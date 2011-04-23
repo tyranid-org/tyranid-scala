@@ -28,6 +28,8 @@ trait BasicRepositories extends BasicScalaProject {
 
     "org.mortbay.jetty"         % "jetty"                    % "6.1.22"        % "test->default",
 
+    "com.mongodb.casbah"        % "casbah_2.8.1"             % "2.1.1"         % "compile->default",
+
     //"postgresql"              % "postgresql"               % "8.4-701.jdbc4" % "compile->default",
     //"xom"                       % "xom"                      % "1.1"           % "compile->default",
 
