@@ -3,10 +3,9 @@ import sbt._
 
 trait BasicRepositories extends BasicScalaProject {
   // comment out if you're not also using maven
-  val mavenLocal = "Local Maven Repository" at "file://"+Path.userHome+"/.m2/repository"
+  //val mavenLocal = "Local Maven Repository" at "file://"+Path.userHome+"/.m2/repository"
 
   // required because Ivy doesn't pull repositories from poms
-  // comment out if you're not also using maven
   val scalaToolsRepo   = "scala-tools.org" at "http://scala-tools.org/repo-releases"
   val centralMavenRepo = "central-maven"   at "http://repo1.maven.org/maven2/"
 
