@@ -1,0 +1,66 @@
+
+package org.tyranid.text
+
+class StringImp( s:String ) {
+	def denull = if ( s == null ) "" else s
+
+	def splitFirst( sep:Char ) = {
+		val idx = s.indexOf( sep )
+		( s.substring( 0, idx ), s.substring( idx+1 ) )
+	}
+
+	/**
+	 * Named this way to be similar to Lift's "encJs" method on Strings.
+	 */
+	def encUrl = java.net.URLEncoder.encode( s, "UTF-8" ) 
+	def decUrl = java.net.URLDecoder.decode( s, "UTF-8" )
+
+	def isBlank  = ( s == null || s.length == 0 )
+	def notBlank = ( s != null && s.length >  0 )
+
+  /**
+   * Similar to Groovy's ?: (Elvis) operator.
+   *
+   * Example:  user.name or "Unknown"
+   */
+	def or( fallback:String ) = if ( isBlank ) fallback else s
+
+  /**
+   * Equivalent to:    !s.isBlank |* ...
+   */
+  def |*( v: => String ):String = if ( !isBlank ) v else ""
+
+  /**
+   * Example:
+   *
+   * "foo" |* ( "class=\"" + _ + "\"" )  becomes:  class="foo"
+   * ""    |* ( "class=\"" + _ + "\"" )  becomes:  (empty string)
+   */
+  def |*( v: ( String ) => String ):String = v( s )
+
+	def toXml = scala.xml.XML.loadString( s )
+
+  def toLiftJson = _root_.net.liftweb.json.JsonParser.parse( s )
+
+  def toJackson = new org.codehaus.jackson.map.ObjectMapper().readTree( s )
+
+
+  def word =
+    if ( s == null ) ""
+    else             s.trim
+
+  def lowerWord = word.toLowerCase
+
+	/**
+ 	 * Scala's StringOps defines a toBoolean(), but it is very minimal ... it only accepts "true" and "false"
+ 	 */
+	def toLaxBoolean =
+		lowerWord match {
+		case ""
+	     | "n" | "no"
+		   | "f" | "false"
+			 | "off"         => false
+		case _             => true
+	  }
+}
+
