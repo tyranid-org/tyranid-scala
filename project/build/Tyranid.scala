@@ -24,7 +24,7 @@ class Tyranid( info: ProjectInfo ) extends DefaultProject( info ) {
 
     "org.mortbay.jetty"         % "jetty"                    % "6.1.22"        % "test->default",
 
-    "com.mongodb.casbah"       %% "casbah"                   % "2.1.1"         % "compile->default",
+    "org.mongodb"               % "mongo-java-driver"        % "2.5.3"         % "compile->default",
 
     //"postgresql"              % "postgresql"               % "8.4-701.jdbc4" % "compile->default",
     //"xom"                       % "xom"                      % "1.1"           % "compile->default",
