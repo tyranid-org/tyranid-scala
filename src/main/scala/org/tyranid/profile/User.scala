@@ -17,20 +17,41 @@
 
 package org.tyranid.profile
 
-import net.liftweb.http.SessionVar
+import com.mongodb.DBObject
+
+import net.liftweb.http.{ RedirectResponse, SessionVar }
+
+import org.tyranid.Imp.option
+import org.tyranid.db.mongo.Imp._
 
 object User {
 
   private object currentVar extends SessionVar[Option[User]]( None )
 
   def current:Option[User] = currentVar.is
+
+  def isLoggedIn = current.flatten( _.loggedIn, false )
+  def isAdmin    = current.flatten( _.admin, false )
+
+  import net.liftweb.sitemap.Loc._
+
+  lazy val ReqLoggedIn = If( isLoggedIn _,  () => RedirectResponse("/user/login") )
+  lazy val ReqAdmin    = If( isAdmin _,     () => RedirectResponse("/user/login") )
 }
 
 class User {
 
+  val db:DBObject = Mongo.obj
+
+  var loggedIn:Boolean = false
+  var admin:Boolean = false
+
   /*
 
-      mongo object
+      1)  implement user/login
+
+      2)  
+
 
 
       
