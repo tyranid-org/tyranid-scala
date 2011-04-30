@@ -17,6 +17,7 @@
 
 package org.tyranid.text
 
+
 class StringImp( s:String ) {
 	def denull = if ( s == null ) "" else s
 
@@ -24,6 +25,7 @@ class StringImp( s:String ) {
 		val idx = s.indexOf( sep )
 		( s.substring( 0, idx ), s.substring( idx+1 ) )
 	}
+
 
 	/**
 	 * Named this way to be similar to Lift's "encJs" method on Strings.

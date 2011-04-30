@@ -20,7 +20,7 @@ package org.tyranid.profile
 
 import net.liftweb.http.{ RedirectResponse, SessionVar }
 
-import org.tyranid.Imp.option
+import org.tyranid.Imp.{ boolean, option }
 import org.tyranid.db.mongo.DBWrapObject
 import org.tyranid.db.mongo.Imp._
 
@@ -65,7 +65,6 @@ org.tyranid.ui.UiObject
      field( "pathname" )
 
      render( "pathname" )
-
 
 
  */
