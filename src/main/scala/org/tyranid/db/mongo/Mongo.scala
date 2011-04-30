@@ -37,6 +37,8 @@ object Imp {
 	implicit def objImp( obj:DBObject )              = new DBObjectImp( obj )
 }
 
+import Imp._
+
 
 case class MongoImp( mongo:com.mongodb.Mongo ) {
 
@@ -125,5 +127,14 @@ case object MissingDBValue extends DBValue {
   def string = "[missing]"
 
   def int = throw new IllegalArgumentException( "MissingDBValue cannot be converted to an int." )
+}
+
+class DBWrapObject {
+
+  val db:DBObject = Mongo.obj
+
+  def apply( key:String )            = db./( key )
+  def update( key:String, v:AnyRef ) = db.put( key, v )
+
 }
 
