@@ -15,32 +15,28 @@
  *
  */
 
-package org.tyranid.db.mongo
+package org.tyranid.db.ram
 
-import org.bson.BSONObject
-import com.mongodb.{ BasicDBObject, DB, DBCollection, DBObject }
+import scala.collection.mutable.{ ArrayBuffer, HashMap }
 
 import org.tyranid.Imp.string
-import org.tyranid.db.{ Entity, Record }
-import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.{ DbIntSerial, DbChar, Entity }
 
 
-case class MongoEntity( coll:DBCollection ) extends Entity {
+case class RamEntity() extends Entity {
 
 	override lazy val dbName = name.plural
 
-  def create {}
-  def drop   { coll.drop }
+	def create {}
+	def drop   { /* TODO */ }
 
 
 }
 
-class MongoRecord extends Record {
 
-  val db:DBObject = Mongo.obj
+abstract class RamEnumEntity( nameLen: Int ) extends RamEntity {
 
-  def apply( key:String )            = db./( key )
-  def update( key:String, v:AnyRef ) = db.put( key, v )
-
+	"id"   is DbIntSerial       key   ;
+	"name" is DbChar( nameLen ) label ;
 }
 

@@ -19,12 +19,15 @@ package org.tyranid.db.sql
 
 import scala.collection.mutable.{ ArrayBuffer, HashMap }
 
+import org.tyranid.Imp.string
 import org.tyranid.db.{ Attribute, DbIntSerial, DbChar, Entity, ModelException, Record, Schema }
 import org.tyranid.db.tuple.{ View, ViewAttribute, Tuple }
 
 
 
 case class SqlEntity() extends Entity {
+
+	override lazy val dbName = name.camelCaseToUnderLower.plural
 
 	private def toCreateSql = {
 		val sb = new StringBuilder
@@ -116,7 +119,7 @@ object SqlView {
 			val prefix = rsql.substring( m.start, hash )
 			val suffix = rsql.substring( hash+1, m.end )
 
-			entries += ( Schema.byTableName.get( prefix ) match {
+			entries += ( Schema.byDbName.get( prefix ) match {
 								   case Some( en ) => new SqlpTable( m.start, m.end, en, suffix )	
 							     case None       => leafCount += 1
 									                    new SqlpField( m.start, m.end, prefix, suffix )
