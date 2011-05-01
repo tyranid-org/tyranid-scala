@@ -42,35 +42,36 @@ abstract class Domain {
 
 //*******   I n t
 
-object DbInt extends Domain {
+abstract class DbIntish extends Domain {
+	override val idType = IdType.ID_32
+}
 
-  override val idType = IdType.ID_32
+object DbInt extends DbIntish {
 	val sqlName = "INT"
 }
 
+object DbIntSerial extends DbIntish {
+	val sqlName = "SERIAL"
+	override def isAuto = true
+}
 
 
 //*******   L o n g
 
-object DbLong extends Domain {
+abstract class DbLongish extends Domain {
+	override val idType = IdType.ID_64
+}
 
-  override val idType = IdType.ID_64
+object DbLong extends DbLongish {
 	val sqlName = "BIGINT"
 }
 
-
-
-//*******   C h a r
-
-object DbText {
-	def apply( len: Int ) = new DbText( len )
+object DbLongSerial extends DbLongish {
+	val sqlName = "BIGSERIAL"
+	override def isAuto = true
 }
 
-class DbText( len: Int = 16384 ) extends Domain {
 
-  override val idType = IdType.ID_STRING
-	val sqlName = "CHAR(" + len + ")"
-}
 
 
 //*******   U r l
@@ -94,6 +95,41 @@ object DbPassword extends Domain {
 }
 
 
+//*******   C h a r
+
+object DbChar {
+	def apply( len: Int ) = new DbChar( len )
+}
+
+class DbChar( len: Int ) extends Domain {
+	val sqlName = "CHAR(" + len + ")"
+}
+
+
+//*******   V a r C h a r
+
+object DbVarChar {
+	def apply( len: Int ) = new DbVarChar( len )
+}
+
+class DbVarChar( len: Int ) extends Domain {
+	val sqlName = "VARCHAR(" + len + ")"
+}
+
+
+//*******   T e x t
+
+object DbText extends Domain {
+	val sqlName = "TEXT"
+}
+
+
+//*******   D a t e
+
+object DbDate extends Domain {
+	val sqlName = "DATE"
+}
+
 //*******   D a t e T i m e
 
 object DbDateTime extends Domain {
@@ -101,7 +137,6 @@ object DbDateTime extends Domain {
 }
 
 //*******   L i n k
-/*
 
 object DbLink {
 	def apply( toEn: Entity ) = new DbLink( toEn )
@@ -109,10 +144,16 @@ object DbLink {
 
 class DbLink( toEn: Entity ) extends Domain {
 	lazy val sqlName = toEn.idType match {
-		                 case IdType.ID_32      => "INT"
-		                 case IdType.ID_64      => "BIGINT"
-		                 case IdType.ID_COMPLEX => throw new ModelException( toEn.name + " has a complex ID and cannot be linked to." )
-										 }
+		                case IdType.ID_32      => "INT"
+		                case IdType.ID_64      => "BIGINT"
+		                case IdType.ID_COMPLEX => throw new ModelException( toEn.name + " has a complex ID and cannot be linked to." )
+										}
+
+	override def see( v:AnyRef ) =
+		v match {
+		case null => ""
+		case n:Number => toEn.labelFor( n.longValue )
+		}
 }
 
- */
+

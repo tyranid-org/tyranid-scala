@@ -57,15 +57,6 @@ case class DBCollectionImp( coll:DBCollection ) {
   def +=( obj:DBObject ) = coll.insert( obj )
 }
 
-case class MongoEntity( coll:DBCollection ) extends Entity {
-
-  def create {}
-  def drop   { coll.drop }
-
-
-}
-
-
 trait DBValue {
 
   def /( name:String ):DBValue
@@ -138,14 +129,5 @@ case object MissingDBValue extends DBValue {
   def string = "[missing]"
 
   def int = throw new IllegalArgumentException( "MissingDBValue cannot be converted to an int." )
-}
-
-class DBWrapObject {
-
-  val db:DBObject = Mongo.obj
-
-  def apply( key:String )            = db./( key )
-  def update( key:String, v:AnyRef ) = db.put( key, v )
-
 }
 

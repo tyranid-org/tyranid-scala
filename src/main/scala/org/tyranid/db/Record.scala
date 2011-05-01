@@ -15,17 +15,13 @@
  *
  */
 
-package org.tyranid
+package org.tyranid.db
+
+import org.tyranid.Imp.string
 
 
-object Bind {
+trait Record {
 
-  @volatile var ProfileDbName:String = "default"
-
-  // SQL
-  @volatile var DbUrl:String  = ""
-  @volatile var DbUser:String = ""
-  @volatile var DbPw:String   = ""
-  @volatile var DbDriver      = "org.postgresql.Driver"
 }
+
 

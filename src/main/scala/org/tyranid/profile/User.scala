@@ -21,7 +21,7 @@ package org.tyranid.profile
 import net.liftweb.http.{ RedirectResponse, SessionVar }
 
 import org.tyranid.Imp.{ boolean, option }
-import org.tyranid.db.mongo.DBWrapObject
+import org.tyranid.db.mongo.MongoRecord
 import org.tyranid.db.mongo.Imp._
 
 object User {
@@ -69,7 +69,7 @@ org.tyranid.ui.UiObject
 
  */
 
-class User extends DBWrapObject {
+class User extends MongoRecord {
 
   var loggedIn = false
   var admin    = false

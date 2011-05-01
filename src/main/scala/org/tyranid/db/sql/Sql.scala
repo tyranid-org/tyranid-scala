@@ -17,6 +17,12 @@
 
 package org.tyranid.db.sql
 
+import java.sql.{ Connection, DriverManager, SQLException }
+
+import net.liftweb.common.{ Box, Empty, Full }
+import net.liftweb.mapper.{ DefaultConnectionIdentifier, ConnectionIdentifier, ConnectionManager }
+
+import org.tyranid.Bind
 import org.tyranid.db.Entity
 
 
@@ -27,19 +33,108 @@ object Imp {
 }
 
 
-case class SqlEntity() extends Entity {
+object SqlVendor extends ConnectionManager {
+  private var pool:List[Connection] = Nil
+  private var poolSize = 0
+  private val maxPoolSize = 4
 
-	def create {
-    /*
-		Sql.commitUpdate( toCreateSql )
-		if ( staticView != null )
-			Sql.commitUpdate( staticView.toInsertSql( staticTuples:_* ) )
-     */
-	}
+  	
+  private def createOne:Box[Connection] =
+    try {
+	    Class.forName( Bind.DbDriver )
 
-	def drop { /* Sql.commitUpdate( toDropSql ) */ }
+			Full( DriverManager.getConnection( Bind.DbUrl, Bind.DbUser, Bind.DbPw ) )
+	  } catch {
+	    case e: Exception => e.printStackTrace; Empty
+	  }
 
+  def newConnection( name:ConnectionIdentifier ):Box[Connection] =
+    synchronized {
+      pool match {
+			case Nil if poolSize < maxPoolSize =>
+	  		val ret = createOne
+        poolSize += 1
+        ret.foreach(c => pool = c :: pool)
+        ret
 
+			case Nil => wait(1000L); newConnection(name)
+			case x :: xs => try {
+	        x.setAutoCommit(false)
+	        Full(x)
+	      } catch {
+          case e => try {
+            pool = xs
+            poolSize = poolSize - 1
+            x.close
+            newConnection(name)
+          } catch {
+            case e => newConnection(name)
+          }
+        }
+      }
+    }
+
+  def releaseConnection( conn:Connection ):Unit = synchronized {
+    pool = conn :: pool
+    notify
+  }
 }
 
+
+object Sql {
+
+	def literal( sb: StringBuilder, v:AnyRef ) =
+		v match {
+		case null      => sb ++= "NULL"
+		case s: String => sb += '\'' ++= pgEscapeStr( s ) += '\''
+		case o         => sb ++= o.toString
+		}
+
+	def pgEscapeStr( str:String ): String = {
+		var pos = str.indexOf( '\'' )
+
+		if ( pos == -1 )
+			return str
+
+		val sb = new StringBuilder
+		for ( ch <- str ) {
+			if ( ch == '\'' )
+				sb += '\''
+
+			sb += ch
+		}
+
+		sb.toString
+	}
+
+	def connect[ T ]( block: ( Connection ) => T ): T = {
+		SqlVendor.newConnection( DefaultConnectionIdentifier ) match {
+		case Full( conn ) =>
+			try {
+				block( conn )
+			} finally {
+				SqlVendor.releaseConnection( conn )
+			}
+
+		case _ =>
+			throw new RuntimeException( "ERROR:  Could not allocate database connection!" )
+		}
+	}
+
+	def commitUpdate( sql:String ) = {
+		connect { conn =>
+			val stmt = conn.createStatement
+
+			val oldAc = conn.getAutoCommit
+			conn.setAutoCommit( true )
+
+			try {
+				stmt.executeUpdate( sql )
+			} finally {
+				stmt.close
+				conn.setAutoCommit( oldAc )
+			}
+		}
+	}
+}
 

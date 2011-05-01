@@ -15,17 +15,29 @@
  *
  */
 
-package org.tyranid
+package org.tyranid.db.mongo
+
+import org.bson.BSONObject
+import com.mongodb.{ BasicDBObject, DB, DBCollection, DBObject }
+
+import org.tyranid.db.{ Entity, Record }
+import org.tyranid.db.mongo.Imp._
 
 
-object Bind {
+case class MongoEntity( coll:DBCollection ) extends Entity {
 
-  @volatile var ProfileDbName:String = "default"
+  def create {}
+  def drop   { coll.drop }
 
-  // SQL
-  @volatile var DbUrl:String  = ""
-  @volatile var DbUser:String = ""
-  @volatile var DbPw:String   = ""
-  @volatile var DbDriver      = "org.postgresql.Driver"
+
+}
+
+class MongoRecord extends Record {
+
+  val db:DBObject = Mongo.obj
+
+  def apply( key:String )            = db./( key )
+  def update( key:String, v:AnyRef ) = db.put( key, v )
+
 }
 
