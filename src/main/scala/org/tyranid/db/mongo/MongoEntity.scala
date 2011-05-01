@@ -20,14 +20,18 @@ package org.tyranid.db.mongo
 import org.bson.BSONObject
 import com.mongodb.{ BasicDBObject, DB, DBCollection, DBObject }
 
+import org.tyranid.Bind
 import org.tyranid.Imp.string
 import org.tyranid.db.{ Entity, Record }
 import org.tyranid.db.mongo.Imp._
 
 
-case class MongoEntity( coll:DBCollection ) extends Entity {
+class MongoEntity extends Entity {
 
 	override lazy val dbName = name.plural
+
+  lazy val coll = Mongo.connect.db( Bind.ProfileDbName )( dbName )
+
 
   def create {}
   def drop   { coll.drop }
