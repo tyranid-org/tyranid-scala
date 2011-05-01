@@ -20,6 +20,7 @@ package org.tyranid.db.sql
 import scala.collection.mutable.{ ArrayBuffer, HashMap }
 
 import org.tyranid.db.{ Attribute, DbIntSerial, DbChar, Entity, ModelException, Record, Schema }
+import org.tyranid.db.tuple.{ View, ViewAttribute, Tuple }
 
 
 
@@ -91,16 +92,7 @@ SELECT c#id, c#name, c#gearScore, c#resilience
  WHERE id = ?
 
  */
-
-
-
-class ViewAttribute( val view:SqlView,
-                     val att:Attribute,
-                     val index:Int ) {
-}
-
-
-object View {
+object SqlView {
 	def apply( rsql: String ) = {
 		val entries = new ArrayBuffer[SqlpEntry]
 
@@ -116,7 +108,7 @@ object View {
 		var leafCount = 0
 		val v = new SqlView
 
-		val m = View.r.pattern.matcher( rsql )
+		val m = SqlView.r.pattern.matcher( rsql )
 		var pos = 0
 		while ( m.find( pos ) ) {
 			val hash = rsql.indexOf( '#', m.start )
@@ -180,19 +172,10 @@ private case class SqlpField( start: Int, end: Int, alias: String, name: String 
 private case class SqlpTable( start: Int, end: Int, table: Entity, alias: String ) extends SqlpEntry
 
 
-class SqlView {
+class SqlView extends View {
 
 	var rsql:String = null
 	var sql:String = null
-
-	var leaves:Array[ViewAttribute] = null
-
-	def leafCount = leaves.size
-
-	lazy val entity  = leaves( 0 ).att.entity
-	lazy val eleaves = leaves.filter( _.att.entity == entity )
-	lazy val ekeys   = eleaves.filter( _.att.isKey )
-	lazy val elabels = eleaves.filter( _.att.isLabel )
 
 	def query( params:AnyRef* ) = {
 		Sql.connect { c =>
@@ -253,29 +236,7 @@ class SqlView {
 	def makeRecords = new SqlRecord( this )
 }
 
-
-class SqlRecord( val view:SqlView ) extends Record {
-
-	val values = new Array[AnyRef]( view.leafCount )
-
-	def apply( index: Int ) = values( index )
-	def update( index: Int, value: AnyRef ) = values( index ) = value
-
-	def see( index: Int ) = view.leaves( index ).att.domain.see( apply( index ) )
-
-	override def toString = {
-		val sb = new StringBuilder
-		sb += '('
-		for ( i <- 0 until values.length ) {
-			if ( i > 0 ) sb += ','
-			sb ++= view.leaves( i ).att.name + '=' ++= values( i ).toString
-		}
-
-		sb += ')'
-		sb.toString
-	}
-
-	def isNew = view.ekeys.findIndexOf( va => values( va.index ) == null ) != -1
+class SqlRecord( override val view:SqlView ) extends Tuple( view ) {
 
 	def save = {
 		val en = view.entity
@@ -346,7 +307,7 @@ UPDATE """ ++= en.dbName ++= """
 }
 
 
-object ViewTest {
+object SqlViewTest {
 
 	/*
 
@@ -363,7 +324,7 @@ object ViewTest {
 
 
 	def test = {
-		val v = View( """
+		val v = SqlView( """
 SELECT #id, #name, #battle_group
   FROM realms#
  WHERE id < ?
