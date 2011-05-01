@@ -20,6 +20,8 @@ package org.tyranid.db.mongo
 import org.bson.BSONObject
 import com.mongodb.{ BasicDBObject, DB, DBCollection, DBObject }
 
+import org.tyranid.db.Entity
+
 
 /**
  * IMPlicit IMPorts.
@@ -53,6 +55,14 @@ case class DBImp( db:com.mongodb.DB ) {
 case class DBCollectionImp( coll:DBCollection ) {
 
   def +=( obj:DBObject ) = coll.insert( obj )
+}
+
+case class MongoEntity( coll:DBCollection ) extends Entity {
+
+  def create {}
+  def drop   { coll.drop }
+
+
 }
 
 

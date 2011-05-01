@@ -69,6 +69,13 @@ class StringImp( s:String ) {
 
   def lowerWord = word.toLowerCase
 
+	def plural:String = s match {
+		case s if s.endsWith( "status" ) => s
+		case s if s.endsWith( "s" )      => s + "es"
+		case s if s.endsWith( "y" )      => s.substring( 0, s.length - 1 ) + "ies"
+		case s                           => s + "s"
+	  }
+
 	/**
  	 * Scala's StringOps defines a toBoolean(), but it is very minimal ... it only accepts "true" and "false"
  	 */
@@ -80,5 +87,45 @@ class StringImp( s:String ) {
 			 | "off"         => false
 		case _             => true
 	  }
+
+	def uncapitalize = if ( s.length > 1 ) s.charAt( 0 ).toLower + s.substring( 1 ) else s
+	
+	def camelCaseToUnderLower:String = {
+	  val sb = new StringBuilder
+	  var first = true
+	  
+	  for ( ch <- s )
+	    if ( first )           { sb += ch.toLower; first = false }
+	    else if ( ch.isUpper ) sb += '_' += ch.toLower
+	    else                   sb += ch
+	  
+	  sb.toString
+	}
+	
+	def camelCaseToSpaceUpper:String = {
+	  val sb = new StringBuilder
+	  var first = true
+	  
+	  for ( ch <- s )
+	    if ( first ) {
+	      sb += ch.toUpper
+	      first = false
+      } else {
+        if ( ch.isUpper ) sb += ' '
+        sb += ch
+      }
+	  
+	  var s1 = sb.toString
+	  
+	  for ( sub <- substitutions )
+	    s1 = sub._1.replaceAllIn( s1, sub._2 )
+	    
+	  s
+	}
+
+	val substitutions = Array(
+    ( """\bUrl\b""".r, "URL" ),
+    ( """\bId\b""".r, "ID" ),
+    ( """\bUuid\b""".r, "UUID" ) )
 }
 
