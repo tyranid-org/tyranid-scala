@@ -21,12 +21,11 @@ package org.tyranid.profile
 import net.liftweb.http.{ RedirectResponse, SessionVar }
 
 import org.tyranid.Imp.{ boolean, option }
-import org.tyranid.db.mongo.MongoRecord
-import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.Record
 
 object User {
 
-  private object currentVar extends SessionVar[User]( new User )
+  private object currentVar extends SessionVar[User]( null )
 
   def current:User = currentVar.is
 
@@ -69,7 +68,8 @@ org.tyranid.ui.UiObject
 
  */
 
-class User extends MongoRecord {
+// TODO:  change from MongoRecord to Record once Record has accessors/mutators
+class User extends org.tyranid.db.mongo.MongoRecord {
 
   var loggedIn = false
   var admin    = false
