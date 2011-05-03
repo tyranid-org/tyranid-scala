@@ -20,25 +20,23 @@ package org.tyranid.db
 import scala.collection.mutable.{ ArrayBuffer, HashMap }
 
 import org.tyranid.Imp.string
-import org.tyranid.db.tuple.{ ViewAttribute, View, Tuple }
+import org.tyranid.db.tuple.{ TupleView, Tuple }
+
 
 /*
  * * *   A t t r i b u t e s
  */
 
-class Attribute( val entity: Entity, val name: String ) extends DbItem {
-	var domain: Domain = null
+class Attribute( val entity:Entity, val name:String ) extends DbItem {
+	var domain:Domain = null
 
-	def is( domain: Domain ): Attribute = {
-		this.domain = domain
-		this
-	}
+	def is( domain:Domain ) = { this.domain = domain; this }
 
 	var isKey = false
-	def key: Attribute = { isKey = true; this }
+	def key = { isKey = true; this }
 
 	var isLabel = false
-	def label: Attribute = { isLabel = true; this }
+	def label = { isLabel = true; this }
 }
 
 
@@ -97,12 +95,12 @@ trait Entity extends DbItem {
 	 * * *  Static Data
 	 */
 
-	var staticView:View = null
+	var staticView:TupleView = null
 	var staticRecords:Array[Tuple] = null
 	var staticIdIndex:HashMap[Long,Tuple] = null
 
 	def static( names:Product, tuples:Product* ) {
-		val v = new View
+		val v = new TupleView
 		val leafCount = names.productArity
 		val vas = new Array[ViewAttribute]( leafCount )
 		for ( li <- 0 until leafCount )

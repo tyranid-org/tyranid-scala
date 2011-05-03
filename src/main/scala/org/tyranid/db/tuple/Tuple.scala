@@ -17,16 +17,13 @@
 
 package org.tyranid.db.tuple
 
-import org.tyranid.db.{ Attribute, Record }
+import org.tyranid.db.{ Attribute, Record, View, ViewAttribute }
 
-class ViewAttribute( val view:View,
-                     val att:Attribute,
-                     val index:Int ) {
-}
-
-class View {
+class TupleView extends View {
 	var leaves:Array[ViewAttribute] = null
 	def leafCount = leaves.size
+
+  def apply( name:String ) = leaves.find( _.name == name ).get
 
 	lazy val entity  = leaves( 0 ).att.entity
 	lazy val eleaves = leaves.filter( _.att.entity == entity )
@@ -35,12 +32,15 @@ class View {
 }
 
 
-class Tuple( val view:View ) extends Record {
+class Tuple( val view:TupleView ) extends Record {
 
 	val values = new Array[AnyRef]( view.leafCount )
 
 	def apply( index: Int ) = values( index )
+  def apply( key:String ) = apply( view( key ).index )
+
 	def update( index: Int, value: AnyRef ) = values( index ) = value
+  def update( key:String, v:AnyRef ) = update( view( key ).index, v )
 
 	def see( index: Int ) = view.leaves( index ).att.domain.see( apply( index ) )
 

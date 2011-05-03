@@ -38,55 +38,9 @@ object User {
   lazy val ReqAdmin    = If( isAdmin _,     () => RedirectResponse("/user/login") )
 }
 
-/*
-
-   1.  create basic model classes
-
-       org.tyranid.db.Entity
-       org.tyranid.db.Attribute
-       org.tyranid.db.Domain
-
-
-
-   Attribute support
-
-
-
-   Entity ---* Attribute
-
-
-org.tyranid.ui.UiObject
-
-   UiObject extends DBWrapObject
-
-     val meta = Entity
-
-     field( "pathname" )
-
-     render( "pathname" )
-
-
- */
-
-// TODO:  change from MongoRecord to Record once Record has accessors/mutators
-class User extends org.tyranid.db.mongo.MongoRecord {
+trait User extends Record {
 
   var loggedIn = false
   var admin    = false
-
-  /*
-
-      1)  implement user/login
-
-      2)  
-
-
-
-      
-
-      send an email to reset password
-
-   */
-
 }
 

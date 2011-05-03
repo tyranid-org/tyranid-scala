@@ -20,8 +20,8 @@ package org.tyranid.db.sql
 import scala.collection.mutable.{ ArrayBuffer, HashMap }
 
 import org.tyranid.Imp.string
-import org.tyranid.db.{ Attribute, DbIntSerial, DbChar, Entity, ModelException, Record, Schema }
-import org.tyranid.db.tuple.{ View, ViewAttribute, Tuple }
+import org.tyranid.db.{ Attribute, DbIntSerial, DbChar, Entity, ModelException, Record, Schema, ViewAttribute }
+import org.tyranid.db.tuple.{ TupleView, Tuple }
 
 
 
@@ -96,7 +96,7 @@ SELECT c#id, c#name, c#gearScore, c#resilience
 
  */
 object SqlView {
-	def apply( rsql: String ) = {
+	def apply( rsql:String ) = {
 		val entries = new ArrayBuffer[SqlpEntry]
 
 		def findEntity( alias: String ): Entity = {
@@ -175,7 +175,7 @@ private case class SqlpField( start: Int, end: Int, alias: String, name: String 
 private case class SqlpTable( start: Int, end: Int, table: Entity, alias: String ) extends SqlpEntry
 
 
-class SqlView extends View {
+class SqlView extends TupleView {
 
 	var rsql:String = null
 	var sql:String = null
@@ -240,6 +240,9 @@ class SqlView extends View {
 }
 
 class SqlRecord( override val view:SqlView ) extends Tuple( view ) {
+
+  override def /( key:String ) = apply( key ).asInstanceOf[SqlRecord]
+  override def /( key:Symbol ) = apply( key.toString ).asInstanceOf[SqlRecord]
 
 	def save = {
 		val en = view.entity

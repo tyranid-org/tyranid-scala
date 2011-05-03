@@ -17,16 +17,19 @@
 
 package org.tyranid.db.mongo
 
+import scala.collection.mutable
+
 import org.bson.BSONObject
 import com.mongodb.{ BasicDBObject, DB, DBCollection, DBObject }
 
 import org.tyranid.Bind
 import org.tyranid.Imp.string
-import org.tyranid.db.{ Entity, Record }
+import org.tyranid.db.{ Entity, Record, View, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 
 
 class MongoEntity extends Entity {
+
 
 	override lazy val dbName = name.plural
 
@@ -39,12 +42,22 @@ class MongoEntity extends Entity {
 
 }
 
-class MongoRecord extends Record {
+class MongoView( override val entity:MongoEntity ) extends View {
+
+  private val map = mutable.HashMap[String,ViewAttribute]()
+
+  def apply( name:String ) =
+    map.getOrElseUpdate( name, new ViewAttribute( this, entity.attrib( name ), -1 ) )
+}
+
+class MongoRecord( override val view:MongoView ) extends Record {
 
   val db:DBObject = Mongo.obj
 
-  def apply( key:String )            = db./( key )
+  def apply( key:String )            = db.get( key )
   def update( key:String, v:AnyRef ) = db.put( key, v )
 
+  override def /( key:String ) = apply( key ).asInstanceOf[MongoRecord]
+  override def /( key:Symbol ) = apply( key.toString ).asInstanceOf[MongoRecord]
 }
 

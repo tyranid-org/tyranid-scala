@@ -17,6 +17,9 @@
 
 package org.tyranid.db
 
+import net.liftweb.http.SHtml
+
+
 /*
  * * *   D o m a i n s
  */
@@ -37,6 +40,8 @@ abstract class Domain {
 		case null => ""
 		case v    => v.toString
 		}
+
+  def ui( r:Record, va:ViewAttribute, opts:(String,String)* ) = SHtml.text( r s va.name, v => r( va.name ) = v )
 }
 
 
