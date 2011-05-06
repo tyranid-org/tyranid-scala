@@ -58,6 +58,5 @@ class MongoRecord( override val view:MongoView ) extends Record {
   def update( key:String, v:AnyRef ) = db.put( key, v )
 
   override def /( key:String ) = apply( key ).asInstanceOf[MongoRecord]
-  override def /( key:Symbol ) = apply( key.toString ).asInstanceOf[MongoRecord]
 }
 

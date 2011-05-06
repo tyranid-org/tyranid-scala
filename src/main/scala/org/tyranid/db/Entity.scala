@@ -54,7 +54,13 @@ trait Entity extends DbItem {
 
 	val attribs = new ArrayBuffer[Attribute]
 
-	def attrib( name:String ) = attribs.find( _.name == name ).get
+	def attrib( name:String ) =
+    try {
+      attribs.find( _.name == name ).get
+    } catch {
+      case e:java.util.NoSuchElementException =>
+        throw new ModelException( "Could not find attribute " + name + " in entity " + this.name )
+    }
 
 	def attByDbName( dbName:String ) = attribs.find( _.dbName == dbName ).get
 

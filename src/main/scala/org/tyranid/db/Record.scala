@@ -42,66 +42,65 @@ trait Record {
   def apply( key:String ):AnyRef
   def update( key:String, v:AnyRef )
 
-  def apply( key:Symbol ):AnyRef = apply( key.toString )
-  def update( key:Symbol, v:AnyRef ) { update( key.toString, v ) }
-
   /**
    * Record/Object/Document/Tuple
    */
   def /( key:String ) = apply( key ).asInstanceOf[Record]
-  def /( key:Symbol ) = apply( key.toString ).asInstanceOf[Record]
 
   /**
    * Array
    */
   //def a( key:String ) = apply( key ).asInstanceOf[Array]
-  //def a( key:Symbol ) = apply( key.toString ).asInstanceOf[Array]
 
   /**
    * Boolean
    */
   def b( key:String ) = apply( key ).asInstanceOf[Boolean]
-  def b( key:Symbol ) = apply( key.toString ).asInstanceOf[Boolean]
 
   /**
-   * Long
+   * Double
    */
   def d( key:String ) = apply( key ).asInstanceOf[Double]
-  def d( key:Symbol ) = apply( key.toString ).asInstanceOf[Double]
 
   /**
-   * Long
+   * Int
    */
   def i( key:String ) = apply( key ).asInstanceOf[Int]
-  def i( key:Symbol ) = apply( key.toString ).asInstanceOf[Int]
 
   /**
    * Long
    */
   def l( key:String ) = apply( key ).asInstanceOf[Long]
-  def l( key:Symbol ) = apply( key.toString ).asInstanceOf[Long]
 
   /**
    * Regular Expression
    */
   //def r( key:String ) = apply( key ).asInstanceOf[Long]
-  //def r( key:Symbol ) = apply( key.toString ).asInstanceOf[Long]
 
   /**
    * String
    */
-  def s( key:String ) = apply( key ).toString
-  def s( key:Symbol ) = apply( key.toString ).toString
+  def s( key:String ) = {
+    val v = apply( key )
+    if ( v != null ) v.toString else ""
+  }
 
   /**
    * Date/Time
    */
   //def d( key:String ) = apply( key ).toString
-  //def d( key:Symbol ) = apply( key.toString ).toString
 
+
+  def label( name:String, opts:(String,String)* ) = <label for={ name }/>
 
   def ui( name:String, opts:(String,String)* ) = view( name ).ui( this, opts:_* )
-  def ui( name:Symbol, opts:(String,String)* ) = view( name.toString ).ui( this, opts:_* )
+
+  def td( name:String, opts:(String,String)* ) = {
+    val va = view( name )
+
+    <td>{ label( name ) }</td> ++
+    <td>{ va.ui( this, ( opts ++ Seq( "id" -> name ) ):_* ) }</td>
+  }
 }
 
 

@@ -20,12 +20,13 @@ package org.tyranid.profile
 
 import net.liftweb.http.{ RedirectResponse, SessionVar }
 
+import org.tyranid.Bind
 import org.tyranid.Imp.{ boolean, option }
 import org.tyranid.db.Record
 
 object User {
 
-  private object currentVar extends SessionVar[User]( null )
+  private object currentVar extends SessionVar[User]( Bind.NewUser() )
 
   def current:User = currentVar.is
 

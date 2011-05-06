@@ -17,6 +17,19 @@
 
 package org.tyranid
 
+import scala.xml.NodeSeq
+
+import org.tyranid.profile.User
+
+object Debug {
+  def check( xml: => NodeSeq ):NodeSeq = {
+    try {
+      xml
+    } catch {
+      case t:Throwable => t.printStackTrace; <div class="error">Internal site problem, please try again later.</div>
+    }
+  }
+}
 
 object Bind {
 
@@ -27,5 +40,7 @@ object Bind {
   @volatile var DbUser:String = ""
   @volatile var DbPw:String   = ""
   @volatile var DbDriver      = "org.postgresql.Driver"
+
+  @volatile var NewUser:() => User = null
 }
 
