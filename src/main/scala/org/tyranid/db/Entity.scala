@@ -21,24 +21,41 @@ import scala.collection.mutable.{ ArrayBuffer, HashMap }
 
 import org.tyranid.Imp.string
 import org.tyranid.db.tuple.{ TupleView, Tuple }
+import org.tyranid.logic.{ Invalid, Valid }
 
 
 /*
  * * *   A t t r i b u t e s
  */
 
-class Attribute( val entity:Entity, val name:String ) extends DbItem {
+class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid {
 	var domain:Domain = null
   var label:String = name.camelCaseToSpaceUpper
 
+  /**
+   *    DSL ... TODO:  move this out to a builder object
+   */
+
 	def is( domain:Domain ) = { this.domain = domain; this }
   def as( label:String ) = { this.label = label; this }
+	def key = { isKey = true; this }
+	def labelAtt = { isLabelAtt = true; this }
+
+  def is( str:String ) = {
+    str match {
+    case "key"      => isKey = true
+    case "required" => localValidations ::= ( ( scope:Scope ) => scope.required )
+    }
+
+    this
+  }
 
 	var isKey = false
-	def key = { isKey = true; this }
-
 	var isLabelAtt = false
-	def labelAtt = { isLabelAtt = true; this }
+
+  private var localValidations:List[ ( Scope ) => Option[Invalid] ] = Nil
+
+  override def validations = localValidations ++ domain.validations
 }
 
 

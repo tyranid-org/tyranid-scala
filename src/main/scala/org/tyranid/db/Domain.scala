@@ -80,8 +80,6 @@ object DbLongSerial extends DbLongish {
 }
 
 
-
-
 //*******   U r l
 
 object DbUrl extends Domain {

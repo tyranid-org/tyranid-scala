@@ -21,8 +21,8 @@ package org.tyranid.profile
 import net.liftweb.http.{ RedirectResponse, SessionVar }
 
 import org.tyranid.Bind
-import org.tyranid.Imp.{ boolean, option }
-import org.tyranid.db.Record
+import org.tyranid.Imp.{ boolean, option, symbol }
+import org.tyranid.db.{ Record, Scope }
 
 object User {
 

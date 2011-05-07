@@ -20,7 +20,7 @@ package org.tyranid.db
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp.string
-import org.tyranid.logic.Valid
+import org.tyranid.logic.{ Invalid, Valid }
 
 
 class ViewAttribute( val view:View,
@@ -121,9 +121,13 @@ trait Record extends Valid {
   }
 }
 
-case class Scope( r:Record, va:Option[ViewAttribute] ) {
+case class Scope( rec:Record, va:Option[ViewAttribute] ) {
 
-  def s = va.map( va => r.s( va ) )
+  def s = va.map( va => rec.s( va ) )
+
+  def at( name:String ) = Scope( rec, Some( rec.view( name ) ) )
+
+  def required = s.filter( _.isBlank ).map( s => Invalid( this, "is required." ) )
 }
 
 
