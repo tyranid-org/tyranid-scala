@@ -19,7 +19,7 @@ package org.tyranid.db.ram
 
 import scala.collection.mutable.{ ArrayBuffer, HashMap }
 
-import org.tyranid.Imp.string
+import org.tyranid.Imp.{ string, symbol }
 import org.tyranid.db.{ DbIntSerial, DbChar, Entity }
 
 
@@ -36,7 +36,7 @@ case class RamEntity() extends Entity {
 
 abstract class RamEnumEntity( nameLen: Int ) extends RamEntity {
 
-	"id"   is DbIntSerial       key   ;
-	"name" is DbChar( nameLen ) label ;
+	"id"   is DbIntSerial       is 'key   ;
+	"name" is DbChar( nameLen ) is 'label ;
 }
 

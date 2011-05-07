@@ -19,7 +19,7 @@ package org.tyranid.db.sql
 
 import scala.collection.mutable.{ ArrayBuffer, HashMap }
 
-import org.tyranid.Imp.string
+import org.tyranid.Imp.{ string, symbol }
 import org.tyranid.db.{ Attribute, DbIntSerial, DbChar, Entity, ModelException, Record, Schema, ViewAttribute }
 import org.tyranid.db.tuple.{ TupleView, Tuple }
 
@@ -59,8 +59,8 @@ case class SqlEntity() extends Entity {
 
 abstract class SqlEnumEntity( nameLen: Int ) extends SqlEntity {
 
-	"id"   is DbIntSerial       key   ;
-	"name" is DbChar( nameLen ) label ;
+	"id"   is DbIntSerial       is 'key   ;
+	"name" is DbChar( nameLen ) is 'label ;
 }
 
 

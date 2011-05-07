@@ -38,12 +38,10 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
 
 	def is( domain:Domain ) = { this.domain = domain; this }
   def as( label:String ) = { this.label = label; this }
-	def key = { isKey = true; this }
-	def labelAtt = { isLabelAtt = true; this }
-
   def is( str:String ) = {
     str match {
     case "key"      => isKey = true
+    case "label"    => isLabelAtt = true
     case "required" => localValidations ::= ( ( scope:Scope ) => scope.required )
     }
 
