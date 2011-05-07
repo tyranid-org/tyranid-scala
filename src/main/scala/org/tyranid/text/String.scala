@@ -120,7 +120,7 @@ class StringImp( s:String ) {
 	  for ( sub <- substitutions )
 	    s1 = sub._1.replaceAllIn( s1, sub._2 )
 	    
-	  s
+	  s1
 	}
 
 	val substitutions = Array(

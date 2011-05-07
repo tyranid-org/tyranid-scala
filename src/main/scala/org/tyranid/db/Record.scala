@@ -17,6 +17,8 @@
 
 package org.tyranid.db
 
+import scala.xml.NodeSeq
+
 import org.tyranid.Imp.string
 
 class ViewAttribute( val view:View,
@@ -24,6 +26,9 @@ class ViewAttribute( val view:View,
                      val index:Int ) {
 
   def name = att.name
+  def label:String = att.label
+
+  def label( r:Record, opts:(String,String)* ):NodeSeq = <label for={ name }>{ label }</label>
 
   def ui( r:Record, opts:(String,String)* ) = att.domain.ui( r, this, opts:_* )
 }
@@ -91,7 +96,7 @@ trait Record {
   //def d( key:String ) = apply( key ).toString
 
 
-  def label( name:String, opts:(String,String)* ) = <label for={ name }/>
+  def label( name:String, opts:(String,String)* ) = view( name ).label( this, opts:_* )
 
   def ui( name:String, opts:(String,String)* ) = view( name ).ui( this, opts:_* )
 

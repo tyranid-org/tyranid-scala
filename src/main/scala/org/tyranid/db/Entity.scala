@@ -29,14 +29,16 @@ import org.tyranid.db.tuple.{ TupleView, Tuple }
 
 class Attribute( val entity:Entity, val name:String ) extends DbItem {
 	var domain:Domain = null
+  var label:String = name.camelCaseToSpaceUpper
 
 	def is( domain:Domain ) = { this.domain = domain; this }
+  def as( label:String ) = { this.label = label; this }
 
 	var isKey = false
 	def key = { isKey = true; this }
 
-	var isLabel = false
-	def label = { isLabel = true; this }
+	var isLabelAtt = false
+	def labelAtt = { isLabelAtt = true; this }
 }
 
 
@@ -45,8 +47,6 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem {
  */
 
 trait Entity extends DbItem {
-
-
 
 	/*
 	 * * *  Attributes

@@ -28,7 +28,7 @@ class TupleView extends View {
 	lazy val entity  = leaves( 0 ).att.entity
 	lazy val eleaves = leaves.filter( _.att.entity == entity )
 	lazy val ekeys   = eleaves.filter( _.att.isKey )
-	lazy val elabels = eleaves.filter( _.att.isLabel )
+	lazy val elabels = eleaves.filter( _.att.isLabelAtt )
 }
 
 
