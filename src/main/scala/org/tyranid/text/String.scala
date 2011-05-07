@@ -17,6 +17,8 @@
 
 package org.tyranid.text
 
+import scala.util.matching.Regex
+
 
 class StringImp( s:String ) {
 	def denull = if ( s == null ) "" else s
@@ -62,6 +64,8 @@ class StringImp( s:String ) {
 
   def toJackson = new org.codehaus.jackson.map.ObjectMapper().readTree( s )
 
+
+  def matches( r:Regex ) = r.pattern.matcher( s ).matches
 
   def word =
     if ( s == null ) ""

@@ -19,12 +19,15 @@ package org.tyranid.db
 
 import net.liftweb.http.SHtml
 
+import org.tyranid.Imp.{ boolean, string }
+import org.tyranid.logic.{ Valid, Invalid }
+
 
 /*
  * * *   D o m a i n s
  */
 
-abstract class Domain {
+trait Domain extends Valid {
 
 	val idType = IdType.ID_COMPLEX
 
@@ -90,6 +93,13 @@ object DbUrl extends Domain {
 
 object DbEmail extends Domain {
 	val sqlName = "VARCHAR(128)"
+
+  val regex = """^[\\w\\-]([\\.\\w])+[\\w]+@([\\w\\-]+\\.)+[A-Z]{2,4}$""".r
+
+  override val validations =
+    ( ( scope:Scope ) => scope.s.filter( !_.matches( regex ) ).map( s => Invalid( scope, "is an invalid email address." ) ) ) ::
+    super.validations
+
 }
 
 
@@ -103,10 +113,10 @@ object DbPassword extends Domain {
 //*******   C h a r
 
 object DbChar {
-	def apply( len: Int ) = new DbChar( len )
+	def apply( len:Int ) = new DbChar( len )
 }
 
-class DbChar( len: Int ) extends Domain {
+class DbChar( len:Int ) extends Domain {
 	val sqlName = "CHAR(" + len + ")"
 }
 
@@ -114,10 +124,10 @@ class DbChar( len: Int ) extends Domain {
 //*******   V a r C h a r
 
 object DbVarChar {
-	def apply( len: Int ) = new DbVarChar( len )
+	def apply( len:Int ) = new DbVarChar( len )
 }
 
-class DbVarChar( len: Int ) extends Domain {
+class DbVarChar( len:Int ) extends Domain {
 	val sqlName = "VARCHAR(" + len + ")"
 }
 

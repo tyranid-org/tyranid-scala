@@ -20,6 +20,8 @@ package org.tyranid.db
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp.string
+import org.tyranid.logic.Valid
+
 
 class ViewAttribute( val view:View,
                      val att:Attribute,
@@ -41,7 +43,7 @@ trait View {
 
 }
 
-trait Record {
+trait Record extends Valid {
   val view:View
 
   def apply( key:String ):AnyRef
@@ -51,61 +53,77 @@ trait Record {
    * Record/Object/Document/Tuple
    */
   def /( key:String ) = apply( key ).asInstanceOf[Record]
+  def /( va:ViewAttribute ) = apply( va.name ).asInstanceOf[Record]
 
   /**
    * Array
    */
   //def a( key:String ) = apply( key ).asInstanceOf[Array]
+  //def a( va:ViewAttribute ) = apply( va.name ).asInstanceOf[Array]
 
   /**
    * Boolean
    */
   def b( key:String ) = apply( key ).asInstanceOf[Boolean]
+  def b( va:ViewAttribute ) = apply( va.name ).asInstanceOf[Boolean]
 
   /**
    * Double
    */
   def d( key:String ) = apply( key ).asInstanceOf[Double]
+  def d( va:ViewAttribute ) = apply( va.name ).asInstanceOf[Double]
 
   /**
    * Int
    */
   def i( key:String ) = apply( key ).asInstanceOf[Int]
+  def i( va:ViewAttribute ) = apply( va.name ).asInstanceOf[Int]
 
   /**
    * Long
    */
   def l( key:String ) = apply( key ).asInstanceOf[Long]
+  def l( va:ViewAttribute ) = apply( va.name ).asInstanceOf[Long]
 
   /**
    * Regular Expression
    */
   //def r( key:String ) = apply( key ).asInstanceOf[Long]
+  //def r( va:ViewAttribute ) = apply( va.name ).asInstanceOf[Long]
 
   /**
    * String
    */
-  def s( key:String ) = {
+  def s( key:String ):String = {
     val v = apply( key )
     if ( v != null ) v.toString else ""
   }
+  def s( va:ViewAttribute ):String = s( va.name )
 
   /**
    * Date/Time
    */
   //def d( key:String ) = apply( key ).toString
+  //def d( va:ViewAttribute ) = apply( va.name ).toString
 
 
-  def label( name:String, opts:(String,String)* ) = view( name ).label( this, opts:_* )
+  def label( name:String, opts:(String,String)* ):NodeSeq = label( view( name ), opts:_* )
+  def label( va:ViewAttribute, opts:(String,String)* ) = va.label( this, opts:_* )
 
-  def ui( name:String, opts:(String,String)* ) = view( name ).ui( this, opts:_* )
+  def ui( name:String, opts:(String,String)* ):NodeSeq = ui( view( name ), opts:_* )
+  def ui( va:ViewAttribute, opts:(String,String)* ) = va.ui( this, opts:_* )
 
-  def td( name:String, opts:(String,String)* ) = {
-    val va = view( name )
+  def td( name:String, opts:(String,String)* ):NodeSeq = td( view( name ), opts:_* )
+  def td( va:ViewAttribute, opts:(String,String)* ) = {
 
-    <td>{ label( name ) }</td> ++
-    <td>{ va.ui( this, ( opts ++ Seq( "id" -> name ) ):_* ) }</td>
+    <td>{ label( va ) }</td> ++
+    <td>{ va.ui( this, ( opts ++ Seq( "id" -> va.name ) ):_* ) }</td>
   }
+}
+
+case class Scope( r:Record, va:Option[ViewAttribute] ) {
+
+  def s = va.map( va => r.s( va ) )
 }
 
 
