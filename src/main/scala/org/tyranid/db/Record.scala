@@ -19,13 +19,13 @@ package org.tyranid.db
 
 import scala.xml.NodeSeq
 
-import org.tyranid.Imp.string
+import org.tyranid.Imp._
 import org.tyranid.logic.{ Invalid, Valid }
 
 
 class ViewAttribute( val view:View,
                      val att:Attribute,
-                     val index:Int ) {
+                     val index:Int ) extends Valid {
 
   def name = att.name
   def label:String = att.label
@@ -33,11 +33,15 @@ class ViewAttribute( val view:View,
   def label( r:Record, opts:(String,String)* ):NodeSeq = <label for={ name }>{ label }</label>
 
   def ui( r:Record, opts:(String,String)* ) = att.domain.ui( r, this, opts:_* )
+
+  override def validations = att.validations
 }
 
 trait View {
 
   val entity:Entity
+
+  def vas:Iterable[ViewAttribute]
 
   def apply( name:String ):ViewAttribute
 
@@ -119,13 +123,21 @@ trait Record extends Valid {
     <td>{ label( va ) }</td> ++
     <td>{ va.ui( this, ( opts ++ Seq( "id" -> va.name ) ):_* ) }</td>
   }
+
+  def invalids( scope:Scope ) =
+    for ( va <- view.vas;
+          vaScope = scope.at( va );
+          invalidOpt <- va.validations.map( validator => validator( vaScope ) );
+          invalid <- invalidOpt )
+      yield invalid
 }
 
-case class Scope( rec:Record, va:Option[ViewAttribute] ) {
+case class Scope( rec:Record, va:Option[ViewAttribute] = None, adding:Boolean = false ) {
 
-  def s = va.map( va => rec.s( va ) )
+  def s = va.map( rec.s )
 
-  def at( name:String ) = Scope( rec, Some( rec.view( name ) ) )
+  def at( name:String ):Scope = at( rec.view( name ) )
+  def at( va:ViewAttribute )  = copy( va = Some( va ) )
 
   def required = s.filter( _.isBlank ).map( s => Invalid( this, "is required." ) )
 }

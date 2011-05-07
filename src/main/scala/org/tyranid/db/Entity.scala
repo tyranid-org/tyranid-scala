@@ -61,7 +61,9 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
  * * *   E n t i t i e s
  */
 
-trait Entity extends DbItem {
+trait Entity extends Domain with DbItem {
+
+	val sqlName = "invalid"
 
 	/*
 	 * * *  Attributes
@@ -82,7 +84,7 @@ trait Entity extends DbItem {
 	val name = getClass.getSimpleName.replace( "$", "" )
 
 
-	lazy val idType =
+	override lazy val idType =
 		attribs.filter( _.isKey ) match {
 		case as if as.size == 1 => as( 0 ).domain.idType
 		case _                  => IdType.ID_COMPLEX

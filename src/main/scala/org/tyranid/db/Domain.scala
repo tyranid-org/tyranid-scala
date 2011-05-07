@@ -24,12 +24,12 @@ import org.tyranid.logic.{ Valid, Invalid }
 
 
 /*
- * * *   D o m a i n s
+ * * *   Domains
  */
 
 trait Domain extends Valid {
 
-	val idType = IdType.ID_COMPLEX
+	lazy val idType = IdType.ID_COMPLEX
 
 	val sqlName:String
 
@@ -48,10 +48,12 @@ trait Domain extends Valid {
 }
 
 
-//*******   I n t
+/*
+ * * *   Numbers
+ */
 
 abstract class DbIntish extends Domain {
-	override val idType = IdType.ID_32
+	override lazy val idType = IdType.ID_32
 }
 
 object DbInt extends DbIntish {
@@ -64,10 +66,8 @@ object DbIntSerial extends DbIntish {
 }
 
 
-//*******   L o n g
-
 abstract class DbLongish extends Domain {
-	override val idType = IdType.ID_64
+	override lazy val idType = IdType.ID_64
 }
 
 object DbLong extends DbLongish {
@@ -80,93 +80,83 @@ object DbLongSerial extends DbLongish {
 }
 
 
-//*******   U r l
-
-object DbUrl extends Domain {
-	val sqlName = "VARCHAR(256)"
+object DbDouble extends Domain {
+	val sqlName = "DOUBLE PRECISION"
 }
 
 
-//*******   E m a i l
 
-object DbEmail extends Domain {
-	val sqlName = "VARCHAR(128)"
-
-  val regex = """^[\\w\\-]([\\.\\w])+[\\w]+@([\\w\\-]+\\.)+[A-Z]{2,4}$""".r
-
-  override val validations =
-    ( ( scope:Scope ) => scope.s.filter( !_.matches( regex ) ).map( s => Invalid( scope, "is an invalid email address." ) ) ) ::
-    super.validations
-
-}
-
-//*******   P h o n e  N u m b e r
-
-object DbPhone extends Domain {
-	val sqlName = "VARCHAR(10)"
-}
-
-//*******   P a s s w o r d
-
-object DbPassword extends Domain {
-	val sqlName = "VARCHAR(64)"
-}
-
-
-//*******   B o o l e a n
-
-object DbBoolean extends Domain {
-	val sqlName = "CHAR(1)"
-}
-
-//*******   C h a r
-
-object DbChar {
-	def apply( len:Int ) = new DbChar( len )
-}
-
-class DbChar( len:Int ) extends Domain {
-	val sqlName = "CHAR(" + len + ")"
-}
-
-
-//*******   V a r C h a r
-
-object DbVarChar {
-	def apply( len:Int ) = new DbVarChar( len )
-}
-
-class DbVarChar( len:Int ) extends Domain {
-	val sqlName = "VARCHAR(" + len + ")"
-}
-
-
-//*******   T e x t
+/*
+ * * *   Text
+ */
 
 object DbText extends Domain {
 	val sqlName = "TEXT"
 }
 
+trait LimitedText extends Domain {
+  val len:Int
 
-//*******   D a t e
+  override def validations =
+    ( ( scope:Scope ) => scope.s.filter( s => s.notBlank && s.length > len ).map( s => Invalid( scope, "cannot be longer than " + "character".plural( len ) + "." ) ) ) ::
+    super.validations
+
+}
+
+case class DbChar( len:Int ) extends LimitedText {
+	val sqlName = "CHAR(" + len + ")"
+}
+
+case class DbVarChar( len:Int ) extends LimitedText {
+	val sqlName = "VARCHAR(" + len + ")"
+}
+
+object DbPassword extends DbVarChar( 64 )
+
+object DbUrl extends DbVarChar( 256 )
+
+object DbEmail extends DbVarChar( 128 ) {
+
+  override val validations =
+    ( ( scope:Scope ) => scope.s.filter( s => s.notBlank && !s.isEmail ).map( s => Invalid( scope, "is an invalid email address." ) ) ) ::
+    super.validations
+
+}
+
+object DbPhone extends DbChar( 10 )
+
+
+/*
+ * * *   Booleans
+ */
+
+object DbBoolean extends Domain {
+	val sqlName = "CHAR(1)"
+}
+
+
+/*
+ * * *   Times
+ */
 
 object DbDate extends Domain {
 	val sqlName = "DATE"
 }
 
-//*******   D a t e T i m e
-
 object DbDateTime extends Domain {
 	val sqlName = "TIMESTAMP WITHOUT TIME ZONE"
 }
 
-//*******   L i n k
 
-object DbLink {
-	def apply( toEn: Entity ) = new DbLink( toEn )
+/*
+ * * *   Linking & Embedding
+ */
+
+case class DbArray( of:Domain ) extends Domain {
+	val sqlName = "invalid"
 }
 
-class DbLink( toEn: Entity ) extends Domain {
+case class DbLink( toEn: Entity ) extends Domain {
 	lazy val sqlName = toEn.idType match {
 		                case IdType.ID_32      => "INT"
 		                case IdType.ID_64      => "BIGINT"
@@ -179,5 +169,6 @@ class DbLink( toEn: Entity ) extends Domain {
 		case n:Number => toEn.labelFor( n.longValue )
 		}
 }
+
 
 

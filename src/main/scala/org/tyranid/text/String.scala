@@ -131,5 +131,21 @@ class StringImp( s:String ) {
     ( """\bUrl\b""".r, "URL" ),
     ( """\bId\b""".r, "ID" ),
     ( """\bUuid\b""".r, "UUID" ) )
+
+
+  def isEmail:Boolean = {
+
+    if ( isBlank )
+      return true
+  
+    try {
+      val addr = new javax.mail.internet.InternetAddress( s )
+      val idx = s.indexOf( '@' )
+
+      idx <= 0 || idx >= s.length - 5
+    } catch {
+      case e:javax.mail.internet.AddressException => true
+    }
+  }
 }
 

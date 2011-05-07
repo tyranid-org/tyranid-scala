@@ -46,6 +46,8 @@ class MongoView( override val entity:MongoEntity ) extends View {
 
   private val map = mutable.HashMap[String,ViewAttribute]()
 
+  def vas = map.values
+
   def apply( name:String ) =
     map.getOrElseUpdate( name, new ViewAttribute( this, entity.attrib( name ), -1 ) )
 }

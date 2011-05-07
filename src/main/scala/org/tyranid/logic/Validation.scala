@@ -17,6 +17,7 @@
 
 package org.tyranid.logic
 
+import org.tyranid.Imp._
 import org.tyranid.db.Scope
 
 case class Invalid( scope:Scope, message:String )
@@ -26,4 +27,5 @@ trait Valid {
   def validations:List[ ( Scope ) => Option[Invalid] ] = Nil
 
 }
+
 

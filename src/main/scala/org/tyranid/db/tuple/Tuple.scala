@@ -25,6 +25,8 @@ class TupleView extends View {
 
   def apply( name:String ) = leaves.find( _.name == name ).get
 
+  def vas = leaves
+
 	lazy val entity  = leaves( 0 ).att.entity
 	lazy val eleaves = leaves.filter( _.att.entity == entity )
 	lazy val ekeys   = eleaves.filter( _.att.isKey )
