@@ -92,6 +92,11 @@ object DbEmail extends Domain {
 	val sqlName = "VARCHAR(128)"
 }
 
+//*******   P h o n e  N u m b e r
+
+object DbPhone extends Domain {
+	val sqlName = "VARCHAR(10)"
+}
 
 //*******   P a s s w o r d
 
@@ -99,6 +104,12 @@ object DbPassword extends Domain {
 	val sqlName = "VARCHAR(64)"
 }
 
+
+//*******   B o o l e a n
+
+object DbBoolean extends Domain {
+	val sqlName = "CHAR(1)"
+}
 
 //*******   C h a r
 
