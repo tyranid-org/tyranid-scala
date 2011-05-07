@@ -100,7 +100,6 @@ trait LimitedText extends Domain {
   override def validations =
     ( ( scope:Scope ) => scope.s.filter( s => s.notBlank && s.length > len ).map( s => Invalid( scope, "cannot be longer than " + "character".plural( len ) + "." ) ) ) ::
     super.validations
-
 }
 
 case class DbChar( len:Int ) extends LimitedText {

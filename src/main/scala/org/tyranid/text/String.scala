@@ -80,6 +80,8 @@ class StringImp( s:String ) {
 		case s                           => s + "s"
 	  }
 
+	def plural( cnt:Int ):String = if ( cnt == 1 ) s else plural
+
 	/**
  	 * Scala's StringOps defines a toBoolean(), but it is very minimal ... it only accepts "true" and "false"
  	 */
