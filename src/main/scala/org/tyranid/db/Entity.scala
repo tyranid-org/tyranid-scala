@@ -18,6 +18,7 @@
 package org.tyranid.db
 
 import scala.collection.mutable.{ ArrayBuffer, HashMap }
+import scala.xml.NodeSeq
 
 import org.tyranid.Imp.string
 import org.tyranid.db.tuple.{ TupleView, Tuple }
@@ -31,6 +32,7 @@ import org.tyranid.logic.{ Invalid, Valid }
 class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid {
 	var domain:Domain = null
   var label:String = name.camelCaseToSpaceUpper
+  var help:NodeSeq = NodeSeq.Empty
 
   /**
    *    DSL ... TODO:  move this out to a builder object
@@ -47,6 +49,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
 
     this
   }
+  def help( ns:NodeSeq ):Attribute = { help = ns; this }
 
 	var isKey = false
 	var isLabelAtt = false
