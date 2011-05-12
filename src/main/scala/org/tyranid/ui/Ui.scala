@@ -41,36 +41,33 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1 ) {
 
 case class Row( fields:Field* )
 
-case class Box( rec:Record, rows:Row* ) {
+object Grid {
+
+  def apply( rec:Record, rows:Row* ) = new Grid( rec.view, rows:_* ).draw( rec )
+}
+
+case class Grid( view:View, rows:Row* ) {
   val boxSpan = rows.map( _.fields.length ).max
 
-  implicit def draw =
-    <table>
-    {
-      for ( row <- rows;
-            line <- 1 to 3 ) yield
-        <tr>
-        {
-          val fc = row.fields.length
-          var fi = 0
-          val remainingSpan = boxSpan
+  def draw( rec:Record ) =
+    for ( row <- rows;
+          line <- 1 to 3 ) yield
+      <tr>{
+        val fc = row.fields.length
+        var fi = 0
+        val remainingSpan = boxSpan
 
-          for ( f <- row.fields ) yield {
-            fi += 1
-            val span = ( fi == fc ) ? remainingSpan | f.span
-            val va = f.va( rec.view )
+        for ( f <- row.fields ) yield {
+          fi += 1
+          val span = ( fi == fc ) ? remainingSpan | f.span
+          val va = f.va( rec.view )
 
-            <td colspan={ span.toString }>{
-              line match {
-              case 1 => va.label( rec, f.opts.opts:_* )
-              case 2 => va.ui( rec, f.opts.opts:_* )
-              case 3 => NodeSeq.Empty
-              }
-            }</td>
+          line match {
+          case 1 => <td class="labelc" colspan={ span.toString }>{ va.label( rec, f.opts.opts:_* ) }</td>
+          case 2 => <td class="fieldc" colspan={ span.toString }>{ va.ui( rec, f.opts.opts:_* ) }</td>
+          case 3 => <td class="notec"  colspan={ span.toString }></td>
           }
         }
-        </tr>
-    }
-    </table>
+      }</tr>
 }
 
