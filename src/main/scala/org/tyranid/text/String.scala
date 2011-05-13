@@ -19,6 +19,7 @@ package org.tyranid.text
 
 import scala.util.matching.Regex
 
+import org.tyranid.Imp._
 
 class StringImp( s:String ) {
 	def denull = if ( s == null ) "" else s
@@ -137,16 +138,13 @@ class StringImp( s:String ) {
 
   def isEmail:Boolean = {
 
-    if ( isBlank )
-      return true
-  
     try {
       val addr = new javax.mail.internet.InternetAddress( s )
       val idx = s.indexOf( '@' )
 
-      idx <= 0 || idx >= s.length - 5
+      idx > 0 && idx < s.length - 5
     } catch {
-      case e:javax.mail.internet.AddressException => true
+      case e:javax.mail.internet.AddressException => false
     }
   }
 }
