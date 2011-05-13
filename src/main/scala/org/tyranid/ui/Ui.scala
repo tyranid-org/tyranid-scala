@@ -63,7 +63,7 @@ case class Grid( view:View, rows:Row* ) {
           val va = f.va( rec.view )
 
           line match {
-          case 1 => <td class="labelc" colspan={ span.toString }>{ va.label( rec, f.opts.opts:_* ) }</td>
+          case 1 => <td class="labelc" colspan={ span.toString }>{ va.label( rec, f.opts.opts:_* ) }{ va.att.required |* <span class="required">*</span> }</td>
           case 2 => <td class="fieldc" colspan={ span.toString }>{ va.ui( rec, ( f.opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</td>
           case 3 => <td class="notec"  colspan={ span.toString }></td>
           }

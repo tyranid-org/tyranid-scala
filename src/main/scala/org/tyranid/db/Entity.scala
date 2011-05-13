@@ -33,6 +33,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
 	var domain:Domain = null
   var label:String = name.camelCaseToSpaceUpper
   var help:NodeSeq = NodeSeq.Empty
+  var required:Boolean = false
 
   /**
    *    DSL ... TODO:  move this out to a builder object
@@ -44,7 +45,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
     str match {
     case "key"      => isKey = true
     case "label"    => isLabelAtt = true
-    case "required" => localValidations ::= ( ( scope:Scope ) => scope.required )
+    case "required" => required = true; localValidations ::= ( ( scope:Scope ) => scope.required )
     }
 
     this
