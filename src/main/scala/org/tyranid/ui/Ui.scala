@@ -49,7 +49,7 @@ object Grid {
 case class Grid( view:View, rows:Row* ) {
   val boxSpan = rows.map( _.fields.length ).max
 
-  def draw( rec:Record ) =
+  def draw_2( rec:Record ) =
     for ( row <- rows;
           line <- 1 to 3 ) yield
       <tr>{
@@ -68,6 +68,27 @@ case class Grid( view:View, rows:Row* ) {
           case 3 => <td class="notec"  colspan={ span.toString }></td>
           }
         }
+      }</tr>
+
+  def draw( rec:Record ) =
+    for ( row <- rows ) yield
+      <tr>{
+        val fc = row.fields.length
+        var fi = 0
+        val remainingSpan = boxSpan
+
+        for ( f <- row.fields ) yield
+          <td>
+           <div class="fieldbc">{
+            fi += 1
+            val span = ( fi == fc ) ? remainingSpan | f.span
+            val va = f.va( rec.view )
+
+            <div class="labelc" colspan={ span.toString }>{ va.label( rec, f.opts.opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
+            <div class="fieldc" colspan={ span.toString }>{ va.ui( rec, ( f.opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
+            <div class="notec"  colspan={ span.toString }></div>
+           }</div>
+          </td>
       }</tr>
 }
 

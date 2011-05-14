@@ -18,7 +18,7 @@
 package org.tyranid.db
 
 import net.liftweb.http.SHtml
-import net.liftweb.http.SHtml._
+import net.liftweb.http.SHtml.ElemAttr
 
 import org.tyranid.Imp._
 import org.tyranid.logic.{ Valid, Invalid }
@@ -45,7 +45,7 @@ trait Domain extends Valid {
 		case v    => v.toString
 		}
 
-  def ui( r:Record, va:ViewAttribute, opts:(String,String)* ) = SHtml.text( r s va.name, v => r( va.name ) = v, opts.map( ElemAttr.pairToBasic ):_* )
+  def ui( r:Record, va:ViewAttribute, opts:(String,String)* ) = SHtml.ajaxText( r s va.name, v => r( va.name ) = v, opts.map( ElemAttr.pairToBasic ):_* )
 }
 
 
