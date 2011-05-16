@@ -50,6 +50,7 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1 )( implicit 
 
   def ui( rec:Record ) = {
     val invalids = va.invalids( Scope( rec, Some( va ) ) )
+    rec.invalids( va.index ) = !invalids.isEmpty
 
     <div id={ va.name + "_c" } class={ "fieldc" + ( !invalids.isEmpty |* " invalid" ) }>{
 
