@@ -44,20 +44,31 @@ class MongoEntity extends Entity {
 
 class MongoView( override val entity:MongoEntity ) extends View {
 
-  private val map = mutable.HashMap[String,ViewAttribute]()
+  private val byName = mutable.HashMap[String,ViewAttribute]()
+  private val byIndex = mutable.HashMap[Int,ViewAttribute]()
+  @volatile private var nextIndex = 0
 
-  def vas = map.values
+  def vas = byName.values
 
-  def apply( name:String ) =
-    map.getOrElseUpdate( name, new ViewAttribute( this, entity.attrib( name ), -1 ) )
+  private def add( name:String ) = {
+    val va = new ViewAttribute( this, entity.attrib( name ), nextIndex )
+    nextIndex += 1
+    byName( name ) = va
+    byIndex( va.index ) = va
+    va
+  }
+
+  def apply( name:String ) = byName.getOrElse( name, add( name ) )
+  def apply( idx:Int )     = byIndex( idx )
 }
 
 class MongoRecord( override val view:MongoView ) extends Record {
 
   val db:DBObject = Mongo.obj
 
-  def apply( key:String )            = db.get( key )
-  def update( key:String, v:AnyRef ) = db.put( key, v )
+  def apply( key:String )                  = db.get( key )
+  def update( key:String, v:AnyRef )       = db.put( key, v )
+  def update( va:ViewAttribute, v:AnyRef ) = db.put( va.name, v )
 
   override def /( key:String ) = apply( key ).asInstanceOf[MongoRecord]
 }

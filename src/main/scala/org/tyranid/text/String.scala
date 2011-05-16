@@ -136,8 +136,7 @@ class StringImp( s:String ) {
     ( """\bUuid\b""".r, "UUID" ) )
 
 
-  def isEmail:Boolean = {
-
+  def isEmail:Boolean =
     try {
       val addr = new javax.mail.internet.InternetAddress( s )
       val idx = s.indexOf( '@' )
@@ -146,6 +145,5 @@ class StringImp( s:String ) {
     } catch {
       case e:javax.mail.internet.AddressException => false
     }
-  }
 }
 

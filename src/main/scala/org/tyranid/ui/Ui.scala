@@ -19,8 +19,14 @@ package org.tyranid.ui
 
 import scala.xml.NodeSeq
 
+import net.liftweb.http.S
+import net.liftweb.http.js.JsCmds._
+import net.liftweb.http.js.JE.JsRaw
+
 import org.tyranid.Imp._
-import org.tyranid.db.{ View, Record }
+import org.tyranid.db.{ Record, Scope, View }
+import org.tyranid.logic.Invalid
+
 
 object Opts {
   val Empty = Opts()
@@ -30,13 +36,48 @@ case class Opts( opts:(String,String)* )
 
 object Field {
 
-  implicit def string2Field( name:String ) = Field( name )
-  implicit def symbol2Field( name:Symbol ) = Field( name.name )
+  implicit def string2Field( name:String )( implicit view:View ) = Field( name )
+  implicit def symbol2Field( name:Symbol )( implicit view:View ) = Field( name.name )
 }
 
-case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1 ) {
+case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1 )( implicit view:View ) {
 
-  def va( view:View ) = view( name )
+  lazy val va = view( name )
+
+  private def invalidLines( invalids:Seq[Invalid] ) =
+    for ( invalid <- invalids )
+      yield <p>{ invalid.message }</p>
+
+  def ui( rec:Record ) = {
+    val invalids = va.invalids( Scope( rec, Some( va ) ) )
+
+    <div id={ va.name + "_c" } class={ "fieldc" + ( !invalids.isEmpty |* " invalid" ) }>{
+
+      <div class="labelc">{ va.label( rec, opts.opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
+      <div class="inputc">{ va.att.domain.ui( rec, this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
+      <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
+    }</div>
+  }
+
+  def updateDisplayCmd( r:Record ) = {
+    val invalids = va.invalids( Scope( r, Some( va ) ) )
+      
+    if ( invalids.isEmpty ) {
+      if ( r.invalids( va.index ) ) {
+        r.invalids -= va.index
+
+        SetHtml( va.name + "_e", NodeSeq.Empty ) &
+        JsRaw( "$('#" + va.name + "_c').removeClass('invalid');" )
+      } else {
+        Noop
+      }
+    } else {
+      r.invalids += va.index
+
+      SetHtml( va.name + "_e", invalidLines( invalids ) ) &
+      JsRaw( "$('#" + va.name + "_c').addClass('invalid');" )
+    }
+  }
 }
 
 case class Row( fields:Field* )
@@ -49,46 +90,11 @@ object Grid {
 case class Grid( view:View, rows:Row* ) {
   val boxSpan = rows.map( _.fields.length ).max
 
-  def draw_2( rec:Record ) =
-    for ( row <- rows;
-          line <- 1 to 3 ) yield
-      <tr>{
-        val fc = row.fields.length
-        var fi = 0
-        val remainingSpan = boxSpan
-
-        for ( f <- row.fields ) yield {
-          fi += 1
-          val span = ( fi == fc ) ? remainingSpan | f.span
-          val va = f.va( rec.view )
-
-          line match {
-          case 1 => <td class="labelc" colspan={ span.toString }>{ va.label( rec, f.opts.opts:_* ) }{ va.att.required |* <span class="required">*</span> }</td>
-          case 2 => <td class="fieldc" colspan={ span.toString }>{ va.ui( rec, ( f.opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</td>
-          case 3 => <td class="notec"  colspan={ span.toString }></td>
-          }
-        }
-      }</tr>
-
   def draw( rec:Record ) =
     for ( row <- rows ) yield
       <tr>{
-        val fc = row.fields.length
-        var fi = 0
-        val remainingSpan = boxSpan
-
         for ( f <- row.fields ) yield
-          <td>
-           <div class="fieldbc">{
-            fi += 1
-            val span = ( fi == fc ) ? remainingSpan | f.span
-            val va = f.va( rec.view )
-
-            <div class="labelc" colspan={ span.toString }>{ va.label( rec, f.opts.opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
-            <div class="fieldc" colspan={ span.toString }>{ va.ui( rec, ( f.opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
-            <div class="notec"  colspan={ span.toString }></div>
-           }</div>
-          </td>
+          <td colspan={ f.span.toString } class="cell">{ f.ui( rec ) }</td>
       }</tr>
 }
 

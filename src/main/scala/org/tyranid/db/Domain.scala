@@ -22,6 +22,7 @@ import net.liftweb.http.SHtml.ElemAttr
 
 import org.tyranid.Imp._
 import org.tyranid.logic.{ Valid, Invalid }
+import org.tyranid.ui.Field
 
 
 /*
@@ -45,7 +46,8 @@ trait Domain extends Valid {
 		case v    => v.toString
 		}
 
-  def ui( r:Record, va:ViewAttribute, opts:(String,String)* ) = SHtml.ajaxText( r s va.name, v => r( va.name ) = v, opts.map( ElemAttr.pairToBasic ):_* )
+  def ui( r:Record, f:Field, opts:(String,String)* ) =
+    SHtml.ajaxText( r s f.va.name, v => { r( f.va.name ) = v; f.updateDisplayCmd( r ) }, opts.map( ElemAttr.pairToBasic ):_* )
 }
 
 
@@ -98,7 +100,7 @@ trait LimitedText extends Domain {
   val len:Int
 
   override def validations =
-    ( ( scope:Scope ) => scope.s.filter( s => s.notBlank && s.length > len ).map( s => Invalid( scope, "cannot be longer than " + "character".plural( len ) + "." ) ) ) ::
+    ( ( scope:Scope ) => scope.s.filter( s => s.notBlank && s.length > len ).map( s => Invalid( scope, "Too long (max " + len + " " + "character".plural( len ) + ")." ) ) ) ::
     super.validations
 }
 
@@ -117,7 +119,7 @@ object DbUrl extends DbVarChar( 256 )
 object DbEmail extends DbVarChar( 128 ) {
 
   override val validations =
-    ( ( scope:Scope ) => scope.s.filter( s => s.notBlank && !s.isEmail ).map( s => Invalid( scope, "is an invalid email address." ) ) ) ::
+    ( ( scope:Scope ) => scope.s.filter( s => s.notBlank && !s.isEmail ).map( s => Invalid( scope, "Invalid email address." ) ) ) ::
     super.validations
 
 }

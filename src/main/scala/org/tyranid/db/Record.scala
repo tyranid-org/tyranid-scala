@@ -17,6 +17,7 @@
 
 package org.tyranid.db
 
+import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
@@ -32,9 +33,20 @@ class ViewAttribute( val view:View,
 
   def label( r:Record, opts:(String,String)* ):NodeSeq = <label for={ name }>{ label }</label>
 
-  def ui( r:Record, opts:(String,String)* ) = att.domain.ui( r, this, opts:_* )
+
+  /*
+   * * *   Validation
+   */
 
   override def validations = att.validations
+
+  def invalids( scope:Scope ) = {
+    require( scope.va.get == this )
+
+    for ( invalidOpt <- validations.map( validator => validator( scope ) );
+          invalid <- invalidOpt )
+      yield invalid
+  }
 }
 
 trait View {
@@ -44,14 +56,18 @@ trait View {
   def vas:Iterable[ViewAttribute]
 
   def apply( name:String ):ViewAttribute
-
+  def apply( idx:Int ):ViewAttribute
 }
 
 trait Record extends Valid {
   val view:View
 
+  var isAdding:Boolean = false
+  var isInitial:Boolean = true
+
   def apply( key:String ):AnyRef
   def update( key:String, v:AnyRef )
+  def update( va:ViewAttribute, v:AnyRef )
 
   /**
    * Record/Object/Document/Tuple
@@ -111,18 +127,14 @@ trait Record extends Valid {
   //def d( va:ViewAttribute ) = apply( va.name ).toString
 
 
-  def label( name:String, opts:(String,String)* ):NodeSeq = label( view( name ), opts:_* )
-  def label( va:ViewAttribute, opts:(String,String)* ) = va.label( this, opts:_* )
+  /*
+   * * *   Validation
+   */
 
-  def ui( name:String, opts:(String,String)* ):NodeSeq = ui( view( name ), opts:_* )
-  def ui( va:ViewAttribute, opts:(String,String)* ) = va.ui( this, opts:_* )
-
-  def td( name:String, opts:(String,String)* ):NodeSeq = td( view( name ), opts:_* )
-  def td( va:ViewAttribute, opts:(String,String)* ) = {
-
-    <td>{ label( va ) }</td> ++
-    <td>{ va.ui( this, ( opts ++ Seq( "id" -> va.name ) ):_* ) }</td>
-  }
+  /**
+   * List of currently-invalid view attributes for this record.
+   */
+  val invalids = mutable.BitSet()
 
   def invalids( scope:Scope ) =
     for ( va <- view.vas;
@@ -132,14 +144,14 @@ trait Record extends Valid {
       yield invalid
 }
 
-case class Scope( rec:Record, va:Option[ViewAttribute] = None, adding:Boolean = false ) {
+case class Scope( rec:Record, va:Option[ViewAttribute] = None ) {
 
   def s = va.map( rec.s )
 
   def at( name:String ):Scope = at( rec.view( name ) )
   def at( va:ViewAttribute )  = copy( va = Some( va ) )
 
-  def required = s.filter( _.isBlank ).map( s => Invalid( this, "is required." ) )
+  def required = !rec.isInitial |* s.filter( _.isBlank ).map( s => Invalid( this, "Please fill in." ) )
 }
 
 

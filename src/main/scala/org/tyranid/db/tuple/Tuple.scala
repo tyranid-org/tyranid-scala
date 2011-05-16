@@ -24,6 +24,7 @@ class TupleView extends View {
 	def leafCount = leaves.size
 
   def apply( name:String ) = leaves.find( _.name == name ).get
+  def apply( idx:Int )     = leaves( idx )
 
   def vas = leaves
 
@@ -41,8 +42,9 @@ class Tuple( val view:TupleView ) extends Record {
 	def apply( index: Int ) = values( index )
   def apply( key:String ) = apply( view( key ).index )
 
-	def update( index: Int, value: AnyRef ) = values( index ) = value
-  def update( key:String, v:AnyRef ) = update( view( key ).index, v )
+	def update( index: Int, v:AnyRef )       = values( index ) = v
+  def update( key:String, v:AnyRef )       = update( view( key ).index, v )
+  def update( va:ViewAttribute, v:AnyRef ) = values( va.index ) = v
 
 	def see( index: Int ) = view.leaves( index ).att.domain.see( apply( index ) )
 
