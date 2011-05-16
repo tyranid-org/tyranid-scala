@@ -112,7 +112,11 @@ case class DbVarChar( len:Int ) extends LimitedText {
 	val sqlName = "VARCHAR(" + len + ")"
 }
 
-object DbPassword extends DbVarChar( 64 )
+object DbPassword extends DbVarChar( 64 ) {
+
+  override def ui( r:Record, f:Field, opts:(String,String)* ) =
+    SHtml.ajaxText( r s f.va.name, v => { r( f.va.name ) = v; f.updateDisplayCmd( r ) }, ( opts ++ Seq( "type" -> "password" ) ).map( ElemAttr.pairToBasic ):_* )
+}
 
 object DbUrl extends DbVarChar( 256 )
 
