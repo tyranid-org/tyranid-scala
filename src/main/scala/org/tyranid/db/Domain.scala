@@ -132,6 +132,15 @@ object DbPhone extends DbChar( 10 )
 
 
 /*
+ * * *   Binary
+ */
+
+object DbImage extends Domain {
+  val sqlName = "TEXT"  // TODO
+}
+
+
+/*
  * * *   Booleans
  */
 
