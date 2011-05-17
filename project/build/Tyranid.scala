@@ -2,13 +2,13 @@
 import sbt._
 
 class Tyranid( info: ProjectInfo ) extends DefaultProject( info ) {
-  // required because Ivy doesn't pull repositories from poms
+	override def compileOptions = super.compileOptions ++ Seq(Deprecation, Unchecked)
+
+  // Dependencies
   val scalaToolsRepo   = "scala-tools.org" at "http://scala-tools.org/repo-releases"
   val centralMavenRepo = "central-maven"   at "http://repo1.maven.org/maven2/"
 
   val liftVersion = "2.3"
-
-	override def compileOptions = super.compileOptions ++ Seq(Unchecked)
 
   override def libraryDependencies = Set(
     "net.liftweb"              %% "lift-webkit"              % liftVersion     % "compile->default",
@@ -35,5 +35,10 @@ class Tyranid( info: ProjectInfo ) extends DefaultProject( info ) {
 
     "org.scalatest"             % "scalatest"                % "1.3"           % "test->default"
   ) ++ super.libraryDependencies
+
+  // Publishing
+  override def managedStyle = ManagedStyle.Maven
+  val publishTo = "Scala Tools Nexus" at "http://nexus.scala-tools.org/content/repositories/releases/"
+  Credentials( Path.userHome / ".nexus" / ".scala-tools-credentials", log )
 }
 
