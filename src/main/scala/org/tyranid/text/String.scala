@@ -74,6 +74,9 @@ class StringImp( s:String ) {
 
   def lowerWord = word.toLowerCase
 
+  /**
+   * Generates a plural form of a singular word.
+   */
 	def plural:String = s match {
 		case s if s.endsWith( "status" ) => s
 		case s if s.endsWith( "s" )      => s + "es"
@@ -81,6 +84,10 @@ class StringImp( s:String ) {
 		case s                           => s + "s"
 	  }
 
+  /**
+   * Generates a plural form of a singular word based if the passed in number is not 1.
+   * i.e. 0 cats, 1 cat, 2 cats, ...
+   */
 	def plural( cnt:Int ):String = if ( cnt == 1 ) s else plural
 
 	/**
@@ -97,6 +104,12 @@ class StringImp( s:String ) {
 
 	def uncapitalize = if ( s.length > 1 ) s.charAt( 0 ).toLower + s.substring( 1 ) else s
 	
+  /**
+   * Used to a case-insensitive identifier from a camelcase identifier,
+   * like for example a SQL database field.
+   *
+   * Example:   "helloThere" to "hello_there"
+   */
 	def camelCaseToUnderLower:String = {
 	  val sb = new StringBuilder
 	  var first = true
@@ -108,7 +121,12 @@ class StringImp( s:String ) {
 	  
 	  sb.toString
 	}
-	
+
+  /**
+   * Used to generate a display name from a camelcase name.
+   *
+   * Example:   "helloThere" to "Hello There"
+   */
 	def camelCaseToSpaceUpper:String = {
 	  val sb = new StringBuilder
 	  var first = true
@@ -135,7 +153,9 @@ class StringImp( s:String ) {
     ( """\bId\b""".r, "ID" ),
     ( """\bUuid\b""".r, "UUID" ) )
 
-
+  /**
+   * Does this string represent a valid email address?
+   */
   def isEmail:Boolean =
     try {
       val addr = new javax.mail.internet.InternetAddress( s )

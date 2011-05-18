@@ -30,16 +30,12 @@ import org.tyranid.db.mongo.Imp._
 
 class MongoEntity extends Entity {
 
-
 	override lazy val dbName = name.plural
 
   lazy val coll = Mongo.connect.db( Bind.ProfileDbName )( dbName )
 
-
   def create {}
   def drop   { coll.drop }
-
-
 }
 
 class MongoView( override val entity:MongoEntity ) extends View {
@@ -66,9 +62,26 @@ class MongoRecord( override val view:MongoView ) extends Record {
 
   val db:DBObject = Mongo.obj
 
-  def apply( key:String )                  = db.get( key )
-  def update( key:String, v:AnyRef )       = db.put( key, v )
-  def update( va:ViewAttribute, v:AnyRef ) = db.put( va.name, v )
+  private var temporaries:mutable.Map[String,AnyRef] = null
+
+  def apply( va:ViewAttribute ) =
+    if ( va.temporary ) {
+      if ( temporaries == null )
+        null // TODO:  return a canonical empty value based on attribute type
+      else
+        temporaries( va.name )
+    } else {
+      db.get( va.name )
+    }
+
+  def update( va:ViewAttribute, v:AnyRef ) =
+    if ( va.temporary ) {
+      if ( temporaries == null )
+        temporaries = mutable.HashMap()
+      temporaries( va.name ) = v
+    } else {
+      db.put( va.name, v )
+    }
 
   override def /( key:String ) = apply( key ).asInstanceOf[MongoRecord]
 }

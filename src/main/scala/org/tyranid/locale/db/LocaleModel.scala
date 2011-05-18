@@ -17,10 +17,16 @@
 
 package org.tyranid.locale.db
 
+import org.tyranid.Imp.symbol
+import org.tyranid.db.{ DbInt, DbChar }
 import org.tyranid.db.ram.RamEntity
 
 
 object Region extends RamEntity {
+  "id"     is DbInt      is 'key;
+  "name"   is DbChar(64) is 'label;
+  "code"   is DbChar(4)  ; 
+
 	static(
 	( "id",  "name",				         "code" ),
 	(  1,    "Alabama",              "AL" ),
@@ -77,6 +83,10 @@ object Region extends RamEntity {
 }
 
 object Country extends RamEntity {
+  "id"     is DbInt      is 'key;
+  "name"   is DbChar(64) is 'label;
+  "code"   is DbChar(4)  ; 
+
 	static(
        ( "id", "name",				                               "code" ),
 	(    4077, "Andorra",                                      "AN" ),

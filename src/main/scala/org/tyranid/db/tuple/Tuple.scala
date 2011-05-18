@@ -40,10 +40,9 @@ class Tuple( val view:TupleView ) extends Record {
 	val values = new Array[AnyRef]( view.leafCount )
 
 	def apply( index: Int ) = values( index )
-  def apply( key:String ) = apply( view( key ).index )
-
 	def update( index: Int, v:AnyRef )       = values( index ) = v
-  def update( key:String, v:AnyRef )       = update( view( key ).index, v )
+
+  def apply( va:ViewAttribute ) = apply( va.index )
   def update( va:ViewAttribute, v:AnyRef ) = values( va.index ) = v
 
 	def see( index: Int ) = view.leaves( index ).att.domain.see( apply( index ) )

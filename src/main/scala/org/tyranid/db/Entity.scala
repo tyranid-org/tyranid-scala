@@ -36,6 +36,11 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   var required:Boolean = false
 
   /**
+   * Indicates whether this va is persisted in the database or is just used as a temporary form field.
+   */
+  var temporary:Boolean = false
+
+  /**
    *    DSL ... TODO:  move this out to a builder object
    */
 
@@ -43,9 +48,10 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   def as( label:String ) = { this.label = label; this }
   def is( str:String ) = {
     str match {
-    case "key"      => isKey = true
-    case "label"    => isLabelAtt = true
-    case "required" => required = true; localValidations ::= ( ( scope:Scope ) => scope.required )
+    case "key"       => isKey = true
+    case "label"     => isLabelAtt = true
+    case "required"  => required = true; localValidations ::= ( ( scope:Scope ) => scope.required )
+    case "temporary" => temporary = true
     }
 
     this

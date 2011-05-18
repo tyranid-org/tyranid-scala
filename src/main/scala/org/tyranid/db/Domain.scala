@@ -116,6 +116,16 @@ object DbPassword extends DbVarChar( 64 ) {
 
   override def ui( r:Record, f:Field, opts:(String,String)* ) =
     SHtml.ajaxText( r s f.va.name, v => { r( f.va.name ) = v; f.updateDisplayCmd( r ) }, ( opts ++ Seq( "type" -> "password" ) ).map( ElemAttr.pairToBasic ):_* )
+
+  override def validations =
+    ( ( scope:Scope ) => {
+        // TODO:  Might be cleaner to add a DbPasswordMatch domain and then change this to look for DbPassword and DbPasswordMatch rather than use fixed names like "password" and "password2"
+        ( scope.va.get.name == "password2" &&
+          scope.rec( "password" ) != scope.rec( "password2" ) ) |*
+          Some( Invalid( scope, "Passwords do not match." ) )
+      } ) ::
+    ( ( scope:Scope ) => scope.s.filter( s => s.notBlank && s.length < 7 ).map( s => Invalid( scope, "Password too short (7 characters minimum)." ) ) ) ::
+    super.validations
 }
 
 object DbUrl extends DbVarChar( 256 )

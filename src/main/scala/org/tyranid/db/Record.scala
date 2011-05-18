@@ -28,6 +28,8 @@ class ViewAttribute( val view:View,
                      val att:Attribute,
                      val index:Int ) extends Valid {
 
+  def temporary = att.temporary
+
   def name = att.name
   def label:String = att.label
 
@@ -65,51 +67,53 @@ trait Record extends Valid {
   var isAdding:Boolean = false
   var isInitial:Boolean = true
 
-  def apply( key:String ):AnyRef
-  def update( key:String, v:AnyRef )
+  final def apply( key:String ):AnyRef = apply( view( key ) )
+  final def update( key:String, v:AnyRef ):Unit = update( view( key ), v )
+
+  def apply( va:ViewAttribute ):AnyRef
   def update( va:ViewAttribute, v:AnyRef )
 
   /**
    * Record/Object/Document/Tuple
    */
-  def /( key:String ) = apply( key ).asInstanceOf[Record]
-  def /( va:ViewAttribute ) = apply( va.name ).asInstanceOf[Record]
+  def /( key:String )       = apply( key ).asInstanceOf[Record]
+  def /( va:ViewAttribute ) = apply( va ).asInstanceOf[Record]
 
   /**
    * Array
    */
-  //def a( key:String ) = apply( key ).asInstanceOf[Array]
-  //def a( va:ViewAttribute ) = apply( va.name ).asInstanceOf[Array]
+  //def a( key:String )       = apply( key ).asInstanceOf[Array]
+  //def a( va:ViewAttribute ) = apply( va ).asInstanceOf[Array]
 
   /**
    * Boolean
    */
-  def b( key:String ) = apply( key ).asInstanceOf[Boolean]
-  def b( va:ViewAttribute ) = apply( va.name ).asInstanceOf[Boolean]
+  def b( key:String )       = apply( key ).asInstanceOf[Boolean]
+  def b( va:ViewAttribute ) = apply( va ).asInstanceOf[Boolean]
 
   /**
    * Double
    */
-  def d( key:String ) = apply( key ).asInstanceOf[Double]
-  def d( va:ViewAttribute ) = apply( va.name ).asInstanceOf[Double]
+  def d( key:String )       = apply( key ).asInstanceOf[Double]
+  def d( va:ViewAttribute ) = apply( va ).asInstanceOf[Double]
 
   /**
    * Int
    */
-  def i( key:String ) = apply( key ).asInstanceOf[Int]
-  def i( va:ViewAttribute ) = apply( va.name ).asInstanceOf[Int]
+  def i( key:String )       = apply( key ).asInstanceOf[Int]
+  def i( va:ViewAttribute ) = apply( va ).asInstanceOf[Int]
 
   /**
    * Long
    */
-  def l( key:String ) = apply( key ).asInstanceOf[Long]
-  def l( va:ViewAttribute ) = apply( va.name ).asInstanceOf[Long]
+  def l( key:String )       = apply( key ).asInstanceOf[Long]
+  def l( va:ViewAttribute ) = apply( va ).asInstanceOf[Long]
 
   /**
    * Regular Expression
    */
-  //def r( key:String ) = apply( key ).asInstanceOf[Long]
-  //def r( va:ViewAttribute ) = apply( va.name ).asInstanceOf[Long]
+  //def r( key:String )       = apply( key ).asInstanceOf[Long]
+  //def r( va:ViewAttribute ) = apply( va ).asInstanceOf[Long]
 
   /**
    * String
@@ -118,7 +122,10 @@ trait Record extends Valid {
     val v = apply( key )
     if ( v != null ) v.toString else ""
   }
-  def s( va:ViewAttribute ):String = s( va.name )
+  def s( va:ViewAttribute ):String = {
+    val v = apply( va )
+    if ( v != null ) v.toString else ""
+  }
 
   /**
    * Date/Time
