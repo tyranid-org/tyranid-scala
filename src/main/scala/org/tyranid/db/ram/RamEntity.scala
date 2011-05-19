@@ -30,7 +30,7 @@ case class RamEntity() extends Entity {
 	def create {}
 	def drop   { /* TODO */ }
 
-
+  override def idLabels:Seq[(AnyRef,String)] = staticRecords.map( _.idLabel )
 }
 
 

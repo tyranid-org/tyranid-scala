@@ -123,6 +123,8 @@ trait Entity extends Domain with DbItem {
 		sb.toString
 	}
 
+  def idLabels:Seq[(AnyRef,String)] = Nil
+
 
 	/*
 	 * * *  Static Data

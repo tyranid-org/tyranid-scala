@@ -1,6 +1,9 @@
 
 import sbt._
 
+import com.untyped.LessCssPlugin
+
+
 class Tyranid( info: ProjectInfo ) extends DefaultProject( info ) {
 	override def compileOptions = super.compileOptions ++ Seq(Deprecation, Unchecked)
 

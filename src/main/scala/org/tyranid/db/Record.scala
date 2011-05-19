@@ -73,6 +73,9 @@ trait Record extends Valid {
   def apply( va:ViewAttribute ):AnyRef
   def update( va:ViewAttribute, v:AnyRef )
 
+
+  def idLabel:(AnyRef,String) = ( "foo", "foo" )
+
   /**
    * Record/Object/Document/Tuple
    */
