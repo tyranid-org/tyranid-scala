@@ -57,6 +57,9 @@ trait View {
 
   def vas:Iterable[ViewAttribute]
 
+  lazy val keyVa   = entity.keyAtt.map( a => apply( a.name ) )
+  lazy val labelVa = entity.labelAtt.map( a => apply( a.name ) )
+
   def apply( name:String ):ViewAttribute
   def apply( idx:Int ):ViewAttribute
 }
@@ -74,7 +77,7 @@ trait Record extends Valid {
   def update( va:ViewAttribute, v:AnyRef )
 
 
-  def idLabel:(AnyRef,String) = ( "foo", "foo" )
+  def idLabel:(AnyRef,String) = ( apply( view.keyVa.get ), s( view.labelVa.get ) )
 
   /**
    * Record/Object/Document/Tuple

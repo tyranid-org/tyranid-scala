@@ -49,7 +49,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   def is( str:String ) = {
     str match {
     case "key"       => isKey = true
-    case "label"     => isLabelAtt = true
+    case "label"     => isLabel = true
     case "required"  => required = true; localValidations ::= ( ( scope:Scope ) => scope.required )
     case "temporary" => temporary = true
     }
@@ -59,7 +59,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   def help( ns:NodeSeq ):Attribute = { help = ns; this }
 
 	var isKey = false
-	var isLabelAtt = false
+	var isLabel = false
 
   private var localValidations:List[ ( Scope ) => Option[Invalid] ] = Nil
 
@@ -92,6 +92,9 @@ trait Entity extends Domain with DbItem {
 	def attByDbName( dbName:String ) = attribs.find( _.dbName == dbName ).get
 
 	val name = getClass.getSimpleName.replace( "$", "" )
+
+  lazy val keyAtt   = attribs.find( _.isKey )
+  lazy val labelAtt = attribs.find( _.isLabel )
 
 
 	override lazy val idType =
