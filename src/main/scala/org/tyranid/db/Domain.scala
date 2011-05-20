@@ -49,6 +49,11 @@ trait Domain extends Valid {
 
   def ui( r:Record, f:Field, opts:(String,String)* ) =
     SHtml.ajaxText( r s f.va.name, v => { r( f.va.name ) = v; f.updateDisplayCmd( r ) }, opts.map( ElemAttr.pairToBasic ):_* )
+
+  /**
+   * These are the class(es) that should be added to the input container.
+   */
+  def inputcClasses = ""
 }
 
 
@@ -202,6 +207,8 @@ case class DbLink( toEn:Entity ) extends Domain {
     SHtml.ajaxSelect( toEn.idLabels.map( v => ( v._1.toString, v._2 ) ),
                       Full( r s f.va ), v => { r( f.va ) = v; f.updateDisplayCmd( r ) },
                       opts.map( ElemAttr.pairToBasic ):_* )
+
+  override def inputcClasses = " select"
 
 	override def see( v:AnyRef ) =
 		v match {

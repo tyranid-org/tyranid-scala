@@ -55,7 +55,7 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1 )( implicit 
     <div id={ va.name + "_c" } class={ "fieldc" + ( !invalids.isEmpty |* " invalid" ) }>{
 
       <div class="labelc">{ va.label( rec, opts.opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
-      <div class="inputc">{ va.att.domain.ui( rec, this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
+      <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( rec, this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
       <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
     }</div>
   }
