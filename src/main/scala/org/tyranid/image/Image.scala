@@ -28,12 +28,16 @@ import net.liftweb.http.{ FileParamHolder, SHtml }
 
 import org.tyranid.Bind
 import org.tyranid.Imp._
-import org.tyranid.cloud.aws.S3
+import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.{ Domain, Record }
 import org.tyranid.ui.Field
 
+object DbImage {
 
-case class DbImage( bucket:String ) extends Domain {
+  def apply( bucketPrefix:String ):DbImage = DbImage( Bind.S3Buckets( bucketPrefix ) )
+}
+
+case class DbImage( bucket:S3Bucket ) extends Domain {
   val sqlName = "TEXT"  // TODO
 
   private def save( r:Record, f:Field )( fp:FileParamHolder ) =
@@ -50,12 +54,7 @@ case class DbImage( bucket:String ) extends Domain {
       S3.access( bucket, name, public = true )
     }
 
-  def url( path:String ) = {
-    Bind.CloudFrontBuckets.get( bucket ) match {
-    case Some( cfb ) => "https://" + cfb.domain + ".cloudfront.net/" + path
-    case _           => "https://s3.amazonaws.com/" + bucket + "/" + path
-    }
-  }
+  def url( path:String ) = bucket.url( path )
 
   override def ui( r:Record, f:Field, opts:(String,String)* ):NodeSeq =
     SHtml.text( r s f.va, v => r( f.va ) = v, "class" -> "textInput" ) ++

@@ -50,15 +50,15 @@ object Bind {
 
 
   // AWS
-  import org.tyranid.cloud.aws.CloudFrontBucket
+  import org.tyranid.cloud.aws.S3Bucket
 
   @volatile var AwsCredentials:com.amazonaws.auth.AWSCredentials = null
 
   @volatile var BucketSuffix:String = ""
 
-  val CloudFrontBuckets = mutable.Map[String,CloudFrontBucket]()
+  val S3Buckets = mutable.Map[String,S3Bucket]()
 
-  def apply( cfb:CloudFrontBucket ) = CloudFrontBuckets( cfb.bucket ) = cfb
+  def apply( bucket:S3Bucket ) = S3Buckets( bucket.prefix ) = bucket
 
 }
 

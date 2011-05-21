@@ -25,14 +25,18 @@ import com.amazonaws.services.s3.model.{ AmazonS3Exception, GroupGrantee, Object
 import org.tyranid.Bind
 import org.tyranid.Imp._
 
-case class CloudFrontBucket( bucketPrefix:String, distributionId:String, domain:String ) {
-  lazy val bucket = bucketPrefix + Bind.EnvSuffix + Bind.BucketSuffix
+case class S3Bucket( prefix:String, cfDistributionId:String = "", cfDomain:String = "" ) {
+  val name = prefix + Bind.EnvSuffix + Bind.BucketSuffix
+
+  def url( path:String ) =
+    if ( cfDomain.isBlank ) "https://s3.amazonaws.com/" + name + "/" + path
+    else                    "https://" + cfDomain + ".cloudfront.net/" + path
 }
 
 object S3 {
   private val s3 = new AmazonS3Client( Bind.AwsCredentials )
 
-  def write( bucket:String, key:String, mimeType:String, data:Array[Byte] ) = {
+  def write( bucket:S3Bucket, key:String, mimeType:String, data:Array[Byte] ) = {
     val md = new ObjectMetadata
     md.setContentLength( data.length )
     md.setContentType( mimeType )
@@ -40,24 +44,24 @@ object S3 {
     val is = new ByteArrayInputStream( data )
 
     try {
-      /* val putObjectResult = */ s3.putObject( bucket, key, is, md )
+      /* val putObjectResult = */ s3.putObject( bucket.name, key, is, md )
     } finally {
       is.close
     }
   }
 
-  def delete( bucket:String, key:String ) = s3.deleteObject( bucket, key )
+  def delete( bucket:S3Bucket, key:String ) = s3.deleteObject( bucket.name, key )
 
-  def access( bucket:String, key:String, public:Boolean ) = {
+  def access( bucket:S3Bucket, key:String, public:Boolean ) = {
 
     try {
-      val acl = s3.getObjectAcl( bucket, key )
+      val acl = s3.getObjectAcl( bucket.name, key )
 
       acl.revokeAllPermissions( GroupGrantee.AllUsers )
       if ( public )
         acl.grantPermission( GroupGrantee.AllUsers, Permission.Read )
 
-      s3.setObjectAcl( bucket, key, acl )
+      s3.setObjectAcl( bucket.name, key, acl )
     } catch {
       case e:AmazonS3Exception =>
         log( "S3 Exception", e )
