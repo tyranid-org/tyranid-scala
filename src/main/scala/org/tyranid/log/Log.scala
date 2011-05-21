@@ -15,21 +15,21 @@
  *
  */
 
-package org.tyranid
+package org.tyranid.log
+
+import org.tyranid.Imp._
 
 
-/**
- * IMPlicit IMPorts.
- */
-object Imp {
+object Log {
 
-  def spam( msg:String ) = println( "SPAM: " + msg )
+  def log( msg:String = "", exception:Exception = null ) = {
+    if ( msg.notBlank )
+      println( "LOG: " + msg )
+    if ( exception != null )
+      exception.printStackTrace
 
-  def log( msg:String = "", exception:Exception = null ) = org.tyranid.log.Log.log( msg, exception )
-
-	implicit def boolean( v:Boolean )     = new org.tyranid.logic.BooleanImp( v )
-	implicit def option[A]( v:Option[A] ) = new org.tyranid.collection.OptionImp( v )
-	implicit def string( v:String )       = new org.tyranid.text.StringImp( v )
-	implicit def symbol( v:Symbol )       = v.name
+    // TODO:  insert into mongo
+  }
 }
+
 

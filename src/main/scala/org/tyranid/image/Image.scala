@@ -1,3 +1,19 @@
+/**
+ * Copyright (c) 2008-2011 Tyranid <http://tyranid.org>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 
 package org.tyranid.image
 
@@ -6,11 +22,57 @@ import java.net.URL
 
 import scala.collection.mutable
 import scala.collection.JavaConversions._
+import scala.xml.NodeSeq
+
+import net.liftweb.http.{ FileParamHolder, SHtml }
 
 import org.tyranid.Imp._
+import org.tyranid.cloud.aws.S3
+import org.tyranid.db.{ Domain, Record }
+import org.tyranid.ui.Field
 
+
+object DbImage extends Domain {
+  val sqlName = "TEXT"  // TODO
+
+  val bucket = "images" // TODO
+
+  private def save( r:Record, f:Field )( fp:FileParamHolder ) =
+    fp.file match {
+    case null =>
+    case x if x.length == 0 =>
+    case x =>
+
+      val id = "TODO"
+
+      val extension = fp.fileName.suffix( '.' ).replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
+      val name = id + "/" + f.va.att.name + "." + extension
+      S3.write( bucket, name, fp.mimeType, x )
+      S3.access( bucket, name, true )
+
+      //val cloudFrontUrl = "https://" + cloudFrontName + "/" + name
+      //path.findPath( "Src" :: Nil ).rset( cloudFrontUrl )
+    }
+
+  override def ui( r:Record, f:Field, opts:(String,String)* ):NodeSeq =
+    SHtml.text( r s f.va, v => r( f.va ) = v, "class" -> "textInput" ) ++
+    <div>upload image: { SHtml.fileUpload( save( r, f ) _ ) }</div>
+
+  //override def inputcClasses = " select"
+}
 
 object Image {
+
+  private val cache = mutable.Map[URL,Image]()
+
+  def apply( url:URL ):Image = synchronized {
+    cache.getOrElseUpdate(
+      url,
+      queryDimensions( url ) match {
+      case Some( ( width, height ) ) => Image( url, Some( width ), Some( height ) )
+      case None                      => Image( url )
+      } )
+  }
 
 	def queryDimensions( url:URL ):Option[( Int, Int )] = {
     import javax.imageio.{ ImageIO, ImageReader }
@@ -81,5 +143,10 @@ object Image {
 
 		None
 	}
+}
+
+case class Image( url:URL, width:Option[Int] = None, height:Option[Int] = None ) {
+
+
 }
 

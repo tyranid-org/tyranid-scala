@@ -42,5 +42,9 @@ object Bind {
   @volatile var DbDriver      = "org.postgresql.Driver"
 
   @volatile var NewUser:() => User = null
+
+  // AWS
+
+  @volatile var AwsCredentials:com.amazonaws.auth.AWSCredentials = null
 }
 

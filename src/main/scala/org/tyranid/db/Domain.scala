@@ -17,6 +17,8 @@
 
 package org.tyranid.db
 
+import scala.xml.NodeSeq
+
 import net.liftweb.common.Full
 import net.liftweb.http.SHtml
 import net.liftweb.http.SHtml.ElemAttr
@@ -47,7 +49,7 @@ trait Domain extends Valid {
 		case v    => v.toString
 		}
 
-  def ui( r:Record, f:Field, opts:(String,String)* ) =
+  def ui( r:Record, f:Field, opts:(String,String)* ):NodeSeq =
     SHtml.ajaxText( r s f.va.name, v => { r( f.va.name ) = v; f.updateDisplayCmd( r ) }, opts.map( ElemAttr.pairToBasic ):_* )
 
   /**
@@ -151,9 +153,6 @@ object DbPhone extends DbChar( 10 )
  * * *   Binary
  */
 
-object DbImage extends Domain {
-  val sqlName = "TEXT"  // TODO
-}
 
 
 /*

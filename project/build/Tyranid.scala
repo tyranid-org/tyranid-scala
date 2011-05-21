@@ -29,6 +29,8 @@ class Tyranid( info: ProjectInfo ) extends DefaultProject( info ) {
 
     "org.mongodb"               % "mongo-java-driver"        % "2.5.3"         % "compile->default",
 
+    "com.amazonaws"             % "aws-java-sdk"             % "1.2.0"         % "compile->default",
+
     //"postgresql"              % "postgresql"               % "8.4-701.jdbc4" % "compile->default",
     //"xom"                       % "xom"                      % "1.1"           % "compile->default",
 
