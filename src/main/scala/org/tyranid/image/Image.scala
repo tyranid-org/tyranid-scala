@@ -26,16 +26,15 @@ import scala.xml.NodeSeq
 
 import net.liftweb.http.{ FileParamHolder, SHtml }
 
+import org.tyranid.Bind
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.S3
 import org.tyranid.db.{ Domain, Record }
 import org.tyranid.ui.Field
 
 
-object DbImage extends Domain {
+case class DbImage( bucket:String ) extends Domain {
   val sqlName = "TEXT"  // TODO
-
-  val bucket = "images" // TODO
 
   private def save( r:Record, f:Field )( fp:FileParamHolder ) =
     fp.file match {
@@ -48,11 +47,15 @@ object DbImage extends Domain {
       val extension = fp.fileName.suffix( '.' ).replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
       val name = id + "/" + f.va.att.name + "." + extension
       S3.write( bucket, name, fp.mimeType, x )
-      S3.access( bucket, name, true )
-
-      //val cloudFrontUrl = "https://" + cloudFrontName + "/" + name
-      //path.findPath( "Src" :: Nil ).rset( cloudFrontUrl )
+      S3.access( bucket, name, public = true )
     }
+
+  def url( path:String ) = {
+    Bind.CloudFrontBuckets.get( bucket ) match {
+    case Some( cfb ) => "https://" + cfb.domain + ".cloudfront.net/" + path
+    case _           => "https://s3.amazonaws.com/" + bucket + "/" + path
+    }
+  }
 
   override def ui( r:Record, f:Field, opts:(String,String)* ):NodeSeq =
     SHtml.text( r s f.va, v => r( f.va ) = v, "class" -> "textInput" ) ++

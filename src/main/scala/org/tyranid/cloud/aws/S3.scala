@@ -25,6 +25,9 @@ import com.amazonaws.services.s3.model.{ AmazonS3Exception, GroupGrantee, Object
 import org.tyranid.Bind
 import org.tyranid.Imp._
 
+case class CloudFrontBucket( bucketPrefix:String, distributionId:String, domain:String ) {
+  lazy val bucket = bucketPrefix + Bind.EnvSuffix + Bind.BucketSuffix
+}
 
 object S3 {
   private val s3 = new AmazonS3Client( Bind.AwsCredentials )

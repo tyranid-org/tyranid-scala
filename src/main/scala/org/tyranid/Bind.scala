@@ -17,6 +17,7 @@
 
 package org.tyranid
 
+import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import org.tyranid.profile.User
@@ -33,6 +34,10 @@ object Debug {
 
 object Bind {
 
+  // Environment
+  @volatile var EnvSuffix = "" // "-x" or "-dx"
+
+  // DB
   @volatile var ProfileDbName:String = "default"
 
   // SQL
@@ -43,8 +48,17 @@ object Bind {
 
   @volatile var NewUser:() => User = null
 
+
   // AWS
+  import org.tyranid.cloud.aws.CloudFrontBucket
 
   @volatile var AwsCredentials:com.amazonaws.auth.AWSCredentials = null
+
+  @volatile var BucketSuffix:String = ""
+
+  val CloudFrontBuckets = mutable.Map[String,CloudFrontBucket]()
+
+  def apply( cfb:CloudFrontBucket ) = CloudFrontBuckets( cfb.bucket ) = cfb
+
 }
 
