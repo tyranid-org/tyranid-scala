@@ -293,12 +293,16 @@ object Base62 {
  * Base64 number support.
  */
 object Base64 {
+  import java.nio.ByteBuffer
 
   /**
    * Uses URL-safe encoding characters (i.e., "-" and "_").
    */
-  def toString( bytes:Array[Byte] ) =
+  def toString( bytes:Array[Byte] ):String =
     org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString( bytes )
+
+  def toString( i:Int  ):String = toString( ByteBuffer.allocate( 4 ).putInt ( i ).array )
+  def toString( l:Long ):String = toString( ByteBuffer.allocate( 8 ).putLong( l ).array )
 
   def toBytes( str:String ) =
     org.apache.commons.codec.binary.Base64.decodeBase64( str )

@@ -17,6 +17,8 @@
 
 package org.tyranid.db
 
+import org.bson.types.ObjectId
+
 import scala.collection.mutable
 import scala.xml.NodeSeq
 
@@ -79,6 +81,8 @@ trait Record extends Valid {
 
   def idLabel:(AnyRef,String) = ( apply( view.keyVa.get ), s( view.labelVa.get ) )
 
+  def tid = view.keyVa.flatten( kva => view.entity.tid + kva.att.domain.tid( this, kva ), "invalid" )
+
   /**
    * Record/Object/Document/Tuple
    */
@@ -114,6 +118,12 @@ trait Record extends Valid {
    */
   def l( key:String )       = apply( key ).asInstanceOf[Long]
   def l( va:ViewAttribute ) = apply( va ).asInstanceOf[Long]
+
+  /**
+   * BSON ObjectId
+   */
+  def oid( key:String )       = apply( key ).asInstanceOf[ObjectId]
+  def oid( va:ViewAttribute ) = apply( va ).asInstanceOf[ObjectId]
 
   /**
    * Regular Expression
