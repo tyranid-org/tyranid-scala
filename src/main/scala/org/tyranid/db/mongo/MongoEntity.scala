@@ -18,17 +18,33 @@
 package org.tyranid.db.mongo
 
 import scala.collection.mutable
+import scala.xml.NodeSeq
 
 import org.bson.BSONObject
 import com.mongodb.{ BasicDBObject, DB, DBCollection, DBObject }
 
+import net.liftweb.http.SHtml
+
 import org.tyranid.Bind
 import org.tyranid.Imp.string
-import org.tyranid.db.{ Entity, Record, View, ViewAttribute }
+import org.tyranid.db.{ Domain, Entity, Record, View, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.math.Base64
+import org.tyranid.ui.Field
 
 
-class MongoEntity extends Entity {
+case object DbMongoId extends Domain {
+  val sqlName = "invalid"
+
+  override def tid( r:Record, va:ViewAttribute ) = Base64.toString( r.oid( va ).toByteArray )
+
+  override def ui( r:Record, f:Field, opts:(String,String)* ):NodeSeq =
+    SHtml.text( r s f.va, v => r( f.va ) = v, "class" -> "textInput" ) 
+
+  //override def inputcClasses = " select"
+}
+
+case class MongoEntity( tid:String ) extends Entity {
 
 	override lazy val dbName = name.plural
 
@@ -71,7 +87,10 @@ class MongoRecord( override val view:MongoView ) extends Record {
       else
         temporaries( va.name )
     } else {
-      db.get( va.name )
+      va.name match {
+      case "id" => db.get( "_id" )
+      case s    => db.get( s )
+      }
     }
 
   def update( va:ViewAttribute, v:AnyRef ) =
@@ -80,7 +99,10 @@ class MongoRecord( override val view:MongoView ) extends Record {
         temporaries = mutable.HashMap()
       temporaries( va.name ) = v
     } else {
-      db.put( va.name, v )
+      va.name match {
+      case "id" => db.put( "_id", v )
+      case s    => db.put( s, v )
+      }
     }
 
   override def /( key:String ) = apply( key ).asInstanceOf[MongoRecord]

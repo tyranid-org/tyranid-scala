@@ -25,6 +25,7 @@ import net.liftweb.http.SHtml.ElemAttr
 
 import org.tyranid.Imp._
 import org.tyranid.logic.{ Valid, Invalid }
+import org.tyranid.math.Base64
 import org.tyranid.ui.Field
 
 
@@ -37,6 +38,8 @@ trait Domain extends Valid {
 	lazy val idType = IdType.ID_COMPLEX
 
 	val sqlName:String
+
+  def tid( r:Record, va:ViewAttribute ) = "invalid"
 
   /**
    * Is this field automatic populated by the underlying DBMS.
@@ -65,6 +68,8 @@ trait Domain extends Valid {
 
 abstract class DbIntish extends Domain {
 	override lazy val idType = IdType.ID_32
+
+  override def tid( r:Record, va:ViewAttribute ) = Base64.toString( r i va )
 }
 
 object DbInt extends DbIntish {
@@ -79,6 +84,8 @@ object DbIntSerial extends DbIntish {
 
 abstract class DbLongish extends Domain {
 	override lazy val idType = IdType.ID_64
+
+  override def tid( r:Record, va:ViewAttribute ) = Base64.toString( r l va )
 }
 
 object DbLong extends DbLongish {

@@ -29,8 +29,10 @@ case class S3Bucket( prefix:String, cfDistributionId:String = "", cfDomain:Strin
   val name = prefix + Bind.EnvSuffix + Bind.BucketSuffix
 
   def url( path:String ) =
-    if ( cfDomain.isBlank ) "https://s3.amazonaws.com/" + name + "/" + path
-    else                    "https://" + cfDomain + ".cloudfront.net/" + path
+    if ( cfDomain.isBlank || Bind.EnvSuffix.notBlank )
+      "https://s3.amazonaws.com/" + name + "/" + path
+    else
+      "https://" + cfDomain + ".cloudfront.net/" + path
 }
 
 object S3 {

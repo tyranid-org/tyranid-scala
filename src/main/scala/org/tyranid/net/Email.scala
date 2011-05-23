@@ -57,7 +57,7 @@ case class Email( subject:String, text:String ) {
 
   def add( recipientType:Message.RecipientType, emailAddresses:String* ):Email = {
     if ( emailAddresses != null ) {
-      for ( val emailAddress <- emailAddresses ) {
+      for ( emailAddress <- emailAddresses ) {
         try {
           add( recipientType, getInetAddress( emailAddress, null ) )
         } catch { 

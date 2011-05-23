@@ -17,7 +17,7 @@
 
 package org.tyranid.db
 
-import scala.collection.mutable.{ ArrayBuffer, HashMap }
+import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp.string
@@ -71,7 +71,24 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
  * * *   E n t i t i e s
  */
 
+object Entity {
+
+  private val index = mutable.Map[String,Entity]()
+
+  def register( en:Entity ) = {
+    if ( index.contains( en.tid ) )
+      throw new RuntimeException( "Entity \"" + en.name + "\" has a duplicate TID of \"" + en.tid + "\"." )
+
+    index( en.tid ) = en
+  }
+}
+
 trait Entity extends Domain with DbItem {
+
+  /**
+   * Tyranid ID.  This is a 3-byte identifier stored as a 4-character base64 string.  All Entity TIDs should be unique.
+   */
+  val tid:String
 
 	val sqlName = "invalid"
 
@@ -79,7 +96,7 @@ trait Entity extends Domain with DbItem {
 	 * * *  Attributes
 	 */
 
-	val attribs = new ArrayBuffer[Attribute]
+	val attribs = new mutable.ArrayBuffer[Attribute]
 
 	def attrib( name:String ) =
     try {
@@ -92,6 +109,8 @@ trait Entity extends Domain with DbItem {
 	def attByDbName( dbName:String ) = attribs.find( _.dbName == dbName ).get
 
 	val name = getClass.getSimpleName.replace( "$", "" )
+
+  Entity.register( this )
 
   lazy val keyAtt   = attribs.find( _.isKey )
   lazy val labelAtt = attribs.find( _.isLabel )
@@ -135,7 +154,7 @@ trait Entity extends Domain with DbItem {
 
 	var staticView:TupleView = null
 	var staticRecords:Array[Tuple] = null
-	var staticIdIndex:HashMap[Long,Tuple] = null
+	var staticIdIndex:mutable.HashMap[Long,Tuple] = null
 
 	def static( names:Product, tuples:Product* ) {
 		val v = new TupleView
@@ -160,7 +179,7 @@ trait Entity extends Domain with DbItem {
 
 		val keys = staticView.ekeys
 		if ( keys.size == 1 ) {
-			staticIdIndex = new HashMap[Long,Tuple]
+			staticIdIndex = new mutable.HashMap[Long,Tuple]
 			val idIdx = keys( 0 ).index
 
 			for ( ti <- 0 until tlen ) {

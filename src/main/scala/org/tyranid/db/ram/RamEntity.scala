@@ -23,7 +23,7 @@ import org.tyranid.Imp.{ string, symbol }
 import org.tyranid.db.{ DbIntSerial, DbChar, Entity }
 
 
-case class RamEntity() extends Entity {
+case class RamEntity( tid:String ) extends Entity {
 
 	override lazy val dbName = name.plural
 
@@ -34,7 +34,7 @@ case class RamEntity() extends Entity {
 }
 
 
-abstract class RamEnumEntity( nameLen: Int ) extends RamEntity {
+abstract class RamEnumEntity( nameLen:Int, tid:String ) extends RamEntity( tid ) {
 
 	"id"   is DbIntSerial       is 'key   ;
 	"name" is DbChar( nameLen ) is 'label ;
