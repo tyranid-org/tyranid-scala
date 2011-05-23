@@ -3,9 +3,10 @@ package org.tyranid.net
 import org.tyranid.Imp._
 
 import java.io.{ File, UnsupportedEncodingException }
-import java.util.Date
+import java.util.{ Date, Properties }
 
 import javax.activation._
+import javax.mail.Authenticator;
 
 import javax.mail._
 import javax.mail.internet._
@@ -19,6 +20,7 @@ import scala.collection.mutable.ArrayBuffer
 
 
 case class Email( subject:String, text:String ) {
+  private var emailSession:Session = null;
   private var sender:InternetAddress = null
   private var primaryRecipients = ArrayBuffer[InternetAddress]()
   private var ccRecipients:ArrayBuffer[InternetAddress] = null
@@ -34,21 +36,21 @@ case class Email( subject:String, text:String ) {
 
   def addTo( emailAddress:String )  = {
     if ( emailAddress.notBlank ) 
-      add( Message.RecipientType.TO, emailAddress.split( "," ):_* )
+      add( Message.RecipientType.TO, emailAddress.split( "," ) : _* )
     else 
       this
   }
 
   def addCc( emailAddress:String ):Email = {
     if ( emailAddress.notBlank ) 
-      return add( Message.RecipientType.CC, emailAddress.split( "," ):_* )
+      return add( Message.RecipientType.CC, emailAddress.split( "," ) : _* )
 
     this
   }
 
   def addBcc( emailAddress:String ): Email = {
     if ( emailAddress.notBlank ) 
-      return add( Message.RecipientType.BCC, emailAddress.split( "," ):_* )
+      return add( Message.RecipientType.BCC, emailAddress.split( "," ) : _* )
 
     this
   }
@@ -121,7 +123,7 @@ case class Email( subject:String, text:String ) {
   @throws(classOf[MessagingException])
   def compose():Email = {
     if ( message == null ) {
-      //var session:Session = Configs.getMailSession()
+      //var session:Session = getMailSession()
       //message = new MimeMessage( session )
     }
 
@@ -183,9 +185,57 @@ case class Email( subject:String, text:String ) {
   private def guessContentType( f:File ):String = {
     new MimetypesFileTypeMap().getContentType( f );
   }
+  
+  private def getMailSession() : Session  = {
+    if ( emailSession == null ) {
+      val host = "smtp.gmail.com"; // TODO:  get this out of Mongo
+      
+      if ( host == null )
+        throw new RuntimeException( "WARNING: Mail Host not set in Database globalConfig.  Sending of mail failed!" );
+
+      var props:Properties = System.getProperties();
+      props.put( "mail.smtp.host", host );
+      
+      val port = "465"; // TODO:  get this out of Mongo
+      
+      if ( port.notBlank )
+          props.put( "mail.smtp.port", port );
+      
+      val tls = true; // TODO:  get this out of Mongo
+      
+      if ( tls )
+          props.put( "mail.smtp.starttls.enable", "true" );
+      
+      val ssl = true; // TODO:  get this out of Mongo
+      
+      if ( ssl ) {
+          props.put( "mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory" );
+          props.put( "mail.smtp.socketFactory.fallback", "false" );
+      }
+          
+//    props.put( "mail.smtp.debug", "true" );
+            
+      val authUser:String = "support@volerro.com"; // TODO:  get this out of Mongo
+      val authPassword = "^af875$vol"; // TODO:  get this out of Mongo
+      
+      if ( authUser.notBlank ) {
+        props.put( "mail.smtp.auth", "true" );
+        props.put( "mail.smtp.user", authUser );
+        props.put( "mail.smtp.password", authPassword );
+        
+        
+        emailSession = Session.getDefaultInstance( props, EmailAuth( user = authUser, password = authPassword ) );
+      } else {
+        emailSession = Session.getDefaultInstance( props, null );
+      }
+    }
+    
+    return emailSession;
+  }
 }
 
-object Email {
+case class EmailAuth( user:String, password:String ) extends Authenticator {
+  override def getPasswordAuthentication() = { new PasswordAuthentication( user , password ) };
 }
 
 /*
