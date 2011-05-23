@@ -45,11 +45,8 @@ case class DbImage( bucket:S3Bucket ) extends Domain {
     case null =>
     case x if x.length == 0 =>
     case x =>
-
-      val id = "TODO"
-
       val extension = fp.fileName.suffix( '.' ).replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
-      val name = id + "/" + f.va.att.name + "." + extension
+      val name = r.entityTid + "/" + r.recordTid + "/" + f.va.att.name + "." + extension
       S3.write( bucket, name, fp.mimeType, x )
       S3.access( bucket, name, public = true )
     }

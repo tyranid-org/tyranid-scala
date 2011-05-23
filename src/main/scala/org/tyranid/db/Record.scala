@@ -81,7 +81,10 @@ trait Record extends Valid {
 
   def idLabel:(AnyRef,String) = ( apply( view.keyVa.get ), s( view.labelVa.get ) )
 
-  def tid = view.keyVa.flatten( kva => view.entity.tid + kva.att.domain.tid( this, kva ), "invalid" )
+  def tid = entityTid + recordTid
+
+  def entityTid = view.entity.tid
+  def recordTid = view.keyVa.flatten( kva => kva.att.domain.tid( this, kva ), "-invalid" )
 
   /**
    * Record/Object/Document/Tuple
