@@ -288,3 +288,19 @@ object Base62 {
 	}
 }
 
+
+/**
+ * Base64 number support.
+ */
+object Base64 {
+
+  /**
+   * Uses URL-safe encoding characters (i.e., "-" and "_").
+   */
+  def toString( bytes:Array[Byte] ) =
+    org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString( bytes )
+
+  def toBytes( str:String ) =
+    org.apache.commons.codec.binary.Base64.decodeBase64( str )
+}
+

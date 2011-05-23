@@ -24,8 +24,7 @@ import org.tyranid.db.{ Attribute, DbIntSerial, DbChar, Entity, ModelException, 
 import org.tyranid.db.tuple.{ TupleView, Tuple }
 
 
-
-case class SqlEntity() extends Entity {
+case class SqlEntity( tid:String ) extends Entity {
 
 	override lazy val dbName = name.camelCaseToUnderLower.plural
 
@@ -57,7 +56,7 @@ case class SqlEntity() extends Entity {
 }
 
 
-abstract class SqlEnumEntity( nameLen: Int ) extends SqlEntity {
+abstract class SqlEnumEntity( nameLen:Int, tid:String ) extends SqlEntity( tid ) {
 
 	"id"   is DbIntSerial       is 'key   ;
 	"name" is DbChar( nameLen ) is 'label ;

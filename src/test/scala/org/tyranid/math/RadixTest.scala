@@ -86,6 +86,7 @@ class RadixSuite extends FunSuite {
 
       assert( bi === Base36.toBigInt( Base36.toString( bi ) ) )
       assert( bi === Base62.toBigInt( Base62.toString( bi ) ) )
+      assert( bytes === Base64.toBytes( Base64.toString( bytes ) ) )
     }
   }
 }

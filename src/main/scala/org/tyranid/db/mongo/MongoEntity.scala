@@ -28,7 +28,7 @@ import org.tyranid.db.{ Entity, Record, View, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 
 
-class MongoEntity extends Entity {
+case class MongoEntity( tid:String ) extends Entity {
 
 	override lazy val dbName = name.plural
 

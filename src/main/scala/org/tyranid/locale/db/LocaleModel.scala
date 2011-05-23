@@ -22,7 +22,7 @@ import org.tyranid.db.{ DbInt, DbChar }
 import org.tyranid.db.ram.RamEntity
 
 
-object Region extends RamEntity {
+object Region extends RamEntity( tid = "a01t" ) {
   "id"     is DbInt      is 'key;
   "name"   is DbChar(64) is 'label;
   "code"   is DbChar(4)  ; 
@@ -82,7 +82,7 @@ object Region extends RamEntity {
 	(  3874, "District of Columbia", "DC" ) )	    
 }
 
-object Country extends RamEntity {
+object Country extends RamEntity( tid = "a02t" ) {
   "id"     is DbInt      is 'key;
   "name"   is DbChar(64) is 'label;
   "code"   is DbChar(4)  ; 
