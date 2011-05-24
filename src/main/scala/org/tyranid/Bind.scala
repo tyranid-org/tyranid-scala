@@ -48,7 +48,10 @@ object Bind {
 
   @volatile var NewUser:() => User = null
 
-
+  // ReCaptcha
+  @volatile var ReCaptchaPublicKey      = ""
+  @volatile var ReCaptchaPrivateKey     = ""
+  
   // AWS
   import org.tyranid.cloud.aws.S3Bucket
 

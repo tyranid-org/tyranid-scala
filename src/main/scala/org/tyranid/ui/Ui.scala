@@ -40,7 +40,7 @@ object Field {
   implicit def symbol2Field( name:Symbol )( implicit view:View ) = Field( name.name )
 }
 
-case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1 )( implicit view:View ) {
+case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, height:Int = -1 )( implicit view:View ) {
 
   lazy val va = view( name )
 
@@ -52,7 +52,7 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1 )( implicit 
     val invalids = va.invalids( Scope( rec, Some( va ) ) )
     rec.invalids( va.index ) = !invalids.isEmpty
 
-    <div id={ va.name + "_c" } class={ "fieldc" + ( !invalids.isEmpty |* " invalid" ) }>{
+    <div id={ va.name + "_c" } class={ "fieldc" + ( !invalids.isEmpty |* " invalid" ) } style={ height != -1 |* "height:" + height + "px;" }>{
 
       <div class="labelc">{ va.label( rec, opts.opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
       <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( rec, this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</div>

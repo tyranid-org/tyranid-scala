@@ -152,7 +152,7 @@ trait Record extends Valid {
   //def d( key:String ) = apply( key ).toString
   //def d( va:ViewAttribute ) = apply( va.name ).toString
 
-
+  
   /*
    * * *   Validation
    */
