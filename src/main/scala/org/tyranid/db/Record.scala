@@ -177,7 +177,7 @@ trait Record extends Valid {
   def save {}
 }
 
-case class Scope( rec:Record, va:Option[ViewAttribute] = None ) {
+case class Scope( rec:Record, initialDraw:Boolean, va:Option[ViewAttribute] = None ) {
 
   def s = va.map( rec.s )
 

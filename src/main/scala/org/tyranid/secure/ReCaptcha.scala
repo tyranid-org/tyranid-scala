@@ -24,7 +24,7 @@ import scala.collection.mutable
 import scala.collection.JavaConversions._
 import scala.xml.{ NodeSeq, Unparsed }
 
-import net.liftweb.http.{ FileParamHolder, SHtml }
+import net.liftweb.http.{ FileParamHolder, S, SHtml }
 
 import org.tyranid.Bind
 import org.tyranid.Imp._
@@ -32,13 +32,14 @@ import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.{ Domain, Record, Scope }
 import org.tyranid.logic.Invalid
 import org.tyranid.ui.Field
+import dispatch._
+import dispatch.Http._
 
-object DbReCaptcha {
-
-}
 
 case class DbReCaptcha( theme:String ) extends Domain {
   val sqlName = "invalid"
+    
+  override def show( s:Scope ) = s.rec.s( s.va.get ) != "passed"
 
   override def ui( r:Record, f:Field, opts:(String,String)* ):NodeSeq = {
      <head>
@@ -61,17 +62,27 @@ case class DbReCaptcha( theme:String ) extends Domain {
       """ ) } </script>
      </tail>
   }
-  
+
+  override def inputcClasses = " recaptcha"
+
   override val validations =
     ( ( scope:Scope ) => {
-      
-      if ( passed captcha )
-        None
-      else
-        Some( Invalid( scope, "Invalid captcha." ) )
-    } ) ) ::
-    super.validations
+      ( scope.initialDraw && scope.rec( scope.va.get ) == "failed" ) ||
+      ( !scope.rec.isInitial &&
+        !scope.initialDraw && {
+          val passedCaptcha =
+            Http( "http://www.google.com/recaptcha/api/verify" << Map(
+              "privatekey" -> Bind.ReCaptchaPrivateKey,
+              "remoteip"   -> S.containerRequest.map(_.remoteAddress).openOr("localhost"),
+              "challenge"  -> S.param( "recaptcha_challenge_field" ).openOr( "" ),
+              "response"   -> S.param( "recaptcha_response_field" ).openOr( "" ) ) as_str ).trim.startsWith( "true" )
+        
+          scope.rec( scope.va.get ) = if ( passedCaptcha ) "passed" else "failed"
 
-  
+          passedCaptcha
+        } ) |*
+        Some( Invalid( scope, "Invalid captcha." ) )
+    } ) ::
+    super.validations
 }
 

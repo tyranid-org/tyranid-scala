@@ -51,6 +51,8 @@ trait Domain extends Valid {
 		case null => ""
 		case v    => v.toString
 		}
+	
+	def show( s:Scope ) = true
 
   def ui( r:Record, f:Field, opts:(String,String)* ):NodeSeq =
     SHtml.ajaxText( r s f.va.name, v => { r( f.va.name ) = v; f.updateDisplayCmd( r ) }, opts.map( ElemAttr.pairToBasic ):_* )

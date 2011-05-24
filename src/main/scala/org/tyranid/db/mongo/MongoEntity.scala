@@ -85,7 +85,7 @@ class MongoRecord( override val view:MongoView ) extends Record {
       if ( temporaries == null )
         null // TODO:  return a canonical empty value based on attribute type
       else
-        temporaries( va.name )
+        temporaries.get( va.name ).getOrElse( null ) // TODO:  return a canonical empty value based on attribute type
     } else {
       va.name match {
       case "id" => db.get( "_id" )
@@ -108,7 +108,7 @@ class MongoRecord( override val view:MongoView ) extends Record {
   override def /( key:String ) = apply( key ).asInstanceOf[MongoRecord]
 
   override def save {
-    view.entity.coll.
+    //view.entity.coll.
   }
 }
 

@@ -40,7 +40,7 @@ object Field {
   implicit def symbol2Field( name:Symbol )( implicit view:View ) = Field( name.name )
 }
 
-case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, height:Int = -1 )( implicit view:View ) {
+case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1 )( implicit view:View ) {
 
   lazy val va = view( name )
 
@@ -48,11 +48,14 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, height:Int 
     for ( invalid <- invalids )
       yield <p>{ invalid.message }</p>
 
-  def ui( rec:Record ) = {
-    val invalids = va.invalids( Scope( rec, Some( va ) ) )
+  def ui( parentScope:Scope ) = {
+    val scope = parentScope.at( va )
+    val invalids = va.invalids( scope )
+    val rec = scope.rec
     rec.invalids( va.index ) = !invalids.isEmpty
-
-    <div id={ va.name + "_c" } class={ "fieldc" + ( !invalids.isEmpty |* " invalid" ) } style={ height != -1 |* "height:" + height + "px;" }>{
+    
+    va.att.domain.show( scope ) |*
+    <div id={ va.name + "_c" } class={ "fieldc" + ( !invalids.isEmpty |* " invalid" ) }>{
 
       <div class="labelc">{ va.label( rec, opts.opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
       <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( rec, this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
@@ -61,7 +64,7 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, height:Int 
   }
 
   def updateDisplayCmd( r:Record ) = {
-    val invalids = va.invalids( Scope( r, Some( va ) ) )
+    val invalids = va.invalids( Scope( r, initialDraw = false, Some( va ) ) )
       
     if ( invalids.isEmpty ) {
       if ( r.invalids( va.index ) ) {
@@ -91,11 +94,14 @@ object Grid {
 case class Grid( view:View, rows:Row* ) {
   val boxSpan = rows.map( _.fields.length ).max
 
-  def draw( rec:Record ) =
+  def draw( rec:Record ) = {
+    val scope = Scope( rec, initialDraw = true )
+    
     for ( row <- rows ) yield
       <tr>{
         for ( f <- row.fields ) yield
-          <td colspan={ f.span.toString } class="cell">{ f.ui( rec ) }</td>
+          <td colspan={ f.span.toString } class="cell">{ f.ui( scope ) }</td>
       }</tr>
+  }
 }
 
