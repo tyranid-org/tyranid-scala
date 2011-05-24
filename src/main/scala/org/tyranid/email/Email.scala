@@ -1,4 +1,4 @@
-package org.tyranid.net
+package org.tyranid.email
 
 import org.tyranid.Imp._
 
