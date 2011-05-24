@@ -106,5 +106,9 @@ class MongoRecord( override val view:MongoView ) extends Record {
     }
 
   override def /( key:String ) = apply( key ).asInstanceOf[MongoRecord]
+
+  override def save {
+    view.entity.coll.
+  }
 }
 

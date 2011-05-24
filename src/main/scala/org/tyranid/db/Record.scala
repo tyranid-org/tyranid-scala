@@ -168,6 +168,13 @@ trait Record extends Valid {
           invalidOpt <- va.validations.map( validator => validator( vaScope ) );
           invalid <- invalidOpt )
       yield invalid
+
+
+  /*
+   * * *   Persistence
+   */
+
+  def save {}
 }
 
 case class Scope( rec:Record, va:Option[ViewAttribute] = None ) {
