@@ -108,7 +108,7 @@ trait Entity extends Domain with DbItem {
 
 	def attByDbName( dbName:String ) = attribs.find( _.dbName == dbName ).get
 
-	val name = getClass.getSimpleName.replace( "$", "" )
+	val name = getClass.getSimpleName.replace( "$", "" ).uncapitalize
 
   Entity.register( this )
 
