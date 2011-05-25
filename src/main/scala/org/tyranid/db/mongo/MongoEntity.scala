@@ -48,10 +48,10 @@ case class MongoEntity( tid:String ) extends Entity {
 
 	override lazy val dbName = name.plural
 
-  lazy val coll = Mongo.connect.db( Bind.ProfileDbName )( dbName )
+  lazy val db = Mongo.connect.db( Bind.ProfileDbName )( dbName )
 
   def create {}
-  def drop   { coll.drop }
+  def drop   { db.drop }
 }
 
 class MongoView( override val entity:MongoEntity ) extends View {
@@ -77,7 +77,7 @@ class MongoView( override val entity:MongoEntity ) extends View {
 class MongoRecord( override val view:MongoView ) extends Record with DBObject {
 
   val obj:DBObject = Mongo.obj
-  val db:DBCollection = view.entity.coll
+  val db:DBCollection = view.entity.db
 
   private var temporaries:mutable.Map[String,AnyRef] = null
 
@@ -110,7 +110,7 @@ class MongoRecord( override val view:MongoView ) extends Record with DBObject {
 
   override def save {
     throw new RuntimeException( "not supported yet" )
-    //view.entity.coll.
+    //view.entity.db.
   }
 
 
