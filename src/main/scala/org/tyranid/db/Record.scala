@@ -47,9 +47,13 @@ class ViewAttribute( val view:View,
   def invalids( scope:Scope ) = {
     require( scope.va.get == this )
 
-    for ( invalidOpt <- validations.map( validator => validator( scope ) );
-          invalid <- invalidOpt )
-      yield invalid
+    ( for ( invalidOpt <- validations.map( validator => validator( scope ) );
+            invalid <- invalidOpt )
+        yield invalid ) ++
+    ( for ( pair <- scope.rec.extraVaValidations;
+            if pair._1 == this;
+            invalid <- pair._2( scope ) )
+        yield invalid )
   }
 }
 
@@ -162,12 +166,14 @@ trait Record extends Valid {
    */
   val invalids = mutable.BitSet()
 
+  var extraVaValidations:List[ ( ViewAttribute, ( Scope ) => Option[Invalid] ) ] = Nil
+
   def invalids( scope:Scope ) =
     for ( va <- view.vas;
           vaScope = scope.at( va );
           invalidOpt <- va.validations.map( validator => validator( vaScope ) );
           invalid <- invalidOpt )
-      yield invalid
+        yield invalid
 
 
   /*
