@@ -78,7 +78,7 @@ case class DbReCaptcha( theme:String ) extends Domain {
         
           scope.rec( scope.va.get ) = if ( passedCaptcha ) "passed" else "failed"
 
-          passedCaptcha
+          !passedCaptcha
         } ) |*
         Some( Invalid( scope, "Invalid captcha." ) )
     } ) ::
