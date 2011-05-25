@@ -74,9 +74,10 @@ class MongoView( override val entity:MongoEntity ) extends View {
   def apply( idx:Int )     = byIndex( idx )
 }
 
-class MongoRecord( override val view:MongoView ) extends Record {
+class MongoRecord( override val view:MongoView ) extends Record with DBObject {
 
-  val db:DBObject = Mongo.obj
+  val obj:DBObject = Mongo.obj
+  val db:DBCollection = view.entity.coll
 
   private var temporaries:mutable.Map[String,AnyRef] = null
 
@@ -88,8 +89,8 @@ class MongoRecord( override val view:MongoView ) extends Record {
         temporaries.get( va.name ).getOrElse( null ) // TODO:  return a canonical empty value based on attribute type
     } else {
       va.name match {
-      case "id" => db.get( "_id" )
-      case s    => db.get( s )
+      case "id" => obj.get( "_id" )
+      case s    => obj.get( s )
       }
     }
 
@@ -100,15 +101,34 @@ class MongoRecord( override val view:MongoView ) extends Record {
       temporaries( va.name ) = v
     } else {
       va.name match {
-      case "id" => db.put( "_id", v )
-      case s    => db.put( s, v )
+      case "id" => obj.put( "_id", v )
+      case s    => obj.put( s, v )
       }
     }
 
   override def /( key:String ) = apply( key ).asInstanceOf[MongoRecord]
 
   override def save {
+    throw new RuntimeException( "not supported yet" )
     //view.entity.coll.
   }
+
+
+  /*
+   * * *   DBObject delegation
+   */
+
+  def containsField( s:String )      = obj.containsField( s )
+  @deprecated( "use containsField" )
+  def containsKey( s:String )        = obj.containsKey( s )
+  def get( key:String )              = obj.get( key )
+  def keySet                         = obj.keySet
+  def put( key:String, v:AnyRef )    = obj.put( key, v )
+  def putAll( o:BSONObject )         = obj.putAll( o )
+  def putAll( m:java.util.Map[_,_] ) = obj.putAll( m )
+  def removeField( key:String )      = obj.removeField( key )
+  def toMap                          = obj.toMap
+  def isPartialObject                = obj.isPartialObject
+  def markAsPartialObject            = obj.markAsPartialObject
 }
 

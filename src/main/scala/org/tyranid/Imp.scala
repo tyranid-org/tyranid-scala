@@ -23,6 +23,18 @@ package org.tyranid
  */
 object Imp {
 
+  /**
+   * Try a block of code that returns a string, if it succeeds return the string, otherwise return the exception message.
+   */
+  def trystr[T]( block: => String ) =
+    try {
+      block
+    } catch {
+      case e =>
+        e.printStackTrace
+        e.getMessage
+    }
+
   def spam( msg:String ) = println( "SPAM: " + msg )
 
   def log( msg:String = "", exception:Exception = null ) = org.tyranid.log.Log.log( msg, exception )

@@ -41,27 +41,26 @@ case class DbReCaptcha( theme:String ) extends Domain {
     
   override def show( s:Scope ) = s.rec.s( s.va.get ) != "passed"
 
-  override def ui( r:Record, f:Field, opts:(String,String)* ):NodeSeq = {
-     <head>
-      <script type="text/javascript" src="http://www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>
+  override def ui( r:Record, f:Field, opts:(String,String)* ) =
+    <head>
+     <script type="text/javascript" src="http://www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>
 
-      <script type="text/javascript">{ Unparsed( """
-         function showRecaptcha(element) {
-           Recaptcha.create( """" + Bind.ReCaptchaPublicKey + """", element, {
-             theme: """" + theme + """",
-             callback: Recaptcha.focus_response_field});
-         }
+     <script type="text/javascript">{ Unparsed( """
+       function showRecaptcha(element) {
+         Recaptcha.create( """" + Bind.ReCaptchaPublicKey + """", element, {
+           theme: """" + theme + """",
+           callback: Recaptcha.focus_response_field});
+       }
       """ ) } </script>
-     </head>
+    </head>
 
-     <div id="recaptcha_div"></div>
+    <div id="recaptcha_div"></div>
       
-     <tail>
-      <script type="text/javascript">{ Unparsed( """
-        showRecaptcha('recaptcha_div');      
-      """ ) } </script>
-     </tail>
-  }
+    <tail>
+    <script type="text/javascript">{ Unparsed( """
+       showRecaptcha('recaptcha_div');      
+     """ ) } </script>
+    </tail>;
 
   override def inputcClasses = " recaptcha"
 
