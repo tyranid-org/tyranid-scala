@@ -146,7 +146,7 @@ case class Email( subject:String, text:String ) {
 
     message.setFrom( from )
     
-    if ( replyTo != from ) 
+    if ( replyTo != null && replyTo != from ) 
       message.setReplyTo( Array[Address]( replyTo ) )
     
     if (primaryRecipients == null) 
