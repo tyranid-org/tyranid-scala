@@ -21,7 +21,8 @@ import scala.collection.mutable.ArrayBuffer
 
 case class Email( subject:String, text:String ) {
   private var emailSession:Session = null;
-  private var sender:InternetAddress = null
+  private var replyTo:InternetAddress = null
+  private var from:InternetAddress = null
   private var primaryRecipients = ArrayBuffer[InternetAddress]()
   private var ccRecipients:ArrayBuffer[InternetAddress] = null
   private var bccRecipients:ArrayBuffer[InternetAddress] = null
@@ -95,9 +96,19 @@ case class Email( subject:String, text:String ) {
     return new InternetAddress( emailAddress )
   }
 
-  def sender(_senderEmailAddress:String) : Email = {
+  def replyTo( _replyToEmailAddress:String ) : Email = {
     try {
-      sender = getInetAddress(_senderEmailAddress, null)
+      replyTo = getInetAddress( _replyToEmailAddress, null )
+    } catch { 
+      case ae:AddressException => 
+    }
+    
+    this
+  }
+
+  def from(_fromEmailAddress:String) : Email = {
+    try {
+      from = getInetAddress( _fromEmailAddress, null )
     } catch { 
       case ae:AddressException => 
     }
@@ -123,19 +134,20 @@ case class Email( subject:String, text:String ) {
   @throws(classOf[MessagingException])
   def compose():Email = {
     if ( message == null ) {
-      //var session:Session = getMailSession()
-      //message = new MimeMessage( session )
+      var session:Session = getMailSession()
+      message = new MimeMessage( session )
     }
 
     //if (defaultFrom) 
     //  sender( Configs.getDefaultMailFrom() )
 
-    if (sender == null) 
-      throw new MessagingException("A sender must be set on this email message.")
+    if ( from == null ) 
+      throw new MessagingException( "A from must be set on this email message!" )
 
-
-    message.setFrom(sender)
-    message.setReplyTo( Array[Address]( sender ) )
+    message.setFrom( from )
+    
+    if ( replyTo != from ) 
+      message.setReplyTo( Array[Address]( replyTo ) )
     
     if (primaryRecipients == null) 
       throw new MessagingException("The primary recipients must be set on this email message.")
