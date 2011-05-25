@@ -76,7 +76,7 @@ class MongoView( override val entity:MongoEntity ) extends View {
 
 class MongoRecord( override val view:MongoView ) extends Record with DBObject {
 
-  val obj:DBObject = Mongo.obj
+  val obj:DBObject = Mobj()
   val db:DBCollection = view.entity.db
 
   private var temporaries:mutable.Map[String,AnyRef] = null

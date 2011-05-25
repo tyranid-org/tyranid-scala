@@ -27,10 +27,21 @@ import org.tyranid.db.Entity
  * IMPlicit IMPorts.
  */
 object Imp {
+  val $gt = "$gt"
+  val $ne = "$ne"
+
+  object Mobj {
+    def apply = new DBObjectImp( new BasicDBObject )
+    def apply( vals: ( String, Any )* ):DBObjectImp = {
+      val o = new BasicDBObject
+      for ( v <- vals )
+        o.put( v._1, v._2 )
+      new DBObjectImp( o )
+    }
+  }
+
   object Mongo {
     def connect = new com.mongodb.Mongo
-
-    def obj = new DBObjectImp( new BasicDBObject )
   }
 
 	implicit def mongoImp( mongo:com.mongodb.Mongo ) = new MongoImp( mongo )
