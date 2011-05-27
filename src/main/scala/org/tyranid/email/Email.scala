@@ -16,11 +16,8 @@ import javax.mail.internet._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-
-
 //Email( subject = ...,
 //       text = ... )
-
 
 case class Email( subject:String, text:String ) {
   private var emailSession:Session = null;
@@ -202,7 +199,6 @@ case class Email( subject:String, text:String ) {
   }
   
   private def getMailSession() : Session  = {
-    
     if ( emailSession == null ) {
       var emailConfig = EmailConfig.db.findOne()
       

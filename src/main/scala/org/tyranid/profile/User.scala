@@ -29,6 +29,7 @@ object User {
   private object currentVar extends SessionVar[User]( Bind.NewUser() )
 
   def current:User = currentVar.is
+  def current_=( user:User ) = currentVar.set( user )
 
   def isLoggedIn = current.loggedIn
   def isAdmin    = current.admin

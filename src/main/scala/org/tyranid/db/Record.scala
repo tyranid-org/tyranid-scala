@@ -81,8 +81,7 @@ trait Record extends Valid {
 
   def apply( va:ViewAttribute ):AnyRef
   def update( va:ViewAttribute, v:AnyRef )
-
-
+  
   def idLabel:(AnyRef,String) = ( apply( view.keyVa.get ), s( view.labelVa.get ) )
 
   def tid = entityTid + recordTid

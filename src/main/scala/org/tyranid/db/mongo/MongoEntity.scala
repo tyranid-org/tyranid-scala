@@ -110,8 +110,7 @@ case class MongoRecord( override val view:MongoView, obj:DBObject = Mobj() ) ext
   override def /( key:String ) = apply( key ).asInstanceOf[MongoRecord]
 
   override def save {
-    throw new RuntimeException( "not supported yet" )
-    //view.entity.db.
+    db.save( this )
   }
 
 
