@@ -52,9 +52,11 @@ case class MongoEntity( tid:String ) extends Entity {
 
   def create {}
   def drop   { db.drop }
+
+  def apply( obj:DBObject ) = MongoRecord( MongoView( this ), obj )
 }
 
-class MongoView( override val entity:MongoEntity ) extends View {
+case class MongoView( override val entity:MongoEntity ) extends View {
 
   private val byName = mutable.HashMap[String,ViewAttribute]()
   private val byIndex = mutable.HashMap[Int,ViewAttribute]()
@@ -74,9 +76,8 @@ class MongoView( override val entity:MongoEntity ) extends View {
   def apply( idx:Int )     = byIndex( idx )
 }
 
-class MongoRecord( override val view:MongoView ) extends Record with DBObject {
+case class MongoRecord( override val view:MongoView, obj:DBObject = Mobj() ) extends Record with DBObject {
 
-  val obj:DBObject = Mobj()
   val db:DBCollection = view.entity.db
 
   private var temporaries:mutable.Map[String,AnyRef] = null
