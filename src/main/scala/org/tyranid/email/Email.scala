@@ -1,6 +1,8 @@
 package org.tyranid.email
 
 import org.tyranid.Imp._
+import org.tyranid.email.db.EmailConfig;
+import org.tyranid.db.mongo.Imp._
 
 import java.io.{ File, UnsupportedEncodingException }
 import java.util.{ Date, Properties }
@@ -13,6 +15,7 @@ import javax.mail.internet._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+
 
 
 //Email( subject = ...,
@@ -199,42 +202,47 @@ case class Email( subject:String, text:String ) {
   }
   
   private def getMailSession() : Session  = {
+    
     if ( emailSession == null ) {
-      val host = "smtp.gmail.com"; // TODO:  get this out of Mongo
+      var emailConfig = EmailConfig.db.findOne()
+      
+      if ( emailConfig == null )
+        throw new RuntimeException( "Email failed because there is no emailConfig is available." );
+        
+      val host = emailConfig get "host"
       
       if ( host == null )
         throw new RuntimeException( "WARNING: Mail Host not set in Database globalConfig.  Sending of mail failed!" );
 
-      var props:Properties = System.getProperties();
-      props.put( "mail.smtp.host", host );
+      var props:Properties = System.getProperties()
+      props.put( "mail.smtp.host", host )
       
-      val port = "465"; // TODO:  get this out of Mongo
+      val port = emailConfig get "port"
       
-      if ( port.notBlank )
-          props.put( "mail.smtp.port", port );
+      if ( port != null )
+          props.put( "mail.smtp.port", port )
       
-      val tls = true; // TODO:  get this out of Mongo
+      val tls = emailConfig get "tls"
       
-      if ( tls )
+      if ( tls != null )
           props.put( "mail.smtp.starttls.enable", "true" );
       
-      val ssl = true; // TODO:  get this out of Mongo
+      val ssl = emailConfig get "ssl"
       
-      if ( ssl ) {
+      if ( ssl != null ) {
           props.put( "mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory" );
           props.put( "mail.smtp.socketFactory.fallback", "false" );
       }
           
 //    props.put( "mail.smtp.debug", "true" );
             
-      val authUser:String = "support@volerro.com"; // TODO:  get this out of Mongo
-      val authPassword = "^af875$vol"; // TODO:  get this out of Mongo
+      val authUser = ( emailConfig get "authUser" ).toString
+      val authPassword = ( emailConfig get "authPassword" ).toString
       
-      if ( authUser.notBlank ) {
+      if ( authUser notBlank ) {
         props.put( "mail.smtp.auth", "true" );
         props.put( "mail.smtp.user", authUser );
         props.put( "mail.smtp.password", authPassword );
-        
         
         emailSession = Session.getDefaultInstance( props, EmailAuth( user = authUser, password = authPassword ) );
       } else {
