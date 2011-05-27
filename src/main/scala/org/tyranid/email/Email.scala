@@ -152,7 +152,6 @@ case class Email( subject:String, text:String ) {
     if (primaryRecipients == null) 
       throw new MessagingException("The primary recipients must be set on this email message.")
 
-
     message.addRecipients( Message.RecipientType.TO, primaryRecipients.toArray[Address] )
 
     if ( ccRecipients != null ) 
@@ -208,7 +207,7 @@ case class Email( subject:String, text:String ) {
       val host = emailConfig get "host"
       
       if ( host == null )
-        throw new RuntimeException( "WARNING: Mail Host not set in Database globalConfig.  Sending of mail failed!" );
+        throw new RuntimeException( "WARNING: host not set in emailConfig.  Sending of mail failed!" );
 
       var props:Properties = System.getProperties()
       props.put( "mail.smtp.host", host )
@@ -216,16 +215,16 @@ case class Email( subject:String, text:String ) {
       val port = emailConfig get "port"
       
       if ( port != null )
-          props.put( "mail.smtp.port", port )
-      
+          props.put( "mail.smtp.port", port.toString )
+            
       val tls = emailConfig get "tls"
       
       if ( tls != null )
-          props.put( "mail.smtp.starttls.enable", "true" );
+          props.put( "mail.smtp.starttls.enable", tls );
       
       val ssl = emailConfig get "ssl"
       
-      if ( ssl != null ) {
+      if ( ssl == "true" ) {
           props.put( "mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory" );
           props.put( "mail.smtp.socketFactory.fallback", "false" );
       }
@@ -236,6 +235,8 @@ case class Email( subject:String, text:String ) {
       val authPassword = ( emailConfig get "authPassword" ).toString
       
       if ( authUser notBlank ) {
+        println( authUser )
+        println( authPassword )
         props.put( "mail.smtp.auth", "true" );
         props.put( "mail.smtp.user", authUser );
         props.put( "mail.smtp.password", authPassword );

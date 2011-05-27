@@ -8,4 +8,6 @@ object EmailConfig extends MongoEntity( tid = "a0At" ) {
   "port"         is DbInt;
   "authUser"     is DbChar(40);
   "authPassword" is DbPassword;
+  
+  override lazy val dbName = name
 }
