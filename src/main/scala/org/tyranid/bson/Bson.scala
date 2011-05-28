@@ -20,6 +20,9 @@ package org.tyranid.bson
 import org.bson.types.ObjectId
 
 
+/**
+ * Represents either BsonObjects or things that can behave like a BsonObject.
+ */
 trait BsonObject {
   def apply( key:String ):AnyRef
   def update( key:String, v:AnyRef ):Unit
