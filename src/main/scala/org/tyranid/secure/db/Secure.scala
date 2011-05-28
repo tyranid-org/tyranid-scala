@@ -4,8 +4,8 @@ import org.tyranid.db.mongo.MongoEntity;
 import org.tyranid.db._;
 
 object Secure extends MongoEntity( tid = "a0Bt" ) {
-  "publicKey"          is DbChar(40);
-  "privateKey"         is DbChar(40);
+  "recaptchaPublicKey"          is DbChar(40);
+  "recaptchaPrivateKey"         is DbChar(40);
   
   override lazy val dbName = name
 }
