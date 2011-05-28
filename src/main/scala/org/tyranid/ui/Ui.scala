@@ -17,7 +17,7 @@
 
 package org.tyranid.ui
 
-import scala.xml.NodeSeq
+import scala.xml.{ Node, NodeSeq }
 
 import net.liftweb.http.S
 import net.liftweb.http.js.JsCmds._
@@ -33,6 +33,20 @@ object Opts {
 }
 
 case class Opts( opts:(String,String)* )
+
+
+object Button {
+
+  def link( name:String, href:String, color:String ) =
+    <a class={ color + "Btn" } href={ href }><span>{ name }</span></a>
+
+  def bar( buttons:Node* ) =
+    <table class="btnbar">
+     <tr>
+      { buttons.map( btn => <td>{ btn }</td> ) }
+     </tr>
+    </table>
+}
 
 object Field {
 
