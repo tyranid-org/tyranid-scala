@@ -138,6 +138,7 @@ object DbPassword extends DbVarChar( 64 ) {
     ( ( scope:Scope ) => {
         // TODO:  Might be cleaner to add a DbPasswordMatch domain and then change this to look for DbPassword and DbPasswordMatch rather than use fixed names like "password" and "password2"
         ( scope.va.get.name == "password2" &&
+          scope.rec.s( "password2" ).notBlank &&
           scope.rec( "password" ) != scope.rec( "password2" ) ) |*
           Some( Invalid( scope, "Passwords do not match." ) )
       } ) ::
@@ -150,7 +151,7 @@ object DbUrl extends DbVarChar( 256 )
 object DbEmail extends DbVarChar( 128 ) {
 
   override val validations =
-    ( ( scope:Scope ) => scope.s.filter( s => s.notBlank && !s.isEmail ).map( s => Invalid( scope, "Invalid email address." ) ) ) ::
+    ( ( scope:Scope ) => scope.s.filter( s => scope.saving && s.notBlank && !s.isEmail ).map( s => Invalid( scope, "Invalid email address." ) ) ) ::
     super.validations
 
 }
