@@ -76,7 +76,7 @@ case class MongoView( override val entity:MongoEntity ) extends View {
   def apply( idx:Int )     = byIndex( idx )
 }
 
-case class MongoRecord( override val view:MongoView, obj:DBObject = Mobj() ) extends Record with DBObject {
+case class MongoRecord( override val view:MongoView, obj:DBObject = Mobj() ) extends Record with DBObjectWrap {
 
   val db:DBCollection = view.entity.db
 
@@ -107,28 +107,10 @@ case class MongoRecord( override val view:MongoView, obj:DBObject = Mobj() ) ext
       }
     }
 
-  override def /( key:String ) = apply( key ).asInstanceOf[MongoRecord]
+  override def o( key:String ) = apply( key ).asInstanceOf[MongoRecord]
 
   override def save {
     db.save( this )
   }
-
-
-  /*
-   * * *   DBObject delegation
-   */
-
-  def containsField( s:String )      = obj.containsField( s )
-  @deprecated( "use containsField" )
-  def containsKey( s:String )        = obj.containsKey( s )
-  def get( key:String )              = obj.get( key )
-  def keySet                         = obj.keySet
-  def put( key:String, v:AnyRef )    = obj.put( key, v )
-  def putAll( o:BSONObject )         = obj.putAll( o )
-  def putAll( m:java.util.Map[_,_] ) = obj.putAll( m )
-  def removeField( key:String )      = obj.removeField( key )
-  def toMap                          = obj.toMap
-  def isPartialObject                = obj.isPartialObject
-  def markAsPartialObject            = obj.markAsPartialObject
 }
 

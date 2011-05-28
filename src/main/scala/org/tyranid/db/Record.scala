@@ -17,13 +17,13 @@
 
 package org.tyranid.db
 
-import org.bson.types.ObjectId
-
 import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
+import org.tyranid.bson.BsonObject
 import org.tyranid.logic.{ Invalid, Valid }
+import org.bson.types.ObjectId
 
 
 class ViewAttribute( val view:View,
@@ -70,7 +70,7 @@ trait View {
   def apply( idx:Int ):ViewAttribute
 }
 
-trait Record extends Valid {
+trait Record extends Valid with BsonObject {
   val view:View
 
   var isAdding:Boolean = false
@@ -82,6 +82,8 @@ trait Record extends Valid {
   def apply( va:ViewAttribute ):AnyRef
   def update( va:ViewAttribute, v:AnyRef )
   
+  override def o( key:String ) = apply( key ).asInstanceOf[Record]
+
   def idLabel:(AnyRef,String) = ( apply( view.keyVa.get ), s( view.labelVa.get ) )
 
   def tid = entityTid + recordTid
@@ -92,58 +94,46 @@ trait Record extends Valid {
   /**
    * Record/Object/Document/Tuple
    */
-  def /( key:String )       = apply( key ).asInstanceOf[Record]
   def /( va:ViewAttribute ) = apply( va ).asInstanceOf[Record]
 
   /**
    * Array
    */
-  //def a( key:String )       = apply( key ).asInstanceOf[Array]
   //def a( va:ViewAttribute ) = apply( va ).asInstanceOf[Array]
 
   /**
    * Boolean
    */
-  def b( key:String )       = apply( key ).asInstanceOf[Boolean]
   def b( va:ViewAttribute ) = apply( va ).asInstanceOf[Boolean]
 
   /**
    * Double
    */
-  def d( key:String )       = apply( key ).asInstanceOf[Double]
   def d( va:ViewAttribute ) = apply( va ).asInstanceOf[Double]
 
   /**
    * Int
    */
-  def i( key:String )       = apply( key ).asInstanceOf[Int]
   def i( va:ViewAttribute ) = apply( va ).asInstanceOf[Int]
 
   /**
    * Long
    */
-  def l( key:String )       = apply( key ).asInstanceOf[Long]
   def l( va:ViewAttribute ) = apply( va ).asInstanceOf[Long]
 
   /**
    * BSON ObjectId
    */
-  def oid( key:String )       = apply( key ).asInstanceOf[ObjectId]
   def oid( va:ViewAttribute ) = apply( va ).asInstanceOf[ObjectId]
 
   /**
    * Regular Expression
    */
-  //def r( key:String )       = apply( key ).asInstanceOf[Long]
   //def r( va:ViewAttribute ) = apply( va ).asInstanceOf[Long]
 
   /**
    * String
    */
-  def s( key:String ):String = {
-    val v = apply( key )
-    if ( v != null ) v.toString else ""
-  }
   def s( va:ViewAttribute ):String = {
     val v = apply( va )
     if ( v != null ) v.toString else ""
@@ -152,7 +142,6 @@ trait Record extends Valid {
   /**
    * Date/Time
    */
-  //def d( key:String ) = apply( key ).toString
   //def d( va:ViewAttribute ) = apply( va.name ).toString
 
   
