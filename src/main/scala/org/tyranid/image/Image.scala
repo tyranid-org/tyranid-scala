@@ -29,7 +29,7 @@ import net.liftweb.http.{ FileParamHolder, SHtml }
 import org.tyranid.Bind
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
-import org.tyranid.db.{ Domain, Record }
+import org.tyranid.db.{ Domain, Record, Scope }
 import org.tyranid.ui.Field
 
 object DbImage {
@@ -53,9 +53,9 @@ case class DbImage( bucket:S3Bucket ) extends Domain {
 
   def url( path:String ) = bucket.url( path )
 
-  override def ui( r:Record, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.text( r s f.va, v => r( f.va ) = v, "class" -> "textInput" ) ++
-    <div>upload image: { SHtml.fileUpload( save( r, f ) _ ) }</div>
+  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
+    SHtml.text( s.rec s f.va, v => s.rec( f.va ) = v, "class" -> "textInput" ) ++
+    <div>upload image: { SHtml.fileUpload( save( s.rec, f ) _ ) }</div>
 
   //override def inputcClasses = " select"
 }

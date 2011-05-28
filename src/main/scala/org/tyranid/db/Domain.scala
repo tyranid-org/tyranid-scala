@@ -54,8 +54,8 @@ trait Domain extends Valid {
 	
 	def show( s:Scope ) = true
 
-  def ui( r:Record, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxText( r s f.va.name, v => { r( f.va.name ) = v; f.updateDisplayCmd( r ) }, opts.map( ElemAttr.pairToBasic ):_* )
+  def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
+    SHtml.ajaxText( s.rec s f.va.name, v => { s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) }, opts.map( ElemAttr.pairToBasic ):_* )
 
   /**
    * These are the class(es) that should be added to the input container.
@@ -131,8 +131,8 @@ case class DbVarChar( len:Int ) extends LimitedText {
 
 object DbPassword extends DbVarChar( 64 ) {
 
-  override def ui( r:Record, f:Field, opts:(String,String)* ) =
-    SHtml.ajaxText( r s f.va.name, v => { r( f.va.name ) = v; f.updateDisplayCmd( r ) }, ( opts ++ Seq( "type" -> "password" ) ).map( ElemAttr.pairToBasic ):_* )
+  override def ui( s:Scope, f:Field, opts:(String,String)* ) =
+    SHtml.ajaxText( s.rec s f.va.name, v => { s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) }, ( opts ++ Seq( "type" -> "password" ) ).map( ElemAttr.pairToBasic ):_* )
 
   override def validations =
     ( ( scope:Scope ) => {
@@ -141,7 +141,7 @@ object DbPassword extends DbVarChar( 64 ) {
           scope.rec( "password" ) != scope.rec( "password2" ) ) |*
           Some( Invalid( scope, "Passwords do not match." ) )
       } ) ::
-    ( ( scope:Scope ) => scope.s.filter( s => s.notBlank && s.length < 7 ).map( s => Invalid( scope, "Password too short (7 characters minimum)." ) ) ) ::
+    ( ( scope:Scope ) => scope.s.filter( s => scope.saving && s.notBlank && s.length < 7 ).map( s => Invalid( scope, "Password too short (7 characters minimum)." ) ) ) ::
     super.validations
 }
 
@@ -197,7 +197,7 @@ case class DbArray( of:Domain ) extends Domain {
 
       1. 
 
-  override def ui( r:Record, f:Field, opts:(String,String)* ) =
+  override def ui( s:Scope, f:Field, opts:(String,String)* ) =
 
 
 
@@ -211,9 +211,9 @@ case class DbLink( toEn:Entity ) extends Domain {
 		                case IdType.ID_COMPLEX => throw new ModelException( toEn.name + " has a complex ID and cannot be linked to." )
 										}
 
-  override def ui( r:Record, f:Field, opts:(String,String)* ) =
+  override def ui( s:Scope, f:Field, opts:(String,String)* ) =
     SHtml.ajaxSelect( toEn.idLabels.map( v => ( v._1.toString, v._2 ) ),
-                      Full( r s f.va ), v => { r( f.va ) = v; f.updateDisplayCmd( r ) },
+                      Full( s.rec s f.va ), v => { s.rec( f.va ) = v; f.updateDisplayCmd( s ) },
                       opts.map( ElemAttr.pairToBasic ):_* )
 
   override def inputcClasses = " select"

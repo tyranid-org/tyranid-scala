@@ -27,7 +27,7 @@ import net.liftweb.http.SHtml
 
 import org.tyranid.Bind
 import org.tyranid.Imp.string
-import org.tyranid.db.{ Domain, Entity, Record, View, ViewAttribute }
+import org.tyranid.db.{ Domain, Entity, Record, Scope, View, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.math.Base64
 import org.tyranid.ui.Field
@@ -38,8 +38,8 @@ case object DbMongoId extends Domain {
 
   override def tid( r:Record, va:ViewAttribute ) = Base64.toString( r.oid( va ).toByteArray )
 
-  override def ui( r:Record, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.text( r s f.va, v => r( f.va ) = v, "class" -> "textInput" ) 
+  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
+    SHtml.text( s.rec s f.va, v => s.rec( f.va ) = v, "class" -> "textInput" ) 
 
   //override def inputcClasses = " select"
 }

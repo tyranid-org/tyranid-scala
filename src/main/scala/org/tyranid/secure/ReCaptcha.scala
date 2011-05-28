@@ -41,7 +41,7 @@ case class DbReCaptcha( theme:String ) extends Domain {
     
   override def show( s:Scope ) = s.rec.s( s.va.get ) != "passed"
 
-  override def ui( r:Record, f:Field, opts:(String,String)* ) =
+  override def ui( s:Scope, f:Field, opts:(String,String)* ) =
     <head>
      <script type="text/javascript" src="http://www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>
 

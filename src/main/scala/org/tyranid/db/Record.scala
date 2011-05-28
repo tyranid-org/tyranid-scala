@@ -171,7 +171,10 @@ trait Record extends Valid with BsonObject {
   def save {}
 }
 
-case class Scope( rec:Record, initialDraw:Boolean, va:Option[ViewAttribute] = None ) {
+case class Scope( rec:Record,
+                  initialDraw:Boolean = false,
+                  saving:Boolean = true,
+                  va:Option[ViewAttribute] = None ) {
 
   def s = va.map( rec.s )
 

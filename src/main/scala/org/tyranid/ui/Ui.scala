@@ -19,7 +19,7 @@ package org.tyranid.ui
 
 import scala.xml.{ Node, NodeSeq }
 
-import net.liftweb.http.S
+import net.liftweb.http.{ S, SHtml }
 import net.liftweb.http.js.JsCmds._
 import net.liftweb.http.js.JE.JsRaw
 
@@ -39,6 +39,9 @@ object Button {
 
   def link( name:String, href:String, color:String ) =
     <a class={ color + "Btn" } href={ href }><span>{ name }</span></a>
+
+  def submit( name:String, act:() => Unit, color:String ) =
+    SHtml.submit( name, act, "class" -> ( color + "Btn" ) )
 
   def bar( buttons:Node* ) =
     <table class="btnbar">
@@ -72,17 +75,18 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1 )( implicit 
     <div id={ va.name + "_c" } class={ "fieldc" + ( !invalids.isEmpty |* " invalid" ) }>{
 
       <div class="labelc">{ va.label( rec, opts.opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
-      <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( rec, this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
+      <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( scope, this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
       <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
     }</div>
   }
 
-  def updateDisplayCmd( r:Record ) = {
-    val invalids = va.invalids( Scope( r, initialDraw = false, Some( va ) ) )
+  def updateDisplayCmd( scope:Scope ) = {
+    val rec = scope.rec
+    val invalids = va.invalids( scope.copy( initialDraw = false, va = Some( va ) ) )
       
     if ( invalids.isEmpty ) {
-      if ( r.invalids( va.index ) ) {
-        r.invalids -= va.index
+      if ( rec.invalids( va.index ) ) {
+        rec.invalids -= va.index
 
         SetHtml( va.name + "_e", NodeSeq.Empty ) &
         JsRaw( "$('#" + va.name + "_c').removeClass('invalid');" )
@@ -90,7 +94,7 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1 )( implicit 
         Noop
       }
     } else {
-      r.invalids += va.index
+      rec.invalids += va.index
 
       SetHtml( va.name + "_e", invalidLines( invalids ) ) &
       JsRaw( "$('#" + va.name + "_c').addClass('invalid');" )
@@ -102,14 +106,14 @@ case class Row( fields:Field* )
 
 object Grid {
 
-  def apply( rec:Record, rows:Row* ) = new Grid( rec.view, rows:_* ).draw( rec )
+  def apply( s:Scope, rows:Row* ) = new Grid( s.rec.view, rows:_* ).draw( s )
 }
 
 case class Grid( view:View, rows:Row* ) {
   val boxSpan = rows.map( _.fields.length ).max
 
-  def draw( rec:Record ) = {
-    val scope = Scope( rec, initialDraw = true )
+  def draw( pScope:Scope ) = {
+    val scope = pScope.copy( initialDraw = true )
     
     for ( row <- rows ) yield
       <tr>{
