@@ -18,9 +18,10 @@
 package org.tyranid.db.mongo
 
 import org.bson.BSONObject
+import org.bson.types.ObjectId
 import com.mongodb.{ BasicDBObject, DB, DBCollection, DBObject }
 
-import org.tyranid.db.Entity
+import org.tyranid.bson.BsonObject
 
 
 /**
@@ -76,7 +77,28 @@ trait DBValue {
   def int:Int
 }
 
-case class DBObjectImp( obj:DBObject ) extends DBObject with DBValue {
+trait DBObjectWrap extends DBObject with BsonObject {
+  val obj:DBObject
+
+  /*
+   * * *   DBObject delegation
+   */
+
+  def containsField( s:String )      = obj.containsField( s )
+  @deprecated( "use containsField" )
+  def containsKey( s:String )        = obj.containsKey( s )
+  def get( key:String )              = obj.get( key )
+  def keySet                         = obj.keySet
+  def put( key:String, v:AnyRef )    = obj.put( key, v )
+  def putAll( o:BSONObject )         = obj.putAll( o )
+  def putAll( m:java.util.Map[_,_] ) = obj.putAll( m )
+  def removeField( key:String )      = obj.removeField( key )
+  def toMap                          = obj.toMap
+  def isPartialObject                = obj.isPartialObject
+  def markAsPartialObject            = obj.markAsPartialObject
+}
+
+case class DBObjectImp( obj:DBObject ) extends DBObjectWrap with DBValue {
 
   def apply( key:String )            = /( key )
   def update( key:String, v:AnyRef ) = obj.put( key, v )
@@ -96,25 +118,6 @@ case class DBObjectImp( obj:DBObject ) extends DBObject with DBValue {
   def int = throw new IllegalArgumentException( obj + " is not convertible to int." )
 
   def string = obj.toString
-
-
-
-  /*
-   * * *   DBObject delegation
-   */
-
-  def containsField( s:String )      = obj.containsField( s )
-  @deprecated( "use containsField" )
-  def containsKey( s:String )        = obj.containsKey( s )
-  def get( key:String )              = obj.get( key )
-  def keySet                         = obj.keySet
-  def put( key:String, v:AnyRef )    = obj.put( key, v )
-  def putAll( o:BSONObject )         = obj.putAll( o )
-  def putAll( m:java.util.Map[_,_] ) = obj.putAll( m )
-  def removeField( key:String )      = obj.removeField( key )
-  def toMap                          = obj.toMap
-  def isPartialObject                = obj.isPartialObject
-  def markAsPartialObject            = obj.markAsPartialObject
 }
 
 case class BasicDBValue( ref:AnyRef ) extends DBValue {

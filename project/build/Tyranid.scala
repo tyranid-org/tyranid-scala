@@ -19,6 +19,8 @@ class Tyranid( info: ProjectInfo ) extends DefaultProject( info ) {
     "net.liftweb"              %% "lift-util"                % liftVersion     % "compile->default",
     "net.liftweb"              %% "lift-widgets"             % liftVersion     % "compile->default",
 
+    "org.scala-tools.time"     %% "time"                     % "0.3"           % "compile->default",
+
     "net.databinder"           %% "dispatch-http"            % "0.7.8"         % "compile->default",
     "net.databinder"           %% "dispatch-lift-json"       % "0.7.8"         % "compile->default",
 

@@ -240,7 +240,7 @@ class SqlView extends TupleView {
 
 class SqlRecord( override val view:SqlView ) extends Tuple( view ) {
 
-  override def /( key:String ) = apply( key ).asInstanceOf[SqlRecord]
+  override def o( key:String ) = apply( key ).asInstanceOf[SqlRecord]
 
 	override def save = {
 		val en = view.entity
