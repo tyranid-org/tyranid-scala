@@ -66,6 +66,7 @@ case class DbReCaptcha( theme:String ) extends Domain {
 
   override val validations =
     ( ( scope:Scope ) => {
+      scope.captcha && {
       ( scope.initialDraw && scope.rec( scope.va.get ) == "failed" ) ||
       ( !scope.rec.isInitial &&
         !scope.initialDraw && {
@@ -79,7 +80,7 @@ case class DbReCaptcha( theme:String ) extends Domain {
           scope.rec( scope.va.get ) = if ( passedCaptcha ) "passed" else "failed"
 
           !passedCaptcha
-        } ) |*
+        } ) } |*
         Some( Invalid( scope, "Invalid captcha." ) )
     } ) ::
     super.validations

@@ -80,6 +80,9 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1 )( implicit 
     }</div>
   }
 
+  def input( parentScope:Scope ) =
+    va.att.domain.ui( parentScope.at( va ), this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* )
+
   def updateDisplayCmd( scope:Scope ) = {
     val rec = scope.rec
     val invalids = va.invalids( scope.copy( initialDraw = false, va = Some( va ) ) )

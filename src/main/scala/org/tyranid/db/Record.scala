@@ -174,6 +174,7 @@ trait Record extends Valid with BsonObject {
 case class Scope( rec:Record,
                   initialDraw:Boolean = false,
                   saving:Boolean = true,
+                  captcha:Boolean = false,
                   va:Option[ViewAttribute] = None ) {
 
   def s = va.map( rec.s )
