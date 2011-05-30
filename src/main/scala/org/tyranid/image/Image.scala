@@ -49,13 +49,23 @@ case class DbImage( bucket:S3Bucket ) extends Domain {
       val name = r.entityTid + "/" + r.recordTid + "/" + f.va.att.name + "." + extension
       S3.write( bucket, name, fp.mimeType, x )
       S3.access( bucket, name, public = true )
+//      r( f.name ) = name;
     }
 
   def url( path:String ) = bucket.url( path )
 
-  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.text( s.rec s f.va, v => s.rec( f.va ) = v, "class" -> "textInput" ) ++
-    <div>upload image: { SHtml.fileUpload( save( s.rec, f ) _ ) }</div>
+  override def ui( s:Scope, f:Field, opts:(String,String)* ): NodeSeq =
+    /*SHtml.text( s.rec s f.va, v => s.rec( f.va ) = v, "class" -> "textInput" ) ++ */
+    <div class='thumbnail' style='vertical-align:middle;height:80px;'>
+      { 
+      if ( ( s.rec s f.va ).isBlank ) {
+        <img src='http://d33lorp9dhlilu.cloudfront.net/generic-image.png' style='float:left;'/>
+      } else {
+        <img src='{ url }' style='float:left;'/>
+      }
+      }
+      <div style='float:right; vertical-align:middle;height:80px;'> { SHtml.fileUpload( save( s.rec, f ) _ ) }</div>
+    </div>
 
   //override def inputcClasses = " select"
 }
