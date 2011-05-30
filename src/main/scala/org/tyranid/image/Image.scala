@@ -45,17 +45,20 @@ case class DbImage( bucket:S3Bucket ) extends Domain {
     case null =>
     case x if x.length == 0 =>
     case x =>
+println( "entering IMAGE save ..." )
       val extension = fp.fileName.suffix( '.' ).replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
-      val name = r.entityTid + "/" + r.recordTid + "/" + f.va.att.name + "." + extension
-      S3.write( bucket, name, fp.mimeType, x )
-      S3.access( bucket, name, public = true )
+      val path = r.entityTid + "/" + r.recordTid + "/" + f.va.att.name + "." + extension
+      S3.write( bucket, path, fp.mimeType, x )
+      S3.access( bucket, path, public = true )
+
+      r( f.va ) = bucket.url( path )
     }
 
   def url( path:String ) = bucket.url( path )
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.text( s.rec s f.va, v => s.rec( f.va ) = v, "class" -> "textInput" ) ++
-    <div>upload image: { SHtml.fileUpload( save( s.rec, f ) _ ) }</div>
+    //SHtml.text( s.rec s f.va, v => s.rec( f.va ) = v, "class" -> "textInput" ) ++
+    <div>Image: { SHtml.fileUpload( save( s.rec, f ) _ ) }</div>
 
   //override def inputcClasses = " select"
 }
