@@ -24,20 +24,26 @@ import org.tyranid.Bind
 import org.tyranid.Imp.{ boolean, option, symbol }
 import org.tyranid.db.{ Record, Scope }
 
-object User {
+trait UserMeta {
 
-  private object currentVar extends SessionVar[User]( Bind.NewUser() )
+  def current:User           = User.currentVar.is
+  def current_=( user:User ) = User.currentVar.set( user )
 
-  def current:User = currentVar.is
-  def current_=( user:User ) = currentVar.set( user )
+  def isLoggedIn = User.current.loggedIn
+  def isAdmin    = User.current.admin
 
-  def isLoggedIn = current.loggedIn
-  def isAdmin    = current.admin
+  lazy val ReqLoggedIn = User._ReqLoggedIn
+  lazy val ReqAdmin    = User._ReqAdmin
+}
+
+object User extends UserMeta {
+
+  private[profile] object currentVar extends SessionVar[User]( Bind.NewUser() )
 
   import net.liftweb.sitemap.Loc._
 
-  lazy val ReqLoggedIn = If( isLoggedIn _,  () => RedirectResponse("/user/login") )
-  lazy val ReqAdmin    = If( isAdmin _,     () => RedirectResponse("/user/login") )
+  private[profile] lazy val _ReqLoggedIn = If( isLoggedIn _,  () => RedirectResponse("/user/login") )
+  private[profile] lazy val _ReqAdmin    = If( isAdmin _,     () => RedirectResponse("/user/login") )
 }
 
 trait User extends Record {
