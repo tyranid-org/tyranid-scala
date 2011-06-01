@@ -80,6 +80,9 @@ trait DBValue {
 trait DBObjectWrap extends DBObject with BsonObject {
   val obj:DBObject
 
+  def has( key:String )    = obj.containsField( key )
+  def remove( key:String ) = obj.removeField( key )
+
   /*
    * * *   DBObject delegation
    */
