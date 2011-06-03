@@ -129,6 +129,13 @@ case class DbVarChar( len:Int ) extends LimitedText {
 	val sqlName = "VARCHAR(" + len + ")"
 }
 
+/**
+ * A string that must be lower case.
+ */
+case class DbLowerChar( len:Int ) extends LimitedText {
+	val sqlName = "CHAR(" + len + ")"
+}
+
 object DbPassword extends DbVarChar( 64 ) {
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ) =

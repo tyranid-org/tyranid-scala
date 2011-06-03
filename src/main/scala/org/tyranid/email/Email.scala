@@ -16,8 +16,34 @@ import javax.mail.internet._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-//Email( subject = ...,
-//       text = ... )
+
+object Email {
+
+  private val wellKnownProviders = Array(
+    "@aol.com",
+    "@fastmail.fm",
+    "@gmail.com",
+    "@hotmail.com",
+    "@inbox.com",
+    "@lycos.com",
+    "@mac.com",
+    "@mail.com",
+    "@me.com",
+    "@msn.com",
+    "@yahoo.com" )
+
+  def isWellKnownProvider( email:String ) = {
+    val lemail = email.toLowerCase
+    wellKnownProviders exists lemail.endsWith
+  }
+
+  def domainFor( email:String ) =
+    email.indexOf( '@' ) match {
+    case -1 => ""
+    case n  => email.substring( n+1 )
+    }
+    
+}
 
 case class Email( subject:String, text:String ) {
   private var emailSession:Session = null;
