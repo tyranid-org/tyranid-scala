@@ -178,6 +178,11 @@ object DbPhone extends DbChar( 10 )
 
 object DbBoolean extends Domain {
 	val sqlName = "CHAR(1)"
+	  
+  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
+    SHtml.ajaxCheckbox( ( s.rec s f.va.name ) == "Y", (v:Boolean) => { if ( v ) s.rec( f.va.name ) = "Y" else s.rec( f.va.name ) = "N"; f.updateDisplayCmd( s ) }, opts.map( ElemAttr.pairToBasic ):_* )
+    
+  override def inputcClasses = " checkbox"
 }
 
 
