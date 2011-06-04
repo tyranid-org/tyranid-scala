@@ -18,10 +18,10 @@
 package org.tyranid.profile
 
 
-import net.liftweb.http.{ RedirectResponse, SessionVar }
+import net.liftweb.http.{ RedirectResponse, S, SessionVar }
 
 import org.tyranid.Bind
-import org.tyranid.Imp.{ boolean, option, symbol }
+import org.tyranid.Imp._
 import org.tyranid.db.{ Record, Scope }
 
 trait UserMeta {
@@ -42,7 +42,11 @@ object User extends UserMeta {
 
   import net.liftweb.sitemap.Loc._
 
-  private[profile] lazy val _ReqLoggedIn = If( isLoggedIn _,  () => RedirectResponse("/user/login") )
+  private[profile] lazy val _ReqLoggedIn =
+    If( isLoggedIn _,  () => {
+      RedirectResponse("/user/login?l=" + S.uriAndQueryString.open_!.encUrl )
+    } )
+    
   private[profile] lazy val _ReqAdmin    = If( isAdmin _,     () => RedirectResponse("/user/login") )
 }
 

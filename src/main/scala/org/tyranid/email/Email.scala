@@ -43,6 +43,11 @@ object Email {
     case n  => email.substring( n+1 )
     }
     
+  def domainPart( email:String ) = {
+    val emailParser = """([\w\d\-\_]+)(\+\d+)?@([\w\d\-]+)([\w\d\.])+""".r
+    val emailParser( name, num, domain, com ) = email
+    domain
+  }
 }
 
 case class Email( subject:String, text:String ) {

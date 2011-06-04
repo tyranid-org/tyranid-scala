@@ -30,6 +30,7 @@ import org.tyranid.bson.BsonObject
 object Imp {
   val $gt      = "$gt"
   val $ne      = "$ne"
+  val $and     = "$and"
   val $or      = "$or"
   val $regex   = "$regex"
   val $options = "$options"
@@ -71,6 +72,9 @@ case class DBImp( db:com.mongodb.DB ) {
 case class DBCollectionImp( coll:DBCollection ) {
 
   def +=( obj:DBObject ) = coll.insert( obj )
+  
+  // TODO:  is there a way to implement this without actually bringing the object back?
+  def exists( query:DBObject ) = coll.findOne( query ) != null
 }
 
 case class DBCursorImp( cursor:DBCursor ) extends Iterator[DBObject] {
@@ -93,6 +97,10 @@ trait DBObjectWrap extends DBObject with BsonObject {
   def has( key:String )    = obj.containsField( key )
   def remove( key:String ) = obj.removeField( key )
 
+  def isNew = !has( "_id" )
+ 
+  
+  
   /*
    * * *   DBObject delegation
    */

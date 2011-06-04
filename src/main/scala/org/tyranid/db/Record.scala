@@ -75,7 +75,7 @@ trait Record extends Valid with BsonObject {
 
   var isAdding:Boolean = false
   var isInitial:Boolean = true
-
+  
   final def apply( key:String ):AnyRef = apply( view( key ) )
   final def update( key:String, v:AnyRef ):Unit = update( view( key ), v )
 

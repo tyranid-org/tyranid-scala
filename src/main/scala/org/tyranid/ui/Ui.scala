@@ -67,7 +67,7 @@ object Field {
   implicit def symbol2Field( name:Symbol )( implicit view:View ) = Field( name.name )
 }
 
-case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1 )( implicit view:View ) {
+case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolean = true )( implicit view:View ) {
 
   lazy val va = view( name )
 
