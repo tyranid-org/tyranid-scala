@@ -17,9 +17,10 @@
 
 package org.tyranid.ui
 
-import scala.xml.{ Node, NodeSeq }
+import scala.xml.{ Node, NodeSeq, Unparsed }
 
 import net.liftweb.http.{ S, SHtml }
+import net.liftweb.http.js.JsCmd
 import net.liftweb.http.js.JsCmds._
 import net.liftweb.http.js.JE.JsRaw
 
@@ -35,6 +36,12 @@ object Opts {
 case class Opts( opts:(String,String)* )
 
 
+object Focus {
+
+  def apply( id:String ) =
+    <script>{ Unparsed( """$( $('""" + id + """').focus() );""" ) }</script>
+}
+
 object Button {
 
   def link( name:String, href:String, color:String ) =
@@ -42,6 +49,9 @@ object Button {
 
   def submit( name:String, act:() => Unit, color:String ) =
     SHtml.submit( name, act, "class" -> ( color + "Btn" ) )
+
+  def button( name:String, act:( String ) => JsCmd, color:String, inline:Boolean = false ) =
+    <button class={ color + "Btn" } style={ inline |* "display:inline;" } onclick={ SHtml.ajaxCall( JsRaw( "''" ), act )._2.toJsCmd }>{ name }</button>
 
   def bar( buttons:Node* ) =
     <table class="btnbar">

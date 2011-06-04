@@ -19,7 +19,7 @@ package org.tyranid.db.mongo
 
 import org.bson.BSONObject
 import org.bson.types.ObjectId
-import com.mongodb.{ BasicDBObject, DB, DBCollection, DBObject }
+import com.mongodb.{ BasicDBObject, DB, DBCollection, DBCursor, DBObject }
 
 import org.tyranid.bson.BsonObject
 
@@ -28,8 +28,11 @@ import org.tyranid.bson.BsonObject
  * IMPlicit IMPorts.
  */
 object Imp {
-  val $gt = "$gt"
-  val $ne = "$ne"
+  val $gt      = "$gt"
+  val $ne      = "$ne"
+  val $or      = "$or"
+  val $regex   = "$regex"
+  val $options = "$options"
 
   object Mobj {
     def apply = new DBObjectImp( new BasicDBObject )
@@ -49,6 +52,7 @@ object Imp {
 	implicit def dbImp( db:DB )                      = new DBImp( db )
 	implicit def collectionImp( coll:DBCollection )  = new DBCollectionImp( coll )
 	implicit def objImp( obj:DBObject )              = new DBObjectImp( obj )
+	implicit def cursorImp( cursor:DBCursor )        = new DBCursorImp( cursor )
 }
 
 import Imp._
@@ -67,6 +71,12 @@ case class DBImp( db:com.mongodb.DB ) {
 case class DBCollectionImp( coll:DBCollection ) {
 
   def +=( obj:DBObject ) = coll.insert( obj )
+}
+
+case class DBCursorImp( cursor:DBCursor ) extends Iterator[DBObject] {
+
+  def hasNext = cursor.hasNext
+  def next = cursor.next
 }
 
 trait DBValue {
