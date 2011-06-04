@@ -27,6 +27,8 @@ trait BsonObject {
   def apply( key:String ):AnyRef
   def update( key:String, v:AnyRef ):Unit
 
+  def id = apply( "id" )
+
   //def a( key:String )       = apply( key ).asInstanceOf[Array]
   def o( key:String )         = apply( key ).asInstanceOf[BsonObject]
   def b( key:String )         = apply( key ).asInstanceOf[Boolean]
