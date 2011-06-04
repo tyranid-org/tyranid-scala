@@ -41,6 +41,11 @@ case class DbImage( bucket:S3Bucket ) extends Domain {
   val sqlName = "TEXT"  // TODO
 
   private def save( r:Record, f:Field )( fp:FileParamHolder ) =
+    
+//    val fileObj = r.o( f.va )
+//    fileObj( 'name ) = dsf
+//    fileObj( 'descriptipon )
+    
     fp.file match {
     case null =>
     case x if x.length == 0 =>
