@@ -99,8 +99,6 @@ trait Record extends Valid with BsonObject {
   def apply( va:ViewAttribute ):AnyRef
   def update( va:ViewAttribute, v:Any )
   
-  override def o( key:String ) = apply( key ).asInstanceOf[Record]
-
   def idLabel:(AnyRef,String) = ( apply( view.keyVa.get ), s( view.labelVa.get ) )
 
   def tid = entityTid + recordTid
@@ -111,7 +109,9 @@ trait Record extends Valid with BsonObject {
   /**
    * Record/Object/Document/Tuple
    */
-  def /( va:ViewAttribute ) = apply( va ).asInstanceOf[Record]
+  def /( va:ViewAttribute )    = apply( va ).asInstanceOf[Record]
+  override def o( key:String ) = apply( key ).asInstanceOf[Record]
+
 
   /**
    * Array
