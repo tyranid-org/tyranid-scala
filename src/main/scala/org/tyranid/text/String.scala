@@ -95,6 +95,14 @@ class StringImp( s:String ) {
    */
 	def plural( cnt:Int ):String = if ( cnt == 1 ) s else plural
 
+  /**
+   * Generates a possessive form of a singular word.
+   */
+	def possessive:String = s match {
+		case s if s.endsWith( "s" ) => s + "'"
+		case s                      => s + "'s"
+	  }
+
 	/**
  	 * Scala's StringOps defines a toBoolean(), but it is very minimal ... it only accepts "true" and "false"
  	 */

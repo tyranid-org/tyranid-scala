@@ -21,12 +21,13 @@ import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import org.bson.BSONObject
+import org.bson.types.ObjectId
 import com.mongodb.{ BasicDBObject, DB, DBCollection, DBObject }
 
 import net.liftweb.http.SHtml
 
 import org.tyranid.Bind
-import org.tyranid.Imp.string
+import org.tyranid.Imp._
 import org.tyranid.db.{ Domain, Entity, Record, Scope, View, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.math.Base64
@@ -54,6 +55,15 @@ case class MongoEntity( tid:String ) extends Entity {
   def drop   { db.drop }
 
   def apply( obj:DBObject ) = MongoRecord( MongoView( this ), obj )
+
+  override def byRecordTid( recordTid:String ):Option[MongoRecord] = {
+    val obj = db.findOne( new ObjectId( Base64.toBytes( recordTid ) ) )
+
+    obj != null |* Some( make( obj ) )
+  }
+
+  def make                 = MongoRecord( MongoView( this ), Mobj() )
+  def make( obj:DBObject ) = MongoRecord( MongoView( this ), obj )
 }
 
 case class MongoView( override val entity:MongoEntity ) extends View {
@@ -95,11 +105,11 @@ case class MongoRecord( override val view:MongoView, obj:DBObject = Mobj() ) ext
       }
     }
 
-  def update( va:ViewAttribute, v:AnyRef ) =
+  def update( va:ViewAttribute, v:Any ) =
     if ( va.temporary ) {
       if ( temporaries == null )
         temporaries = mutable.HashMap()
-      temporaries( va.name ) = v
+      temporaries( va.name ) = v.asInstanceOf[AnyRef]
     } else {
       va.name match {
       case "id" => obj.put( "_id", v )
@@ -111,6 +121,10 @@ case class MongoRecord( override val view:MongoView, obj:DBObject = Mobj() ) ext
 
   override def save {
     db.save( this )
+  }
+
+  def remove {
+    db.remove( this )
   }
 }
 

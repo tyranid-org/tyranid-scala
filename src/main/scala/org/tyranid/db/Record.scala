@@ -70,17 +70,34 @@ trait View {
   def apply( idx:Int ):ViewAttribute
 }
 
+object Record {
+
+
+  def byTid( tid:String, only:Entity = null ):Option[Record] = {
+
+    val ( entityTid, recordTid ) = tid.splitAt( 4 )
+
+    Entity.
+      byTid( entityTid ).
+      filter( e => only == null || only == e ).
+      flatMap( entity => entity.byRecordTid( recordTid ) )
+  }
+
+}
+
 trait Record extends Valid with BsonObject {
   val view:View
+
+  def entity = view.entity
 
   var isAdding:Boolean = false
   var isInitial:Boolean = true
   
   final def apply( key:String ):AnyRef = apply( view( key ) )
-  final def update( key:String, v:AnyRef ):Unit = update( view( key ), v )
+  final def update( key:String, v:Any ):Unit = update( view( key ), v )
 
   def apply( va:ViewAttribute ):AnyRef
-  def update( va:ViewAttribute, v:AnyRef )
+  def update( va:ViewAttribute, v:Any )
   
   override def o( key:String ) = apply( key ).asInstanceOf[Record]
 

@@ -25,7 +25,7 @@ import org.bson.types.ObjectId
  */
 trait BsonObject {
   def apply( key:String ):AnyRef
-  def update( key:String, v:AnyRef ):Unit
+  def update( key:String, v:Any ):Unit
 
   def id = apply( "id" )
 

@@ -75,6 +75,8 @@ object Entity {
 
   private val index = mutable.Map[String,Entity]()
 
+  def byTid( tid:String ) = index.get( tid )
+
   def register( en:Entity ) = {
     if ( index.contains( en.tid ) )
       throw new RuntimeException( "Entity \"" + en.name + "\" has a duplicate TID of \"" + en.tid + "\"." )
@@ -146,6 +148,8 @@ trait Entity extends Domain with DbItem {
 	}
 
   def idLabels:Seq[(AnyRef,String)] = Nil
+
+  def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException // ... yet
 
 
 	/*

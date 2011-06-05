@@ -226,7 +226,15 @@ case class DbLink( toEn:Entity ) extends Domain {
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ) =
     SHtml.ajaxSelect( toEn.idLabels.map( v => ( v._1.toString, v._2 ) ),
-                      Full( s.rec s f.va ), v => { s.rec( f.va ) = v; f.updateDisplayCmd( s ) },
+                      Full( s.rec s f.va ),
+                      v => {
+                        toEn.idType match {
+                        case IdType.ID_32 => s.rec( f.va ) = v.toInt
+                        case IdType.ID_64 => s.rec( f.va ) = v.toLong
+                        case _            => s.rec( f.va ) = v
+                        }
+                        f.updateDisplayCmd( s )
+                      },
                       opts.map( ElemAttr.pairToBasic ):_* )
 
   override def inputcClasses = " select"

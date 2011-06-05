@@ -54,5 +54,8 @@ trait User extends Record {
 
   var loggedIn = false
   var admin    = false
+
+
+  def fullName = s( 'firstName ) + " " + s( 'lastName )
 }
 
