@@ -64,6 +64,8 @@ case class MongoEntity( tid:String ) extends Entity {
 
   def make                 = MongoRecord( MongoView( this ), Mobj() )
   def make( obj:DBObject ) = MongoRecord( MongoView( this ), obj )
+
+  def remove( obj:DBObject ) = db.remove( obj )
 }
 
 case class MongoView( override val entity:MongoEntity ) extends View {
