@@ -17,10 +17,13 @@
 
 package org.tyranid.db.mongo
 
+import scala.collection.JavaConversions._
+
 import org.bson.BSONObject
 import org.bson.types.ObjectId
-import com.mongodb.{ BasicDBObject, DB, DBCollection, DBCursor, DBObject }
+import com.mongodb.{ BasicDBList, BasicDBObject, DB, DBCollection, DBCursor, DBObject }
 
+import org.tyranid.Bind
 import org.tyranid.bson.BsonObject
 
 
@@ -46,13 +49,14 @@ object Imp {
   }
 
   object Mongo {
-    def connect = new com.mongodb.Mongo
+    lazy val connect = new com.mongodb.Mongo( Bind.MongoHost )
   }
 
 	implicit def mongoImp( mongo:com.mongodb.Mongo ) = new MongoImp( mongo )
 	implicit def dbImp( db:DB )                      = new DBImp( db )
 	implicit def collectionImp( coll:DBCollection )  = new DBCollectionImp( coll )
 	implicit def objImp( obj:DBObject )              = new DBObjectImp( obj )
+	implicit def listImp( obj:BasicDBList )          = new DBListImp( obj )
 	implicit def cursorImp( cursor:DBCursor )        = new DBCursorImp( cursor )
 }
 
@@ -86,12 +90,11 @@ case class DBCursorImp( cursor:DBCursor ) extends Iterator[DBObject] {
 trait DBValue {
 
   def /( name:String ):DBValue
-
   def string:String
   def int:Int
 }
 
-trait DBObjectWrap extends DBObject with BsonObject {
+trait DBObjectWrap extends DBObject with BsonObject with DBValue {
   val obj:DBObject
 
   def has( key:String )    = obj.containsField( key )
@@ -117,12 +120,6 @@ trait DBObjectWrap extends DBObject with BsonObject {
   def toMap                          = obj.toMap
   def isPartialObject                = obj.isPartialObject
   def markAsPartialObject            = obj.markAsPartialObject
-}
-
-case class DBObjectImp( obj:DBObject ) extends DBObjectWrap with DBValue {
-
-  def apply( key:String )         = obj.get( key )
-  def update( key:String, v:Any ) = obj.put( key, v )
 
 
   /*
@@ -135,10 +132,30 @@ case class DBObjectImp( obj:DBObject ) extends DBObjectWrap with DBValue {
     case null         => MissingDBValue
     case v            => BasicDBValue( v )
     }
-
   def int = throw new IllegalArgumentException( obj + " is not convertible to int." )
-
   def string = obj.toString
+}
+
+case class DBObjectImp( obj:DBObject ) extends DBObjectWrap with DBValue {
+
+  def apply( key:String )         = obj.get( key )
+  def update( key:String, v:Any ) = obj.put( key, v )
+}
+
+case class DBListImp( obj:BasicDBList ) extends DBObjectWrap with DBValue with Seq[Any] {
+
+  def apply( key:String )         = obj.get( key )
+  def update( key:String, v:Any ) = obj.put( key, v )
+
+
+  /*
+   * * *   Seq[Any] delegation
+   */
+
+  def apply( idx:Int )         = obj.get( idx )
+  def update( idx:Int, v:Any ) = obj.put( idx, v )
+  def length = obj.size
+  def iterator = obj.iterator
 }
 
 case class BasicDBValue( ref:AnyRef ) extends DBValue {

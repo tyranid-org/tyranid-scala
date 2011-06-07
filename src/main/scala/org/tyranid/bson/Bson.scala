@@ -18,6 +18,7 @@
 package org.tyranid.bson
 
 import org.bson.types.ObjectId
+import com.mongodb.BasicDBList
 
 
 /**
@@ -29,7 +30,7 @@ trait BsonObject {
 
   def id = apply( "id" )
 
-  //def a( key:String )       = apply( key ).asInstanceOf[Array]
+  def a( key:String )         = apply( key ).asInstanceOf[BasicDBList] // this isn't quite right...
   def o( key:String )         = apply( key ).asInstanceOf[BsonObject]
   def b( key:String )         = apply( key ).asInstanceOf[Boolean]
   def d( key:String )         = apply( key ).asInstanceOf[Double]
