@@ -31,12 +31,27 @@ import org.tyranid.bson.BsonObject
  * IMPlicit IMPorts.
  */
 object Imp {
-  val $gt      = "$gt"
-  val $ne      = "$ne"
-  val $and     = "$and"
-  val $or      = "$or"
-  val $regex   = "$regex"
-  val $options = "$options"
+  val $all       = "$all"
+  val $and       = "$and"
+  val $elemMatch = "$elemMatch"
+  val $exists    = "$exists"
+  val $gt        = "$gt"
+  val $gte       = "$gte"
+  val $in        = "$in"
+  val $lt        = "$lt"
+  val $lte       = "$lte"
+  val $max       = "$max"
+  val $min       = "$min"
+  val $mod       = "$mod"
+  val $ne        = "$ne"
+  val $nin       = "$nin"
+  val $not       = "$not"
+  val $nor       = "$nor"
+  val $options   = "$options"
+  val $or        = "$or"
+  val $regex     = "$regex"
+  val $size      = "$size"
+  val $where     = "$where"
 
   object Mobj {
     def apply = new DBObjectImp( new BasicDBObject )
