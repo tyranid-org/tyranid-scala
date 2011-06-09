@@ -47,7 +47,8 @@ object User extends UserMeta {
       RedirectResponse("/user/login?l=" + S.uriAndQueryString.open_!.encUrl )
     } )
     
-  private[profile] lazy val _ReqAdmin    = If( isAdmin _,     () => RedirectResponse("/user/login") )
+  private[profile] lazy val _ReqAdmin    =
+    If( isAdmin _,     () => RedirectResponse("/user/login") )
 }
 
 trait User extends Record {
