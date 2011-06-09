@@ -50,7 +50,9 @@ object Imp {
   val $options   = "$options"
   val $or        = "$or"
   val $regex     = "$regex"
+  val $set       = "$set"
   val $size      = "$size"
+  val $unset     = "$unset"
   val $where     = "$where"
 
   object Mobj {
@@ -114,6 +116,8 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
 
   def has( key:String )    = obj.containsField( key )
   def remove( key:String ) = obj.removeField( key )
+
+  def rename( from:String, to:String ) = obj.put( to, obj.removeField( from ) )
 
   def isNew = !has( "_id" )
  
