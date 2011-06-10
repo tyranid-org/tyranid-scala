@@ -54,7 +54,8 @@ case class MongoEntity( tid:String ) extends Entity {
   def create {}
   def drop   { db.drop }
 
-  def apply( obj:DBObject ) = MongoRecord( MongoView( this ), obj )
+  def apply( obj:DBObject ) =
+    if ( obj != null ) MongoRecord( MongoView( this ), obj ) else null
 
   override def byRecordTid( recordTid:String ):Option[MongoRecord] = {
     val obj = db.findOne( new ObjectId( Base64.toBytes( recordTid ) ) )
@@ -119,7 +120,12 @@ case class MongoRecord( override val view:MongoView, obj:DBObject = Mobj() ) ext
       }
     }
 
-  override def o( key:String ) = apply( key ).asInstanceOf[MongoRecord]
+  override def o( key:String ) =
+    apply( key ) match {
+    case o:DBObjectWrap => o
+    case o:DBObject     => DBObjectImp( o )
+    case null           => null
+    }
 
   override def save {
     db.save( this )

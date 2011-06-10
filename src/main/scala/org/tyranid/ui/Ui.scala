@@ -50,6 +50,9 @@ object Button {
   def submit( name:String, act:() => Unit, color:String ) =
     SHtml.submit( name, act, "class" -> ( color + "Btn" ) )
 
+  def ajaxButton( name:String, act:() => JsCmd, color:String ) =
+    SHtml.ajaxButton( name, act, "class" -> ( color + "Btn" ) )
+
   def button( name:String, act:( String ) => JsCmd, color:String, inline:Boolean = false ) =
     <button class={ color + "Btn" } style={ inline |* "display:inline;" } onclick={ SHtml.ajaxCall( JsRaw( "''" ), act )._2.toJsCmd }>{ name }</button>
 

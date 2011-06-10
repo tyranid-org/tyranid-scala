@@ -110,7 +110,8 @@ trait Record extends Valid with BsonObject {
    * Record/Object/Document/Tuple
    */
   def /( va:ViewAttribute )    = apply( va ).asInstanceOf[Record]
-  override def o( key:String ) = apply( key ).asInstanceOf[Record]
+  
+  override def o( key:String ) = apply( key ).asInstanceOf[BsonObject]
 
 
   /**
