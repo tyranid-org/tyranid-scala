@@ -88,10 +88,21 @@ object Record {
 trait Record extends Valid with BsonObject {
   val view:View
 
+  val parent:Record
+
   def entity = view.entity
 
   var isAdding:Boolean = false
-  var isInitial:Boolean = true
+
+  def submit {
+    require( parent == null )
+    submitFlagged = true
+  }
+
+  def hasSubmitted:Boolean = submitFlagged || ( parent != null && parent.hasSubmitted )
+
+  private var submitFlagged:Boolean = false
+
   
   final def apply( key:String ):AnyRef = apply( view( key ) )
   final def update( key:String, v:Any ):Unit = update( view( key ), v )
@@ -111,8 +122,19 @@ trait Record extends Valid with BsonObject {
    */
   def /( va:ViewAttribute )    = apply( va ).asInstanceOf[Record]
   
-  override def o( key:String ) = apply( key ).asInstanceOf[BsonObject]
+  /**
+   * BSON ObjectId
+   */
+  def oid( va:ViewAttribute ) = apply( va ).asInstanceOf[ObjectId]
 
+  /**
+   * BSON Object
+   */
+  override def o( name:String ) = o( view( name ) )
+  def o( va:ViewAttribute ) = apply( va ).asInstanceOf[BsonObject]
+
+  final def rec( name:String ):Record = rec( view( name ) )
+  def rec( va:ViewAttribute ):Record
 
   /**
    * Array
@@ -138,11 +160,6 @@ trait Record extends Valid with BsonObject {
    * Long
    */
   def l( va:ViewAttribute ) = apply( va ).asInstanceOf[Long]
-
-  /**
-   * BSON ObjectId
-   */
-  def oid( va:ViewAttribute ) = apply( va ).asInstanceOf[ObjectId]
 
   /**
    * Regular Expression
@@ -174,12 +191,17 @@ trait Record extends Valid with BsonObject {
 
   var extraVaValidations:List[ ( ViewAttribute, ( Scope ) => Option[Invalid] ) ] = Nil
 
-  def invalids( scope:Scope ) =
-    for ( va <- view.vas;
-          vaScope = scope.at( va );
-          invalidOpt <- va.validations.map( validator => validator( vaScope ) );
-          invalid <- invalidOpt )
-        yield invalid
+  def invalids( scope:Scope ):Iterable[Invalid] =
+    ( for ( va <- view.vas;
+            vaScope = scope.at( va );
+            invalidOpt <- va.validations.map( validator => validator( vaScope ) );
+            invalid <- invalidOpt )
+        yield invalid ) ++
+    ( for ( va <- view.vas;
+            if va.att.domain.isInstanceOf[Entity];
+            r = rec( va );
+            invalid <- r.invalids( scope.at( r ) ) )
+        yield invalid )
 
 
   /*
@@ -197,10 +219,11 @@ case class Scope( rec:Record,
 
   def s = va.map( rec.s )
 
+  def at( rec:Record )  = copy( rec = rec, va = None )
   def at( name:String ):Scope = at( rec.view( name ) )
   def at( va:ViewAttribute )  = copy( va = Some( va ) )
 
-  def required = !rec.isInitial |* s.filter( _.isBlank ).map( s => Invalid( this, "Please fill in." ) )
+  def required = rec.hasSubmitted |* s.filter( _.isBlank ).map( s => Invalid( this, "Please fill in." ) )
 }
 
 

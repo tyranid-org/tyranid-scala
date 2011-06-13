@@ -217,18 +217,18 @@ case class DbArray( of:Domain ) extends Domain {
    */
 }
 
-case class DbLink( toEn:Entity ) extends Domain {
-	lazy val sqlName = toEn.idType match {
+case class DbLink( toEntity:Entity ) extends Domain {
+	lazy val sqlName = toEntity.idType match {
 		                case IdType.ID_32      => "INT"
 		                case IdType.ID_64      => "BIGINT"
-		                case IdType.ID_COMPLEX => throw new ModelException( toEn.name + " has a complex ID and cannot be linked to." )
+		                case IdType.ID_COMPLEX => throw new ModelException( toEntity.name + " has a complex ID and cannot be linked to." )
 										}
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ) =
-    SHtml.ajaxSelect( toEn.idLabels.map( v => ( v._1.toString, v._2 ) ),
+    SHtml.ajaxSelect( toEntity.idLabels.map( v => ( v._1.toString, v._2 ) ),
                       Full( s.rec s f.va ),
                       v => {
-                        toEn.idType match {
+                        toEntity.idType match {
                         case IdType.ID_32 => s.rec( f.va ) = v.toInt
                         case IdType.ID_64 => s.rec( f.va ) = v.toLong
                         case _            => s.rec( f.va ) = v
@@ -242,7 +242,7 @@ case class DbLink( toEn:Entity ) extends Domain {
 	override def see( v:AnyRef ) =
 		v match {
 		case null => ""
-		case n:Number => toEn.labelFor( n.longValue )
+		case n:Number => toEntity.labelFor( n.longValue )
 		}
 }
 

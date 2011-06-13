@@ -28,7 +28,7 @@ import net.liftweb.http.SHtml
 
 import org.tyranid.Bind
 import org.tyranid.Imp._
-import org.tyranid.db.{ Domain, Entity, Record, Scope, View, ViewAttribute }
+import org.tyranid.db.{ DbLink, Domain, Entity, Record, Scope, View, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.math.Base64
 import org.tyranid.ui.Field
@@ -63,8 +63,9 @@ case class MongoEntity( tid:String ) extends Entity {
     obj != null |* Some( make( obj ) )
   }
 
-  def make                 = MongoRecord( MongoView( this ), Mobj() )
-  def make( obj:DBObject ) = MongoRecord( MongoView( this ), obj )
+  def make = MongoRecord( MongoView( this ), Mobj() )
+
+  def make( obj:DBObject, parent:MongoRecord = null ) = MongoRecord( MongoView( this ), obj, parent )
 
   def remove( obj:DBObject ) = db.remove( obj )
 }
@@ -89,9 +90,13 @@ case class MongoView( override val entity:MongoEntity ) extends View {
   def apply( idx:Int )     = byIndex( idx )
 }
 
-case class MongoRecord( override val view:MongoView, obj:DBObject = Mobj() ) extends Record with DBObjectWrap {
+case class MongoRecord( override val view:MongoView,
+                        obj:DBObject = Mobj(),
+                        override val parent:MongoRecord = null ) extends Record with DBObjectWrap {
 
   val db:DBCollection = view.entity.db
+
+  override def entity = super.entity.asInstanceOf[MongoEntity]
 
   private var temporaries:mutable.Map[String,AnyRef] = null
 
@@ -120,12 +125,31 @@ case class MongoRecord( override val view:MongoView, obj:DBObject = Mobj() ) ext
       }
     }
 
-  override def o( key:String ) =
-    apply( key ) match {
+  override def o( va:ViewAttribute ):DBObjectWrap =
+    apply( va ) match {
     case o:DBObjectWrap => o
     case o:DBObject     => DBObjectImp( o )
     case null           => null
     }
+
+  def rec( va:ViewAttribute ):MongoRecord = {
+    var obj = o( va )
+
+    if ( obj.isInstanceOf[Record] )
+      return obj.asInstanceOf[MongoRecord]
+
+    // embedded link ...
+    //val en = va.att.domain.asInstanceOf[DbLink].toEntity
+    // embedded record ...
+    val en = va.att.domain.asInstanceOf[MongoEntity]
+
+    if ( obj == null )
+      obj = Mobj()
+
+    val rec = en.make( obj, this )
+    update( va, rec )
+    rec
+  }
 
   override def save {
     db.save( this )

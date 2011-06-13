@@ -37,6 +37,8 @@ class TupleView extends View {
 
 class Tuple( val view:TupleView ) extends Record {
 
+  val parent = null
+
 	val values = new Array[AnyRef]( view.leafCount )
 
 	def apply( index: Int ) = values( index )
@@ -60,6 +62,8 @@ class Tuple( val view:TupleView ) extends Record {
 	}
 
 	def isNew = view.ekeys.findIndexOf( va => values( va.index ) == null ) != -1
+
+  def rec( va:ViewAttribute ):Tuple = throw new UnsupportedOperationException
 }
 
 

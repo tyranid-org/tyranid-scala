@@ -68,7 +68,7 @@ case class DbReCaptcha( theme:String ) extends Domain {
     ( ( scope:Scope ) => {
       scope.captcha && {
       ( scope.initialDraw && scope.rec( scope.va.get ) == "failed" ) ||
-      ( !scope.rec.isInitial &&
+      ( scope.rec.hasSubmitted &&
         !scope.initialDraw && {
           val passedCaptcha =
             Http( "http://www.google.com/recaptcha/api/verify" << Map(
