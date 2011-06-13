@@ -85,12 +85,11 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolea
     rec.invalids( va.index ) = !invalids.isEmpty
     
     va.att.domain.show( scope ) |*
-    <div id={ va.name + "_c" } class={ "fieldc" + ( !invalids.isEmpty |* " invalid" ) }>{
-
-      <div class="labelc">{ va.label( rec, opts.opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
-      <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( scope, this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
-      <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
-    }</div>
+    <div id={ va.name + "_c" } class={ "fieldc" + ( !invalids.isEmpty |* " invalid" ) }>
+     <div class="labelc">{ va.label( rec, opts.opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
+     <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( scope, this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
+     <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
+    </div>
   }
 
   def input( parentScope:Scope ) =
