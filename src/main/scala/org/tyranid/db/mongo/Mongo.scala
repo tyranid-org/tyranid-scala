@@ -126,7 +126,13 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
    * * *   BsonObject
    */
 
-  override def o( key:String ):DBObjectWrap = apply( key ).asInstanceOf[DBObjectWrap]
+  override def o( key:String ):DBObjectWrap =
+    apply( key ) match {
+    case o:DBObjectWrap => o
+    case o:DBObject     => DBObjectImp( o )
+    case null           => null
+    }
+
  
   
   

@@ -17,6 +17,7 @@
 
 package org.tyranid.ui
 
+import scala.collection.mutable
 import scala.xml.{ Node, NodeSeq, Unparsed }
 
 import net.liftweb.http.{ S, SHtml }
@@ -25,7 +26,7 @@ import net.liftweb.http.js.JsCmds._
 import net.liftweb.http.js.JE.JsRaw
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ Record, Scope, View }
+import org.tyranid.db.{ Record, Path, Scope, View, ViewAttribute }
 import org.tyranid.logic.Invalid
 
 
@@ -64,40 +65,61 @@ object Button {
     </table>
 }
 
-object Field {
 
-  implicit def string2Field( name:String )( implicit view:View ) = Field( name )
-  implicit def symbol2Field( name:Symbol )( implicit view:View ) = Field( name.name )
+/*
+ * * *   UI
+ */
+
+
+trait UiObj {
+
+  def bind( view:View ):UiObj
+
+  def draw( scope:Scope ):NodeSeq = NodeSeq.Empty
 }
 
-case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolean = true )( implicit view:View ) {
 
-  lazy val va = view( name )
+object Field {
+
+  implicit def string2Field( name:String ) = Field( name )
+  implicit def symbol2Field( name:Symbol ) = Field( name.name )
+}
+
+case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolean = true, inputOnly:Boolean = false ) extends UiObj {
+
+  var path:Path = null
+  def va = path.leaf
+
+  def bind( view:View ) = {
+    path = view.path( name )
+    this // TODO:  return an immutable version
+  }
 
   private def invalidLines( invalids:Seq[Invalid] ) =
     for ( invalid <- invalids )
       yield <p>{ invalid.message }</p>
 
-  def ui( parentScope:Scope ) = {
-    val scope = parentScope.at( va )
-    val invalids = va.invalids( scope )
-    val rec = scope.rec
-    rec.invalids( va.index ) = !invalids.isEmpty
-    
-    va.att.domain.show( scope ) |*
-    <div id={ va.name + "_c" } class={ "fieldc" + ( !invalids.isEmpty |* " invalid" ) }>
-     <div class="labelc">{ va.label( rec, opts.opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
-     <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( scope, this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
-     <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
-    </div>
-  }
+  override def draw( pScope:Scope ) =
+    if ( inputOnly ) {
+      va.att.domain.ui( pScope.at( path ), this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* )
 
-  def input( parentScope:Scope ) =
-    va.att.domain.ui( parentScope.at( va ), this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* )
+    } else {
+      val scope = pScope.at( path )
+      val invalids = va.invalids( scope )
+      val rec = scope.rec
+      rec.invalids( va.index ) = !invalids.isEmpty
+    
+      va.att.domain.show( scope ) |*
+      <div id={ va.name + "_c" } class={ "fieldc" + ( !invalids.isEmpty |* " invalid" ) }>
+       <div class="labelc">{ va.label( rec, opts.opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
+       <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( scope, this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
+       <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
+      </div>
+    }
 
   def updateDisplayCmd( scope:Scope ) = {
     val rec = scope.rec
-    val invalids = va.invalids( scope.copy( initialDraw = false, va = Some( va ) ) )
+    val invalids = va.invalids( scope.copy( initialDraw = false, path = Some( va ) ) )
       
     if ( invalids.isEmpty ) {
       if ( rec.invalids( va.index ) ) {
@@ -117,23 +139,36 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolea
   }
 }
 
-case class Row( fields:Field* )
+case class Row( fields:Field* ) extends UiObj {
 
-object Grid {
-
-  def apply( s:Scope, rows:Row* ) = new Grid( s.rec.view, rows:_* ).draw( s )
+  def bind( view:View ) = {
+    for ( field <- fields )
+      field.bind( view )
+    this // TODO:  return an immutable version
+  }
 }
 
-case class Grid( view:View, rows:Row* ) {
+case class Grid( rows:Row* ) extends UiObj {
   val boxSpan = rows.map( _.fields.length ).max
 
-  def draw( pScope:Scope ) = {
+  var view:View = null
+
+  def bind( view:View ) = {
+    this.view = view
+
+    for ( row <- rows )
+      row.bind( view )
+
+    this // TODO:  return an immutable version
+  }
+
+  override def draw( pScope:Scope ) = {
     val scope = pScope.copy( initialDraw = true )
     
     for ( row <- rows ) yield
       <tr>{
         for ( f <- row.fields ) yield
-          <td colspan={ f.span.toString } class="cell">{ f.ui( scope ) }</td>
+          <td colspan={ f.span.toString } class="cell">{ f.draw( scope ) }</td>
       }</tr>
   }
 }

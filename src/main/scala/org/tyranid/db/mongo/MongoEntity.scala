@@ -51,6 +51,8 @@ case class MongoEntity( tid:String ) extends Entity {
 
   lazy val db = Mongo.connect.db( Bind.ProfileDbName )( dbName )
 
+  def makeView = MongoView( this )
+
   def create {}
   def drop   { db.drop }
 

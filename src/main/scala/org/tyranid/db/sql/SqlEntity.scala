@@ -28,6 +28,8 @@ case class SqlEntity( tid:String ) extends Entity {
 
 	override lazy val dbName = name.camelCaseToUnderLower.plural
 
+  def makeView = throw new UnsupportedOperationException
+
 	private def toCreateSql = {
 		val sb = new StringBuilder
 		sb ++= "CREATE TABLE " ++= dbName ++= " (\n"

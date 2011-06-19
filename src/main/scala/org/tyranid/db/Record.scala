@@ -17,18 +17,36 @@
 
 package org.tyranid.db
 
+import org.bson.types.ObjectId
+
 import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
 import org.tyranid.bson.BsonObject
 import org.tyranid.logic.{ Invalid, Valid }
-import org.bson.types.ObjectId
+import org.tyranid.ui.{ UiObj }
 
+
+trait Path {
+
+  def pathSize:Int
+  def pathAt( idx:Int ):ViewAttribute
+
+  def leaf:ViewAttribute
+}
+
+case class MultiPath( vas:ViewAttribute* ) extends Path {
+
+  def pathSize = vas.length
+  def pathAt( idx:Int ) = vas( idx )
+
+  def leaf = vas.last
+}
 
 class ViewAttribute( val view:View,
                      val att:Attribute,
-                     val index:Int ) extends Valid {
+                     val index:Int ) extends Valid with Path {
 
   def temporary = att.temporary
 
@@ -36,6 +54,18 @@ class ViewAttribute( val view:View,
   def label:String = att.label
 
   def label( r:Record, opts:(String,String)* ):NodeSeq = <label for={ name }>{ label }</label>
+
+  def toView:View = att.domain.asInstanceOf[Entity].makeView
+
+
+  /*
+   * * *   Path
+   */
+
+  def pathSize = 1
+  def pathAt( idx:Int ) = this
+
+  def leaf = this
 
 
   /*
@@ -68,6 +98,40 @@ trait View {
 
   def apply( name:String ):ViewAttribute
   def apply( idx:Int ):ViewAttribute
+
+
+  private val uis = mutable.Map[String,UiObj]()
+
+  def ui( name:String, ui: => UiObj ) = synchronized {
+    uis.getOrElseUpdate( name, ui.bind( this ) )
+  }
+
+  def path( path:String ):Path = {
+
+    val names = path.split( "_" )
+    val nlen = names.length
+
+    if ( nlen == 1 ) {
+      apply( names( 0 ) )
+    } else {
+      val pbuf = new Array[ViewAttribute]( nlen )
+
+      var ni = 0 
+      var view = this
+
+      while ( ni < nlen ) {
+        val va = view( names( ni ) )
+        pbuf( ni ) = va
+
+        ni += 1
+
+        if ( ni < nlen )
+          view = va.toView
+      }
+
+      MultiPath( pbuf:_* )
+    }
+  }
 }
 
 object Record {
@@ -200,7 +264,7 @@ trait Record extends Valid with BsonObject {
     ( for ( va <- view.vas;
             if va.att.domain.isInstanceOf[Entity];
             r = rec( va );
-            invalid <- r.invalids( scope.at( r ) ) )
+            invalid <- r.invalids( scope.at( va ) ) )
         yield invalid )
 
 
@@ -215,15 +279,36 @@ case class Scope( rec:Record,
                   initialDraw:Boolean = false,
                   saving:Boolean = true,
                   captcha:Boolean = false,
-                  va:Option[ViewAttribute] = None ) {
+                  path:Option[Path] = None ) {
 
   def s = va.map( rec.s )
 
-  def at( rec:Record )  = copy( rec = rec, va = None )
-  def at( name:String ):Scope = at( rec.view( name ) )
-  def at( va:ViewAttribute )  = copy( va = Some( va ) )
+  def at( name:String ):Scope = at( rec.view.path( name ) )
+
+  def at( path:Path ) = {
+    val plen = path.pathSize - 1
+
+    var r = rec
+    var pi = 0
+    while ( pi < plen ) {
+      val va = path.pathAt( pi )
+      r = r.rec( va )
+      pi += 1
+    }
+
+    val va = path.pathAt( pi )
+
+    if ( va.att.domain.isInstanceOf[Entity] )
+      copy( rec = r.rec( va ), path = None )
+    else
+      copy( rec = r, path = Some( path ) )
+  }
+
+  def va = path.map( _.leaf )
 
   def required = rec.hasSubmitted |* s.filter( _.isBlank ).map( s => Invalid( this, "Please fill in." ) )
+
+  def draw( name:String, ui: => UiObj ) = rec.view.ui( name, ui ).draw( this )
 }
 
 

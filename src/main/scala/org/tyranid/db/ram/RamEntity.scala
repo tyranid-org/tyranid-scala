@@ -27,6 +27,8 @@ case class RamEntity( tid:String ) extends Entity {
 
 	override lazy val dbName = name.plural
 
+  def makeView = throw new UnsupportedOperationException
+
 	def create {}
 	def drop   { /* TODO */ }
 

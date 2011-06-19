@@ -35,6 +35,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   var help:NodeSeq = NodeSeq.Empty
   var required:Boolean = false
 
+
   /**
    * Indicates whether this va is persisted in the database or is just used as a temporary form field.
    */
@@ -93,6 +94,9 @@ trait Entity extends Domain with DbItem {
   val tid:String
 
 	val sqlName = "invalid"
+
+  def makeView:View
+
 
 	/*
 	 * * *  Attributes
