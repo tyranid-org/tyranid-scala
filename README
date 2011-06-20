@@ -1,9 +1,0 @@
-
-Tyranid is a free, open-source framework designed to help process and collect information using strong run-time typing using the Scala language.
-
-The library is currently in its early stages and the API will likely change frequently until version 1.0 is reached.
-
-More information can be found at:
-
-http://tyranid.org
-
