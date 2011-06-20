@@ -51,13 +51,13 @@ case class MongoEntity( tid:String ) extends Entity {
 
   lazy val db = Mongo.connect.db( Bind.ProfileDbName )( dbName )
 
-  def makeView = MongoView( this )
+  lazy val makeView = MongoView( this )
 
   def create {}
   def drop   { db.drop }
 
   def apply( obj:DBObject ) =
-    if ( obj != null ) MongoRecord( MongoView( this ), obj ) else null
+    if ( obj != null ) MongoRecord( makeView, obj ) else null
 
   override def byRecordTid( recordTid:String ):Option[MongoRecord] = {
     val obj = db.findOne( new ObjectId( Base64.toBytes( recordTid ) ) )
@@ -65,9 +65,9 @@ case class MongoEntity( tid:String ) extends Entity {
     obj != null |* Some( make( obj ) )
   }
 
-  def make = MongoRecord( MongoView( this ), Mobj() )
+  def make = MongoRecord( makeView, Mobj() )
 
-  def make( obj:DBObject, parent:MongoRecord = null ) = MongoRecord( MongoView( this ), obj, parent )
+  def make( obj:DBObject, parent:MongoRecord = null ) = MongoRecord( makeView, obj, parent )
 
   def remove( obj:DBObject ) = db.remove( obj )
 }
