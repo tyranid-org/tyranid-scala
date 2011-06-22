@@ -60,10 +60,14 @@ class BooleanImp( bval:Boolean ) {
    */
 
   def |*   ( v: => String    ):String    = if ( bval ) v else ""
+  def |*[T]( v: => Int       ):Int       = if ( bval ) v else 0
+  def |*[T]( v: => Long      ):Long      = if ( bval ) v else 0L
+  def |*[T]( v: => Double    ):Double    = if ( bval ) v else 0.0
   def |*   ( v: => NodeSeq   ):NodeSeq   = if ( bval ) v else NodeSeq.Empty
-  def |*   ( v: => JsCmd     ):JsCmd     = if ( bval ) v else Noop
   def |*[T]( v: => Option[T] ):Option[T] = if ( bval ) v else None
+  def |*   ( v: => JsCmd     ):JsCmd     = if ( bval ) v else Noop
   def |*[T]( v: => Box[T]    ):Box[T]    = if ( bval ) v else Empty
+  def |*[T]( v: => List[T]   ):List[T]   = if ( bval ) v else Nil
   def |*[T]( v: => Unit      ):Unit      = if ( bval ) v
 
   /**
