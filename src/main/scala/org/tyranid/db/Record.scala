@@ -108,7 +108,11 @@ trait View {
 
   def path( path:String ):Path = {
 
-    val names = path.split( "_" )
+    val names =
+      path.split(
+        if ( path.indexOf( '.' ) != -1 ) "."
+        else                             "_" )
+    
     val nlen = names.length
 
     if ( nlen == 1 ) {

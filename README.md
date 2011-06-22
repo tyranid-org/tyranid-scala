@@ -11,7 +11,7 @@ Threading
 ---------
 
 <table>
-<tr><th>SCOPE</th><th>THREADSAFE</th><th>Classes</th></tr>
+<tr><th>Scope</th><th>Threadsafe</th><th>Classes</th></tr>
 <tr><td>Global</td><td>Yes</td><td>Entity/Attribute</td></tr>
 <tr><td>Global</td><td>Yes</td><td>View/ViewAttribute</td></tr>
 <tr><td>Global</td><td>Yes</td><td>Ui/Grid/Field/etc.</td></tr>
