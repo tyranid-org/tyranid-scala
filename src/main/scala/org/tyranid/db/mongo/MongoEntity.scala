@@ -53,6 +53,13 @@ case class MongoEntity( tid:String ) extends Entity {
 
   lazy val makeView = MongoView( this )
 
+  override def idLabels:Iterable[(AnyRef,String)] = {
+    val labelName = labelAtt.get.name // TODO:  this should be labelAtt.dbName, but dbName by default is underscore-upper, and there is no MongoAttribute
+
+    db.find( Mobj(), Mobj( labelName -> 1 ) )
+      .map( obj => ( obj( '_id ), obj s labelName ) ).toIterable
+  }
+
   def create {}
   def drop   { db.drop }
 

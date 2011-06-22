@@ -31,6 +31,7 @@ object Imp {
 
 trait DbItem {
 	val name: String
+
 	lazy val dbName = name.camelCaseToUnderLower
 }
 

@@ -225,7 +225,7 @@ case class DbLink( toEntity:Entity ) extends Domain {
 										}
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ) =
-    SHtml.ajaxSelect( toEntity.idLabels.map( v => ( v._1.toString, v._2 ) ),
+    SHtml.ajaxSelect( toEntity.idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq,
                       Full( s.rec s f.va ),
                       v => {
                         toEntity.idType match {
