@@ -17,6 +17,7 @@
 
 package org.tyranid.db.mongo
 
+import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.xml.NodeSeq
 
@@ -56,8 +57,8 @@ case class MongoEntity( tid:String ) extends Entity {
   override def idLabels:Iterable[(AnyRef,String)] = {
     val labelName = labelAtt.get.name // TODO:  this should be labelAtt.dbName, but dbName by default is underscore-upper, and there is no MongoAttribute
 
-    db.find( Mobj(), Mobj( labelName -> 1 ) )
-      .map( obj => ( obj( '_id ), obj s labelName ) ).toIterable
+    db.find( Mobj(), Mobj( labelName -> 1 ) ).toSeq.
+       map( obj => ( obj( '_id ), obj s labelName ) )
   }
 
   def create {}
