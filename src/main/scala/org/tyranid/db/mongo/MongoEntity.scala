@@ -70,10 +70,10 @@ case class MongoEntity( tid:String ) extends Entity {
   override def byRecordTid( recordTid:String ):Option[MongoRecord] = {
     val obj = db.findOne( new ObjectId( Base64.toBytes( recordTid ) ) )
 
-    obj != null |* Some( make( obj ) )
+    obj != null |* Some( apply( obj ) )
   }
 
-  def make = MongoRecord( makeView, Mobj() )
+  def make = apply( Mobj() )
 
   def make( obj:DBObject, parent:MongoRecord = null ) = MongoRecord( makeView, obj, parent )
 
