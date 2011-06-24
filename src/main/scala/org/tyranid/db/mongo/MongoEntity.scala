@@ -109,6 +109,15 @@ case class MongoRecord( override val view:MongoView,
 
   private var temporaries:mutable.Map[String,AnyRef] = null
 
+  def temporary( name:String ) =
+    if ( temporaries != null ) temporaries.get( name )
+    else                       None
+
+  def temporary( name:String, value:Any ) {
+    if ( temporaries == null ) temporaries = mutable.HashMap()
+    temporaries( name ) = value.asInstanceOf[AnyRef]
+  }
+
   def apply( va:ViewAttribute ) =
     if ( va.temporary ) {
       if ( temporaries == null )
