@@ -196,14 +196,17 @@ trait Entity extends Domain with DbItem {
 		}
 	}
 
-	def staticLabelFor( id:Long ) = {
-		val t = staticIdIndex( id )
+	def staticLabelFor( id:Long ) =
+    if ( id == 0 ) {
+      ""
+    } else {
+		  val t = staticIdIndex( id )
 
-		val sb = new StringBuilder
-		for ( lleaf <- t.view.elabels )
-			sb ++= t( lleaf.index ).toString
+		  val sb = new StringBuilder
+		  for ( lleaf <- t.view.elabels )
+			  sb ++= t( lleaf.index ).toString
 
-		sb.toString
-	}
+		  sb.toString
+    }
 }
 
