@@ -140,25 +140,23 @@ trait Entity extends Domain with DbItem {
 
 	def recreate { drop; create }
 
+  def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException // ... yet
 
-	def labelFor( id:Long ) = {
-		val t = staticIdIndex( id )
 
-		val sb = new StringBuilder
-		for ( lleaf <- t.view.elabels )
-			sb ++= t( lleaf.index ).toString
+  /*
+   * * *  Labels
+   */
 
-		sb.toString
-	}
+  def labelFor( id:Any ):String
 
   def idLabels:Iterable[(AnyRef,String)] = Nil
-
-  def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException // ... yet
 
 
 	/*
 	 * * *  Static Data
 	 */
+
+  def isStatic = staticView != null
 
 	var staticView:TupleView = null
 	var staticRecords:Array[Tuple] = null
@@ -196,6 +194,16 @@ trait Entity extends Domain with DbItem {
 				staticIdIndex( id ) = t
 			}
 		}
+	}
+
+	def staticLabelFor( id:Long ) = {
+		val t = staticIdIndex( id )
+
+		val sb = new StringBuilder
+		for ( lleaf <- t.view.elabels )
+			sb ++= t( lleaf.index ).toString
+
+		sb.toString
 	}
 }
 

@@ -242,7 +242,7 @@ case class DbLink( toEntity:Entity ) extends Domain {
 	override def see( v:AnyRef ) =
 		v match {
 		case null => ""
-		case n:Number => toEntity.labelFor( n.longValue )
+		case n:Number => toEntity.labelFor( n )
 		}
 }
 

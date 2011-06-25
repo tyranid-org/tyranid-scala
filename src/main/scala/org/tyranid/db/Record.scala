@@ -247,6 +247,13 @@ trait Record extends Valid with BsonObject {
    */
   //def d( va:ViewAttribute ) = apply( va.name ).toString
 
+
+  def label( va:ViewAttribute ):String = {
+    va.att.domain.asInstanceOf[DbLink].toEntity.labelFor( apply( va ) )
+  }
+
+  def label( key:String ):String = label( view( key ) )
+
   
   /*
    * * *   Validation

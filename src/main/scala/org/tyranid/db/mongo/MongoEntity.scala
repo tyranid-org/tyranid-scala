@@ -54,13 +54,6 @@ case class MongoEntity( tid:String ) extends Entity {
 
   lazy val makeView = MongoView( this )
 
-  override def idLabels:Iterable[(AnyRef,String)] = {
-    val labelName = labelAtt.get.name // TODO:  this should be labelAtt.dbName, but dbName by default is underscore-upper, and there is no MongoAttribute
-
-    db.find( Mobj(), Mobj( labelName -> 1 ) ).toSeq.
-       map( obj => ( obj( '_id ), obj s labelName ) )
-  }
-
   def create {}
   def drop   { db.drop }
 
@@ -78,6 +71,26 @@ case class MongoEntity( tid:String ) extends Entity {
   def make( obj:DBObject, parent:MongoRecord = null ) = MongoRecord( makeView, obj, parent )
 
   def remove( obj:DBObject ) = db.remove( obj )
+
+
+  override def idLabels:Iterable[(AnyRef,String)] = {
+    val labelName = labelAtt.get.name // TODO:  this should be labelAtt.dbName, but dbName by default is underscore-upper, and there is no MongoAttribute
+
+    db.find( Mobj(), Mobj( labelName -> 1 ) ).toSeq.
+       map( obj => ( obj( '_id ), obj s labelName ) )
+  }
+
+  def labelFor( id:Any ) =
+    if ( isStatic ) {
+      staticLabelFor( id.asInstanceOf[Long] )
+    } else {
+      val labelName = labelAtt.get.name // TODO:  this should be labelAtt.dbName, but dbName by default is underscore-upper, and there is no MongoAttribute
+
+      val obj = db.findOne( Mobj( "_id" -> id ), Mobj( labelName -> 1 ) )
+
+      if ( obj != null ) obj.s( labelName )
+      else               ""
+    }
 }
 
 case class MongoView( override val entity:MongoEntity ) extends View {

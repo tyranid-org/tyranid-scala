@@ -55,6 +55,12 @@ case class SqlEntity( tid:String ) extends Entity {
 	def drop { Sql.commitUpdate( toDropSql ) }
 
 
+  def labelFor( id:Any ) =
+    if ( isStatic ) {
+      staticLabelFor( id.asInstanceOf[Long] )
+    } else {
+      throw new UnsupportedOperationException
+    }
 }
 
 

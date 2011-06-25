@@ -32,6 +32,8 @@ case class RamEntity( tid:String ) extends Entity {
 	def create {}
 	def drop   { /* TODO */ }
 
+  def labelFor( id:Any ) = staticLabelFor( id.asInstanceOf[Long] )
+
   override def idLabels:Seq[(AnyRef,String)] = staticRecords.map( _.idLabel )
 }
 
