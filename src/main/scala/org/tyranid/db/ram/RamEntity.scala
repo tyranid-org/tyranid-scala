@@ -36,6 +36,7 @@ case class RamEntity( tid:String ) extends Entity {
     id match {
     case l:Long => staticLabelFor( l )
     case i:Int  => staticLabelFor( i.toLong )
+    case null   => ""
     case id     => id.toString
     }
 
