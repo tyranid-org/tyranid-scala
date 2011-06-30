@@ -21,6 +21,7 @@ import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp.string
+import org.tyranid.db.es.{ NoSearch, Searchable }
 import org.tyranid.db.tuple.{ TupleView, Tuple }
 import org.tyranid.logic.{ Invalid, Valid }
 
@@ -34,6 +35,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   var label:String = name.camelCaseToSpaceUpper
   var help:NodeSeq = NodeSeq.Empty
   var required:Boolean = false
+  var search:Searchable = NoSearch
 
 
   /**
@@ -57,6 +59,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
 
     this
   }
+  def is( search:Searchable ) { this.search = search; this }
   def help( ns:NodeSeq ):Attribute = { help = ns; this }
 
 	var isKey = false
@@ -87,6 +90,8 @@ object Entity {
 }
 
 trait Entity extends Domain with DbItem {
+
+  val searchIndex = "main"
 
   /**
    * Tyranid ID.  This is a 3-byte identifier stored as a 4-character base64 string.  All Entity TIDs should be unique.

@@ -17,9 +17,81 @@
 
 package org.tyranid.db.es
 
+import dispatch._
+import dispatch.Http._
+
 import org.tyranid.Imp._
+import org.tyranid.db.Record
 
 
+/**
+ * ES = ElasticSearch
+ *
+ * NOTE: decide between the native Java API vs. the REST/JSON API
+ *
+ *       native:  the REST/JSON API is implemented in terms of the native API internally, so the native API should be faster
+ *       native:  the native API allows you to join the cluster as a data-less node, this means that routing is done in 1-hop instead of 2-hops
+ *       rest:    less JARs to link in ( added ~10MB to WAR size )
+ *       rest:    JAR is hosted at Sonatype, not at scala-tools or maven, so another repo to bring in
+ *       rest:    less configuration?  (not sure about this)
+ *       
+ *       *** going with REST/JSON for now ***
+ */
 object Es {
+
+  // TODO:  bulk indexing
+
+
+  def jsonFor( rec:Record ) = {
+    val sb = new StringBuilder
+
+    def enter( rec:Record ) {
+      val view = rec.view
+
+      sb += '{'
+
+      for ( va <- view.vas;
+            if va.att.search.text;
+            v = rec( va );
+            if v != null ) {
+
+        sb ++= va.att.dbName += ':'
+        v match {
+        case crec:Record => enter( crec )
+        case v:Number    => v.toString
+        case v           => '"' + v.toString.encJson + '"'
+        }
+      }
+
+      sb += '}'
+    }
+
+    enter( rec )
+
+    sb.toString
+  }
+
+  // TODO:  do this in a background thread?  send it to an actor?
+  def index( rec:Record ) = {
+
+    spam( "index json is:\n\n" + jsonFor( rec ) + "\n\n" )
+
+    val url = "http://localhost:9200/" + rec.view.entity.searchIndex + "/" + rec.view.entity.dbName + "/" + rec.tid
+
+    spam( "indexing:  " + Http( url << jsonFor( rec ) as_str ) )
+    
+  }
+}
+
+trait Searchable {
+
+  val text:Boolean
+}
+
+case class Search( text:Boolean = true ) extends Searchable {
+}
+
+case object NoSearch extends Searchable {
+  val text = false
 }
 
