@@ -239,7 +239,15 @@ trait Record extends Valid with BsonObject {
    */
   def s( va:ViewAttribute ):String = {
     val v = apply( va )
-    if ( v != null ) v.toString else ""
+    
+    // TODO:  need to make this work with BsonObject i.e. View-less Mongo objects
+    v != null |* /*{
+      va.att.domain match {
+        case link:DbLink => link.toEntity.labelFor( v )
+        case _           => */ v.toString /*
+      }
+    }
+    */
   }
 
   /**
