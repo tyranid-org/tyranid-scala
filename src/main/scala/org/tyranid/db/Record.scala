@@ -24,6 +24,7 @@ import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
 import org.tyranid.bson.BsonObject
+import org.tyranid.db.es.Es
 import org.tyranid.logic.{ Invalid, Valid }
 import org.tyranid.ui.{ UiObj }
 
@@ -291,7 +292,10 @@ trait Record extends Valid with BsonObject {
    * * *   Persistence
    */
 
-  def save {}
+  def save {
+    if ( view.entity.isSearchable )
+      Es.index( this )
+  }
 }
 
 case class Scope( rec:Record,

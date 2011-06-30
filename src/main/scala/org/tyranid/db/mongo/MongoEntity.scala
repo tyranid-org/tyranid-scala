@@ -185,6 +185,7 @@ case class MongoRecord( override val view:MongoView,
 
   override def save {
     db.save( this )
+    super.save // call after, so that tid is available
   }
 
   def remove {

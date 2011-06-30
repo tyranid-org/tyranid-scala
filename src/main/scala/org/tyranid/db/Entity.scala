@@ -92,6 +92,8 @@ object Entity {
 trait Entity extends Domain with DbItem {
 
   val searchIndex = "main"
+  lazy val isSearchable = attribs.exists( _.search.text )
+
 
   /**
    * Tyranid ID.  This is a 3-byte identifier stored as a 4-character base64 string.  All Entity TIDs should be unique.

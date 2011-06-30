@@ -49,17 +49,21 @@ object Es {
       val view = rec.view
 
       sb += '{'
+      var first = true
 
       for ( va <- view.vas;
             if va.att.search.text;
             v = rec( va );
             if v != null ) {
 
+        if ( first ) first = false
+        else         sb += ','
+
         sb ++= va.att.dbName += ':'
         v match {
         case crec:Record => enter( crec )
-        case v:Number    => v.toString
-        case v           => '"' + v.toString.encJson + '"'
+        case v:Number    => sb ++= v.toString
+        case v           => sb ++= ( '"' + v.toString.encJson + '"' )
         }
       }
 
@@ -73,13 +77,15 @@ object Es {
 
   // TODO:  do this in a background thread?  send it to an actor?
   def index( rec:Record ) = {
+    if ( false ) {
+    spam( "disabled for demo!" )
 
     spam( "index json is:\n\n" + jsonFor( rec ) + "\n\n" )
 
     val url = "http://localhost:9200/" + rec.view.entity.searchIndex + "/" + rec.view.entity.dbName + "/" + rec.tid
 
     spam( "indexing:  " + Http( url << jsonFor( rec ) as_str ) )
-    
+    }
   }
 }
 
