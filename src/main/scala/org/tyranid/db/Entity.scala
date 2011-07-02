@@ -59,7 +59,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
 
     this
   }
-  def is( search:Searchable ) { this.search = search; this }
+  def is( search:Searchable ) = { this.search = search; this }
   def help( ns:NodeSeq ):Attribute = { help = ns; this }
 
 	var isKey = false

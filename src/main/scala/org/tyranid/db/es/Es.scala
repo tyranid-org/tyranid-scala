@@ -17,11 +17,57 @@
 
 package org.tyranid.db.es
 
+import akka.actor.Actor
+import akka.actor.Actor.actorOf
+
 import dispatch._
 import dispatch.Http._
 
 import org.tyranid.Imp._
 import org.tyranid.db.Record
+
+
+/*
+ * * *   Searchable
+ */
+
+trait Searchable {
+
+  val text:Boolean
+}
+
+case class Search( text:Boolean = true ) extends Searchable {
+}
+
+case object NoSearch extends Searchable {
+  val text = false
+}
+
+
+/*
+ * * *   Indexing
+ */
+
+object Indexer {
+
+  // TODO:  add fault tolerance / load balancing / etc.
+  lazy val actor = actorOf[Indexer].start()
+}
+
+class Indexer extends Actor {
+
+  def receive = {
+  case IndexMsg( index, typ, id, json ) =>
+    spam( "index json is:\n\n" + json + "\n\n" )
+
+    val url = "http://localhost:9200/" + index + "/" + typ + "/" + id
+
+    spam( "indexing:  " + Http( url << json as_str ) )
+  }
+
+}
+
+case class IndexMsg( index:String, typ:String, id:String, json:String )
 
 
 /**
@@ -75,26 +121,11 @@ object Es {
     sb.toString
   }
 
-  // TODO:  do this in a background thread?  send it to an actor?
   def index( rec:Record ) = {
 
-    spam( "index json is:\n\n" + jsonFor( rec ) + "\n\n" )
+    spam( "index invoked" )
 
-    val url = "http://localhost:9200/" + rec.view.entity.searchIndex + "/" + rec.view.entity.dbName + "/" + rec.tid
-
-    spam( "indexing:  " + Http( url << jsonFor( rec ) as_str ) )
+    Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
   }
-}
-
-trait Searchable {
-
-  val text:Boolean
-}
-
-case class Search( text:Boolean = true ) extends Searchable {
-}
-
-case object NoSearch extends Searchable {
-  val text = false
 }
 
