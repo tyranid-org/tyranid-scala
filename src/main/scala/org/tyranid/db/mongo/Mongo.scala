@@ -141,7 +141,7 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
    */
 
   def containsField( s:String )      = obj.containsField( s )
-  @deprecated( "use containsField" )
+  @deprecated( message = "use containsField", since = "..." )
   def containsKey( s:String )        = obj.containsKey( s )
   def get( key:String )              = obj.get( key )
   def keySet                         = obj.keySet

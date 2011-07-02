@@ -77,15 +77,12 @@ object Es {
 
   // TODO:  do this in a background thread?  send it to an actor?
   def index( rec:Record ) = {
-    if ( false ) {
-    spam( "disabled for demo!" )
 
     spam( "index json is:\n\n" + jsonFor( rec ) + "\n\n" )
 
     val url = "http://localhost:9200/" + rec.view.entity.searchIndex + "/" + rec.view.entity.dbName + "/" + rec.tid
 
     spam( "indexing:  " + Http( url << jsonFor( rec ) as_str ) )
-    }
   }
 }
 

@@ -61,7 +61,7 @@ class Tuple( val view:TupleView ) extends Record {
 		sb.toString
 	}
 
-	def isNew = view.ekeys.findIndexOf( va => values( va.index ) == null ) != -1
+	def isNew = view.ekeys.indexWhere( va => values( va.index ) == null ) != -1
 
   def rec( va:ViewAttribute ):Tuple = throw new UnsupportedOperationException
 }
