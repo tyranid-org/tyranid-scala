@@ -125,6 +125,13 @@ case class DbChar( len:Int ) extends LimitedText {
 	val sqlName = "CHAR(" + len + ")"
 }
 
+case class DbLargeChar( len:Int ) extends LimitedText {
+	val sqlName = "CHAR(" + len + ")"
+	
+  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
+    SHtml.ajaxTextarea( s.rec s f.va.name, v => { s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) }, opts.map( ElemAttr.pairToBasic ):_* )
+}
+
 case class DbVarChar( len:Int ) extends LimitedText {
 	val sqlName = "VARCHAR(" + len + ")"
 }
