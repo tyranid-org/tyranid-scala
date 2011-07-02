@@ -58,11 +58,9 @@ class Indexer extends Actor {
 
   def receive = {
   case IndexMsg( index, typ, id, json ) =>
-    spam( "index json is:\n\n" + json + "\n\n" )
 
-    val url = "http://localhost:9200/" + index + "/" + typ + "/" + id
 
-    spam( "indexing:  " + Http( url << json as_str ) )
+    spam( "indexing:  " + Http( ( "http://localhost:9200/" + index + "/" + typ + "/" + id ) << json as_str ) )
   }
 
 }
@@ -121,11 +119,10 @@ object Es {
     sb.toString
   }
 
-  def index( rec:Record ) = {
-
-    spam( "index invoked" )
-
+  def index( rec:Record ) =
     Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
+
+  def indexAll = {
   }
 }
 
