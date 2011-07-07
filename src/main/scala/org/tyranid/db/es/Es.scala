@@ -24,7 +24,9 @@ import dispatch._
 import dispatch.Http._
 
 import org.tyranid.Imp._
-import org.tyranid.db.Record
+import org.tyranid.db.{ Entity, Record, View }
+import org.tyranid.db.mongo.MongoEntity
+import org.tyranid.db.mongo.Imp._
 
 
 /*
@@ -83,9 +85,6 @@ case class IndexMsg( index:String, typ:String, id:String, json:String )
  */
 object Es {
 
-  // TODO:  bulk indexing
-
-
   def jsonFor( rec:Record ) = {
     val sb = new StringBuilder
 
@@ -119,10 +118,27 @@ object Es {
     sb.toString
   }
 
+  def hasSearchData( v:View ) = v.vas.exists( _.att.search.text )
+
   def index( rec:Record ) =
     Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
 
   def indexAll = {
+    for ( e <- Entity.all ) {
+
+      e match {
+      case e:MongoEntity =>
+        val v = e.makeView
+        if ( hasSearchData( v ) ) {
+          val cursor = e.db.find()
+
+          for ( obj <- cursor )
+            index( e.make( obj ) )
+        }
+
+      case _ =>
+      }
+    }
   }
 }
 

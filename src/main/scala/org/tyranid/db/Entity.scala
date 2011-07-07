@@ -79,6 +79,8 @@ object Entity {
 
   private val index = mutable.Map[String,Entity]()
 
+  def all = index.values
+
   def byTid( tid:String ) = index.get( tid )
 
   def register( en:Entity ) = {
