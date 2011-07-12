@@ -53,6 +53,12 @@ class JsonNodeImp( node:JsonNode ) extends Dynamic {
   def update( name:String, value:Double  ) = node.asInstanceOf[ObjectNode].put( name, value )
   def update( name:String, value:String  ) = node.asInstanceOf[ObjectNode].put( name, value )
 
+  def b( key:String ) = apply( key ).getValueAsBoolean
+  def d( key:String ) = apply( key ).getValueAsDouble
+  def i( key:String ) = apply( key ).getValueAsInt
+  def l( key:String ) = apply( key ).getValueAsLong
+  def s( key:String ) = apply( key ).getValueAsText.denull
+
   def b = node.getValueAsBoolean
   def d = node.getValueAsDouble
   def i = node.getValueAsInt
