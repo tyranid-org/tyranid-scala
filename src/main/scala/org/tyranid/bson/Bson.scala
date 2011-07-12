@@ -28,7 +28,7 @@ trait BsonObject {
   def apply( key:String ):AnyRef
   def update( key:String, v:Any ):Unit
 
-  def id = apply( "id" )
+  def id = apply( "_id" )
 
   def a( key:String )         = apply( key ).asInstanceOf[BasicDBList] // this isn't quite right...
   def o( key:String )         = apply( key ).asInstanceOf[BsonObject]

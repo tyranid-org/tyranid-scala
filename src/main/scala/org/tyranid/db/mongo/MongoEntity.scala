@@ -121,6 +121,8 @@ case class MongoRecord( override val view:MongoView,
 
   override def entity = super.entity.asInstanceOf[MongoEntity]
 
+  override def id = apply( "id" )
+
   private var temporaries:mutable.Map[String,AnyRef] = null
 
   def temporary( name:String ) =
