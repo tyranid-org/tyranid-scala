@@ -83,7 +83,7 @@ class StringImp( s:String ) {
 
   def toLiftJson = _root_.net.liftweb.json.JsonParser.parse( s )
 
-  def toJackson = new org.codehaus.jackson.map.ObjectMapper().readTree( s )
+  def toJson = org.tyranid.json.Json.parse( s )
 
 
   def matches( r:Regex ) = r.pattern.matcher( s ).matches
