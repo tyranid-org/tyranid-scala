@@ -65,6 +65,16 @@ object Imp {
     }
   }
 
+  object Mlist {
+    def apply = new BasicDBList
+    def apply( vals:Any* ):BasicDBList = {
+      val l = new BasicDBList
+      for ( i <- 0 until vals.size )
+        l( i ) = vals( i )
+      l
+    }
+  }
+
   object Mongo {
     lazy val connect = new com.mongodb.Mongo( Bind.MongoHost )
   }
