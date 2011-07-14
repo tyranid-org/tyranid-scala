@@ -24,7 +24,7 @@ import org.bson.types.ObjectId
 import com.mongodb.{ BasicDBList, BasicDBObject, DB, DBCollection, DBCursor, DBObject }
 
 import org.tyranid.Bind
-import org.tyranid.bson.BsonObject
+import org.tyranid.bson.{ BsonObject, BsonList }
 
 
 /**
@@ -174,10 +174,8 @@ case class DBObjectImp( obj:DBObject ) extends DBObjectWrap with DBValue {
   def update( key:String, v:Any ) = obj.put( key, v )
 }
 
-case class DBListImp( obj:BasicDBList ) extends DBObjectWrap with DBValue with Seq[Any] {
-
-  def apply( key:String )         = obj.get( key )
-  def update( key:String, v:Any ) = obj.put( key, v )
+trait DBListWrap extends DBObjectWrap with BsonList {
+  val obj:BasicDBList
 
 
   /*
@@ -188,6 +186,14 @@ case class DBListImp( obj:BasicDBList ) extends DBObjectWrap with DBValue with S
   def update( idx:Int, v:Any ) = obj.put( idx, v )
   def length = obj.size
   def iterator = obj.iterator
+}
+
+case class DBListImp( obj:BasicDBList ) extends DBListWrap with Seq[Any] {
+
+  def apply( key:String )         = obj.get( key )
+  def update( key:String, v:Any ) = obj.put( key, v )
+
+
 }
 
 case class BasicDBValue( ref:AnyRef ) extends DBValue {

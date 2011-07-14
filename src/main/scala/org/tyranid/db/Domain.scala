@@ -220,6 +220,8 @@ case class DbArray( of:Domain ) extends Domain {
   override def ui( s:Scope, f:Field, opts:(String,String)* ) =
 
 
+  draw a field for each array element, and add an "Add" button
+
 
    */
 }

@@ -45,4 +45,24 @@ trait BsonObject {
   //def d( key:String ) = apply( key ).toString
 }
 
+trait BsonList extends BsonObject with Seq[Any] {
+
+  def apply( idx:Int ):AnyRef
+  def update( idx:Int, v:Any ):Unit
+
+
+  def a( idx:Int )         = apply( idx ).asInstanceOf[BasicDBList] // this isn't quite right...
+  def o( idx:Int )         = apply( idx ).asInstanceOf[BsonObject]
+  def b( idx:Int )         = apply( idx ).asInstanceOf[Boolean]
+  def d( idx:Int )         = apply( idx ).asInstanceOf[Double]
+  def i( idx:Int )         = apply( idx ).asInstanceOf[Int]
+  def l( idx:Int )         = apply( idx ).asInstanceOf[Long]
+  def oid( idx:Int )       = apply( idx ).asInstanceOf[ObjectId]
+  //def r( idx:Int )       = apply( idx ).asInstanceOf[Long]
+  def s( idx:Int ):String = {
+    val v = apply( idx )
+    if ( v != null ) v.toString else ""
+  }
+  //def d( idx:Int ) = apply( idx ).toString
+}
 
