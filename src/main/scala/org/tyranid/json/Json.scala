@@ -30,16 +30,19 @@ object Jobj {
 
 object Json {
 
-  val factory = new org.codehaus.jackson.JsonFactory().configure( org.codehaus.jackson.JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true )
+  lazy val factory = {
+    val factory = new org.codehaus.jackson.JsonFactory()
+    
+    factory.configure( org.codehaus.jackson.JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true )
+  }
 
-  def parse( json:String ) = new org.codehaus.jackson.map.ObjectMapper( factory ).readTree( json )
+  def parse( json:String ) = { new org.codehaus.jackson.map.ObjectMapper( factory ) }.readTree( json )
 
-  val Missing = MissingNode.getInstance
 }
 
-class JsonNodeImp( node:JsonNode ) extends Dynamic {
+class JsonNodeImp( node:JsonNode ) /*extends Dynamic*/ {
 
-  def applyDynamic( name:String )( args:Any* ) = node.path( name )
+  //def applyDynamic( name:String )( args:Any* ) = node.path( name )
 
   def /( name:String ) = node.path( name )
   def /( idx:Int )     = node.path( idx )
@@ -65,7 +68,10 @@ class JsonNodeImp( node:JsonNode ) extends Dynamic {
   def l = node.getValueAsLong
   def s = node.getValueAsText.denull
 
-  import Json.Missing
+
+
+  def Missing = MissingNode.getInstance
+  //import Json.Missing
   def opt = if ( node ne Missing ) Some( node ) else None
   def ob  = if ( node ne Missing ) Some( b )    else None
   def od  = if ( node ne Missing ) Some( d )    else None
