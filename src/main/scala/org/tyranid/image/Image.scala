@@ -30,41 +30,15 @@ import org.tyranid.Bind
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.{ Domain, Record, Scope }
+import org.tyranid.io.DbFile
 import org.tyranid.ui.Field
 
 object DbImage {
 
-  def apply( bucketPrefix:String ):DbImage = DbImage( Bind.S3Buckets( bucketPrefix ) )
+  def apply( bucketPrefix:String ):DbImage = new DbImage( Bind.S3Buckets( bucketPrefix ) )
 }
 
-case class DbImage( bucket:S3Bucket ) extends Domain {
-  val sqlName = "TEXT"  // TODO
-
-  private def save( r:Record, f:Field )( fp:FileParamHolder ) =
-    
-//    val fileObj = r.o( f.va )
-//    fileObj( 'name ) = dsf
-//    fileObj( 'descriptipon )
-    
-    fp.file match {
-    case null =>
-    case x if x.length == 0 =>
-    case x =>
-      val extension = fp.fileName.suffix( '.' ).replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
-      val path = r.entityTid + "/" + r.recordTid + "/" + f.va.att.name + "." + extension
-      S3.write( bucket, path, fp.mimeType, x )
-      S3.access( bucket, path, public = true )
-
-      r( f.va ) = bucket.url( path )
-    }
-
-  def url( path:String ) = {
-    if ( path.startsWith( "http" ) ) {
-      path
-    } else {
-      bucket.url( path )
-    }
-  }
+class DbImage( bucket:S3Bucket ) extends DbFile( bucket ) {
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ): NodeSeq =
     /*SHtml.text( s.rec s f.va, v => s.rec( f.va ) = v, "class" -> "textInput" ) ++ */
