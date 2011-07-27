@@ -26,6 +26,9 @@ import org.tyranid.db.tuple.{ TupleView, Tuple }
 import org.tyranid.logic.{ Invalid, Valid }
 
 
+trait AttributeAnnotation
+
+
 /*
  * * *   A t t r i b u t e s
  */
@@ -61,6 +64,10 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   }
   def is( search:Searchable ) = { this.search = search; this }
   def help( ns:NodeSeq ):Attribute = { help = ns; this }
+
+  private var annotations:List[AttributeAnnotation] = Nil
+  def is( anno:AttributeAnnotation ) = annotations ::= anno
+
 
 	var isKey = false
 	var isLabel = false
@@ -177,20 +184,33 @@ trait Entity extends Domain with DbItem {
 		val vas = new Array[ViewAttribute]( leafCount )
 		for ( li <- 0 until leafCount )
 			vas( li ) = new ViewAttribute( v, attrib( names.productElement( li ).asInstanceOf[String] ), li )
-
 		v.leaves = vas
-		staticView = v
 
 		val tlen = tuples.size
-		staticRecords = new Array[Tuple]( tlen )
+    val newTuples = new Array[Tuple]( tlen )
 		for ( ti <- 0 until tlen ) {
 			val rt = tuples( ti )
 			val t = new Tuple( v )
 			val values = t.values
 			for ( li <- 0 until leafCount )
 				values( li ) = rt.productElement( li ).asInstanceOf[AnyRef]
-			staticRecords( ti ) = t
+			newTuples( ti ) = t
 		}
+
+    static( newTuples:_* )
+	}
+
+	def static( tuples:Tuple* ) {
+    val v = tuples( 0 ).view
+		val vas = v.vas
+
+    staticView = v
+
+		val tlen = tuples.size
+    // TODO:  use a toArray method or similar
+		staticRecords = new Array[Tuple]( tlen )
+		for ( ti <- 0 until tlen )
+      staticRecords( ti ) = tuples( ti )
 
 		val keys = staticView.ekeys
 		if ( keys.size == 1 ) {

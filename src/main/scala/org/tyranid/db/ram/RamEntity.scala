@@ -20,14 +20,26 @@ package org.tyranid.db.ram
 import scala.collection.mutable.{ ArrayBuffer, HashMap }
 
 import org.tyranid.Imp.{ string, symbol }
-import org.tyranid.db.{ DbIntSerial, DbChar, Entity }
+import org.tyranid.db.{ DbIntSerial, DbChar, Entity, View, ViewAttribute }
+import org.tyranid.db.tuple.TupleView
 
 
 case class RamEntity( tid:String ) extends Entity {
 
 	override lazy val dbName = name.plural
 
-  def makeView = throw new UnsupportedOperationException
+  def viewFor( names:String* ) = {
+		val v = new TupleView
+    val len = names.size
+		val vas = new Array[ViewAttribute]( len )
+    for ( i <- 0 until len )
+      vas( i ) = new ViewAttribute( v, attrib( names( i ) ), i )
+
+    v.leaves = vas
+    v
+  }
+
+  def makeView:View = throw new UnsupportedOperationException
 
 	def create {}
 	def drop   { /* TODO */ }

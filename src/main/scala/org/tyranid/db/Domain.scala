@@ -238,8 +238,8 @@ case class DbLink( toEntity:Entity ) extends Domain {
                       Full( s.rec s f.va ),
                       v => {
                         toEntity.idType match {
-                        case IdType.ID_32 => s.rec( f.va ) = v.toInt
-                        case IdType.ID_64 => s.rec( f.va ) = v.toLong
+                        case IdType.ID_32 => s.rec( f.va ) = v.toLaxInt
+                        case IdType.ID_64 => s.rec( f.va ) = v.toLaxLong
                         case _            => s.rec( f.va ) = v
                         }
                         f.updateDisplayCmd( s )
