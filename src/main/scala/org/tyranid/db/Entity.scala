@@ -68,6 +68,11 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   private var annotations:List[AttributeAnnotation] = Nil
   def is( anno:AttributeAnnotation ) = annotations ::= anno
 
+  def annotated[ T <: AttributeAnnotation :Manifest ] = {
+    val m = manifest[T]
+    annotations.find( _.getClass == m.erasure ).map( _.asInstanceOf[T] )
+  }
+
 
 	var isKey = false
 	var isLabel = false
