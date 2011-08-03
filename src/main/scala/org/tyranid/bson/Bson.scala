@@ -30,7 +30,7 @@ trait BsonObject {
 
   def id = apply( "_id" )
 
-  def a( key:String )         = apply( key ).asInstanceOf[BasicDBList] // this isn't quite right...
+  def a( key:String )         = apply( key ).asInstanceOf[BasicDBList]
   def o( key:String )         = apply( key ).asInstanceOf[BsonObject]
   def b( key:String )         = apply( key ).asInstanceOf[Boolean]
   def d( key:String )         = apply( key ).asInstanceOf[Double]
@@ -51,7 +51,7 @@ trait BsonList extends BsonObject with Seq[Any] {
   def update( idx:Int, v:Any ):Unit
 
 
-  def a( idx:Int )         = apply( idx ).asInstanceOf[BasicDBList] // this isn't quite right...
+  def a( idx:Int )         = apply( idx ).asInstanceOf[BasicDBList]
   def o( idx:Int )         = apply( idx ).asInstanceOf[BsonObject]
   def b( idx:Int )         = apply( idx ).asInstanceOf[Boolean]
   def d( idx:Int )         = apply( idx ).asInstanceOf[Double]

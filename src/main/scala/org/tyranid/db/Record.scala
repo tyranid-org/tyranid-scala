@@ -18,6 +18,7 @@
 package org.tyranid.db
 
 import org.bson.types.ObjectId
+import com.mongodb.BasicDBList
 
 import scala.collection.mutable
 import scala.xml.NodeSeq
@@ -208,7 +209,7 @@ trait Record extends Valid with BsonObject {
   /**
    * Array
    */
-  //def a( va:ViewAttribute ) = apply( va ).asInstanceOf[Array]
+  def a( va:ViewAttribute ) = apply( va ).asInstanceOf[BasicDBList]
 
   /**
    * Boolean
