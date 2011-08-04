@@ -46,6 +46,8 @@ trait Domain extends Valid {
    */
 	def isAuto = false
 
+  def isSet( v:Any ) = v != null
+
 	def see( v:AnyRef ) =
 		v match {
 		case null => ""
@@ -109,11 +111,16 @@ object DbDouble extends Domain {
  * * *   Text
  */
 
-object DbText extends Domain {
+trait DbTextLike extends Domain {
+
+  override def isSet( v:Any ) = v != null && !v.asInstanceOf[String].isBlank
+}
+
+object DbText extends DbTextLike {
 	val sqlName = "TEXT"
 }
 
-trait LimitedText extends Domain {
+trait LimitedText extends DbTextLike {
   val len:Int
 
   override def validations =

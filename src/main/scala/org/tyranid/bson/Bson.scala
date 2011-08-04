@@ -25,6 +25,7 @@ import com.mongodb.BasicDBList
  * Represents either BsonObjects or things that can behave like a BsonObject.
  */
 trait BsonObject {
+  def has( key:String ):Boolean
   def apply( key:String ):AnyRef
   def update( key:String, v:Any ):Unit
 

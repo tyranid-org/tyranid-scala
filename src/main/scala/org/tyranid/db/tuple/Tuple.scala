@@ -41,13 +41,16 @@ class Tuple( val view:TupleView ) extends Record {
 
 	val values = new Array[AnyRef]( view.leafCount )
 
-	def apply( index: Int ) = values( index )
-	def update( index: Int, v:Any ) = values( index ) = v.asInstanceOf[AnyRef]
+  def has( index:Int )                = values( index ) != null
+  def has( va:ViewAttribute ):Boolean = has( va.index )
+
+	def apply( index:Int ) = values( index )
+	def update( index:Int, v:Any ) = values( index ) = v.asInstanceOf[AnyRef]
 
   def apply( va:ViewAttribute ) = apply( va.index )
   def update( va:ViewAttribute, v:Any ) = values( va.index ) = v.asInstanceOf[AnyRef]
 
-	def see( index: Int ) = view.leaves( index ).att.domain.see( apply( index ) )
+	def see( index:Int ) = view.leaves( index ).att.domain.see( apply( index ) )
 
 	override def toString = {
 		val sb = new StringBuilder

@@ -151,6 +151,16 @@ case class MongoRecord( override val view:MongoView,
     temporaries( name ) = value.asInstanceOf[AnyRef]
   }
 
+  def has( va:ViewAttribute ) =
+    if ( va.temporary ) {
+      temporaries != null && temporaries.get( va.name ).getOrElse( null ) != null
+    } else {
+      va.name match {
+      case "id" => obj.has( "_id" )
+      case s    => obj.has( s )
+      }
+    }
+
   def apply( va:ViewAttribute ) =
     if ( va.temporary ) {
       if ( temporaries == null )

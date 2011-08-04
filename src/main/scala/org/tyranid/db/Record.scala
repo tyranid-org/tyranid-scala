@@ -162,18 +162,9 @@ trait Record extends Valid with BsonObject {
 
   def entity = view.entity
 
-  var isAdding:Boolean = false
+  def has( key:String ) = has( view( key ) )
+  def has( va:ViewAttribute ):Boolean
 
-  def submit {
-    require( parent == null )
-    submitFlagged = true
-  }
-
-  def hasSubmitted:Boolean = submitFlagged || ( parent != null && parent.hasSubmitted )
-
-  private var submitFlagged:Boolean = false
-
-  
   final def apply( key:String ):AnyRef = apply( view( key ) )
   final def update( key:String, v:Any ):Unit = update( view( key ), v )
 
@@ -263,6 +254,22 @@ trait Record extends Valid with BsonObject {
   }
 
   def label( key:String ):String = label( view( key ) )
+
+
+  /*
+   * * *   Forms
+   */
+
+  var isAdding:Boolean = false
+
+  def submit {
+    require( parent == null )
+    submitFlagged = true
+  }
+
+  def hasSubmitted:Boolean = submitFlagged || ( parent != null && parent.hasSubmitted )
+
+  private var submitFlagged:Boolean = false
 
   
   /*
