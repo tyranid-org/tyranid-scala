@@ -74,6 +74,9 @@ abstract class DbIntish extends Domain {
 	override lazy val idType = IdType.ID_32
 
   override def tid( r:Record, va:ViewAttribute ) = Base64.toString( r i va )
+
+  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
+    SHtml.ajaxText( s.rec s f.va.name, v => { s.rec( f.va.name ) = v.toLaxInt; f.updateDisplayCmd( s ) }, opts.map( ElemAttr.pairToBasic ):_* )
 }
 
 object DbInt extends DbIntish {
