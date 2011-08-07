@@ -18,7 +18,7 @@
 package org.tyranid.locale.db
 
 import org.tyranid.Imp.symbol
-import org.tyranid.db.{ DbInt, DbChar }
+import org.tyranid.db.{ DbInt, DbChar, DbLink }
 import org.tyranid.db.ram.RamEntity
 
 
@@ -26,7 +26,7 @@ object Region extends RamEntity( tid = "a01t" ) {
   "id"     is DbInt      is 'key;
   "name"   is DbChar(64) is 'label;
   "code"   is DbChar(4);
-  "country" is DbInt;
+  "country" is DbLink(Country);
   "abbr"    is DbChar(2); 
 
 	static(
