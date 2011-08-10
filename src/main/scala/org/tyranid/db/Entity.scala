@@ -175,6 +175,8 @@ trait Entity extends Domain with DbItem {
 
 	/*
 	 * * *  Static Data
+   *
+   * TODO:  move this to EnumEntity below ?
 	 */
 
   def isStatic = staticView != null
@@ -242,5 +244,23 @@ trait Entity extends Domain with DbItem {
 
 		  sb.toString
     }
+}
+
+// TODO:  should this extend RamEntity ?
+trait EnumEntity[ T >: Null <: Tuple ] extends Entity {
+
+	def apply( id:Int ):T =
+    if ( id == 0 ) null
+    else           staticIdIndex( id ).asInstanceOf[T]
+
+  def arrayToSeq( rec:Record, name:String ) = {
+    import org.tyranid.db.mongo.Imp._
+
+    rec.a( name ).map(
+      _ match {
+      case i:Int => apply( i )
+      case o     => o.asInstanceOf[T]
+      } ).toSeq
+  }
 }
 
