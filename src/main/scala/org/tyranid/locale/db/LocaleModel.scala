@@ -25,7 +25,7 @@ import org.tyranid.db.ram.RamEntity
 object Region extends RamEntity( tid = "a01t" ) {
   "id"     is DbInt      is 'key;
   "name"   is DbChar(64) is 'label;
-  "code"   is DbChar(4);
+  "fips"   is DbChar(4);
   "country" is DbInt;
   "abbr"    is DbChar(2); 
 
