@@ -31,6 +31,17 @@ object Region extends RamEntity( tid = "a01t" ) {
 
 	static { s =>
   s( "id",  "name",				                                "fips",   "country", "abbr" )
+
+  /*
+      There is some scala compiler bug that shows up when you have more than ~1500ish records in a single method.
+   */
+
+  init1( s )
+  init2( s )
+  init3( s )
+}
+
+  def init1( s:org.tyranid.db.StaticBuilder ) = {
   s(   1,    "Alabama",                                    "01",     4306,     "AL" )
   s(   2,    "Alaska",                                     "02",     4306,     "AK" )
   s(   3,    "Arizona",                                    "04",     4306,     "AZ" )
@@ -261,15 +272,6 @@ object Region extends RamEntity( tid = "a01t" ) {
   s(   228,  "Kalbacar",                                   "26",     4094 )
   s(   229,  "Kurdamir",                                   "27",     4094 )
   s(   230,  "Lacin",                                      "28",     4094 )
-
-
-
-
-
-
-
-
-
   s(   231,  "Lankaran",                                   "29",     4094 )
   s(   232,  "Lankaran",                                   "30",     4094 )
   s(   233,  "Lerik",                                      "31",     4094 )
@@ -1489,6 +1491,9 @@ object Region extends RamEntity( tid = "a01t" ) {
   s(   1447, "Greater Accra",                              "01",     4158 )
   s(   1448, "Ashanti",                                    "02",     4158 )
   s(   1449, "Brong-Ahafo",                                "03",     4158 )
+}
+
+  def init2( s:org.tyranid.db.StaticBuilder ) = {
   s(   1450, "Volta",                                      "08",     4158 )
   s(   1451, "Upper East",                                 "10",     4158 )
   s(   1452, "Upper West",                                 "11",     4158 )
@@ -1891,6 +1896,7 @@ object Region extends RamEntity( tid = "a01t" ) {
   s(   1849, "Kjosarsysla",                                "15",     4185 )
   s(   1850, "Myrasysla",                                  "17",     4185 )
   s(   1851, "Nordur-Mulasysla",                           "20",     4185 )
+
   s(   1852, "Nordur-Tingeyjarsysla",                      "21",     4185 )
   s(   1853, "Rangarvallasysla",                           "23",     4185 )
   s(   1854, "Skagafjardarsysla",                          "28",     4185 )
@@ -2888,6 +2894,9 @@ object Region extends RamEntity( tid = "a01t" ) {
   s(   2847, "Madre de Dios",                              "17",     4249 )
   s(   2848, "Moquegua",                                   "18",     4249 )
   s(   2849, "Pasco",                                      "19",     4249 )
+}
+
+  def init3( s:org.tyranid.db.StaticBuilder ) = {
   s(   2850, "Piura",                                      "20",     4249 )
   s(   2851, "Puno",                                       "21",     4249 )
   s(   2852, "San Martin",                                 "22",     4249 )
