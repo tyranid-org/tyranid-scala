@@ -26,7 +26,7 @@ object Region extends RamEntity( tid = "a01t" ) {
   "id"     is DbInt      is 'key;
   "name"   is DbChar(64) is 'label;
   "code"   is DbChar(4);
-  "country" is DbLink(Country);
+  "country" is DbInt;
   "abbr"    is DbChar(2); 
 
 	static(
