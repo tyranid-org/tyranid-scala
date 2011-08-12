@@ -199,8 +199,9 @@ trait Entity extends Domain with DbItem {
 			val rt = tuples( ti )
 			val t = new Tuple( v )
 			val values = t.values
-			for ( li <- 0 until leafCount )
-				values( li ) = rt.productElement( li ).asInstanceOf[AnyRef]
+      val vlen = rt.productArity
+			for ( vi <- 0 until vlen )
+				values( vi ) = rt.productElement( vi ).asInstanceOf[AnyRef]
 			newTuples( ti ) = t
 		}
 
