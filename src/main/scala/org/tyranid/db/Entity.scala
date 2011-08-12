@@ -55,7 +55,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   def is( str:String ) = {
     str match {
     case "key"       => isKey = true
-    case "label"     => println( str); isLabel = true
+    case "label"     => isLabel = true
     case "required"  => required = true; localValidations ::= ( ( scope:Scope ) => scope.required )
     case "temporary" => temporary = true
     }

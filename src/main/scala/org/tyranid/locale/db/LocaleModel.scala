@@ -26,7 +26,7 @@ object Region extends RamEntity( tid = "a01t" ) {
   "id"     is DbInt      is 'key;
   "name"   is DbChar(64) is 'label;
   "fips"   is DbChar(4);
-  "country" is DbInt;
+  "country" is DbLink(Country);
   "abbr"    is DbChar(2); 
 
 	static(
@@ -2054,7 +2054,7 @@ object Region extends RamEntity( tid = "a01t" ) {
   (   2022, "Ch'ungch'ong-bukto",                         "05",     4198 ),
   (   2023, "Kangwon-do",                                 "06",     4198 ),
   (   2024, "Pusan-jikhalsi",                             "10",     4198 ),
-  (   2025, "Seoul-t'ukpyolsi",                           "11",     4198 ),
+  (   2025, "Seoul-t'ukpyolsi",                           "11",     4198 ) /*,
   (   2026, "Inch'on-jikhalsi",                           "12",     4198 ),
   (   2027, "Kyonggi-do",                                 "13",     4198 ),
   (   2028, "Kyongsang-bukto",                            "14",     4198 ),
@@ -4276,7 +4276,7 @@ object Region extends RamEntity( tid = "a01t" ) {
   (   4535, "Vinh Puc Province",                          "86",     4314 ),
   (   4536, "Boqueron",                                   "24",     4261 ),
   (   4537, "Negros Occidental",                          "45",     4252 ),
-  (   4538, "Liban-Sud",                                  "02",     4203 ) )
+  (   4538, "Liban-Sud",                                  "02",     4203 ) */ )
 }
 
 object Country extends RamEntity( tid = "a02t" ) {
