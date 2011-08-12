@@ -185,6 +185,18 @@ trait Entity extends Domain with DbItem {
 	var staticRecords:Array[Tuple] = null
 	var staticIdIndex:mutable.HashMap[Long,Tuple] = null
 
+  def static( block: ( StaticBuilder ) => Unit ) {
+    try {
+      val tl = StaticBuilder( this )
+      block( tl )
+      static( tl.tuples:_* )
+    } catch {
+      case e =>
+        e.printStackTrace
+        throw e
+    }
+  }
+
 	def static( names:Product, tuples:Product* ) {
 		val v = new TupleView
 		val leafCount = names.productArity
@@ -264,4 +276,41 @@ trait EnumEntity[ T >: Null <: Tuple ] extends Entity {
       } ).toSeq
   }
 }
+
+/*
+
+  static { s =>
+    s( "foo", "bar", "count" )
+    s( 12,    12,    1212 )
+  }
+
+
+ */
+
+case class StaticBuilder( en:Entity ) {
+
+	val v = new TupleView
+  val tuples = new mutable.ArrayBuffer[Tuple]()
+
+  private var first = true
+
+  def apply( values:Any* ) = {
+    val vlen = values.length
+
+    if ( first ) {
+      val vas = new Array[ViewAttribute]( vlen )
+      for ( li <- 0 until vlen )
+        vas( li ) = new ViewAttribute( v, en.attrib( values( li ).asInstanceOf[String] ), li )
+      v.leaves = vas
+      first = false
+    } else {
+			val t = new Tuple( v )
+			for ( vi <- 0 until vlen )
+				t.values( vi ) = values( vi ).asInstanceOf[AnyRef]
+      tuples += t
+    }
+  }
+}
+
+
 
