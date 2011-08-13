@@ -1094,7 +1094,6 @@ object Region extends RamEntity( tid = "a01t" ) {
   s(   1050, "Debub",                                      "02",     4142 )
   s(   1051, "Debubawi K'eyih Bahri",                      "03",     4142 )
   s(   1052, "Gash Barka",                                 "04",     4142 )
-  /*
   s(   1053, "Ma'akel",                                    "05",     4142 )
   s(   1054, "Semenawi K'eyih Bahri",                      "06",     4142 )
   s(   1055, "Islas Baleares",                             "07",     4143 )
@@ -4296,7 +4295,6 @@ object Region extends RamEntity( tid = "a01t" ) {
   s(   4536, "Boqueron",                                   "24",     4261 )
   s(   4537, "Negros Occidental",                          "45",     4252 )
   s(   4538, "Liban-Sud",                                  "02",     4203 )
-  */
   }
 }
 
