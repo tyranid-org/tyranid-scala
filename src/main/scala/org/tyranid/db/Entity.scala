@@ -294,7 +294,8 @@ case class StaticBuilder( en:Entity ) {
 
   private var first = true
 
-  def apply( values:Any* ) = {
+  def apply( values:Any* ) {
+    if ( values == null ) return
     val vlen = values.length
 
     if ( first ) {
@@ -305,8 +306,12 @@ case class StaticBuilder( en:Entity ) {
       first = false
     } else {
 			val t = new Tuple( v )
-			for ( vi <- 0 until vlen )
-				t.values( vi ) = values( vi ).asInstanceOf[AnyRef]
+			for ( vi <- 0 until vlen ) {
+        val any = values( vi )
+				t.values( vi ) =
+          if ( any != null ) any.asInstanceOf[AnyRef]
+          else               null
+      }
       tuples += t
     }
   }
