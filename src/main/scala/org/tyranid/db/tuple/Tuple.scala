@@ -37,6 +37,9 @@ class TupleView extends View {
 
 class Tuple( val view:TupleView ) extends Record {
 
+  // TODO:  need to clean up id/_id code
+  override def id = apply( "id" )
+
   val parent = null
 
 	val values = new Array[AnyRef]( view.leafCount )
