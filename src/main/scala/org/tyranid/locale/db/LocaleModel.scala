@@ -17,8 +17,8 @@
 
 package org.tyranid.locale.db
 
-import org.tyranid.Imp.symbol
-import org.tyranid.db.{ DbInt, DbChar, DbLink }
+import org.tyranid.Imp._
+import org.tyranid.db.{ DbInt, DbChar, DbLink, Record }
 import org.tyranid.db.ram.RamEntity
 
 
@@ -39,6 +39,14 @@ object Region extends RamEntity( tid = "a01t" ) {
   init1( s )
   init2( s )
   init3( s )
+  
+  def regionsForCountry( cid:Int ):Seq[Record] = {
+    val countryIdx = staticView( 'country ).index
+    
+    staticRecords.filter( _( countryIdx ).asInstanceOf[Int] == cid )
+  }
+  
+  
 }
 
   def init1( s:org.tyranid.db.StaticBuilder ) = {
@@ -4303,6 +4311,12 @@ object Country extends RamEntity( tid = "a02t" ) {
   "name"   is DbChar(64) is 'label;
   "code"   is DbChar(4)  ; 
 
+  def idForCode( s:String ):Int = {
+    val codeIdx = staticView( 'code ).index
+    
+    staticRecords.find( _( codeIdx ) == s ).flatten( _.id.asInstanceOf[Int], 0 )
+  }
+  
 	static { s =>
   s(    "id", "name",				                                  "code" )
 	s(    4077, "Andorra",                                      "AN" )
