@@ -44,9 +44,7 @@ object Region extends RamEntity( tid = "a01t" ) {
     val countryIdx = staticView( 'country ).index
     
     staticRecords.filter( _( countryIdx ).asInstanceOf[Int] == cid )
-  }
-  
-  
+  }  
 }
 
   def init1( s:org.tyranid.db.StaticBuilder ) = {
