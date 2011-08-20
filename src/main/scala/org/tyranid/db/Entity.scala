@@ -277,16 +277,6 @@ trait EnumEntity[ T >: Null <: Tuple ] extends Entity {
   }
 }
 
-/*
-
-  static { s =>
-    s( "foo", "bar", "count" )
-    s( 12,    12,    1212 )
-  }
-
-
- */
-
 case class StaticBuilder( en:Entity ) {
 
 	val v = new TupleView
