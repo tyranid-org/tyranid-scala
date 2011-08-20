@@ -4315,6 +4315,12 @@ object Country extends RamEntity( tid = "a02t" ) {
     staticRecords.find( _( codeIdx ) == s ).flatten( _.id.asInstanceOf[Int], 0 )
   }
   
+  def idForName( s:String ):Int = {
+    val nameIdx = staticView( 'name ).index
+    
+    staticRecords.find( _( nameIdx ) == s ).flatten( _.id.asInstanceOf[Int], 0 )
+  }
+  
 	static { s =>
   s(    "id", "name",				                                  "code" )
 	s(    4077, "Andorra",                                      "AN" )
