@@ -118,6 +118,9 @@ case class MongoView( override val entity:MongoEntity ) extends View {
 
   def vas = byName.values
 
+  // This preloads all of the view attributes for the entity associated with this view.
+  entity.attribs.foreach { a => add( a.name ) }
+
   private def add( name:String ) = {
     val va = new ViewAttribute( this, entity.attrib( name ), nextIndex )
     nextIndex += 1

@@ -271,8 +271,9 @@ trait EnumEntity[ T >: Null <: Tuple ] extends Entity {
 
     rec.a( name ).map(
       _ match {
-      case i:Int => apply( i )
-      case o     => o.asInstanceOf[T]
+      case i:Int    => apply( i )
+      case d:Double => apply( d.toInt )
+      case o        => o.asInstanceOf[T]
       } ).toSeq
   }
 }
