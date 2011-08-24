@@ -37,8 +37,8 @@ object Region extends RamEntity( tid = "a01t" ) {
    */
 
   init1( s )
-  init2( s )
-  init3( s )
+//  init2( s )
+//  init3( s )
   
   def regionsForCountry( cid:Int ):Seq[Record] = {
     val countryIdx = staticView( 'country ).index
@@ -109,6 +109,7 @@ object Region extends RamEntity( tid = "a01t" ) {
   s(   59,   "Puerto Rico",                                "43",     4306,     "PR" )
   s(   60,   "Palau",                                      "70",     4306,     "PW" )
   s(   61,   "Virgin Islands",                             "52",     4306,     "VI" )
+  /*
   s(   62,   "Canillo",                                    "02",     4077 )
   s(   63,   "Encamp",                                     "03",     4077 )
   s(   64,   "La Massana",                                 "04",     4077 )
@@ -4301,6 +4302,7 @@ object Region extends RamEntity( tid = "a01t" ) {
   s(   4536, "Boqueron",                                   "24",     4261 )
   s(   4537, "Negros Occidental",                          "45",     4252 )
   s(   4538, "Liban-Sud",                                  "02",     4203 )
+  */
   }
 }
 
