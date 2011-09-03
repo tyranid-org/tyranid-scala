@@ -82,7 +82,7 @@ case class DbReCaptcha( theme:String ) extends Domain {
 
           !passedCaptcha
         } ) } |*
-        Some( Invalid( scope, "Invalid captcha." ) )
+          Some( Invalid( scope, "Invalid captcha." ) )
     } ) ::
     super.validations
 }
