@@ -135,17 +135,14 @@ class StringImp( s:String ) {
 		case _             => true
 	  }
 
-  /**
-   * Like Scala's toInt except that blank strings are converted to 0.
-   */
   def toLaxInt = if ( s.isBlank ) 0
                  else             s.toInt
 
-  /**
-   * Like Scala's toInt except that blank strings are converted to 0.
-   */
+  def toLaxDouble = if ( s.isBlank ) 0
+                    else             s.toDouble
+
   def toLaxLong = if ( s.isBlank ) 0
-                  else             s.toInt
+                  else             s.toLong
 
 	def uncapitalize = if ( s.length > 1 ) s.charAt( 0 ).toLower + s.substring( 1 ) else s
 	
