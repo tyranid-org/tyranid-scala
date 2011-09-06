@@ -54,18 +54,14 @@ case class MongoEntity( tid:String ) extends Entity {
 
   lazy val makeView = MongoView( this )
 
-  override def idLabels:Iterable[(AnyRef,String)] = {
-    val labelName = labelAtt.get.name // TODO:  this should be labelAtt.dbName, but dbName by default is underscore-upper, and there is no MongoAttribute
-
-    db.find( Mobj(), Mobj( labelName -> 1 ) ).toSeq.
-       map( obj => ( obj( '_id ), obj s labelName ) )
-  }
-
   def create {}
   def drop   { db.drop }
 
   def apply( obj:DBObject ) =
     if ( obj != null ) MongoRecord( makeView, obj ) else null
+
+
+  def toTid( oid:ObjectId ) = tid + Base64.toString( oid.toByteArray )
 
   override def byRecordTid( recordTid:String ):Option[MongoRecord] = {
     val obj = db.findOne( new ObjectId( Base64.toBytes( recordTid ) ) )
@@ -78,6 +74,40 @@ case class MongoEntity( tid:String ) extends Entity {
   def make( obj:DBObject, parent:MongoRecord = null ) = MongoRecord( makeView, obj, parent )
 
   def remove( obj:DBObject ) = db.remove( obj )
+
+
+  override def idLabels:Iterable[(AnyRef,String)] = {
+    val labelName = labelAtt.get.name // TODO:  this should be labelAtt.dbName, but dbName by default is underscore-upper, and there is no MongoAttribute
+
+    db.find( Mobj(), Mobj( labelName -> 1 ) ).toSeq.
+       map( obj => ( obj( '_id ), obj s labelName ) )
+  }
+
+  def labelFor( id:Any ) =
+    if ( isStatic ) {
+      staticLabelFor( id.asInstanceOf[Long] )
+    } else {
+      val labelName = labelAtt.get.name // TODO:  this should be labelAtt.dbName, but dbName by default is underscore-upper, and there is no MongoAttribute
+
+      val obj = db.findOne( Mobj( "_id" -> id ), Mobj( labelName -> 1 ) )
+
+      if ( obj != null ) obj.s( labelName )
+      else               ""
+    }
+
+
+  def recify( obj:Any, update: ( MongoRecord ) => Unit ):MongoRecord = {
+
+    if ( obj.isInstanceOf[Record] )
+      return obj.asInstanceOf[MongoRecord]
+
+    val rec = make(
+      if ( obj == null ) Mobj()
+      else               obj.asInstanceOf[DBObject],
+      null ) // 2nd parameter is the parent record, but we don't have that...
+    update( rec )
+    rec
+  }
 }
 
 case class MongoView( override val entity:MongoEntity ) extends View {
@@ -87,6 +117,9 @@ case class MongoView( override val entity:MongoEntity ) extends View {
   @volatile private var nextIndex = 0
 
   def vas = byName.values
+
+  // This preloads all of the view attributes for the entity associated with this view.
+  entity.attribs.foreach { a => add( a.name ) }
 
   private def add( name:String ) = {
     val va = new ViewAttribute( this, entity.attrib( name ), nextIndex )
@@ -108,6 +141,8 @@ case class MongoRecord( override val view:MongoView,
 
   override def entity = super.entity.asInstanceOf[MongoEntity]
 
+  override def id = apply( "id" )
+
   private var temporaries:mutable.Map[String,AnyRef] = null
 
   def temporary( name:String ) =
@@ -118,6 +153,16 @@ case class MongoRecord( override val view:MongoView,
     if ( temporaries == null ) temporaries = mutable.HashMap()
     temporaries( name ) = value.asInstanceOf[AnyRef]
   }
+
+  def has( va:ViewAttribute ) =
+    if ( va.temporary ) {
+      temporaries != null && temporaries.get( va.name ).getOrElse( null ) != null
+    } else {
+      va.name match {
+      case "id" => obj.has( "_id" )
+      case s    => obj.has( s )
+      }
+    }
 
   def apply( va:ViewAttribute ) =
     if ( va.temporary ) {
@@ -151,27 +196,12 @@ case class MongoRecord( override val view:MongoView,
     case null           => null
     }
 
-  def rec( va:ViewAttribute ):MongoRecord = {
-    var obj = o( va )
-
-    if ( obj.isInstanceOf[Record] )
-      return obj.asInstanceOf[MongoRecord]
-
-    // embedded link ...
-    //val en = va.att.domain.asInstanceOf[DbLink].toEntity
-    // embedded record ...
-    val en = va.att.domain.asInstanceOf[MongoEntity]
-
-    if ( obj == null )
-      obj = Mobj()
-
-    val rec = en.make( obj, this )
-    update( va, rec )
-    rec
-  }
+  def rec( va:ViewAttribute ):MongoRecord =
+    va.att.domain.asInstanceOf[MongoEntity].recify( o( va ), rec => update( va, rec ) )
 
   override def save {
     db.save( this )
+    super.save // call after, so that tid is available
   }
 
   def remove {

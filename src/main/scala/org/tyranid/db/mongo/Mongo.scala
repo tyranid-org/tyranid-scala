@@ -23,8 +23,9 @@ import org.bson.BSONObject
 import org.bson.types.ObjectId
 import com.mongodb.{ BasicDBList, BasicDBObject, DB, DBCollection, DBCursor, DBObject }
 
+import org.tyranid.Imp._
 import org.tyranid.Bind
-import org.tyranid.bson.BsonObject
+import org.tyranid.bson.{ BsonObject, BsonList }
 
 
 /**
@@ -62,6 +63,16 @@ object Imp {
       for ( v <- vals )
         o.put( v._1, v._2 )
       new DBObjectImp( o )
+    }
+  }
+
+  object Mlist {
+    def apply = new BasicDBList
+    def apply( vals:Any* ):BasicDBList = {
+      val l = new BasicDBList
+      for ( i <- 0 until vals.size )
+        l( i ) = vals( i )
+      l
     }
   }
 
@@ -114,8 +125,8 @@ trait DBValue {
 trait DBObjectWrap extends DBObject with BsonObject with DBValue {
   val obj:DBObject
 
-  def has( key:String )    = obj.containsField( key )
-  def remove( key:String ) = obj.removeField( key )
+  override def has( key:String ) = obj.containsField( key )
+  def remove( key:String )       = obj.removeField( key )
 
   def rename( from:String, to:String ) = obj.put( to, obj.removeField( from ) )
 
@@ -139,7 +150,7 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
    */
 
   def containsField( s:String )      = obj.containsField( s )
-  @deprecated( "use containsField" )
+  @deprecated( message = "use containsField", since = "..." )
   def containsKey( s:String )        = obj.containsKey( s )
   def get( key:String )              = obj.get( key )
   def keySet                         = obj.keySet
@@ -172,10 +183,8 @@ case class DBObjectImp( obj:DBObject ) extends DBObjectWrap with DBValue {
   def update( key:String, v:Any ) = obj.put( key, v )
 }
 
-case class DBListImp( obj:BasicDBList ) extends DBObjectWrap with DBValue with Seq[Any] {
-
-  def apply( key:String )         = obj.get( key )
-  def update( key:String, v:Any ) = obj.put( key, v )
+trait DBListWrap extends DBObjectWrap with BsonList {
+  val obj:BasicDBList
 
 
   /*
@@ -186,6 +195,25 @@ case class DBListImp( obj:BasicDBList ) extends DBObjectWrap with DBValue with S
   def update( idx:Int, v:Any ) = obj.put( idx, v )
   def length = obj.size
   def iterator = obj.iterator
+}
+
+case class DBListImp( obj:BasicDBList ) extends DBListWrap with Seq[Any] {
+
+  def apply( key:String )         = obj.get( key )
+  def update( key:String, v:Any ) = obj.put( key, v )
+
+  /*
+   * * *  Helper methods for when the list is a list of DBObjects
+   */
+   
+  def nextId = if ( obj.size == 0 ) 1 else obj.map( _.asInstanceOf[DBObject] i 'aid ).max + 1
+  
+  def addAndId( aobj:DBObject ) = {
+    aobj( "aid" ) = nextId
+    obj.put( obj.size, aobj )
+  }
+  
+  def find( id:Int ):Option[DBObject] = obj.map( _.asInstanceOf[DBObject] ).find( _.i( 'aid ) == id )
 }
 
 case class BasicDBValue( ref:AnyRef ) extends DBValue {

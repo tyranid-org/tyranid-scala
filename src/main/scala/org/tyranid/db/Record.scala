@@ -18,12 +18,14 @@
 package org.tyranid.db
 
 import org.bson.types.ObjectId
+import com.mongodb.BasicDBList
 
 import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
 import org.tyranid.bson.BsonObject
+import org.tyranid.db.es.Es
 import org.tyranid.logic.{ Invalid, Valid }
 import org.tyranid.ui.{ UiObj }
 
@@ -160,25 +162,17 @@ trait Record extends Valid with BsonObject {
 
   def entity = view.entity
 
-  var isAdding:Boolean = false
+  def has( key:String ) = has( view( key ) )
+  def has( va:ViewAttribute ):Boolean
 
-  def submit {
-    require( parent == null )
-    submitFlagged = true
-  }
-
-  def hasSubmitted:Boolean = submitFlagged || ( parent != null && parent.hasSubmitted )
-
-  private var submitFlagged:Boolean = false
-
-  
   final def apply( key:String ):AnyRef = apply( view( key ) )
   final def update( key:String, v:Any ):Unit = update( view( key ), v )
 
   def apply( va:ViewAttribute ):AnyRef
   def update( va:ViewAttribute, v:Any )
-  
-  def idLabel:(AnyRef,String) = ( apply( view.keyVa.get ), s( view.labelVa.get ) )
+ 
+  def label = s( view.labelVa.get )
+  def idLabel:(AnyRef,String) = ( apply( view.keyVa.get ), label )
 
   def tid = entityTid + recordTid
 
@@ -207,7 +201,7 @@ trait Record extends Valid with BsonObject {
   /**
    * Array
    */
-  //def a( va:ViewAttribute ) = apply( va ).asInstanceOf[Array]
+  def a( va:ViewAttribute ) = apply( va ).asInstanceOf[BasicDBList]
 
   /**
    * Boolean
@@ -239,13 +233,44 @@ trait Record extends Valid with BsonObject {
    */
   def s( va:ViewAttribute ):String = {
     val v = apply( va )
-    if ( v != null ) v.toString else ""
+    
+    // TODO:  need to make this work with BsonObject i.e. View-less Mongo objects
+    v != null |* /*{
+      va.att.domain match {
+        case link:DbLink => link.toEntity.labelFor( v )
+        case _           => */ v.toString /*
+      }
+    }
+    */
   }
 
   /**
    * Date/Time
    */
   //def d( va:ViewAttribute ) = apply( va.name ).toString
+
+
+  def label( va:ViewAttribute ):String = {
+    va.att.domain.asInstanceOf[DbLink].toEntity.labelFor( apply( va ) )
+  }
+
+  def label( key:String ):String = label( view( key ) )
+
+
+  /*
+   * * *   Forms
+   */
+
+  var isAdding:Boolean = false
+
+  def submit {
+    require( parent == null )
+    submitFlagged = true
+  }
+
+  def hasSubmitted:Boolean = submitFlagged || ( parent != null && parent.hasSubmitted )
+
+  private var submitFlagged:Boolean = false
 
   
   /*
@@ -276,7 +301,10 @@ trait Record extends Valid with BsonObject {
    * * *   Persistence
    */
 
-  def save {}
+  def save {
+    if ( view.entity.isSearchable )
+      Es.index( this )
+  }
 }
 
 case class Scope( rec:Record,

@@ -39,9 +39,10 @@ object Imp {
 
   def log( msg:String = "", exception:Exception = null ) = org.tyranid.log.Log.log( msg, exception )
 
-	implicit def boolean( v:Boolean )     = new org.tyranid.logic.BooleanImp( v )
-	implicit def option[A]( v:Option[A] ) = new org.tyranid.collection.OptionImp( v )
-	implicit def string( v:String )       = new org.tyranid.text.StringImp( v )
-	implicit def symbol( v:Symbol )       = v.name
+	implicit def boolean( v:Boolean )                       = new org.tyranid.logic.BooleanImp( v )
+	implicit def option[A]( v:Option[A] )                   = new org.tyranid.collection.OptionImp( v )
+	implicit def string( v:String )                         = new org.tyranid.text.StringImp( v )
+	implicit def symbol( v:Symbol )                         = v.name
+	implicit def jackson( v:org.codehaus.jackson.JsonNode ) = new org.tyranid.json.JsonNodeImp( v )
 }
 

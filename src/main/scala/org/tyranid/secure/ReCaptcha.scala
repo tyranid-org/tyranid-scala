@@ -24,6 +24,9 @@ import scala.collection.mutable
 import scala.collection.JavaConversions._
 import scala.xml.{ NodeSeq, Unparsed }
 
+import dispatch._
+import dispatch.Http._
+
 import net.liftweb.http.{ FileParamHolder, S, SHtml }
 
 import org.tyranid.Bind
@@ -32,8 +35,6 @@ import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.{ Domain, Record, Scope }
 import org.tyranid.logic.Invalid
 import org.tyranid.ui.Field
-import dispatch._
-import dispatch.Http._
 
 
 case class DbReCaptcha( theme:String ) extends Domain {
@@ -81,7 +82,7 @@ case class DbReCaptcha( theme:String ) extends Domain {
 
           !passedCaptcha
         } ) } |*
-        Some( Invalid( scope, "Invalid captcha." ) )
+          Some( Invalid( scope, "Invalid captcha." ) )
     } ) ::
     super.validations
 }

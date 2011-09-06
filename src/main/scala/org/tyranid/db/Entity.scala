@@ -21,8 +21,12 @@ import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp.string
+import org.tyranid.db.es.{ NoSearch, Searchable }
 import org.tyranid.db.tuple.{ TupleView, Tuple }
 import org.tyranid.logic.{ Invalid, Valid }
+
+
+trait AttributeAnnotation
 
 
 /*
@@ -34,6 +38,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   var label:String = name.camelCaseToSpaceUpper
   var help:NodeSeq = NodeSeq.Empty
   var required:Boolean = false
+  var search:Searchable = NoSearch
 
 
   /**
@@ -57,7 +62,17 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
 
     this
   }
+  def is( search:Searchable ) = { this.search = search; this }
   def help( ns:NodeSeq ):Attribute = { help = ns; this }
+
+  private var annotations:List[AttributeAnnotation] = Nil
+  def is( anno:AttributeAnnotation ) = annotations ::= anno
+
+  def annotated[ T <: AttributeAnnotation :Manifest ] = {
+    val m = manifest[T]
+    annotations.find( _.getClass == m.erasure ).map( _.asInstanceOf[T] )
+  }
+
 
 	var isKey = false
 	var isLabel = false
@@ -76,6 +91,8 @@ object Entity {
 
   private val index = mutable.Map[String,Entity]()
 
+  def all = index.values
+
   def byTid( tid:String ) = index.get( tid )
 
   def register( en:Entity ) = {
@@ -87,6 +104,10 @@ object Entity {
 }
 
 trait Entity extends Domain with DbItem {
+
+  val searchIndex = "main"
+  lazy val isSearchable = attribs.exists( _.search.text )
+
 
   /**
    * Tyranid ID.  This is a 3-byte identifier stored as a 4-character base64 string.  All Entity TIDs should be unique.
@@ -140,29 +161,41 @@ trait Entity extends Domain with DbItem {
 
 	def recreate { drop; create }
 
+  def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException // ... yet
 
-	def labelFor( id:Long ) = {
-		val t = staticIdIndex( id )
 
-		val sb = new StringBuilder
-		for ( lleaf <- t.view.elabels )
-			sb ++= t( lleaf.index ).toString
+  /*
+   * * *  Labels
+   */
 
-		sb.toString
-	}
+  def labelFor( id:Any ):String
 
   def idLabels:Iterable[(AnyRef,String)] = Nil
-
-  def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException // ... yet
 
 
 	/*
 	 * * *  Static Data
+   *
+   * TODO:  move this to EnumEntity below ?
 	 */
+
+  def isStatic = staticView != null
 
 	var staticView:TupleView = null
 	var staticRecords:Array[Tuple] = null
 	var staticIdIndex:mutable.HashMap[Long,Tuple] = null
+
+  def static( block: ( StaticBuilder ) => Unit ) {
+    try {
+      val tl = StaticBuilder( this )
+      block( tl )
+      static( tl.tuples:_* )
+    } catch {
+      case e =>
+        e.printStackTrace
+        throw e
+    }
+  }
 
 	def static( names:Product, tuples:Product* ) {
 		val v = new TupleView
@@ -170,20 +203,34 @@ trait Entity extends Domain with DbItem {
 		val vas = new Array[ViewAttribute]( leafCount )
 		for ( li <- 0 until leafCount )
 			vas( li ) = new ViewAttribute( v, attrib( names.productElement( li ).asInstanceOf[String] ), li )
-
 		v.leaves = vas
-		staticView = v
 
 		val tlen = tuples.size
-		staticRecords = new Array[Tuple]( tlen )
+    val newTuples = new Array[Tuple]( tlen )
 		for ( ti <- 0 until tlen ) {
 			val rt = tuples( ti )
 			val t = new Tuple( v )
 			val values = t.values
-			for ( li <- 0 until leafCount )
-				values( li ) = rt.productElement( li ).asInstanceOf[AnyRef]
-			staticRecords( ti ) = t
+      val vlen = rt.productArity
+			for ( vi <- 0 until vlen )
+				values( vi ) = rt.productElement( vi ).asInstanceOf[AnyRef]
+			newTuples( ti ) = t
 		}
+
+    static( newTuples:_* )
+	}
+
+	def static( tuples:Tuple* ) {
+    val v = tuples( 0 ).view
+		val vas = v.vas
+
+    staticView = v
+
+		val tlen = tuples.size
+    // TODO:  use a toArray method or similar
+		staticRecords = new Array[Tuple]( tlen )
+		for ( ti <- 0 until tlen )
+      staticRecords( ti ) = tuples( ti )
 
 		val keys = staticView.ekeys
 		if ( keys.size == 1 ) {
@@ -197,5 +244,69 @@ trait Entity extends Domain with DbItem {
 			}
 		}
 	}
+
+	def staticLabelFor( id:Long ) =
+    if ( id == 0 ) {
+      ""
+    } else {
+		  val t = staticIdIndex( id )
+
+		  val sb = new StringBuilder
+		  for ( lleaf <- t.view.elabels )
+			  sb ++= t( lleaf.index ).toString
+
+		  sb.toString
+    }
 }
+
+// TODO:  should this extend RamEntity ?
+trait EnumEntity[ T >: Null <: Tuple ] extends Entity {
+
+	def apply( id:Int ):T =
+    if ( id == 0 ) null
+    else           staticIdIndex( id ).asInstanceOf[T]
+
+  def arrayToSeq( rec:Record, name:String ) = {
+    import org.tyranid.db.mongo.Imp._
+
+    rec.a( name ).map(
+      _ match {
+      case i:Int    => apply( i )
+      case d:Double => apply( d.toInt )
+      case o        => o.asInstanceOf[T]
+      } ).toSeq
+  }
+}
+
+case class StaticBuilder( en:Entity ) {
+
+	val v = new TupleView
+  val tuples = new mutable.ArrayBuffer[Tuple]()
+
+  private var first = true
+
+  def apply( values:Any* ) {
+    if ( values == null ) return
+    val vlen = values.length
+
+    if ( first ) {
+      val vas = new Array[ViewAttribute]( vlen )
+      for ( li <- 0 until vlen )
+        vas( li ) = new ViewAttribute( v, en.attrib( values( li ).asInstanceOf[String] ), li )
+      v.leaves = vas
+      first = false
+    } else {
+			val t = new Tuple( v )
+			for ( vi <- 0 until vlen ) {
+        val any = values( vi )
+				t.values( vi ) =
+          if ( any != null ) any.asInstanceOf[AnyRef]
+          else               null
+      }
+      tuples += t
+    }
+  }
+}
+
+
 

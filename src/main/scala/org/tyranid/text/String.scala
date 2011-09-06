@@ -36,6 +36,26 @@ class StringImp( s:String ) {
 	def encUrl = java.net.URLEncoder.encode( s, "UTF-8" ) 
 	def decUrl = java.net.URLDecoder.decode( s, "UTF-8" )
 
+  def encJson = {
+    val sb = new StringBuilder
+    val len = s.length
+
+    for ( i <- 0 until len ) {
+      s.charAt( i ) match {
+      case '\b' => sb ++= "\\b"
+      case '\f' => sb ++= "\\f"
+      case '\n' => sb ++= "\\n"
+      case '\r' => sb ++= "\\r"
+      case '\t' => sb ++= "\\t"
+      case '\\' => sb ++= "\\"
+      case '"'  => sb ++= "\""
+      case ch   => sb += ch
+      }
+    }
+
+    sb.toString
+  }
+
 	def isBlank  = ( s == null || s.length == 0 )
 	def notBlank = ( s != null && s.length >  0 )
 
@@ -63,7 +83,7 @@ class StringImp( s:String ) {
 
   def toLiftJson = _root_.net.liftweb.json.JsonParser.parse( s )
 
-  def toJackson = new org.codehaus.jackson.map.ObjectMapper().readTree( s )
+  def toJson = org.tyranid.json.Json.parse( s )
 
   def toBigInt = BigInt( s )
 
@@ -115,6 +135,15 @@ class StringImp( s:String ) {
 			 | "off"         => false
 		case _             => true
 	  }
+
+  def toLaxInt = if ( s.isBlank ) 0
+                 else             s.toInt
+
+  def toLaxDouble = if ( s.isBlank ) 0
+                    else             s.toDouble
+
+  def toLaxLong = if ( s.isBlank ) 0
+                  else             s.toLong
 
 	def uncapitalize = if ( s.length > 1 ) s.charAt( 0 ).toLower + s.substring( 1 ) else s
 	

@@ -266,8 +266,6 @@ case class Email( subject:String, text:String ) {
       val authPassword = ( emailConfig get "authPassword" ).toString
       
       if ( authUser notBlank ) {
-        println( authUser )
-        println( authPassword )
         props.put( "mail.smtp.auth", "true" );
         props.put( "mail.smtp.user", authUser );
         props.put( "mail.smtp.password", authPassword );

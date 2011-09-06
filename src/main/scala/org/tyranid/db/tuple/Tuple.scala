@@ -37,17 +37,23 @@ class TupleView extends View {
 
 class Tuple( val view:TupleView ) extends Record {
 
+  // TODO:  need to clean up id/_id code
+  override def id = apply( "id" )
+
   val parent = null
 
 	val values = new Array[AnyRef]( view.leafCount )
 
-	def apply( index: Int ) = values( index )
-	def update( index: Int, v:Any ) = values( index ) = v.asInstanceOf[AnyRef]
+  def has( index:Int )                = values( index ) != null
+  def has( va:ViewAttribute ):Boolean = has( va.index )
+
+	def apply( index:Int ) = values( index )
+	def update( index:Int, v:Any ) = values( index ) = v.asInstanceOf[AnyRef]
 
   def apply( va:ViewAttribute ) = apply( va.index )
   def update( va:ViewAttribute, v:Any ) = values( va.index ) = v.asInstanceOf[AnyRef]
 
-	def see( index: Int ) = view.leaves( index ).att.domain.see( apply( index ) )
+	def see( index:Int ) = view.leaves( index ).att.domain.see( apply( index ) )
 
 	override def toString = {
 		val sb = new StringBuilder
@@ -61,7 +67,7 @@ class Tuple( val view:TupleView ) extends Record {
 		sb.toString
 	}
 
-	def isNew = view.ekeys.findIndexOf( va => values( va.index ) == null ) != -1
+	def isNew = view.ekeys.indexWhere( va => values( va.index ) == null ) != -1
 
   def rec( va:ViewAttribute ):Tuple = throw new UnsupportedOperationException
 }

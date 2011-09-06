@@ -46,6 +46,8 @@ trait Domain extends Valid {
    */
 	def isAuto = false
 
+  def isSet( v:Any ) = v != null
+
 	def see( v:AnyRef ) =
 		v match {
 		case null => ""
@@ -72,6 +74,9 @@ abstract class DbIntish extends Domain {
 	override lazy val idType = IdType.ID_32
 
   override def tid( r:Record, va:ViewAttribute ) = Base64.toString( r i va )
+
+  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
+    SHtml.ajaxText( s.rec s f.va.name, v => { s.rec( f.va.name ) = v.toLaxInt; f.updateDisplayCmd( s ) }, opts.map( ElemAttr.pairToBasic ):_* )
 }
 
 object DbInt extends DbIntish {
@@ -109,11 +114,16 @@ object DbDouble extends Domain {
  * * *   Text
  */
 
-object DbText extends Domain {
+trait DbTextLike extends Domain {
+
+  override def isSet( v:Any ) = v != null && !v.asInstanceOf[String].isBlank
+}
+
+object DbText extends DbTextLike {
 	val sqlName = "TEXT"
 }
 
-trait LimitedText extends Domain {
+trait LimitedText extends DbTextLike {
   val len:Int
 
   override def validations =
@@ -123,6 +133,13 @@ trait LimitedText extends Domain {
 
 case class DbChar( len:Int ) extends LimitedText {
 	val sqlName = "CHAR(" + len + ")"
+}
+
+case class DbLargeChar( len:Int ) extends LimitedText {
+	val sqlName = "CHAR(" + len + ")"
+	
+  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
+    SHtml.ajaxTextarea( s.rec s f.va.name, v => { s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) }, opts.map( ElemAttr.pairToBasic ):_* )
 }
 
 case class DbVarChar( len:Int ) extends LimitedText {
@@ -213,6 +230,8 @@ case class DbArray( of:Domain ) extends Domain {
   override def ui( s:Scope, f:Field, opts:(String,String)* ) =
 
 
+  draw a field for each array element, and add an "Add" button
+
 
    */
 }
@@ -225,12 +244,12 @@ case class DbLink( toEntity:Entity ) extends Domain {
 										}
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ) =
-    SHtml.ajaxSelect( toEntity.idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq,
+    SHtml.ajaxSelect( ( "" -> "" ) +: toEntity.idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq,
                       Full( s.rec s f.va ),
                       v => {
                         toEntity.idType match {
-                        case IdType.ID_32 => s.rec( f.va ) = v.toInt
-                        case IdType.ID_64 => s.rec( f.va ) = v.toLong
+                        case IdType.ID_32 => s.rec( f.va ) = v.toLaxInt
+                        case IdType.ID_64 => s.rec( f.va ) = v.toLaxLong
                         case _            => s.rec( f.va ) = v
                         }
                         f.updateDisplayCmd( s )
@@ -242,7 +261,7 @@ case class DbLink( toEntity:Entity ) extends Domain {
 	override def see( v:AnyRef ) =
 		v match {
 		case null => ""
-		case n:Number => toEntity.labelFor( n.longValue )
+		case n:Number => toEntity.labelFor( n )
 		}
 }
 
