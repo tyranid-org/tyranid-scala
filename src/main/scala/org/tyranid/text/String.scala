@@ -65,6 +65,7 @@ class StringImp( s:String ) {
 
   def toJackson = new org.codehaus.jackson.map.ObjectMapper().readTree( s )
 
+  def toBigInt = BigInt( s )
 
   def matches( r:Regex ) = r.pattern.matcher( s ).matches
 

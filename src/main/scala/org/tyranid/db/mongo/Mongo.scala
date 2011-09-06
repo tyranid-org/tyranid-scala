@@ -133,8 +133,6 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
     case null           => null
     }
 
- 
-  
   
   /*
    * * *   DBObject delegation
