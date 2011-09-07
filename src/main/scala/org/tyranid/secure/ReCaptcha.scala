@@ -72,7 +72,7 @@ case class DbReCaptcha( theme:String ) extends Domain {
       ( scope.rec.hasSubmitted &&
         !scope.initialDraw && {
           val passedCaptcha =
-            Http( "http://www.google.com/recaptcha/api/verify" << Map(
+            Http( url( "http://www.google.com/recaptcha/api/verify" ) << Map(
               "privatekey" -> Bind.ReCaptchaPrivateKey,
               "remoteip"   -> S.containerRequest.map(_.remoteAddress).openOr("localhost"),
               "challenge"  -> S.param( "recaptcha_challenge_field" ).openOr( "" ),

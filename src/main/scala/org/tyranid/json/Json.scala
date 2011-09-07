@@ -38,6 +38,7 @@ object Json {
 
   def parse( json:String ) = { new org.codehaus.jackson.map.ObjectMapper( factory ) }.readTree( json )
 
+  val EmptyArray  = JsonNodeFactory.instance.arrayNode
 }
 
 class JsonNodeImp( node:JsonNode ) /*extends Dynamic*/ {
@@ -56,12 +57,18 @@ class JsonNodeImp( node:JsonNode ) /*extends Dynamic*/ {
   def update( name:String, value:Double  ) = node.asInstanceOf[ObjectNode].put( name, value )
   def update( name:String, value:String  ) = node.asInstanceOf[ObjectNode].put( name, value )
 
+  def a( key:String ):ArrayNode = apply( key ).a
   def b( key:String ) = apply( key ).getValueAsBoolean
   def d( key:String ) = apply( key ).getValueAsDouble
   def i( key:String ) = apply( key ).getValueAsInt
   def l( key:String ) = apply( key ).getValueAsLong
   def s( key:String ) = apply( key ).getValueAsText.denull
 
+  def a  =
+    node match {
+    case array:ArrayNode     => array
+    case missing:MissingNode => Json.EmptyArray
+    }
   def b = node.getValueAsBoolean
   def d = node.getValueAsDouble
   def i = node.getValueAsInt

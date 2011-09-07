@@ -62,7 +62,7 @@ class Indexer extends Actor {
   case IndexMsg( index, typ, id, json ) =>
 
     if ( json != "{}" )
-      spam( "indexing:  " + Http( ( "http://localhost:9200/" + index + "/" + typ + "/" + id ) << json as_str ) )
+      spam( "indexing:  " + Http( url( "http://localhost:9200/" + index + "/" + typ + "/" + id ) << json as_str ) )
   }
 
 }
@@ -86,7 +86,7 @@ case class IndexMsg( index:String, typ:String, id:String, json:String )
 object Es {
 
   def search( text:String ) =
-    Http( "http://localhost:9200/_search" <<? Map( "q" -> text ) as_str )
+    Http( url( "http://localhost:9200/_search" ) <<? Map( "q" -> text ) as_str )
 
 
   def jsonFor( rec:Record ) = {
