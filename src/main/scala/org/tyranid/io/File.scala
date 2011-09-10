@@ -80,6 +80,27 @@ class DbFile( bucket:S3Bucket ) extends Domain {
     </div>
 }
 
+object DbLocalFile {
+  def apply = new DbLocalFile
+}
+
+class DbLocalFile extends Domain {
+  val sqlName = "TEXT"
+
+  protected def save( r:Record, f:Field )( fp:FileParamHolder ) =
+    fp.file match {
+    case null =>
+    case x if x.length == 0 =>
+    case x =>
+      r( f.va ) = fp.fileName
+    }
+
+  override def ui( s:Scope, f:Field, opts:(String,String)* ): NodeSeq =
+    <div class='thumbnail'><div> { SHtml.fileUpload( save( s.rec, f ) _ ) }</div></div>
+}
+
+
 object File {
 }
+
 
