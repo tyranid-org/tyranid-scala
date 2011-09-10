@@ -136,14 +136,30 @@ class StringImp( s:String ) {
 		case _             => true
 	  }
 
-  def toLaxInt = if ( s.isBlank ) 0
-                 else             s.toInt
+  def toLaxInt =
+    if ( s.isBlank )
+      0
+    else
+      try {
+        s.toInt
+      } catch {
+      case e:NumberFormatException =>
+        0
+      }
 
   def toLaxDouble = if ( s.isBlank ) 0
                     else             s.toDouble
 
-  def toLaxLong = if ( s.isBlank ) 0
-                  else             s.toLong
+  def toLaxLong =
+    if ( s.isBlank )
+      0
+    else
+      try {
+        s.toLong
+      } catch {
+      case e:NumberFormatException =>
+        0
+      }
 
 	def uncapitalize = if ( s.length > 1 ) s.charAt( 0 ).toLower + s.substring( 1 ) else s
 	
