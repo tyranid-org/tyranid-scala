@@ -44,9 +44,7 @@ case class RamEntity( tid:String ) extends Entity {
 	def create {}
 	def drop   { /* TODO */ }
 
-  def labelFor( id:Any ) = {
-    spam( "RamEntity id=" + id + " class=" + id.getClass.getName )
-
+  def labelFor( id:Any ) =
     id match {
     case l:Long => staticLabelFor( l )
     case i:Int  => staticLabelFor( i.toLong )
@@ -57,7 +55,6 @@ case class RamEntity( tid:String ) extends Entity {
       else          s
     case id     => id.toString
     }
-  }
 
   override def idLabels:Seq[(AnyRef,String)] = staticRecords.map( _.idLabel )
 }
