@@ -80,11 +80,7 @@ class DbFile( bucket:S3Bucket ) extends Domain {
     </div>
 }
 
-object DbLocalFile {
-  def apply = new DbLocalFile
-}
-
-class DbLocalFile extends Domain {
+object DbLocalFile extends Domain {
   val sqlName = "TEXT"
 
   protected def save( r:Record, f:Field )( fp:FileParamHolder ) =
