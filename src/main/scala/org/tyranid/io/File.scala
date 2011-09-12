@@ -17,7 +17,7 @@
 
 package org.tyranid.io
 
-import java.io.IOException
+import java.io.{ IOException, FileOutputStream, InputStream, OutputStream }
 import java.net.URL
 
 import scala.collection.mutable
@@ -83,12 +83,30 @@ class DbFile( bucket:S3Bucket ) extends Domain {
 object DbLocalFile extends Domain {
   val sqlName = "TEXT"
 
+  private def transfer( input: InputStream, out: OutputStream ) {
+  	val buffer = new Array[Byte](8192)
+  		
+  	def transfer() {
+  		val read = input.read( buffer )
+  		if ( read >= 0 ) {
+  			out.write( buffer, 0, read )
+  			transfer()
+  		}
+  	}
+  		
+  	transfer()
+  }
+  	
   protected def save( r:Record, f:Field )( fp:FileParamHolder ) =
     fp.file match {
     case null =>
     case x if x.length == 0 =>
     case x =>
-      r( f.va ) = fp.fileName
+      val tmpName = "/tmp/" + System.currentTimeMillis + "_" + fp.fileName
+      var fops = new FileOutputStream( new java.io.File( tmpName ) )
+      transfer( fp.fileStream, fops )
+      fops.close()
+      r( f.va ) = tmpName
     }
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ): NodeSeq =
