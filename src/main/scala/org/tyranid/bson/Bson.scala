@@ -21,6 +21,7 @@ import org.bson.types.ObjectId
 import com.mongodb.BasicDBList
 
 import org.tyranid.Imp._
+import org.tyranid.db.mongo.Imp._
 
 
 /**
@@ -33,6 +34,11 @@ trait BsonObject {
 
   def id = apply( "_id" )
 
+  def a_?( key:String ) =
+    apply( key ) match {
+    case null          => Mongo.EmptyArray
+    case a:BasicDBList => a
+    }
   def a( key:String )         = apply( key ).asInstanceOf[BasicDBList]
   def o( key:String )         = apply( key ).asInstanceOf[BsonObject]
   def b( key:String )         = apply( key ).asInstanceOf[Boolean]

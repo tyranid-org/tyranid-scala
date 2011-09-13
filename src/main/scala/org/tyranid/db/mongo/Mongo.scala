@@ -78,6 +78,8 @@ object Imp {
 
   object Mongo {
     lazy val connect = new com.mongodb.Mongo( Bind.MongoHost )
+
+    val EmptyArray = Mlist()
   }
 
 	implicit def mongoImp( mongo:com.mongodb.Mongo ) = new MongoImp( mongo )
