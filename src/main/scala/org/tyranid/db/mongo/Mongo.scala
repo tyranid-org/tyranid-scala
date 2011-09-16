@@ -116,7 +116,14 @@ case class DBCollectionImp( coll:DBCollection ) {
    */
   def findOrMake( query:DBObject ) =
     coll.findOne( query ) match {
-    case null => query.asInstanceOf[BasicDBObject].copy().asInstanceOf[DBObject]
+    case null =>
+      val o =
+        query match {
+        case o:DBObjectWrap  => o.obj.asInstanceOf[BasicDBObject]
+        case b:BasicDBObject => b
+        }
+
+      o.copy().asInstanceOf[DBObject]
     case o    => o
     }
 }
