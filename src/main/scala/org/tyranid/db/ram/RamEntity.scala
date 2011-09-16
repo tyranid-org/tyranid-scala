@@ -19,7 +19,7 @@ package org.tyranid.db.ram
 
 import scala.collection.mutable.{ ArrayBuffer, HashMap }
 
-import org.tyranid.Imp.{ string, symbol }
+import org.tyranid.Imp._
 import org.tyranid.db.{ DbIntSerial, DbChar, Entity, View, ViewAttribute }
 import org.tyranid.db.tuple.TupleView
 
@@ -49,6 +49,10 @@ case class RamEntity( tid:String ) extends Entity {
     case l:Long => staticLabelFor( l )
     case i:Int  => staticLabelFor( i.toLong )
     case null   => ""
+    case s:String =>
+      val l = s.toLaxLong
+      if ( l != 0 ) staticLabelFor( l )
+      else          s
     case id     => id.toString
     }
 

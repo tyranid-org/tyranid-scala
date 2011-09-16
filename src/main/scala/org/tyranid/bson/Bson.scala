@@ -20,6 +20,9 @@ package org.tyranid.bson
 import org.bson.types.ObjectId
 import com.mongodb.BasicDBList
 
+import org.tyranid.Imp._
+import org.tyranid.db.mongo.Imp._
+
 
 /**
  * Represents either BsonObjects or things that can behave like a BsonObject.
@@ -31,11 +34,21 @@ trait BsonObject {
 
   def id = apply( "_id" )
 
+  def a_?( key:String ) =
+    apply( key ) match {
+    case null          => Mongo.EmptyArray
+    case a:BasicDBList => a
+    }
   def a( key:String )         = apply( key ).asInstanceOf[BasicDBList]
   def o( key:String )         = apply( key ).asInstanceOf[BsonObject]
   def b( key:String )         = apply( key ).asInstanceOf[Boolean]
   def d( key:String )         = apply( key ).asInstanceOf[Double]
-  def i( key:String )         = apply( key ).asInstanceOf[Int]
+  def i( key:String )         =
+    apply( key ) match {
+    case i:java.lang.Integer => i.intValue
+    case s:String => s.toLaxInt
+    case null => 0
+    }
   def l( key:String )         = apply( key ).asInstanceOf[Long]
   def oid( key:String )       = apply( key ).asInstanceOf[ObjectId]
   //def r( key:String )       = apply( key ).asInstanceOf[Long]

@@ -48,6 +48,10 @@ object Email {
     val emailParser( name, num, domain, com ) = email
     domain
   }
+
+  def apply( subject:String, text:String, to:String, from:String ) {
+    Email( subject, text ).addTo( to ).from( from ).send
+  }
 }
 
 case class Email( subject:String, text:String ) {
