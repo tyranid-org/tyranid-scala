@@ -107,6 +107,16 @@ case class DBCollectionImp( coll:DBCollection ) {
   
   // TODO:  is there a way to implement this without actually bringing the object back?
   def exists( query:DBObject ) = coll.findOne( query ) != null
+
+  /**
+   * This attempts to find the object in the collection.  If it does not exist, a clone of the
+   * query object is returned.
+   */
+  def findOrMake( query:DBObject ) =
+    coll.findOne( query ) match {
+    case null => query.asInstanceOf[BasicDBObject].copy().asInstanceOf[DBObject]
+    case o    => o
+    }
 }
 
 case class DBCursorImp( cursor:DBCursor ) extends Iterator[DBObject] {
