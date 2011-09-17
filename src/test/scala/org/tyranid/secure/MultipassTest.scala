@@ -64,7 +64,7 @@ finished multipass string: OGgtOgKikHKiROeDbzRCD1vlSHMti_hjWdshZnF_zrlPqVJ80oOwZ
 
     val multipass = new Multipass( "assistly_subdomain", "multipass_api_key" )
 
-    val rslt = multipass.make( """{"uid":"123abc","customer_email":"testuser@yoursite.com","customer_name":"Test User","expires":"2011-07-06 23:28:40Z"}""" )
+    val rslt = multipass.json( """{"uid":"123abc","customer_email":"testuser@yoursite.com","customer_name":"Test User","expires":"2011-07-06 23:28:40Z"}""" )
 
     val expected = "OGgtOgKikHKiROeDbzRCD1vlSHMti_hjWdshZnF_zrlPqVJ80oOwZd8QRkAJjG9Op4jjzlOiCuXJvBLJUAqYKGsBLX4Qq8hYyR1Bm_aBB-SAJp71tPb5NerozU8iDOTb-2UXgmy-lMdp7ACXCRxYUy6FwBYNHlQcbHIesBDLAtM"
 

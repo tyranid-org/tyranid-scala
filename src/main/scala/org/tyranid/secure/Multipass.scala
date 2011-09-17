@@ -21,7 +21,7 @@ object Multipass {
   val DefaultInitVector = "OpenSSL for Ruby".getBytes
 }
 
-class Multipass( accountKey:String, apiKey:String, initVector:Array[Byte] = Multipass.DefaultInitVector ) {
+case class Multipass( accountKey:String, apiKey:String, initVector:Array[Byte] = Multipass.DefaultInitVector ) {
 
   private val secretKeySpec = {
     val salted = apiKey + accountKey
@@ -52,7 +52,7 @@ class Multipass( accountKey:String, apiKey:String, initVector:Array[Byte] = Mult
     cout.close
   }
 
-  def make( json:String ) = {
+  def json( json:String ) = {
     val data = json.getBytes
     for ( i <- 0 until 16 )
       data( i ) = ( data( i ) ^ initVector( i ) ).toByte
@@ -62,10 +62,15 @@ class Multipass( accountKey:String, apiKey:String, initVector:Array[Byte] = Mult
     Base64.toString( out.toByteArray )
   }    
 
-  def make( uid:String, redirect:String, email:String, name:String ):String = {
+  def props( uid:String, redirect:String, email:String, name:String, tags: (String,String)* ):String = {
     val expires = ( new Instant() + 5.minutes ).toString()
 
-    make( """{ "uid":"""" + uid + """", "expires":"""" + expires + """", "customer_email":"""" + email + """", "customer_name":"""" + name + """" }""" )
+    json( "\"{ \"uid\":\"" + uid +
+          "\", \"expires\":\"" + expires +
+          "\", \"customer_email\":\"" + email +
+          "\", \"customer_name\":\"" + name + "\"" +
+          tags.map( t => ", \"customer_custom_" + t._1 + "\",\"" + t._2 + "\"" ) +
+          " }" )
   }
 }
 
