@@ -66,5 +66,9 @@ object Bind {
 
   def apply( bucket:S3Bucket ) = S3Buckets( bucket.prefix ) = bucket
 
+  // Assistly
+  @volatile var AssistlySiteKey = ""
+  @volatile var AssistlyMultipassKey = ""
+
 }
 

@@ -21,6 +21,7 @@ import scala.util.matching.Regex
 
 import org.tyranid.Imp._
 
+
 class StringImp( s:String ) {
 	def denull = if ( s == null ) "" else s
 
