@@ -41,7 +41,7 @@ class Tyranid( info: ProjectInfo ) extends DefaultProject( info ) with AkkaProje
 
     "javax.servlet"              % "servlet-api"              % "2.5",
 
-    "org.scalatest"              % "scalatest"                % "1.3"           % "test->default"
+    "org.scalatest"             %% "scalatest"                % "1.6.1"         % "test->default"
   ) ++ super.libraryDependencies
 
   // Publishing

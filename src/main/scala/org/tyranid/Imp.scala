@@ -42,6 +42,7 @@ object Imp {
 	implicit def boolean( v:Boolean )                       = new org.tyranid.logic.BooleanImp( v )
 	implicit def option[A]( v:Option[A] )                   = new org.tyranid.collection.OptionImp( v )
 	implicit def string( v:String )                         = new org.tyranid.text.StringImp( v )
+  implicit def array[A]( a:Array[A] )                     = new org.tyranid.collection.ArrayImp( a )
   implicit def byteArray( ba:Array[Byte] )                = new org.tyranid.math.ByteArray( ba )
 	implicit def symbol( v:Symbol )                         = v.name
 	implicit def jackson( v:org.codehaus.jackson.JsonNode ) = new org.tyranid.json.JsonNodeImp( v )
