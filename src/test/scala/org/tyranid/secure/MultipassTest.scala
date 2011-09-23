@@ -68,6 +68,8 @@ finished multipass string: OGgtOgKikHKiROeDbzRCD1vlSHMti_hjWdshZnF_zrlPqVJ80oOwZ
 
     val expected = "OGgtOgKikHKiROeDbzRCD1vlSHMti_hjWdshZnF_zrlPqVJ80oOwZd8QRkAJjG9Op4jjzlOiCuXJvBLJUAqYKGsBLX4Qq8hYyR1Bm_aBB-SAJp71tPb5NerozU8iDOTb-2UXgmy-lMdp7ACXCRxYUy6FwBYNHlQcbHIesBDLAtM"
 
+    multipass.props( "uid", "redirect", "email", "name", "org" -> "acme" )
+
     //spam( " got:" + rslt )
     //spam( "want:" + expected )
 
