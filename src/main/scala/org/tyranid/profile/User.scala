@@ -23,22 +23,18 @@ import net.liftweb.http.{ RedirectResponse, S, SessionVar }
 import org.tyranid.Bind
 import org.tyranid.Imp._
 import org.tyranid.db.{ Record, Scope }
+import org.tyranid.ui.Session
 
 trait UserMeta {
 
-  def current:User           = User.currentVar.is
-  def current_=( user:User ) = User.currentVar.set( user )
-
-  def isLoggedIn = User.current.loggedIn
-  def isAdmin    = User.current.admin
+  def isLoggedIn = Session.apply.user.loggedIn
+  def isAdmin    = Session.apply.user.admin
 
   lazy val ReqLoggedIn = User._ReqLoggedIn
   lazy val ReqAdmin    = User._ReqAdmin
 }
 
 object User extends UserMeta {
-
-  private[profile] object currentVar extends SessionVar[User]( Bind.NewUser() )
 
   import net.liftweb.sitemap.Loc._
 

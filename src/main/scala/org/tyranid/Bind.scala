@@ -21,6 +21,8 @@ import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import org.tyranid.profile.User
+import org.tyranid.ui.Session
+
 
 object Debug {
   def check( xml: => NodeSeq ):NodeSeq = {
@@ -38,6 +40,9 @@ object Bind {
   // Environment
   @volatile var EnvSuffix = "" // "-x" or "-dx"
 
+  @volatile var NewUser:() => User = null
+  @volatile var NewSession:() => Session = null
+
   // DB
   @volatile var ProfileDbName:String = "default"
 
@@ -48,8 +53,6 @@ object Bind {
   @volatile var DbUser:String = ""
   @volatile var DbPw:String   = ""
   @volatile var DbDriver      = "org.postgresql.Driver"
-
-  @volatile var NewUser:() => User = null
 
   // ReCaptcha
   @volatile var ReCaptchaPublicKey      = ""
