@@ -21,7 +21,7 @@ import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import org.tyranid.profile.User
-import org.tyranid.ui.Session
+import org.tyranid.session.Session
 
 
 object Debug {

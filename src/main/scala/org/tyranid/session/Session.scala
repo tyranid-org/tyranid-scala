@@ -15,7 +15,7 @@
  *
  */
 
-package org.tyranid.ui
+package org.tyranid.session
 
 import scala.collection.mutable
 import scala.xml.{ Node, NodeSeq, Unparsed }

@@ -23,7 +23,7 @@ import net.liftweb.http.{ RedirectResponse, S, SessionVar }
 import org.tyranid.Bind
 import org.tyranid.Imp._
 import org.tyranid.db.{ Record, Scope }
-import org.tyranid.ui.Session
+import org.tyranid.session.Session
 
 trait UserMeta {
 
