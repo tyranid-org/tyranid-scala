@@ -32,6 +32,18 @@ trait SessionMeta {
 
   def apply():Session = currentVar.is
 
+
+  /*
+   * * *   Editing
+   */
+
+  private val editings = mutable.Map[ Class[_], AnyRef ]()
+
+  def editing[ T: Manifest ]( gen: => AnyRef ) =
+    editings.getOrElseUpdate( manifest[T].erasure, gen )
+  def doneEditing[ T: Manifest ] =
+    editings.remove( manifest[T].erasure )
+  def clearAllEditing = editings.clear
 }
 
 trait Session {
