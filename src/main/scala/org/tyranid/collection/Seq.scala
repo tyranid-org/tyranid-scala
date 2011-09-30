@@ -17,15 +17,21 @@
 
 package org.tyranid.collection
 
+
 class SeqImp[A]( seq:Seq[A] ) {
+
+  /**
+   * Like Seq.groupBy() except this requires that the underlying data is a
+   * sequence of ( K, V ) tuples.  This is a grouped-version of toMap().
+   */
+  def group[K,V]( implicit ev: A <:< (K, V) ):Map[K,Seq[V]] =
+    seq.groupBy( _._1 ).mapValues( _.map( _._2 ) )
 
   /**
    * Like Seq.groupBy() except that you can specify both the key and the value.
    */
   def groupBy2[K,V]( kf: ( A ) => K, vf: ( A ) => V ):Map[K,Seq[V]] =
-    seq.map( a => ( kf( a ), vf( a ) ) ).
-      groupBy( _._1 ).
-      mapValues( _.map( _._2 ) )
+    new SeqImp( seq.map( a => ( kf( a ), vf( a ) ) ) ).group
 }
 
 
