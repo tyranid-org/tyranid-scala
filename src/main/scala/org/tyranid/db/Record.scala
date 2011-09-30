@@ -17,6 +17,8 @@
 
 package org.tyranid.db
 
+import java.util.Date
+
 import org.bson.types.ObjectId
 import com.mongodb.BasicDBList
 
@@ -247,7 +249,7 @@ trait Record extends Valid with BsonObject {
   /**
    * Date/Time
    */
-  //def d( va:ViewAttribute ) = apply( va.name ).toString
+  def t( va:ViewAttribute ) = apply( va.name ).asInstanceOf[Date]
 
 
   def label( va:ViewAttribute ):String = {

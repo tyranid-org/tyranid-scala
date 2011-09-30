@@ -17,6 +17,8 @@
 
 package org.tyranid.bson
 
+import java.util.Date
+
 import org.bson.types.ObjectId
 import com.mongodb.BasicDBList
 
@@ -40,7 +42,6 @@ trait BsonObject {
     case a:BasicDBList => a
     }
   def a( key:String )         = apply( key ).asInstanceOf[BasicDBList]
-  def o( key:String )         = apply( key ).asInstanceOf[BsonObject]
   def b( key:String )         = apply( key ).asInstanceOf[Boolean]
   def d( key:String )         = apply( key ).asInstanceOf[Double]
   def i( key:String )         =
@@ -50,13 +51,14 @@ trait BsonObject {
     case null => 0
     }
   def l( key:String )         = apply( key ).asInstanceOf[Long]
+  def o( key:String )         = apply( key ).asInstanceOf[BsonObject]
   def oid( key:String )       = apply( key ).asInstanceOf[ObjectId]
   //def r( key:String )       = apply( key ).asInstanceOf[Long]
   def s( key:String ):String = {
     val v = apply( key )
     if ( v != null ) v.toString else ""
   }
-  //def d( key:String ) = apply( key ).toString
+  def t( key:String )         = apply( key ).asInstanceOf[Date]
 }
 
 trait BsonList extends BsonObject with Seq[Any] {
@@ -66,17 +68,17 @@ trait BsonList extends BsonObject with Seq[Any] {
 
 
   def a( idx:Int )         = apply( idx ).asInstanceOf[BasicDBList]
-  def o( idx:Int )         = apply( idx ).asInstanceOf[BsonObject]
   def b( idx:Int )         = apply( idx ).asInstanceOf[Boolean]
   def d( idx:Int )         = apply( idx ).asInstanceOf[Double]
   def i( idx:Int )         = apply( idx ).asInstanceOf[Int]
   def l( idx:Int )         = apply( idx ).asInstanceOf[Long]
+  def o( idx:Int )         = apply( idx ).asInstanceOf[BsonObject]
   def oid( idx:Int )       = apply( idx ).asInstanceOf[ObjectId]
   //def r( idx:Int )       = apply( idx ).asInstanceOf[Long]
   def s( idx:Int ):String = {
     val v = apply( idx )
     if ( v != null ) v.toString else ""
   }
-  //def d( idx:Int ) = apply( idx ).toString
+  def t( idx:Int )         = apply( idx ).asInstanceOf[Date]
 }
 
