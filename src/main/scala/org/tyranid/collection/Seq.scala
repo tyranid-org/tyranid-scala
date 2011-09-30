@@ -17,6 +17,8 @@
 
 package org.tyranid.collection
 
+import org.tyranid.Imp._
+
 
 class SeqImp[A]( seq:Seq[A] ) {
 
@@ -31,7 +33,7 @@ class SeqImp[A]( seq:Seq[A] ) {
    * Like Seq.groupBy() except that you can specify both the key and the value.
    */
   def groupBy2[K,V]( kf: ( A ) => K, vf: ( A ) => V ):Map[K,Seq[V]] =
-    new SeqImp( seq.map( a => ( kf( a ), vf( a ) ) ) ).group
+    seq.map( a => ( kf( a ), vf( a ) ) ).group
 }
 
 
