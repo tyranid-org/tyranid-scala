@@ -19,12 +19,12 @@ package org.tyranid.db.meta
 
 import com.mongodb.BasicDBList
 
-import org.tyranid.Imp._
-import org.tyranid.db.{ Entity, Record, ViewAttribute }
+import org.tyranid.db.{ Entity, Record, Path, MultiPath, ViewAttribute }
 import org.tyranid.db.{ AttributeAnnotation, Domain, DbArray, DbLink, Entity, Record, ViewAttribute }
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoView, MongoRecord }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.profile.User
+import org.tyranid.Imp._
 
 
 
@@ -32,16 +32,12 @@ import org.tyranid.profile.User
  * * *   UiMap
  */
 
-case class UiMapping( url:String, paths:List[String]* ) {
+case class UiMapping( url:String, paths:Seq[String]* ) {
 
-  private def matchOne( path:List[ViewAttribute], tpath:List[String] ) = {
-    //( 1 until tpath.size ).foreach( i => spam( "i:" + i + " p:" + path( i-1 ).name + " tp:" + tpath( i ) ) )
-
+  def matches( path:Path ) = {
     // start at 1 to skip past "org" ... probably needs to be done better?
-    !( 1 until tpath.size ).exists( i => tpath( i ) != path( i-1 ).name )
+    paths.exists( tpath => path.matches( tpath, 1 ) )
   }
-
-  def matches( path:List[ViewAttribute] ) = paths.exists( tpath => matchOne( path, tpath ) )
 }
 
 
@@ -57,7 +53,7 @@ object UiMap {
     this
   }
 
-  def findMatch( path:List[ViewAttribute] ) = mappings.find( _.matches( path ) )
+  def findMatch( path:Path ) = mappings.find( _.matches( path ) )
 }
 
 
@@ -75,14 +71,14 @@ trait Req extends AttributeAnnotation {
   def matches( user:User ):Boolean
 }
 
-case class Completion( total:Double, completed:Double, paths:List[ List[ViewAttribute] ] )
+case class Completion( total:Double, completed:Double, paths:List[Path] )
 
 object Completion {
 
   def apply( rec:Record, user:User ):Completion = {
     var total = 0d;
     var completed = 0d;
-    var paths:List[ List[ViewAttribute] ] = Nil
+    var paths:List[Path] = Nil
 
     def record( path:List[ViewAttribute], rec:Record ) {
       for ( va <- rec.view.vas ) {
@@ -128,13 +124,13 @@ object Completion {
           if ( d.isSet( value ) )
             completed += req.weight
           else
-            paths ::= path
+            paths ::= MultiPath( path.reverse:_* )
 
         case dom =>
           if ( d.isSet( value ) )
             completed += req.weight
           else
-            paths ::= path
+            paths ::= MultiPath( path.reverse:_* )
         }
       }
     }

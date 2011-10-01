@@ -36,41 +36,61 @@ import org.tyranid.ui.{ UiObj }
  * * *  Path
  */
 
-//case class Path( nodes:Seq[PathNode] )
-
 /*
 
-    need to account for array index positions in the path
+    +.  rewrite Completion to use Paths
+
+    +.  write unit tests in terms of Tyranid models ... i.e. locale, etc.
+
+    +.  implement flatten
+
+    +.  differencing
+
+    +.  change log writes
 
 
-    class ArrayIndex extends PathNode
-
-    write unit tests in terms of Tyranid models ... i.e. locale, etc.
  */
+
+
+trait PathNode {
+  def name:String
+  def label:String
+}
+
+case class ArrayIndex( idx:Int ) extends PathNode {
+
+  def name  = idx.toString
+  def label = name
+}
 
 trait Path {
 
-  def pathSize:Int
-  def pathAt( idx:Int ):ViewAttribute
+  def name  = ( 0 until pathSize ).map( i => pathAt( i ).name ).mkString( "." )
+  def label = ( 0 until pathSize ).map( i => pathAt( i ).label ).mkString( " . " )
 
-  def leaf:ViewAttribute
+  def pathSize:Int
+  def pathAt( idx:Int ):PathNode
+
+  def leaf:ViewAttribute = pathAt( pathSize - 1 ).asInstanceOf[ViewAttribute]
+
+  def matches( other:Seq[String], ostart:Int = 0 ) = {
+
+    !( ostart until other.size ).exists( i => other( i ) != pathAt( i-ostart ).name )
+  }
+}
+
+case class MultiPath( nodes:PathNode* ) extends Path {
+
+  def pathSize = nodes.length
+  def pathAt( idx:Int ) = nodes( idx )
 }
 
 case class PathValue( path:Path, value:Any )
 
-case class MultiPath( vas:ViewAttribute* ) extends Path {
-
-  def pathSize = vas.length
-  def pathAt( idx:Int ) = vas( idx )
-
-  def leaf = vas.last
-}
-
-
 object Path {
 
   def flatten( r:Record ):Seq[PathValue] = {
-
+    // TODO
     Nil
   }
 }

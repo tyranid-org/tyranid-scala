@@ -38,12 +38,12 @@ import org.tyranid.ui.{ UiObj }
 
 class ViewAttribute( val view:View,
                      val att:Attribute,
-                     val index:Int ) extends Valid with Path {
+                     val index:Int ) extends Valid with Path with PathNode {
 
   def temporary = att.temporary
 
-  def name = att.name
-  def label:String = att.label
+  override def name  = att.name
+  override def label = att.label
 
   def label( r:Record, opts:(String,String)* ):NodeSeq = <label for={ name }>{ label }</label>
 
@@ -56,8 +56,6 @@ class ViewAttribute( val view:View,
 
   def pathSize = 1
   def pathAt( idx:Int ) = this
-
-  def leaf = this
 
 
   /*
@@ -313,12 +311,12 @@ case class Scope( rec:Record,
     var r = rec
     var pi = 0
     while ( pi < plen ) {
-      val va = path.pathAt( pi )
+      val va = path.pathAt( pi ).asInstanceOf[ViewAttribute]
       r = r.rec( va )
       pi += 1
     }
 
-    val va = path.pathAt( pi )
+    val va = path.pathAt( pi ).asInstanceOf[ViewAttribute]
 
     if ( va.att.domain.isInstanceOf[Entity] )
       copy( rec = r.rec( va ), path = None )

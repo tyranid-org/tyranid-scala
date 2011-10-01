@@ -27,7 +27,6 @@ class PathSuite extends FunSuite {
   test( "todo" ) {
 
       //assert( re.decimal === Base36.toLong( re.base36 ) )
-    }
   }
 }
 
