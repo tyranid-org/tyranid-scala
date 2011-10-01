@@ -20,13 +20,22 @@ package org.tyranid.db
 import org.scalatest.FunSuite
 
 import org.tyranid.Imp._
+import org.tyranid.test.db._
 
 
 class PathSuite extends FunSuite {
 
-  test( "todo" ) {
+  test( "flatten1" ) {
 
-      //assert( re.decimal === Base36.toLong( re.base36 ) )
+    val obj = Widget.make
+
+    obj( 'name ) = "test"
+
+    val pvs = Path.flatten( obj )
+
+    assert( pvs.size === 1 )
+
+    assert( pvs( 0 ).value === "test" )
   }
 }
 
