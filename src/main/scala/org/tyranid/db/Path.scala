@@ -28,6 +28,8 @@ import scala.xml.NodeSeq
 import org.tyranid.Imp._
 import org.tyranid.bson.BsonObject
 import org.tyranid.db.es.Es
+import org.tyranid.db.mongo.MongoEntity
+import org.tyranid.db.mongo.Imp._
 import org.tyranid.logic.{ Invalid, Valid }
 import org.tyranid.ui.{ UiObj }
 
@@ -38,16 +40,13 @@ import org.tyranid.ui.{ UiObj }
 
 /*
 
-    +.  rewrite Completion to use Paths
-
-    +.  write unit tests in terms of Tyranid models ... i.e. locale, etc.
+    !.  write unit tests in terms of Tyranid models ... i.e. locale, etc.
 
     +.  implement flatten
 
     +.  differencing
 
     +.  change log writes
-
 
  */
 
@@ -89,9 +88,51 @@ case class PathValue( path:Path, value:Any )
 
 object Path {
 
-  def flatten( r:Record ):Seq[PathValue] = {
-    // TODO
-    Nil
+  def flatten( rec:Record ):Seq[PathValue] = {
+    var pathValues:List[PathValue] = Nil
+
+    def record( path:List[ViewAttribute], rec:Record ) {
+      for ( va <- rec.view.vas ) {
+        va.att.domain match {
+        case en:Entity   => record( va :: path, rec.rec( va ) )
+        case arr:DbArray => array( va :: path, rec.a( va ) )
+        case dom         => simple( va :: path, rec( va ) )
+        }
+      }
+    }
+
+    def array( path:List[ViewAttribute], arr:BasicDBList ) {
+      if ( arr == null || arr.size == 0 ) {
+        Nil
+      } else {
+        val va = path.head
+        val dom = va.att.domain.asInstanceOf[DbArray].of
+        val value = arr( 0 )
+
+        dom match {
+        case en:MongoEntity => record( va :: path, en.recify( arr( 0 ), rec => arr( 0 ) = rec ) )
+        case arr:DbArray    => array( va :: path, value.asInstanceOf[BasicDBList] )
+        case dom            => simple( va :: path, value )
+        }
+      }
+    }
+
+    def simple( path:List[ViewAttribute], value:Any ) {
+      val va = path.head
+      val a  = va.att
+      val d  = a.domain
+
+      if ( d.isSet( value ) ) {
+        pathValues ::= PathValue( MultiPath( path.reverse:_* ), value )
+
+        if ( d.isInstanceOf[DbLink] ) {
+          // TODO: recurse the link
+        }
+      }
+    }
+
+    record( Nil, rec )
+    pathValues
   }
 }
 
