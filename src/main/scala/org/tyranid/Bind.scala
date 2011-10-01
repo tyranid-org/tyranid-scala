@@ -23,6 +23,7 @@ import scala.xml.NodeSeq
 import org.tyranid.profile.User
 import org.tyranid.session.Session
 
+import com.braintreegateway.BraintreeGateway
 
 object Debug {
   def check( xml: => NodeSeq ):NodeSeq = {
@@ -57,6 +58,9 @@ object Bind {
   // ReCaptcha
   @volatile var ReCaptchaPublicKey      = ""
   @volatile var ReCaptchaPrivateKey     = ""
+
+  // Braintree
+  @volatile var BraintreeGateway:BraintreeGateway = null
   
   // AWS
   import org.tyranid.cloud.aws.S3Bucket
