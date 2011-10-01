@@ -32,21 +32,9 @@ import org.tyranid.logic.{ Invalid, Valid }
 import org.tyranid.ui.{ UiObj }
 
 
-trait Path {
-
-  def pathSize:Int
-  def pathAt( idx:Int ):ViewAttribute
-
-  def leaf:ViewAttribute
-}
-
-case class MultiPath( vas:ViewAttribute* ) extends Path {
-
-  def pathSize = vas.length
-  def pathAt( idx:Int ) = vas( idx )
-
-  def leaf = vas.last
-}
+/*
+ * * *  ViewAttribute
+ */
 
 class ViewAttribute( val view:View,
                      val att:Attribute,

@@ -44,6 +44,10 @@ case class UiMapping( url:String, paths:List[String]* ) {
   def matches( path:List[ViewAttribute] ) = paths.exists( tpath => matchOne( path, tpath ) )
 }
 
+
+/**
+ * A UiMap maps fields in the database to URL-paths in the UI where that field can be edited.
+ */
 object UiMap {
 
   private var mappings:List[UiMapping] = Nil
@@ -61,6 +65,10 @@ object UiMap {
  * * *   Completion
  */
 
+/**
+ * This provides additional requirements for an Attribute.  For example, how important it is (weighting),
+ * who is responsible for completing it, whether it is absolutely required, and so on.
+ */
 trait Req extends AttributeAnnotation {
   val weight:Double
 
