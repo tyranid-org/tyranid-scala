@@ -26,15 +26,12 @@ import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoView, MongoRecord }
 import org.tyranid.db.mongo.Imp._
 
 
-trait From extends AttributeAnnotation {
-  val weight:Double
-}
 
-trait CompletionContext {
-  def matches( from:From ):Boolean
-}
+/*
+ * * *   UiMap
+ */
 
-case class CompletionMapping( url:String, paths:List[String]* ) {
+case class UiMapping( url:String, paths:List[String]* ) {
 
   private def matchOne( path:List[ViewAttribute], tpath:List[String] ) = {
     //( 1 until tpath.size ).foreach( i => spam( "i:" + i + " p:" + path( i-1 ).name + " tp:" + tpath( i ) ) )
@@ -46,11 +43,11 @@ case class CompletionMapping( url:String, paths:List[String]* ) {
   def matches( path:List[ViewAttribute] ) = paths.exists( tpath => matchOne( path, tpath ) )
 }
 
-object CompletionMap {
+object UiMap {
 
-  private var mappings:List[CompletionMapping] = Nil
+  private var mappings:List[UiMapping] = Nil
 
-  def +=( mapping:CompletionMapping ) = {
+  def +=( mapping:UiMapping ) = {
     mappings ::= mapping
     this
   }
@@ -58,6 +55,15 @@ object CompletionMap {
   def findMatch( path:List[ViewAttribute] ) = mappings.find( _.matches( path ) )
 }
 
+
+
+trait From extends AttributeAnnotation {
+  val weight:Double
+}
+
+trait CompletionContext {
+  def matches( from:From ):Boolean
+}
 
 case class Completion( total:Double, completed:Double, paths:List[ List[ViewAttribute] ] )
 
