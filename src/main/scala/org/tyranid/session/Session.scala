@@ -52,7 +52,6 @@ trait Session {
 
   def user:User           = userVar
   def user_=( user:User ) = userVar = user
-
 }
 
 object Session extends SessionMeta {
