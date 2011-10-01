@@ -61,7 +61,7 @@ object UiMap {
  * * *   Completion
  */
 
-trait From extends AttributeAnnotation {
+trait Req extends AttributeAnnotation {
   val weight:Double
 
   def matches( user:User ):Boolean
@@ -106,25 +106,25 @@ object Completion {
       val va = path.head
       val a  = va.att
 
-      for ( from <- a.annotated[From];
+      for ( req <- a.annotated[Req];
             d = a.domain;
             ri <- path;
-            rfrom <- ri.att.annotated[From];
-            if rfrom.matches( user ) ) {
-        total += from.weight
+            rreq <- ri.att.annotated[Req];
+            if rreq.matches( user ) ) {
+        total += req.weight
         d match {
         case link:DbLink =>
           val key = value
           // TODO:  what?
 
           if ( d.isSet( value ) )
-            completed += from.weight
+            completed += req.weight
           else
             paths ::= path
 
         case dom =>
           if ( d.isSet( value ) )
-            completed += from.weight
+            completed += req.weight
           else
             paths ::= path
         }
