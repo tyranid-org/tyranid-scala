@@ -24,6 +24,7 @@ import org.tyranid.db.{ Entity, Record, ViewAttribute }
 import org.tyranid.db.{ AttributeAnnotation, Domain, DbArray, DbLink, Entity, Record, ViewAttribute }
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoView, MongoRecord }
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.profile.User
 
 
 
@@ -56,20 +57,21 @@ object UiMap {
 }
 
 
+/*
+ * * *   Completion
+ */
 
 trait From extends AttributeAnnotation {
   val weight:Double
-}
 
-trait CompletionContext {
-  def matches( from:From ):Boolean
+  def matches( user:User ):Boolean
 }
 
 case class Completion( total:Double, completed:Double, paths:List[ List[ViewAttribute] ] )
 
 object Completion {
 
-  def apply( rec:Record, ctx:CompletionContext ):Completion = {
+  def apply( rec:Record, user:User ):Completion = {
     var total = 0d;
     var completed = 0d;
     var paths:List[ List[ViewAttribute] ] = Nil
@@ -108,7 +110,7 @@ object Completion {
             d = a.domain;
             ri <- path;
             rfrom <- ri.att.annotated[From];
-            if ctx.matches( rfrom ) ) {
+            if rfrom.matches( user ) ) {
         total += from.weight
         d match {
         case link:DbLink =>
