@@ -19,6 +19,8 @@ package org.tyranid.db
 
 import java.util.Date
 
+import scala.annotation.tailrec
+
 import org.bson.types.ObjectId
 import com.mongodb.BasicDBList
 
@@ -40,14 +42,10 @@ import org.tyranid.ui.{ UiObj }
 
 /*
 
-    !.  write unit tests in terms of Tyranid models ... i.e. locale, etc.
-
-    +.  implement flatten
-
-    +.  differencing
-
     +.  change log writes
 
+    TODO:  eliminate the call to reverse() and instead always store Paths in reverse order so that
+           common subpaths can be shared?  will save a lot of space when doing operations like Diff.
  */
 
 
@@ -84,14 +82,57 @@ case class MultiPath( nodes:PathNode* ) extends Path {
   def pathAt( idx:Int ) = nodes( idx )
 }
 
-case class PathValue( path:Path, value:Any )
+object PathValue {
+
+  implicit val order = new Ordering[PathValue] {
+    def compare( a:PathValue, b:PathValue ) = Path.order.compare( a.path, b.path )
+  }
+}
+
+case class PathValue( path:Path, value:Any ) {
+  override def toString = path.name + "=" + value.toString
+}
+
+case class PathUpdate( path:Path, oldValue:Any, newValue:Any ) {
+  override def toString = path.name + ": " + oldValue.toString + " => " + newValue.toString
+}
 
 object Path {
+
+  implicit val order = new Ordering[Path] {
+    def compare( a:Path, b:Path ):Int = {
+      @tailrec
+      def compare0( i:Int ):Int = {
+        if ( i >= a.pathSize ) {
+          if ( i >= b.pathSize )
+            0
+          else
+            -1
+        } else if ( i >= b.pathSize ) {
+          1
+        } else {
+          a.pathAt( i ).name.compareTo( b.pathAt( i ).name ) match {
+          case n if n != 0 => n
+          case _           => compare0( i+1 )
+          }
+        }
+      }
+
+      compare0( 0 )
+    }
+  }
 
   def flatten( rec:Record ):Seq[PathValue] = {
     var pathValues:List[PathValue] = Nil
 
-    def record( path:List[ViewAttribute], rec:Record ) {
+    @tailrec
+    def findva( path:List[PathNode] ):ViewAttribute =
+      path.head match {
+      case va:ViewAttribute => va
+      case _                => findva( path.tail )
+      }
+
+    def record( path:List[PathNode], rec:Record ) {
       for ( va <- rec.view.vas ) {
         va.att.domain match {
         case en:Entity   => record( va :: path, rec.rec( va ) )
@@ -101,24 +142,28 @@ object Path {
       }
     }
 
-    def array( path:List[ViewAttribute], arr:BasicDBList ) {
+    def array( path:List[PathNode], arr:BasicDBList ) {
       if ( arr == null || arr.size == 0 ) {
         Nil
       } else {
-        val va = path.head
+        val va = findva( path )
         val dom = va.att.domain.asInstanceOf[DbArray].of
-        val value = arr( 0 )
 
-        dom match {
-        case en:MongoEntity => record( va :: path, en.recify( arr( 0 ), rec => arr( 0 ) = rec ) )
-        case arr:DbArray    => array( va :: path, value.asInstanceOf[BasicDBList] )
-        case dom            => simple( va :: path, value )
+        for ( i <- 0 until arr.size ) {
+          val ipath = ArrayIndex( i ) :: path
+          val value = arr( i )
+
+          dom match {
+          case en:MongoEntity => record( ipath, en.recify( arr( 0 ), rec => arr( 0 ) = rec ) )
+          case arr:DbArray    => array( ipath, value.asInstanceOf[BasicDBList] )
+          case dom            => simple( ipath, value )
+          }
         }
       }
     }
 
-    def simple( path:List[ViewAttribute], value:Any ) {
-      val va = path.head
+    def simple( path:List[PathNode], value:Any ) {
+      val va = findva( path )
       val a  = va.att
       val d  = a.domain
 
@@ -133,6 +178,50 @@ object Path {
 
     record( Nil, rec )
     pathValues
+  }
+
+  case class Diff( as:Seq[PathValue],
+                   bs:Seq[PathValue],
+                   updates:Seq[PathUpdate] )
+
+  def diff( a:Record, b:Record ):Diff = {
+    val al = flatten( a ).sorted
+    val bl = flatten( b ).sorted
+
+    val as      = mutable.ArrayBuffer[PathValue]()
+    val bs      = mutable.ArrayBuffer[PathValue]()
+    val updates = mutable.ArrayBuffer[PathUpdate]()
+
+    @tailrec
+    def diff0( ai:Int, bi:Int ) {
+      if ( ai < al.size && bi < bl.size ) {
+        val apv = al( ai )
+        val bpv = bl( bi )
+
+        Path.order.compare( apv.path, bpv.path ) match {
+        case i if i < 0 =>
+          as += apv
+          diff0( ai+1, bi )
+        case i if i > 0 =>
+          bs += bpv
+          diff0( ai, bi+1 )
+        case 0 =>
+          if ( apv.value != bpv.value )
+            updates += PathUpdate( apv.path, apv.value, bpv.value )
+
+          diff0( ai+1, bi+1 )
+        }
+      } else if ( ai < al.size ) {
+        as += al( ai )
+        diff0( ai+1, bi )
+      } else if ( bi < bl.size ) {
+        bs += bl( bi )
+        diff0( ai, bi+1 )
+      }
+    }
+
+    diff0( 0, 0 )
+    Diff( as, bs, updates )
   }
 }
 

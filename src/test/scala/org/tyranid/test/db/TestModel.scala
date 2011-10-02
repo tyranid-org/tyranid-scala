@@ -22,7 +22,15 @@ import org.tyranid.time.Time
 
 
 object Widget extends MongoEntity( tid = "test0" ) {
-  "id"             is DbMongoId           is 'key;
-  "name"           is DbChar(32)          is 'label;
+  "id"           is DbMongoId           is 'key;
+  "name"         is DbChar(32)          is 'label;
+  "dims"         is Dimensions          ;
+  "tags"         is DbArray(DbChar(32)) ;
+  "level"        is DbInt               ;
+}
+
+object Dimensions extends MongoEntity( tid = "test1" ) {
+  "height"       is DbInt       ;
+  "weight"       is DbInt       ;
 }
 
