@@ -47,5 +47,14 @@ class SeqSuite extends FunSuite {
     assert( m3( 2 ) === Seq( 'cat ) )
     assert( m3( 3 ) === Seq( 'dog ) )
   }
+
+  test( "of" ) {
+    val data:Seq[Any] = Seq( 1, 'c, 'a, "cat", 4, 't, 53.2 )
+
+    assert( data.of[Symbol]            === Seq( 'c, 'a, 't ) )
+    assert( data.of[String]            === Seq( "cat" ) )
+    assert( data.of[java.lang.Integer] === Seq( 1, 4 ) )
+    assert( data.of[java.lang.Double]  === Seq( 53.2 ) )
+  }
 }
 

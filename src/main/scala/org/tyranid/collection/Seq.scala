@@ -27,13 +27,27 @@ class SeqImp[A]( seq:Seq[A] ) {
    * sequence of ( K, V ) tuples.  This is a grouped-version of toMap().
    */
   def group[K,V]( implicit ev: A <:< (K, V) ):Map[K,Seq[V]] =
+    // TODO:  implement more efficiently
     seq.groupBy( _._1 ).mapValues( _.map( _._2 ) )
 
   /**
    * Like Seq.groupBy() except that you can specify both the key and the value.
    */
   def groupBy2[K,V]( kf: ( A ) => K, vf: ( A ) => V ):Map[K,Seq[V]] =
+    // TODO:  implement more efficiently
     seq.map( a => ( kf( a ), vf( a ) ) ).group
+
+  /**
+   * This filters the sequence of A to members of subtype B and returns a Seq of
+   * subtype B.
+   *
+   * equivalent to:  seq.filter( _.isInstanceOf[B] ).map( _.asInstanceOf[B] )
+   */
+  def of[ B <: A : Manifest ]:Seq[B] = {
+    // TODO:  implement more efficiently
+    val cls = manifest[B].erasure
+    seq.filter( obj => cls.isAssignableFrom( obj.getClass ) ).map( _.asInstanceOf[B] )
+  }
 }
 
 

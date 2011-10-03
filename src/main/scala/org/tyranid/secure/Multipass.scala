@@ -53,7 +53,6 @@ case class Multipass( accountKey:String, apiKey:String, initVector:Array[Byte] =
   }
 
   def json( json:String ) = {
-spam( "JSON\n\n" + json + "\n\n" )
     val data = json.getBytes
     for ( i <- 0 until 16 )
       data( i ) = ( data( i ) ^ initVector( i ) ).toByte

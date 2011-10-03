@@ -28,8 +28,6 @@ class ArraySuite extends FunSuite {
 
     val arr = Array( "one", "two", "three", "four", "five" )
 
-    spam( arr.mkString( " " ) )
-
     val arr5 = arr.resize( 5 )
     assert( arr5 eq arr )
 

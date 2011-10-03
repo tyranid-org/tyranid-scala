@@ -70,9 +70,6 @@ finished multipass string: OGgtOgKikHKiROeDbzRCD1vlSHMti_hjWdshZnF_zrlPqVJ80oOwZ
 
     multipass.props( "uid", "redirect", "email", "name", "org" -> "acme" )
 
-    //spam( " got:" + rslt )
-    //spam( "want:" + expected )
-
     assert( rslt  === expected )
   }
 }
