@@ -106,7 +106,6 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolea
     } else {
       val scope = pScope.at( path )
       val invalids = va.invalids( scope )
-spam( "va.name=" + va.name + " invalids=" + invalids )
       val rec = scope.rec
       rec.invalids( va.index ) = !invalids.isEmpty
     
