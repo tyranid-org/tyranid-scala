@@ -97,7 +97,7 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolea
 
   private def invalidLines( invalids:Seq[Invalid] ) =
     for ( invalid <- invalids )
-      yield <p>{ invalid.message }</p>
+      yield <span>{ invalid.message }</span>
 
   override def draw( pScope:Scope ) =
     if ( inputOnly ) {
