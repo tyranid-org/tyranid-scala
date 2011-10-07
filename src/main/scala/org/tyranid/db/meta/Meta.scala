@@ -99,7 +99,7 @@ object Completion {
         val value = arr( 0 )
 
         dom match {
-        case en:MongoEntity => record( va :: path, en.recify( arr( 0 ), rec => arr( 0 ) = rec ) )
+        case en:MongoEntity => record( va :: path, en.recify( arr( 0 ), parent = null /* TODO:  this is wrong, pass in parent record to array() ? */, rec => arr( 0 ) = rec ) )
         case arr:DbArray    => array( va :: path, value.asInstanceOf[BasicDBList] )
         case dom            => simple( va :: path, value )
         }

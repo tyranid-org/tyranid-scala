@@ -96,7 +96,7 @@ case class MongoEntity( tid:String ) extends Entity {
     }
 
 
-  def recify( obj:Any, update: ( MongoRecord ) => Unit ):MongoRecord = {
+  def recify( obj:Any, parent:MongoRecord, update: ( MongoRecord ) => Unit ):MongoRecord = {
 
     if ( obj.isInstanceOf[Record] )
       return obj.asInstanceOf[MongoRecord]
@@ -104,7 +104,7 @@ case class MongoEntity( tid:String ) extends Entity {
     val rec = make(
       if ( obj == null ) Mobj()
       else               obj.asInstanceOf[DBObject],
-      null ) // 2nd parameter is the parent record, but we don't have that...
+      parent ) // but we don't have that...
     update( rec )
     rec
   }
@@ -206,7 +206,7 @@ case class MongoRecord( override val view:MongoView,
     }
 
   def rec( va:ViewAttribute ):MongoRecord =
-    va.att.domain.asInstanceOf[MongoEntity].recify( o( va ), rec => update( va, rec ) )
+    va.att.domain.asInstanceOf[MongoEntity].recify( o( va ), this, rec => update( va, rec ) )
 
   override def save {
     db.save( this )
