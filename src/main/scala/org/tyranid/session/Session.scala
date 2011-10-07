@@ -40,7 +40,7 @@ trait SessionMeta {
   private val editings = mutable.Map[ Class[_], AnyRef ]()
 
   def editing[ T: Manifest ]( gen: => AnyRef ) =
-    editings.getOrElseUpdate( manifest[T].erasure, gen )
+    editings.getOrElseUpdate( manifest[T].erasure, gen ).asInstanceOf[T]
   def doneEditing[ T: Manifest ] =
     editings.remove( manifest[T].erasure )
   def clearAllEditing = editings.clear

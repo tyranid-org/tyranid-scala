@@ -41,9 +41,6 @@ import org.tyranid.ui.{ UiObj }
  */
 
 /*
-
-    +.  change log writes
-
     TODO:  eliminate the call to reverse() and instead always store Paths in reverse order so that
            common subpaths can be shared?  will save a lot of space when doing operations like Diff.
  */

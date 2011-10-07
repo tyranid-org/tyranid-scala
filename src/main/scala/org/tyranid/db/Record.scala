@@ -286,6 +286,22 @@ trait Record extends Valid with BsonObject {
 
 
   /*
+   * * *   Manipulation
+   */
+
+  /**
+   * This is a copy of the record that was originally read in.  This is used for edit differencing.
+   */
+  var original:Record = null
+
+  def copyToOriginal = original = deep
+
+  /**
+   * This performs a deep copy of this record.  This does not copy the <b>original</b> record, if any.
+   */
+  def deep:Record
+
+  /*
    * * *   Persistence
    */
 

@@ -145,6 +145,15 @@ case class MongoRecord( override val view:MongoView,
 
   private var temporaries:mutable.Map[String,AnyRef] = null
 
+  def deep:MongoRecord = {
+    val copy = new MongoRecord( view, obj.copy(), parent )
+
+    if ( temporaries != null )
+      copy.temporaries = temporaries.clone
+
+    copy
+  }
+
   def temporary( name:String ) =
     if ( temporaries != null ) temporaries.get( name )
     else                       None

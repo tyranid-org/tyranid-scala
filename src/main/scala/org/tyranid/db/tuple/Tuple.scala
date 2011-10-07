@@ -55,6 +55,8 @@ class Tuple( val view:TupleView ) extends Record {
 
 	def see( index:Int ) = view.leaves( index ).att.domain.see( apply( index ) )
 
+  def deep:Tuple = throw new UnsupportedOperationException
+
 	override def toString = {
 		val sb = new StringBuilder
 		sb += '('
