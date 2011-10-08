@@ -77,7 +77,6 @@ class PathSuite extends FunSuite {
     assert( diff.as( 0 ).path.name === "level" )
     assert( diff.as( 0 ).value === 2 )
 
-
     a.remove( 'level )
     b( 'level ) = 2
 
@@ -87,6 +86,22 @@ class PathSuite extends FunSuite {
     assert( diff.updates.size === 0 )
     assert( diff.bs( 0 ).path.name === "level" )
     assert( diff.bs( 0 ).value === 2 )
+  }
+
+  test( "pathNames" ) {
+    val view = Widget.makeView
+    val paths = Array(
+      "categories",
+      "categories_1",
+      "categories_1_name",
+      "dims_height",
+      "prices_0_price",
+      "prices_0_type_name",
+      "prices_0_type_quantity"
+    )
+
+    for ( path <- paths )
+      assert( view.path( path ).pathName === path )
   }
 }
 

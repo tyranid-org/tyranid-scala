@@ -20,9 +20,10 @@ package org.tyranid.db
 import java.util.Date
 
 import scala.annotation.tailrec
+import scala.collection.JavaConversions._
 
 import org.bson.types.ObjectId
-import com.mongodb.BasicDBList
+import com.mongodb.{ BasicDBList, BasicDBObject, DBObject }
 
 import scala.collection.mutable
 import scala.xml.NodeSeq
@@ -71,18 +72,36 @@ trait Path {
 
     !( ostart until other.size ).exists( i => other( i ) != pathAt( i-ostart ).name )
   }
+
+  def pathName = name
 }
 
 case class MultiPath( nodes:PathNode* ) extends Path {
 
   def pathSize = nodes.length
   def pathAt( idx:Int ) = nodes( idx )
+
+  override lazy val pathName = nodes.map( _.name ).mkString( "_" )
 }
 
 object PathValue {
 
   implicit val order = new Ordering[PathValue] {
     def compare( a:PathValue, b:PathValue ) = Path.order.compare( a.path, b.path )
+  }
+
+  def fromDbObject( root:View, obj:DBObject ):Iterable[PathValue] =
+    for ( key <- obj.keySet;
+          if key != "_id" )
+      yield PathValue( Path.parse( root, key ), obj( key ) )
+
+  def toDbObject( pathValues:Iterable[PathValue] ):DBObject = {
+    val obj = new BasicDBObject
+
+    for ( pv <- pathValues )
+      obj( pv.path.pathName ) = pv.value
+      
+    obj
   }
 }
 
@@ -116,6 +135,40 @@ object Path {
       }
 
       compare0( 0 )
+    }
+  }
+
+  def parse( root:View, path:String ):Path = {
+
+    val names =
+      path.split(
+        if ( path.indexOf( '.' ) != -1 ) "\\."
+        else                             "_" )
+
+    val nlen = names.length
+
+    if ( nlen == 1 ) {
+      root( names( 0 ) )
+    } else {
+      val pbuf = new Array[PathNode]( nlen )
+
+      var view = root
+
+      for ( ni <- 0 until nlen ) {
+        names( ni ) match {
+        case s if s.isInt =>
+          pbuf( ni ) = ArrayIndex( s.toInt )
+
+        case s =>
+          val va = view( s )
+          pbuf( ni ) = va
+
+          if ( ni+1 < nlen )
+            view = va.toView
+        }
+      }
+
+      MultiPath( pbuf:_* )
     }
   }
 

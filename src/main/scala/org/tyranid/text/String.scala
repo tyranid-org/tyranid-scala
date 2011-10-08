@@ -86,8 +86,6 @@ class StringImp( s:String ) {
 
   def toJson = org.tyranid.json.Json.parse( s )
 
-  def toBigInt = BigInt( s )
-
   def matches( r:Regex ) = r.pattern.matcher( s ).matches
 
   def word =
@@ -137,6 +135,8 @@ class StringImp( s:String ) {
 		case _             => true
 	  }
 
+  def isInt = s.forall( _.isDigit )
+
   def toLaxInt =
     if ( s.isBlank )
       0
@@ -161,6 +161,8 @@ class StringImp( s:String ) {
       case e:NumberFormatException =>
         0
       }
+
+  def toBigInt = BigInt( s )
 
 	def uncapitalize = if ( s.length > 1 ) s.charAt( 0 ).toLower + s.substring( 1 ) else s
 	

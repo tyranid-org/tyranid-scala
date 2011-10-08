@@ -47,7 +47,12 @@ class ViewAttribute( val view:View,
 
   def label( r:Record, opts:(String,String)* ):NodeSeq = <label for={ name }>{ label }</label>
 
-  def toView:View = att.domain.asInstanceOf[Entity].makeView
+  def toView:View =
+    att.domain match {
+    case en:Entity     => en.makeView
+    case link:DbLink   => link.toEntity.makeView
+    case array:DbArray => array.of.asInstanceOf[Entity].makeView
+    }
 
 
   /*
@@ -96,36 +101,7 @@ trait View {
     uis.getOrElseUpdate( name, ui.bind( this ) )
   }
 
-  def path( path:String ):Path = {
-
-    val names =
-      path.split(
-        if ( path.indexOf( '.' ) != -1 ) "."
-        else                             "_" )
-    
-    val nlen = names.length
-
-    if ( nlen == 1 ) {
-      apply( names( 0 ) )
-    } else {
-      val pbuf = new Array[ViewAttribute]( nlen )
-
-      var ni = 0 
-      var view = this
-
-      while ( ni < nlen ) {
-        val va = view( names( ni ) )
-        pbuf( ni ) = va
-
-        ni += 1
-
-        if ( ni < nlen )
-          view = va.toView
-      }
-
-      MultiPath( pbuf:_* )
-    }
-  }
+  def path( path:String ):Path = Path.parse( this, path )
 }
 
 object Record {

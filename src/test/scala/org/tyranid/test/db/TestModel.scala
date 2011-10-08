@@ -27,10 +27,29 @@ object Widget extends MongoEntity( tid = "test0" ) {
   "dims"         is Dimensions          ;
   "tags"         is DbArray(DbChar(32)) ;
   "level"        is DbInt               ;
+  "categories"   is DbLink(Category)    ;
+  "prices"       is DbArray(Pricing)    ;
 }
 
 object Dimensions extends MongoEntity( tid = "test1" ) {
-  "height"       is DbInt       ;
-  "weight"       is DbInt       ;
+  "height"       is DbInt               ;
+  "weight"       is DbInt               ;
 }
+
+object Category extends MongoEntity( tid = "test2" ) {
+  "id"           is DbMongoId           is 'key;
+  "name"         is DbChar(128)         is 'label;
+}
+
+object Pricing extends MongoEntity( tid = "test3" ) {
+  "type"         is DbLink(PriceType)   ;
+  "price"        is DbDouble            ;
+}
+
+object PriceType extends MongoEntity( tid = "test4" ) {
+  "id"           is DbMongoId           is 'key;
+  "name"         is DbChar(128)         ;
+  "quantity"     is DbInt               ;
+}
+
 
