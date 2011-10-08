@@ -22,6 +22,7 @@ import java.util.Date
 import org.bson.types.ObjectId
 import com.mongodb.BasicDBList
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.xml.NodeSeq
 
@@ -47,12 +48,7 @@ class ViewAttribute( val view:View,
 
   def label( r:Record, opts:(String,String)* ):NodeSeq = <label for={ name }>{ label }</label>
 
-  def toView:View =
-    att.domain match {
-    case en:Entity     => en.makeView
-    case link:DbLink   => link.toEntity.makeView
-    case array:DbArray => array.of.asInstanceOf[Entity].makeView
-    }
+  def toView = View.from( att.domain )
 
 
   /*
@@ -102,6 +98,18 @@ trait View {
   }
 
   def path( path:String ):Path = Path.parse( this, path )
+}
+
+object View {
+
+  @tailrec
+  def from( d:Domain ):View =
+    d match {
+    case en:Entity     => en.makeView
+    case link:DbLink   => link.toEntity.makeView
+    case array:DbArray => from( array.of )
+    case _             => null
+    }
 }
 
 object Record {

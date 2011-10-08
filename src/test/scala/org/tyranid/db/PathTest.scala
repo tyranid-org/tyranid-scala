@@ -103,5 +103,23 @@ class PathSuite extends FunSuite {
     for ( path <- paths )
       assert( view.path( path ).pathName === path )
   }
+
+  test( "dbobject" ) {
+    val view = Widget.makeView
+    val data = Array(
+      ( "name",        "test" ),
+      ( "dims_height", 20 ),
+      ( "tags_0",      "acme" ),
+      ( "tags_1",      "fun" )
+    )
+
+    val pvs = (
+      for ( d <- data ) yield
+        PathValue( Path.parse( view, d._1 ), d._2 ) ).sorted
+
+    val pvs2 = PathValue.fromDbObject( view, PathValue.toDbObject( pvs ) ).toSeq.sorted.toArray
+
+    assert( pvs === pvs2 )
+  }
 }
 
