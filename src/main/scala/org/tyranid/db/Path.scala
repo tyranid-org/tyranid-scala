@@ -20,7 +20,6 @@ package org.tyranid.db
 import java.util.Date
 
 import scala.annotation.tailrec
-import scala.collection.JavaConversions._
 
 import org.bson.types.ObjectId
 import com.mongodb.{ BasicDBList, BasicDBObject, DBObject }
@@ -90,10 +89,13 @@ object PathValue {
     def compare( a:PathValue, b:PathValue ) = Path.order.compare( a.path, b.path )
   }
 
-  def fromDbObject( root:View, obj:DBObject ):Iterable[PathValue] =
+  def fromDbObject( root:View, obj:DBObject ):Iterable[PathValue] = {
+    import scala.collection.JavaConversions._
+
     for ( key <- obj.keySet;
           if key != "_id" )
       yield PathValue( Path.parse( root, key ), obj( key ) )
+  }
 
   def toDbObject( pathValues:Iterable[PathValue] ):DBObject = {
     val obj = new BasicDBObject
@@ -109,8 +111,29 @@ case class PathValue( path:Path, value:Any ) {
   override def toString = path.name + "=" + value.toString
 }
 
-case class PathUpdate( path:Path, oldValue:Any, newValue:Any ) {
-  override def toString = path.name + ": " + oldValue.toString + " => " + newValue.toString
+object PathDiff {
+
+  def fromDbObject( root:View, obj:DBObject ):Iterable[PathDiff] = {
+    import scala.collection.JavaConversions._
+
+    for ( key <- obj.keySet;
+          if key != "_id";
+          diffs = obj.o( key ) )
+      yield PathDiff( Path.parse( root, key ), diffs( 'a ), diffs( 'b ) )
+  }
+
+  def toDbObject( pathDiffs:Iterable[PathDiff] ):DBObject = {
+    val obj = new BasicDBObject
+
+    for ( pd <- pathDiffs )
+      obj( pd.path.pathName ) = Mobj( "a" -> pd.a, "b" -> pd.b )
+      
+    obj
+  }
+}
+
+case class PathDiff( path:Path, a:Any, b:Any ) {
+  override def toString = path.name + ": " + a.toString + " => " + b.toString
 }
 
 object Path {
@@ -232,15 +255,17 @@ object Path {
 
   case class Diff( as:Seq[PathValue],
                    bs:Seq[PathValue],
-                   updates:Seq[PathUpdate] )
+                   diffs:Seq[PathDiff] ) {
+    def nonEmpty = as.nonEmpty || bs.nonEmpty || diffs.nonEmpty
+  }
 
   def diff( a:Record, b:Record ):Diff = {
     val al = flatten( a ).sorted
     val bl = flatten( b ).sorted
 
-    val as      = mutable.ArrayBuffer[PathValue]()
-    val bs      = mutable.ArrayBuffer[PathValue]()
-    val updates = mutable.ArrayBuffer[PathUpdate]()
+    val as    = mutable.ArrayBuffer[PathValue]()
+    val bs    = mutable.ArrayBuffer[PathValue]()
+    val diffs = mutable.ArrayBuffer[PathDiff]()
 
     @tailrec
     def diff0( ai:Int, bi:Int ) {
@@ -257,7 +282,7 @@ object Path {
           diff0( ai, bi+1 )
         case 0 =>
           if ( apv.value != bpv.value )
-            updates += PathUpdate( apv.path, apv.value, bpv.value )
+            diffs += PathDiff( apv.path, apv.value, bpv.value )
 
           diff0( ai+1, bi+1 )
         }
@@ -271,7 +296,7 @@ object Path {
     }
 
     diff0( 0, 0 )
-    Diff( as, bs, updates )
+    Diff( as, bs, diffs )
   }
 }
 

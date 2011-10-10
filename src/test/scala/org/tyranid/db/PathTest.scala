@@ -63,9 +63,9 @@ class PathSuite extends FunSuite {
     var diff = Path.diff( a, b )
     assert( diff.as.size === 0 )
     assert( diff.bs.size === 0 )
-    assert( diff.updates.size === 1 )
-    assert( diff.updates( 0 ).path.name === "dims.height" )
-    assert( diff.updates( 0 ).newValue === 21 )
+    assert( diff.diffs.size === 1 )
+    assert( diff.diffs( 0 ).path.name === "dims.height" )
+    assert( diff.diffs( 0 ).b === 21 )
 
     a( 'level ) = 2
     a.o( 'dims )( 'height ) = 21
@@ -73,7 +73,7 @@ class PathSuite extends FunSuite {
     diff = Path.diff( a, b )
     assert( diff.as.size === 1 )
     assert( diff.bs.size === 0 )
-    assert( diff.updates.size === 0 )
+    assert( diff.diffs.size === 0 )
     assert( diff.as( 0 ).path.name === "level" )
     assert( diff.as( 0 ).value === 2 )
 
@@ -83,7 +83,7 @@ class PathSuite extends FunSuite {
     diff = Path.diff( a, b )
     assert( diff.as.size === 0 )
     assert( diff.bs.size === 1 )
-    assert( diff.updates.size === 0 )
+    assert( diff.diffs.size === 0 )
     assert( diff.bs( 0 ).path.name === "level" )
     assert( diff.bs( 0 ).value === 2 )
   }

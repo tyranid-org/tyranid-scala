@@ -17,15 +17,51 @@
 
 package org.tyranid.db.meta
 
+import java.util.Date
+
 import com.mongodb.BasicDBList
 
-import org.tyranid.db.{ Entity, Record, Path, MultiPath, ViewAttribute }
-import org.tyranid.db.{ AttributeAnnotation, Domain, DbArray, DbLink, Entity, Record, ViewAttribute }
+import org.tyranid.Bind
+import org.tyranid.Imp._
+import org.tyranid.db.{ Entity, Record, Path, PathValue, PathDiff, MultiPath, ViewAttribute }
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoView, MongoRecord }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.profile.User
-import org.tyranid.Imp._
+import org.tyranid.session.Session
 
+
+trait Versioning extends Entity {
+
+  abstract override def save( r:Record ) {
+    super.save( r )
+
+    val original = r.original
+
+    if ( original != null ) {
+      val diffs = Path.diff( original, r )
+
+      if ( diffs.nonEmpty ) {
+        val log = Mobj()
+
+        log( 'user ) = Session().user.id
+        log( 'on ) = new Date
+
+        if ( diffs.as.nonEmpty )
+          log( 'removals ) = PathValue.toDbObject( diffs.as )
+        
+        if ( diffs.bs.nonEmpty )
+          log( 'adds ) = PathValue.toDbObject( diffs.bs )
+        
+        if ( diffs.diffs.nonEmpty )
+          log( 'updates ) = PathDiff.toDbObject( diffs.diffs )
+
+        val db = Mongo.connect.db( Bind.ProfileDbName )( r.entity.dbName + "_log" )
+
+        db.save( log )
+      }
+    }
+  }
+}
 
 object Version {
 

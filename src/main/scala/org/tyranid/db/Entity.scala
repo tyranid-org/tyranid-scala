@@ -24,6 +24,7 @@ import org.tyranid.Imp.string
 import org.tyranid.db.es.{ NoSearch, Searchable }
 import org.tyranid.db.tuple.{ TupleView, Tuple }
 import org.tyranid.logic.{ Invalid, Valid }
+import org.tyranid.db.es.Es
 
 
 trait AttributeAnnotation
@@ -161,7 +162,17 @@ trait Entity extends Domain with DbItem {
 
 	def recreate { drop; create }
 
+
+  /*
+   * * *  Records
+   */
+
   def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException // ... yet
+
+  def save( r:Record ) {
+    if ( isSearchable )
+      Es.index( r )
+  }
 
 
   /*
