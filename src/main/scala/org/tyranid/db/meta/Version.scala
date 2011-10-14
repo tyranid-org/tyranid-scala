@@ -45,6 +45,7 @@ trait Versioning extends Entity {
 
         log( 'user ) = Session().user.id
         log( 'on ) = new Date
+        log( 'recId ) = r.id
 
         if ( diffs.as.nonEmpty )
           log( 'removals ) = PathValue.toDbObject( diffs.as )

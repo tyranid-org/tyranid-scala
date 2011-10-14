@@ -26,5 +26,12 @@ class AnyRefImp[T <: AnyRef]( ref:T ) {
   def ?|( default: => T ):T =
     if ( ref != null ) ref
     else               default
+
+  /**
+   * null-safe toString().  Need a better name.
+   */
+  def safeString:String =
+    if ( ref != null ) ref.toString
+    else               ""
 }
 
