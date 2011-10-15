@@ -39,6 +39,7 @@ object Imp {
   val $gt        = "$gt"
   val $gte       = "$gte"
   val $in        = "$in"
+  val $inc       = "$inc"
   val $lt        = "$lt"
   val $lte       = "$lte"
   val $max       = "$max"
