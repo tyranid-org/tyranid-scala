@@ -85,7 +85,7 @@ object Field {
   implicit def symbol2Field( name:Symbol ) = Field( name.name )
 }
 
-case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolean = true, inputOnly:Boolean = false ) extends UiObj {
+case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolean = true, inputOnly:Boolean = false, onSet:Option[ ( Field ) => JsCmd ] = None ) extends UiObj {
 
   var path:Path = null
   def va = path.leaf
@@ -125,8 +125,10 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolea
       if ( rec.invalids( va.index ) ) {
         rec.invalids -= va.index
 
+
         SetHtml( va.name + "_e", NodeSeq.Empty ) &
-        JsRaw( "$('#" + va.name + "_c').removeClass('invalid');" )
+        JsRaw( "$('#" + va.name + "_c').removeClass('invalid');" ) &
+        onSet.flatten( _( this ), Noop )
       } else {
         Noop
       }
