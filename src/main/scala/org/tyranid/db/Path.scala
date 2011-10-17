@@ -46,6 +46,10 @@ import org.tyranid.ui.{ UiObj }
  */
 
 
+trait Pathable {
+  def path:Path
+}
+
 trait PathNode {
   def name:String
   def label:String
@@ -57,7 +61,9 @@ case class ArrayIndex( idx:Int ) extends PathNode {
   def label = name
 }
 
-trait Path {
+trait Path extends Pathable {
+
+  def path = this
 
   def name  = ( 0 until pathSize ).map( i => pathAt( i ).name ).mkString( "." )
   def label = ( 0 until pathSize ).map( i => pathAt( i ).label ).mkString( " . " )
@@ -107,7 +113,7 @@ object PathValue {
   }
 }
 
-case class PathValue( path:Path, value:Any ) {
+case class PathValue( path:Path, value:Any ) extends Pathable {
   override def toString = path.name + "=" + value.toString
 }
 
@@ -132,7 +138,7 @@ object PathDiff {
   }
 }
 
-case class PathDiff( path:Path, a:Any, b:Any ) {
+case class PathDiff( path:Path, a:Any, b:Any ) extends Pathable {
   override def toString = path.name + ": " + a.toString + " => " + b.toString
 }
 
