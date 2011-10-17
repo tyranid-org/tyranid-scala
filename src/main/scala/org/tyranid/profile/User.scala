@@ -53,5 +53,10 @@ trait User extends Record {
   var admin    = false
 
   def fullName = s( 'firstName ) + " " + s( 'lastName )
+
+  /**
+   * This is a list of tags that the user is interested in.
+   */
+  def allowTags:Seq[Int] = Nil
 }
 

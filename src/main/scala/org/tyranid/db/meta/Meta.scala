@@ -68,6 +68,8 @@ object UiMap {
 trait Req extends AttributeAnnotation {
   val weight:Double
 
+  val tags:Seq[Int]
+
   def matches( user:User ):Boolean
 }
 
