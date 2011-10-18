@@ -20,7 +20,7 @@ package org.tyranid.bson
 import java.util.Date
 
 import org.bson.types.ObjectId
-import com.mongodb.BasicDBList
+import com.mongodb.{ BasicDBList, DBObject }
 
 import org.tyranid.Imp._
 import org.tyranid.db.mongo.Imp._
@@ -59,6 +59,67 @@ trait BsonObject {
     if ( v != null ) v.toString else ""
   }
   def t( key:String )         = apply( key ).asInstanceOf[Date]
+
+
+  /*
+   * * *  Option-variants
+   */
+
+  def opta( key:String ):Option[BasicDBList] =
+    apply( key ) match {
+    case null          => None
+    case l:BasicDBList => Some( l )
+    }
+
+  def optb( key:String ):Option[Boolean] =
+    apply( key ) match {
+    case null                => None
+    case b:java.lang.Boolean => Some( b )
+    case s:String            => Some( s.toLaxBoolean )
+    }
+
+  def optd( key:String ):Option[Double] =
+    apply( key ) match {
+    case null                => None
+    case d:java.lang.Double  => Some( d )
+    case n:Number            => Some( n.doubleValue )
+    case s:String            => Some( s.toLaxDouble )
+    }
+
+  def opti( key:String ):Option[Int] =
+    apply( key ) match {
+    case null                 => None
+    case i:java.lang.Integer  => Some( i )
+    case n:Number             => Some( n.intValue )
+    case s:String             => Some( s.toLaxInt )
+    }
+
+  def optl( key:String ):Option[Long] =
+    apply( key ) match {
+    case null              => None
+    case l:java.lang.Long  => Some( l )
+    case n:Number          => Some( n.longValue )
+    case s:String          => Some( s.toLaxLong )
+    }
+
+  def opto( key:String ):Option[DBObject] =
+    apply( key ) match {
+    case null       => None
+    case o:DBObject => Some( o )
+    }
+
+  def opts( key:String ):Option[String] =
+    apply( key ) match {
+    case null      => None
+    case s:String  => Some( s )
+    case o         => Some( o.toString )
+    }
+
+  def optt( key:String ):Option[Date] =
+    apply( key ) match {
+    case null    => None
+    case t:Date  => Some( t )
+    }
 }
 
 trait BsonList extends BsonObject with Seq[Any] {
