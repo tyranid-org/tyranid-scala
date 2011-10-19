@@ -40,6 +40,7 @@ object Region extends RamEntity( tid = "a01t" ) {
 //  init2( s )
 //  init3( s )
   
+
   def idForAbbr( s:String ):Int = {
     val abbrIdx = staticView( 'abbr ).index
   
