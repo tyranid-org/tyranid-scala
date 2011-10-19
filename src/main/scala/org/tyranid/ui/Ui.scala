@@ -117,7 +117,12 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolea
       </div>
     }
 
-  def updateDisplayCmd( scope:Scope ) = {
+  def updateDisplayCmd( scope:Scope ):JsCmd = {
+    
+    val onSetCmd = onSet.flatten( _( this ), Noop )
+    if ( onSetCmd != Noop )
+      return onSetCmd
+    
     val rec = scope.rec
     val invalids = va.invalids( scope.copy( initialDraw = false, path = Some( va ) ) )
       
@@ -127,8 +132,7 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolea
 
 
         SetHtml( va.name + "_e", NodeSeq.Empty ) &
-        JsRaw( "$('#" + va.name + "_c').removeClass('invalid');" ) &
-        onSet.flatten( _( this ), Noop )
+        JsRaw( "$('#" + va.name + "_c').removeClass('invalid');" )
       } else {
         Noop
       }

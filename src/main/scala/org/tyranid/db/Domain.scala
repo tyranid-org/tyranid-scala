@@ -57,7 +57,10 @@ trait Domain extends Valid {
 	def show( s:Scope ) = true
 
   def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxText( s.rec s f.va.name, v => { s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) }, opts.map( ElemAttr.pairToBasic ):_* )
+    SHtml.ajaxText( s.rec s f.va.name, v => { 
+      if ( s.rec( f.va.name ) != v ) {
+        s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) 
+      } }, opts.map( ElemAttr.pairToBasic ):_* )
 
   /**
    * These are the class(es) that should be added to the input container.
@@ -76,7 +79,10 @@ abstract class DbIntish extends Domain {
   override def tid( r:Record, va:ViewAttribute ) = Base64.toString( r i va )
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxText( s.rec s f.va.name, v => { s.rec( f.va.name ) = v.toLaxInt; f.updateDisplayCmd( s ) }, opts.map( ElemAttr.pairToBasic ):_* )
+    SHtml.ajaxText( s.rec s f.va.name, v => { 
+      if ( s.rec( f.va.name ) != v ) {
+        s.rec( f.va.name ) = v.toLaxInt; f.updateDisplayCmd( s ) 
+      } }, opts.map( ElemAttr.pairToBasic ):_* )
 }
 
 object DbInt extends DbIntish {
@@ -139,7 +145,10 @@ case class DbLargeChar( len:Int ) extends LimitedText {
 	val sqlName = "CHAR(" + len + ")"
 	
   override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxTextarea( s.rec s f.va.name, v => { s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) }, opts.map( ElemAttr.pairToBasic ):_* )
+    SHtml.ajaxTextarea( s.rec s f.va.name, v => { 
+      if ( s.rec( f.va.name ) != v ) {
+        s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) 
+      } }, opts.map( ElemAttr.pairToBasic ):_* )
 }
 
 case class DbVarChar( len:Int ) extends LimitedText {
@@ -156,7 +165,10 @@ case class DbLowerChar( len:Int ) extends LimitedText {
 object DbPassword extends DbVarChar( 64 ) {
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ) =
-    SHtml.ajaxText( s.rec s f.va.name, v => { s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) }, ( opts ++ Seq( "type" -> "password" ) ).map( ElemAttr.pairToBasic ):_* )
+    SHtml.ajaxText( s.rec s f.va.name, v => { 
+      if ( s.rec( f.va.name ) != v ) {
+        s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) 
+      } }, ( opts ++ Seq( "type" -> "password" ) ).map( ElemAttr.pairToBasic ):_* )
 
   override def validations =
     ( ( scope:Scope ) => {
