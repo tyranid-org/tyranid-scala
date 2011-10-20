@@ -48,6 +48,16 @@ class SeqImp[A]( seq:Seq[A] ) {
     val cls = manifest[B].erasure
     seq.filter( obj => cls.isAssignableFrom( obj.getClass ) ).map( _.asInstanceOf[B] )
   }
+
+  def whileDo( _while: (A) => Boolean )( _do: (A) => Unit ) {
+
+    for ( a <- seq ) {
+      if ( !_while( a ) )
+        return
+
+      _do( a )
+    }
+  }
 }
 
 

@@ -20,6 +20,10 @@ package org.tyranid.time
 
 object Time {
 
-  val MsPerMinute = 60 * 1000
+  val OneMinuteMs   =           60 * 1000
+  val FiveMinutesMs =       5 * 60 * 1000
+  val HalfHourMs    =      30 * 60 * 1000
+  val OneDayMs      = 24 * 60 * 60 * 1000
+
 }
 
