@@ -29,6 +29,18 @@ object Region extends RamEntity( tid = "a01t" ) {
   "country" is DbLink(Country);
   "abbr"    is DbChar(2); 
 
+  def idForAbbr( s:String ):Int = {
+    val abbrIdx = staticView( 'abbr ).index
+  
+    staticRecords.find( _( abbrIdx ) == s ).flatten( _.id.asInstanceOf[Int], 0 )
+  }
+  
+  def regionsForCountry( cid:Int ):Seq[Record] = {
+    val countryIdx = staticView( 'country ).index
+    
+    staticRecords.filter( _( countryIdx ).asInstanceOf[Int] == cid )
+  }  
+
 	static { s =>
   s( "id",  "name",				                                "fips",   "country", "abbr" )
 
@@ -41,17 +53,6 @@ object Region extends RamEntity( tid = "a01t" ) {
 //  init3( s )
   
 
-  def idForAbbr( s:String ):Int = {
-    val abbrIdx = staticView( 'abbr ).index
-  
-    staticRecords.find( _( abbrIdx ) == s ).flatten( _.id.asInstanceOf[Int], 0 )
-  }
-  
-  def regionsForCountry( cid:Int ):Seq[Record] = {
-    val countryIdx = staticView( 'country ).index
-    
-    staticRecords.filter( _( countryIdx ).asInstanceOf[Int] == cid )
-  }  
 }
 
   def init1( s:org.tyranid.db.StaticBuilder ) = {
