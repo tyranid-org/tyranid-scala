@@ -19,7 +19,7 @@ package org.tyranid.db.meta
 
 import java.util.Date
 
-import com.mongodb.BasicDBList
+import com.mongodb.{ BasicDBList, DBObject }
 
 import org.tyranid.Bind
 import org.tyranid.Imp._
@@ -40,6 +40,12 @@ object AutoIncrement {
   }
 
   def apply( name:String ):Int =
-    db.findAndModify( Mobj( "_id" -> 1 ), Mobj( $inc -> Mobj( name -> 1 ) ) ).i( 'name )
+    db.findAndModify( Mobj( "_id" -> 1 ).obj,
+                      null.asInstanceOf[DBObject],
+                      null.asInstanceOf[DBObject],
+                      false,
+                      Mobj( $inc -> Mobj( name -> 1 ) ).obj,
+                      true,
+                      true ).i( name )
 }
 

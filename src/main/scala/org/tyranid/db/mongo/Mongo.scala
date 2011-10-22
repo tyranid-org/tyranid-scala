@@ -24,6 +24,7 @@ import org.bson.types.ObjectId
 import com.mongodb.{ BasicDBList, BasicDBObject, DB, DBCollection, DBCursor, DBObject }
 
 import org.tyranid.Imp._
+import org.tyranid.any.Deep
 import org.tyranid.Bind
 import org.tyranid.bson.{ BsonObject, BsonList }
 
@@ -124,7 +125,7 @@ case class DBCollectionImp( coll:DBCollection ) {
         case b:BasicDBObject => b
         }
 
-      o.copy().asInstanceOf[DBObject]
+      o.deep.asInstanceOf[DBObject]
     case o    => o
     }
 }
@@ -195,6 +196,23 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
     }
   def int = throw new IllegalArgumentException( obj + " is not convertible to int." )
   def string = obj.toString
+
+  override def deep:DBObjectWrap = {
+
+    val newobj = new BasicDBObject
+
+    for ( field <- keySet ) {
+      get( field ) match {
+      case v:BasicDBList => newobj.put( field, DBListWrap.deep( v ) )
+      case v:Deep        => newobj.put( field, v.deep )
+      case v:DBObject    => newobj.put( field, v.deep )
+      case v             => newobj.put( field, v )
+      }
+    }
+
+    newobj
+  }
+    
 }
 
 case class DBObjectImp( obj:DBObject ) extends DBObjectWrap with DBValue {
@@ -203,9 +221,29 @@ case class DBObjectImp( obj:DBObject ) extends DBObjectWrap with DBValue {
   def update( key:String, v:Any ) = obj.put( key, v )
 }
 
+object DBListWrap {
+
+  def deep( list:BasicDBList ):BasicDBList = {
+    val newlist = new BasicDBList
+
+    for ( field <- list.keySet ) {
+      list.get( field ) match {
+      case v:Deep     => newlist.put( field, v.deep )
+      case v:DBObject => newlist.put( field, v.deep )
+      case v          => newlist.put( field, v )
+      }
+    }
+
+    newlist
+  }
+
+}
+
 trait DBListWrap extends DBObjectWrap with BsonList {
   val obj:BasicDBList
 
+
+  override def deep:DBListWrap = DBListWrap.deep( obj )
 
   /*
    * * *   Seq[Any] delegation

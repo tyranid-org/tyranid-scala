@@ -98,6 +98,9 @@ object PathValue {
   def fromDbObject( root:View, obj:DBObject ):Iterable[PathValue] = {
     import scala.collection.JavaConversions._
 
+    if ( obj == null )
+      return Nil
+
     for ( key <- obj.keySet;
           if key != "_id" )
       yield PathValue( Path.parse( root, key ), obj( key ) )
@@ -121,6 +124,9 @@ object PathDiff {
 
   def fromDbObject( root:View, obj:DBObject ):Iterable[PathDiff] = {
     import scala.collection.JavaConversions._
+
+    if ( obj == null )
+      return Nil
 
     for ( key <- obj.keySet;
           if key != "_id";

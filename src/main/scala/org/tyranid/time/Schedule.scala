@@ -32,6 +32,8 @@ object Scheduler {
   def schedule( subject:String, start:Date, periodMs:Long )( task: () => Unit ) {
 
     tasks.synchronized {
+      val idx = tasks.indexWhere( _.subject == subject )
+      if ( idx != -1 ) tasks.remove( idx )
       tasks += Task( subject, start.getTime, periodMs, task )
     }
   }

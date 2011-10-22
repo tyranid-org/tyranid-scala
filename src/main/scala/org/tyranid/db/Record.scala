@@ -277,7 +277,10 @@ trait Record extends Valid with BsonObject {
    */
   var original:Record = null
 
-  def snapshot = { original = deep; this }
+  def snapshot = { 
+    spam( "\n\nSNAPSHOTTING\n\n" )
+    original = deep; this
+  }
 
   /**
    * This performs a deep copy of this record.  This does not copy the <b>original</b> record, if any.
