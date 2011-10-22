@@ -20,6 +20,7 @@ package org.tyranid
 import scala.collection.mutable
 import scala.xml.NodeSeq
 
+import org.tyranid.db.Entity
 import org.tyranid.profile.User
 import org.tyranid.session.Session
 
@@ -40,8 +41,10 @@ object Bind {
   @volatile var EnvSuffix = "" // "-x" or "-dx"
 
   @volatile var NewUser:() => User = null
+  @volatile var UserEntity:Entity = null
   @volatile var NewSession:() => Session = null
-
+  @volatile var LoginCookieName:String = null
+  
   // DB
   @volatile var ProfileDbName:String = "default"
 

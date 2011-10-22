@@ -27,8 +27,33 @@ import org.tyranid.session.Session
 
 trait UserMeta {
 
-  def isLoggedIn = Session.apply.user.loggedIn
-  def isAdmin    = Session.apply.user.admin
+  def isLoggedIn = { 
+    if ( Session().user.loggedIn )
+      true
+    else {
+      if ( Bind.LoginCookieName == null )
+        false
+      else {
+        val savedCookie = S.cookieValue( Bind.LoginCookieName ) openOr null
+
+        var user = { 
+          if ( savedCookie != null )
+            Record.byTid( savedCookie, only = Bind.UserEntity ).map( _.asInstanceOf[User] ) getOrElse null
+          else 
+            null
+        }
+
+        if ( user == null )
+          false
+        else {
+          Session().user = user
+          true
+        }
+      }
+    }
+  }
+  
+  def isAdmin    = Session().user.admin
 
   lazy val ReqLoggedIn = User._ReqLoggedIn
   lazy val ReqAdmin    = User._ReqAdmin
