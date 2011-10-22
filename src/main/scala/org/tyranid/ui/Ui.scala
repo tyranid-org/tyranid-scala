@@ -85,7 +85,7 @@ object Field {
   implicit def symbol2Field( name:Symbol ) = Field( name.name )
 }
 
-case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolean = true, inputOnly:Boolean = false, onSet:Option[ ( Field ) => JsCmd ] = None ) extends UiObj {
+case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolean = true, inputOnly:Boolean = false, onSet:Option[ ( Field ) => JsCmd ] = None, focus:Boolean = false ) extends UiObj {
 
   var path:Path = null
   def va = path.leaf
@@ -102,7 +102,6 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolea
   override def draw( pScope:Scope ) =
     if ( inputOnly ) {
       va.att.domain.ui( pScope.at( path ), this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* )
-
     } else {
       val scope = pScope.at( path )
       val invalids = va.invalids( scope )
