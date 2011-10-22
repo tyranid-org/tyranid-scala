@@ -41,7 +41,7 @@ object Scheduler {
   spawn {
 
     while ( true ) {
-
+      
       val size =
         tasks.synchronized {
           tasks.sortBy( _.nextMs )
@@ -64,7 +64,7 @@ object Scheduler {
               e.printStackTrace
           }
 
-          task.nextMs +=  task.periodMs
+          task.nextMs += task.periodMs
         }
       }
 

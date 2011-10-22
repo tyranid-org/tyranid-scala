@@ -28,6 +28,7 @@ import org.tyranid.logic.{ Valid, Invalid }
 import org.tyranid.math.Base64
 import org.tyranid.ui.Field
 
+import net.liftweb.http.js.JsCmds.{FocusOnLoad}
 
 /*
  * * *   Domains
@@ -56,11 +57,21 @@ trait Domain extends Valid {
 	
 	def show( s:Scope ) = true
 
-  def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxText( s.rec s f.va.name, v => { 
-      if ( s.rec( f.va.name ) != v ) {
-        s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) 
-      } }, opts.map( ElemAttr.pairToBasic ):_* )
+  def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq = {
+      var input =
+        SHtml.ajaxText( s.rec s f.va.name, v => { 
+          if ( s.rec( f.va.name ) != v ) {
+            s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) 
+          } }, opts.map( ElemAttr.pairToBasic ):_* )
+        
+    
+      if ( f.focus )
+        FocusOnLoad( input )
+      else 
+        input
+    }
+    
+
 
   /**
    * These are the class(es) that should be added to the input container.
