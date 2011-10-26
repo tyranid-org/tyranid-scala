@@ -46,7 +46,7 @@ object Bind {
   @volatile var LoginCookieName:String = null
   
   // DB
-  @volatile var ProfileDbName:String = "default"
+  @volatile var ProfileDbName:String = null
 
   @volatile var MongoHost:String = "localhost"
 

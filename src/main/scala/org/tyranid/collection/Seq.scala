@@ -44,9 +44,13 @@ class SeqImp[A]( seq:Seq[A] ) {
    * equivalent to:  seq.filter( _.isInstanceOf[B] ).map( _.asInstanceOf[B] )
    */
   def of[ B <: A : Manifest ]:Seq[B] = {
-    // TODO:  implement more efficiently
     val cls = manifest[B].erasure
     seq.filter( obj => cls.isAssignableFrom( obj.getClass ) ).map( _.asInstanceOf[B] )
+  }
+
+  def findOf[ B <: A : Manifest ]:Option[B] = {
+    val cls = manifest[B].erasure
+    seq.find( obj => cls.isAssignableFrom( obj.getClass ) ).map( _.asInstanceOf[B] )
   }
 
   def whileDo( _while: (A) => Boolean )( _do: (A) => Unit ) {
