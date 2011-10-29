@@ -26,12 +26,11 @@ import org.tyranid.db.{ Record, Scope }
 import org.tyranid.session.Session
 
 trait UserMeta {
-
   def isLoggedIn = { 
     if ( Session().user.loggedIn )
       true
     else {
-      if ( Bind.LoginCookieName == null )
+      if ( Bind.LoginCookieName == null || Session().user.isLoggingOut )
         false
       else {
         val savedCookie = S.cookieValue( Bind.LoginCookieName ) openOr null
@@ -75,6 +74,7 @@ object User extends UserMeta {
 trait User extends Record {
 
   var loggedIn = false
+  var isLoggingOut = false
   var admin    = false
 
   def fullName = s( 'firstName ) + " " + s( 'lastName )
