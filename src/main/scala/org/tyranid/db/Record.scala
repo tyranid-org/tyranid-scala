@@ -97,6 +97,8 @@ trait View {
   }
 
   def path( path:String ):Path = Path.parse( this, path )
+
+  def paths( paths:Seq[String] ) = paths.map( path => Path.parse( this, path ) )
 }
 
 object View {

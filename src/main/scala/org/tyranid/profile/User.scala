@@ -17,7 +17,6 @@
 
 package org.tyranid.profile
 
-
 import net.liftweb.http.{ RedirectResponse, S, SessionVar }
 
 import org.tyranid.Bind

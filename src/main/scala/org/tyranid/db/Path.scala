@@ -66,6 +66,7 @@ trait Path extends Pathable {
   def path = this
 
   def name  = ( 0 until pathSize ).map( i => pathAt( i ).name ).mkString( "." )
+  def name_ = ( 0 until pathSize ).map( i => pathAt( i ).name ).mkString( "_" )
   def label = ( 0 until pathSize ).map( i => pathAt( i ).label ).mkString( " . " )
 
   def pathSize:Int
@@ -79,6 +80,19 @@ trait Path extends Pathable {
   }
 
   def pathName = name
+
+  def get( rec:Record ):Any = {
+
+    var cur:Any = rec
+    for ( pi <- 0 until pathSize )
+      cur =
+        pathAt( pi ) match {
+        case va:ViewAttribute => cur.asInstanceOf[BsonObject]( va.name )
+        case ai:ArrayIndex    => cur.asInstanceOf[BasicDBList].get( ai.idx )
+        }
+
+    cur
+  }
 }
 
 case class MultiPath( nodes:PathNode* ) extends Path {
