@@ -64,7 +64,8 @@ object Scheduler {
               e.printStackTrace
           }
 
-          task.nextMs += task.periodMs
+          while ( task.nextMs < System.currentTimeMillis )
+            task.nextMs += task.periodMs
         }
       }
 
