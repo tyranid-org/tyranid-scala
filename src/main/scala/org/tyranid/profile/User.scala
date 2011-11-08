@@ -17,7 +17,6 @@
 
 package org.tyranid.profile
 
-
 import net.liftweb.http.{ RedirectResponse, S, SessionVar }
 
 import org.tyranid.Bind
@@ -26,9 +25,33 @@ import org.tyranid.db.{ Record, Scope }
 import org.tyranid.session.Session
 
 trait UserMeta {
+  def isLoggedIn = { 
+    if ( Session().user.loggedIn )
+      true
+    else {
+      if ( Bind.LoginCookieName == null || Session().user.isLoggingOut )
+        false
+      else {
+        val savedCookie = S.cookieValue( Bind.LoginCookieName ) openOr null
 
-  def isLoggedIn = Session.apply.user.loggedIn
-  def isAdmin    = Session.apply.user.admin
+        var user = { 
+          if ( savedCookie != null )
+            Record.byTid( savedCookie, only = Bind.UserEntity ).map( _.asInstanceOf[User] ) getOrElse null
+          else 
+            null
+        }
+
+        if ( user == null )
+          false
+        else {
+          Session().user = user
+          true
+        }
+      }
+    }
+  }
+  
+  def isAdmin    = Session().user.admin
 
   lazy val ReqLoggedIn = User._ReqLoggedIn
   lazy val ReqAdmin    = User._ReqAdmin
@@ -50,6 +73,7 @@ object User extends UserMeta {
 trait User extends Record {
 
   var loggedIn = false
+  var isLoggingOut = false
   var admin    = false
 
   def fullName = s( 'firstName ) + " " + s( 'lastName )

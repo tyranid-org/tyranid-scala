@@ -34,8 +34,8 @@ object Tag extends MongoEntity( tid = "a0Ct" ) {
   private val tags = mutable.HashMap[String,Int]()
 
   def idFor( tag:String ) = synchronized {
-    tags.getOrElseUpdate( tag,
-      db.findOne( Mobj( "tag" -> tag ) ) match {
+    tags.getOrElseUpdate( tag, {
+      db.findOne( Mobj( "name" -> tag ) ) match {
       case null =>
         val id = AutoIncrement( "tag" )
         db.save( Mobj( "_id" -> id, "name" -> tag ) )
@@ -43,7 +43,8 @@ object Tag extends MongoEntity( tid = "a0Ct" ) {
 
       case to =>
         to.i( "_id" )
-      } )
+      }
+    } )
   }
 }
 

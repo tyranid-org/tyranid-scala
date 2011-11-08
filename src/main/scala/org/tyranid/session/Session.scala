@@ -25,6 +25,7 @@ import net.liftweb.http.SessionVar
 import org.tyranid.Imp._
 import org.tyranid.Bind
 import org.tyranid.profile.User
+import org.tyranid.report.Query
 
 
 trait SessionMeta {
@@ -52,6 +53,17 @@ trait Session {
 
   def user:User           = userVar
   def user_=( user:User ) = userVar = user
+
+
+  /*
+   * * *   Reports
+   */
+
+  private val reports = mutable.Map[String,org.tyranid.report.Report]()
+
+  def reportFor( query:Query ) = reports.synchronized {
+    reports.getOrElseUpdate( query.name, query.newReport )
+  }
 }
 
 object Session extends SessionMeta {

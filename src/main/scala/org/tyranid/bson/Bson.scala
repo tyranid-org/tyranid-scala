@@ -23,16 +23,19 @@ import org.bson.types.ObjectId
 import com.mongodb.{ BasicDBList, DBObject }
 
 import org.tyranid.Imp._
+import org.tyranid.any.Deep
 import org.tyranid.db.mongo.Imp._
 
 
 /**
  * Represents either BsonObjects or things that can behave like a BsonObject.
  */
-trait BsonObject {
+trait BsonObject extends Deep {
   def has( key:String ):Boolean
   def apply( key:String ):AnyRef
   def update( key:String, v:Any ):Unit
+
+  def deep:BsonObject
 
   def id = apply( "_id" )
 
@@ -126,6 +129,8 @@ trait BsonList extends BsonObject with Seq[Any] {
 
   def apply( idx:Int ):AnyRef
   def update( idx:Int, v:Any ):Unit
+
+  def deep:BsonList
 
 
   def a( idx:Int )         = apply( idx ).asInstanceOf[BasicDBList]

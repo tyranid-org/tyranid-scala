@@ -121,5 +121,19 @@ class PathSuite extends FunSuite {
 
     assert( pvs === pvs2 )
   }
+
+  test( "pathGet" ) {
+
+    val obj = Widget.make
+    val v = obj.view
+
+    obj( 'name ) = "test"
+    obj( 'dims ) = Mobj( "height" -> 20, "weight" -> 31 )
+    obj( 'tags ) = Mlist( "acme", "fun" )
+
+    assert( Path.parse( v, "name"        ).get( obj ) == "test" )
+    assert( Path.parse( v, "dims.height" ).get( obj ) == 20 )
+    assert( Path.parse( v, "tags.0"      ).get( obj ) == "acme" )
+  }
 }
 

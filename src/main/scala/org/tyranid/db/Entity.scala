@@ -20,7 +20,7 @@ package org.tyranid.db
 import scala.collection.mutable
 import scala.xml.NodeSeq
 
-import org.tyranid.Imp.string
+import org.tyranid.Imp._
 import org.tyranid.db.es.{ NoSearch, Searchable }
 import org.tyranid.db.tuple.{ TupleView, Tuple }
 import org.tyranid.logic.{ Invalid, Valid }
@@ -69,10 +69,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   private var annotations:List[AttributeAnnotation] = Nil
   def is( anno:AttributeAnnotation ) = annotations ::= anno
 
-  def annotated[ T <: AttributeAnnotation :Manifest ] = {
-    val m = manifest[T]
-    annotations.find( _.getClass == m.erasure ).map( _.asInstanceOf[T] )
-  }
+  def annotated[ T <: AttributeAnnotation :Manifest ] = annotations.findOf[T]
 
 
 	var isKey = false
@@ -118,6 +115,8 @@ trait Entity extends Domain with DbItem {
 	val sqlName = "invalid"
 
   def makeView:View
+
+  lazy val label = name.camelCaseToSpaceUpper
 
 
 	/*

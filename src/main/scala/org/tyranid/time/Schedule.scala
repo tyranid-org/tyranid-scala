@@ -32,6 +32,8 @@ object Scheduler {
   def schedule( subject:String, start:Date, periodMs:Long )( task: () => Unit ) {
 
     tasks.synchronized {
+      val idx = tasks.indexWhere( _.subject == subject )
+      if ( idx != -1 ) tasks.remove( idx )
       tasks += Task( subject, start.getTime, periodMs, task )
     }
   }
@@ -39,7 +41,7 @@ object Scheduler {
   spawn {
 
     while ( true ) {
-
+      
       val size =
         tasks.synchronized {
           tasks.sortBy( _.nextMs )
@@ -62,7 +64,8 @@ object Scheduler {
               e.printStackTrace
           }
 
-          task.nextMs +=  task.periodMs
+          while ( task.nextMs < System.currentTimeMillis )
+            task.nextMs += task.periodMs
         }
       }
 
