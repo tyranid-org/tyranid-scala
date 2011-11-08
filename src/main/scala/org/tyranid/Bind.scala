@@ -45,7 +45,7 @@ object Bind {
   // DB
   @volatile var ProfileDbName:String = "default"
 
-  @volatile var MongoHost:String = "localhost"
+  @volatile var MongoHost:String = null
 
   // SQL
   @volatile var DbUrl:String  = ""
