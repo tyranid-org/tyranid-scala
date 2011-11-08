@@ -135,6 +135,10 @@ function init() {
   $( ".colh, .cola" ).draggable( { revert:true, stack:".colh, .cola, .def" } )
   $( ".colh"        ).droppable( { accept:".colh, .cola", activeClass:"dactive", hoverClass:"dhover", drop:dropped } )
   $( ".def"         ).droppable( { accept:".colh",        activeClass:"dactive", hoverClass:"dhover", drop:dropped } )
+
+  var hs = $( '.colh' )
+  if ( hs.size() > 0 )
+    $( "td", hs ).height( $( hs[0] ).height() - 4 )
 }
 
 function dropped( event, ui ) {
