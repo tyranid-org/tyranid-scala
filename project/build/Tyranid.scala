@@ -12,7 +12,7 @@ class Tyranid( info: ProjectInfo ) extends DefaultProject( info ) with AkkaProje
   val scalaToolsSnapshots = "scala-tools.org" at "http://scala-tools.org/repo-snapshots"
   val centralMavenRepo    = "central-maven"   at "http://repo1.maven.org/maven2/"
 
-  val liftVersion = "2.4-SNAPSHOT"
+  val liftVersion = "2.4-M4"
 
   override def libraryDependencies = Set(
     "net.liftweb"               %% "lift-webkit"              % liftVersion     % "compile->default",
