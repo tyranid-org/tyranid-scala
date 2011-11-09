@@ -73,15 +73,15 @@ object Imp {
     def apply( vals:Any* ):BasicDBList = {
       val l = new BasicDBList
       for ( i <- 0 until vals.size )
-        l( i ) = vals( i )
+        l( i ) = vals( i ).asInstanceOf[AnyRef]
       l
     }
   }
 
   object Mongo {
     lazy val connect = {
-      println( "CONNECTING USING " + Bind.MongoHost )
-      new Exception().printStackTrace
+      //println( "CONNECTING USING " + Bind.MongoHost )
+      //new Exception().printStackTrace
       new com.mongodb.Mongo( Bind.MongoHost )
     }
 

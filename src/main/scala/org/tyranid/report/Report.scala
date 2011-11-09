@@ -42,6 +42,7 @@ trait Query {
   def newReport = {
     var r = new Report
     r.columns ++= defaultColumns
+    r.hidden ++= paths.filter( p => !r.columns.contains( p ) )
     r
   }
 
@@ -89,27 +90,25 @@ case class Grid( query:Query ) {
     }
 
     SetHtml( id, innerDraw ) &
-    net.liftweb.http.js.JsCmds.Run( "init();" )
+    net.liftweb.http.js.JsCmds.Run( "initReport();" )
   }
 
   private def col( p:Path ) =
-    <table>
-     <tr>
-      <td id={ p.name_ }>{ p.label }</td>
-     </tr>
-    </table>
+    <div id={ p.name_ }>{ p.label }</div>
 
   private def innerDraw = {
     val rows = query.run( report )
 
     <div id="def" class="def">
-     <table class="colc">
-      <tr>
-      { for ( p <- report.hidden ) yield
-        <td id={ p.name_ } class="cola">{ col( p ) }</td>
-      }
-      </tr>
-     </table>
+     <div>Available Columns</div>
+     <div class="availc">
+      <table class="colc">
+       { for ( p <- report.hidden ) yield
+         <tr><td id={ p.name_ } class="cola">{ col( p ) }</td></tr>
+       }
+      </table>
+     </div>
+     <div>Filtered Columns</div>
     </div>
     <table class="grid">
      <thead>
@@ -118,7 +117,7 @@ case class Grid( query:Query ) {
      <tbody>
       { for ( r <- rows ) yield
       <tr>
-       { report.columns.map( p => <td>{ p.get( r ).toString }</td> ) }
+       { report.columns.map( p => <td>{ p.get( r ).asInstanceOf[AnyRef].safeString }</td> ) }
       </tr> }
      </tbody>
     </table>
@@ -127,28 +126,11 @@ case class Grid( query:Query ) {
   def draw = {
 
     <head>
+     <script src="/js/report.js" type="text/javascript"/>
      <script>{ Unparsed( """
 
-$( init )
-
-function init() {
-  $( ".colh, .cola" ).draggable( { revert:true, stack:".colh, .cola, .def" } )
-  $( ".colh"        ).droppable( { accept:".colh, .cola", activeClass:"dactive", hoverClass:"dhover", drop:dropped } )
-  $( ".def"         ).droppable( { accept:".colh",        activeClass:"dactive", hoverClass:"dhover", drop:dropped } )
-
-  var hs = $( '.colh' )
-  if ( hs.size() > 0 )
-    $( "td", hs ).height( $( hs[0] ).height() - 4 )
-}
-
-function dropped( event, ui ) {
-  var f = ui.draggable.attr('id')
-  var t = $(this).attr('id')
-
-  if ( f != t ) {
-    ui.draggable.draggable( 'option', 'revert', false );
-    """ + SHtml.ajaxCall( JsRaw( "f + ':' + t" ), drag _ )._2.toJsCmd + """;
-  }
+function execDrag( id ) {
+  """ + SHtml.ajaxCall( JsRaw( "id" ), drag _ )._2.toJsCmd + """;
 }
 
      """ ) }</script>
