@@ -42,7 +42,7 @@ trait Query {
   def newReport = {
     var r = new Report
     r.columns ++= defaultColumns
-    r.hidden ++= paths.filter( p => !r.columns.contains( p ) )
+    r.hidden ++= paths.filter( p => !r.columns.contains( p ) ).sortBy( _.label )
     r
   }
 
@@ -99,28 +99,36 @@ case class Grid( query:Query ) {
   private def innerDraw = {
     val rows = query.run( report )
 
-    <div id="def" class="def">
-     <div>Available Columns</div>
-     <div class="availc">
-      <table class="colc">
-       { for ( p <- report.hidden ) yield
-         <tr><td id={ p.name_ } class="cola">{ col( p ) }</td></tr>
-       }
-      </table>
-     </div>
-     <div>Filtered Columns</div>
-    </div>
-    <table class="grid">
-     <thead>
-      { report.columns.map( p => <th class="colh" id={ p.name_ }>{ col( p ) }</th> ) }
-     </thead>
-     <tbody>
-      { for ( r <- rows ) yield
-      <tr>
-       { report.columns.map( p => <td>{ p.get( r ).asInstanceOf[AnyRef].safeString }</td> ) }
-      </tr> }
-     </tbody>
+    <table id="def" class="def">
+     <tr>
+      <th>Available Columns</th>
+      <td>
+       <div class="availc">
+        <table class="colc">
+         { for ( p <- report.hidden ) yield
+           <tr><td id={ p.name_ } class="cola">{ col( p ) }</td></tr>
+         }
+        </table>
+       </div>
+      </td>
+     </tr>
+     <tr>
+      <th>Filtered Columns</th>
+     </tr>
     </table>
+    <div class="grid">
+     <table>
+      <thead>
+       { report.columns.map( p => <th class="colh" id={ p.name_ }>{ col( p ) }</th> ) }
+      </thead>
+      <tbody>
+       { for ( r <- rows ) yield
+       <tr>
+        { report.columns.map( p => <td>{ p.get( r ).asInstanceOf[AnyRef].safeString }</td> ) }
+       </tr> }
+      </tbody>
+     </table>
+    </div>
   }
 
   def draw = {

@@ -17,8 +17,6 @@
 
 package org.tyranid.db.mongo
 
-import scala.collection.JavaConversions._
-
 import org.bson.BSONObject
 import org.bson.types.ObjectId
 import com.mongodb.{ BasicDBList, BasicDBObject, DB, DBCollection, DBCursor, DBObject }
@@ -58,6 +56,13 @@ object Imp {
   val $unset     = "$unset"
   val $where     = "$where"
 
+	implicit def mongoImp( mongo:com.mongodb.Mongo ) = new MongoImp( mongo )
+	implicit def dbImp( db:DB )                      = new DBImp( db )
+	implicit def collectionImp( coll:DBCollection )  = new DBCollectionImp( coll )
+	implicit def objImp( obj:DBObject )              = new DBObjectImp( obj )
+	implicit def listImp( obj:BasicDBList )          = new DBListImp( obj )
+	implicit def cursorImp( cursor:DBCursor )        = new DBCursorImp( cursor )
+
   object Mobj {
     def apply = new DBObjectImp( new BasicDBObject )
     def apply( vals: ( String, Any )* ):DBObjectImp = {
@@ -72,6 +77,7 @@ object Imp {
     def apply = new BasicDBList
     def apply( vals:Any* ):BasicDBList = {
       val l = new BasicDBList
+      import Imp.listImp
       for ( i <- 0 until vals.size )
         l( i ) = vals( i ).asInstanceOf[AnyRef]
       l
@@ -87,13 +93,6 @@ object Imp {
 
     val EmptyArray = Mlist()
   }
-
-	implicit def mongoImp( mongo:com.mongodb.Mongo ) = new MongoImp( mongo )
-	implicit def dbImp( db:DB )                      = new DBImp( db )
-	implicit def collectionImp( coll:DBCollection )  = new DBCollectionImp( coll )
-	implicit def objImp( obj:DBObject )              = new DBObjectImp( obj )
-	implicit def listImp( obj:BasicDBList )          = new DBListImp( obj )
-	implicit def cursorImp( cursor:DBCursor )        = new DBCursorImp( cursor )
 }
 
 import Imp._
@@ -205,6 +204,7 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
 
     val newobj = new BasicDBObject
 
+    import scala.collection.JavaConversions._
     for ( field <- keySet ) {
       get( field ) match {
       case v:BasicDBList => newobj.put( field, DBListWrap.deep( v ) )
@@ -230,6 +230,7 @@ object DBListWrap {
   def deep( list:BasicDBList ):BasicDBList = {
     val newlist = new BasicDBList
 
+    import scala.collection.JavaConversions._
     for ( field <- list.keySet ) {
       list.get( field ) match {
       case v:Deep     => newlist.put( field, v.deep )
@@ -256,6 +257,8 @@ trait DBListWrap extends DBObjectWrap with BsonList {
   def apply( idx:Int )         = obj.get( idx )
   def update( idx:Int, v:Any ) = obj.put( idx, v )
   def length = obj.size
+
+  import scala.collection.JavaConversions._
   def iterator = obj.iterator
 }
 
