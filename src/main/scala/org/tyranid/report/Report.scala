@@ -18,7 +18,7 @@
 package org.tyranid.report
 
 import scala.collection.mutable
-import scala.xml.Unparsed
+import scala.xml.{ NodeSeq, Unparsed }
 
 import net.liftweb.http.SHtml
 import net.liftweb.http.js.JsCmds.SetHtml
@@ -47,11 +47,23 @@ trait Query {
   }
 
   def by( name:String ) = paths.find( _.name_ == name ).get
+
+  def layouts:Seq[Layout] = Nil
+
+  def layout( name:String ) = layouts.find( _.name == name )
+}
+
+trait Layout {
+  def name:String
+  def header:NodeSeq
+  def row( rec:Record ):NodeSeq
 }
 
 class Report {
 
   @volatile var name:String = _
+
+  @volatile var layout:String = _
 
   val filters = mutable.Map[Path,Any]()
 
@@ -99,42 +111,58 @@ case class Grid( query:Query ) {
   private def innerDraw = {
     val rows = query.run( report )
 
-    <table id="def" class="def">
-     <tr>
-      <th>Available Columns</th>
-      <td>
-       <div class="availc">
-        <table class="colc">
-         { for ( p <- report.hidden ) yield
-           <tr><td id={ p.name_ } class="cola">{ col( p ) }</td></tr>
-         }
-        </table>
-       </div>
-      </td>
-     </tr>
-     <tr>
-      <th>Filtered Columns</th>
-     </tr>
-    </table>
-    <div class="grid">
-     <table>
-      <thead>
-       { report.columns.map( p => <th class="colh" id={ p.name_ }>{ col( p ) }</th> ) }
-      </thead>
-      <tbody>
-       { for ( r <- rows ) yield
+    if ( report.layout.notBlank ) {
+      val layout = query.layout( report.layout ).get
+
+      <div class="grid">
+       <table>
+        <thead>
+         { layout.header }
+        </thead>
+        <tbody>
+         { for ( r <- rows ) yield
+             layout.row( r ) }
+        </tbody>
+       </table>
+      </div>
+    } else {
+      <table id="def" class="def">
        <tr>
-        { report.columns.map( p => <td>{ p.get( r ).asInstanceOf[AnyRef].safeString }</td> ) }
-       </tr> }
-      </tbody>
-     </table>
-    </div>
+        <th>Available Columns</th>
+        <td>
+         <div class="availc">
+          <table class="colc">
+           { for ( p <- report.hidden ) yield
+             <tr><td id={ p.name_ } class="cola">{ col( p ) }</td></tr>
+           }
+          </table>
+         </div>
+        </td>
+       </tr>
+       <tr>
+        <th>Filtered Columns</th>
+       </tr>
+      </table>
+      <div class="grid">
+       <table>
+        <thead>
+         { report.columns.map( p => <th class="colh" id={ p.name_ }>{ col( p ) }</th> ) }
+        </thead>
+        <tbody>
+         { for ( r <- rows ) yield
+         <tr>
+          { report.columns.map( p => <td>{ p.get( r ).asInstanceOf[AnyRef].safeString }</td> ) }
+         </tr> }
+        </tbody>
+       </table>
+      </div>
+    }
   }
 
   def draw = {
 
     <head>
-     <script src="/js/report.js" type="text/javascript"/>
+     <script src="/cjs/report.js" type="text/javascript"/>
      <script>{ Unparsed( """
 
 function execDrag( id ) {

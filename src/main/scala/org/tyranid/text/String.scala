@@ -36,6 +36,7 @@ class StringImp( s:String ) {
 	 */
 	def encUrl = java.net.URLEncoder.encode( s, "UTF-8" ) 
 	def decUrl = java.net.URLDecoder.decode( s, "UTF-8" )
+  //def decUrl = new org.apache.commons.codec.net.URLCodec( "UTF-8" ).decode( s )
 
   def encJson = {
     val sb = new StringBuilder
