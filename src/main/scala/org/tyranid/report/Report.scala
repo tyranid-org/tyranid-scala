@@ -55,6 +55,10 @@ trait Query {
 
 trait Layout {
   def name:String
+  def run:LayoutRun
+}
+
+trait LayoutRun {
   def header:NodeSeq
   def row( rec:Record ):NodeSeq
 }
@@ -112,16 +116,16 @@ case class Grid( query:Query ) {
     val rows = query.run( report )
 
     if ( report.layout.notBlank ) {
-      val layout = query.layout( report.layout ).get
+      val run = query.layout( report.layout ).get.run
 
       <div class="grid">
        <table>
         <thead>
-         { layout.header }
+         { run.header }
         </thead>
         <tbody>
          { for ( r <- rows ) yield
-             layout.row( r ) }
+             run.row( r ) }
         </tbody>
        </table>
       </div>
