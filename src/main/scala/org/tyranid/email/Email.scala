@@ -44,7 +44,7 @@ object Email {
     }
     
   def domainPart( email:String ) = {
-    val emailParser = """([\w\d\-\_]+)(\+\d+)?@([\w\d\-]+)([\w\d\.])+""".r
+    val emailParser = """([\w\d\-\_\.]+)(\+\d+)?@([\w\d\-]+)([\w\d\.])+""".r
     val emailParser( name, num, domain, com ) = email
     domain
   }
