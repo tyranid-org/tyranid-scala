@@ -39,39 +39,27 @@ trait Versioning extends Entity {
 
     if ( original != null ) {
       val diffs = Path.diff( original, r )
-spam("2")
 
       if ( diffs.nonEmpty ) {
         val log = Mobj()
 
         log( 'user ) = Session().user.id
-spam("2.1")
         log( 'on ) = new Date
-spam("r: " + r )
-spam("o.id apply: " + original.apply( "_id" ) )
-spam("r.id: " + r.id )
         log( 'recId ) = r.id
-spam("2.3")
 
         if ( diffs.as.nonEmpty )
           log( 'removals ) = PathValue.toDbObject( diffs.as )
         
-spam("3")
         if ( diffs.bs.nonEmpty )
           log( 'adds ) = PathValue.toDbObject( diffs.bs )
         
         if ( diffs.diffs.nonEmpty )
           log( 'updates ) = PathDiff.toDbObject( diffs.diffs )
 
-spam("4")
         val db = Mongo.connect.db( Bind.ProfileDbName )( r.entity.dbName + "_log" )
 
-spam("5")
         db.save( log )
-spam("6")
       }
-spam("10")
-      
     }
   }
 }

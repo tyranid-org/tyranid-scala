@@ -129,9 +129,7 @@ trait Entity extends Domain with DbItem {
 
 	def attrib( name:String ) =
     try {
-      spam( "entity=" + this.name )
-      spam( "attribs=" + attribs.map( _.name ).mkString( ":" ) )
-      look( "attrib=" + name, attribs.find( _.name == name ).get )
+      attribs.find( _.name == name ).get
     } catch {
       case e:java.util.NoSuchElementException =>
         throw new ModelException( "Could not find attribute " + name + " in entity " + this.name )
