@@ -242,10 +242,30 @@ object DbDate extends Domain {
   override val validations =
     ( ( scope:Scope ) => scope.s.filter( s => scope.saving && s.notBlank && !s.isDate ).map( s => Invalid( scope, "Invalid date (format: mm/dd/yyyy)" ) ) ) ::
     super.validations
+
+  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
+    SHtml.ajaxText(
+      someDateToDateStringMethod( s.rec d f.va.name ),
+      v => { 
+        if ( s.rec( f.va.name ) != v ) {
+          s.rec( f.va.name ) = v.toLaxDate; f.updateDisplayCmd( s ) 
+        }
+      },
+      opts.map( ElemAttr.pairToBasic ):_* )
 }
 
 object DbDateTime extends Domain {
 	val sqlName = "TIMESTAMP WITHOUT TIME ZONE"
+
+  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
+    SHtml.ajaxText(
+      someDateToDateTimeStringMethod( s.rec d f.va.name ),
+      v => { 
+        if ( s.rec( f.va.name ) != v ) {
+          s.rec( f.va.name ) = v.toLaxDateTime; f.updateDisplayCmd( s ) 
+        }
+      },
+      opts.map( ElemAttr.pairToBasic ):_* )
 }
 
 

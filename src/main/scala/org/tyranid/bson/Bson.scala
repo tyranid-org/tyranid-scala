@@ -53,7 +53,12 @@ trait BsonObject extends Deep {
     case s:String => s.toLaxInt
     case null => 0
     }
-  def l( key:String )         = apply( key ).asInstanceOf[Long]
+  def l( key:String )         =
+    apply( key ) match {
+    case n:java.lang.Number => n.longValue
+    case s:String           => s.toLaxLong
+    case null => 0
+    }
   def o( key:String )         = apply( key ).asInstanceOf[BsonObject]
   def oid( key:String )       = apply( key ).asInstanceOf[ObjectId]
   //def r( key:String )       = apply( key ).asInstanceOf[Long]
