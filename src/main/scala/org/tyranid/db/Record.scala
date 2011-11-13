@@ -138,7 +138,10 @@ trait Record extends Valid with BsonObject {
   def has( key:String ) = has( view( key ) )
   def has( va:ViewAttribute ):Boolean
 
-  final def apply( key:String ):AnyRef = apply( view( key ) )
+  final def apply( key:String ):AnyRef = {
+    apply( look( "view", view( look( "key", key ) ) ) )
+  }
+
   final def update( key:String, v:Any ):Unit = update( view( key ), v )
 
   def apply( va:ViewAttribute ):AnyRef

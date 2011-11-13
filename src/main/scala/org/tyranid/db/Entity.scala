@@ -56,6 +56,8 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   def is( str:String ) = {
     str match {
     case "key"       => isKey = true
+                        if ( entity.isInstanceOf[org.tyranid.db.mongo.MongoEntity] && name != "id" )
+                          throw new IllegalArgumentException( "Cannot mark '" + name + "' as a key on the MongoDB entity '" + entity.name + "' -- MongoDB keys must be called 'id'." )
     case "label"     => isLabel = true
     case "required"  => required = true; localValidations ::= ( _.required )
     case "temporary" => temporary = true
@@ -127,7 +129,9 @@ trait Entity extends Domain with DbItem {
 
 	def attrib( name:String ) =
     try {
-      attribs.find( _.name == name ).get
+      spam( "entity=" + this.name )
+      spam( "attribs=" + attribs.map( _.name ).mkString( ":" ) )
+      look( "attrib=" + name, attribs.find( _.name == name ).get )
     } catch {
       case e:java.util.NoSuchElementException =>
         throw new ModelException( "Could not find attribute " + name + " in entity " + this.name )

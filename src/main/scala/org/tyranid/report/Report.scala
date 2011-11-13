@@ -91,6 +91,47 @@ class Report {
     columns -= insert
     columns.insert( columns.indexOf( before ), insert )
   }
+
+  def label( title:String, attr:String ) = <label for={ attr }>{ title }</label>
+
+  def bool( title:String, attr:String ) =
+    SHtml.checkbox( search.b( attr ),
+    ( v:Boolean ) => {
+      if ( v ) search( attr ) = v
+      else     search.remove( attr )
+    } ) ++ label( title, attr )
+
+  def textUpper( attr:String, width:Int ) =
+    SHtml.text( search.s( attr ),
+    ( v:String ) => {
+      if ( v.notBlank ) search( attr ) = v.toUpperCase
+      else              search.remove( attr )
+    },
+    "style" -> ( "width:" + width.toString + "px;" ) )
+
+  def textUpperSubst( attr:String, width:Int ) =
+    SHtml.text(
+      { val regex = search.o( attr )
+        regex != null |* regex.s( $regex )
+      },
+      ( v:String ) => {
+        if ( v.notBlank ) search( attr ) = Mobj( $regex -> v.toUpperCase )
+        else              search.remove( attr )
+      },
+      "style" -> ( "width:" + width.toString + "px;" ) )
+
+  def intGte( attr:String ) =
+    SHtml.text(
+      { val o = search.o( attr )
+
+        if ( o == null ) ""
+        else             o.i( $gte ).toString },
+      ( v:String ) => {
+        val i = v.toLaxInt
+
+        if ( i == 0 ) search.remove( attr )
+        else          search( attr ) = Mobj( $gte -> i ) },
+      "style" -> "width:80px;" )
 }
 
 case class Grid( query:Query ) {

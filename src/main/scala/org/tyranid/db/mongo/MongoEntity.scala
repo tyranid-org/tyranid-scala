@@ -116,21 +116,62 @@ case class MongoView( override val entity:MongoEntity ) extends View {
   private val byIndex = mutable.HashMap[Int,ViewAttribute]()
   @volatile private var nextIndex = 0
 
-  def vas = byName.values
+  private var cacheVas:Seq[ViewAttribute] = Nil
+  private var rebuildVas = false
+
+  def vas = synchronized {
+    if ( rebuildVas || cacheVas.isEmpty ) {
+      val values = byName.values
+
+      val buf = new mutable.ArrayBuffer[ViewAttribute]( values.size )
+      for ( v <- values )
+        buf += v
+      cacheVas = buf
+      rebuildVas = false
+    }
+
+    cacheVas
+  }
 
   // This preloads all of the view attributes for the entity associated with this view.
   entity.attribs.foreach { a => add( a.name ) }
 
   private def add( name:String ) = {
-    val va = new ViewAttribute( this, entity.attrib( name ), nextIndex )
+spam( "331.1" )
+    val va = new ViewAttribute( this, look( "attrib", entity.attrib( name ) ), nextIndex )
+spam( "331.2" )
     nextIndex += 1
+spam( "331.3" )
     byName( name ) = va
+spam( "331.4" )
     byIndex( va.index ) = va
+spam( "331.5" )
+    rebuildVas = true
+spam( "331.6" )
     va
   }
 
-  def apply( name:String ) = byName.getOrElse( name, add( name ) )
-  def apply( idx:Int )     = byIndex( idx )
+  def apply( name:String ) = synchronized {
+    //look( "apply", byName.getOrElse( name, look( "add", add( name ) ) ) )
+    var rslt = byName.get( name )
+    spam( "rslt=" + rslt )
+
+    if ( rslt == None ) {
+      spam( "331" )
+      val a = add( name )
+
+      spam( "333" )
+
+      byName( name ) = a
+      a
+      
+    } else {
+      rslt.get
+    }
+
+    //byName.getOrElse( name, add( name ) )
+  }
+  def apply( idx:Int )     = synchronized { byIndex( idx ) }
 }
 
 case class MongoRecord( override val view:MongoView,
@@ -174,17 +215,20 @@ case class MongoRecord( override val view:MongoView,
     }
 
   def apply( va:ViewAttribute ) =
+  look( "apply",
     if ( va.temporary ) {
+  spam( "apply.1" )
       if ( temporaries == null )
         null // TODO:  return a canonical empty value based on attribute type
       else
         temporaries.get( va.name ).getOrElse( null ) // TODO:  return a canonical empty value based on attribute type
     } else {
+  spam( "apply.2" )
       va.name match {
       case "id" => obj.get( "_id" )
       case s    => obj.get( s )
       }
-    }
+    } )
 
   def update( va:ViewAttribute, v:Any ) =
     if ( va.temporary ) {

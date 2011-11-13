@@ -36,6 +36,12 @@ object Imp {
     }
 
   def spam( msg:String ) = println( "SPAM: " + msg )
+  def look[T]( msg:String, block: => T ): T = {
+    spam( "look[" + msg + "]=>[...evaluating...]" )
+    val result = block
+    spam( "LOOK[" + msg + "]=>[" + ( if ( result != null ) result.toString else "null" ) + "]" )
+    result
+  }
 
   def log( msg:String = "", exception:Exception = null ) = org.tyranid.log.Log.log( msg, exception )
 

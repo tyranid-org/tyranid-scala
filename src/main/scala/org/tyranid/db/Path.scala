@@ -72,7 +72,16 @@ trait Path extends Pathable {
   def pathSize:Int
   def pathAt( idx:Int ):PathNode
 
-  def leaf:ViewAttribute = pathAt( pathSize - 1 ).asInstanceOf[ViewAttribute]
+  def leaf:ViewAttribute = {
+    var ps = pathSize - 1
+    while ( true ) {
+      pathAt( ps ) match {
+      case va:ViewAttribute => return va
+      case _                => ps -= 1
+      }
+    }
+    null
+  }
 
   def matches( other:Seq[String], ostart:Int = 0 ) = {
 
