@@ -228,5 +228,11 @@ class StringImp( s:String ) {
     } catch {
       case e:javax.mail.internet.AddressException => false
     }
+    
+  val datep1 = """(\d\d)/(\d\d)/(\d\d\d\d)""".r.pattern
+  val datep2 = """(\d\d)-(\d\d)-(\d\d\d\d)""".r.pattern
+  
+  def isDate:Boolean =
+    datep1.matcher( s ).matches || datep2.matcher( s ).matches
 }
 
