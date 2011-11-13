@@ -169,10 +169,10 @@ trait Entity extends Domain with DbItem {
   def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException // ... yet
 
   def save( r:Record ) {
-println("**1")
+//println("**1")
     if ( isSearchable )
       Es.index( r )
-println("**2")
+//println("**2")
   }
 
 

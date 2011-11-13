@@ -210,9 +210,9 @@ case class MongoRecord( override val view:MongoView,
 
   override def save {
     db.save( this )
-println( "** m entity save...")    
+//println( "** m entity save...")    
     super.save // call after, so that tid is available
-println( "** m entity save done")    
+//println( "** m entity save done")    
   }
 
   def remove {
