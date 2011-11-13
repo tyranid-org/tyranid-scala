@@ -20,12 +20,15 @@ package org.tyranid.report
 import scala.collection.mutable
 import scala.xml.{ NodeSeq, Unparsed }
 
+import com.mongodb.DBObject
+
 import net.liftweb.http.SHtml
 import net.liftweb.http.js.JsCmds.SetHtml
 import net.liftweb.http.js.JE.JsRaw
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ Path, Record, ViewAttribute }
+import org.tyranid.db.mongo.Imp._
 import org.tyranid.session.Session
 
 
@@ -38,6 +41,7 @@ trait Query {
   val defaultColumns:Seq[Path]
 
   def run( report:Report ):Iterable[Record]
+
 
   def newReport = {
     var r = new Report
@@ -55,7 +59,7 @@ trait Query {
 
 trait Layout {
   def name:String
-  def run:LayoutRun
+  def run( report:Report ):LayoutRun
 }
 
 trait LayoutRun {
@@ -69,7 +73,9 @@ class Report {
 
   @volatile var layout:String = _
 
-  val filters = mutable.Map[Path,Any]()
+  // TODO:  make this database-agnostic
+  val search        = Mobj()
+  var sort:DBObject = null
 
   val hidden  = mutable.ArrayBuffer[Path]()
   val columns = mutable.ArrayBuffer[Path]()
@@ -116,7 +122,7 @@ case class Grid( query:Query ) {
     val rows = query.run( report )
 
     if ( report.layout.notBlank ) {
-      val run = query.layout( report.layout ).get.run
+      val run = query.layout( report.layout ).get.run( report )
 
       <div class="grid">
        <table>
