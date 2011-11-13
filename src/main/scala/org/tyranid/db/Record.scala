@@ -281,7 +281,6 @@ trait Record extends Valid with BsonObject {
   var original:Record = null
 
   def snapshot = { 
-    spam( "\n\nSNAPSHOTTING\n\n" )
     original = deep; this
   }
 
