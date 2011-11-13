@@ -20,7 +20,7 @@ package org.tyranid.text
 import scala.util.matching.Regex
 
 import org.tyranid.Imp._
-
+import java.util.{ Date }
 
 class StringImp( s:String ) {
 	def denull = if ( s == null ) "" else s
