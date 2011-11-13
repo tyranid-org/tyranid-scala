@@ -133,7 +133,11 @@ object DbDouble extends Domain {
 
 trait DbTextLike extends Domain {
 
-  override def isSet( v:Any ) = v != null && !v.asInstanceOf[String].isBlank
+  override def isSet( v:Any ) =
+    v match {
+    case s:String => s.notBlank
+    case _ => false
+    }
 }
 
 object DbText extends DbTextLike {
@@ -232,6 +236,12 @@ object DbBoolean extends Domain {
 
 object DbDate extends Domain {
 	val sqlName = "DATE"
+	
+  override def inputcClasses = " date"      
+  
+  override val validations =
+    ( ( scope:Scope ) => scope.s.filter( s => scope.saving && s.notBlank && !s.isDate ).map( s => Invalid( scope, "Invalid date (format: mm/dd/yyyy)" ) ) ) ::
+    super.validations
 }
 
 object DbDateTime extends Domain {

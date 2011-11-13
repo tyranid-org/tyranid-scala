@@ -223,6 +223,7 @@ object Path {
 
   def flatten( rec:Record ):Seq[PathValue] = {
     var pathValues:List[PathValue] = Nil
+  spam( "f1" )
 
     @tailrec
     def findva( path:List[PathNode] ):ViewAttribute =
@@ -232,6 +233,7 @@ object Path {
       }
 
     def record( path:List[PathNode], rec:Record ) {
+      spam( "f1.rec" )
       for ( va <- rec.view.vas ) {
         va.att.domain match {
         case en:Entity   => record( va :: path, rec.rec( va ) )
@@ -262,20 +264,27 @@ object Path {
     }
 
     def simple( path:List[PathNode], value:Any ) {
+//      spam( "f1.sim" )
       val va = findva( path )
+//      spam( "f1.sim1" )
       val a  = va.att
       val d  = a.domain
+//      spam( "f1.sim2: " + d.getClass.getName )
 
       if ( d.isSet( value ) ) {
+//        spam( "f1.sim2.1" )
         pathValues ::= PathValue( MultiPath( path.reverse:_* ), value )
 
         if ( d.isInstanceOf[DbLink] ) {
           // TODO: recurse the link
         }
       }
+//      spam( "f1.sim3" )
     }
 
+//    spam( "f2" )
     record( Nil, rec )
+//    spam( "f3" )
     pathValues
   }
 
@@ -298,7 +307,7 @@ object Path {
       if ( ai < al.size && bi < bl.size ) {
         val apv = al( ai )
         val bpv = bl( bi )
-
+        
         Path.order.compare( apv.path, bpv.path ) match {
         case i if i < 0 =>
           as += apv
