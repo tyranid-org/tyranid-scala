@@ -17,6 +17,7 @@
 
 package org.tyranid.time
 
+import java.util.{ Date }
 
 object Time {
 
@@ -24,6 +25,23 @@ object Time {
   val FiveMinutesMs =       5 * 60 * 1000
   val HalfHourMs    =      30 * 60 * 1000
   val OneDayMs      = 24 * 60 * 60 * 1000
+  
+  val DateFormat = new java.text.SimpleDateFormat( "MM/dd/yyyy" )
+  val DateTimeFormat = new java.text.SimpleDateFormat( "MM/dd/yyyy HH:mm:ss" )
+  
 
+  def toDateStr( d:Date ) = {
+    if ( d == null )
+      null
+    else
+      DateFormat.format( d );
+  }
+  
+  def toDateTimeStr( d:Date ) = {
+    if ( d == null )
+      null
+    else
+      DateTimeFormat.format( d );
+  }
 }
 

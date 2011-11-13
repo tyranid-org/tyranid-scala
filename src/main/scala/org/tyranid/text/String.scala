@@ -20,6 +20,7 @@ package org.tyranid.text
 import scala.util.matching.Regex
 
 import org.tyranid.Imp._
+import org.tyranid.time.{ Time }
 import java.util.{ Date }
 
 class StringImp( s:String ) {
@@ -235,19 +236,16 @@ class StringImp( s:String ) {
   def isDate:Boolean =
     datep1.matcher( s ).matches || datep2.matcher( s ).matches
     
-  val dateFormat = new java.text.SimpleDateFormat( "MM/dd/yyyy-MM-dd HH:mm:ss" )
-  val dateTimeFormat = new java.text.SimpleDateFormat( "MM/dd/yyyy HH:mm:ss" )
-  
   def toLaxDate:Date = {
     if ( isDate )
-      dateFormat.parse( s )
+      Time.DateFormat.parse( s )
     else 
       null
   }
   
   def toLaxDateTime:Date = {
     if ( isDate )
-      dateTimeFormat.parse( s )
+      Time.DateTimeFormat.parse( s )
     else 
       null
   }

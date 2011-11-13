@@ -26,6 +26,7 @@ import net.liftweb.http.SHtml.ElemAttr
 import org.tyranid.Imp._
 import org.tyranid.logic.{ Valid, Invalid }
 import org.tyranid.math.Base64
+import org.tyranid.time.{ Time }
 import org.tyranid.ui.Field
 
 import net.liftweb.http.js.JsCmds.{FocusOnLoad}
@@ -245,7 +246,7 @@ object DbDate extends Domain {
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
     SHtml.ajaxText(
-      someDateToDateStringMethod( s.rec d f.va.name ),
+      Time.toDateStr( s.rec t f.va.name ),
       v => { 
         if ( s.rec( f.va.name ) != v ) {
           s.rec( f.va.name ) = v.toLaxDate; f.updateDisplayCmd( s ) 
@@ -259,7 +260,7 @@ object DbDateTime extends Domain {
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
     SHtml.ajaxText(
-      someDateToDateTimeStringMethod( s.rec d f.va.name ),
+      Time.toDateTimeStr( s.rec t f.va.name ),
       v => { 
         if ( s.rec( f.va.name ) != v ) {
           s.rec( f.va.name ) = v.toLaxDateTime; f.updateDisplayCmd( s ) 
