@@ -20,7 +20,8 @@ package org.tyranid.time
 import java.util.Date
 
 import scala.collection.mutable
-import scala.concurrent.ops.spawn
+
+import org.tyranid.Imp._
 
 
 case class Task( subject:String, var nextMs:Long, periodMs:Long, task: () => Unit )
@@ -38,7 +39,7 @@ object Scheduler {
     }
   }
 
-  spawn {
+  background {
 
     while ( true ) {
       
