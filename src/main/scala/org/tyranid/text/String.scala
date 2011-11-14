@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2011 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2011 2 <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -238,20 +238,20 @@ class StringImp( s:String ) {
     
   def toLaxDate:Date = 
     if ( isDate )
-      Time.DateFormat.parse( s )
+      Time.DateFormat.parse( s.trim )
     else 
       null
   
   def toLaxDate( f:String ):Date = {
     if ( isDate )
-      new java.text.SimpleDateFormat( f ).parse( s )
+      new java.text.SimpleDateFormat( f ).parse( s.trim )
     else
       null
   }
   
   def toLaxDateTime:Date = {
     if ( isDate )
-      Time.DateTimeFormat.parse( s )
+      Time.DateTimeFormat.parse( s.trim )
     else 
       null
   }
