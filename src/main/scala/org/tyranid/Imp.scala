@@ -43,6 +43,18 @@ object Imp {
     result
   }
 
+  def background( block: => Unit ) {
+    scala.concurrent.ops.spawn {
+      try {
+        block
+      } catch {
+      case e =>
+        println( "spawn() stack trace:" )
+        e.printStackTrace()
+      }
+    }
+  }
+
   def log( msg:String = "", exception:Exception = null ) = org.tyranid.log.Log.log( msg, exception )
 
 	implicit def any[ T <: AnyRef ]( v:T )                  = new org.tyranid.logic.AnyRefImp[T]( v )
