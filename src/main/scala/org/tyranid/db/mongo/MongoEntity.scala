@@ -55,22 +55,8 @@ case class MongoEntity( tid:String ) extends Entity {
 
   
   override def save( rec:Record ) = {
-spam( "s1" )
-    val r = rec.asInstanceOf[MongoRecord]
-
-for ( k <- r.keySet ) {
-  spam( "key=" + k )
-  spam( "value=" + r.get( k ) )
-}
-
-  r( 'outOfServiceDate ) = null
-  
-spam( "s2" )
-
-    db.save( r )
-spam( "s3" )
+    db.save( rec.asInstanceOf[MongoRecord] )
     super.save( rec ) // call after, so that tid is available
-spam( "s4" )
   }
 
 
