@@ -54,6 +54,74 @@ case class SqlEntity( tid:String ) extends Entity {
 
 	def drop { Sql.commitUpdate( toDropSql ) }
 
+	override def save( rec:Record ) = {
+		val en = this
+    val r = rec.asInstanceOf[SqlRecord]
+    val view = r.view
+		val evas = view.eleaves
+		val ekeys = view.ekeys
+
+		val sb = new StringBuilder
+
+		if ( r.isNew ) {
+			sb ++= """
+INSERT INTO """ ++= en.dbName ++= """
+         ( """
+
+			var first = true
+	 		evas foreach { va =>
+				if ( !va.att.domain.isAuto ) {
+					if ( first ) first = false
+					else         sb ++= ", "
+					sb ++= va.att.dbName
+				}
+			}
+
+			sb ++= """ )
+  VALUES ( """
+
+			first = true
+	 		evas foreach { va =>
+				if ( !va.att.domain.isAuto ) {
+					if ( first ) first = false
+					else         sb ++= ", "
+					Sql.literal( sb, r.values( va.index ) )
+				}
+			}
+
+			sb ++= " )"
+		} else {
+			sb ++= """
+UPDATE """ ++= en.dbName ++= """
+   SET """
+
+			var first = true
+	 		evas foreach { va =>
+				if ( !va.att.isKey ) {
+					if ( first ) first = false
+					else         sb ++= ", "
+					sb ++= va.att.dbName ++= " = "
+					Sql.literal( sb, r.values( va.index ) )
+				}
+			}
+
+			sb ++= """
+ WHERE """
+
+			first = true
+			ekeys foreach { va =>
+				if ( first ) first = false
+				else         sb ++= """
+   AND """
+				sb ++= va.att.dbName ++= " = "
+				Sql.literal( sb, r.values( va.index ) )
+			}
+
+		}
+
+		//println( "SQL-->\n" + sb.toString + "\n" )
+		Sql.commitUpdate( sb.toString )
+	}
 
   def labelFor( id:Any ) =
     if ( isStatic ) {
@@ -249,73 +317,6 @@ class SqlView extends TupleView {
 class SqlRecord( override val view:SqlView ) extends Tuple( view ) {
 
   override def o( key:String ) = apply( key ).asInstanceOf[SqlRecord]
-
-	override def save = {
-		val en = view.entity
-		val evas = view.eleaves
-		val ekeys = view.ekeys
-
-		val sb = new StringBuilder
-
-		if ( isNew ) {
-			sb ++= """
-INSERT INTO """ ++= en.dbName ++= """
-         ( """
-
-			var first = true
-	 		evas foreach { va =>
-				if ( !va.att.domain.isAuto ) {
-					if ( first ) first = false
-					else         sb ++= ", "
-					sb ++= va.att.dbName
-				}
-			}
-
-			sb ++= """ )
-  VALUES ( """
-
-			first = true
-	 		evas foreach { va =>
-				if ( !va.att.domain.isAuto ) {
-					if ( first ) first = false
-					else         sb ++= ", "
-					Sql.literal( sb, values( va.index ) )
-				}
-			}
-
-			sb ++= " )"
-		} else {
-			sb ++= """
-UPDATE """ ++= en.dbName ++= """
-   SET """
-
-			var first = true
-	 		evas foreach { va =>
-				if ( !va.att.isKey ) {
-					if ( first ) first = false
-					else         sb ++= ", "
-					sb ++= va.att.dbName ++= " = "
-					Sql.literal( sb, values( va.index ) )
-				}
-			}
-
-			sb ++= """
- WHERE """
-
-			first = true
-			ekeys foreach { va =>
-				if ( first ) first = false
-				else         sb ++= """
-   AND """
-				sb ++= va.att.dbName ++= " = "
-				Sql.literal( sb, values( va.index ) )
-			}
-
-		}
-
-		//println( "SQL-->\n" + sb.toString + "\n" )
-		Sql.commitUpdate( sb.toString )
-	}
 }
 
 

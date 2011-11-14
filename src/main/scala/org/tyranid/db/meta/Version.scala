@@ -33,7 +33,9 @@ import org.tyranid.session.Session
 trait Versioning extends Entity {
 
   abstract override def save( r:Record ) {
+spam( "v1" )
     super.save( r )
+spam( "v2" )
 
     val original = r.original
 
@@ -61,6 +63,7 @@ trait Versioning extends Entity {
         db.save( log )
       }
     }
+spam( "v3" )
   }
 }
 

@@ -293,9 +293,7 @@ trait Record extends Valid with BsonObject {
    * * *   Persistence
    */
 
-  def save {
-    entity.save( this )
-  }
+  final def save = entity.save( this )
 }
 
 case class Scope( rec:Record,

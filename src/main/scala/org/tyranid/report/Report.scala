@@ -30,6 +30,7 @@ import org.tyranid.Imp._
 import org.tyranid.db.{ Path, Record, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.session.Session
+import org.tyranid.ui.Button
 
 
 trait Query {
@@ -51,6 +52,8 @@ trait Query {
   }
 
   def by( name:String ) = paths.find( _.name_ == name ).get
+
+  val searchScreen:String = null
 
   def layouts:Seq[Layout] = Nil
 
@@ -75,7 +78,8 @@ class Report {
 
   // TODO:  make this database-agnostic
   val search        = Mobj()
-  var sort:DBObject = null
+  @volatile var sort:DBObject = null
+  @volatile var skip:Int = 0
 
   val hidden  = mutable.ArrayBuffer[Path]()
   val columns = mutable.ArrayBuffer[Path]()
@@ -162,7 +166,15 @@ case class Grid( query:Query ) {
   private def innerDraw = {
     val rows = query.run( report )
 
-    if ( report.layout.notBlank ) {
+    <div class="gridNav">
+     { Button.bar(
+         Seq(
+           query.searchScreen.notBlank |* Some( Button.link( "Change Search", query.searchScreen, color = "grey" ) ),
+           Some( Button.link( "Next", "/carrier/search", color = "grey" ) )
+         ).flatten:_*
+       ) }
+    </div> ++
+    { if ( report.layout.notBlank ) {
       val run = query.layout( report.layout ).get.run( report )
 
       <div class="grid">
@@ -176,7 +188,7 @@ case class Grid( query:Query ) {
         </tbody>
        </table>
       </div>
-    } else {
+      } else {
       <table id="def" class="def">
        <tr>
         <th>Available Columns</th>
@@ -207,6 +219,7 @@ case class Grid( query:Query ) {
         </tbody>
        </table>
       </div>
+      }
     }
   }
 

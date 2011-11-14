@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.tyranid.db.mongo
@@ -53,6 +52,25 @@ case class MongoEntity( tid:String ) extends Entity {
   lazy val db = Mongo.connect.db( Bind.ProfileDbName )( dbName )
 
   lazy val makeView = MongoView( this )
+
+  
+  override def save( rec:Record ) = {
+spam( "s1" )
+    val r = rec.asInstanceOf[MongoRecord]
+
+for ( k <- r.keySet ) {
+  spam( "key=" + k )
+  spam( "value=" + r.get( k ) )
+}
+  
+spam( "s2" )
+
+    db.save( r )
+spam( "s3" )
+    super.save( rec ) // call after, so that tid is available
+spam( "s4" )
+  }
+
 
   def create {}
   def drop   { db.drop }
@@ -238,13 +256,6 @@ case class MongoRecord( override val view:MongoView,
 
   def rec( va:ViewAttribute ):MongoRecord =
     va.att.domain.asInstanceOf[MongoEntity].recify( o( va ), this, rec => update( va, rec ) )
-
-  override def save {
-    db.save( this )
-//println( "** m entity save...")    
-    super.save // call after, so that tid is available
-//println( "** m entity save done")    
-  }
 
   def remove {
     db.remove( this )
