@@ -177,6 +177,16 @@ case class Grid( query:Query ) {
     redraw
   }
 
+  private def adHoc = {
+    report.layout = null
+    redraw
+  }
+
+  private def standard = {
+    report.layout = "Standard"
+    redraw
+  }
+
   private def innerDraw = {
     val rows = query.run( report )
 
@@ -185,7 +195,9 @@ case class Grid( query:Query ) {
          Seq(
            query.searchScreen.notBlank |* Some( Button.link( "Change Search", query.searchScreen, color = "grey" ) ),
            report.offset > 0 |* Some( Button.ajaxButton( "Prev", () => prev, color = "grey" ) ),
-           Some( Button.ajaxButton( "Next", () => next, color = "grey" ) )
+           Some( Button.ajaxButton( "Next", () => next, color = "grey" ) ),
+           report.layout.notBlank |* Some( Button.ajaxButton( "Ad-Hoc", () => adHoc, color = "grey" ) ),
+           report.layout.isBlank |* Some( Button.ajaxButton( "Standard", () => standard, color = "grey" ) )
          ).flatten:_*
        ) }
     </div> ++
