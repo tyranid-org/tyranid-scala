@@ -17,6 +17,8 @@
 
 package org.tyranid.db.es
 
+import com.mongodb.DBObject
+
 import akka.actor.Actor
 import akka.actor.Actor.actorOf
 
@@ -108,9 +110,10 @@ object Es {
 
         sb ++= va.att.dbName += ':'
         v match {
-        case crec:Record => enter( crec )
-        case v:Number    => sb ++= v.toString
-        case v           => sb ++= ( '"' + v.toString.encJson + '"' )
+        case crec:Record  => enter( crec )
+        case dbo:DBObject => enter( rec.rec( va ) )
+        case v:Number     => sb ++= v.toString
+        case v            => sb ++= ( '"' + v.toString.encJson + '"' )
         }
       }
 

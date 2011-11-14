@@ -44,6 +44,7 @@ trait UserMeta {
         if ( user == null )
           false
         else {
+          user.loggedIn = true
           Session().user = user
           true
         }
