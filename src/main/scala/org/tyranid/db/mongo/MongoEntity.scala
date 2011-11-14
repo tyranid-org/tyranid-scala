@@ -62,6 +62,8 @@ for ( k <- r.keySet ) {
   spam( "key=" + k )
   spam( "value=" + r.get( k ) )
 }
+
+  r( 'outOfServiceDate ) = null
   
 spam( "s2" )
 
