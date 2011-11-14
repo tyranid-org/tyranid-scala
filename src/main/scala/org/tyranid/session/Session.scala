@@ -28,10 +28,13 @@ import org.tyranid.profile.User
 import org.tyranid.report.Query
 
 
-trait SessionMeta {
+object SessionMeta {
   private object currentVar extends SessionVar[Session]( Bind.NewSession() )
+}
 
-  def apply():Session = currentVar.is
+trait SessionMeta {
+
+  def apply():Session = SessionMeta.currentVar.is
 
 
   /*
@@ -67,7 +70,6 @@ trait Session {
 }
 
 object Session extends SessionMeta {
-
 }
 
 

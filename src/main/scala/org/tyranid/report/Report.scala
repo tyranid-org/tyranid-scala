@@ -23,6 +23,7 @@ import scala.xml.{ NodeSeq, Unparsed }
 import com.mongodb.DBObject
 
 import net.liftweb.http.SHtml
+import net.liftweb.http.js.JsCmd
 import net.liftweb.http.js.JsCmds.SetHtml
 import net.liftweb.http.js.JE.JsRaw
 
@@ -79,7 +80,8 @@ class Report {
   // TODO:  make this database-agnostic
   val search        = Mobj()
   @volatile var sort:DBObject = null
-  @volatile var skip:Int = 0
+  @volatile var offset:Int = 0
+  @volatile var pageSize = 20
 
   val hidden  = mutable.ArrayBuffer[Path]()
   val columns = mutable.ArrayBuffer[Path]()
@@ -149,19 +151,41 @@ case class Grid( query:Query ) {
 
     val fp = query.by( fn )
 
-    if ( tn == "def" ) {
+    if ( tn == "def" )
       report.remove( fp )
-
-    } else {
+    else
       report.insertBefore( insert = fp, before = query.by( tn ) )
-    }
 
+    redraw
+  }
+
+  private def redraw:JsCmd =
     SetHtml( id, innerDraw ) &
     net.liftweb.http.js.JsCmds.Run( "initReport();" )
-  }
 
   private def col( p:Path ) =
     <div id={ p.name_ }>{ p.label }</div>
+
+  private def prev = {
+    report.offset -= report.pageSize
+    if ( report.offset < 0 ) report.offset = 0
+    redraw
+  }
+
+  private def next = {
+    report.offset += report.pageSize
+    redraw
+  }
+
+  private def adHoc = {
+    report.layout = null
+    redraw
+  }
+
+  private def standard = {
+    report.layout = "Standard"
+    redraw
+  }
 
   private def innerDraw = {
     val rows = query.run( report )
@@ -170,7 +194,10 @@ case class Grid( query:Query ) {
      { Button.bar(
          Seq(
            query.searchScreen.notBlank |* Some( Button.link( "Change Search", query.searchScreen, color = "grey" ) ),
-           Some( Button.link( "Next", "/carrier/search", color = "grey" ) )
+           report.offset > 0 |* Some( Button.ajaxButton( "Prev", () => prev, color = "grey" ) ),
+           Some( Button.ajaxButton( "Next", () => next, color = "grey" ) ),
+           report.layout.notBlank |* Some( Button.ajaxButton( "Ad-Hoc", () => adHoc, color = "grey" ) ),
+           report.layout.isBlank |* Some( Button.ajaxButton( "Standard", () => standard, color = "grey" ) )
          ).flatten:_*
        ) }
     </div> ++
