@@ -236,10 +236,16 @@ class StringImp( s:String ) {
   def isDate:Boolean =
     datep1.matcher( s ).matches || datep2.matcher( s ).matches
     
-  def toLaxDate:Date = {
+  def toLaxDate:Date = 
     if ( isDate )
       Time.DateFormat.parse( s )
     else 
+      null
+  
+  def toLaxDate( f:String ):Date = {
+    if ( isDate )
+      new java.text.SimpleDateFormat( f ).parse( s )
+    else
       null
   }
   
@@ -249,5 +255,7 @@ class StringImp( s:String ) {
     else 
       null
   }
+  
+  def toLaxDateTime( f:String ):Date = toLaxDateTime( f )
 }
 
