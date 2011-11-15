@@ -49,6 +49,7 @@ trait Query {
     var r = new Report
     r.columns ++= defaultColumns
     r.hidden ++= paths.filter( p => !r.columns.contains( p ) ).sortBy( _.label )
+    r.layout = "Standard"
     r
   }
 
