@@ -249,6 +249,23 @@ class StringImp( s:String ) {
       null
   }
   
+  // Gets the first character, null, or an empty string
+  def toLaxChar() = {
+    if ( s == null )
+      null
+    else if ( s.length > 0 )
+      s.substring( 0, 1 )
+    else
+      s // must be empty string
+  }
+  
+  def toLaxMoney() = {
+    if ( s.isBlank )
+      0.0
+    else
+      s.replace( "$", "" ).replace( ",", "" ).toLaxDouble
+  }
+  
   def toLaxDateTime:Date = {
     if ( isDate )
       Time.DateTimeFormat.parse( s.trim )
