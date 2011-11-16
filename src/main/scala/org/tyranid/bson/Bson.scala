@@ -66,7 +66,12 @@ trait BsonObject extends Deep {
     val v = apply( key )
     if ( v != null ) v.toString else ""
   }
-  def t( key:String )         = apply( key ).asInstanceOf[Date]
+  def t( key:String )         =
+    apply( key ) match {
+    case d:Date   => d
+    case s:String => s.toLaxDate // TODO:  replace with more generic parsing method
+    case null     => null
+    }
 
 
   /*
