@@ -263,7 +263,7 @@ class StringImp( s:String ) {
     if ( s.isBlank )
       0.0
     else
-      s.replace( "$", "" ).replace( ",", "" ).toLaxDouble
+      s.trim.replace( "$", "" ).replace( ",", "" ).toLaxDouble
   }
   
   def toLaxDateTime:Date = {
