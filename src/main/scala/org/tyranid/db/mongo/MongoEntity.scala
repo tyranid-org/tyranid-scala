@@ -37,7 +37,14 @@ import org.tyranid.ui.Field
 case object DbMongoId extends Domain {
   val sqlName = "invalid"
 
-  override def tid( r:Record, va:ViewAttribute ) = Base64.toString( r.oid( va ).toByteArray )
+  override def tid( r:Record, va:ViewAttribute ) = {
+    val oid = r.oid( va )
+
+    if ( oid == null )
+      null
+    else
+      Base64.toString( oid.toByteArray )
+  }
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
     SHtml.text( s.rec s f.va, v => s.rec( f.va ) = v, "class" -> "textInput" ) 
