@@ -102,11 +102,20 @@ class Report {
   def label( title:String, attr:String ) = <label for={ attr }>{ title }</label>
 
   def bool( title:String, attr:String ) =
-    SHtml.checkbox( search.b( attr ),
-    ( v:Boolean ) => {
-      if ( v ) search( attr ) = v
-      else     search.remove( attr )
-    } ) ++ label( title, attr )
+    SHtml.checkbox(
+      search.b( attr ),
+      ( v:Boolean ) => {
+        if ( v ) search( attr ) = v
+        else     search.remove( attr )
+      } ) ++ label( title, attr )
+
+  def boolExists( title:String, attr:String ) =
+    SHtml.checkbox(
+      search.s( attr ).notBlank,
+      ( v:Boolean ) => {
+        if ( v ) search( attr ) = Mobj( $gt -> "" )
+        else     search.remove( attr )
+      } ) ++ label( title, attr )
 
   def textUpper( attr:String, width:Int ) =
     SHtml.text( search.s( attr ),

@@ -229,22 +229,10 @@ class StringImp( s:String ) {
     } catch {
       case e:javax.mail.internet.AddressException => false
     }
+
+  def isDate = Time.isDate( s )
     
-  val datep1 = """(\d\d)/(\d\d)/(\d\d\d\d)""".r.pattern
-  val datep2 = """(\d\d)-(\d\d)-(\d\d\d\d)""".r.pattern
-  
-  def isDate:Boolean =
-    datep1.matcher( s ).matches || datep2.matcher( s ).matches
-    
-  def toLaxDate:Date = 
-    if ( isDate ) {
-      try {
-        Time.DateFormat.parse( s.trim )
-      } catch {
-        case e => null
-      }
-    } else 
-      null
+  def toLaxDate:Date = Time.parse( s.trim )
   
   def toLaxDate( f:String ):Date = {
     if ( isDate ) {

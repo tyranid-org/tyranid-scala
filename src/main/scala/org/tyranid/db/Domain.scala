@@ -241,7 +241,7 @@ object DbDate extends Domain {
   override def inputcClasses = " date"      
   
   override val validations =
-    ( ( scope:Scope ) => scope.s.filter( s => scope.saving && s.notBlank && !s.isDate ).map( s => Invalid( scope, "Invalid date (format: mm/dd/yyyy)" ) ) ) ::
+    ( ( scope:Scope ) => scope.s.filter( s => scope.saving && s.notBlank && !s.isDate ).map( s => { spam( "INVALID DATE[" + s + "]" ); Invalid( scope, "Invalid date (format: mm/dd/yyyy)" ) } ) ) ::
     super.validations
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
