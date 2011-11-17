@@ -248,6 +248,7 @@ object DbDate extends Domain {
         _ match {
         case s:String => scope.saving && s.notBlank && !s.isDate
         case d:Date   => false
+        case null     => false
         }
       }.map( s => { spam( "INVALID DATE[" + s + "]" ); Invalid( scope, "Invalid date (format: mm/dd/yyyy)" ) } )
     } ::
