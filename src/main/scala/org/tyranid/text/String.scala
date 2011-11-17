@@ -237,15 +237,23 @@ class StringImp( s:String ) {
     datep1.matcher( s ).matches || datep2.matcher( s ).matches
     
   def toLaxDate:Date = 
-    if ( isDate )
-      Time.DateFormat.parse( s.trim )
-    else 
+    if ( isDate ) {
+      try {
+        Time.DateFormat.parse( s.trim )
+      } catch {
+        case e => null
+      }
+    } else 
       null
   
   def toLaxDate( f:String ):Date = {
-    if ( isDate )
-      new java.text.SimpleDateFormat( f ).parse( s.trim )
-    else
+    if ( isDate ) {
+      try {
+        new java.text.SimpleDateFormat( f ).parse( s.trim )
+      } catch {
+        case e => null
+      }
+    } else
       null
   }
   
