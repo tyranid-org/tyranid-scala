@@ -51,6 +51,8 @@ class DbFile( bucket:S3Bucket ) extends Domain {
     case x if x.length == 0 =>
     case x =>
       val extension = fp.fileName.suffix( '.' ).replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
+      if ( r.recordTid == "-invalid" )
+        r.save
       val path = r.entityTid + "/" + r.recordTid + "/" + f.va.att.name + "." + extension
       S3.write( bucket, path, fp.mimeType, x )
       S3.access( bucket, path, public = true )
