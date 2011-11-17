@@ -54,6 +54,8 @@ class DbFile( bucket:S3Bucket ) extends Domain {
       if ( r.recordTid == "-invalid" )
         r.save
       val path = r.entityTid + "/" + r.recordTid + "/" + f.va.att.name + "." + extension
+      
+      println( "PATH: " + path );
       S3.write( bucket, path, fp.mimeType, x )
       S3.access( bucket, path, public = true )
 
