@@ -17,6 +17,8 @@
 
 package org.tyranid.db
 
+import java.util.Date
+
 import scala.xml.NodeSeq
 
 import net.liftweb.common.Full
@@ -241,7 +243,14 @@ object DbDate extends Domain {
   override def inputcClasses = " date"      
   
   override val validations =
-    ( ( scope:Scope ) => scope.s.filter( s => scope.saving && s.notBlank && !s.isDate ).map( s => { spam( "INVALID DATE[" + s + "]" ); Invalid( scope, "Invalid date (format: mm/dd/yyyy)" ) } ) ) ::
+    { ( scope:Scope ) =>
+      scope.value.filter {
+        _ match {
+        case s:String => scope.saving && s.notBlank && !s.isDate
+        case d:Date   => false
+        }
+      }.map( s => { spam( "INVALID DATE[" + s + "]" ); Invalid( scope, "Invalid date (format: mm/dd/yyyy)" ) } )
+    } ::
     super.validations
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =

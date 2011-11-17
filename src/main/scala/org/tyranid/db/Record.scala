@@ -304,6 +304,8 @@ case class Scope( rec:Record,
 
   def s = va.map( rec.s )
 
+  def value = va.map( rec.apply )
+
   def at( name:String ):Scope = at( rec.view.path( name ) )
 
   def at( path:Path ) = {
