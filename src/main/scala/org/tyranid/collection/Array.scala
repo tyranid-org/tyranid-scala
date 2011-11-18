@@ -37,5 +37,22 @@ class ArrayImp[A]( array:Array[A] ) {
       System.arraycopy( array, 0, newArray, 0, newSize min array.size )
       newArray
     }
+
+  /**
+   * This filters the sequence of A to members of subtype B and returns an Array of
+   * subtype B.
+   *
+   * equivalent to:  seq.filter( _.isInstanceOf[B] ).map( _.asInstanceOf[B] )
+   */
+  def of[ B <: A : Manifest ]:Array[B] = {
+    val cls = manifest[B].erasure
+    array.filter( obj => cls.isAssignableFrom( obj.getClass ) ).map( _.asInstanceOf[B] )
+  }
+
+  def findOf[ B <: A : Manifest ]:Option[B] = {
+    val cls = manifest[B].erasure
+    array.find( obj => cls.isAssignableFrom( obj.getClass ) ).map( _.asInstanceOf[B] )
+  }
+
 }
 

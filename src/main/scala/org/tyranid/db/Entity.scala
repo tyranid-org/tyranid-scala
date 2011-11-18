@@ -290,6 +290,8 @@ trait EnumEntity[ T >: Null <: Tuple ] extends Entity {
       case o        => o.asInstanceOf[T]
       } ).toSeq
   }
+
+  def values( implicit mt:Manifest[T] ) = staticRecords.of[T]
 }
 
 case class StaticBuilder( en:Entity ) {
