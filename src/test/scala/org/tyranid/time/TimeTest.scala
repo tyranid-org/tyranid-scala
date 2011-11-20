@@ -17,9 +17,12 @@
 
 package org.tyranid.time
 
+import java.util.{ Calendar, Date, TimeZone }
+
 import org.scalatest.FunSuite
 
 import org.tyranid.Imp._
+import org.tyranid.session.Session
 
 
 class TimeSuite extends FunSuite {
@@ -37,6 +40,112 @@ class TimeSuite extends FunSuite {
     //"%u2122".decUrl
 
     //assert( re.base36  === Base36.toString( re.decimal ) )
+  }
+
+  test( "timeZoneParsing" ) {
+
+    assert( Time.toLaxTimeZone( "cst" ) == TimeZone.getTimeZone( "CST" ) )
+  }
+
+  test( "timeParser" ) {
+    org.tyranid.test.TestBoot.boot
+
+
+    val times = Array[String](
+      "2008-01-02",                   "2008-01-02 00:00 UTC",
+      "2008 - 1 - 2 10: 30",          "2008-01-02 10:30 UTC",
+      "Jan 2, 2008",                  "2008-01-02 00:00 UTC",
+      "january 2, 2008",              "2008-01-02 00:00 UTC",
+      "4/20/71",                      "1971-04-20 00:00 UTC",
+      "tues, 4/20/1971",              "1971-04-20 00:00 UTC",
+      "wednesday jan 3, 2008",        "because Wednesday was specified but that date is on a Thursday.",
+      "thu, jan 3, 2008",             "2008-01-03 00:00 UTC",
+      "thu, jan 3, 2008 at 10:30p",   "2008-01-03 22:30 UTC",
+      "thu, jan 3, 2008 at 10:p",     "because \":p\" was confusing.",
+      "today at 2 pm",                "2008-06-21 14:00 CDT",
+      "tomorrow 2 pm",                "2008-06-22 14:00 CDT",
+      "2 pm tomorrow",                "2008-06-22 14:00 CDT",
+      "yesterday, 3pm",               "2008-06-20 15:00 CDT",
+      "this saturday at 5pm",         "because \"this\" is confusing, try \"last\" or \"next\".",
+      "5pm last",                     "because \"last\" did not have a day of the week after it.",
+      "next sat at 5pm",              "2008-06-28 17:00 CDT",
+      "5:30p on last fri",            "2008-06-20 17:30 CDT",
+      "5:30p",                        "because no date could be found.",
+      "today on 5/1/1990",            "because duplicate date information was found at \"5/1/1990\".",
+      "5:30p at 5:30p",               "because duplicate time information was found at \"5:30p\".",
+      "now",                          "2008-06-21 12:00 CDT",
+      "sat, june 21, 2008",           "2008-06-21 00:00 UTC",
+      "sat, june 21, 08",             "2008-06-21 00:00 UTC",
+      "wed, june 21, 89",             "1989-06-21 00:00 UTC",
+      "2008-jan-02",                  "2008-01-02 00:00 UTC",
+      "20081103",                     "2008-11-03 00:00 UTC",
+      "20081103 1203",                "2008-11-03 12:03 UTC",
+      "20081103 120300",              "2008-11-03 12:03 UTC",
+      "2008-11-03 120300",            "2008-11-03 12:03 UTC",
+      "2008.11.03 120300",            "2008-11-03 12:03 UTC",
+      "5pm 20081103",                 "2008-11-03 17:00 UTC",
+      "5pm on 20081103",              "2008-11-03 17:00 UTC",
+      "5pm on 20081103 cst",          "2008-11-03 17:00 CST",
+      "5pm cst on 20081103",          "2008-11-03 17:00 CST",
+      "20081103 140300a",             "because a 24 hour time was given while an am/pm (\"a\") was found.",
+      "20081103 12:03:00a",           "2008-11-03 00:03 UTC",
+      "20081103 12:03:00 a.m.",       "2008-11-03 00:03 UTC",
+      "20081103 12:03:00 A. M.",      "2008-11-03 00:03 UTC",
+      "20081103 14:03:00 a.m.",       "because a 24 hour time was given while an am/pm (\"a.m.\") was found.",
+      "20081103 120300.930 EST",      "2008-11-03 12:03:00.930 EST",
+      "2008-01-02 12:00",             "2008-01-02 12:00 UTC",
+      "2008-01-02 12:00a",            "2008-01-02 00:00 UTC",
+      "2008-01-02 12:00 pm",          "2008-01-02 12:00 UTC",
+      "2008-01-02 12:00 CST",         "2008-01-02 12:00 CST",
+      "2008-01-02 12:00:02",          "2008-01-02 12:00:02 UTC",
+      "2008-01-02 12:00:02 CST",      "2008-01-02 12:00:02 CST",
+      "2008-01-02 12:00:02.983",      "2008-01-02 12:00:02.983 UTC",
+      "2008-01-02 12:00:02.983 PST",  "2008-01-02 12:00:02.983 PST",
+      "2008-01-02 12:00 CST",         "2008-01-02 12:00 CST"
+    )
+
+    val tp = new TimeParser
+    val savedTz = Session().user.timeZone
+    Session().user.timeZone = TimeZone.getTimeZone( "CST" )
+
+    // set a fixed now for regression testing purposes
+    tp.now = {
+      val c = Calendar.getInstance
+      c.set( 2008, 5, 21, 12, 0, 0 )
+      c.set( Calendar.MILLISECOND, 0 )
+      c
+    }
+   
+    for ( i <- 0 until times.length by 2 ) {
+        val time = times( i )
+        val expected = times( i+1 )
+   
+        try {
+            val dtv = Time.createNullCalendar
+            tp.parse( dtv, time )
+            val actual = dtv.toDisplay
+   
+            if ( !expected.equals( actual ) ) {
+                println( "\n Parsing: " + time )
+                println(   "  Tokens: " + tp.tokenString )
+                println(   "  Actual: " + actual )
+                println(   "Expected: " + expected )
+                assert( true === false )
+            }
+        } catch {
+        case ex:java.text.ParseException =>
+            val msg = ex.getMessage
+            val because = msg.substring( msg.indexOf( "because" ) )
+            if ( !expected.equals( because ) ) {
+                println( "\n Parsing: " + time )
+                println(   "  Tokens: " + tp.tokenString )
+                println(   " Problem: " + msg )
+                assert( true === false )
+            }
+        }
+    }
+
+    Session().user.timeZone = savedTz
   }
 }
 

@@ -17,9 +17,86 @@
 
 package org.tyranid.time
 
-import java.util.{ Date }
+import java.util.{ Calendar, Date, TimeZone }
+
+import org.tyranid.Imp._
+
+
+class CalendarImp( c:Calendar ) {
+
+  def copyDateFrom( other:Calendar ) {
+    c.set( Calendar.YEAR,         other.get( Calendar.YEAR ) )
+    c.set( Calendar.MONTH,        other.get( Calendar.MONTH ) )
+    c.set( Calendar.DAY_OF_MONTH, other.get( Calendar.DAY_OF_MONTH ) )
+  }
+
+  def copyDateTimeFrom( other:Calendar ) {
+    copyDateFrom( other )
+    c.set( Calendar.HOUR,         other.get( Calendar.HOUR ) )
+    c.set( Calendar.MINUTE,       other.get( Calendar.MINUTE ) )
+    c.set( Calendar.SECOND,       other.get( Calendar.SECOND ) )
+    c.set( Calendar.MILLISECOND,  other.get( Calendar.MILLISECOND ) )
+    c.setTimeZone(                other.getTimeZone )
+  }
+
+  def rollToDayOfWeek( dayOfWeek:Int, direction:Int ) {
+    assert( direction == -1 || direction == 1 )
+
+    do {
+      c.add( Calendar.DAY_OF_MONTH, direction )
+    } while ( c.get( Calendar.DAY_OF_WEEK ) != dayOfWeek )
+  }
+
+  def format( iso:Boolean = false ) = {
+    val sb = new StringBuilder
+    sb ++= "%04d-%02d-%02d%s%02d:%02d".format(
+      c.get( Calendar.YEAR ), c.get( Calendar.MONTH ) + 1, c.get( Calendar.DAY_OF_MONTH ),
+      if ( iso ) "Z" else " ",
+      c.get( Calendar.HOUR_OF_DAY ), c.get( Calendar.MINUTE ) )
+    val seconds = c.get( Calendar.SECOND )
+    val milli   = c.get( Calendar.MILLISECOND )
+    if ( seconds != 0 || milli != 0 ) {
+      sb ++= ":%02d".format( seconds )
+
+      if ( milli != 0 )
+        sb ++= ".%03d".format( milli )
+    }
+
+    val tz = c.getTimeZone
+    sb += ' ' ++= tz.getDisplayName( tz.inDaylightTime( c.getTime ), TimeZone.SHORT )
+    sb.toString
+  }
+
+  def toDisplay = format( iso = false )
+  def toIso8601 = format( iso = true )
+}
+
+class DateImp( d:Date ) {
+}
 
 object Time {
+
+  def fourDigitYear( year:Int, len:Int ) =
+    if ( len == 4 || year >= 100 ) year
+    else if ( year < 50 )          2000 + year
+    else                           1900 + year
+
+  def createNullCalendar = {
+    val c = Calendar.getInstance
+    c.set( 0, 0, 0, 0, 0, 0 )
+    c.setTimeZone( Utc )
+    c
+  }
+
+  val Utc = TimeZone.getTimeZone( "UTC" )
+
+  def toLaxTimeZone( s:String ) = {
+    val su = s.toUpperCase
+    TimeZone.getTimeZone(
+      // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4135882
+      if ( "AKST".equals( s ) ) "AST"
+      else                      su )
+  }
 
   val OneMinuteMs   =           60 * 1000
   val FiveMinutesMs =       5 * 60 * 1000

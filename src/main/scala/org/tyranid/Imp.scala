@@ -17,6 +17,8 @@
 
 package org.tyranid
 
+import java.util.{ Calendar, Date }
+
 
 /**
  * IMPlicit IMPorts.
@@ -59,6 +61,8 @@ object Imp {
 
 	implicit def any[ T <: AnyRef ]( v:T )                  = new org.tyranid.logic.AnyRefImp[T]( v )
 	implicit def boolean( v:Boolean )                       = new org.tyranid.logic.BooleanImp( v )
+	implicit def calendar( v:Calendar )                     = new org.tyranid.time.CalendarImp( v )
+	implicit def date( v:Date )                             = new org.tyranid.time.DateImp( v )
 	implicit def option[A]( v:Option[A] )                   = new org.tyranid.collection.OptionImp( v )
 	implicit def string( v:String )                         = new org.tyranid.text.StringImp( v )
   implicit def array[A]( a:Array[A] )                     = new org.tyranid.collection.ArrayImp( a )

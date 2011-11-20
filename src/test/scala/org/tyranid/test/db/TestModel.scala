@@ -20,6 +20,41 @@ import org.tyranid.secure.DbReCaptcha
 import org.tyranid.time.Time
 
 
+object User extends MongoEntity( tid = "test5" ) {
+  "id"             is DbMongoId           is 'key;
+  "email"          is DbEmail             is 'label is 'required;
+  "password"       is DbPassword          is 'required;
+  "password2"      is DbPassword          is 'required is 'temporary as "Repeat Password";
+  "stayLoggedIn"   is DbBoolean           as "Keep me logged in for two weeks";
+  "firstName"      is DbChar(32)          is 'required;
+  "lastName"       is DbChar(32)          is 'required;
+}
+
+class User( override val obj:DBObject = Mobj() ) extends MongoRecord( User.makeView, obj ) with org.tyranid.profile.User {
+  
+  override def fullName = {
+    val sb = new StringBuilder
+
+    if ( s( 'firstName ).notBlank ) sb ++= s( 'firstName ).capitalize
+    if ( s( 'lastName ).notBlank )  sb += ' ' ++= s( 'lastName ).capitalize
+      
+    sb.toString
+  }
+}
+
+
+
+class Session extends org.tyranid.session.Session {
+
+  override def user:User = super.user.asInstanceOf[User]
+}
+
+object Session extends org.tyranid.session.SessionMeta {
+
+  override def apply:Session = super.apply.asInstanceOf[Session]
+}
+
+
 
 object Widget extends MongoEntity( tid = "test0" ) {
   "id"           is DbMongoId           is 'key;

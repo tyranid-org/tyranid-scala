@@ -17,6 +17,8 @@
 
 package org.tyranid.profile
 
+import java.util.TimeZone
+
 import net.liftweb.http.{ RedirectResponse, S, SessionVar }
 
 import org.tyranid.Bind
@@ -83,5 +85,9 @@ trait User extends Record {
    * This is a list of tags that the user is interested in.
    */
   def allowTags:Seq[Int] = Nil
+
+  @volatile var timeZone:TimeZone =
+    // TODO:  persist time zone in user record, edit it in UI, etc.
+    TimeZone.getDefault
 }
 
