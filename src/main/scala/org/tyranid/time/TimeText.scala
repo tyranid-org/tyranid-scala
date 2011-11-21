@@ -26,7 +26,7 @@ import org.tyranid.session.Session
 
 
 
-object TimeParser {
+object TimeConstants {
 
 	val MONTHS         = Array( "january", "february", "march", "april", "may", "june",
 		                          "july", "august", "september", "october", "november", "december" )
@@ -95,7 +95,7 @@ private class Token {
     t match {
     case Type.INT    => i >= 1 && i <= 12
     case Type.STRING =>
-      if ( eval( Type.MONTH, TimeParser.MONTHS ) ) {
+      if ( eval( Type.MONTH, TimeConstants.MONTHS ) ) {
         i += 1
         true
       } else
@@ -108,7 +108,7 @@ private class Token {
   def dayOfWeek =
     t match {
     case Type.STRING =>
-      if ( eval( Type.DAY_OF_WEEK, TimeParser.DAYS_OF_WEEK ) ) {
+      if ( eval( Type.DAY_OF_WEEK, TimeConstants.DAYS_OF_WEEK ) ) {
         i += 1
         true
       } else
@@ -123,7 +123,7 @@ private class Token {
   def milli  = t == Type.INT && i < 1000
   def ampm =
     t match {
-    case Type.STRING => eval( Type.AMPM, TimeParser.AMPMS )
+    case Type.STRING => eval( Type.AMPM, TimeConstants.AMPMS )
     case Type.AMPM   => true
     case _           => false
     }
@@ -145,14 +145,14 @@ private class Token {
 		
   def filler =
     t match {
-    case Type.STRING => eval( Type.FILLER, TimeParser.FILLERS )
+    case Type.STRING => eval( Type.FILLER, TimeConstants.FILLERS )
     case Type.FILLER => true
     case _           => false
     }
 		
   def userRelatives =
     t match {
-    case Type.STRING        => eval( Type.USER_RELATIVE, TimeParser.USER_RELATIVES )
+    case Type.STRING        => eval( Type.USER_RELATIVE, TimeConstants.USER_RELATIVES )
     case Type.USER_RELATIVE => true
     case _                  => false
     }
@@ -177,12 +177,12 @@ private class Token {
     case Type.INT           => i.toString
     case Type.STRING        => "\"" + s + '"'
     case Type.CHAR          => "\'" + ch + '\''
-    case Type.MONTH         => "!" + TimeParser.MONTHS( i-1 )
-    case Type.DAY_OF_WEEK   => "!" + TimeParser.DAYS_OF_WEEK( i-1 )
-    case Type.AMPM          => "!" + TimeParser.AMPMS( i )
+    case Type.MONTH         => "!" + TimeConstants.MONTHS( i-1 )
+    case Type.DAY_OF_WEEK   => "!" + TimeConstants.DAYS_OF_WEEK( i-1 )
+    case Type.AMPM          => "!" + TimeConstants.AMPMS( i )
     case Type.TIMEZONE      => "tz" + s.toString
-    case Type.FILLER        => "!" + TimeParser.FILLERS( i )
-    case Type.USER_RELATIVE => "!" + TimeParser.USER_RELATIVES( i )
+    case Type.FILLER        => "!" + TimeConstants.FILLERS( i )
+    case Type.USER_RELATIVE => "!" + TimeConstants.USER_RELATIVES( i )
     }
 }
 
@@ -223,11 +223,10 @@ class TimeParser {
     // TODO:  make this user-local now
     Calendar.getInstance
   }
-	
+
+	var now:Calendar = createUserNow
 	private var sb = new StringBuilder
 	private var text:String = _
-	
-	var now:Calendar = createUserNow
 	
 	
 	/*
@@ -578,8 +577,8 @@ class TimeParser {
   private var dateOnly = false
 
 	private var tp = 0
-	
-	def parse( dv:Calendar, text:String, dateOnly:Boolean = false, forceUserTime:Boolean = false ) = {
+
+	def parse( text:String, dv:Calendar = Time.createNullCalendar, dateOnly:Boolean = false, forceUserTime:Boolean = false ):Calendar = {
     year = 0
     month = 0
     dayOfMonth = 0
@@ -648,11 +647,12 @@ class TimeParser {
 				dv.rollToDayOfWeek( dayOfWeek, rollDaysNeeded )
 			else
 				if ( dayOfWeek != dv.get( Calendar.DAY_OF_WEEK ) )
-					fail(  TimeParser.DAYS_OF_WEEK( dayOfWeek-1 ).capitalize
+					fail(  TimeConstants.DAYS_OF_WEEK( dayOfWeek-1 ).capitalize
 						   + " was specified but that date is on a "
-					     + TimeParser.DAYS_OF_WEEK( dv.get( Calendar.DAY_OF_WEEK ) - 1 ).capitalize + "." )
+					     + TimeConstants.DAYS_OF_WEEK( dv.get( Calendar.DAY_OF_WEEK ) - 1 ).capitalize + "." )
 		}
 
+    dv
 	}
 	
 	private def tokenize {
@@ -761,4 +761,4 @@ class TimeParser {
 		}
 	}
 }
-	
+

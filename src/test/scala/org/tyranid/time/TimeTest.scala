@@ -51,7 +51,7 @@ class TimeSuite extends FunSuite {
     org.tyranid.test.TestBoot.boot
 
 
-    val times = Array[String](
+    val data = Array[String](
       "2008-01-02",                   "2008-01-02 00:00 UTC",
       "2008 - 1 - 2 10: 30",          "2008-01-02 10:30 UTC",
       "Jan 2, 2008",                  "2008-01-02 00:00 UTC",
@@ -111,38 +111,79 @@ class TimeSuite extends FunSuite {
     // set a fixed now for regression testing purposes
     tp.now = {
       val c = Calendar.getInstance
+      c.setTimeZone( Time.Utc )
       c.set( 2008, 5, 21, 12, 0, 0 )
       c.set( Calendar.MILLISECOND, 0 )
       c
     }
    
-    for ( i <- 0 until times.length by 2 ) {
-        val time = times( i )
-        val expected = times( i+1 )
+    for ( i <- 0 until data.length by 2 ) {
+      val time     = data( i )
+      val expected = data( i+1 )
    
-        try {
-            val dtv = Time.createNullCalendar
-            tp.parse( dtv, time )
-            val actual = dtv.toDisplay
+      try {
+        val actual = tp.parse( time ).toDisplay
    
-            if ( !expected.equals( actual ) ) {
-                println( "\n Parsing: " + time )
-                println(   "  Tokens: " + tp.tokenString )
-                println(   "  Actual: " + actual )
-                println(   "Expected: " + expected )
-                assert( true === false )
-            }
-        } catch {
-        case ex:java.text.ParseException =>
-            val msg = ex.getMessage
-            val because = msg.substring( msg.indexOf( "because" ) )
-            if ( !expected.equals( because ) ) {
-                println( "\n Parsing: " + time )
-                println(   "  Tokens: " + tp.tokenString )
-                println(   " Problem: " + msg )
-                assert( true === false )
-            }
+        if ( !expected.equals( actual ) ) {
+          println( "\n Parsing: " + time )
+          println(   "  Tokens: " + tp.tokenString )
+          println(   "  Actual: " + actual )
+          println(   "Expected: " + expected )
+          assert( true === false )
         }
+      } catch {
+      case ex:java.text.ParseException =>
+        val msg = ex.getMessage
+        val because = msg.substring( msg.indexOf( "because" ) )
+        if ( !expected.equals( because ) ) {
+          println( "\n Parsing: " + time )
+          println(   "  Tokens: " + tp.tokenString )
+          println(   " Problem: " + msg )
+          assert( true === false )
+        }
+      }
+    }
+
+    Session().user.timeZone = savedTz
+  }
+
+  test( "durationText" ) {
+    val data = Array[String](
+      "2008-01-02 CST",                   "Thursday, January 2, 2008 at 12:00am",
+      "2020-01-10 CST",                   "now",
+      "2020-01-10 00:02 CST",             "in a few minutes",
+      "2020-01-09 23:58 CST",             "a few minutes ago",
+      "2020-01-10 00:32 CST",             "in 32 minutes",
+      "2020-01-09 23:20 CST",             "40 minutes ago",
+      "2020-01-09 23:05 CST",             "an hour ago",
+      "2020-01-10 01:09 CST",             "in an hour",
+      "2020-01-09 18:05 CST",             "6 hours ago",
+      "2020-01-10 08:09 CST",             "in 8 hours",
+      "2020-01-11 08:09 CST",             "tomorrow at 8:09am",
+      "2020-01-12 08:09 CST",             "next Monday at 8:09am",
+      "2020-01-09 08:09 CST",             "yesterday at 8:09am",
+      "2020-01-08 08:09 CST",             "Thursday at 8:09am",
+      "2020-01-01 08:09 CST",             "Thursday, January 1 at 8:09am",
+      "2019-01-01 08:09 CST",             "Wednesday, January 1, 2019 at 8:09am"
+    )
+
+    val now = {
+      val c = Calendar.getInstance
+      c.setTimeZone( TimeZone.getTimeZone( "CST" ) )
+      c.set( 2020, 0, 10, 0, 0, 0 )
+      c.set( Calendar.MILLISECOND, 0 )
+      c.getTime
+    }
+
+    val tp = new TimeParser
+    val savedTz = Session().user.timeZone
+    Session().user.timeZone = TimeZone.getTimeZone( "CST" )
+
+    for ( i <- 0 until data.length by 2 ) {
+      val time     = data( i )
+      val expected = data( i+1 )
+
+      assert( Time.duration( now = now, date = tp.parse( time ).getTime ) === expected )
     }
 
     Session().user.timeZone = savedTz

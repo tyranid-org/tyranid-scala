@@ -20,9 +20,24 @@ package org.tyranid.time
 import java.util.{ Calendar, Date, TimeZone }
 
 import org.tyranid.Imp._
+import org.tyranid.session.Session
 
 
 class CalendarImp( c:Calendar ) {
+
+  def dayOfWeekName = TimeConstants.DAYS_OF_WEEK( c.get( Calendar.DAY_OF_WEEK ) ).capitalize
+  def monthName     = TimeConstants.MONTHS( c.get( Calendar.MONTH ) ).capitalize
+
+  def isSameYearAs( other:Calendar ) =
+    c.get( Calendar.YEAR )         == other.get( Calendar.YEAR )
+
+  def isSameWeekAs( other:Calendar ) =
+    c.get( Calendar.WEEK_OF_YEAR ) == other.get( Calendar.WEEK_OF_YEAR )
+
+  def isSameDayAs( other:Calendar ) =
+    c.get( Calendar.YEAR )         == other.get( Calendar.YEAR ) &&
+    c.get( Calendar.MONTH )        == other.get( Calendar.MONTH ) &&
+    c.get( Calendar.DAY_OF_MONTH ) == other.get( Calendar.DAY_OF_MONTH )
 
   def copyDateFrom( other:Calendar ) {
     c.set( Calendar.YEAR,         other.get( Calendar.YEAR ) )
@@ -72,6 +87,12 @@ class CalendarImp( c:Calendar ) {
 }
 
 class DateImp( d:Date ) {
+
+  def toCalendar( tz:TimeZone ) = {
+    val c = Calendar.getInstance( tz )
+    c.setTime( d )
+    c
+  }
 }
 
 object Time {
@@ -98,10 +119,12 @@ object Time {
       else                      su )
   }
 
-  val OneMinuteMs   =           60 * 1000
-  val FiveMinutesMs =       5 * 60 * 1000
-  val HalfHourMs    =      30 * 60 * 1000
-  val OneDayMs      = 24 * 60 * 60 * 1000
+  val OneMinuteMs   =               60 * 1000
+  val FiveMinutesMs =           5 * 60 * 1000
+  val HalfHourMs    =          30 * 60 * 1000
+  val OneHourMs     =          60 * 60 * 1000
+  val OneDayMs      =     24 * 60 * 60 * 1000
+  val OneWeekMs     = 7 * 24 * 60 * 60 * 1000
   
   val datep1 = """(\d\d)/(\d\d?)/(\d\d\d\d)""".r.pattern
   val DateFormat = new java.text.SimpleDateFormat( "MM/dd/yyyy" )
@@ -164,6 +187,76 @@ object Time {
       null
     else
       DateTimeFormat.format( d );
+  }
+
+  def duration( now:Date, date:Date ):String = {
+
+    val rawSince = now.getTime - date.getTime
+
+    val nc = now.toCalendar( Session().user.timeZone )
+    val c = date.toCalendar( Session().user.timeZone ) 
+
+    val ( since, future ) =
+      if ( rawSince < 0 ) ( rawSince * -1, true  )
+      else                ( rawSince,      false )
+
+    if ( since < 1 * Time.OneMinuteMs ) {
+      "now"
+    } else if ( since < 5 * Time.OneMinuteMs ) {
+      if ( future ) "in a few minutes"
+      else          "a few minutes ago"
+    } else if ( since < 50 * Time.OneMinuteMs ) {
+      if ( future ) "in %d minutes".format( since / Time.OneMinuteMs )
+      else          "%d minutes ago".format( since / Time.OneMinuteMs )
+    } else if ( since < 70 * Time.OneMinuteMs ) {
+      if ( future ) "in an hour"
+      else          "an hour ago"
+    } else if ( since < 12 * Time.OneHourMs ) {
+      if ( future ) "in %d hours".format( ( since.toDouble / Time.OneHourMs ).round )
+      else          "%d hours ago".format( ( since.toDouble / Time.OneHourMs ).round )
+    } else if ( since < Time.OneWeekMs ) {
+      var days = 0
+      val sameWeek = c.isSameWeekAs( nc )
+
+      while ( !c.isSameDayAs( nc ) ) {
+        nc.roll( Calendar.DATE, future )
+        days += 1
+      }
+
+      "%s at %d:%02d%s".format(
+        if ( days == 1 ) {
+          future ? "tomorrow" | "yesterday"
+        } else if ( sameWeek ) {
+          c.dayOfWeekName
+        } else {
+          ( future ? "next " | "last " ) + c.dayOfWeekName
+        },
+        c.get( Calendar.HOUR ) match { case 0 => 12 case i => i },
+        c.get( Calendar.MINUTE ),
+        c.get( Calendar.AM_PM ) match { case 0 => "am" case 1 => "pm" } )
+    } else {
+      val sb = new StringBuilder
+      sb ++= "%s, %s %d%s%s%d:%02d%s".format(
+        c.dayOfWeekName,
+        c.monthName, c.get( Calendar.DAY_OF_MONTH ),
+        if ( c.isSameYearAs( nc ) ) ""
+        else                        ", " + c.get( Calendar.YEAR ),
+        " at ",
+        c.get( Calendar.HOUR ) match { case 0 => 12 case i => i },
+        c.get( Calendar.MINUTE ),
+        c.get( Calendar.AM_PM ) match { case 0 => "am" case 1 => "pm" } )
+
+      val seconds = c.get( Calendar.SECOND )
+      val milli   = c.get( Calendar.MILLISECOND )
+      if ( seconds != 0 || milli != 0 ) {
+        sb ++= ":%02d".format( seconds )
+
+        if ( milli != 0 )
+          sb ++= ".%03d".format( milli )
+      }
+
+      sb.toString
+    }
   }
 }
 
