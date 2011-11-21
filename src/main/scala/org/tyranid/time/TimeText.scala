@@ -26,17 +26,6 @@ import org.tyranid.session.Session
 
 
 
-object TimeConstants {
-
-	val MONTHS         = Array( "january", "february", "march", "april", "may", "june",
-		                          "july", "august", "september", "october", "november", "december" )
-	val DAYS_OF_WEEK   = Array( "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday" )
-	val AMPMS          = Array( "am", "pm" )
-	val FILLERS        = Array( "on", "at" )
-	val USER_RELATIVES = Array( "tomorrow", "yesterday", "today", "next", "this", "last", "now" )
-}
-	
-
 sealed trait Type
 
 object Type {
@@ -95,7 +84,7 @@ private class Token {
     t match {
     case Type.INT    => i >= 1 && i <= 12
     case Type.STRING =>
-      if ( eval( Type.MONTH, TimeConstants.MONTHS ) ) {
+      if ( eval( Type.MONTH, Time.MonthNames ) ) {
         i += 1
         true
       } else
@@ -108,7 +97,7 @@ private class Token {
   def dayOfWeek =
     t match {
     case Type.STRING =>
-      if ( eval( Type.DAY_OF_WEEK, TimeConstants.DAYS_OF_WEEK ) ) {
+      if ( eval( Type.DAY_OF_WEEK, Time.WeekDayNames ) ) {
         i += 1
         true
       } else
@@ -123,7 +112,7 @@ private class Token {
   def milli  = t == Type.INT && i < 1000
   def ampm =
     t match {
-    case Type.STRING => eval( Type.AMPM, TimeConstants.AMPMS )
+    case Type.STRING => eval( Type.AMPM, Time.AmPmNames )
     case Type.AMPM   => true
     case _           => false
     }
@@ -145,14 +134,14 @@ private class Token {
 		
   def filler =
     t match {
-    case Type.STRING => eval( Type.FILLER, TimeConstants.FILLERS )
+    case Type.STRING => eval( Type.FILLER, Time.FillerWords )
     case Type.FILLER => true
     case _           => false
     }
 		
   def userRelatives =
     t match {
-    case Type.STRING        => eval( Type.USER_RELATIVE, TimeConstants.USER_RELATIVES )
+    case Type.STRING        => eval( Type.USER_RELATIVE, Time.RelativeWords )
     case Type.USER_RELATIVE => true
     case _                  => false
     }
@@ -177,12 +166,12 @@ private class Token {
     case Type.INT           => i.toString
     case Type.STRING        => "\"" + s + '"'
     case Type.CHAR          => "\'" + ch + '\''
-    case Type.MONTH         => "!" + TimeConstants.MONTHS( i-1 )
-    case Type.DAY_OF_WEEK   => "!" + TimeConstants.DAYS_OF_WEEK( i-1 )
-    case Type.AMPM          => "!" + TimeConstants.AMPMS( i )
+    case Type.MONTH         => "!" + Time.MonthNames( i-1 )
+    case Type.DAY_OF_WEEK   => "!" + Time.WeekDayNames( i-1 )
+    case Type.AMPM          => "!" + Time.AmPmNames( i )
     case Type.TIMEZONE      => "tz" + s.toString
-    case Type.FILLER        => "!" + TimeConstants.FILLERS( i )
-    case Type.USER_RELATIVE => "!" + TimeConstants.USER_RELATIVES( i )
+    case Type.FILLER        => "!" + Time.FillerWords( i )
+    case Type.USER_RELATIVE => "!" + Time.RelativeWords( i )
     }
 }
 
@@ -647,9 +636,9 @@ class TimeParser {
 				dv.rollToDayOfWeek( dayOfWeek, rollDaysNeeded )
 			else
 				if ( dayOfWeek != dv.get( Calendar.DAY_OF_WEEK ) )
-					fail(  TimeConstants.DAYS_OF_WEEK( dayOfWeek-1 ).capitalize
+					fail(  Time.WeekDayNames( dayOfWeek-1 ).capitalize
 						   + " was specified but that date is on a "
-					     + TimeConstants.DAYS_OF_WEEK( dv.get( Calendar.DAY_OF_WEEK ) - 1 ).capitalize + "." )
+					     + Time.WeekDayNames( dv.get( Calendar.DAY_OF_WEEK ) - 1 ).capitalize + "." )
 		}
 
     dv

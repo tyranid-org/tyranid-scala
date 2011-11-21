@@ -25,8 +25,8 @@ import org.tyranid.session.Session
 
 class CalendarImp( c:Calendar ) {
 
-  def dayOfWeekName = TimeConstants.DAYS_OF_WEEK( c.get( Calendar.DAY_OF_WEEK ) ).capitalize
-  def monthName     = TimeConstants.MONTHS( c.get( Calendar.MONTH ) ).capitalize
+  def dayOfWeekName = Time.WeekDayNames( c.get( Calendar.DAY_OF_WEEK ) ).capitalize
+  def monthName     = Time.MonthNames( c.get( Calendar.MONTH ) ).capitalize
 
   def isSameYearAs( other:Calendar ) =
     c.get( Calendar.YEAR )         == other.get( Calendar.YEAR )
@@ -93,9 +93,26 @@ class DateImp( d:Date ) {
     c.setTime( d )
     c
   }
+
+  def toUserCalendar = toCalendar( Session().user.timeZone )
+  def toUtcCalendar  = toCalendar( Time.Utc )
 }
 
 object Time {
+
+  val OneMinuteMs    =               60 * 1000
+  val FiveMinutesMs  =           5 * 60 * 1000
+  val HalfHourMs     =          30 * 60 * 1000
+  val OneHourMs      =          60 * 60 * 1000
+  val OneDayMs       =     24 * 60 * 60 * 1000
+  val OneWeekMs      = 7 * 24 * 60 * 60 * 1000
+  
+	val MonthNames     = Array( "january", "february", "march", "april", "may", "june",
+		                          "july", "august", "september", "october", "november", "december" )
+	val WeekDayNames   = Array( "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday" )
+	val AmPmNames      = Array( "am", "pm" )
+	val FillerWords    = Array( "on", "at" )
+	val RelativeWords  = Array( "tomorrow", "yesterday", "today", "next", "this", "last", "now" )
 
   def fourDigitYear( year:Int, len:Int ) =
     if ( len == 4 || year >= 100 ) year
@@ -103,9 +120,8 @@ object Time {
     else                           1900 + year
 
   def createNullCalendar = {
-    val c = Calendar.getInstance
+    val c = Calendar.getInstance( Utc )
     c.set( 0, 0, 0, 0, 0, 0 )
-    c.setTimeZone( Utc )
     c
   }
 
@@ -119,13 +135,6 @@ object Time {
       else                      su )
   }
 
-  val OneMinuteMs   =               60 * 1000
-  val FiveMinutesMs =           5 * 60 * 1000
-  val HalfHourMs    =          30 * 60 * 1000
-  val OneHourMs     =          60 * 60 * 1000
-  val OneDayMs      =     24 * 60 * 60 * 1000
-  val OneWeekMs     = 7 * 24 * 60 * 60 * 1000
-  
   val datep1 = """(\d\d)/(\d\d?)/(\d\d\d\d)""".r.pattern
   val DateFormat = new java.text.SimpleDateFormat( "MM/dd/yyyy" )
 
@@ -193,8 +202,9 @@ object Time {
 
     val rawSince = now.getTime - date.getTime
 
-    val nc = now.toCalendar( Session().user.timeZone )
-    val c = date.toCalendar( Session().user.timeZone ) 
+    val tz = Session().user.timeZone
+    val nc = now.toCalendar( tz )
+    val c = date.toCalendar( tz ) 
 
     val ( since, future ) =
       if ( rawSince < 0 ) ( rawSince * -1, true  )
@@ -219,12 +229,14 @@ object Time {
       val sameWeek = c.isSameWeekAs( nc )
 
       while ( !c.isSameDayAs( nc ) ) {
-        nc.roll( Calendar.DATE, future )
+        nc.add( Calendar.DATE, if ( future ) 1 else -1 )
         days += 1
       }
 
       "%s at %d:%02d%s".format(
-        if ( days == 1 ) {
+        if ( days == 0 ) {
+          ""
+        } else if ( days == 1 ) {
           future ? "tomorrow" | "yesterday"
         } else if ( sameWeek ) {
           c.dayOfWeekName
