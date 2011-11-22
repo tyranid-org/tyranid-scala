@@ -25,7 +25,7 @@ import org.tyranid.session.Session
 
 class CalendarImp( c:Calendar ) {
 
-  def dayOfWeekName = Time.WeekDayNames( c.get( Calendar.DAY_OF_WEEK ) ).capitalize
+  def dayOfWeekName = Time.WeekDayNames( c.get( Calendar.DAY_OF_WEEK ) - 1 ).capitalize
   def monthName     = Time.MonthNames( c.get( Calendar.MONTH ) ).capitalize
 
   def isSameYearAs( other:Calendar ) =
