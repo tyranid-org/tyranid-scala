@@ -208,12 +208,7 @@ object Comp {
 
 class TimeParser {
 
-  def createUserNow:Calendar = {
-    // TODO:  make this user-local now
-    Calendar.getInstance
-  }
-
-	var now:Calendar = createUserNow
+	var now:Calendar = Time.createUserNowCalendar
 	private var sb = new StringBuilder
 	private var text:String = _
 	
@@ -737,11 +732,7 @@ class TimeParser {
     case ex:ArrayIndexOutOfBoundsException =>
 			if ( tcount >= tks.length ) {
 				val olen = tks.length
-				val otokens = tks
-
-        // TODO:  array resize
-				tks = new Array[Token]( olen * 2 )
-				System.arraycopy( otokens, 0, tks, 0, olen )
+				tks = tks.resize( olen * 2 )
         for ( i <- olen until tks.length )
 					tks( i ) = new Token
 			}

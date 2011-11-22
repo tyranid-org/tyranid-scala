@@ -230,21 +230,6 @@ class StringImp( s:String ) {
       case e:javax.mail.internet.AddressException => false
     }
 
-  def isDate = Time.isDate( s )
-    
-  def toLaxDate:Date = Time.parse( s.trim )
-  
-  def toLaxDate( f:String ):Date = {
-    if ( isDate ) {
-      try {
-        new java.text.SimpleDateFormat( f ).parse( s.trim )
-      } catch {
-        case e => null
-      }
-    } else
-      null
-  }
-  
   // Gets the first character, null, or an empty string
   def toLaxChar() = {
     if ( s == null )
@@ -260,6 +245,36 @@ class StringImp( s:String ) {
       0.0
     else
       s.trim.replace( "$", "" ).replace( ",", "" ).toLaxDouble
+  }
+
+
+  /*
+   * * *   Date / Time
+   */
+
+  def parseCalendar( dateOnly:Boolean = false, userTime:Boolean = false ) = {
+    // TODO:  share time parser on local thread or something?
+    new org.tyranid.time.TimeParser().parse( s, dateOnly = dateOnly, forceUserTime = userTime )
+  }
+
+  def parseDate( dateOnly:Boolean = false, userTime:Boolean = false ) = parseCalendar( dateOnly, userTime ).getTime
+  
+
+  // TODO:  change following to use parseDate
+  
+  def isDate = Time.isDate( s )
+    
+  def toLaxDate:Date = Time.parse( s.trim )
+  
+  def toLaxDate( f:String ):Date = {
+    if ( isDate ) {
+      try {
+        new java.text.SimpleDateFormat( f ).parse( s.trim )
+      } catch {
+        case e => null
+      }
+    } else
+      null
   }
   
   def toLaxDateTime:Date = {

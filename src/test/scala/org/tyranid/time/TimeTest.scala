@@ -149,7 +149,7 @@ class TimeSuite extends FunSuite {
 
   test( "durationText" ) {
     val data = Array[String](
-      "2008-01-02 CST",                   "Thursday, January 2, 2008 at 12:00am",
+      "2008-01-02 CST",                   "Wednesday, January 2, 2008 at 12:00am",
       "2020-01-10 CST",                   "now",
       "2020-01-10 00:02 CST",             "in a few minutes",
       "2020-01-09 23:58 CST",             "a few minutes ago",
@@ -160,11 +160,11 @@ class TimeSuite extends FunSuite {
       "2020-01-09 18:05 CST",             "6 hours ago",
       "2020-01-10 08:09 CST",             "in 8 hours",
       "2020-01-11 08:09 CST",             "tomorrow at 8:09am",
-      "2020-01-12 08:09 CST",             "next Monday at 8:09am",
+      "2020-01-12 08:09 CST",             "next Sunday at 8:09am",
       "2020-01-09 08:09 CST",             "yesterday at 8:09am",
-      "2020-01-08 08:09 CST",             "Thursday at 8:09am",
-      "2020-01-01 08:09 CST",             "Thursday, January 1 at 8:09am",
-      "2019-01-01 08:09 CST",             "Wednesday, January 1, 2019 at 8:09am"
+      "2020-01-08 08:09 CST",             "Wednesday at 8:09am",
+      "2020-01-01 08:09 CST",             "Wednesday, January 1 at 8:09am",
+      "2019-01-01 08:09 CST",             "Tuesday, January 1, 2019 at 8:09am"
     )
 
     val now = {
@@ -187,6 +187,27 @@ class TimeSuite extends FunSuite {
     }
 
     Session().user.timeZone = savedTz
+  }
+
+  test( "iso8601" ) {
+    val data = Array[String](
+      "2008-01-02 2:30 UTC",  "2008-01-02T02:30Z",
+      "2008-01-02 CST",       "2008-01-02T00:00-0600",
+      "2008-01-02 CET",       "2008-01-02T00:00+0100"
+    )
+
+    for ( i <- 0 until data.length by 2 ) {
+      val time     = data( i )
+      val expected = data( i+1 )
+
+      assert( time.parseCalendar().toIso8601 === expected )
+    }
+  }
+
+  test( "dateArithmetic" ) {
+    assert( "2010-1-1 5:00a".parseDate().add( Calendar.MINUTE, 5 ).toUtcCalendar.toIso8601 === "2010-01-01T05:05Z" )
+    assert( "2010-1-1 5:00a".parseDate().add( Calendar.DATE,   2 ).toUtcCalendar.toIso8601 === "2010-01-03T05:00Z" )
+    assert( "2010-1-1 5:00a".parseDate().add( Calendar.DATE,  -1 ).toUtcCalendar.toIso8601 === "2009-12-31T05:00Z" )
   }
 }
 

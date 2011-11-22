@@ -1,8 +1,7 @@
 
 package org.tyranid.secure
 
-import org.joda.time._
-import org.scala_tools.time.Imports._
+import java.util.{ Calendar, Date }
 
 import java.io.{ ByteArrayInputStream, ByteArrayOutputStream, InputStream, OutputStream }
 import java.security.{ InvalidAlgorithmParameterException, InvalidKeyException, NoSuchAlgorithmException }
@@ -63,7 +62,7 @@ case class Multipass( accountKey:String, apiKey:String, initVector:Array[Byte] =
   }    
 
   def props( uid:String, redirect:String, email:String, name:String, tags: (String,String)* ):String = {
-    val expires = ( new Instant() + 5.minutes ).toString()
+    val expires = new Date().add( Calendar.MINUTE, 5 ).toUtcCalendar.toIso8601
 
     json( "{ \"uid\":\"" + uid +
           "\", \"expires\":\"" + expires +

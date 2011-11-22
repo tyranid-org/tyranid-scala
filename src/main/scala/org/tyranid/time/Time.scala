@@ -62,11 +62,11 @@ class CalendarImp( c:Calendar ) {
     } while ( c.get( Calendar.DAY_OF_WEEK ) != dayOfWeek )
   }
 
-  def format( iso:Boolean = false ) = {
+  def format( iso8601:Boolean = false ) = {
     val sb = new StringBuilder
     sb ++= "%04d-%02d-%02d%s%02d:%02d".format(
       c.get( Calendar.YEAR ), c.get( Calendar.MONTH ) + 1, c.get( Calendar.DAY_OF_MONTH ),
-      if ( iso ) "Z" else " ",
+      if ( iso8601 ) "T" else " ",
       c.get( Calendar.HOUR_OF_DAY ), c.get( Calendar.MINUTE ) )
     val seconds = c.get( Calendar.SECOND )
     val milli   = c.get( Calendar.MILLISECOND )
@@ -78,12 +78,25 @@ class CalendarImp( c:Calendar ) {
     }
 
     val tz = c.getTimeZone
-    sb += ' ' ++= tz.getDisplayName( tz.inDaylightTime( c.getTime ), TimeZone.SHORT )
+    if ( iso8601 ) {
+      var offset = tz.getOffset( c.getTime.getTime )
+      if ( offset == 0 ) {
+        sb += 'Z'
+      } else {
+        offset /= 60000
+        val minutes = offset % 60
+        val hours   = offset / 60
+        sb ++= "%+03d%02d".format( hours, minutes )
+      }
+    } else {
+      sb += ' ' ++= tz.getDisplayName( tz.inDaylightTime( c.getTime ), TimeZone.SHORT )
+    }
+
     sb.toString
   }
 
-  def toDisplay = format( iso = false )
-  def toIso8601 = format( iso = true )
+  def toDisplay = format( iso8601 = false )
+  def toIso8601 = format( iso8601 = true )
 }
 
 class DateImp( d:Date ) {
@@ -96,6 +109,12 @@ class DateImp( d:Date ) {
 
   def toUserCalendar = toCalendar( Session().user.timeZone )
   def toUtcCalendar  = toCalendar( Time.Utc )
+
+  def add( field:Int, amount:Int ) = {
+    val c = toUtcCalendar
+    c.add( field, amount )
+    c.getTime
+  }
 }
 
 object Time {
@@ -124,6 +143,8 @@ object Time {
     c.set( 0, 0, 0, 0, 0, 0 )
     c
   }
+
+  def createUserNowCalendar:Calendar = Calendar.getInstance( Session().user.timeZone )
 
   val Utc = TimeZone.getTimeZone( "UTC" )
 
