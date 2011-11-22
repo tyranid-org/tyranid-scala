@@ -251,7 +251,7 @@ trait DbDateLike extends Domain {
         _ match {
         case s:String =>
           try {
-            scope.saving && s.notBlank && s.parseDate( dateOnly = dateOnly ) != null
+            scope.saving && s.notBlank && !s.isDate( dateOnly = dateOnly )
           } catch {
           case e:java.text.ParseException =>
             msg = e.getMessage

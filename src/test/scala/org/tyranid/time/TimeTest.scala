@@ -40,7 +40,7 @@ class TimeSuite extends FunSuite {
       "2008-01-04T02:30Z",            "2008-01-04 02:30 UTC",
       "2008-01-02T02:30:59Z",         "2008-01-02 02:30:59 UTC",
       "2008-01-02T02:30:59.042Z",     "2008-01-02 02:30:59.042 UTC",
-      "2008-01-02T02:30:59.042",      "because invalid ISO 8601 format, missing a 'Z' at the end.",
+      "2008-01-02T02:30:59.042",      "because an invalid ISO 8601 format was found -- it was missing a 'Z' at the end.",
       "Sep-10-2015",                  "2015-09-10 00:00 UTC",
       "Aug/10/2015",                  "2015-08-10 00:00 UTC",
       "2008-01-02",                   "2008-01-02 00:00 UTC",

@@ -252,16 +252,12 @@ class StringImp( s:String ) {
    * * *   Date / Time
    */
 
-  def toDate( format:String ):Date = {
-    if ( isDate ) {
-      try {
-        new java.text.SimpleDateFormat( format ).parse( s.trim )
-      } catch {
-        case e => null
-      }
-    } else
-      null
-  }
+  def toDate( format:String ):Date =
+    try {
+      new java.text.SimpleDateFormat( format ).parse( s.trim )
+    } catch {
+      case e => null
+    }
   
   def parseCalendar( dateOnly:Boolean = false, userTime:Boolean = false ) = {
     // TODO:  share time parser on local thread or something?
@@ -273,7 +269,7 @@ class StringImp( s:String ) {
   /**
    * This method does all the work of parseDate, so it is slow.  Only use if you don't need the date value.
    */
-  def isDate:Boolean = toLaxDate != null
+  def isDate( dateOnly:Boolean = false ):Boolean = parseCalendar( dateOnly = dateOnly ) != null
  
   /**
    * Warning!  If the date is invalid, null is returned.  Use parseCalendar() and look for a ParseException with a
@@ -287,11 +283,6 @@ class StringImp( s:String ) {
       null
     }
   
-  /**
-   * This method does all the work of parseDate, so it is slow.  Only use if you don't need the date value.
-   */
-  def isDateTime:Boolean = toLaxDateTime != null
- 
   /**
    * Warning!  If the date is invalid, null is returned.  Use parseCalendar() and look for a ParseException with a
    *           description of any parsing errors if user error reporting is needed.

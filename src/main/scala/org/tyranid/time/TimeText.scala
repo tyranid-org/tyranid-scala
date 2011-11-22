@@ -251,7 +251,7 @@ class TimeParser {
 	}
 	
 	private def fail( reason:String ) =
-    throw new ParseException( "Could not parse \"" + text + "\" because " + reason, tks( tcount-1 ).pos )
+    throw new ParseException( "Could not parse \"" + text + "\" because " + reason, tcount > 0 |* tks( tcount-1 ).pos )
 	
 	private def sep( tp:Int ) =
 		if ( tp < tcount && tks( tp ).sep ) tp + 1
@@ -339,7 +339,7 @@ class TimeParser {
       timeMilli
 
       if ( tp >= tcount || tks( tp ).s != "z" )
-        fail( "invalid ISO 8601 format, missing a 'Z' at the end." )
+        fail( "an invalid ISO 8601 format was found -- it was missing a 'Z' at the end." )
       tp += 1
 
       return true
