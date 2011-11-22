@@ -252,24 +252,10 @@ class StringImp( s:String ) {
    * * *   Date / Time
    */
 
-  def parseCalendar( dateOnly:Boolean = false, userTime:Boolean = false ) = {
-    // TODO:  share time parser on local thread or something?
-    new org.tyranid.time.TimeParser().parse( s, dateOnly = dateOnly, forceUserTime = userTime )
-  }
-
-  def parseDate( dateOnly:Boolean = false, userTime:Boolean = false ) = parseCalendar( dateOnly, userTime ).getTime
-  
-
-  // TODO:  change following to use parseDate
-  
-  def isDate = Time.isDate( s )
-    
-  def toLaxDate:Date = Time.parse( s.trim )
-  
-  def toLaxDate( f:String ):Date = {
+  def toDate( format:String ):Date = {
     if ( isDate ) {
       try {
-        new java.text.SimpleDateFormat( f ).parse( s.trim )
+        new java.text.SimpleDateFormat( format ).parse( s.trim )
       } catch {
         case e => null
       }
@@ -277,13 +263,46 @@ class StringImp( s:String ) {
       null
   }
   
-  def toLaxDateTime:Date = {
-    if ( isDate )
-      Time.DateTimeFormat.parse( s.trim )
-    else 
-      null
+  def parseCalendar( dateOnly:Boolean = false, userTime:Boolean = false ) = {
+    // TODO:  share time parser on local thread or something?
+    new org.tyranid.time.TimeParser().parse( s, dateOnly = dateOnly, forceUserTime = userTime )
   }
+
+  def parseDate( dateOnly:Boolean = false, userTime:Boolean = false ) = parseCalendar( dateOnly, userTime ).getTime
+
+  /**
+   * This method does all the work of parseDate, so it is slow.  Only use if you don't need the date value.
+   */
+  def isDate:Boolean = toLaxDate != null
+ 
+  /**
+   * Warning!  If the date is invalid, null is returned.  Use parseCalendar() and look for a ParseException with a
+   *           description of any parsing errors if user error reporting is needed.
+   */
+  def toLaxDate:Date =
+    try {
+      parseDate( dateOnly = true )
+    } catch {
+    case p:java.text.ParseException =>
+      null
+    }
   
-  def toLaxDateTime( f:String ):Date = toLaxDateTime( f )
+  /**
+   * This method does all the work of parseDate, so it is slow.  Only use if you don't need the date value.
+   */
+  def isDateTime:Boolean = toLaxDateTime != null
+ 
+  /**
+   * Warning!  If the date is invalid, null is returned.  Use parseCalendar() and look for a ParseException with a
+   *           description of any parsing errors if user error reporting is needed.
+   */
+  def toLaxDateTime:Date = {
+    try {
+      parseDate()
+    } catch {
+    case p:java.text.ParseException =>
+      null
+    }
+  }
 }
 

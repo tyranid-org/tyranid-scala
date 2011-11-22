@@ -237,26 +237,36 @@ object DbBoolean extends Domain {
  * * *   Times
  */
 
-object DbDate extends Domain {
+trait DbDateLike extends Domain {
 	val sqlName = "DATE"
+
+  def dateOnly = true
 	
   override def inputcClasses = " date"      
   
   override val validations =
-    { ( scope:Scope ) =>
+    { var msg:String = ""
+      ( scope:Scope ) =>
       scope.value.filter {
         _ match {
-        case s:String => scope.saving && s.notBlank && !s.isDate
+        case s:String =>
+          try {
+            scope.saving && s.notBlank && s.parseDate( dateOnly = dateOnly ) != null
+          } catch {
+          case e:java.text.ParseException =>
+            msg = e.getMessage
+            true
+          }
         case d:Date   => false
         case null     => false
         }
-      }.map( s => { spam( "INVALID DATE[" + s + "]" ); Invalid( scope, "Invalid date (format: mm/dd/yyyy)" ) } )
+      }.map( s => Invalid( scope, msg ) )
     } ::
     super.validations
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
     SHtml.ajaxText(
-      Time.toDateStr( s.rec t f.va.name ),
+      ( s.rec t f.va.name ).toDateStr,
       v => { 
         if ( s.rec( f.va.name ) != v ) {
           s.rec( f.va.name ) = v.toLaxDate; f.updateDisplayCmd( s ) 
@@ -265,12 +275,16 @@ object DbDate extends Domain {
       opts.map( ElemAttr.pairToBasic ):_* )
 }
 
-object DbDateTime extends Domain {
-	val sqlName = "TIMESTAMP WITHOUT TIME ZONE"
+object DbDate extends DbDateLike
+
+object DbDateTime extends DbDateLike {
+	override val sqlName = "TIMESTAMP WITHOUT TIME ZONE"
+
+  override def dateOnly = false
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
     SHtml.ajaxText(
-      Time.toDateTimeStr( s.rec t f.va.name ),
+      ( s.rec t f.va.name ).toDateTimeStr,
       v => { 
         if ( s.rec( f.va.name ) != v ) {
           s.rec( f.va.name ) = v.toLaxDateTime; f.updateDisplayCmd( s ) 

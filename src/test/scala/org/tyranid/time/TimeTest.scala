@@ -26,21 +26,7 @@ import org.tyranid.session.Session
 
 
 class TimeSuite extends FunSuite {
-
-  test( "parsing" ) {
-
-    assert( "Sep-10-2015".isDate === true )
-    assert( "June-4-2015".isDate === true )
-
-    assert( "Sep-10-2015".toLaxDate === "09/10/2015".toLaxDate )
-    assert( "Aug/10/2015".toLaxDate === "08-10-2015".toLaxDate )
-    assert( "June-05-2015".toLaxDate === "Jun-05-2015".toLaxDate )
-    assert( "June-5-2015".toLaxDate === "Jun-05-2015".toLaxDate )
-
-    //"%u2122".decUrl
-
-    //assert( re.base36  === Base36.toString( re.decimal ) )
-  }
+  org.tyranid.test.TestBoot.boot
 
   test( "timeZoneParsing" ) {
 
@@ -48,10 +34,15 @@ class TimeSuite extends FunSuite {
   }
 
   test( "timeParser" ) {
-    org.tyranid.test.TestBoot.boot
-
 
     val data = Array[String](
+      "2008-01-02T02Z",               "2008-01-02 02:00 UTC",
+      "2008-01-04T02:30Z",            "2008-01-04 02:30 UTC",
+      "2008-01-02T02:30:59Z",         "2008-01-02 02:30:59 UTC",
+      "2008-01-02T02:30:59.042Z",     "2008-01-02 02:30:59.042 UTC",
+      "2008-01-02T02:30:59.042",      "because invalid ISO 8601 format, missing a 'Z' at the end.",
+      "Sep-10-2015",                  "2015-09-10 00:00 UTC",
+      "Aug/10/2015",                  "2015-08-10 00:00 UTC",
       "2008-01-02",                   "2008-01-02 00:00 UTC",
       "2008 - 1 - 2 10: 30",          "2008-01-02 10:30 UTC",
       "Jan 2, 2008",                  "2008-01-02 00:00 UTC",
@@ -65,6 +56,7 @@ class TimeSuite extends FunSuite {
       "today at 2 pm",                "2008-06-21 14:00 CDT",
       "tomorrow 2 pm",                "2008-06-22 14:00 CDT",
       "2 pm tomorrow",                "2008-06-22 14:00 CDT",
+      "tom 2p",                       "2008-06-22 14:00 CDT",
       "yesterday, 3pm",               "2008-06-20 15:00 CDT",
       "this saturday at 5pm",         "because \"this\" is confusing, try \"last\" or \"next\".",
       "5pm last",                     "because \"last\" did not have a day of the week after it.",
@@ -129,7 +121,7 @@ class TimeSuite extends FunSuite {
           println(   "  Tokens: " + tp.tokenString )
           println(   "  Actual: " + actual )
           println(   "Expected: " + expected )
-          assert( true === false )
+          assert( expected === actual )
         }
       } catch {
       case ex:java.text.ParseException =>
@@ -139,12 +131,24 @@ class TimeSuite extends FunSuite {
           println( "\n Parsing: " + time )
           println(   "  Tokens: " + tp.tokenString )
           println(   " Problem: " + msg )
-          assert( true === false )
+          assert( expected === because )
         }
       }
     }
 
     Session().user.timeZone = savedTz
+  }
+
+  test( "stringParsing" ) {
+
+    assert( "Sep-10-2015".toLaxDate === "09/10/2015".toLaxDate )
+    assert( "Aug/10/2015".toLaxDate === "08-10-2015".toLaxDate )
+    assert( "June-05-2015".toLaxDate === "Jun-05-2015".toLaxDate )
+    assert( "June-5-2015".toLaxDate === "Jun-05-2015".toLaxDate )
+
+    //"%u2122".decUrl
+
+    //assert( re.base36  === Base36.toString( re.decimal ) )
   }
 
   test( "durationText" ) {

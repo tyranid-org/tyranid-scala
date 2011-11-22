@@ -85,6 +85,7 @@ private class Token {
     case Type.INT    => i >= 1 && i <= 12
     case Type.STRING =>
       if ( eval( Type.MONTH, Time.MonthNames ) ) {
+        t = Type.MONTH
         i += 1
         true
       } else
@@ -98,6 +99,7 @@ private class Token {
     t match {
     case Type.STRING =>
       if ( eval( Type.DAY_OF_WEEK, Time.WeekDayNames ) ) {
+        t = Type.DAY_OF_WEEK
         i += 1
         true
       } else
@@ -306,16 +308,69 @@ class TimeParser {
 	
 	private def date:Boolean = {
 		val t = tks( tp )
-		
-		if (   t.year && tp + 5 <= tcount
-			  && tks( tp+1 ).t == Type.CHAR && tks( tp+3 ).t == Type.CHAR  
-		    && tks( tp+2 ).month && tks( tp+4 ).dayOfMonth ) {
+    
+    // ISO 8601 parsing ... i.e. 2008-01-02T02:30Z
+		if (   tp + 7 < tcount && tks( tp+5 ).s == "T"
+        && t.year && tks( tp+1 ).ch == '-' && tks( tp+2 ).month && tks( tp+3 ).ch == '-' && tks( tp+4 ).dayOfMonth
+        && tks( tp+6 ).hour ) {
+
+      year       = Time.fourDigitYear( t.i, t.len )
+      month      = tks( tp+2 ).i-1
+      dayOfMonth = tks( tp+4 ).i
+      dateFound( tp )
+
+      hour       = tks( tp+6 ).i
+      timeFound( tp )
+      tp += 7
+
+      if ( tp + 2 < tcount && tks( tp ).ch == ':' && tks( tp+1 ).second ) {
+        minute = tks( tp+1 ).i
+        tp += 2
+        if ( tp + 2 < tcount && tks( tp ).ch == ':' && tks( tp+1 ).second ) {
+          second = tks( tp+1 ).i
+          tp += 2
+        } else {
+          second = 0
+        }
+      } else {
+        minute = 0
+      }
+
+      timeMilli
+
+      if ( tp >= tcount || tks( tp ).s != "z" )
+        fail( "invalid ISO 8601 format, missing a 'Z' at the end." )
+      tp += 1
+
+      return true
+    }
+
+		if (   tp + 4 < tcount
+        && t.year && tks( tp+2 ).month && tks( tp+4 ).dayOfMonth
+			  && tks( tp+1 ).t == Type.CHAR && tks( tp+3 ).t == Type.CHAR ) {
 			val sep = tks( tp+1 ).ch
 			
 			if ( ( sep == '-' || sep == '.' ) && sep == tks( tp+3 ).ch ) {
 				year       = Time.fourDigitYear( t.i, t.len )
 				month      = tks( tp+2 ).i-1
 				dayOfMonth = tks( tp+4 ).i
+				dateFound( tp )
+		    tp += 5
+		    return true
+			}
+		}
+
+		if (   tp + 4 < tcount
+        && t.month && tks( tp+2 ).dayOfMonth && tks( tp+4 ).year
+			  && tks( tp+1 ).t == Type.CHAR && tks( tp+3 ).t == Type.CHAR
+           // don't try to interpret an hour as a year in Aug 09 19:00:00
+        && ( tp + 5 >= tcount || tks( tp+5 ).ch != ':' ) ) {
+			val sep = tks( tp+1 ).ch
+			
+			if ( ( sep == '-' || sep == '.' || sep == '/' ) && sep == tks( tp+3 ).ch ) {
+				year       = Time.fourDigitYear( tks( tp+4 ).i, tks( tp+4 ).len )
+				month      = t.i-1
+				dayOfMonth = tks( tp+2 ).i
 				dateFound( tp )
 		    tp += 5
 		    return true
@@ -694,6 +749,18 @@ class TimeParser {
 					t.len = 1
 					t.ch = ch
 					return true
+
+        case 'T' => // ISO 8601 time separator
+          if ( pos+1 < len && Character.isDigit( text.charAt( pos+1 ) ) ) {
+            val t = tks( tcount )
+            tcount += 1
+            t.t = Type.STRING
+            t.pos = start
+            t.len = 1
+            t.s = "T"
+            return true
+          }
+
         case _ =>
 				}
 				
@@ -708,7 +775,7 @@ class TimeParser {
 					if ( Character.isWhitespace( ch ) ) {
 						pos += 1
 						cond = false
-					} else if ( ch == '-' || ch == ',' || ch == '.' ) {
+					} else if ( ch == '-' || ch == ',' || ch == '.' || ch == '/' ) {
 						cond = false
           } else {
             sb.append( Character.toLowerCase( ch ) )
