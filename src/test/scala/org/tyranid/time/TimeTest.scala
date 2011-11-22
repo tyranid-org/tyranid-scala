@@ -213,5 +213,13 @@ class TimeSuite extends FunSuite {
     assert( "2010-1-1 5:00a".parseDate().add( Calendar.DATE,   2 ).toUtcCalendar.toIso8601 === "2010-01-03T05:00Z" )
     assert( "2010-1-1 5:00a".parseDate().add( Calendar.DATE,  -1 ).toUtcCalendar.toIso8601 === "2009-12-31T05:00Z" )
   }
+
+  test( "lastWeek" ) {
+    val now = "2012-3-1 3:25a".parseDate()
+    val ( firstOfLastWeek, firstOfWeek ) = now.localLastWeekRange
+
+    assert( firstOfWeek.toDateTimeStr     === "02/26/2012 00:00:00" )
+    assert( firstOfLastWeek.toDateTimeStr === "02/19/2012 00:00:00" )
+  }
 }
 

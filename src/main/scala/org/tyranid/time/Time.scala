@@ -47,11 +47,18 @@ class CalendarImp( c:Calendar ) {
 
   def copyDateTimeFrom( other:Calendar ) {
     copyDateFrom( other )
-    c.set( Calendar.HOUR,         other.get( Calendar.HOUR ) )
+    c.set( Calendar.HOUR_OF_DAY,  other.get( Calendar.HOUR_OF_DAY ) )
     c.set( Calendar.MINUTE,       other.get( Calendar.MINUTE ) )
     c.set( Calendar.SECOND,       other.get( Calendar.SECOND ) )
     c.set( Calendar.MILLISECOND,  other.get( Calendar.MILLISECOND ) )
     c.setTimeZone(                other.getTimeZone )
+  }
+
+  def setMidnight = {
+    c.set( Calendar.HOUR_OF_DAY, 0 )
+    c.set( Calendar.MINUTE,      0 )
+    c.set( Calendar.SECOND,      0 )
+    c.set( Calendar.MILLISECOND, 0 )
   }
 
   def rollToDayOfWeek( dayOfWeek:Int, direction:Int ) {
@@ -114,6 +121,19 @@ class DateImp( d:Date ) {
     val c = toUtcCalendar
     c.add( field, amount )
     c.getTime
+  }
+
+  def localLastWeekRange = {
+    val firstOfWeek = Calendar.getInstance
+    firstOfWeek.setTime( d )
+    firstOfWeek.setMidnight
+    firstOfWeek.add( Calendar.DATE, -( firstOfWeek.get( Calendar.DAY_OF_WEEK ) - 1 ) )
+
+    val firstOfLastWeek = Calendar.getInstance
+    firstOfLastWeek.copyDateTimeFrom( firstOfWeek )
+    firstOfLastWeek.add( Calendar.DATE, -7 )
+
+    ( firstOfLastWeek.getTime, firstOfWeek.getTime )
   }
 
   def toDateStr = {
