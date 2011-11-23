@@ -64,7 +64,7 @@ trait Query {
 
 trait Layout {
   def name:String
-  def run( report:Report ):LayoutRun
+  def run( grid:Grid ):LayoutRun
 }
 
 trait LayoutRun {
@@ -155,6 +155,12 @@ case class Grid( query:Query ) {
   val report = Session().reportFor( query )
 
   val id = "grid" // TODO:  modify this by session
+  var odd = false
+
+  def rowClass = {
+    odd = !odd
+    odd |* "odd"
+  }
 
   def drag( js:String ) = {
     val ( fn, tn ) = js.splitFirst( ':' )
@@ -212,7 +218,7 @@ case class Grid( query:Query ) {
        ) }
     </div> ++
     { if ( report.layout.notBlank ) {
-      val run = query.layout( report.layout ).get.run( report )
+      val run = query.layout( report.layout ).get.run( this )
 
       <div class="grid">
        <table>
@@ -221,7 +227,8 @@ case class Grid( query:Query ) {
         </thead>
         <tbody>
          { for ( r <- rows ) yield
-             run.row( r ) }
+             run.row( r )
+         }
         </tbody>
        </table>
       </div>
@@ -250,7 +257,7 @@ case class Grid( query:Query ) {
         </thead>
         <tbody>
          { for ( r <- rows ) yield
-         <tr>
+         <tr class={ rowClass }>
           { report.columns.map( p => <td>{ p.get( r ).asInstanceOf[AnyRef].safeString }</td> ) }
          </tr> }
         </tbody>
