@@ -26,7 +26,11 @@ case class LatLong( lat:Double, long:Double )
 
 object ZipCode {
 
-  lazy val zipdatadb = Mongo.connect.db( Bind.ProfileDbName )( "zipdata" )
+  lazy val zipdatadb = {
+    val db = Mongo.connect.db( Bind.ProfileDbName )( "zipdata" )
+    db.ensureIndex( Mobj( "ZipCode" -> 1 ) )
+    db
+  }
 
   def latLongFor( zipCode:Int ) = {
 
