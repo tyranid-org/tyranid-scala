@@ -80,6 +80,7 @@ class Report {
 
   // TODO:  make this database-agnostic
   val search        = Mobj()
+  val parameters    = Mobj()
   @volatile var sort:DBObject = null
   @volatile var offset:Int = 0
   @volatile var pageSize = 20

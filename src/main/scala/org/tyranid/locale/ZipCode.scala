@@ -15,7 +15,7 @@
  *
  */
 
-package org.tyranid.locale.db
+package org.tyranid.locale
 
 import org.tyranid.Bind
 import org.tyranid.Imp._
