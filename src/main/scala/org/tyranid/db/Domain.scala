@@ -210,8 +210,17 @@ object DbEmail extends DbVarChar( 128 ) {
 
 }
 
-object DbPhone extends DbChar( 10 )
+object DbPhone extends DbChar( 14 ) {
+  override def inputcClasses = " phone"
+}
 
+object DbDunsNumber extends DbChar( 11 ) {
+  override def inputcClasses = " dunsnumber"
+}
+
+object DbFedEin extends DbChar( 9 ) {
+  override def inputcClasses = " fein"
+}
 
 /*
  * * *   Binary
