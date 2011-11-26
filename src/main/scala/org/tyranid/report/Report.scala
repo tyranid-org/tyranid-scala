@@ -18,7 +18,7 @@
 package org.tyranid.report
 
 import scala.collection.mutable
-import scala.xml.{ NodeSeq, Unparsed }
+import scala.xml.{ NodeSeq, Text, Unparsed }
 
 import com.mongodb.DBObject
 
@@ -30,6 +30,7 @@ import net.liftweb.http.js.JE.JsRaw
 import org.tyranid.Imp._
 import org.tyranid.db.{ Path, Record, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.session.Session
 import org.tyranid.ui.Button
 
@@ -38,45 +39,67 @@ trait Query {
 
   val name:String
 
-  val paths:Seq[Path]
+  val allFields:Seq[Field]
 
-  val defaultColumns:Seq[Path]
+  val defaultFields:Seq[Field]
+
+  def prepareSearch( report:Report ) = report.search
 
   def run( report:Report ):Iterable[Record]
 
 
   def newReport = {
     var r = new Report
-    r.columns ++= defaultColumns
-    r.hidden ++= paths.filter( p => !r.columns.contains( p ) ).sortBy( _.label )
-    r.layout = "Standard"
+    r.columns ++= defaultFields
+    r.hidden ++= allFields.filter( p => !r.columns.contains( p ) ).sortBy( _.label )
     r
   }
 
-  def by( name:String ) = paths.find( _.name_ == name ).get
+  def by( name:String ) = allFields.find( _.name == name ).get
 
   val searchScreen:String = null
-
-  def layouts:Seq[Layout] = Nil
-
-  def layout( name:String ) = layouts.find( _.name == name )
 }
 
-trait Layout {
+trait Field {
   def name:String
-  def run( grid:Grid ):LayoutRun
+
+  def label = name.camelCaseToSpaceUpper
+
+  def header = <th id={ name } class="colh" style={ headerStyle }><div><span>{ headerCell }</span></div></th>
+  def headerStyle = ""
+  def headerCell:NodeSeq = Text( label )
+
+  def cell( run:Run, rec:Record ):NodeSeq
+
 }
 
-trait LayoutRun {
-  def header:NodeSeq
-  def row( rec:Record ):NodeSeq
+case class PathField( path:Path ) extends Field {
+  def name = path.name_
+  override def label = path.label
+
+  def cell( run:Run, r:Record ) = <td>{ r s name }</td>
+}
+
+trait MongoQuery extends Query {
+  val entity:MongoEntity
+
+  lazy val view = entity.makeView
+
+  def run( report:Report ) = {
+    var part = entity.db.find( prepareSearch( report ), Mobj() ).limit( 20 );
+
+    if ( report.offset != 0 )
+      part = part.skip( report.offset )
+    if ( report.sort != null )
+      part = part.sort( report.sort )
+    
+    part.toIterable.map( o => entity.apply( o ) )
+  }
 }
 
 class Report {
 
   @volatile var name:String = _
-
-  @volatile var layout:String = _
 
   // TODO:  make this database-agnostic
   val search        = Mobj()
@@ -85,16 +108,16 @@ class Report {
   @volatile var offset:Int = 0
   @volatile var pageSize = 20
 
-  val hidden  = mutable.ArrayBuffer[Path]()
-  val columns = mutable.ArrayBuffer[Path]()
+  val hidden  = mutable.ArrayBuffer[Field]()
+  val columns = mutable.ArrayBuffer[Field]()
 
-  def remove( remove:Path ) = {
+  def remove( remove:Field ) = {
     columns -= remove
     hidden -= remove
     hidden += remove
   }
 
-  def insertBefore( insert:Path, before:Path ) = {
+  def insertBefore( insert:Field, before:Field ) = {
     hidden -= insert
     columns -= insert
     columns.insert( columns.indexOf( before ), insert )
@@ -151,6 +174,18 @@ class Report {
       "style" -> "width:80px;" )
 }
 
+class Run( report:Report, grid:Grid ) {
+
+  val cache = mutable.HashMap[String,AnyRef]()
+
+  val header = <tr>{ report.columns.map( _.header ) }</tr>
+
+  def row( rec:Record ) = {
+    // TODO:  get IDs on these ...{ report.columns.map( p => <th class="colh" id={ p.name_ }>{ col( p ) }</th> ) }
+    <tr class={ grid.rowClass }>{ report.columns.map( _.cell( this, rec ) ) }</tr>
+  }
+}
+
 case class Grid( query:Query ) {
 
   val report = Session().reportFor( query )
@@ -166,6 +201,8 @@ case class Grid( query:Query ) {
   def drag( js:String ) = {
     val ( fn, tn ) = js.splitFirst( ':' )
 
+spam( "fn[" + fn + "] tn[" + tn + "]" )
+
     val fp = query.by( fn )
 
     if ( tn == "def" )
@@ -180,9 +217,6 @@ case class Grid( query:Query ) {
     SetHtml( id, innerDraw ) &
     net.liftweb.http.js.JsCmds.Run( "initReport();" )
 
-  private def col( p:Path ) =
-    <div id={ p.name_ }>{ p.label }</div>
-
   private def prev = {
     report.offset -= report.pageSize
     if ( report.offset < 0 ) report.offset = 0
@@ -194,16 +228,6 @@ case class Grid( query:Query ) {
     redraw
   }
 
-  private def adHoc = {
-    report.layout = null
-    redraw
-  }
-
-  private def standard = {
-    report.layout = "Standard"
-    redraw
-  }
-
   private def innerDraw = {
     val rows = query.run( report )
 
@@ -212,28 +236,14 @@ case class Grid( query:Query ) {
          Seq(
            query.searchScreen.notBlank |* Some( Button.link( "Change Search", query.searchScreen, color = "grey" ) ),
            report.offset > 0 |* Some( Button.ajaxButton( "Prev", () => prev, color = "grey" ) ),
-           Some( Button.ajaxButton( "Next", () => next, color = "grey" ) ),
-           report.layout.notBlank |* Some( Button.ajaxButton( "Ad-Hoc", () => adHoc, color = "grey" ) ),
-           report.layout.isBlank |* Some( Button.ajaxButton( "Standard", () => standard, color = "grey" ) )
+           Some( Button.ajaxButton( "Next", () => next, color = "grey" ) )
          ).flatten:_*
        ) }
     </div> ++
-    { if ( report.layout.notBlank ) {
-      val run = query.layout( report.layout ).get.run( this )
+    { val run = new Run( report, this )
 
-      <div class="grid">
-       <table>
-        <thead>
-         { run.header }
-        </thead>
-        <tbody>
-         { for ( r <- rows ) yield
-             run.row( r )
-         }
-        </tbody>
-       </table>
-      </div>
-      } else {
+      /*
+
       <table id="def" class="def">
        <tr>
         <th>Available Columns</th>
@@ -241,7 +251,7 @@ case class Grid( query:Query ) {
          <div class="availc">
           <table class="colc">
            { for ( p <- report.hidden ) yield
-             <tr><td id={ p.name_ } class="cola">{ col( p ) }</td></tr>
+             <tr><td id={ p.name } class="cola">{ col( p ) }</td></tr>
            }
           </table>
          </div>
@@ -251,20 +261,19 @@ case class Grid( query:Query ) {
         <th>Filtered Columns</th>
        </tr>
       </table>
+
+      */
+
       <div class="grid">
        <table>
         <thead>
-         { report.columns.map( p => <th class="colh" id={ p.name_ }>{ col( p ) }</th> ) }
+         { run.header }
         </thead>
         <tbody>
-         { for ( r <- rows ) yield
-         <tr class={ rowClass }>
-          { report.columns.map( p => <td>{ p.get( r ).asInstanceOf[AnyRef].safeString }</td> ) }
-         </tr> }
+         { rows.map( r => run.row( r ) ) }
         </tbody>
        </table>
       </div>
-      }
     }
   }
 
