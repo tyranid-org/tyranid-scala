@@ -118,6 +118,9 @@ case class DBCollectionImp( coll:DBCollection ) {
   // TODO:  is there a way to implement this without actually bringing the object back?
   def exists( query:DBObject ) = coll.findOne( query ) != null
 
+  def updateId( id:ObjectId, update:DBObject ) =
+    coll.update( Mobj( "_id" -> id ), update )
+
   /**
    * This attempts to find the object in the collection.  If it does not exist, a clone of the
    * query object is returned.

@@ -47,7 +47,6 @@ trait Query {
 
   def run( report:Report ):Iterable[Record]
 
-
   def newReport = {
     var r = new Report
     r.columns ++= defaultFields
@@ -61,6 +60,8 @@ trait Query {
 }
 
 trait Field {
+  def category = "Common"
+
   def name:String
 
   def label = name.camelCaseToSpaceUpper
@@ -69,15 +70,19 @@ trait Field {
   def headerStyle = ""
   def headerCell:NodeSeq = Text( label )
 
+  def cellClass:String = null
   def cell( run:Run, rec:Record ):NodeSeq
 
 }
 
-case class PathField( path:Path ) extends Field {
+case class PathField( cat:String, path:Path ) extends Field {
+
+  override def category = cat
+
   def name = path.name_
   override def label = path.label
 
-  def cell( run:Run, r:Record ) = <td>{ r s name }</td>
+  def cell( run:Run, r:Record ) = Text( r s name )
 }
 
 trait MongoQuery extends Query {
@@ -95,6 +100,8 @@ trait MongoQuery extends Query {
     
     part.toIterable.map( o => entity.apply( o ) )
   }
+
+  def field( path:String, cat:String = "Common" ) = PathField( cat, view.path( path ) )
 }
 
 class Report {
@@ -182,7 +189,16 @@ class Run( report:Report, grid:Grid ) {
 
   def row( rec:Record ) = {
     // TODO:  get IDs on these ...{ report.columns.map( p => <th class="colh" id={ p.name_ }>{ col( p ) }</th> ) }
-    <tr class={ grid.rowClass }>{ report.columns.map( _.cell( this, rec ) ) }</tr>
+    <tr class={ grid.rowClass }>{
+      for ( f <- report.columns ) yield {
+        val cls = f.cellClass
+
+        if ( cls != null )
+          <td class={ cls }>{ f.cell( this, rec ) }</td>
+        else
+          <td>{ f.cell( this, rec ) }</td>
+      }
+    }</tr>
   }
 }
 
