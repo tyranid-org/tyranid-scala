@@ -224,7 +224,7 @@ case class Grid( query:Query ) {
 
   def rowClass = {
     odd = !odd
-    odd |* "odd"
+    !odd |* "even"
   }
 
   def exec( js:String ) = {
@@ -242,10 +242,12 @@ case class Grid( query:Query ) {
       val fp = query.by( fn )
 
       if ( tn == "def" )
+        // TODO:  if selections, remove all selections as well, also unselect everything
         report.remove( fp )
       else if ( tn == "_end" )
         report.add( fp )
       else
+        // TODO:  if selections, insert everything before insert ... (if insert is selected, don't move it)
         report.insertBefore( insert = fp, before = query.by( tn ) )
 
       recalcFields
