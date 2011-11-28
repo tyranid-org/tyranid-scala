@@ -68,7 +68,7 @@ trait Field {
 
   def label = name.camelCaseToSpaceUpper
 
-  def header = <th id={ name } class="colh" style={ headerStyle }><div><span>{ headerCell }</span></div></th>
+  def header( run:Run ) = <th id={ name } class={ if ( run.report.selectedColumns( name ) ) "colh hi" else "colh" } style={ headerStyle }><div><span>{ headerCell }</span></div></th>
   def headerStyle = ""
   def headerCell:NodeSeq = Text( label )
 
@@ -77,9 +77,9 @@ trait Field {
 
 }
 
-case class PathField( cat:String, path:Path ) extends Field {
+case class PathField( sec:String, path:Path ) extends Field {
 
-  override def section = cat
+  override def section = sec
 
   def name = path.name_
   override def label = path.label
@@ -103,7 +103,7 @@ trait MongoQuery extends Query {
     part.toIterable.map( o => entity.apply( o ) )
   }
 
-  def field( path:String, cat:String = "Standard" ) = PathField( cat, view.path( path ) )
+  def field( path:String, sec:String = "Standard" ) = PathField( sec, view.path( path ) )
 }
 
 class Report {
@@ -122,6 +122,8 @@ class Report {
 
   val hidden  = mutable.ArrayBuffer[Field]()
   val columns = mutable.ArrayBuffer[Field]()
+
+  val selectedColumns = mutable.Set[String]()
 
   def remove( remove:Field ) = {
     columns -= remove
@@ -192,11 +194,11 @@ class Report {
       "style" -> "width:80px;" )
 }
 
-class Run( report:Report, grid:Grid ) {
+case class Run( report:Report, grid:Grid ) {
 
   val cache = mutable.HashMap[String,AnyRef]()
 
-  val header = <tr>{ report.columns.map( _.header ) }</tr>
+  val header = <tr>{ report.columns.map( _.header( this ) ) }</tr>
 
   def row( rec:Record ) = {
     // TODO:  get IDs on these ...{ report.columns.map( p => <th class="colh" id={ p.name_ }>{ col( p ) }</th> ) }
@@ -225,20 +227,30 @@ case class Grid( query:Query ) {
     odd |* "odd"
   }
 
-  def drag( js:String ) = {
-    val ( fn, tn ) = js.splitFirst( ':' )
+  def exec( js:String ) = {
+    if ( js.startsWith( "!" ) ) {
+      val fp = query.by( js.substring(1) )
 
-    val fp = query.by( fn )
+      val empty = report.selectedColumns.isEmpty
+      report.selectedColumns( fp.name ) = !report.selectedColumns( fp.name )
 
-    if ( tn == "def" )
-      report.remove( fp )
-    else if ( tn == "_end" )
-      report.add( fp )
-    else
-      report.insertBefore( insert = fp, before = query.by( tn ) )
+      empty != report.selectedColumns.isEmpty |*
+        SetHtml( "searchTitle", searchTitle )
+    } else {
+      val ( fn, tn ) = js.splitFirst( ':' )
 
-    recalcFields
-    redraw
+      val fp = query.by( fn )
+
+      if ( tn == "def" )
+        report.remove( fp )
+      else if ( tn == "_end" )
+        report.add( fp )
+      else
+        report.insertBefore( insert = fp, before = query.by( tn ) )
+
+      recalcFields
+      redraw
+    }
   }
 
   private def initReport:JsCmd =
@@ -263,6 +275,15 @@ case class Grid( query:Query ) {
     report.offset += report.pageSize
     redraw
   }
+
+
+  /*
+   * * *  Search
+   */
+
+  def searchTitle =
+    if ( report.selectedColumns.isEmpty ) Text( "search all fields" )
+    else                                  Unparsed( "search <span class='hitext'>highlighted</span> fields" )
 
 
   /*
@@ -297,7 +318,7 @@ case class Grid( query:Query ) {
 
   private def sectionDropdown =
     SHtml.ajaxSelect(
-      sections.map( cat => cat -> cat ),
+      sections.map( sec => sec -> sec ),
       Full( section ),
       v => {
         report.onSection = v
@@ -360,6 +381,23 @@ case class Grid( query:Query ) {
       <td style="width:410px;">
       </td>
       <td>
+       <table class="tile" style="width:226px; height:54px;">
+        <tr>
+         <td id="searchTitle" class="label">{ searchTitle }</td>
+        </tr>
+        <tr>
+         <td>
+          <form method="get" class="searchBox" action="/search/results" onsubmit="this.submit();return false;">
+	         <fieldset>
+            { SHtml.text( "", v => println( "do something with " + v ), "placeholder" -> "Search", "class" -> "field" ) }
+		        <input type="image" class="btn" name="submit" src="http://www.volerro.com/wp-content/themes/platformpro/images/search-btn.png" alt="Go"/>
+	         </fieldset>
+          </form>
+         </td>
+        </tr>
+       </table>
+      </td>
+      <td>
        <table class="tile" style="width:298px; height:54px;">
         <tr>
          <td class="label">section</td>
@@ -392,8 +430,8 @@ case class Grid( query:Query ) {
      <script src="/cjs/report.js" type="text/javascript"/>
      <script>{ Unparsed( """
 
-function execDrag( id ) {
-  """ + SHtml.ajaxCall( JsRaw( "id" ), drag _ )._2.toJsCmd + """;
+function gridexec( id ) {
+  """ + SHtml.ajaxCall( JsRaw( "id" ), exec _ )._2.toJsCmd + """;
 }
 
      """ ) }</script>
