@@ -22,9 +22,10 @@ import scala.xml.{ NodeSeq, Text, Unparsed }
 
 import com.mongodb.DBObject
 
+import net.liftweb.common.{ Full, Empty }
 import net.liftweb.http.SHtml
 import net.liftweb.http.js.JsCmd
-import net.liftweb.http.js.JsCmds.SetHtml
+import net.liftweb.http.js.JsCmds.{ Noop, SetHtml }
 import net.liftweb.http.js.JE.JsRaw
 
 import org.tyranid.Imp._
@@ -38,6 +39,7 @@ import org.tyranid.ui.Button
 trait Query {
 
   val name:String
+  def label = name.camelCaseToSpaceUpper
 
   val allFields:Seq[Field]
 
@@ -60,7 +62,7 @@ trait Query {
 }
 
 trait Field {
-  def category = "Common"
+  def section = "Standard"
 
   def name:String
 
@@ -77,7 +79,7 @@ trait Field {
 
 case class PathField( cat:String, path:Path ) extends Field {
 
-  override def category = cat
+  override def section = cat
 
   def name = path.name_
   override def label = path.label
@@ -101,7 +103,7 @@ trait MongoQuery extends Query {
     part.toIterable.map( o => entity.apply( o ) )
   }
 
-  def field( path:String, cat:String = "Common" ) = PathField( cat, view.path( path ) )
+  def field( path:String, cat:String = "Standard" ) = PathField( cat, view.path( path ) )
 }
 
 class Report {
@@ -115,6 +117,9 @@ class Report {
   @volatile var offset:Int = 0
   @volatile var pageSize = 20
 
+  @volatile var onSection:String = ""
+  @volatile var onField:String = ""
+
   val hidden  = mutable.ArrayBuffer[Field]()
   val columns = mutable.ArrayBuffer[Field]()
 
@@ -122,6 +127,12 @@ class Report {
     columns -= remove
     hidden -= remove
     hidden += remove
+  }
+
+  def add( add:Field ) = {
+    hidden -= add
+    columns -= add
+    columns += add
   }
 
   def insertBefore( insert:Field, before:Field ) = {
@@ -217,21 +228,30 @@ case class Grid( query:Query ) {
   def drag( js:String ) = {
     val ( fn, tn ) = js.splitFirst( ':' )
 
-spam( "fn[" + fn + "] tn[" + tn + "]" )
-
     val fp = query.by( fn )
 
     if ( tn == "def" )
       report.remove( fp )
+    else if ( tn == "_end" )
+      report.add( fp )
     else
       report.insertBefore( insert = fp, before = query.by( tn ) )
 
+    recalcFields
     redraw
   }
 
+  private def initReport:JsCmd =
+    net.liftweb.http.js.JsCmds.Run( "initReport();" )
+
   private def redraw:JsCmd =
     SetHtml( id, innerDraw ) &
-    net.liftweb.http.js.JsCmds.Run( "initReport();" )
+    initReport
+
+
+  /*
+   * * *  Navigation
+   */
 
   private def prev = {
     report.offset -= report.pageSize
@@ -244,53 +264,126 @@ spam( "fn[" + fn + "] tn[" + tn + "]" )
     redraw
   }
 
+
+  /*
+   * * *  Field Dropdowns
+   */
+
+  private val sections = "Standard" +: query.allFields.map( _.section ).filter( _ != "Standard" ).sorted.distinct
+
+  private def calcFields = query.allFields.filter( f => f.section == section && !report.columns.contains( f ) ).sortBy( _.label )
+  private def recalcFields {
+    fields = calcFields
+    if ( !fields.find( _.name == field ).isDefined )
+       report.onField = ""
+  }
+
+  private var fields     = calcFields
+
+  private def section = {
+    if ( report.onSection.isBlank )
+      report.onSection = sections( 0 )
+
+    report.onSection
+  }
+
+  private def field = {
+    if ( report.onField.isBlank )
+      report.onField = if ( fields.size > 0 ) fields( 0 ).name
+                       else                   ""
+
+    report.onField
+  }
+
+  private def sectionDropdown =
+    SHtml.ajaxSelect(
+      sections.map( cat => cat -> cat ),
+      Full( section ),
+      v => {
+        report.onSection = v
+        recalcFields
+        SetHtml( "repfd", fieldDropdown ) &
+        SetHtml( "repab", addBox ) &
+        initReport
+      },
+      "style" -> "width:150px; max-width:150px;" )
+
+  private def fieldDropdown =
+    if ( fields.size == 0 )
+    Unparsed( "<select style='width:150px;' disabled><option>none left</option></select>" )
+    else
+    SHtml.ajaxSelect(
+      fields.map( f => f.name -> f.label ),
+      Full( field ),
+      v => {
+        report.onField = v
+        SetHtml( "repab", addBox ) &
+        initReport
+      },
+      "style" -> "width:150px; max-width:150px;" )
+
+  private def addBox:NodeSeq =
+    fields.find( _.name == field ).flatten(
+      f => <div id={ f.name } class="cola"><div><span>Add</span></div></div>,
+      <div class="colna"><div><span>N/A</span></div></div>
+    )
+
   private def innerDraw = {
     val rows = query.run( report )
+    val run = new Run( report, this )
 
-    <div class="gridNav">
-     { Button.bar(
-         Seq(
-           query.searchScreen.notBlank |* Some( Button.link( "Change Search", query.searchScreen, color = "grey" ) ),
-           report.offset > 0 |* Some( Button.ajaxButton( "Prev", () => prev, color = "grey" ) ),
-           Some( Button.ajaxButton( "Next", () => next, color = "grey" ) )
-         ).flatten:_*
-       ) }
+    <div class="header">
+     { query.label }
     </div> ++
-    { val run = new Run( report, this )
-
-      /*
-
-      <table id="def" class="def">
-       <tr>
-        <th>Available Columns</th>
-        <td>
-         <div class="availc">
-          <table class="colc">
-           { for ( p <- report.hidden ) yield
-             <tr><td id={ p.name } class="cola">{ col( p ) }</td></tr>
-           }
+    <table class="def" id="def">
+     <tr>
+      <td>
+       <table class="tile" style="width:300px; height:54px;">
+        <tr>
+         <td class="label">actions</td>
+        </tr>
+        <tr> 
+         <td style="padding:0;">
+          <table>
+           <tr>
+            { Seq(
+                query.searchScreen.notBlank |* Some( Button.link( "Change Search", query.searchScreen, color = "grey" ) ),
+                report.offset > 0 |* Some( Button.ajaxButton( "Prev", () => prev, color = "grey" ) ),
+                Some( Button.ajaxButton( "Next", () => next, color = "grey" ) )
+              ).flatten.map( btn => <td>{ btn }</td> ) }
+           </tr>
           </table>
-         </div>
-        </td>
-       </tr>
-       <tr>
-        <th>Filtered Columns</th>
-       </tr>
-      </table>
-
-      */
-
-      <div class="grid">
-       <table>
-        <thead>
-         { run.header }
-        </thead>
-        <tbody>
-         { rows.map( r => run.row( r ) ) }
-        </tbody>
+         </td>
+        </tr>
        </table>
-      </div>
-    }
+      </td>
+      <td style="width:410px;">
+      </td>
+      <td>
+       <table class="tile" style="width:298px; height:54px;">
+        <tr>
+         <td class="label">section</td>
+         <td id="repcd" style="width:160px;">{ sectionDropdown }</td>
+         <td rowspan="2" id="repab" style="width:130px;">{ addBox }</td>
+        </tr>
+        <tr>
+         <td class="label">field</td>
+         <td id="repfd" style="width:160px;">{ fieldDropdown }</td>
+        </tr>
+       </table>
+      </td>
+     </tr>
+    </table> ++
+    <div class="grid">
+     <table>
+      <thead>
+       { run.header }
+      </thead>
+      <tbody>
+       { rows.map( r => run.row( r ) ) }
+      </tbody>
+     </table>
+    </div>
   }
 
   def draw = {
