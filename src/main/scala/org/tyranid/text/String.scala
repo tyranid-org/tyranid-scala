@@ -144,7 +144,7 @@ class StringImp( s:String ) {
       0
     else
       try {
-        s.toInt
+        s.replace( ",", "" ).toInt
       } catch {
       case e:NumberFormatException =>
         0
