@@ -22,9 +22,10 @@ import scala.xml.{ NodeSeq, Text, Unparsed }
 
 import com.mongodb.DBObject
 
+import net.liftweb.common.{ Full, Empty }
 import net.liftweb.http.SHtml
 import net.liftweb.http.js.JsCmd
-import net.liftweb.http.js.JsCmds.SetHtml
+import net.liftweb.http.js.JsCmds.{ Noop, SetHtml }
 import net.liftweb.http.js.JE.JsRaw
 
 import org.tyranid.Imp._
@@ -38,6 +39,7 @@ import org.tyranid.ui.Button
 trait Query {
 
   val name:String
+  def label = name.camelCaseToSpaceUpper
 
   val allFields:Seq[Field]
 
@@ -46,7 +48,6 @@ trait Query {
   def prepareSearch( report:Report ) = report.search
 
   def run( report:Report ):Iterable[Record]
-
 
   def newReport = {
     var r = new Report
@@ -61,23 +62,29 @@ trait Query {
 }
 
 trait Field {
+  def section = "Standard"
+
   def name:String
 
   def label = name.camelCaseToSpaceUpper
 
-  def header = <th id={ name } class="colh" style={ headerStyle }><div><span>{ headerCell }</span></div></th>
+  def header( run:Run ) = <th id={ name } class={ if ( run.report.selectedColumns( name ) ) "colh hi" else "colh" } style={ headerStyle }><div><span>{ headerCell }</span></div></th>
   def headerStyle = ""
   def headerCell:NodeSeq = Text( label )
 
+  def cellClass:String = null
   def cell( run:Run, rec:Record ):NodeSeq
 
 }
 
-case class PathField( path:Path ) extends Field {
+case class PathField( sec:String, path:Path ) extends Field {
+
+  override def section = sec
+
   def name = path.name_
   override def label = path.label
 
-  def cell( run:Run, r:Record ) = <td>{ r s name }</td>
+  def cell( run:Run, r:Record ) = Text( r s name )
 }
 
 trait MongoQuery extends Query {
@@ -95,6 +102,8 @@ trait MongoQuery extends Query {
     
     part.toIterable.map( o => entity.apply( o ) )
   }
+
+  def field( path:String, sec:String = "Standard" ) = PathField( sec, view.path( path ) )
 }
 
 class Report {
@@ -108,13 +117,24 @@ class Report {
   @volatile var offset:Int = 0
   @volatile var pageSize = 20
 
+  @volatile var onSection:String = ""
+  @volatile var onField:String = ""
+
   val hidden  = mutable.ArrayBuffer[Field]()
   val columns = mutable.ArrayBuffer[Field]()
+
+  val selectedColumns = mutable.Set[String]()
 
   def remove( remove:Field ) = {
     columns -= remove
     hidden -= remove
     hidden += remove
+  }
+
+  def add( add:Field ) = {
+    hidden -= add
+    columns -= add
+    columns += add
   }
 
   def insertBefore( insert:Field, before:Field ) = {
@@ -174,15 +194,24 @@ class Report {
       "style" -> "width:80px;" )
 }
 
-class Run( report:Report, grid:Grid ) {
+case class Run( report:Report, grid:Grid ) {
 
   val cache = mutable.HashMap[String,AnyRef]()
 
-  val header = <tr>{ report.columns.map( _.header ) }</tr>
+  val header = <tr>{ report.columns.map( _.header( this ) ) }</tr>
 
   def row( rec:Record ) = {
     // TODO:  get IDs on these ...{ report.columns.map( p => <th class="colh" id={ p.name_ }>{ col( p ) }</th> ) }
-    <tr class={ grid.rowClass }>{ report.columns.map( _.cell( this, rec ) ) }</tr>
+    <tr class={ grid.rowClass }>{
+      for ( f <- report.columns ) yield {
+        val cls = f.cellClass
+
+        if ( cls != null )
+          <td class={ cls }>{ f.cell( this, rec ) }</td>
+        else
+          <td>{ f.cell( this, rec ) }</td>
+      }
+    }</tr>
   }
 }
 
@@ -195,27 +224,48 @@ case class Grid( query:Query ) {
 
   def rowClass = {
     odd = !odd
-    odd |* "odd"
+    !odd |* "even"
   }
 
-  def drag( js:String ) = {
-    val ( fn, tn ) = js.splitFirst( ':' )
+  def exec( js:String ) = {
+    if ( js.startsWith( "!" ) ) {
+      val fp = query.by( js.substring(1) )
 
-spam( "fn[" + fn + "] tn[" + tn + "]" )
+      val empty = report.selectedColumns.isEmpty
+      report.selectedColumns( fp.name ) = !report.selectedColumns( fp.name )
 
-    val fp = query.by( fn )
+      empty != report.selectedColumns.isEmpty |*
+        SetHtml( "searchTitle", searchTitle )
+    } else {
+      val ( fn, tn ) = js.splitFirst( ':' )
 
-    if ( tn == "def" )
-      report.remove( fp )
-    else
-      report.insertBefore( insert = fp, before = query.by( tn ) )
+      val fp = query.by( fn )
 
-    redraw
+      if ( tn == "def" )
+         TODO:  if selections, remove all selections as well, also unselect everything
+        report.remove( fp )
+      else if ( tn == "_end" )
+        report.add( fp )
+      else
+         TODO:  if selections, insert everything before insert ... (if insert is selected, don't move it)
+        report.insertBefore( insert = fp, before = query.by( tn ) )
+
+      recalcFields
+      redraw
+    }
   }
+
+  private def initReport:JsCmd =
+    net.liftweb.http.js.JsCmds.Run( "initReport();" )
 
   private def redraw:JsCmd =
     SetHtml( id, innerDraw ) &
-    net.liftweb.http.js.JsCmds.Run( "initReport();" )
+    initReport
+
+
+  /*
+   * * *  Navigation
+   */
 
   private def prev = {
     report.offset -= report.pageSize
@@ -228,53 +278,152 @@ spam( "fn[" + fn + "] tn[" + tn + "]" )
     redraw
   }
 
+
+  /*
+   * * *  Search
+   */
+
+  def searchTitle =
+    if ( report.selectedColumns.isEmpty ) Text( "search all fields" )
+    else                                  Unparsed( "search <span class='hitext'>highlighted</span> fields" )
+
+
+  /*
+   * * *  Field Dropdowns
+   */
+
+  private val sections = "Standard" +: query.allFields.map( _.section ).filter( _ != "Standard" ).sorted.distinct
+
+  private def calcFields = query.allFields.filter( f => f.section == section && !report.columns.contains( f ) ).sortBy( _.label )
+  private def recalcFields {
+    fields = calcFields
+    if ( !fields.find( _.name == field ).isDefined )
+       report.onField = ""
+  }
+
+  private var fields     = calcFields
+
+  private def section = {
+    if ( report.onSection.isBlank )
+      report.onSection = sections( 0 )
+
+    report.onSection
+  }
+
+  private def field = {
+    if ( report.onField.isBlank )
+      report.onField = if ( fields.size > 0 ) fields( 0 ).name
+                       else                   ""
+
+    report.onField
+  }
+
+  private def sectionDropdown =
+    SHtml.ajaxSelect(
+      sections.map( sec => sec -> sec ),
+      Full( section ),
+      v => {
+        report.onSection = v
+        recalcFields
+        SetHtml( "repfd", fieldDropdown ) &
+        SetHtml( "repab", addBox ) &
+        initReport
+      },
+      "style" -> "width:150px; max-width:150px;" )
+
+  private def fieldDropdown =
+    if ( fields.size == 0 )
+    Unparsed( "<select style='width:150px;' disabled><option>none left</option></select>" )
+    else
+    SHtml.ajaxSelect(
+      fields.map( f => f.name -> f.label ),
+      Full( field ),
+      v => {
+        report.onField = v
+        SetHtml( "repab", addBox ) &
+        initReport
+      },
+      "style" -> "width:150px; max-width:150px;" )
+
+  private def addBox:NodeSeq =
+    fields.find( _.name == field ).flatten(
+      f => <div id={ f.name } class="cola"><div><span>Add</span></div></div>,
+      <div class="colna"><div><span>N/A</span></div></div>
+    )
+
   private def innerDraw = {
     val rows = query.run( report )
+    val run = new Run( report, this )
 
-    <div class="gridNav">
-     { Button.bar(
-         Seq(
-           query.searchScreen.notBlank |* Some( Button.link( "Change Search", query.searchScreen, color = "grey" ) ),
-           report.offset > 0 |* Some( Button.ajaxButton( "Prev", () => prev, color = "grey" ) ),
-           Some( Button.ajaxButton( "Next", () => next, color = "grey" ) )
-         ).flatten:_*
-       ) }
+    <div class="header">
+     { query.label }
     </div> ++
-    { val run = new Run( report, this )
-
-      /*
-
-      <table id="def" class="def">
-       <tr>
-        <th>Available Columns</th>
-        <td>
-         <div class="availc">
-          <table class="colc">
-           { for ( p <- report.hidden ) yield
-             <tr><td id={ p.name } class="cola">{ col( p ) }</td></tr>
-           }
+    <table class="def" id="def">
+     <tr>
+      <td>
+       <table class="tile" style="width:300px; height:54px;">
+        <tr>
+         <td class="label">actions</td>
+        </tr>
+        <tr> 
+         <td style="padding:0;">
+          <table>
+           <tr>
+            { Seq(
+                query.searchScreen.notBlank |* Some( Button.link( "Change Search", query.searchScreen, color = "grey" ) ),
+                report.offset > 0 |* Some( Button.ajaxButton( "Prev", () => prev, color = "grey" ) ),
+                Some( Button.ajaxButton( "Next", () => next, color = "grey" ) )
+              ).flatten.map( btn => <td>{ btn }</td> ) }
+           </tr>
           </table>
-         </div>
-        </td>
-       </tr>
-       <tr>
-        <th>Filtered Columns</th>
-       </tr>
-      </table>
-
-      */
-
-      <div class="grid">
-       <table>
-        <thead>
-         { run.header }
-        </thead>
-        <tbody>
-         { rows.map( r => run.row( r ) ) }
-        </tbody>
+         </td>
+        </tr>
        </table>
-      </div>
-    }
+      </td>
+      <td style="width:410px;">
+      </td>
+      <td>
+       <table class="tile" style="width:226px; height:54px;">
+        <tr>
+         <td id="searchTitle" class="label">{ searchTitle }</td>
+        </tr>
+        <tr>
+         <td>
+          <form method="get" class="searchBox" action="/search/results" onsubmit="this.submit();return false;">
+	         <fieldset>
+            { SHtml.text( "", v => println( "do something with " + v ), "placeholder" -> "Search", "class" -> "field" ) }
+		        <input type="image" class="btn" name="submit" src="http://www.volerro.com/wp-content/themes/platformpro/images/search-btn.png" alt="Go"/>
+	         </fieldset>
+          </form>
+         </td>
+        </tr>
+       </table>
+      </td>
+      <td>
+       <table class="tile" style="width:298px; height:54px;">
+        <tr>
+         <td class="label">section</td>
+         <td id="repcd" style="width:160px;">{ sectionDropdown }</td>
+         <td rowspan="2" id="repab" style="width:130px;">{ addBox }</td>
+        </tr>
+        <tr>
+         <td class="label">field</td>
+         <td id="repfd" style="width:160px;">{ fieldDropdown }</td>
+        </tr>
+       </table>
+      </td>
+     </tr>
+    </table> ++
+    <div class="grid">
+     <table>
+      <thead>
+       { run.header }
+      </thead>
+      <tbody>
+       { rows.map( r => run.row( r ) ) }
+      </tbody>
+     </table>
+    </div>
   }
 
   def draw = {
@@ -283,8 +432,8 @@ spam( "fn[" + fn + "] tn[" + tn + "]" )
      <script src="/cjs/report.js" type="text/javascript"/>
      <script>{ Unparsed( """
 
-function execDrag( id ) {
-  """ + SHtml.ajaxCall( JsRaw( "id" ), drag _ )._2.toJsCmd + """;
+function gridexec( id ) {
+  """ + SHtml.ajaxCall( JsRaw( "id" ), exec _ )._2.toJsCmd + """;
 }
 
      """ ) }</script>
