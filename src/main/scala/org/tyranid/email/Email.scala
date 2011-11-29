@@ -54,7 +54,7 @@ object Email {
   }
 }
 
-case class Email( subject:String, text:String ) {
+case class Email( subject:String, text:String, html:String=null ) {
   private var emailSession:Session = null;
   private var replyTo:InternetAddress = null
   private var from:InternetAddress = null
@@ -203,26 +203,54 @@ case class Email( subject:String, text:String ) {
     if ( subject != null ) 
       message.setSubject( subject )
 
-    if ( text != null ) 
-      message.setText( text )
-
-    if ( attachments != null ) {
-      var multipart:Multipart = new MimeMultipart()
-      
-      for ( attachment <- attachments ) {
-        var messageBodyPart:BodyPart = new MimeBodyPart()
-        var source:DataSource = new FileDataSource( attachment )
-        messageBodyPart.setDataHandler( new DataHandler( source ) )
-        messageBodyPart.setFileName( attachment.getName() )
-        var contentType:String = guessContentType( attachment )
+    if ( text != null ) {
+      if ( html != null ) {
+        var multipart:Multipart = new MimeMultipart( "alternative" )
+        var plainMessageBodyPart = new MimeBodyPart()
+        plainMessageBodyPart.setContent( text,"text/plain" )
+        multipart.addBodyPart( plainMessageBodyPart )
+        var htmlMessageBodyPart = new MimeBodyPart()
+        htmlMessageBodyPart.setContent( html, "text/html" )
+        multipart.addBodyPart( htmlMessageBodyPart )
         
-        if ( contentType != null ) 
-          messageBodyPart.setHeader( "Content-Type", contentType )
+        if ( attachments != null ) {
+          for ( attachment <- attachments ) {
+            var messageBodyPart:BodyPart = new MimeBodyPart()
+            var source:DataSource = new FileDataSource( attachment )
+            messageBodyPart.setDataHandler( new DataHandler( source ) )
+            messageBodyPart.setFileName( attachment.getName() )
+            var contentType:String = guessContentType( attachment )
 
-        multipart.addBodyPart(messageBodyPart)
+            if ( contentType != null ) 
+              messageBodyPart.setHeader( "Content-Type", contentType )
+
+            multipart.addBodyPart(messageBodyPart)
+          }
+        }
+        
+        message.setContent( multipart )
+      } else {
+        message.setText( text )
+        
+        if ( attachments != null ) {
+          var multipart:Multipart = new MimeMultipart()
+
+          for ( attachment <- attachments ) {
+            var messageBodyPart:BodyPart = new MimeBodyPart()
+            var source:DataSource = new FileDataSource( attachment )
+            messageBodyPart.setDataHandler( new DataHandler( source ) )
+            messageBodyPart.setFileName( attachment.getName() )
+            var contentType:String = guessContentType( attachment )
+
+            if ( contentType != null ) 
+              messageBodyPart.setHeader( "Content-Type", contentType )
+
+            multipart.addBodyPart(messageBodyPart)
+          }
+
+          message.setContent( multipart )
+        }
       }
-      
-      message.setContent( multipart )
     }
 
     this

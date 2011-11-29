@@ -147,21 +147,21 @@ class StringImp( s:String ) {
       0
     else
       try {
-        s.replace( ",", "" ).toInt
+        s.replaceAll( ",", "" ).replaceAll( " ", "" ).toInt
       } catch {
       case e:NumberFormatException =>
         0
       }
 
   def toLaxDouble = if ( s.isBlank ) 0
-                    else             s.toDouble
+                    else             s.replaceAll( ",", "" ).replaceAll( " ", "" ).toDouble
 
   def toLaxLong =
     if ( s.isBlank )
       0
     else
       try {
-        s.toLong
+        s.replaceAll( ",", "" ).replaceAll( " ", "" ).toLong
       } catch {
       case e:NumberFormatException =>
         0
