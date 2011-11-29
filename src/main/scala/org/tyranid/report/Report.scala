@@ -241,14 +241,29 @@ case class Grid( query:Query ) {
 
       val fp = query.by( fn )
 
-      if ( tn == "def" )
-         //TODO:  if selections, remove all selections as well, also unselect everything
-        report.remove( fp )
-      else if ( tn == "_end" )
+      if ( tn == "def" ) {
+        if ( report.selectedColumns( fn ) ) {
+          report.selectedColumns.foreach { n => report.remove( query.by( n ) ) }
+          report.selectedColumns.clear
+        } else {
+          report.remove( fp )
+        }
+      } else if ( tn == "_end" ) {
         report.add( fp )
-      else
-         //TODO:  if selections, insert everything before insert ... (if insert is selected, don't move it)
-        report.insertBefore( insert = fp, before = query.by( tn ) )
+      } else {
+        val tp = query.by( tn )
+
+        if ( report.selectedColumns( fn ) && !report.selectedColumns( tn ) ) {
+          val columns = report.columns.filter( f => report.selectedColumns( f.name ) )
+
+          for ( c <- columns )
+            report.insertBefore( insert = c, before = tp )
+
+          //TODO:  if selections, insert everything before insert ... (if insert is selected, don't move it)
+        } else {
+          report.insertBefore( insert = fp, before = tp )
+        }
+      }
 
       recalcFields
       redraw
