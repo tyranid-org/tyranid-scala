@@ -29,7 +29,7 @@ import net.liftweb.http.js.JsCmds.{ Noop, SetHtml }
 import net.liftweb.http.js.JE.JsRaw
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ Path, Record, ViewAttribute }
+import org.tyranid.db.{ Entity, Path, Record, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.session.Session
@@ -59,6 +59,30 @@ trait Query {
   def by( name:String ) = allFields.find( _.name == name ).get
 
   val searchScreen:String = null
+
+  /*
+       +.  group
+           [ Select ]                    <-- a filter
+
+       +.  When you hit Group, a dialog comes up:
+
+           Add to Existing Group [ Select ]
+
+           Add to New Group      [ ______ ]
+
+           Remove group          [ Select ]          <- union of all groups present on selected organizations
+
+           (Cancel)  (Okay)
+
+        
+
+   */
+  //val actions = Seq(
+    //"Group",          // multi-select
+    //"Connection"      // multi-select
+  //)
+
+  val groupEntity:Entity = null
 }
 
 trait Field {
@@ -376,7 +400,7 @@ case class Grid( query:Query ) {
     <table class="def" id="def">
      <tr>
       <td>
-       <table class="tile" style="width:300px; height:54px;">
+       <table class="tile" style="width:338px; height:54px;">
         <tr>
          <td class="label">actions</td>
         </tr>
@@ -387,7 +411,8 @@ case class Grid( query:Query ) {
             { Seq(
                 query.searchScreen.notBlank |* Some( Button.link( "Change Search", query.searchScreen, color = "grey" ) ),
                 report.offset > 0 |* Some( Button.ajaxButton( "Prev", () => prev, color = "grey" ) ),
-                Some( Button.ajaxButton( "Next", () => next, color = "grey" ) )
+                Some( Button.ajaxButton( "Next", () => next, color = "grey" ) ),
+                query.groupEntity != null |* Some( Button.ajaxButton( "Group", () => Noop, color = "grey" ) )
               ).flatten.map( btn => <td>{ btn }</td> ) }
            </tr>
           </table>
@@ -395,7 +420,27 @@ case class Grid( query:Query ) {
         </tr>
        </table>
       </td>
-      <td style="width:410px;">
+      { query.groupEntity != null |*
+      <td>
+       <table class="tile" style="width:140px; height:54px;">
+        <tr>
+         <td class="label">group</td>
+        </tr>
+        <tr>
+         <td>{ 
+           SHtml.ajaxSelect(
+             ( "" -> "All" ) +: Seq(),
+             Empty,
+             v => {
+               Noop
+             },
+             "style" -> "width:120px; max-width:120px;" )
+         }</td>
+        </tr>
+       </table>
+      </td>
+      }
+      <td style="width:410px; padding:0;">
       </td>
       <td>
        <table class="tile" style="width:226px; height:54px;">

@@ -238,24 +238,24 @@ object Time {
         c.get( Calendar.AM_PM ) match { case 0 => "am" case 1 => "pm" } )
     } else {
       val sb = new StringBuilder
-      sb ++= "%s, %s %d%s%s%d:%02d%s".format(
+      sb ++= "%s, %s %d%s%s%d:%02d".format(
         c.weekDayName,
         c.monthName, c.get( Calendar.DAY_OF_MONTH ),
         if ( c.isSameYearAs( nc ) ) ""
         else                        ", " + c.get( Calendar.YEAR ),
         " at ",
         c.get( Calendar.HOUR ) match { case 0 => 12 case i => i },
-        c.get( Calendar.MINUTE ),
-        c.get( Calendar.AM_PM ) match { case 0 => "am" case 1 => "pm" } )
+        c.get( Calendar.MINUTE ) )
 
-      val seconds = c.get( Calendar.SECOND )
-      val milli   = c.get( Calendar.MILLISECOND )
-      if ( seconds != 0 || milli != 0 ) {
-        sb ++= ":%02d".format( seconds )
+      //val seconds = c.get( Calendar.SECOND )
+      //val milli   = c.get( Calendar.MILLISECOND )
+      //if ( seconds != 0 || milli != 0 ) {
+        //sb ++= ":%02d".format( seconds )
 
-        if ( milli != 0 )
-          sb ++= ".%03d".format( milli )
-      }
+        //if ( milli != 0 )
+          //sb ++= ".%03d".format( milli )
+      //}
+      sb ++= ( c.get( Calendar.AM_PM ) match { case 0 => "am" case 1 => "pm" } )
 
       sb.toString
     }
