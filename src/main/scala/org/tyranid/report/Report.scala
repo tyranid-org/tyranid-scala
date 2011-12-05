@@ -25,6 +25,7 @@ import com.mongodb.DBObject
 import net.liftweb.common.{ Full, Empty }
 import net.liftweb.http.SHtml
 import net.liftweb.http.js.JsCmd
+import net.liftweb.http.js.JsCmds
 import net.liftweb.http.js.JsCmds.{ Noop, SetHtml }
 import net.liftweb.http.js.JE.JsRaw
 
@@ -60,23 +61,8 @@ trait Query {
 
   val searchScreen:String = null
 
-  /*
-       +.  group
-           [ Select ]                    <-- a filter
+  def selectable = groupEntity != null
 
-       +.  When you hit Group, a dialog comes up:
-
-           Add to Existing Group [ Select ]
-
-           Add to New Group      [ ______ ]
-
-           Remove group          [ Select ]          <- union of all groups present on selected organizations
-
-           (Cancel)  (Okay)
-
-        
-
-   */
   //val actions = Seq(
     //"Group",          // multi-select
     //"Connection"      // multi-select
@@ -148,6 +134,7 @@ class Report {
   val columns = mutable.ArrayBuffer[Field]()
 
   val selectedColumns = mutable.Set[String]()
+  val selectedRows = mutable.Set[AnyRef]()
 
   def remove( remove:Field ) = {
     columns -= remove
@@ -220,13 +207,22 @@ class Report {
 
 case class Run( report:Report, grid:Grid ) {
 
+  def query = grid.query
+
   val cache = mutable.HashMap[String,AnyRef]()
 
-  val header = <tr>{ report.columns.map( _.header( this ) ) }</tr>
+  val header =
+    <tr>
+     { query.selectable |* <td></td> }
+     { report.columns.map( _.header( this ) ) }
+    </tr>
 
   def row( rec:Record ) = {
     // TODO:  get IDs on these ...{ report.columns.map( p => <th class="colh" id={ p.name_ }>{ col( p ) }</th> ) }
-    <tr class={ grid.rowClass }>{
+    <tr class={ grid.rowClass }>
+     { query.selectable |* 
+        <td>{ SHtml.ajaxCheckbox( report.selectedRows.contains( rec.id ), (v:Boolean) => { report.selectedRows( rec.id ) = v; Noop } ) }</td> }
+     {
       for ( f <- report.columns ) yield {
         val cls = f.cellClass
 
@@ -235,7 +231,8 @@ case class Run( report:Report, grid:Grid ) {
         else
           <td>{ f.cell( this, rec ) }</td>
       }
-    }</tr>
+     }
+    </tr>
   }
 }
 
@@ -294,8 +291,7 @@ case class Grid( query:Query ) {
     }
   }
 
-  private def initReport:JsCmd =
-    net.liftweb.http.js.JsCmds.Run( "initReport();" )
+  private def initReport:JsCmd = JsCmds.Run( "initReport();" )
 
   private def redraw:JsCmd =
     SetHtml( id, innerDraw ) &
@@ -394,6 +390,10 @@ case class Grid( query:Query ) {
     val rows = query.run( report )
     val run = new Run( report, this )
 
+    val oldselects = report.selectedRows.clone
+    report.selectedRows.clear
+    rows.filter( r => oldselects( r.id ) ).foreach { report.selectedRows += _.id }
+
     <div class="header">
      { query.label }
     </div> ++
@@ -412,7 +412,7 @@ case class Grid( query:Query ) {
                 query.searchScreen.notBlank |* Some( Button.link( "Change Search", query.searchScreen, color = "grey" ) ),
                 report.offset > 0 |* Some( Button.ajaxButton( "Prev", () => prev, color = "grey" ) ),
                 Some( Button.ajaxButton( "Next", () => next, color = "grey" ) ),
-                query.groupEntity != null |* Some( Button.ajaxButton( "Group", () => Noop, color = "grey" ) )
+                query.groupEntity != null |* Some( Button.ajaxButton( "Group", () => JsCmds.Run( "$( '#groupdial' ).dialog( 'open' )" ), color = "grey" ) )
               ).flatten.map( btn => <td>{ btn }</td> ) }
            </tr>
           </table>
@@ -496,8 +496,47 @@ function gridexec( id ) {
   """ + SHtml.ajaxCall( JsRaw( "id" ), exec _ )._2.toJsCmd + """;
 }
 
-     """ ) }</script>
-    </head>
+function initGroup() {
+  $( "#groupdial" ).dialog( {
+    autoOpen:false,
+    title:"Groups",
+    modal:true,
+    width:400
+  } );
+}
+
+$( initGroup )
+
+""" ) }</script>
+    </head> ++
+    { query.groupEntity != null |*
+      <div id="groupdial" style="padding:8px 8px 0;">
+       <table>
+        <tr>
+         <td>Add to Existing Group</td>
+         <td></td>
+        </tr>
+        <tr>
+         <td>Add to New Group</td>
+         <td></td>
+        </tr>
+        <tr>
+         <td>Remove Group</td>
+         <td>{ /* union of all groups present on selected organizations */ }</td>
+        </tr>
+        <tr>
+         <td style="padding:8px 0 0;">
+          <table>
+           <tr>
+            <td>{ Button.ajaxButton( "Cancel", () => JsCmds.Run( "$( '#groupdial' ).dialog( 'close' )" ), color = "grey"  ) }</td>
+            <td style="padding-left:8px;">{ Button.ajaxButton( "Okay",   () => Noop, color = "green" ) }</td>
+           </tr>
+          </table>
+         </td>
+        </tr>
+       </table>
+      </div>
+    } ++
     <div class="report" id={ id }>
     { innerDraw }
     </div>
