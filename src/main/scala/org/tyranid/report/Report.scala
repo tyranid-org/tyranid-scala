@@ -37,6 +37,11 @@ import org.tyranid.session.Session
 import org.tyranid.ui.Button
 
 
+case class Grouping( entity:MongoEntity, keyName:String, value: () => AnyRef ) {
+
+  def list = entity.db.find( Mobj( keyName -> value() ) ).toSeq
+}
+
 trait Query {
 
   val name:String
@@ -61,14 +66,14 @@ trait Query {
 
   val searchScreen:String = null
 
-  def selectable = groupEntity != null
+  def selectable = grouping != null
 
   //val actions = Seq(
     //"Group",          // multi-select
     //"Connection"      // multi-select
   //)
 
-  val groupEntity:Entity = null
+  val grouping:Grouping = null
 }
 
 trait Field {
@@ -386,13 +391,93 @@ case class Grid( query:Query ) {
       <div class="colna"><div><span>N/A</span></div></div>
     )
 
+
+  /*
+   * * *  Groups
+   */
+
+  private var addGroupName = ""
+  private var newGroupName = ""
+  private var removeGroupName = ""
+
+  private var selectedRows:Seq[Record] = _
+  private var groups:Seq[DBObject] = _
+
+  private def group( rows:Seq[Record] ) = {
+    selectedRows = rows.filter( report.selectedRows )
+    groups = query.grouping.list
+
+    addGroupName = ""
+    newGroupName = ""
+    removeGroupName = ""
+
+    val intersection = groups.filter( g => selectedRows.forall( r => g.a_?( 'ids ).contains( r.id ) ) )
+    val union        = groups.filter( g => selectedRows.exists( r => g.a_?( 'ids ).contains( r.id ) ) )
+
+    val addGroup =
+      SHtml.ajaxSelect(
+        groups.filter( g => !intersection.contains( g ) ).map( g => ( g.s( 'name ), g.s( 'name ) ) ),
+        Empty,
+        v => {
+          addGroupName = v
+          Noop
+        },
+        "style" -> "width:120px; max-width:120px;" )
+
+    val newGroup = SHtml.ajaxText( "", v => { newGroupName = v; Noop }, "style" -> "width:120px;" )
+
+    val removeGroup =
+      SHtml.ajaxSelect(
+        union.map( g => ( g.s( 'name ), g.s( 'name ) ) ),
+        Empty,
+        v => {
+          removeGroupName = v
+          Noop
+        },
+        "style" -> "width:120px; max-width:120px;" )
+
+
+    SetHtml( "addGroup", addGroup ) &
+    SetHtml( "newGroup", newGroup ) &
+    SetHtml( "removeGroup", removeGroup ) &
+    JsCmds.Run( "$( '#groupdial' ).dialog( 'open' )" )
+  }
+
+  private def doGroup = {
+    val grouping = query.grouping
+
+    if ( addGroupName.notBlank ) {
+      groups.find( _.s( 'name ) == addGroupName ) foreach { g =>
+        g( 'ids ) = Mlist( ( g.a_?( 'ids ) ++ selectedRows.map( _.id ) ).distinct:_* )
+      }
+    }
+
+    if ( newGroupName.notBlank ) {
+      grouping.entity.db.save(
+        Mobj(
+          "name" -> newGroupName,
+           grouping.keyName -> grouping.value(),
+           "ids" -> Mlist( selectedRows.map( _.id ):_* ) ) )
+    }
+
+    if ( removeGroupName.notBlank ) {
+      groups.find( _.s( 'name ) == removeGroupName ) foreach { g =>
+        g( 'ids ) = Mlist( g.a_?( 'ids ).filter( id => !selectedRows.exists( _.id == id ) ):_* )
+      }
+    }
+
+    JsCmds.Run( "$( '#groupdial' ).dialog( 'close' )" ) &
+    redraw
+  }
+
   private def innerDraw = {
-    val rows = query.run( report )
+    val rows = query.run( report ).toSeq
     val run = new Run( report, this )
 
-    val oldselects = report.selectedRows.clone
+    val selecteds = report.selectedRows.clone
     report.selectedRows.clear
-    rows.filter( r => oldselects( r.id ) ).foreach { report.selectedRows += _.id }
+    rows.filter( r => selecteds( r.id ) ).foreach { report.selectedRows += _.id }
+
 
     <div class="header">
      { query.label }
@@ -412,7 +497,7 @@ case class Grid( query:Query ) {
                 query.searchScreen.notBlank |* Some( Button.link( "Change Search", query.searchScreen, color = "grey" ) ),
                 report.offset > 0 |* Some( Button.ajaxButton( "Prev", () => prev, color = "grey" ) ),
                 Some( Button.ajaxButton( "Next", () => next, color = "grey" ) ),
-                query.groupEntity != null |* Some( Button.ajaxButton( "Group", () => JsCmds.Run( "$( '#groupdial' ).dialog( 'open' )" ), color = "grey" ) )
+                query.grouping != null |* Some( Button.ajaxButton( "Group", () => group( rows ), color = "grey" ) )
               ).flatten.map( btn => <td>{ btn }</td> ) }
            </tr>
           </table>
@@ -420,7 +505,7 @@ case class Grid( query:Query ) {
         </tr>
        </table>
       </td>
-      { query.groupEntity != null |*
+      { query.grouping != null |*
       <td>
        <table class="tile" style="width:140px; height:54px;">
         <tr>
@@ -509,27 +594,27 @@ $( initGroup )
 
 """ ) }</script>
     </head> ++
-    { query.groupEntity != null |*
+    { query.grouping != null |*
       <div id="groupdial" style="padding:8px 8px 0;">
        <table>
         <tr>
          <td>Add to Existing Group</td>
-         <td></td>
+         <td id="addGroup"/>
         </tr>
         <tr>
          <td>Add to New Group</td>
-         <td></td>
+         <td id="newGroup"/>
         </tr>
         <tr>
          <td>Remove Group</td>
-         <td>{ /* union of all groups present on selected organizations */ }</td>
+         <td id="removeGroup"/>
         </tr>
         <tr>
          <td style="padding:8px 0 0;">
           <table>
            <tr>
-            <td>{ Button.ajaxButton( "Cancel", () => JsCmds.Run( "$( '#groupdial' ).dialog( 'close' )" ), color = "grey"  ) }</td>
-            <td style="padding-left:8px;">{ Button.ajaxButton( "Okay",   () => Noop, color = "green" ) }</td>
+            <td><button onclick="$('#groupdial').dialog('close'); return false;" class="greyBtn">Cancel</button></td>
+            <td style="padding-left:8px;">{ Button.ajaxButton( "Okay", () => doGroup, color = "green" ) }</td>
            </tr>
           </table>
          </td>
