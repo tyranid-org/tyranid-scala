@@ -51,9 +51,9 @@ trait Query {
 
   val defaultFields:Seq[Field]
 
-  def prepareSearch( report:Report ) = report.search
+  def prepareSearch( run:Run ) = run.report.search
 
-  def run( report:Report ):Iterable[Record]
+  def run( run:Run ):Iterable[Record]
 
   def newReport = {
     var r = new Report
@@ -107,8 +107,22 @@ trait MongoQuery extends Query {
 
   lazy val view = entity.makeView
 
-  def run( report:Report ) = {
-    var part = entity.db.find( prepareSearch( report ), Mobj() ).limit( 20 );
+  override def prepareSearch( run:Run ) = {
+    super.prepareSearch( run )
+
+    val report = run.report
+
+    run.groupFilter match {
+    case Some( gf ) => report.search( "_id" ) = Mobj( $in -> gf.a_?( 'ids ) )
+    case None       => report.search.remove( "_id" )
+    }
+
+    report.search
+  }
+
+  def run( run:Run ) = {
+    val report = run.report
+    var part = entity.db.find( prepareSearch( run ), Mobj() ).limit( 20 );
 
     if ( report.offset != 0 )
       part = part.skip( report.offset )
@@ -131,6 +145,8 @@ class Report {
   @volatile var sort:DBObject = null
   @volatile var offset:Int = 0
   @volatile var pageSize = 20
+
+  @volatile var groupFilter = ""
 
   @volatile var onSection:String = ""
   @volatile var onField:String = ""
@@ -239,6 +255,12 @@ case class Run( report:Report, grid:Grid ) {
      }
     </tr>
   }
+
+  lazy val groups = query.grouping.list
+
+  def groupsFor( id:AnyRef ) = groups.filter( _.a_?( 'ids ).contains( id ) ).map( _.s( 'name ) ).mkString( ", " )
+
+  def groupFilter = groups.find( _.s( 'name ) == report.groupFilter )
 }
 
 case class Grid( query:Query ) {
@@ -404,43 +426,48 @@ case class Grid( query:Query ) {
   private var groups:Seq[DBObject] = _
 
   private def group( rows:Seq[Record] ) = {
-    selectedRows = rows.filter( report.selectedRows )
-    groups = query.grouping.list
+    selectedRows = rows.filter( r => report.selectedRows( r.id ) )
 
-    addGroupName = ""
-    newGroupName = ""
-    removeGroupName = ""
+    if ( selectedRows.size == 0 ) {
+      JsCmds.Run( "alert( 'No rows selected.' );" )
+    } else {
+      groups = query.grouping.list.toSeq
 
-    val intersection = groups.filter( g => selectedRows.forall( r => g.a_?( 'ids ).contains( r.id ) ) )
-    val union        = groups.filter( g => selectedRows.exists( r => g.a_?( 'ids ).contains( r.id ) ) )
+      addGroupName = ""
+      newGroupName = ""
+      removeGroupName = ""
 
-    val addGroup =
-      SHtml.ajaxSelect(
-        groups.filter( g => !intersection.contains( g ) ).map( g => ( g.s( 'name ), g.s( 'name ) ) ),
-        Empty,
-        v => {
-          addGroupName = v
-          Noop
-        },
-        "style" -> "width:120px; max-width:120px;" )
+      val intersection = groups.filter( g => selectedRows.forall( r => g.a_?( 'ids ).contains( r.id ) ) )
+      val union        = groups.filter( g => selectedRows.exists( r => g.a_?( 'ids ).contains( r.id ) ) )
 
-    val newGroup = SHtml.ajaxText( "", v => { newGroupName = v; Noop }, "style" -> "width:120px;" )
+      val addGroup =
+        SHtml.ajaxSelect(
+          ( "" -> "" ) +: groups.filter( g => !intersection.contains( g ) ).map( g => ( g.s( 'name ), g.s( 'name ) ) ),
+          Empty,
+          v => {
+            addGroupName = v
+            Noop
+          },
+          "id" -> "addGroup_i", "style" -> "width:160px; max-width:160px;" )
 
-    val removeGroup =
-      SHtml.ajaxSelect(
-        union.map( g => ( g.s( 'name ), g.s( 'name ) ) ),
-        Empty,
-        v => {
-          removeGroupName = v
-          Noop
-        },
-        "style" -> "width:120px; max-width:120px;" )
+      val newGroup = SHtml.ajaxText( "", v => { newGroupName = v; Noop }, "id" -> "newGroup_i", "style" -> "width:120px;" )
+
+      val removeGroup =
+        SHtml.ajaxSelect(
+          ( "" -> "" ) +: union.map( g => ( g.s( 'name ), g.s( 'name ) ) ),
+          Empty,
+          v => {
+            removeGroupName = v
+            Noop
+          },
+          "id" -> "removeGroup_i", "style" -> "width:160px; max-width:160px;" )
 
 
-    SetHtml( "addGroup", addGroup ) &
-    SetHtml( "newGroup", newGroup ) &
-    SetHtml( "removeGroup", removeGroup ) &
-    JsCmds.Run( "$( '#groupdial' ).dialog( 'open' )" )
+      SetHtml( "addGroup", addGroup ) &
+      SetHtml( "newGroup", newGroup ) &
+      SetHtml( "removeGroup", removeGroup ) &
+      JsCmds.Run( "$( '#groupdial' ).dialog( 'open' )" )
+    }
   }
 
   private def doGroup = {
@@ -449,6 +476,7 @@ case class Grid( query:Query ) {
     if ( addGroupName.notBlank ) {
       groups.find( _.s( 'name ) == addGroupName ) foreach { g =>
         g( 'ids ) = Mlist( ( g.a_?( 'ids ) ++ selectedRows.map( _.id ) ).distinct:_* )
+        grouping.entity.db.save( g )
       }
     }
 
@@ -463,6 +491,7 @@ case class Grid( query:Query ) {
     if ( removeGroupName.notBlank ) {
       groups.find( _.s( 'name ) == removeGroupName ) foreach { g =>
         g( 'ids ) = Mlist( g.a_?( 'ids ).filter( id => !selectedRows.exists( _.id == id ) ):_* )
+        grouping.entity.db.save( g )
       }
     }
 
@@ -471,8 +500,8 @@ case class Grid( query:Query ) {
   }
 
   private def innerDraw = {
-    val rows = query.run( report ).toSeq
     val run = new Run( report, this )
+    val rows = query.run( run ).toSeq
 
     val selecteds = report.selectedRows.clone
     report.selectedRows.clear
@@ -514,10 +543,11 @@ case class Grid( query:Query ) {
         <tr>
          <td>{ 
            SHtml.ajaxSelect(
-             ( "" -> "All" ) +: Seq(),
-             Empty,
+             ( "" -> "All" ) +: run.groups.map( g => g.s( 'name ) -> g.s( 'name ) ),
+             if ( report.groupFilter.notBlank ) Full( report.groupFilter ) else Empty,
              v => {
-               Noop
+               report.groupFilter = v
+               redraw
              },
              "style" -> "width:120px; max-width:120px;" )
          }</td>
@@ -586,7 +616,8 @@ function initGroup() {
     autoOpen:false,
     title:"Groups",
     modal:true,
-    width:400
+    resizable:false,
+    width:360
   } );
 }
 
@@ -595,18 +626,18 @@ $( initGroup )
 """ ) }</script>
     </head> ++
     { query.grouping != null |*
-      <div id="groupdial" style="padding:8px 8px 0;">
+      <div id="groupdial" style="padding:8px;">
        <table>
         <tr>
-         <td>Add to Existing Group</td>
+         <td style="width:160px;"><label for="addGroup_i">Add to Existing Group</label></td>
          <td id="addGroup"/>
         </tr>
         <tr>
-         <td>Add to New Group</td>
+         <td><label for="newGroup_i">Add to New Group</label></td>
          <td id="newGroup"/>
         </tr>
         <tr>
-         <td>Remove Group</td>
+         <td><label for="removeGroup_i">Remove Group</label></td>
          <td id="removeGroup"/>
         </tr>
         <tr>
