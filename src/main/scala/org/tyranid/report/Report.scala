@@ -34,7 +34,7 @@ import org.tyranid.db.{ Entity, Path, Record, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.session.Session
-import org.tyranid.ui.Button
+import org.tyranid.ui.{ Button, Glyph }
 
 
 case class Grouping( entity:MongoEntity, keyName:String, value: () => AnyRef ) {
@@ -114,7 +114,16 @@ case class BooleanField( sec:String, path:Path, l:String = null ) extends PathFi
 
   override def label = if ( l.notBlank ) l else path.label
 
-  def cell( run:Run, r:Record ) = path.b( r ) |* Unparsed( "&#10004;" )
+  def cell( run:Run, r:Record ) = path.b( r ) |* Glyph.Checkmark
+}
+
+case class ExistsField( sec:String, path:Path, l:String = null ) extends PathField {
+
+  override def section = sec
+
+  override def label = if ( l.notBlank ) l else path.label
+
+  def cell( run:Run, r:Record ) = path.s( r ).notBlank |* Glyph.Checkmark
 }
 
 case class DateField( sec:String, path:Path, l:String = null ) extends PathField {
@@ -161,6 +170,7 @@ trait MongoQuery extends Query {
 
   def date( path:String, sec:String = "Standard", label:String = null ) = DateField( sec, view.path( path ), l = label )
   def boolean( path:String, sec:String = "Standard", label:String = null ) = BooleanField( sec, view.path( path ), l = label )
+  def exists( path:String, sec:String = "Standard", label:String = null ) = ExistsField( sec, view.path( path ), l = label )
   def string( path:String, sec:String = "Standard", label:String = null ) = StringField( sec, view.path( path ), l = label )
 }
 
