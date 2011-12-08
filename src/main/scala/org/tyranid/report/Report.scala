@@ -92,14 +92,41 @@ trait Field {
 
 }
 
-case class PathField( sec:String, path:Path ) extends Field {
+trait PathField extends Field {
+  val path:Path
+
+  def name = path.name_
+}
+
+// TODO:  merge this functionality with Domain
+case class StringField( sec:String, path:Path, l:String = null ) extends PathField {
 
   override def section = sec
 
-  def name = path.name_
-  override def label = path.label
+  override def label = if ( l.notBlank ) l else path.label
 
-  def cell( run:Run, r:Record ) = Text( r s name )
+  def cell( run:Run, r:Record ) = Text( path s r )
+}
+
+case class BooleanField( sec:String, path:Path, l:String = null ) extends PathField {
+
+  override def section = sec
+
+  override def label = if ( l.notBlank ) l else path.label
+
+  def cell( run:Run, r:Record ) = path.b( r ) |* Unparsed( "&#10004;" )
+}
+
+case class DateField( sec:String, path:Path, l:String = null ) extends PathField {
+
+  override def section = sec
+
+  override def label = if ( l.notBlank ) l else path.label
+
+  def cell( run:Run, r:Record ) = {
+    val date = path.t( r )
+    Text( if ( date != null ) date.toDateStr else "" )
+  }
 }
 
 trait MongoQuery extends Query {
@@ -132,7 +159,9 @@ trait MongoQuery extends Query {
     part.toIterable.map( o => entity.apply( o ) )
   }
 
-  def field( path:String, sec:String = "Standard" ) = PathField( sec, view.path( path ) )
+  def date( path:String, sec:String = "Standard", label:String = null ) = DateField( sec, view.path( path ), l = label )
+  def boolean( path:String, sec:String = "Standard", label:String = null ) = BooleanField( sec, view.path( path ), l = label )
+  def string( path:String, sec:String = "Standard", label:String = null ) = StringField( sec, view.path( path ), l = label )
 }
 
 class Report {

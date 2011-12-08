@@ -96,12 +96,34 @@ trait Path extends Pathable {
     for ( pi <- 0 until pathSize )
       cur =
         pathAt( pi ) match {
-        case va:ViewAttribute => cur.asInstanceOf[BsonObject]( va.name )
+        case va:ViewAttribute => cur match {
+                                 case o:BsonObject    => o( va.name )
+                                 case o:BasicDBObject => o( va.name )
+                                 }
         case ai:ArrayIndex    => cur.asInstanceOf[BasicDBList].get( ai.idx )
         }
 
     cur
   }
+
+  // TODO:  merge the functionality below with what is in Bson and Record ?
+  def b( rec:Record ):Boolean =
+    get( rec ) match {
+    case b:java.lang.Boolean => b
+    case s:String            => s.toLaxBoolean
+    case null                => false
+    }
+  def s( rec:Record ):String =
+    get( rec ) match {
+    case null => ""
+    case v    => v.toString
+    }
+  def t( rec:Record )         =
+    get( rec ) match {
+    case d:Date   => d
+    case s:String => s.toLaxDate // TODO:  replace with more generic parsing method
+    case null     => null
+    }
 }
 
 case class MultiPath( nodes:PathNode* ) extends Path {
