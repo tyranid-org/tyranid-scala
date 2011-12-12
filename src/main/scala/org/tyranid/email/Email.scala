@@ -169,7 +169,7 @@ case class Email( subject:String, text:String, html:String=null ) {
   @throws(classOf[MessagingException])
   def compose():Email = {
     if ( message == null ) {
-      var session:Session = getMailSession()
+      var session:Session = getMailSession
       message = new MimeMessage( session )
     }
 
