@@ -31,30 +31,33 @@ import org.tyranid.bson.{ BsonObject, BsonList }
  * IMPlicit IMPorts.
  */
 object Imp {
-  val $all       = "$all"
-  val $and       = "$and"
-  val $elemMatch = "$elemMatch"
-  val $exists    = "$exists"
-  val $gt        = "$gt"
-  val $gte       = "$gte"
-  val $in        = "$in"
-  val $inc       = "$inc"
-  val $lt        = "$lt"
-  val $lte       = "$lte"
-  val $max       = "$max"
-  val $min       = "$min"
-  val $mod       = "$mod"
-  val $ne        = "$ne"
-  val $nin       = "$nin"
-  val $not       = "$not"
-  val $nor       = "$nor"
-  val $options   = "$options"
-  val $or        = "$or"
-  val $regex     = "$regex"
-  val $set       = "$set"
-  val $size      = "$size"
-  val $unset     = "$unset"
-  val $where     = "$where"
+  val $all         = "$all"
+  val $and         = "$and"
+  val $elemMatch   = "$elemMatch"
+  val $exists      = "$exists"
+  val $gt          = "$gt"
+  val $gte         = "$gte"
+  val $in          = "$in"
+  val $inc         = "$inc"
+  val $lt          = "$lt"
+  val $lte         = "$lte"
+  val $max         = "$max"
+  val $maxDistance = "$maxDistance"
+  val $min         = "$min"
+  val $mod         = "$mod"
+  val $ne          = "$ne"
+  val $near        = "$near"
+  val $nearSphere  = "$nearSphere"
+  val $nin         = "$nin"
+  val $not         = "$not"
+  val $nor         = "$nor"
+  val $options     = "$options"
+  val $or          = "$or"
+  val $regex       = "$regex"
+  val $set         = "$set"
+  val $size        = "$size"
+  val $unset       = "$unset"
+  val $where       = "$where"
 
 	implicit def mongoImp( mongo:com.mongodb.Mongo ) = new MongoImp( mongo )
 	implicit def dbImp( db:DB )                      = new DBImp( db )
@@ -114,6 +117,9 @@ case class DBCollectionImp( coll:DBCollection ) {
   
   // TODO:  is there a way to implement this without actually bringing the object back?
   def exists( query:DBObject ) = coll.findOne( query ) != null
+
+  def updateId( id:ObjectId, update:DBObject ) =
+    coll.update( Mobj( "_id" -> id ), update )
 
   /**
    * This attempts to find the object in the collection.  If it does not exist, a clone of the

@@ -45,7 +45,12 @@ trait BsonObject extends Deep {
     case a:BasicDBList => a
     }
   def a( key:String )         = apply( key ).asInstanceOf[BasicDBList]
-  def b( key:String )         = apply( key ).asInstanceOf[Boolean]
+  def b( key:String ):Boolean =
+    apply( key ) match {
+    case b:java.lang.Boolean => b
+    case s:String            => s.toLaxBoolean
+    case null                => false
+    }
   def d( key:String )         = 
     apply( key ) match {
     case i:java.lang.Integer => i.doubleValue

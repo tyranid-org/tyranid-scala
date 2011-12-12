@@ -18,6 +18,7 @@
 package org.tyranid.text
 
 import scala.util.matching.Regex
+import scala.xml.{ NodeSeq, Text }
 
 import org.tyranid.Imp._
 import org.tyranid.time.{ Time }
@@ -84,6 +85,8 @@ class StringImp( s:String ) {
 
 	def toXml = scala.xml.XML.loadString( s )
 
+  def toNodeSeq = if ( s != null ) Text( s ) else NodeSeq.Empty
+
   def toLiftJson = _root_.net.liftweb.json.JsonParser.parse( s )
 
   def toJson = org.tyranid.json.Json.parse( s )
@@ -144,21 +147,21 @@ class StringImp( s:String ) {
       0
     else
       try {
-        s.toInt
+        s.replaceAll( ",", "" ).replaceAll( " ", "" ).toInt
       } catch {
       case e:NumberFormatException =>
         0
       }
 
   def toLaxDouble = if ( s.isBlank ) 0
-                    else             s.toDouble
+                    else             s.replaceAll( ",", "" ).replaceAll( " ", "" ).toDouble
 
   def toLaxLong =
     if ( s.isBlank )
       0
     else
       try {
-        s.toLong
+        s.replaceAll( ",", "" ).replaceAll( " ", "" ).toLong
       } catch {
       case e:NumberFormatException =>
         0
