@@ -61,7 +61,12 @@ class CalendarImp( c:Calendar ) {
     c.set( Calendar.MILLISECOND, 0 )
   }
 
-  def rollToDayOfWeek( dayOfWeek:Int, direction:Int ) {
+  def rollToNearestDayOfWeek( c:Calendar, dayOfWeek:Int, direction:Int ) {
+    while ( c.get( Calendar.DAY_OF_WEEK ) != dayOfWeek )
+      c.add( Calendar.DAY_OF_MONTH, direction )
+  }
+
+  def rollToNextDayOfWeek( dayOfWeek:Int, direction:Int ) {
     assert( direction == -1 || direction == 1 )
 
     do {

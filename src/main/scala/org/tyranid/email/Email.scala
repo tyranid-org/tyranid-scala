@@ -232,7 +232,7 @@ case class Email( subject:String, text:String ) {
     new MimetypesFileTypeMap().getContentType( f );
   }
   
-  private def getMailSession() : Session  = {
+  private def getMailSession:Session  = {
     if ( emailSession == null ) {
       var emailConfig = EmailConfig.db.findOne()
       

@@ -683,7 +683,7 @@ class TimeParser {
 		
 		if ( dayOfWeek != 0 ) {
 			if ( rollToDayOfWeek )
-				dv.rollToDayOfWeek( dayOfWeek, rollDaysNeeded )
+				dv.rollToNextDayOfWeek( dayOfWeek, rollDaysNeeded )
 			else
 				if ( dayOfWeek != dv.get( Calendar.DAY_OF_WEEK ) )
 					fail(  Time.WeekDayNames( dayOfWeek-1 ).capitalize
