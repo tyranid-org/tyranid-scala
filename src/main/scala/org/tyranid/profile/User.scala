@@ -19,7 +19,7 @@ package org.tyranid.profile
 
 import java.util.TimeZone
 
-import net.liftweb.http.{ RedirectResponse, S, SessionVar }
+import net.liftweb.http.{ RedirectResponse, S }
 
 import org.tyranid.Bind
 import org.tyranid.Imp._

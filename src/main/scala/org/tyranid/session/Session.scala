@@ -17,10 +17,10 @@
 
 package org.tyranid.session
 
+import javax.servlet.http.HttpSession
+
 import scala.collection.mutable
 import scala.xml.{ Node, NodeSeq, Unparsed }
-
-import net.liftweb.http.SessionVar
 
 import org.tyranid.Imp._
 import org.tyranid.Bind
@@ -28,13 +28,30 @@ import org.tyranid.profile.User
 import org.tyranid.report.Query
 
 
+
 object SessionMeta {
-  private object currentVar extends SessionVar[Session]( Bind.NewSession() )
+
+  val HttpSessionKey = "tyrSess"
+
+  val sessionVar = new ThreadLocal[HttpSession]()
+
+  def httpSession = sessionVar.get
+  def httpSession_=( obj:HttpSession ) = sessionVar.set( obj )
 }
 
 trait SessionMeta {
 
-  def apply():Session = SessionMeta.currentVar.is
+  def apply():Session = {
+    val http = SessionMeta.httpSession
+
+    http.getAttribute( SessionMeta.HttpSessionKey ) match {
+    case s:Session => s
+    case _         =>
+      val s = Bind.NewSession()
+      http.setAttribute( SessionMeta.HttpSessionKey, s )
+      s
+    }
+  }
 
 
   /*
