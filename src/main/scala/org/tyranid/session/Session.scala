@@ -41,7 +41,7 @@ object SessionMeta {
     if ( http != null ) {
       http
     } else {
-      assignFromLiftSession( net.liftweb.http.S.session.open_! )
+      net.liftweb.http.S.session.foreach ( assignFromLiftSession _ )
       sessionVar.get
     }
   }
