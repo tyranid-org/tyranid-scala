@@ -35,15 +35,33 @@ object SessionMeta {
 
   val sessionVar = new ThreadLocal[HttpSession]()
 
-  def httpSession = sessionVar.get
+  def httpSession:HttpSession = {
+    val http = sessionVar.get
+
+    if ( http != null ) {
+      http
+    } else {
+      assignFromLiftSession( net.liftweb.http.S.session.open_! )
+      sessionVar.get
+    }
+  }
+
   def httpSession_=( obj:HttpSession ) = sessionVar.set( obj )
+
+  def assignFromLiftSession( liftSession:net.liftweb.http.LiftSession ) = {
+    httpSession = {
+      val liftSess = liftSession.httpSession.open_!.asInstanceOf[net.liftweb.http.provider.servlet.HTTPServletSession]
+      val field = liftSess.getClass.getDeclaredField( "session" )
+      field.setAccessible( true )
+      field.get( liftSess ).asInstanceOf[javax.servlet.http.HttpSession]
+    }
+  }
 }
 
 trait SessionMeta {
 
   def apply():Session = {
     val http = SessionMeta.httpSession
-spam( "http=" + http )
 
     http.getAttribute( SessionMeta.HttpSessionKey ) match {
     case s:Session => s
