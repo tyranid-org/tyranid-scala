@@ -43,6 +43,7 @@ trait SessionMeta {
 
   def apply():Session = {
     val http = SessionMeta.httpSession
+spam( "http=" + http )
 
     http.getAttribute( SessionMeta.HttpSessionKey ) match {
     case s:Session => s
