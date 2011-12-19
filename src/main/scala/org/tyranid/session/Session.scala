@@ -53,15 +53,7 @@ object SessionMeta {
       val liftSess = liftSession.httpSession.open_!.asInstanceOf[net.liftweb.http.provider.servlet.HTTPServletSession]
       val field = liftSess.getClass.getDeclaredField( "session" )
       field.setAccessible( true )
-      var session = field.get( liftSess ).asInstanceOf[javax.servlet.http.HttpSession]
-
-println( "session: "+ session )      
-      if ( session == null ) {
-        session = new MockHttpSession
-      }
-      println( "now session: "+ session )      
-      
-      session
+      field.get( liftSess ).asInstanceOf[javax.servlet.http.HttpSession]
     }
   }
 }
