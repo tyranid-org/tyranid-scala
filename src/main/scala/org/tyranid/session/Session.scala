@@ -28,49 +28,80 @@ import org.tyranid.profile.User
 import org.tyranid.report.Query
 
 
+object ThreadData {
 
-object SessionMeta {
+  private val data = new ThreadLocal[ThreadData]()
 
-  val HttpSessionKey = "tyrSess"
+  def apply():ThreadData = {
+    var sess = data.get
 
-  val sessionVar = new ThreadLocal[HttpSession]()
-
-  def httpSession:HttpSession = {
-    val http = sessionVar.get
-
-    if ( http != null ) {
-      http
-    } else {
-      assignFromLiftSession( net.liftweb.http.S.session.open_! )
-      sessionVar.get
+    if ( sess == null ) {
+      sess = new ThreadData
+      data.set( sess )
     }
+
+    sess
   }
 
-  def httpSession_=( obj:HttpSession ) = sessionVar.set( obj )
+  val HttpSessionKey = "tyrSess"
+}
+
+class ThreadData {
+
+  // --- HTTP Session
+
+  var httpData:HttpSession = _
+
+  def http:HttpSession = {
+
+    if ( httpData == null )
+      assignFromLiftSession( net.liftweb.http.S.session.open_! )
+
+    httpData
+  }
+
+  def http_=( obj:HttpSession ) = httpData = obj
+
 
   def assignFromLiftSession( liftSession:net.liftweb.http.LiftSession ) = {
-    httpSession = {
+    httpData = {
       val liftSess = liftSession.httpSession.open_!.asInstanceOf[net.liftweb.http.provider.servlet.HTTPServletSession]
       val field = liftSess.getClass.getDeclaredField( "session" )
       field.setAccessible( true )
       field.get( liftSess ).asInstanceOf[javax.servlet.http.HttpSession]
     }
   }
+
+
+  // --- Tyranid Session
+
+  private var tyrData:Session = _
+
+  def tyr:Session = {
+    if ( tyrData == null ) {
+      tyrData =
+        http.getAttribute( ThreadData.HttpSessionKey ) match {
+        case s:Session => s
+        case _         =>
+          val s = Bind.NewSession()
+          http.setAttribute( ThreadData.HttpSessionKey, s )
+          s
+        }
+    }
+
+    tyrData
+  }
+
+}
+
+
+object SessionMeta {
+
 }
 
 trait SessionMeta {
 
-  def apply():Session = {
-    val http = SessionMeta.httpSession
-
-    http.getAttribute( SessionMeta.HttpSessionKey ) match {
-    case s:Session => s
-    case _         =>
-      val s = Bind.NewSession()
-      http.setAttribute( SessionMeta.HttpSessionKey, s )
-      s
-    }
-  }
+  def apply():Session = ThreadData().tyr
 
 
   /*
