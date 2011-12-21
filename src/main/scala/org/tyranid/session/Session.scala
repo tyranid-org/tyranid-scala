@@ -55,7 +55,7 @@ class ThreadData {
   def http:HttpSession = {
 
     if ( httpData == null )
-      assignFromLiftSession( net.liftweb.http.S.session.open_! )
+      net.liftweb.http.S.session.foreach { assignFromLiftSession _ }
 
     httpData
   }
