@@ -80,12 +80,16 @@ class ThreadData {
   def tyr:Session = {
     if ( tyrData == null ) {
       tyrData =
-        http.getAttribute( ThreadData.HttpSessionKey ) match {
-        case s:Session => s
-        case _         =>
-          val s = Bind.NewSession()
-          http.setAttribute( ThreadData.HttpSessionKey, s )
-          s
+        if ( http != null ) {
+          http.getAttribute( ThreadData.HttpSessionKey ) match {
+          case s:Session => s
+          case _         =>
+            val s = Bind.NewSession()
+            http.setAttribute( ThreadData.HttpSessionKey, s )
+            s
+          }
+        } else {
+          Bind.NewSession()
         }
     }
 
