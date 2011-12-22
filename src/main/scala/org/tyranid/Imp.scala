@@ -71,5 +71,10 @@ object Imp {
   implicit def byteArray( ba:Array[Byte] )                = new org.tyranid.math.ByteArray( ba )
 	implicit def symbol( v:Symbol )                         = v.name
 	implicit def jackson( v:org.codehaus.jackson.JsonNode ) = new org.tyranid.json.JsonNodeImp( v )
+
+  import javax.servlet.http.{ HttpServletRequest, HttpServletResponse }
+  implicit def servletRequest ( v:HttpServletRequest  )   = new org.tyranid.servlet.HttpServletRequestOps ( v )
+  implicit def servletResponse( v:HttpServletResponse )   = new org.tyranid.servlet.HttpServletResponseOps( v )
+
 }
 

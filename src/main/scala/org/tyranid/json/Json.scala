@@ -130,6 +130,7 @@ case class JsonString( root:Any ) {
         write( e._2 )
       }
       sb += '}'
+    case b:java.lang.Boolean => sb ++= b.toString
     case d:java.lang.Double  => sb ++= d.toString
     case l:java.lang.Long    => sb ++= l.toString
     case f:java.lang.Float   => sb ++= f.toString
