@@ -33,5 +33,18 @@ class JsonSuite extends FunSuite {
 
     //assert( jackson( json ).foo.s === "bar" )
   }
+
+  test( "stringify" ) {
+    val data = Seq(
+      "cat",                                       "\"cat\"",
+      5,                                           "5",
+      List( 1, 2, 3 ),                             "[1,2,3]",
+      List( 1, "cat", 3 ),                         """[1,"cat",3]""",
+      Map( "bar" -> 1, "foo" -> List( 1, 2, 3 ) ), """{"bar":1,"foo":[1,2,3]}"""
+    )
+
+    for ( d <- 0 to data.size - 1 by 2 )
+      assert( data( d ).toJsonStr === data( d+1 ) )
+  }
 }
 

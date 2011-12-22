@@ -93,4 +93,46 @@ class JsonNodeImp( node:JsonNode ) /*extends Dynamic*/ {
     }
 }
 
+case class JsonString( root:Any ) {
+
+  private val sb = new StringBuilder
+
+  override def toString = {
+    write( root )
+    sb.toString
+  }
+
+  private def write( obj:Any ):Unit =
+    obj match {
+    case s:String            => sb += '"' ++= s.encJson += '"'
+    case i:java.lang.Integer => sb ++= i.toString
+    case l:Seq[_]            =>
+      var first = true
+      sb += '['
+      for ( v <- l ) {
+        if ( first )
+          first = false
+        else
+          sb += ','
+        write( v )
+      }
+      sb += ']'
+    case o:Map[_,_]          =>
+      sb += '{'
+      var first = true
+      for ( e <- o ) {
+        if ( first )
+          first = false
+        else
+          sb += ','
+        write( e._1 )
+        sb += ':'
+        write( e._2 )
+      }
+      sb += '}'
+    case d:java.lang.Double  => sb ++= d.toString
+    case l:java.lang.Long    => sb ++= l.toString
+    case f:java.lang.Float   => sb ++= f.toString
+    }
+}
 

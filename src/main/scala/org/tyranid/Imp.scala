@@ -59,7 +59,8 @@ object Imp {
 
   def log( msg:String = "", exception:Exception = null ) = org.tyranid.log.Log.log( msg, exception )
 
-	implicit def any[ T <: AnyRef ]( v:T )                  = new org.tyranid.logic.AnyRefImp[T]( v )
+	implicit def anyImp[ T <: Any ]( v:T )                  = new org.tyranid.logic.AnyImp[T]( v )
+	implicit def anyRefImp[ T <: AnyRef ]( v:T )            = new org.tyranid.logic.AnyRefImp[T]( v )
 	implicit def boolean( v:Boolean )                       = new org.tyranid.logic.BooleanImp( v )
 	implicit def calendarImp( v:Calendar )                  = new org.tyranid.time.CalendarImp( v )
 	implicit def dateImp( v:Date )                          = new org.tyranid.time.DateImp( v )
