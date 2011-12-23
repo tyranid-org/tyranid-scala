@@ -25,11 +25,17 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
 
 case class HttpServletResponseOps( res:HttpServletResponse ) {
 
-  def json( json:Any, status:Int = 200 ) = {
-
-    res.setContentType( "application/json" )
+  def json( json:Any, status:Int = 200, jsonpCallback:String = null ) = {
+	res.setContentType( if ( jsonpCallback != null ) "text/javascript" else "application/json" )
     res.setStatus( status )
-    out( json.toJsonStr )
+
+    out( 
+	  if ( jsonpCallback != null ) {
+		jsonpCallback + "(" + json.toJsonStr + ")"
+	  } else {
+	 	json.toJsonStr 
+	  }
+	)
   }
 
   def out( s:String ) = {
@@ -47,16 +53,12 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
 
 
 class TyrServlet extends HttpServlet {
-	
-	override def init( config:ServletConfig ) {}
+  override def init( config:ServletConfig ) {}
 
-	override def doGet( req:HttpServletRequest, res:HttpServletResponse ) {
-	  
+  override def doGet( req:HttpServletRequest, res:HttpServletResponse ) {
     res.setContentType( "text/plain" )
-	        
     val output = "test"
     val outputLength = output.length
-
     res.setContentLength( outputLength )
 	        
     val out = res.getOutputStream
