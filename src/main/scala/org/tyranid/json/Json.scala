@@ -134,6 +134,7 @@ case class JsonString( root:Any ) {
     case d:java.lang.Double  => sb ++= d.toString
     case l:java.lang.Long    => sb ++= l.toString
     case f:java.lang.Float   => sb ++= f.toString
+	case u => println( "Don't know how to turn " + u + " into JSON" ); sb ++= "\"\"" 
     }
 }
 
