@@ -106,6 +106,7 @@ case class JsonString( root:Any ) {
     obj match {
     case s:String            => sb += '"' ++= s.encJson += '"'
     case i:java.lang.Integer => sb ++= i.toString
+    case a:Array[_] => write( List.fromArray( a ) ) 
     case l:Seq[_]            =>
       var first = true
       sb += '['
