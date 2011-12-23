@@ -40,6 +40,7 @@ class JsonSuite extends FunSuite {
       5,                                           "5",
       List( 1, 2, 3 ),                             "[1,2,3]",
       List( 1, "cat", 3 ),                         """[1,"cat",3]""",
+	  Array( 1, 2, 3 ),							   """[1,2,3]""",
       Map( "bar" -> 1, "foo" -> List( 1, 2, 3 ) ), """{"bar":1,"foo":[1,2,3]}""",
       false,                                       "false"
     )
