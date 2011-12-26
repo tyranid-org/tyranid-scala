@@ -52,31 +52,3 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
   }
 }
 
-
-class TyrFilter extends Filter {
-
-  var filterConfig:FilterConfig = _
-
-
-  def init( filterConfig:FilterConfig ) {
-spam( "*** initializing filter" )
-    this.filterConfig = filterConfig;
-    org.tyranid.boot.Boot.boot
-  }
-
-  def destroy {
-    this.filterConfig = null
-  }
-
-  def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ) {
-
-    val req = request.asInstanceOf[HttpServletRequest]
-    val res = response.asInstanceOf[HttpServletResponse]
-
-    spam( "pathInfo:" + req.getPathInfo )
-
-    chain.doFilter(request, response);
-  }
-}
-
-

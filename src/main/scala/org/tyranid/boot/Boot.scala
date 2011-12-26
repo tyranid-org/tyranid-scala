@@ -17,10 +17,11 @@
 
 package org.tyranid.boot
 
+import org.tyranid.web.Weblet
 
 object Boot {
 
-  @volatile private var instance:Boot = _
+  @volatile var instance:Boot = _
 
   def boot = synchronized {
 
@@ -54,6 +55,8 @@ object Boot {
  * 3)  extend this trait.
  */
 trait Boot {
+
+  val weblets:List[Weblet]
 
   def boot:Unit
 }
