@@ -29,8 +29,16 @@ class WebFilter extends Filter {
                               response.asInstanceOf[HttpServletResponse] )
 
     Boot.instance.weblets.find( pair => ctx.matches( pair._1 ) && pair._2.matches( ctx ) ) match {
-    case Some( ( path, weblet ) ) => weblet.handle( ctx )
-    case None                     => chain.doFilter(request, response);
+    case Some( ( path, weblet ) ) =>
+      try {
+        weblet.handle( ctx )
+      } catch {
+      case e =>
+        e.printStackTrace
+      }
+
+    case None =>
+      chain.doFilter(request, response);
     }
   }
 }
