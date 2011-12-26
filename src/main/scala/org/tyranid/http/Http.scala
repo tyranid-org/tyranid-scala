@@ -53,28 +53,15 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
 }
 
 
-class TyrServlet extends HttpServlet {
-  override def init( config:ServletConfig ) {}
-
-  override def doGet( req:HttpServletRequest, res:HttpServletResponse ) {
-    res.setContentType( "text/plain" )
-    val output = "test"
-    val outputLength = output.length
-    res.setContentLength( outputLength )
-	        
-    val out = res.getOutputStream
-    out.write( output.getBytes, 0, outputLength )
-    out.close
-  }
-}
-
 class TyrFilter extends Filter {
 
   var filterConfig:FilterConfig = _
 
 
   def init( filterConfig:FilterConfig ) {
+spam( "*** initializing filter" )
     this.filterConfig = filterConfig;
+    org.tyranid.boot.Boot.boot
   }
 
   def destroy {
@@ -86,8 +73,7 @@ class TyrFilter extends Filter {
     val req = request.asInstanceOf[HttpServletRequest]
     val res = response.asInstanceOf[HttpServletResponse]
 
-
-
+    spam( "pathInfo:" + req.getPathInfo )
 
     chain.doFilter(request, response);
   }
