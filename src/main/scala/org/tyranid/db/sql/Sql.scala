@@ -19,9 +19,6 @@ package org.tyranid.db.sql
 
 import java.sql.{ Connection, DriverManager, SQLException }
 
-import net.liftweb.common.{ Box, Empty, Full }
-import net.liftweb.mapper.{ DefaultConnectionIdentifier, ConnectionIdentifier, ConnectionManager }
-
 import org.tyranid.Bind
 import org.tyranid.db.Entity
 
@@ -33,22 +30,22 @@ object Imp {
 }
 
 
-object SqlVendor extends ConnectionManager {
+object SqlPool {
   private var pool:List[Connection] = Nil
   private var poolSize = 0
   private val maxPoolSize = 4
 
   	
-  private def createOne:Box[Connection] =
+  private def createOne:Option[Connection] =
     try {
 	    Class.forName( Bind.DbDriver )
 
-			Full( DriverManager.getConnection( Bind.DbUrl, Bind.DbUser, Bind.DbPw ) )
+			Some( DriverManager.getConnection( Bind.DbUrl, Bind.DbUser, Bind.DbPw ) )
 	  } catch {
-	    case e: Exception => e.printStackTrace; Empty
+	    case e: Exception => e.printStackTrace; None
 	  }
 
-  def newConnection( name:ConnectionIdentifier ):Box[Connection] =
+  def newConnection:Option[Connection] =
     synchronized {
       pool match {
 			case Nil if poolSize < maxPoolSize =>
@@ -57,18 +54,18 @@ object SqlVendor extends ConnectionManager {
         ret.foreach(c => pool = c :: pool)
         ret
 
-			case Nil => wait(1000L); newConnection(name)
+			case Nil => wait(1000L); newConnection
 			case x :: xs => try {
 	        x.setAutoCommit(false)
-	        Full(x)
+	        Some(x)
 	      } catch {
           case e => try {
             pool = xs
             poolSize = poolSize - 1
             x.close
-            newConnection(name)
+            newConnection
           } catch {
-            case e => newConnection(name)
+            case e => newConnection
           }
         }
       }
@@ -79,7 +76,6 @@ object SqlVendor extends ConnectionManager {
     notify
   }
 }
-
 
 object Sql {
 
@@ -108,12 +104,12 @@ object Sql {
 	}
 
 	def connect[ T ]( block: ( Connection ) => T ): T = {
-		SqlVendor.newConnection( DefaultConnectionIdentifier ) match {
-		case Full( conn ) =>
+		SqlPool.newConnection match {
+		case Some( conn ) =>
 			try {
 				block( conn )
 			} finally {
-				SqlVendor.releaseConnection( conn )
+				SqlPool.releaseConnection( conn )
 			}
 
 		case _ =>

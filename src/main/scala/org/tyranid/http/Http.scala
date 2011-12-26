@@ -2,6 +2,7 @@
 package org.tyranid.servlet
 
 import javax.servlet.ServletConfig
+import javax.servlet.{ Filter, FilterChain, FilterConfig, ServletRequest, ServletResponse }
 import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
 
 import org.tyranid.Imp._
@@ -26,16 +27,16 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
 case class HttpServletResponseOps( res:HttpServletResponse ) {
 
   def json( json:Any, status:Int = 200, jsonpCallback:String = null ) = {
-	res.setContentType( if ( jsonpCallback != null ) "text/javascript" else "application/json" )
+    res.setContentType( if ( jsonpCallback != null ) "text/javascript" else "application/json" )
     res.setStatus( status )
 
     out( 
-	  if ( jsonpCallback != null ) {
-		jsonpCallback + "(" + json.toJsonStr + ")"
-	  } else {
-	 	json.toJsonStr 
-	  }
-	)
+      if ( jsonpCallback != null ) {
+        jsonpCallback + "(" + json.toJsonStr + ")"
+      } else {
+        json.toJsonStr 
+      }
+    )
   }
 
   def out( s:String ) = {
@@ -66,3 +67,30 @@ class TyrServlet extends HttpServlet {
     out.close
   }
 }
+
+class TyrFilter extends Filter {
+
+  var filterConfig:FilterConfig = _
+
+
+  def init( filterConfig:FilterConfig ) {
+    this.filterConfig = filterConfig;
+  }
+
+  def destroy {
+    this.filterConfig = null
+  }
+
+  def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ) {
+
+    val req = request.asInstanceOf[HttpServletRequest]
+    val res = response.asInstanceOf[HttpServletResponse]
+
+
+
+
+    chain.doFilter(request, response);
+  }
+}
+
+

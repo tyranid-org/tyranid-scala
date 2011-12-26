@@ -11,7 +11,6 @@ object Tyranid extends Build {
 
   val commonLibs = Seq(
     "net.liftweb"              %% "lift-webkit"              % liftVersion       % "compile->default", // Lift, Scala Web Framework
-    "net.liftweb"              %% "lift-mapper"              % liftVersion       % "compile->default",
 
     "net.databinder"            %% "dispatch-http"            % "0.8.6"         % "compile->default",
 
