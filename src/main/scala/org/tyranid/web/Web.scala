@@ -28,10 +28,9 @@ class WebFilter extends Filter {
     val ctx = new WebContext( request.asInstanceOf[HttpServletRequest],
                               response.asInstanceOf[HttpServletResponse] )
 
-spam( "matching: " + ctx.req.getServletPath )
-    Boot.instance.weblets.find( _.matches( ctx ) ) match {
-    case Some( weblet ) => weblet.handle( ctx )
-    case None           => chain.doFilter(request, response);
+    Boot.instance.weblets.find( pair => ctx.matches( pair._1 ) && pair._2.matches( ctx ) ) match {
+    case Some( ( path, weblet ) ) => weblet.handle( ctx )
+    case None                     => chain.doFilter(request, response);
     }
   }
 }
@@ -40,7 +39,6 @@ spam( "matching: " + ctx.req.getServletPath )
 case class WebContext( req:HttpServletRequest, res:HttpServletResponse ) {
 
   def matches( path:String ) = {
-    spam( "matching: " + req.getServletPath + " vs. " + path )
     // TODO:  check for path separators ... i.e. "/foo" should not match "/foobar" but should match "/foo/bar"
     req.getServletPath.startsWith( path )
   }
@@ -49,7 +47,8 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse ) {
 
 trait Weblet {
 
-  def matches( ctx:WebContext ):Boolean
+  def matches( ctx:WebContext ) = true
+
   def handle( ctx:WebContext ):Unit
 }
 

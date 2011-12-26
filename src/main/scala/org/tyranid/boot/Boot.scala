@@ -56,7 +56,7 @@ object Boot {
  */
 trait Boot {
 
-  val weblets:List[Weblet]
+  val weblets:List[(String,Weblet)]
 
   def boot:Unit
 }
