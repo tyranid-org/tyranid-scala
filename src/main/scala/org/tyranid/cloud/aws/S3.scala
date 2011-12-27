@@ -38,6 +38,8 @@ case class S3Bucket( prefix:String, cfDistributionId:String = "", cfDomain:Strin
 object S3 {
   private val s3 = new AmazonS3Client( Bind.AwsCredentials )
 
+  def write( bucket:S3Bucket, key:String, file:java.io.File ) = s3.putObject( bucket.name, key, file )
+  
   def write( bucket:S3Bucket, key:String, mimeType:String, data:Array[Byte] ) = {
     val md = new ObjectMetadata
     md.setContentLength( data.length )
@@ -51,7 +53,7 @@ object S3 {
       is.close
     }
   }
-
+  
   def delete( bucket:S3Bucket, key:String ) = s3.deleteObject( bucket.name, key )
 
   def access( bucket:S3Bucket, key:String, public:Boolean ) = {
@@ -60,6 +62,7 @@ object S3 {
       val acl = s3.getObjectAcl( bucket.name, key )
 
       acl.revokeAllPermissions( GroupGrantee.AllUsers )
+      
       if ( public )
         acl.grantPermission( GroupGrantee.AllUsers, Permission.Read )
 
