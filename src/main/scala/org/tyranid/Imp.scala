@@ -25,6 +25,8 @@ import java.util.{ Calendar, Date }
  */
 object Imp {
 
+  def Tyr = org.tyranid.boot.Boot.instance
+
   /**
    * Try a block of code that returns a string, if it succeeds return the string, otherwise return the exception message.
    */

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008-2011 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,19 +30,21 @@ class WebSuite extends FunSuite {
 
   test( "templates" ) {
 
-    assert( WebTemplate( <tyr:shell><div><p>Test</p></div></tyr:shell> ).toString ===
-            <html><head></head><body><div><p>Test</p></div></body></html>.toString )
+    assert(
+      WebTemplate(
+        <tyr:shell><div><p>Test</p></div></tyr:shell> ).toString ===
+      <html><head></head><body><h1>hi there</h1><div><p>Test</p></div></body></html>.toString )
 
-  }
+    assert(
+      WebTemplate(
+        <tyr:shell><tyr:sample/></tyr:shell> ).toString ===
+      <html><head></head><body><h1>hi there</h1><p>Sample</p></body></html>.toString )
 
-  test( "binding" ) {
-
-    val rslt =
-      WebTemplate.bind(
+    assert(
+      WebTemplate(
         <div><p>Test</p><tyr:content/></div>,
-        <input/> )
-
-      assert( rslt.toString === <div><p>Test</p><input></input></div>.toString )
+        <input/> ).toString ===
+      <div><p>Test</p><input></input></div>.toString )
   }
 }
 

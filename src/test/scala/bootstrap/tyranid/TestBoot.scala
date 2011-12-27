@@ -13,7 +13,9 @@ class Boot extends org.tyranid.boot.Bootable {
   val weblets = Nil
 
   val templates =
-    "shell" -> ( xml:NodeSeq ) => <html><head></head><body><tyr:content/></body></html> ) ::
+    "shell"  -> ( ( xml:NodeSeq ) => <html><head></head><body><tyr:header/><tyr:content/></body></html> ) ::
+    "header" -> ( ( xml:NodeSeq ) => <h1>hi there</h1> ) ::
+    "sample" -> ( ( xml:NodeSeq ) => <p>Sample</p> ) ::
     Nil
 
   def boot = {
