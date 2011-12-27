@@ -17,30 +17,36 @@
 
 package org.tyranid.boot
 
+import scala.xml.NodeSeq
+
 import org.tyranid.web.Weblet
 
 object Boot {
 
-  @volatile var instance:Boot = _
+  @volatile var instance:Bootable = _
 
   def boot = synchronized {
 
     if ( instance == null ) {
-      val cls = Class.forName( "bootstrap.tyranid.Boot" )
-      if ( cls == null )
-        throw new RuntimeException( "Could not locate bootstrap.tyranid.Boot" )
-
       try {
+        val cls = Class.forName( "bootstrap.tyranid.Boot" )
+        if ( cls == null )
+          throw new RuntimeException( "Could not locate bootstrap.tyranid.Boot" )
+
         val boot = cls.newInstance
         if ( boot == null )
           throw new RuntimeException( "Could not instantiate bootstrap.tyranid.Boot" )
 
-        instance = boot.asInstanceOf[Boot]
+        instance = boot.asInstanceOf[Bootable]
 
         instance.boot
       } catch {
       case e:ClassCastException =>
         throw new RuntimeException( "bootstrap.tyranid.Boot does not extend org.tyranid.boot.Boot" )
+
+      case e =>
+        e.printStackTrace
+        throw new RuntimeException( "could not instantiate bootstrap.tyranid.Boot" )
       }
     }
   }
@@ -54,9 +60,11 @@ object Boot {
  * 2)  be an object named "Boot",
  * 3)  extend this trait.
  */
-trait Boot {
+trait Bootable {
 
   val weblets:List[(String,Weblet)]
+
+  val templates:List[(String, ( NodeSeq ) => NodeSeq )]
 
   def boot:Unit
 }

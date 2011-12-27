@@ -15,29 +15,34 @@
  *
  */
 
-package org.tyranid.text
+package org.tyranid.web
+
+import java.util.{ Calendar, Date, TimeZone }
 
 import org.scalatest.FunSuite
 
 import org.tyranid.Imp._
+import org.tyranid.session.Session
 
 
-class StringSuite extends FunSuite {
+class WebSuite extends FunSuite {
+  org.tyranid.boot.Boot.boot
 
-  test( "decUrl" ) {
+  test( "templates" ) {
 
-    //"%u2122".decUrl
+    assert( WebTemplate( <tyr:shell><div><p>Test</p></div></tyr:shell> ).toString ===
+            <html><head></head><body><div><p>Test</p></div></body></html>.toString )
 
-    //assert( re.base36  === Base36.toString( re.decimal ) )
   }
 
-  test( "allBlank" ) {
+  test( "binding" ) {
 
-    assert( null.asInstanceOf[String].notAllBlank === false )
-    assert( "".notAllBlank                        === false )
-    assert( "   \n\r".notAllBlank                 === false )
-    assert( "   a\n\r".notAllBlank                === true )
-    assert( "a".notAllBlank                       === true )
+    val rslt =
+      WebTemplate.bind(
+        <div><p>Test</p><tyr:content/></div>,
+        <input/> )
+
+      assert( rslt.toString === <div><p>Test</p><input></input></div>.toString )
   }
 }
 

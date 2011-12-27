@@ -26,7 +26,7 @@ import org.tyranid.session.Session
 
 
 class TimeSuite extends FunSuite {
-  org.tyranid.test.TestBoot.boot
+  org.tyranid.boot.Boot.boot
 
   test( "timeZoneParsing" ) {
 

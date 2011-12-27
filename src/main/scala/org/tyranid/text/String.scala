@@ -63,6 +63,24 @@ class StringImp( s:String ) {
 	def isBlank  = ( s == null || s.length == 0 )
 	def notBlank = ( s != null && s.length >  0 )
 
+  def allBlank:Boolean = {
+    if ( s != null )
+      for ( i <- 0 until s.length )
+        if ( !s( i ).isWhitespace )
+          return false
+
+    true
+  }
+
+  def notAllBlank:Boolean = {
+    if ( s != null )
+      for ( i <- 0 until s.length )
+        if ( !s( i ).isWhitespace )
+          return true
+
+    false
+  }
+
   /**
    * Similar to Groovy's ?: (Elvis) operator.
    *
