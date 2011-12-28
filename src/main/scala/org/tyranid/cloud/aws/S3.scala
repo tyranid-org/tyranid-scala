@@ -17,11 +17,12 @@
 
 package org.tyranid.cloud.aws
 
-import java.io.ByteArrayInputStream
+import java.io.{ ByteArrayInputStream, FileOutputStream }
 
 import com.amazonaws.services.s3.AmazonS3Client
-import com.amazonaws.services.s3.model.{ AmazonS3Exception, GroupGrantee, ObjectMetadata, Permission, S3Object }
+import com.amazonaws.services.s3.model.{ AmazonS3Exception, GroupGrantee, ObjectMetadata, Permission, S3Object, GetObjectRequest }
 
+import org.tyranid.io.IOUtils
 import org.tyranid.Bind
 import org.tyranid.Imp._
 
@@ -72,5 +73,55 @@ object S3 {
         log( "S3 Exception", e )
     }
   }
-}
+  
+  def download( bucket:S3Bucket, key:String ) = {
+	var obj:S3Object = null
+	
+	try {
+      obj = s3.getObject( new GetObjectRequest( bucket.name, key ) )
 
+	  //println( "Content-Type: "  + object.getObjectMetadata().getContentType() );
+		
+      if ( obj != null ) {
+		  val tmpName = "/tmp/" + System.currentTimeMillis + "_" + key
+		  val f = new java.io.File( tmpName )
+			
+		  //f.split( "/" )
+		  //f.mkdirs()
+			
+		  var fops = new FileOutputStream( f )
+		  IOUtils.transfer( obj.getObjectContent(), fops );
+		  fops.close
+		  f
+      }
+	} catch {
+      case e: AmazonS3Exception => {
+        e.printStackTrace()
+        println( e.getMessage() )
+      }
+      
+      null
+    }
+  }
+  
+  def getInputStream( bucket:S3Bucket, key:String ) = {
+	try {
+      val obj = s3.getObject( new GetObjectRequest( bucket.name, key ) )
+      
+      if ( obj != null )
+        obj.getObjectContent()
+
+	} catch {
+      case e: AmazonS3Exception => {
+        e.printStackTrace()
+        println( e.getMessage() )
+      }
+      
+      null
+    }
+  }
+  
+  def getObject( bucket:S3Bucket, key:String ) = {
+    s3.getObject( new GetObjectRequest( bucket.name, key ) )
+  }
+}
