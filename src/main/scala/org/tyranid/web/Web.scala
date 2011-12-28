@@ -1,8 +1,7 @@
 
 package org.tyranid.web
 
-import javax.servlet.ServletConfig
-import javax.servlet.{ Filter, FilterChain, FilterConfig, ServletRequest, ServletResponse }
+import javax.servlet.{ Filter, FilterChain, FilterConfig, ServletRequest, ServletResponse, ServletContext }
 import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
 
 import scala.xml.{ Elem, Node, NodeSeq, Text }
@@ -27,14 +26,14 @@ class WebFilter extends Filter {
   }
 
   def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ) {
-
+    
     val ctx = new WebContext( request.asInstanceOf[HttpServletRequest],
                               response.asInstanceOf[HttpServletResponse] )
 
     Tyr.weblets.find( pair => ctx.matches( pair._1 ) && pair._2.matches( ctx ) ) match {
     case Some( ( path, weblet ) ) =>
       try {
-        weblet.handle( ctx )
+        weblet.handle( ctx, filterConfig.getServletContext() )
       } catch {
       case e =>
         e.printStackTrace
@@ -60,7 +59,7 @@ trait Weblet {
 
   def matches( ctx:WebContext ) = true
 
-  def handle( ctx:WebContext ):Unit
+  def handle( ctx:WebContext, sctx:ServletContext = null ):Unit
 }
 
 

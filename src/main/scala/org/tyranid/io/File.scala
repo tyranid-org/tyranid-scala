@@ -89,20 +89,6 @@ class DbFile( bucket:S3Bucket ) extends Domain {
 object DbLocalFile extends Domain {
   val sqlName = "TEXT"
 
-  private def transfer( input: InputStream, out: OutputStream ) {
-  	val buffer = new Array[Byte](8192)
-  		
-  	def transfer() {
-  		val read = input.read( buffer )
-  		if ( read >= 0 ) {
-  			out.write( buffer, 0, read )
-  			transfer()
-  		}
-  	}
-  		
-  	transfer()
-  }
-  	
   protected def save( r:Record, f:Field )( fp:FileParamHolder ) =
     fp.file match {
     case null =>
@@ -110,7 +96,7 @@ object DbLocalFile extends Domain {
     case x =>
       val tmpName = "/tmp/" + System.currentTimeMillis + "_" + fp.fileName
       var fops = new FileOutputStream( new java.io.File( tmpName ) )
-      transfer( fp.fileStream, fops )
+      IOUtils.transfer( fp.fileStream, fops )
       fops.close()
       r( f.va ) = tmpName
     }
@@ -118,7 +104,6 @@ object DbLocalFile extends Domain {
   override def ui( s:Scope, f:Field, opts:(String,String)* ): NodeSeq =
     <div class='thumbnail'><div> { SHtml.fileUpload( save( s.rec, f ) _ ) }</div></div>
 }
-
 
 object File {
 }

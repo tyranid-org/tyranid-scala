@@ -1,7 +1,6 @@
 
 package org.tyranid.http
 
-import javax.servlet.ServletConfig
 import javax.servlet.{ Filter, FilterChain, FilterConfig, ServletRequest, ServletResponse }
 import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
 
