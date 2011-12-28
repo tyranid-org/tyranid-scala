@@ -28,12 +28,12 @@ class WebFilter extends Filter {
   def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ) {
     
     val ctx = new WebContext( request.asInstanceOf[HttpServletRequest],
-                              response.asInstanceOf[HttpServletResponse] )
+                              response.asInstanceOf[HttpServletResponse], filterConfig.getServletContext() )
 
     Tyr.weblets.find( pair => ctx.matches( pair._1 ) && pair._2.matches( ctx ) ) match {
     case Some( ( path, weblet ) ) =>
       try {
-        weblet.handle( ctx, filterConfig.getServletContext() )
+        weblet.handle( FileUploadSupport.checkContext( ctx ) )
       } catch {
       case e =>
         e.printStackTrace
@@ -46,8 +46,7 @@ class WebFilter extends Filter {
 }
 
 
-case class WebContext( req:HttpServletRequest, res:HttpServletResponse ) {
-
+case class WebContext( req:HttpServletRequest, res:HttpServletResponse, servletCtx:ServletContext ) {
   def matches( path:String ) = {
     // TODO:  check for path separators ... i.e. "/foo" should not match "/foobar" but should match "/foo/bar"
     req.getServletPath.startsWith( path )
@@ -56,10 +55,9 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse ) {
 }
 
 trait Weblet {
-
   def matches( ctx:WebContext ) = true
 
-  def handle( ctx:WebContext, sctx:ServletContext = null ):Unit
+  def handle( ctx:WebContext ):Unit
 }
 
 

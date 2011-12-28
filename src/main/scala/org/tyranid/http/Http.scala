@@ -3,8 +3,8 @@ package org.tyranid.http
 
 import javax.servlet.{ Filter, FilterChain, FilterConfig, ServletRequest, ServletResponse }
 import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
-
 import org.tyranid.Imp._
+import scala.xml.NodeSeq
 
 
 case class RestException( code:String, message:String ) extends Exception
@@ -36,6 +36,12 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
         json.toJsonStr 
       }
     )
+  }
+
+  def html( xml:NodeSeq, status:Int = 200 ) = {
+    res.setContentType( "text/html" )
+    res.setStatus( status )
+    out( xml.toString() )
   }
 
   def out( s:String ) = {
