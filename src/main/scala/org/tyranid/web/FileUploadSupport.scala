@@ -11,14 +11,6 @@ import javax.servlet.ServletContext
 import collection.Iterable
 import java.lang.String
 
-/** FileUploadSupport can be mixed into a [[org.scalatra.ScalatraFilter]] or [[org.scalatra.ScalatraServlet]] to provide easy access to data submitted
-   * as part of a multipart HTTP request.  Commonly this is used for retrieving uploaded files.
-   *
-   * Once the trait has been mixed into your handler you can access any files uploaded using {{{ fileParams("myFile") }}} where ''myFile'' is the name
-   * of the parameter used to upload the file being retrieved.
-   *
-   * @note Once any handler with FileUploadSupport has accessed the request, the fileParams returned by FileUploadSupport will remain fixed for
-   * the lifetime of the request. */
 object FileUploadSupport {
   case class BodyParams(fileParams: FileMultiParams, formParams: Map[String, List[String]])
   val BodyParamsKey = "org.tyranid.web.fileupload.bodyParams"
