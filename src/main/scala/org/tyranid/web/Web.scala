@@ -7,6 +7,7 @@ import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse
 import scala.xml.{ Elem, Node, NodeSeq, Text }
 
 import org.tyranid.Imp._
+import org.tyranid.session.ThreadData
 
 
 case class WebException( message:String ) extends Exception
@@ -26,10 +27,12 @@ class WebFilter extends Filter {
   }
 
   def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ) {
-    
+
     val ctx = new WebContext( request.asInstanceOf[HttpServletRequest],
                               response.asInstanceOf[HttpServletResponse], filterConfig.getServletContext() )
 
+    ThreadData().http = ctx.req.getSession( false )
+    
     Tyr.weblets.find( pair => ctx.matches( pair._1 ) && pair._2.matches( ctx ) ) match {
     case Some( ( path, weblet ) ) =>
       try {
