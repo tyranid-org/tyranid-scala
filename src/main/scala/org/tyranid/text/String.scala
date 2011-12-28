@@ -81,6 +81,38 @@ class StringImp( s:String ) {
     false
   }
 
+  /*
+   * Tokenizes the string into an array of tokens.  For example:
+   *
+   * "  blue green,purple    violet" becomes [ "blue", "green", "purple", "violet" ]
+   */
+  def tokenize:Array[String] = {
+
+    val l = s.length
+    val b = new collection.mutable.ArrayBuffer[String]( 8 )
+    val sb = new StringBuilder
+
+    for ( i <- 0 until l ) {
+      val ch = s.charAt( i )
+
+      if ( ch.isWhitespace || ch == ',' || ch == ';' ) {
+        if ( sb.nonEmpty ) {
+          b += sb.toString
+          sb.clear
+        }
+      } else {
+        sb += ch
+      }
+    }
+
+    if ( sb.nonEmpty ) {
+      b += sb.toString
+      sb.clear
+    }
+
+    Array[String]( b:_* )
+  }
+
   /**
    * Similar to Groovy's ?: (Elvis) operator.
    *

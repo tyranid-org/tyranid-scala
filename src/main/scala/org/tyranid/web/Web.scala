@@ -64,8 +64,6 @@ trait Weblet {
 object WebTemplate {
   /*
 
-     +.  recursively process templates
-
      +.  error message substitution
 
      +.  head merge (or some equivalent)

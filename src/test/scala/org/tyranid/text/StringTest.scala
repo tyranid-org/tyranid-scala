@@ -39,5 +39,11 @@ class StringSuite extends FunSuite {
     assert( "   a\n\r".notAllBlank                === true )
     assert( "a".notAllBlank                       === true )
   }
+
+  test( "tokenize" ) {
+
+    assert( "blue,green,purple,violet"     .tokenize === Array( "blue", "green", "purple", "violet" ) )
+    assert( "  blue green,purple    violet".tokenize === Array( "blue", "green", "purple", "violet" ) )
+  }
 }
 
