@@ -17,7 +17,7 @@
 
 package org.tyranid.cloud.aws
 
-import java.io.{ ByteArrayInputStream, FileOutputStream }
+import java.io.{ ByteArrayInputStream, FileOutputStream, InputStream }
 
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.{ AmazonS3Exception, GroupGrantee, ObjectMetadata, Permission, S3Object, GetObjectRequest }
@@ -52,6 +52,18 @@ object S3 {
       /* val putObjectResult = */ s3.putObject( bucket.name, key, is, md )
     } finally {
       is.close
+    }
+  }
+  
+  def write( bucket:S3Bucket, key:String, contentLength:Long, contentType:String, in:InputStream ) = {
+    val md = new ObjectMetadata
+    md.setContentLength( contentLength )
+    md.setContentType( contentType )
+
+    try {
+      /* val putObjectResult = */ s3.putObject( bucket.name, key, in, md )
+    } finally {
+      in.close
     }
   }
   
@@ -123,5 +135,5 @@ object S3 {
   
   def getObject( bucket:S3Bucket, key:String ) = {
     s3.getObject( new GetObjectRequest( bucket.name, key ) )
-  }
+  }  
 }
