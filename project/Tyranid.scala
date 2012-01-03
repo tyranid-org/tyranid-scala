@@ -22,6 +22,7 @@ object Tyranid extends Build {
     "com.amazonaws"             % "aws-java-sdk"             % "1.1.9"           % "compile->default", // Amazon AWS Java API
     
     "commons-fileupload"        % "commons-fileupload"       % "1.2.1"           % "compile->default",
+    "commons-io"				% "commons-io"				 % "2.1"			 % "compile->default",
 
     //"postgresql"                % "postgresql"               % "8.4-701.jdbc4"   % "compile->default", // Java API to PostgreSQL
     //"xom"                       % "xom"                      % "1.1"             % "compile->default", // mutable Java XML API
