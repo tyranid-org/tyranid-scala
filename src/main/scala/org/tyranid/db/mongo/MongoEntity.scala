@@ -77,7 +77,7 @@ case class MongoEntity( tid:String ) extends Entity {
   def toTid( oid:ObjectId ) = tid + Base64.toString( oid.toByteArray )
 
   override def byRecordTid( recordTid:String ):Option[MongoRecord] =
-    byId(  new ObjectId( Base64.toBytes( recordTid ) ) )
+    byId( new ObjectId( Base64.toBytes( recordTid ) ) )
 
   def byId( id:AnyRef ) = {
     val obj = db.findOne( id )

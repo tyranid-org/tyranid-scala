@@ -493,7 +493,7 @@ case class Grid( query:Query ) {
 
       val removeGroup =
         SHtml.ajaxSelect(
-          ( "" -> "" ) +: union.map( g => ( g.s( 'name ), g.s( 'name ) ) ),
+          ( "" -> "" ) +: union.filter( !_.b( 'builtin ) ).map( g => ( g.s( 'name ), g.s( 'name ) ) ),
           Empty,
           v => {
             removeGroupName = v
