@@ -17,12 +17,15 @@
 
 package org.tyranid.text
 
+import java.util.Date
+
 import scala.util.matching.Regex
 import scala.xml.{ NodeSeq, Text }
 
 import org.tyranid.Imp._
+import org.tyranid.http.Http
 import org.tyranid.time.{ Time }
-import java.util.{ Date }
+
 
 class StringImp( s:String ) {
 	def denull = if ( s == null ) "" else s
@@ -348,5 +351,14 @@ class StringImp( s:String ) {
       null
     }
   }
+
+
+  /*
+   * * *   HTTP / URLs
+   */
+
+  def    GET( query:Map[String,String] = null )                       = Http.   GET( s, query = query )
+  def   POST( form:Map[String,String] = null, content:String = null ) = Http.  POST( s, content = content, form = form )
+  def DELETE( query:Map[String,String] = null )                       = Http.DELETE( s, query = query )
 }
 

@@ -22,9 +22,6 @@ import com.mongodb.DBObject
 import akka.actor.Actor
 import akka.actor.Actor.actorOf
 
-import dispatch._
-import dispatch.Http._
-
 import org.tyranid.Imp._
 import org.tyranid.db.{ Entity, Record, View }
 import org.tyranid.db.mongo.MongoEntity
@@ -64,7 +61,7 @@ class Indexer extends Actor {
   case IndexMsg( index, typ, id, json ) =>
 
     if ( json != "{}" )
-      spam( "indexing:  " + Http( url( "http://localhost:9200/" + index + "/" + typ + "/" + id ) << json as_str ) )
+      spam( "indexing:  " + ( "http://localhost:9200/" + index + "/" + typ + "/" + id ).POST( content = json ) )
   }
 
 }
@@ -87,8 +84,7 @@ case class IndexMsg( index:String, typ:String, id:String, json:String )
  */
 object Es {
 
-  def search( text:String ) =
-    Http( url( "http://localhost:9200/_search" ) <<? Map( "q" -> text ) as_str )
+  def search( text:String ) = "http://localhost:9200/_search".GET( Map( "q" -> text ) )
 
 
   def jsonFor( rec:Record ) = {

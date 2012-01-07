@@ -24,9 +24,6 @@ import scala.collection.mutable
 import scala.collection.JavaConversions._
 import scala.xml.{ NodeSeq, Unparsed }
 
-import dispatch._
-import dispatch.Http._
-
 import net.liftweb.http.{ FileParamHolder, S, SHtml }
 
 import org.tyranid.Bind
@@ -72,11 +69,13 @@ case class DbReCaptcha( theme:String ) extends Domain {
       ( scope.rec.hasSubmitted &&
         !scope.initialDraw && {
           val passedCaptcha =
-            Http( url( "http://www.google.com/recaptcha/api/verify" ) << Map(
-              "privatekey" -> Bind.ReCaptchaPrivateKey,
-              "remoteip"   -> S.containerRequest.map(_.remoteAddress).openOr("localhost"),
-              "challenge"  -> S.param( "recaptcha_challenge_field" ).openOr( "" ),
-              "response"   -> S.param( "recaptcha_response_field" ).openOr( "" ) ) as_str ).trim.startsWith( "true" )
+            "http://www.google.com/recaptcha/api/verify".POST(
+              form = Map(
+                "privatekey" -> Bind.ReCaptchaPrivateKey,
+                "remoteip"   -> S.containerRequest.map(_.remoteAddress).openOr("localhost"),
+                "challenge"  -> S.param( "recaptcha_challenge_field" ).openOr( "" ),
+                "response"   -> S.param( "recaptcha_response_field" ).openOr( "" )
+              ) ).trim.startsWith( "true" )
         
           scope.rec( scope.va.get ) = if ( passedCaptcha ) "passed" else "failed"
 

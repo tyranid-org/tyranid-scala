@@ -1,10 +1,20 @@
 
 package org.tyranid.http
 
+import scala.xml.NodeSeq
+
 import javax.servlet.{ Filter, FilterChain, FilterConfig, ServletRequest, ServletResponse }
 import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
+
+import org.apache.http.NameValuePair
+import org.apache.http.client.methods.{ HttpRequestBase, HttpDelete, HttpGet, HttpPost }
+import org.apache.http.entity.StringEntity
+import org.apache.http.client.entity.UrlEncodedFormEntity
+import org.apache.http.impl.client.DefaultHttpClient
+import org.apache.http.message.BasicNameValuePair
+import org.apache.http.util.EntityUtils
+
 import org.tyranid.Imp._
-import scala.xml.NodeSeq
 
 
 case class RestException( code:String, message:String ) extends Exception
@@ -66,4 +76,53 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     res.getOutputStream.close
   }
 }
+
+
+
+object Http {
+
+  def makeUrl( url:String, query:Map[String,String] = null ) =
+    if ( query != null && query.size > 0 ) {
+      url +
+        ( if ( url.contains( '?' ) ) '&' else '?' ) +
+        query.map( p => p._1 + '=' + p._2.encUrl ).mkString( "&" )
+    } else {
+      url
+    }
+
+  private def execute( request:HttpRequestBase ) = {
+    val client = new DefaultHttpClient
+    val response = client.execute( request )
+    val entity = response.getEntity
+
+    entity != null |* EntityUtils.toString( entity )
+  }
+
+  def GET( url:String, query:Map[String,String] = null ) =
+    execute( new HttpGet( makeUrl( url, query ) ) )
+
+  def POST( url:String, content:String, form:Map[String,String] ) = {
+    val request = new HttpPost( url )
+
+    request.setEntity {
+      if ( form != null ) {
+        assert( content == null )
+
+        val formparams = new java.util.ArrayList[NameValuePair]()
+
+        form foreach { p => formparams.add( new BasicNameValuePair( p._1, p._2 ) ) }
+        new UrlEncodedFormEntity(formparams, "UTF-8")
+      } else {
+        new StringEntity( content )
+      }
+    }
+
+    execute( request )
+  }
+
+  def DELETE( url:String, query:Map[String,String] = null ) =
+    execute( new HttpDelete( makeUrl( url, query ) ) )
+
+}
+
 
