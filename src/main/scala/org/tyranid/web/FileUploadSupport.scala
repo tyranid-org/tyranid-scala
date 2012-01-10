@@ -29,18 +29,19 @@ object FileUploadSupport {
             val formValues = mergedParams.getOrElse(name, List.empty)
             mergedParams += name -> (values.toList ++ formValues)
         }
+        
         ctx.copy( req = wrapRequest( req, mergedParams ) )
       }
     
       ctx
   }
   
-  private def extractMultipartParams(req: HttpServletRequest): BodyParams =
+  private def extractMultipartParams( req: HttpServletRequest ): BodyParams =
     // First look for it cached on the request, because we can't parse it twice.  See GH-16.
-    req.getAttribute(BodyParamsKey).asInstanceOf[Option[BodyParams]] match {
+    req.getAttribute( BodyParamsKey ).asInstanceOf[Option[BodyParams]] match {
       case Some(bodyParams) =>
         bodyParams
-      case None =>
+      case null | None =>
         val upload = newServletFileUpload
         val items = upload.parseRequest(req).asInstanceOf[JList[FileItem]]
         val bodyParams = items.foldRight(BodyParams(FileMultiParams(), Map.empty)) { (item, params) =>
