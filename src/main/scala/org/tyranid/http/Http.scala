@@ -22,6 +22,8 @@ case class RestException( code:String, message:String ) extends Exception
 case class HttpServletRequestOps( req:HttpServletRequest ) {
 
   def s( param:String ):String      = req.getParameter( param )
+  def oid( param:String ) = new org.bson.types.ObjectId( s( param ) )
+  
   def a( param:String ):Seq[String] =
     // jQuery appends a [] to all arrays, check to see if that exists
     req.getParameterValues( param + "[]" ) match {
