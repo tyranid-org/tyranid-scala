@@ -37,6 +37,27 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
 
     s
   }
+  
+  def dump = {
+    var enumer = req.getAttributeNames()
+
+    println( "--Attributes--" )
+      
+    while ( enumer.hasMoreElements() ) {
+      val key = enumer.nextElement()
+      val value = req.getAttribute( key.asInstanceOf[String] )
+      println( key + " : " + value )
+    }
+
+    println( "--Parameters--" )
+    enumer = req.getParameterNames();
+
+    while ( enumer.hasMoreElements() ) {
+      val key = enumer.nextElement()
+      val value = req.getParameter( key.asInstanceOf[String] )
+      println( key + " : " + value )
+    }
+  }
 }
 
 case class HttpServletResponseOps( res:HttpServletResponse ) {
