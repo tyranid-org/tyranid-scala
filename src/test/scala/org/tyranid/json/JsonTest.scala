@@ -17,6 +17,8 @@
 
 package org.tyranid.json
 
+import scala.collection.mutable.LinkedHashMap
+
 import org.scalatest.FunSuite
 
 import org.tyranid.Imp._
@@ -30,8 +32,6 @@ class JsonSuite extends FunSuite {
 {  "foo": "bar",
   "five": 5
 }""".toJson
-
-    //assert( jackson( json ).foo.s === "bar" )
   }
 
   test( "stringify" ) {
@@ -47,6 +47,42 @@ class JsonSuite extends FunSuite {
 
     for ( d <- 0 to data.size - 1 by 2 )
       assert( data( d ).toJsonStr === data( d+1 ) )
+  }
+
+  test( "parsing" ) {
+    val data = Seq(
+      ( "null",                         null ),
+      ( "true",                         true ),
+      ( "false",                        false ),
+      ( "3",                            3 ),
+      ( "3000000000000000",             3000000000000000L ),
+      ( "\"hi\"",                       "hi" ),
+      ( "'h\\u0003i'",                  "h\u0003i" ),
+      ( "'hi \"there\"'",               "hi \"there\"" ),
+      ( "''",                           "" ),
+      ( "[]",                           Array() ),
+      ( "[0,1]",                        Array( 0, 1 ) ),
+      ( "{\"test\":3}",                 LinkedHashMap( "test" -> 3 ) ),
+      ( "{test:3}",                     LinkedHashMap( "test" -> 3 ) ),
+      ( "{\"test\":3,\"foo\":\"bar\"}", LinkedHashMap( "test" -> 3, "foo" -> "bar" ) ),
+      ( "{test:3,foo:'bar'}",           LinkedHashMap( "test" -> 3, "foo" -> "bar" ) ),
+      ( "{test:null,foo:false}",        LinkedHashMap( "test" -> null, "foo" -> false ) ),
+      ( "{}",                           Map() )
+    )
+
+    for ( d <- data )
+      assert( d._1.parseJson === d._2 )
+  }
+
+  test( "parsingNumbers" ) {
+    val data = Seq(
+      ( "3",                classOf[java.lang.Integer] ),
+      ( "3000000000000000", classOf[java.lang.Long] ),
+      ( "3.2",              classOf[java.lang.Double] )
+    )
+
+    for ( d <- data )
+      assert( d._1.parseJson.getClass === d._2 )
   }
 }
 
