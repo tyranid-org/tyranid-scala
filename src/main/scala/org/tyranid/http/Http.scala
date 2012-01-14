@@ -22,6 +22,8 @@ case class RestException( code:String, message:String ) extends Exception
 case class HttpServletRequestOps( req:HttpServletRequest ) {
 
   def s( param:String ):String      = req.getParameter( param )
+  def oid( param:String ) = new org.bson.types.ObjectId( s( param ) )
+  
   def a( param:String ):Seq[String] =
     // jQuery appends a [] to all arrays, check to see if that exists
     req.getParameterValues( param + "[]" ) match {
@@ -36,6 +38,27 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
       throw new RestException( code = "missing-" + param, message = "The '" + param + "' parameter is required." )
 
     s
+  }
+  
+  def dump = {
+    var enumer = req.getAttributeNames()
+
+    println( "--Attributes--" )
+      
+    while ( enumer.hasMoreElements() ) {
+      val key = enumer.nextElement()
+      val value = req.getAttribute( key.asInstanceOf[String] )
+      println( key + " : " + value )
+    }
+
+    println( "--Parameters--" )
+    enumer = req.getParameterNames();
+
+    while ( enumer.hasMoreElements() ) {
+      val key = enumer.nextElement()
+      val value = req.getParameter( key.asInstanceOf[String] )
+      println( key + " : " + value )
+    }
   }
 }
 
