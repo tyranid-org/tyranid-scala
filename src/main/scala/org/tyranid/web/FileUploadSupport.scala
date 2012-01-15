@@ -84,6 +84,8 @@ object FileUploadSupport {
       override def getParameterMap = new JHashMap[String, Array[String]] ++ (formMap transform { (k, v) => v.toArray })
     }
 
+  val maxFileSize = 1024 * 1000 * 1000 * 2 // 2G
+  
   /**
    * Creates a new file upload handler to parse the request.  By default, it
    * creates a `ServletFileUpload` instance with the file item factory 
@@ -93,8 +95,11 @@ object FileUploadSupport {
    *
    * @return a new file upload handler.
    */
-  protected def newServletFileUpload: ServletFileUpload = 
-    new ServletFileUpload(fileItemFactory)
+  protected def newServletFileUpload: ServletFileUpload = { 
+    val sfu = new ServletFileUpload(fileItemFactory)
+    sfu.setSizeMax( maxFileSize )
+    sfu
+  }
 
   /**
    * The file item factory used by the default implementation of 
@@ -104,7 +109,7 @@ object FileUploadSupport {
    * [non-scaladoc] This method predates newServletFileUpload.  If I had it 
    * to do over again, we'd have that instead of this.  Oops.
    */
-  protected def fileItemFactory: FileItemFactory = new DiskFileItemFactory
+  protected def fileItemFactory: FileItemFactory = new DiskFileItemFactory()
 
   /*
   protected def fileMultiParams:FileMultiParams = extractMultipartParams(request).fileParams
