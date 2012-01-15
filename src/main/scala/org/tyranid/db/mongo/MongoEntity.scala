@@ -76,7 +76,7 @@ case class MongoEntity( tid:String ) extends Entity {
 
   def toTid( oid:ObjectId ) = tid + Base64.toString( oid.toByteArray )
   
-  def idFromTid( tid:String ) = {
+  def tidToOid( tid:String ) = {
 
     val ( entityTid, recordTid ) = tid.splitAt( 4 )
 

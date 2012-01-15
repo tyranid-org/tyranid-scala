@@ -20,6 +20,9 @@ package org.tyranid.logic
 
 class AnyImp[T <: Any]( v:T ) {
 
+  def is[U] = v.isInstanceOf[U]
+  def as[U] = v.asInstanceOf[U]
+
   def toJsonStr = new org.tyranid.json.JsonString( v ).toString
 }
 

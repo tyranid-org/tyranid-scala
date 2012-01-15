@@ -18,8 +18,10 @@
 package org.tyranid.json
 
 import scala.collection.JavaConversions._
+
 import org.codehaus.jackson.JsonNode
 import org.codehaus.jackson.node.{ ArrayNode, JsonNodeFactory, MissingNode, ObjectNode }
+
 import org.tyranid.Imp._
 import org.bson.types.ObjectId
 
