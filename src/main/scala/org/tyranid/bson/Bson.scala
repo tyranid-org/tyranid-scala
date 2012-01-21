@@ -38,6 +38,7 @@ trait BsonObject extends Deep {
   def deep:BsonObject
 
   def id = apply( "_id" )
+  def oid = id.as[ObjectId]
 
   def a_?( key:String ) =
     apply( key ) match {
