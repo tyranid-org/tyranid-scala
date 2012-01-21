@@ -55,6 +55,7 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, servletC
     req.getServletPath.startsWith( path )
   }
 
+  def path = req.getServletPath
 }
 
 trait Weblet {
