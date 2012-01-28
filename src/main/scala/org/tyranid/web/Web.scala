@@ -124,6 +124,7 @@ class WebInit extends GenericServlet {
 
   override def init {
     val bayeux = getServletContext().getAttribute(BayeuxServer.ATTRIBUTE).as[BayeuxServer]
+    Tyr.bayeux = bayeux
 
     for ( service <- Tyr.comets )
       service( bayeux )
