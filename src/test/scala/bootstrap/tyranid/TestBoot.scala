@@ -18,6 +18,8 @@ class Boot extends org.tyranid.boot.Bootable {
     "sample" -> ( ( xml:NodeSeq ) => <p>Sample</p> ) ::
     Nil
 
+  val comets = Nil
+
   def boot = {
 
     // Mongo

@@ -1,10 +1,12 @@
 
 package org.tyranid.web
 
-import javax.servlet.{ Filter, FilterChain, FilterConfig, ServletRequest, ServletResponse, ServletContext }
+import javax.servlet.{ Filter, FilterChain, FilterConfig, GenericServlet, ServletException, ServletRequest, ServletResponse, ServletContext }
 import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
 
 import scala.xml.{ Elem, Node, NodeSeq, Text }
+
+import org.cometd.bayeux.server.BayeuxServer
 
 import org.tyranid.Imp._
 import org.tyranid.session.ThreadData
@@ -112,4 +114,23 @@ object WebTemplate {
       xml
 }
 
+
+/**
+ * This initialization is done inside of a servlet because we need to make sure that the CometServlet has initialized already and
+ * using a servlet allows us to use the web.xml load-on-startup mechanism to achieve this ordering.  Another solution would be to set
+ * up a web.xml listener.
+ */
+class WebInit extends GenericServlet {
+
+  override def init {
+    val bayeux = getServletContext().getAttribute(BayeuxServer.ATTRIBUTE).as[BayeuxServer]
+
+    for ( service <- Tyr.comets )
+      service( bayeux )
+  }
+
+  def service( req:ServletRequest, res:ServletResponse ) = {
+    throw new ServletException
+  }
+}
 

@@ -66,6 +66,8 @@ trait Bootable {
 
   val templates:List[(String, ( NodeSeq ) => NodeSeq )]
 
+  val comets:List[ ( org.cometd.bayeux.server.BayeuxServer ) => org.cometd.server.AbstractService ]
+
   def boot:Unit
 }
 
