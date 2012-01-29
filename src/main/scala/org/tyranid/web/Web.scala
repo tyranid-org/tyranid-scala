@@ -115,7 +115,7 @@ object WebTemplate {
 }
 
 
-/**
+/*
  * This initialization is done inside of a servlet because we need to make sure that the CometServlet has initialized already and
  * using a servlet allows us to use the web.xml load-on-startup mechanism to achieve this ordering.  Another solution would be to set
  * up a web.xml listener.
@@ -125,9 +125,7 @@ class WebInit extends GenericServlet {
   override def init {
     val bayeux = getServletContext().getAttribute(BayeuxServer.ATTRIBUTE).as[BayeuxServer]
     Tyr.bayeux = bayeux
-
-    for ( service <- Tyr.comets )
-      service( bayeux )
+    Tyr.comets.foreach { _.init( bayeux ) }
   }
 
   def service( req:ServletRequest, res:ServletResponse ) = {

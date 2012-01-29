@@ -17,7 +17,7 @@
 
 package org.tyranid.session
 
-import javax.servlet.http.HttpSession
+import javax.servlet.http.{ HttpSession, HttpSessionEvent, HttpSessionListener }
 
 import scala.collection.mutable
 import scala.xml.{ Node, NodeSeq, Unparsed }
@@ -27,6 +27,26 @@ import org.tyranid.Bind
 import org.tyranid.profile.User
 import org.tyranid.report.Query
 
+
+object WebSession {
+
+  val sessions = mutable.Map[String,HttpSession]()
+
+  val CometHttpSessionIdKey = "tyrSessId"
+  val HttpSessionKey = "tyrSess"
+}
+
+class WebSessionListener extends HttpSessionListener {
+ 
+  def sessionCreated( e:HttpSessionEvent ) {
+    val session = e.getSession
+    WebSession.sessions( session.getId ) = session
+  }
+ 
+  def sessionDestroyed( e:HttpSessionEvent ) {
+    WebSession.sessions.remove( e.getSession.getId )
+  }	
+}
 
 object ThreadData {
 
@@ -43,7 +63,6 @@ object ThreadData {
     sess
   }
 
-  val HttpSessionKey = "tyrSess"
 }
 
 class ThreadData {
@@ -83,11 +102,11 @@ class ThreadData {
     if ( tyrData == null ) {
       tyrData =
         if ( http != null ) {
-          http.getAttribute( ThreadData.HttpSessionKey ) match {
+          http.getAttribute( WebSession.HttpSessionKey ) match {
           case s:Session => s
           case _         =>
             val s = Bind.NewSession()
-            http.setAttribute( ThreadData.HttpSessionKey, s )
+            http.setAttribute( WebSession.HttpSessionKey, s )
             s
           }
         } else {
@@ -121,7 +140,24 @@ trait SessionMeta {
   def doneEditing[ T: Manifest ] =
     editings.remove( manifest[T].erasure )
   def clearAllEditing = editings.clear
+
+
+
+  def byHttpSessionId( id:String ) =
+    WebSession.sessions( id ) match {
+    case s:HttpSession => from( s )
+    case _             => null
+    }
+
+  def from( httpSession:HttpSession ) =
+    httpSession.getAttribute( WebSession.HttpSessionKey ) match {
+    case s:Session => s
+    case _         => null
+    }
 }
+
+
+object Session extends SessionMeta
 
 trait Session {
 
@@ -141,9 +177,3 @@ trait Session {
     reports.getOrElseUpdate( query.name, query.newReport )
   }
 }
-
-object Session extends SessionMeta {
-}
-
-
-

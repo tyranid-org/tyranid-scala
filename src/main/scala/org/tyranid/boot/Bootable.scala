@@ -21,7 +21,7 @@ import scala.xml.NodeSeq
 
 import org.cometd.bayeux.server.BayeuxServer
 
-import org.tyranid.web.Weblet
+import org.tyranid.web.{ Weblet, CometService }
 
 object Boot {
 
@@ -68,8 +68,9 @@ trait Bootable {
 
   val templates:List[(String, ( NodeSeq ) => NodeSeq )]
 
+  val comets:Seq[CometService]
+
   @volatile var bayeux:BayeuxServer = null
-  val comets:List[ ( BayeuxServer ) => org.cometd.server.AbstractService ]
 
   def boot:Unit
 }
