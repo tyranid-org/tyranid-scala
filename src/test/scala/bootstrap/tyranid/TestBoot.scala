@@ -4,7 +4,6 @@ package bootstrap.tyranid
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
-import org.tyranid.Bind
 import org.tyranid.test.db.{ Session, User }
 
 
@@ -23,10 +22,10 @@ class Boot extends org.tyranid.boot.Bootable {
   def boot = {
 
     // Mongo
-    Bind.ProfileDbName = "test"
+    profileDbName = "test"
 
-    Bind.NewUser    = () => new User
-    Bind.NewSession = () => new Session
+    newUser    = () => new User
+    newSession = () => new Session
   }
 }
 
