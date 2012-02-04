@@ -21,7 +21,6 @@ import java.util.Date
 
 import com.mongodb.BasicDBList
 
-import org.tyranid.Bind
 import org.tyranid.Imp._
 import org.tyranid.db.{ Entity, Record, Path, PathValue, PathDiff, MultiPath, ViewAttribute }
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoView, MongoRecord }
@@ -56,7 +55,7 @@ trait Versioning extends Entity {
         if ( diffs.diffs.nonEmpty )
           log( 'updates ) = PathDiff.toDbObject( diffs.diffs )
 
-        val db = Mongo.connect.db( Bind.ProfileDbName )( r.entity.dbName + "_log" )
+        val db = Mongo.connect.db( Tyr.profileDbName )( r.entity.dbName + "_log" )
 
         db.save( log )
       }

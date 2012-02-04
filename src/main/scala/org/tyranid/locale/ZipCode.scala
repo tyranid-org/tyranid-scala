@@ -17,7 +17,6 @@
 
 package org.tyranid.locale
 
-import org.tyranid.Bind
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbInt, DbChar, DbLink, Record }
 import org.tyranid.db.mongo.Imp._
@@ -27,7 +26,7 @@ case class LatLong( lat:Double, long:Double )
 object ZipCode {
 
   lazy val zipdatadb = {
-    val db = Mongo.connect.db( Bind.ProfileDbName )( "zipdata" )
+    val db = Mongo.connect.db( Tyr.profileDbName )( "zipdata" )
     db.ensureIndex( Mobj( "ZipCode" -> 1 ) )
     db
   }

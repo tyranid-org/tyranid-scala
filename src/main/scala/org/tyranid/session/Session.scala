@@ -23,7 +23,6 @@ import scala.collection.mutable
 import scala.xml.{ Node, NodeSeq, Unparsed }
 
 import org.tyranid.Imp._
-import org.tyranid.Bind
 import org.tyranid.profile.User
 import org.tyranid.report.Query
 
@@ -105,12 +104,12 @@ class ThreadData {
           http.getAttribute( WebSession.HttpSessionKey ) match {
           case s:Session => s
           case _         =>
-            val s = Bind.NewSession()
+            val s = Tyr.newSession()
             http.setAttribute( WebSession.HttpSessionKey, s )
             s
           }
         } else {
-          Bind.NewSession()
+          Tyr.newSession()
         }
     }
 
@@ -161,7 +160,7 @@ object Session extends SessionMeta
 
 trait Session {
 
-  private var userVar = Bind.NewUser()
+  private var userVar = Tyr.newUser()
 
   def user:User           = userVar
   def user_=( user:User ) = userVar = user

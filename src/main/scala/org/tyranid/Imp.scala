@@ -19,6 +19,19 @@ package org.tyranid
 
 import java.util.{ Calendar, Date }
 
+import scala.xml.NodeSeq
+
+
+object Debug {
+  def check( xml: => NodeSeq ):NodeSeq = {
+    try {
+      xml
+    } catch {
+      case e:_root_.net.liftweb.http.ResponseShortcutException => throw e
+      case t:Throwable => t.printStackTrace; <div class="error">Internal site problem, please try again later.</div>
+    }
+  }
+}
 
 /**
  * IMPlicit IMPorts.

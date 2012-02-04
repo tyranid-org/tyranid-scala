@@ -23,7 +23,6 @@ import com.mongodb.{ BasicDBList, BasicDBObject, DB, DBCollection, DBCursor, DBO
 
 import org.tyranid.Imp._
 import org.tyranid.any.Deep
-import org.tyranid.Bind
 import org.tyranid.bson.{ BsonObject, BsonList }
 
 
@@ -89,9 +88,9 @@ object Imp {
 
   object Mongo {
     lazy val connect = {
-      //println( "CONNECTING USING " + Bind.MongoHost )
+      //println( "CONNECTING USING " + Tyr.mongoHost )
       //new Exception().printStackTrace
-      new com.mongodb.Mongo( Bind.MongoHost )
+      new com.mongodb.Mongo( Tyr.mongoHost )
     }
 
     val EmptyArray = Mlist()

@@ -21,7 +21,6 @@ import java.util.Date
 
 import com.mongodb.{ BasicDBList, DBObject }
 
-import org.tyranid.Bind
 import org.tyranid.Imp._
 import org.tyranid.db.{ Entity, Record, Path, PathValue, PathDiff, MultiPath, ViewAttribute }
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoView, MongoRecord }
@@ -33,7 +32,7 @@ import org.tyranid.session.Session
 object AutoIncrement {
 
   private lazy val db = {
-    val db = Mongo.connect.db( Bind.ProfileDbName )( "auto_increment" )
+    val db = Mongo.connect.db( Tyr.profileDbName )( "auto_increment" )
     if ( db.findOne() == null )
       db.save( Mobj( "_id" -> 1 ) )
     db

@@ -26,7 +26,6 @@ import scala.xml.{ NodeSeq, Unparsed }
 
 import net.liftweb.http.{ FileParamHolder, S, SHtml }
 
-import org.tyranid.Bind
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.{ Domain, Record, Scope }
@@ -45,7 +44,7 @@ case class DbReCaptcha( theme:String ) extends Domain {
 
      <script type="text/javascript">{ Unparsed( """
        function showRecaptcha(element) {
-         Recaptcha.create( """" + Bind.ReCaptchaPublicKey + """", element, {
+         Recaptcha.create( """" + Tyr.reCaptchaPublicKey + """", element, {
            theme: """" + theme + """",
            callback: Recaptcha.focus_response_field});
        }
@@ -71,7 +70,7 @@ case class DbReCaptcha( theme:String ) extends Domain {
           val passedCaptcha =
             "http://www.google.com/recaptcha/api/verify".POST(
               form = Map(
-                "privatekey" -> Bind.ReCaptchaPrivateKey,
+                "privatekey" -> Tyr.reCaptchaPrivateKey,
                 "remoteip"   -> S.containerRequest.map(_.remoteAddress).openOr("localhost"),
                 "challenge"  -> S.param( "recaptcha_challenge_field" ).openOr( "" ),
                 "response"   -> S.param( "recaptcha_response_field" ).openOr( "" )

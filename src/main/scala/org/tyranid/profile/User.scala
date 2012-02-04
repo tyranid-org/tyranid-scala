@@ -21,7 +21,6 @@ import java.util.TimeZone
 
 import net.liftweb.http.{ RedirectResponse, S }
 
-import org.tyranid.Bind
 import org.tyranid.Imp._
 import org.tyranid.db.{ Record, Scope }
 import org.tyranid.session.Session
@@ -31,14 +30,14 @@ trait UserMeta {
     if ( Session().user.loggedIn )
       true
     else {
-      if ( Bind.LoginCookieName == null || Session().user.isLoggingOut )
+      if ( Tyr.loginCookieName == null || Session().user.isLoggingOut )
         false
       else {
-        val savedCookie = S.cookieValue( Bind.LoginCookieName ) openOr null
+        val savedCookie = S.cookieValue( Tyr.loginCookieName ) openOr null
 
         var user = { 
           if ( savedCookie != null )
-            Record.byTid( savedCookie, only = Bind.UserEntity ).map( _.asInstanceOf[User] ) getOrElse null
+            Record.byTid( savedCookie, only = Tyr.userEntity ).map( _.asInstanceOf[User] ) getOrElse null
           else 
             null
         }

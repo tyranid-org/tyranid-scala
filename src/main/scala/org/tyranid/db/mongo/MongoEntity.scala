@@ -26,7 +26,6 @@ import com.mongodb.{ BasicDBObject, DB, DBCollection, DBObject }
 
 import net.liftweb.http.SHtml
 
-import org.tyranid.Bind
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbLink, Domain, Entity, Record, Scope, View, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
@@ -56,7 +55,7 @@ case class MongoEntity( tid:String ) extends Entity {
 
 	override lazy val dbName = name.plural
 
-  lazy val db = Mongo.connect.db( Bind.ProfileDbName )( dbName )
+  lazy val db = Mongo.connect.db( Tyr.profileDbName )( dbName )
 
   lazy val makeView = MongoView( this )
 

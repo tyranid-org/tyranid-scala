@@ -21,7 +21,11 @@ import scala.xml.NodeSeq
 
 import org.cometd.bayeux.server.BayeuxServer
 
+import org.tyranid.db.Entity
+import org.tyranid.profile.User
+import org.tyranid.session.Session
 import org.tyranid.web.{ Weblet, CometService }
+
 
 object Boot {
 
@@ -73,5 +77,44 @@ trait Bootable {
   @volatile var bayeux:BayeuxServer = null
 
   def boot:Unit
+
+
+  @volatile var newUser:() => User = null
+  @volatile var userEntity:Entity = null
+  @volatile var newSession:() => Session = null
+  @volatile var loginCookieName:String = null
+
+  // Environment
+  val envSuffix = "" // "-x" or "-dx"
+
+  // DB
+  @volatile var profileDbName:String = null
+
+  @volatile var mongoHost:String = null
+
+  // SQL
+  @volatile var dbUrl:String  = ""
+  @volatile var dbUser:String = ""
+  @volatile var dbPw:String   = ""
+  @volatile var dbDriver      = "org.postgresql.Driver"
+
+  // ReCaptcha
+  val reCaptchaPublicKey      = ""
+  val reCaptchaPrivateKey     = ""
+
+  // Assistly
+  val assistlySiteKey = ""
+  val assistlyMultipassKey = ""
+
+  // AWS
+  import org.tyranid.cloud.aws.S3Bucket
+
+  @volatile var awsCredentials:com.amazonaws.auth.AWSCredentials = null
+
+  @volatile var bucketSuffix:String = ""
+
+  val s3Buckets = scala.collection.mutable.Map[String,S3Bucket]()
+
+  def apply( bucket:S3Bucket ) = s3Buckets( bucket.prefix ) = bucket
 }
 

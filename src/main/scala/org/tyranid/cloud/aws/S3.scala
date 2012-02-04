@@ -23,21 +23,20 @@ import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.{ AmazonS3Exception, GroupGrantee, ObjectMetadata, Permission, S3Object, GetObjectRequest }
 
 import org.tyranid.io.IOUtils
-import org.tyranid.Bind
 import org.tyranid.Imp._
 
 case class S3Bucket( prefix:String, cfDistributionId:String = "", cfDomain:String = "" ) {
-  val name = prefix + Bind.EnvSuffix + Bind.BucketSuffix
+  val name = prefix + Tyr.envSuffix + Tyr.bucketSuffix
 
   def url( path:String ) =
-    if ( cfDomain.isBlank || Bind.EnvSuffix.notBlank )
+    if ( cfDomain.isBlank || Tyr.envSuffix.notBlank )
       "https://s3.amazonaws.com/" + name + "/" + path
     else
       "https://" + cfDomain + ".cloudfront.net/" + path
 }
 
 object S3 {
-  private val s3 = new AmazonS3Client( Bind.AwsCredentials )
+  private val s3 = new AmazonS3Client( Tyr.awsCredentials )
 
   def write( bucket:S3Bucket, key:String, file:java.io.File ) = s3.putObject( bucket.name, key, file )
   
