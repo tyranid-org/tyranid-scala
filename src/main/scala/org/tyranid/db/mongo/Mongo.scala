@@ -58,6 +58,8 @@ object Imp {
   val $unset       = "$unset"
   val $where       = "$where"
 
+  def $push( field:String, value:Any ) = Mobj( "$push" -> Mobj( field -> value ) )
+
 	implicit def mongoImp( mongo:com.mongodb.Mongo ) = new MongoImp( mongo )
 	implicit def dbImp( db:DB )                      = new DBImp( db )
 	implicit def collectionImp( coll:DBCollection )  = new DBCollectionImp( coll )

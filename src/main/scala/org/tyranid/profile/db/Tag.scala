@@ -19,7 +19,6 @@ package org.tyranid.profile.db
 
 import scala.collection.mutable
 
-import org.tyranid.Bind
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbInt, DbChar }
 import org.tyranid.db.mongo.Imp._
