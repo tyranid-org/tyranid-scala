@@ -24,6 +24,7 @@ import scala.xml.{ NodeSeq, Text }
 
 import org.tyranid.Imp._
 import org.tyranid.http.Http
+import org.tyranid.net.Uri
 import org.tyranid.time.{ Time }
 
 
@@ -62,6 +63,8 @@ class StringImp( s:String ) {
 
     sb.toString
   }
+
+  def toUrl = new java.net.URL( Uri.completeUri( s ) )
 
   def toHtmlPreserveWhitespace =
     s.split( "\n\n" ).map( para => <p>{ para.replace( "\n", "<br/>" ) }</p> )

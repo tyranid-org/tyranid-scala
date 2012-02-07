@@ -138,6 +138,33 @@ case class DateField( sec:String, path:Path, l:String = null ) extends PathField
   }
 }
 
+case class LinkField( sec:String, path:Path, l:String = null ) extends PathField {
+
+  override def section = sec
+
+  override def label = if ( l.notBlank ) l else path.label
+
+  def cell( run:Run, r:Record ) = {
+    val base = path.s( r )
+
+    try {
+      <a href={ base.toUrl.toString }>{ base }</a>
+    } catch {
+    case e:Exception =>
+      Text( base )
+    }
+  }
+}
+
+case class ThumbnailField( sec:String, path:Path, l:String = null ) extends PathField {
+
+  override def section = sec
+
+  override def label = if ( l.notBlank ) l else path.label
+
+  def cell( run:Run, r:Record ) = <img src={ path s r } style="width:50px; height:50px;"/>
+}
+
 trait MongoQuery extends Query {
   val entity:MongoEntity
 
@@ -168,10 +195,12 @@ trait MongoQuery extends Query {
     part.toIterable.map( o => entity.apply( o ) )
   }
 
-  def date( path:String, sec:String = "Standard", label:String = null ) = DateField( sec, view.path( path ), l = label )
-  def boolean( path:String, sec:String = "Standard", label:String = null ) = BooleanField( sec, view.path( path ), l = label )
-  def exists( path:String, sec:String = "Standard", label:String = null ) = ExistsField( sec, view.path( path ), l = label )
-  def string( path:String, sec:String = "Standard", label:String = null ) = StringField( sec, view.path( path ), l = label )
+  def date( path:String, sec:String = "Standard", label:String = null )      = DateField( sec, view.path( path ), l = label )
+  def boolean( path:String, sec:String = "Standard", label:String = null )   = BooleanField( sec, view.path( path ), l = label )
+  def exists( path:String, sec:String = "Standard", label:String = null )    = ExistsField( sec, view.path( path ), l = label )
+  def string( path:String, sec:String = "Standard", label:String = null )    = StringField( sec, view.path( path ), l = label )
+  def link( path:String, sec:String = "Standard", label:String = null )      = LinkField( sec, view.path( path ), l = label )
+  def thumbnail( path:String, sec:String = "Standard", label:String = null ) = ThumbnailField( sec, view.path( path ), l = label )
 }
 
 class Report {
