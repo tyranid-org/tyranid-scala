@@ -63,6 +63,9 @@ class StringImp( s:String ) {
     sb.toString
   }
 
+  def toHtmlPreserveWhitespace =
+    s.split( "\n\n" ).map( para => <p>{ para.replace( "\n", "<br/>" ) }</p> )
+
 	def isBlank  = ( s == null || s.length == 0 )
 	def notBlank = ( s != null && s.length >  0 )
 

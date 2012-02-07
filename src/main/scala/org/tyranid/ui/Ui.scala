@@ -58,7 +58,7 @@ object Button {
     SHtml.ajaxButton( name, act, "class" -> ( color + "Btn" ) )
 
   def button( name:String, act:( String ) => JsCmd, color:String, inline:Boolean = false ) =
-    <button class={ color + "Btn" } style={ inline |* "display:inline;" } onclick={ SHtml.ajaxCall( JsRaw( "''" ), act )._2.toJsCmd }>{ name }</button>
+    <button class={ color + "Btn" } style={ inline |* "display:inline;" } onclick={ SHtml.ajaxCall( JsRaw( "''" ), act )._2.toJsCmd }>{ Unparsed( name ) }</button>
 
   def bar( buttons:Node* ) =
     <table class="btnbar">
