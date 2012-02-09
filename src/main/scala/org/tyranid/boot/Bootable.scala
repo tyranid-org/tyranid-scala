@@ -68,6 +68,8 @@ object Boot {
  */
 trait Bootable {
 
+  val applicationName:String
+
   val weblets:List[(String,Weblet)]
 
   val templates:List[(String, ( NodeSeq ) => NodeSeq )]
@@ -97,6 +99,10 @@ trait Bootable {
   @volatile var dbUser:String = ""
   @volatile var dbPw:String   = ""
   @volatile var dbDriver      = "org.postgresql.Driver"
+
+  // LinkedIn
+  val linkedInApiKey    = ""
+  val linkedInSecretKey = ""
 
   // ReCaptcha
   val reCaptchaPublicKey      = ""
