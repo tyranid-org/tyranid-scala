@@ -20,7 +20,7 @@ import org.tyranid.secure.DbReCaptcha
 import org.tyranid.time.Time
 
 
-object User extends MongoEntity( tid = "test5" ) {
+object User extends MongoEntity( tid = "test5" ) with org.tyranid.profile.UserMeta {
   "id"             is DbMongoId           is 'key;
   "email"          is DbEmail             is 'label is 'required;
   "password"       is DbPassword          is 'required;

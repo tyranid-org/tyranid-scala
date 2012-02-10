@@ -165,6 +165,9 @@ trait Session {
   def user:User           = userVar
   def user_=( user:User ) = userVar = user
 
+  var loggedEntry = false
+  var loggedUser  = false
+
 
   /*
    * * *   Reports
@@ -176,3 +179,5 @@ trait Session {
     reports.getOrElseUpdate( query.name, query.newReport )
   }
 }
+
+

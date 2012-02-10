@@ -138,6 +138,18 @@ case class DateField( sec:String, path:Path, l:String = null ) extends PathField
   }
 }
 
+case class DateTimeField( sec:String, path:Path, l:String = null ) extends PathField {
+
+  override def section = sec
+
+  override def label = if ( l.notBlank ) l else path.label
+
+  def cell( run:Run, r:Record ) = {
+    val date = path.t( r )
+    Unparsed( "<nobr>" + ( if ( date != null ) date.toDateTimeStr else "" ) + "</nobr>" )
+  }
+}
+
 case class LinkField( sec:String, path:Path, l:String = null ) extends PathField {
 
   override def section = sec
@@ -175,9 +187,11 @@ trait MongoQuery extends Query {
 
     val report = run.report
 
-    run.groupFilter match {
-    case Some( gf ) => report.search( "_id" ) = Mobj( $in -> gf.a_?( 'ids ) )
-    case None       => report.search.remove( "_id" )
+    if ( grouping != null ) {
+      run.groupFilter match {
+      case Some( gf ) => report.search( "_id" ) = Mobj( $in -> gf.a_?( 'ids ) )
+      case None       => report.search.remove( "_id" )
+      }
     }
 
     report.search
@@ -196,6 +210,7 @@ trait MongoQuery extends Query {
   }
 
   def date( path:String, sec:String = "Standard", label:String = null )      = DateField( sec, view.path( path ), l = label )
+  def dateTime( path:String, sec:String = "Standard", label:String = null )  = DateTimeField( sec, view.path( path ), l = label )
   def boolean( path:String, sec:String = "Standard", label:String = null )   = BooleanField( sec, view.path( path ), l = label )
   def exists( path:String, sec:String = "Standard", label:String = null )    = ExistsField( sec, view.path( path ), l = label )
   def string( path:String, sec:String = "Standard", label:String = null )    = StringField( sec, view.path( path ), l = label )

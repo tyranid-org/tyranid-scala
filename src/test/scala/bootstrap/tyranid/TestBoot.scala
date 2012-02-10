@@ -8,6 +8,7 @@ import org.tyranid.test.db.{ Session, User }
 
 
 class Boot extends org.tyranid.boot.Bootable {
+  val applicationName = "Tyranid Test Suite"
 
   val weblets = Nil
 
@@ -18,6 +19,8 @@ class Boot extends org.tyranid.boot.Bootable {
     Nil
 
   val comets = Nil
+
+  lazy val userMeta = User
 
   def boot = {
 

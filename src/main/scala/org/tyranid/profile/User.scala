@@ -19,6 +19,8 @@ package org.tyranid.profile
 
 import java.util.TimeZone
 
+import org.bson.types.ObjectId
+
 import net.liftweb.http.{ RedirectResponse, S }
 
 import org.tyranid.Imp._
@@ -57,6 +59,9 @@ trait UserMeta {
 
   lazy val ReqLoggedIn = User._ReqLoggedIn
   lazy val ReqAdmin    = User._ReqAdmin
+
+  // TODO:  Make this more sophisticated, allow the entire user to be retrieved instead of just the name, and/or maybe something like ProfileItem
+  def nameFor( userId:ObjectId ) = "TODO"
 }
 
 object User extends UserMeta {
@@ -74,9 +79,9 @@ object User extends UserMeta {
 
 trait User extends Record {
 
-  var loggedIn = false
+  var loggedIn     = false
   var isLoggingOut = false
-  var admin    = false
+  var admin        = false
 
   def fullName = s( 'firstName ) + " " + s( 'lastName )
 

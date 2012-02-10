@@ -22,7 +22,7 @@ import scala.xml.NodeSeq
 import org.cometd.bayeux.server.BayeuxServer
 
 import org.tyranid.db.Entity
-import org.tyranid.profile.User
+import org.tyranid.profile.{ User, UserMeta }
 import org.tyranid.session.Session
 import org.tyranid.web.{ Weblet, CometService }
 
@@ -82,6 +82,7 @@ trait Bootable {
 
 
   @volatile var newUser:() => User = null
+  val userMeta:UserMeta
   @volatile var userEntity:Entity = null
   @volatile var newSession:() => Session = null
   @volatile var loginCookieName:String = null

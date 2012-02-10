@@ -9,7 +9,7 @@ import scala.xml.{ Elem, Node, NodeSeq, Text }
 import org.cometd.bayeux.server.BayeuxServer
 
 import org.tyranid.Imp._
-import org.tyranid.session.ThreadData
+import org.tyranid.session.{ AccessLog, ThreadData }
 
 
 case class WebException( message:String ) extends Exception
@@ -33,7 +33,10 @@ class WebFilter extends Filter {
     val ctx = new WebContext( request.asInstanceOf[HttpServletRequest],
                               response.asInstanceOf[HttpServletResponse], filterConfig.getServletContext() )
 
-    ThreadData().http = ctx.req.getSession( false )
+    val thread = ThreadData()
+    thread.http = ctx.req.getSession( false )
+
+    AccessLog.log( ctx, thread.http, thread.tyr )
     
     Tyr.weblets.find( pair => ctx.matches( pair._1 ) && pair._2.matches( ctx ) ) match {
     case Some( ( path, weblet ) ) =>
