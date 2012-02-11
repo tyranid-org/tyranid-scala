@@ -85,6 +85,7 @@ object Imp {
 	implicit def anyRefImp[ T <: AnyRef ]( v:T )            = new org.tyranid.any.AnyRefImp[T]( v )
 	implicit def boolean( v:Boolean )                       = new org.tyranid.logic.BooleanImp( v )
 	implicit def calendarImp( v:Calendar )                  = new org.tyranid.time.CalendarImp( v )
+	implicit def charImp( v:Char )                          = new org.tyranid.text.CharImp( v )
 	implicit def dateImp( v:Date )                          = new org.tyranid.time.DateImp( v )
 	implicit def option[A]( v:Option[A] )                   = new org.tyranid.collection.OptionImp( v )
 	implicit def string( v:String )                         = new org.tyranid.text.StringImp( v )

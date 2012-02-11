@@ -44,7 +44,7 @@ spam( "cookie contained: " + json )
       "xoauth_oauth2_access_token" -> accessToken,
       "oauth_signature_method"     -> OAuth.signatureMethod )
 
-    params( "oauth_signature" ) = oauth.sign( "POST", exchangeUrl, params, tokenSecret = null )
+    oauth.sign( "POST", exchangeUrl, params )
 
     /*
 
@@ -64,7 +64,7 @@ CONN:O|164844|65429|62339144|173100|*02:1328940064:Lp4cLI3aE3GKmLb8QgQAKSP/hEE=
     val update = Mobj()
 
     update( 'liid ) = memberId
-    for ( rslt <- str.split( "&" );
+    for ( rslt <- str.splitAmp;
           ( key, value ) = rslt.splitFirst( '=' ) ) {
       key match {
       case "oauth_token"                    => update( 'lit )  = value
@@ -77,6 +77,8 @@ CONN:O|164844|65429|62339144|173100|*02:1328940064:Lp4cLI3aE3GKmLb8QgQAKSP/hEE=
 
     // this way of getting the users db is a hack, need to move more knowledge of user schema into tyranid
     Mongo.connect.db( Tyr.profileDbName )( "users" ).update( Mobj( "_id" -> Session().user.id ), Mobj( $set -> update ) )
+
+    spam( ( "http://api.linkedin.com/v1/people/id=" + memberId ).GET() )
   }
 }
 

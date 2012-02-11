@@ -45,5 +45,11 @@ class StringSuite extends FunSuite {
     assert( "blue,green,purple,violet"     .tokenize === Array( "blue", "green", "purple", "violet" ) )
     assert( "  blue green,purple    violet".tokenize === Array( "blue", "green", "purple", "violet" ) )
   }
+
+  test( "splitAmp" ) {
+
+    assert( "1&2& 3".splitAmp === Array( "1", "2", " 3" ) )
+  }
+
 }
 
