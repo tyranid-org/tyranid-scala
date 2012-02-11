@@ -21,6 +21,9 @@ import org.tyranid.Imp._
 
 class ThrowableImp( t:Throwable ) {
 
-  def log = Log.log( Log.StackTrace, "ex" -> t )
+  def log = {
+    t.printStackTrace
+    Log.log( Log.StackTrace, "ex" -> t )
+  }
 }
 

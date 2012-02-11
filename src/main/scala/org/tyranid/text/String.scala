@@ -25,6 +25,7 @@ import scala.xml.{ NodeSeq, Text }
 import org.tyranid.Imp._
 import org.tyranid.http.Http
 import org.tyranid.net.Uri
+import org.tyranid.oauth.OAuth
 import org.tyranid.time.{ Time }
 
 
@@ -43,6 +44,8 @@ class StringImp( s:String ) {
 	def encUrl = java.net.URLEncoder.encode( s, "UTF-8" ) 
 	def decUrl = java.net.URLDecoder.decode( s, "UTF-8" )
   //def decUrl = new org.apache.commons.codec.net.URLCodec( "UTF-8" ).decode( s )
+
+	def encOAuthUrl = OAuth.encOAuthUrl( s )
 
   def encJson = {
     val sb = new StringBuilder
@@ -365,8 +368,8 @@ class StringImp( s:String ) {
    * * *   HTTP / URLs
    */
 
-  def    GET( query:Map[String,String] = null )                       = Http.   GET( s, query = query )
-  def   POST( form:Map[String,String] = null, content:String = null ) = Http.  POST( s, content = content, form = form )
-  def DELETE( query:Map[String,String] = null )                       = Http.DELETE( s, query = query )
+  def    GET( query:collection.Map[String,String] = null )                                                  = Http.GET( s, query = query )
+  def   POST( form:collection.Map[String,String] = null, content:String = null, contentType:String = null ) = Http.POST( s, content, form, contentType )
+  def DELETE( query:collection.Map[String,String] = null )                                                  = Http.DELETE( s, query = query )
 }
 

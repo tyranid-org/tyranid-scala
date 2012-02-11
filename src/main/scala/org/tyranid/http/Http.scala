@@ -104,7 +104,7 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
 
 object Http {
 
-  def makeUrl( url:String, query:Map[String,String] = null ) =
+  def makeUrl( url:String, query:collection.Map[String,String] = null ) =
     if ( query != null && query.size > 0 ) {
       url +
         ( if ( url.contains( '?' ) ) '&' else '?' ) +
@@ -121,10 +121,10 @@ object Http {
     entity != null |* EntityUtils.toString( entity )
   }
 
-  def GET( url:String, query:Map[String,String] = null ) =
+  def GET( url:String, query:collection.Map[String,String] = null ) =
     execute( new HttpGet( makeUrl( url, query ) ) )
 
-  def POST( url:String, content:String, form:Map[String,String] ) = {
+  def POST( url:String, content:String, form:collection.Map[String,String], contentType:String = null ) = {
     val request = new HttpPost( url )
 
     request.setEntity {
@@ -136,14 +136,17 @@ object Http {
         form foreach { p => formparams.add( new BasicNameValuePair( p._1, p._2 ) ) }
         new UrlEncodedFormEntity(formparams, "UTF-8")
       } else {
-        new StringEntity( content )
+        val se = new StringEntity( content )
+        if ( contentType != null )
+          se.setContentType( contentType )
+        se
       }
     }
 
     execute( request )
   }
 
-  def DELETE( url:String, query:Map[String,String] = null ) =
+  def DELETE( url:String, query:collection.Map[String,String] = null ) =
     execute( new HttpDelete( makeUrl( url, query ) ) )
 
 }
