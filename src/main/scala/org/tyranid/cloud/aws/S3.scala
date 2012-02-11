@@ -81,7 +81,7 @@ object S3 {
       s3.setObjectAcl( bucket.name, key, acl )
     } catch {
       case e:AmazonS3Exception =>
-        log( "S3 Exception", e )
+        log( Log.StackTrace, "m" -> "S3 Exception", "ex" -> e )
     }
   }
   

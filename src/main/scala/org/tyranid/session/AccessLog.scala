@@ -17,28 +17,16 @@
 
 package org.tyranid.session
 
-import java.util.Date
-
 import javax.servlet.http.HttpSession
 
 import scala.collection.mutable
-import scala.xml.{ Node, NodeSeq, Unparsed }
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbDateTime, Record }
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
-import org.tyranid.profile.User
-import org.tyranid.report.{ Field, Run, MongoQuery }
 import org.tyranid.web.WebContext
 
 
-object AccessLog extends MongoEntity( tid = "a0Bu" ) {
-  "id"                  is DbMongoId      is 'key;
-  "sid"                 is DbChar(64)     as "Session";
-  "uid"                 is DbMongoId      as "User";
-  "ua"                  is DbChar(256)    as "User Agent";
-  "on"                  is DbDateTime;
+object AccessLog {
 
   def log( ctx:WebContext, httpSession:HttpSession, session:Session ) {
 
@@ -46,58 +34,16 @@ object AccessLog extends MongoEntity( tid = "a0Bu" ) {
       val user = session.user
 
       if ( user.loggedIn ) {
-        db.save( Mobj(
-          "uid" -> user.id,
-          "sid" -> httpSession.getId,
-          "ua" -> ctx.req.getHeader("User-Agent"),
-          "on" -> new Date ) )
-
+        Log.log( Log.Access, "ua" -> ctx.req.getHeader( "User-Agent" ) )
         session.loggedUser = true
         session.loggedEntry = true
       }
     }
 
     if ( !session.loggedEntry && httpSession != null ) {
-      db.save( Mobj(
-        "sid" -> httpSession.getId,
-        "ua" -> ctx.req.getHeader("User-Agent"),
-        "on" -> new Date ) )
-
+      Log.log( Log.Access, "ua" -> ctx.req.getHeader( "User-Agent" ) )
       session.loggedEntry = true
     }
   }
-}
-
-object AccessLogQuery extends MongoQuery {
-
-  //def connections( run:Run ) =
-    //run.cache.getOrElseUpdate( "connections", Connection.db.find( Mobj( "from" -> Session().user.org.id ) ).toSeq ).asInstanceOf[Seq[DBObject]]
-
-  val entity = AccessLog
-  val name = "accessLog"
-
-  override def newReport = {
-    var r = super.newReport
-    r.sort = Mobj( "on" -> -1 )
-    r
-  }
-
-  val allFields = Seq(
-    dateTime( "on" ),
-    string( "sid" ),
-    new Field {
-      def name = "uid"
-      override def label = "User"
-      def cell( run:Run, r:Record ) = {
-        r.oid( 'uid ) match {
-        case null => Unparsed( "" )
-        case uid  => Unparsed( Tyr.userMeta.nameFor( uid ) )
-        }
-      }
-    },
-    string( "ua" )
-  )
-
-  val defaultFields = allFields
 }
 

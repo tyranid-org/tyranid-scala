@@ -108,6 +108,15 @@ case class StringField( sec:String, path:Path, l:String = null ) extends PathFie
   def cell( run:Run, r:Record ) = Text( path s r )
 }
 
+case class MultilineStringField( sec:String, path:Path, l:String = null ) extends PathField {
+
+  override def section = sec
+
+  override def label = if ( l.notBlank ) l else path.label
+
+  def cell( run:Run, r:Record ) = Unparsed( path.s( r ).replace( "\n", "<br/>" ) )
+}
+
 case class BooleanField( sec:String, path:Path, l:String = null ) extends PathField {
 
   override def section = sec
@@ -209,13 +218,14 @@ trait MongoQuery extends Query {
     part.toIterable.map( o => entity.apply( o ) )
   }
 
-  def date( path:String, sec:String = "Standard", label:String = null )      = DateField( sec, view.path( path ), l = label )
-  def dateTime( path:String, sec:String = "Standard", label:String = null )  = DateTimeField( sec, view.path( path ), l = label )
-  def boolean( path:String, sec:String = "Standard", label:String = null )   = BooleanField( sec, view.path( path ), l = label )
-  def exists( path:String, sec:String = "Standard", label:String = null )    = ExistsField( sec, view.path( path ), l = label )
-  def string( path:String, sec:String = "Standard", label:String = null )    = StringField( sec, view.path( path ), l = label )
-  def link( path:String, sec:String = "Standard", label:String = null )      = LinkField( sec, view.path( path ), l = label )
-  def thumbnail( path:String, sec:String = "Standard", label:String = null ) = ThumbnailField( sec, view.path( path ), l = label )
+  def date( path:String, sec:String = "Standard", label:String = null )        = DateField( sec, view.path( path ), l = label )
+  def dateTime( path:String, sec:String = "Standard", label:String = null )    = DateTimeField( sec, view.path( path ), l = label )
+  def boolean( path:String, sec:String = "Standard", label:String = null )     = BooleanField( sec, view.path( path ), l = label )
+  def exists( path:String, sec:String = "Standard", label:String = null )      = ExistsField( sec, view.path( path ), l = label )
+  def string( path:String, sec:String = "Standard", label:String = null )      = StringField( sec, view.path( path ), l = label )
+  def multistring( path:String, sec:String = "Standard", label:String = null ) = MultilineStringField( sec, view.path( path ), l = label )
+  def link( path:String, sec:String = "Standard", label:String = null )        = LinkField( sec, view.path( path ), l = label )
+  def thumbnail( path:String, sec:String = "Standard", label:String = null )   = ThumbnailField( sec, view.path( path ), l = label )
 }
 
 class Report {

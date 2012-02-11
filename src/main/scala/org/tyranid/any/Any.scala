@@ -15,23 +15,14 @@
  *
  */
 
-package org.tyranid.logic
+package org.tyranid.any
 
 
-class AnyRefImp[T <: AnyRef]( ref:T ) {
+class AnyImp[T <: Any]( v:T ) {
 
-  /**
-   * Elvis operator.
-   */
-  def ?|( default: => T ):T =
-    if ( ref != null ) ref
-    else               default
+  def is[U] = v.isInstanceOf[U]
+  def as[U] = v.asInstanceOf[U]
 
-  /**
-   * null-safe toString().  Need a better name.
-   */
-  def safeString:String =
-    if ( ref != null ) ref.toString
-    else               ""
+  def toJsonStr = new org.tyranid.json.JsonString( v ).toString
 }
 

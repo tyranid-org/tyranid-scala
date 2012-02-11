@@ -4,16 +4,18 @@ package org.tyranid.web
 import scala.xml.Unparsed
 
 import org.tyranid.Imp._
+import org.tyranid.session.Session
+import org.tyranid.ui.Button
 
 
 object ChromeFrame {
 
   val sniffBox = Unparsed( """
 <!--[if lt IE 8 ]>
-<div class="error"><a href="/browser/chrome">Welcome to """ + Tyr.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
+<div class="error"><a href="/chrome/install">Welcome to """ + Tyr.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
 <![endif]-->
 <!--[if IE 8 ]>
-<div class="warning"><a href="/browser/chrome">Welcome to """ + Tyr.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
+<div class="warning"><a href="/chrome/install">Welcome to """ + Tyr.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
 <![endif]-->
 """ )
 
@@ -33,12 +35,41 @@ object ChromeFrame {
      CFInstall.check({
        mode: "inline", // the default
        node: "prompt",
-       destination: "/browser/chrome_installed"
+       destination: "/chrome/done"
      });
    });
  </script>
 <![endif]-->""" )
 
+}
 
+
+object ChromeFramelet extends Weblet {
+
+  def handle( ctx:WebContext ) {
+    val s = Session()
+    val u = s.user
+
+    ctx.path match {
+    case "/chrome/install" =>
+      ctx.res.html(
+        WebTemplate(
+          <tyr:chromeShell>
+          { ChromeFrame.installScript }
+          </tyr:chromeShell> ) )
+
+    case "/chrome/done" =>
+      ctx.res.html(
+        WebTemplate(
+          <tyr:chromeShell>
+           <p>Your browser is now upgraded.  Thank you!</p>
+           { Button.bar(
+              Button.link( "Return to " + Tyr.applicationName + ".", "/", color = "green" ) ) }
+          </tyr:chromeShell> ) )
+
+    case _ =>
+      ctx.res.ok
+    }
+  }
 }
 

@@ -52,14 +52,14 @@ object ThreadData {
   private val data = new ThreadLocal[ThreadData]()
 
   def apply():ThreadData = {
-    var sess = data.get
+    var td = data.get
 
-    if ( sess == null ) {
-      sess = new ThreadData
-      data.set( sess )
+    if ( td == null ) {
+      td = new ThreadData
+      data.set( td )
     }
 
-    sess
+    td
   }
 
 }

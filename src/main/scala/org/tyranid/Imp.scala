@@ -21,14 +21,21 @@ import java.util.{ Calendar, Date }
 
 import scala.xml.NodeSeq
 
+import org.tyranid.log.Log
+
 
 object Debug {
   def check( xml: => NodeSeq ):NodeSeq = {
     try {
       xml
     } catch {
-      case e:_root_.net.liftweb.http.ResponseShortcutException => throw e
-      case t:Throwable => t.printStackTrace; <div class="error">Internal site problem, please try again later.</div>
+      case e:_root_.net.liftweb.http.ResponseShortcutException =>
+        throw e
+      case t:Throwable =>
+        t.printStackTrace
+        Log.log( Log.StackTrace, "m" -> "Internal site problem", "ex" -> t )
+        
+        <div class="error">Internal site problem, please try again later.</div>
     }
   }
 }
@@ -72,10 +79,11 @@ object Imp {
     }
   }
 
-  def log( msg:String = "", exception:Exception = null ) = org.tyranid.log.Log.log( msg, exception )
+  val Log = org.tyranid.log.Log
+  def log( event:Int, opts:(String,Any)* ) = org.tyranid.log.Log.log( event, opts:_* )
 
-	implicit def anyImp[ T <: Any ]( v:T )                  = new org.tyranid.logic.AnyImp[T]( v )
-	implicit def anyRefImp[ T <: AnyRef ]( v:T )            = new org.tyranid.logic.AnyRefImp[T]( v )
+	implicit def anyImp[ T <: Any ]( v:T )                  = new org.tyranid.any.AnyImp[T]( v )
+	implicit def anyRefImp[ T <: AnyRef ]( v:T )            = new org.tyranid.any.AnyRefImp[T]( v )
 	implicit def boolean( v:Boolean )                       = new org.tyranid.logic.BooleanImp( v )
 	implicit def calendarImp( v:Calendar )                  = new org.tyranid.time.CalendarImp( v )
 	implicit def dateImp( v:Date )                          = new org.tyranid.time.DateImp( v )
@@ -85,6 +93,7 @@ object Imp {
   implicit def seqImp[A]( a:Seq[A] )                      = new org.tyranid.collection.SeqImp( a )
   implicit def byteArray( ba:Array[Byte] )                = new org.tyranid.math.ByteArray( ba )
 	implicit def symbol( v:Symbol )                         = v.name
+	implicit def throwableImp( t:Throwable )                = new org.tyranid.logic.ThrowableImp( t )
 	implicit def jackson( v:org.codehaus.jackson.JsonNode ) = new org.tyranid.json.JsonNodeImp( v )
 
   import javax.servlet.http.{ HttpServletRequest, HttpServletResponse }

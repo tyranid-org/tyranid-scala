@@ -43,11 +43,15 @@ object Email {
     case n  => email.substring( n+1 )
     }
     
-  def domainPart( email:String ) = {
-    val emailParser = """([\w\d\-\_\.]+)(\+\d+)?@([\w\d\-]+)([\w\d\.])+""".r
-    val emailParser( name, num, domain, com ) = email
-    domain
-  }
+  def domainPart( email:String ) =
+    try {
+      val emailParser = """([\w\d\-\_\.]+)(\+\d+)?@([\w\d\-]+)([\w\d\.])+""".r
+      val emailParser( name, num, domain, com ) = email
+      domain
+    } catch {
+    case e:MatchError =>
+      email
+    }
 
   def apply( subject:String, text:String, to:String, from:String ) {
     Email( subject, text ).addTo( to ).from( from ).send
@@ -98,7 +102,7 @@ case class Email( subject:String, text:String, html:String=null ) {
           add( recipientType, getInetAddress( emailAddress, null ) )
         } catch { 
           case e:AddressException => 
-            log( exception = e )
+            e.log
         }
       }
     }
