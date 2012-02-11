@@ -44,7 +44,7 @@ class DbImage( bucket:S3Bucket ) extends DbFile( bucket ) {
     <div class='thumbnail'>
       { 
       if ( ( s.rec s f.va ).isBlank ) { // TODO:  Replace this with a blank/default image for ALL images
-//        <img src='http://d33lorp9dhlilu.cloudfront.net/generic-image.png' style='float:left;'/>
+//        <img src='https://d33lorp9dhlilu.cloudfront.net/generic-image.png' style='float:left;'/>
       } else {
 //        <img src={ url( s.rec s f.va ) } style='float:left;'/>
       }
