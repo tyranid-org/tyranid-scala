@@ -660,7 +660,7 @@ case class Grid( query:Query ) {
           <form method="get" class="searchBox" action="/search/results" onsubmit="this.submit();return false;">
 	         <fieldset>
             { SHtml.text( "", v => println( "do something with " + v ), "placeholder" -> "Search", "class" -> "field" ) }
-		        <input type="image" class="btn" name="submit" src="http://www.volerro.com/wp-content/themes/platformpro/images/search-btn.png" alt="Go"/>
+		        <input type="image" class="btn" name="submit" src="/images/search-btn.png" alt="Go"/>
 	         </fieldset>
           </form>
          </td>
