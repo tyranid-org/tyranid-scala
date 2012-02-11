@@ -8,19 +8,19 @@ import scala.xml.Unparsed
 
 import org.tyranid.Imp._
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.oauth.OAuth
+import org.tyranid.oauth.{ OAuth, Token }
+import org.tyranid.profile.User
 import org.tyranid.session.Session
 import org.tyranid.web.{ WebContext, Weblet }
 
 
 object LinkedIn {
 
-  def makeOAuth = OAuth( consumerKey = Tyr.linkedInApiKey, consumerSecret = Tyr.linkedInSecretKey )
+  lazy val oauth = OAuth( key = Tyr.linkedInApiKey, secret = Tyr.linkedInSecretKey )
 
   def exchangeToken( cookie:Cookie ) {
 
     val json = cookie.getValue.decUrl.parseJson.as[mutable.Map[String,Any]]
-spam( "cookie contained: " + json )
 
     val memberId    = json( 'member_id ).as[String]
     val accessToken = json( 'access_token ).as[String]
@@ -35,29 +35,14 @@ spam( "cookie contained: " + json )
     if ( calcSignature != signature )
       throw new RuntimeException( "Failed signature match." )
 
-    val oauth = makeOAuth
-
     val exchangeUrl = "https://api.linkedin.com/uas/oauth/accessToken"
 
     val params = mutable.Map(
-      "oauth_consumer_key"         -> oauth.consumerKey,
+      "oauth_consumer_key"         -> oauth.key,
       "xoauth_oauth2_access_token" -> accessToken,
       "oauth_signature_method"     -> OAuth.signatureMethod )
 
     oauth.sign( "POST", exchangeUrl, params )
-
-    /*
-
-com.linkedin.security.auth.pub.LoginDeniedInvalidAuthTokenException
-while obtaining request token for :
-
-POST&https%3A%2F%2Fapi.linkedin.com%2Fuas%2Foauth%2FaccessToken&oauth_consumer_key%3Dakzb237fsren%26oauth_signature_method%3DHMAC-SHA1%26xoauth_oauth2_access_token%3DwzuOPVhwCay9aYm37vtXSyJduv3M859bAqxO
-POST&https%3A%2F%2Fapi.linkedin.com%2Fuas%2Foauth%2Faccesstoken&oauth_consumer_key%3Dakzb237fsren%26oauth_signature_method%3DHMAC-SHA1%26xoauth_oauth2_access_token%3DwzuOPVhwCay9aYm37vtXSyJduv3M859bAqxO
-
-
-CONN:O|164844|65429|62339144|173100|*02:1328940064:Lp4cLI3aE3GKmLb8QgQAKSP/hEE=
-
-    */
 
     val str = exchangeUrl.POST( content = OAuth.encParams( params ), contentType = "application/x-www-form-urlencoded" )
 
@@ -75,11 +60,17 @@ CONN:O|164844|65429|62339144|173100|*02:1328940064:Lp4cLI3aE3GKmLb8QgQAKSP/hEE=
       }
     }
 
-    // this way of getting the users db is a hack, need to move more knowledge of user schema into tyranid
-    Mongo.connect.db( Tyr.profileDbName )( "users" ).update( Mobj( "_id" -> Session().user.id ), Mobj( $set -> update ) )
+    val session = Session()
+    val user = session.user
 
-    spam( ( "http://api.linkedin.com/v1/people/id=" + memberId ).GET() )
+    // this way of getting the users db is a hack, need to move more knowledge of user schema into tyranid
+    Mongo.connect.db( Tyr.profileDbName )( "users" ).update( Mobj( "_id" -> user.id ), Mobj( $set -> update ) )
+    user.copy( update )
   }
+
+  def tokenFor( user:User ) = Token( key = user.s( 'lit ), secret = user.s( 'lits ) )
+
+  def GET( url:String, user:User ) = oauth.GET( url, tokenFor( user ), headers = Map( "x-li-format" -> "json" ) )
 }
 
 object LinkedInlet extends Weblet {

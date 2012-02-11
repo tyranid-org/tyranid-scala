@@ -378,8 +378,13 @@ class StringImp( s:String ) {
    * * *   HTTP / URLs
    */
 
-  def    GET( query:collection.Map[String,String] = null )                                                  = Http.GET( s, query = query )
-  def   POST( form:collection.Map[String,String] = null, content:String = null, contentType:String = null ) = Http.POST( s, content, form, contentType )
-  def DELETE( query:collection.Map[String,String] = null )                                                  = Http.DELETE( s, query = query )
+  def GET( query:collection.Map[String,String] = null, headers:collection.Map[String,String] = null ) =
+    Http.GET( s, query = query, headers )
+
+  def POST( form:collection.Map[String,String] = null, content:String = null, contentType:String = null, headers:collection.Map[String,String] = null ) =
+    Http.POST( s, content, form, contentType, headers )
+
+  def DELETE( query:collection.Map[String,String] = null ) =
+    Http.DELETE( s, query = query )
 }
 

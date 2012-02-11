@@ -17,8 +17,11 @@
 
 package org.tyranid.db.mongo
 
+import scala.collection.JavaConversions._
+
 import org.bson.BSONObject
 import org.bson.types.ObjectId
+
 import com.mongodb.{ BasicDBList, BasicDBObject, DB, DBCollection, DBCursor, DBObject }
 
 import org.tyranid.Imp._
@@ -163,6 +166,8 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
   /*
    * * *   BsonObject
    */
+
+  def keys = obj.keySet.toSeq
 
   override def o( key:String ):DBObjectWrap =
     apply( key ) match {

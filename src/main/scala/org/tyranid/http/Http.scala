@@ -1,17 +1,18 @@
 
 package org.tyranid.http
 
+import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import javax.servlet.{ Filter, FilterChain, FilterConfig, ServletRequest, ServletResponse }
 import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
 
-import org.apache.http.NameValuePair
+import org.apache.http.{ Header, NameValuePair }
 import org.apache.http.client.methods.{ HttpRequestBase, HttpDelete, HttpGet, HttpPost }
 import org.apache.http.entity.StringEntity
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.impl.client.DefaultHttpClient
-import org.apache.http.message.BasicNameValuePair
+import org.apache.http.message.{ BasicHeader, BasicNameValuePair }
 import org.apache.http.util.EntityUtils
 
 import org.tyranid.Imp._
@@ -104,6 +105,33 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
 
 object Http {
 
+  def extractQueryString( url:String, params:mutable.Map[String,String], oauth:Boolean = false ) = {
+    val idx = url.indexOf( '?' )
+
+    if ( idx != -1 ) {
+
+      val pairs = url.substring( idx+1 ).splitAmp
+      for ( pair <- pairs ) {
+        val eq = pair.indexOf( '=' )
+        if ( eq == -1 ) {
+          params( pair ) = ""
+        } else {
+          params( pair.substring(0, eq) ) = {
+            val s = pair.substring(eq + 1)
+            if ( oauth )
+              s.decOAuthUrl
+            else
+              s.decUrl
+          }
+        }
+      }
+
+      url.substring( 0, idx )
+    } else {
+      url
+    }
+  }
+
   def makeUrl( url:String, query:collection.Map[String,String] = null ) =
     if ( query != null && query.size > 0 ) {
       url +
@@ -121,11 +149,21 @@ object Http {
     entity != null |* EntityUtils.toString( entity )
   }
 
-  def GET( url:String, query:collection.Map[String,String] = null ) =
-    execute( new HttpGet( makeUrl( url, query ) ) )
+  private def convertHeaders( headers:collection.Map[String,String] ) =
+    headers.toSeq.map( p => new BasicHeader( p._1, p._2 ) ).toArray[Header]
 
-  def POST( url:String, content:String, form:collection.Map[String,String], contentType:String = null ) = {
+  def GET( url:String, query:collection.Map[String,String] = null, headers:collection.Map[String,String] = null ) = {
+    val get = new HttpGet( makeUrl( url, query ) )
+    if ( headers != null )
+      get.setHeaders( convertHeaders( headers ) )
+    execute( get )
+  }
+
+  def POST( url:String, content:String, form:collection.Map[String,String], contentType:String = null, headers:collection.Map[String,String] = null ) = {
     val request = new HttpPost( url )
+
+    if ( headers != null )
+      request.setHeaders( convertHeaders( headers ) )
 
     request.setEntity {
       if ( form != null ) {

@@ -128,20 +128,6 @@ trait SessionMeta {
   def apply():Session = ThreadData().tyr
 
 
-  /*
-   * * *   Editing
-   */
-
-  private val editings = mutable.Map[ Class[_], AnyRef ]()
-
-  def editing[ T: Manifest ]( gen: => AnyRef ) =
-    editings.getOrElseUpdate( manifest[T].erasure, gen ).asInstanceOf[T]
-  def doneEditing[ T: Manifest ] =
-    editings.remove( manifest[T].erasure )
-  def clearAllEditing = editings.clear
-
-
-
   def byHttpSessionId( id:String ) =
     WebSession.sessions( id ) match {
     case s:HttpSession => from( s )
@@ -178,6 +164,22 @@ trait Session {
   def reportFor( query:Query ) = reports.synchronized {
     reports.getOrElseUpdate( query.name, query.newReport )
   }
+
+
+  /*
+   * * *   Editing
+   */
+
+  private val editings = mutable.Map[ Class[_], AnyRef ]()
+
+  def editing[ T: Manifest ]( gen: => AnyRef ) =
+    editings.getOrElseUpdate( manifest[T].erasure, gen ).asInstanceOf[T]
+  def doneEditing[ T: Manifest ] =
+    editings.remove( manifest[T].erasure )
+  def clearAllEditing = editings.clear
+
+
+
 }
 
 

@@ -37,6 +37,12 @@ trait BsonObject extends Deep {
 
   def deep:BsonObject
 
+  def copy( other:BsonObject ) =
+    for ( key <- other.keys )
+      update( key, other( key ) )
+
+  def keys:Seq[String]
+
   def id = apply( "_id" )
   def oid = id.as[ObjectId]
 
