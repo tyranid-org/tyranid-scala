@@ -15,15 +15,12 @@
  *
  */
 
-package org.tyranid.linkedIn
-
-import org.scalatest.FunSuite
+package org.tyranid.logic
 
 import org.tyranid.Imp._
 
+class ThrowableImp( t:Throwable ) {
 
-class LinkedInSuite extends FunSuite {
-  org.tyranid.boot.Boot.boot
-
+  def log = Log.log( Log.StackTrace, "ex" -> t )
 }
 
