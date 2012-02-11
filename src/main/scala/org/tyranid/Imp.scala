@@ -73,8 +73,7 @@ object Imp {
         block
       } catch {
       case e =>
-        println( "spawn() stack trace:" )
-        e.printStackTrace()
+        throwableImp( e ).log
       }
     }
   }

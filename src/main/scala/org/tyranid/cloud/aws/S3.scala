@@ -106,11 +106,8 @@ object S3 {
 		  f
       }
 	} catch {
-      case e: AmazonS3Exception => {
-        e.printStackTrace()
-        println( e.getMessage() )
-      }
-      
+    case e: AmazonS3Exception =>
+      e.log
       null
     }
   }
@@ -123,11 +120,8 @@ object S3 {
         obj.getObjectContent()
 
 	} catch {
-      case e: AmazonS3Exception => {
-        e.printStackTrace()
-        println( e.getMessage() )
-      }
-      
+    case e: AmazonS3Exception =>
+      e.log
       null
     }
   }

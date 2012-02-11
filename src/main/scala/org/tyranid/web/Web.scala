@@ -44,7 +44,7 @@ class WebFilter extends Filter {
         weblet.handle( FileUploadSupport.checkContext( ctx ) )
       } catch {
       case e =>
-        e.printStackTrace
+        e.log
       }
 
     case None =>

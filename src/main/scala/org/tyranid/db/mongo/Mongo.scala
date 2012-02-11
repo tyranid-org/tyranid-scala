@@ -89,11 +89,7 @@ object Imp {
   }
 
   object Mongo {
-    lazy val connect = {
-      //println( "CONNECTING USING " + Tyr.mongoHost )
-      //new Exception().printStackTrace
-      new com.mongodb.Mongo( Tyr.mongoHost )
-    }
+    lazy val connect = new com.mongodb.Mongo( Tyr.mongoHost )
 
     val EmptyArray = Mlist()
   }

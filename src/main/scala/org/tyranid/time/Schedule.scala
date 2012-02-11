@@ -61,8 +61,7 @@ object Scheduler {
             task.task()
           } catch {
             case e =>
-              println( "Problem running task:" )
-              e.printStackTrace
+              e.log
           }
 
           while ( task.nextMs < System.currentTimeMillis )

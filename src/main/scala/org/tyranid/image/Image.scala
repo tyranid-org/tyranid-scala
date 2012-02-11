@@ -126,7 +126,7 @@ object Image {
 		  println( "dimensions test failed for " + url.getPath )
 		} catch {
 			case e:IOException =>
-				e.printStackTrace
+				e.log
 
 		} finally {
 			if ( iis != null )
