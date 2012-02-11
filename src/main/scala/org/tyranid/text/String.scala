@@ -18,6 +18,7 @@
 package org.tyranid.text
 
 import java.util.Date
+import java.util.regex.Pattern
 
 import scala.util.matching.Regex
 import scala.xml.{ NodeSeq, Text }
@@ -28,6 +29,9 @@ import org.tyranid.net.Uri
 import org.tyranid.oauth.OAuth
 import org.tyranid.time.{ Time }
 
+object StringImp {
+  val AmpersandPattern = Pattern.compile( "&" )
+}
 
 class StringImp( s:String ) {
 	def denull = if ( s == null ) "" else s
@@ -36,6 +40,11 @@ class StringImp( s:String ) {
 		val idx = s.indexOf( sep )
 		( s.substring( 0, idx ), s.substring( idx+1 ) )
 	}
+
+  /*
+   * Faster than s.split( "&" )
+   */
+  def splitAmp = StringImp.AmpersandPattern.split( s )
 
 
 	/**
@@ -46,6 +55,7 @@ class StringImp( s:String ) {
   //def decUrl = new org.apache.commons.codec.net.URLCodec( "UTF-8" ).decode( s )
 
 	def encOAuthUrl = OAuth.encOAuthUrl( s )
+	def decOAuthUrl = OAuth.decOAuthUrl( s )
 
   def encJson = {
     val sb = new StringBuilder
