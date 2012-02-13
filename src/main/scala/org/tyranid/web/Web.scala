@@ -28,17 +28,42 @@ class WebFilter extends Filter {
     this.filterConfig = null
   }
 
+  def secureRedirect( ctx:WebContext ) {
+    val req = ctx.req
+    val qs = req.getQueryString
+
+    val sb = new StringBuilder
+
+    sb ++= "https://"
+    sb ++= req.getServerName
+    if ( ctx.req.getServerPort == 8080 )
+      sb ++= ":8443"
+    sb ++= req.getServletPath
+    if ( qs.notBlank )
+      sb += '?' ++= qs
+
+    ctx.res.sendRedirect( sb.toString )
+  }
+
   def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ) {
+
+    val tyr = Tyr
 
     val ctx = new WebContext( request.asInstanceOf[HttpServletRequest],
                               response.asInstanceOf[HttpServletResponse], filterConfig.getServletContext() )
+
+    if ( tyr.requireSsl )
+      ctx.req.getServerPort match {
+      case 80 | 8080 => return secureRedirect( ctx )
+      case _ =>
+      }
 
     val thread = ThreadData()
     thread.http = ctx.req.getSession( false )
 
     AccessLog.log( ctx, thread.http, thread.tyr )
     
-    Tyr.weblets.find( pair => ctx.matches( pair._1 ) && pair._2.matches( ctx ) ) match {
+    tyr.weblets.find( pair => ctx.matches( pair._1 ) && pair._2.matches( ctx ) ) match {
     case Some( ( path, weblet ) ) =>
       try {
         weblet.handle( FileUploadSupport.checkContext( ctx ) )

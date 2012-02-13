@@ -80,6 +80,8 @@ trait Bootable {
 
   def boot:Unit
 
+  val requireSsl = false
+
 
   @volatile var newUser:() => User = null
   val userMeta:UserMeta

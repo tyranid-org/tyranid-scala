@@ -63,8 +63,13 @@ object LinkedIn {
     val session = Session()
     val user = session.user
 
+    val usersdb = Mongo.connect.db( Tyr.profileDbName )( "users" )
+    val existing = usersdb.findOne( Mobj( "liid" -> memberId ) )
+    if ( existing != null && existing.id != user.id )
+      usersdb.update( Mobj( "_id" -> existing.id ), Mobj( $unset -> Mobj( "liid" -> 1, "lit" -> 1, "lits" -> 1 ) ) )
+
     // this way of getting the users db is a hack, need to move more knowledge of user schema into tyranid
-    Mongo.connect.db( Tyr.profileDbName )( "users" ).update( Mobj( "_id" -> user.id ), Mobj( $set -> update ) )
+    usersdb.update( Mobj( "_id" -> user.id ), Mobj( $set -> update ) )
     user.copy( update )
   }
 
