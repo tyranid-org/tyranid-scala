@@ -88,6 +88,8 @@ object Imp {
 	implicit def charImp( v:Char )                          = new org.tyranid.text.CharImp( v )
 	implicit def dateImp( v:Date )                          = new org.tyranid.time.DateImp( v )
 	implicit def option[A]( v:Option[A] )                   = new org.tyranid.collection.OptionImp( v )
+  //implicit def int( v:Integer )                           = new org.tyranid.math.IntImp( v )
+  //implicit def long( v:Long )                             = new org.tyranid.math.LongImp( v )
 	implicit def string( v:String )                         = new org.tyranid.text.StringImp( v )
   implicit def array[A]( a:Array[A] )                     = new org.tyranid.collection.ArrayImp( a )
   implicit def seqImp[A]( a:Seq[A] )                      = new org.tyranid.collection.SeqImp( a )
