@@ -40,7 +40,7 @@ case class DbReCaptcha( theme:String ) extends Domain {
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ) =
     <head>
-     <script type="text/javascript" src="http://www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>
+     <script type="text/javascript" src="https://www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>
 
      <script type="text/javascript">{ Unparsed( """
        function showRecaptcha(element) {
@@ -68,7 +68,7 @@ case class DbReCaptcha( theme:String ) extends Domain {
       ( scope.rec.hasSubmitted &&
         !scope.initialDraw && {
           val passedCaptcha =
-            "http://www.google.com/recaptcha/api/verify".POST(
+            "https://www.google.com/recaptcha/api/verify".POST(
               form = Map(
                 "privatekey" -> Tyr.reCaptchaPrivateKey,
                 "remoteip"   -> S.containerRequest.map(_.remoteAddress).openOr("localhost"),
