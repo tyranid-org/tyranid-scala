@@ -14,6 +14,12 @@ import org.tyranid.session.{ AccessLog, ThreadData }
 
 case class WebException( message:String ) extends Exception
 
+trait WebLock {
+
+  def open( ctx:WebContext, td:ThreadData ):Boolean
+  def block( ctx:WebContext ):Unit
+}
+
 class WebFilter extends Filter {
 
   var filterConfig:FilterConfig = _
@@ -66,6 +72,10 @@ class WebFilter extends Filter {
     tyr.weblets.find( pair => ctx.matches( pair._1 ) && pair._2.matches( ctx ) ) match {
     case Some( ( path, weblet ) ) =>
       try {
+        for ( lock <- weblet.locks )
+          if ( !lock.open( ctx, thread ) )
+            return lock.block( ctx )
+
         weblet.handle( FileUploadSupport.checkContext( ctx ) )
       } catch {
       case e =>
@@ -73,7 +83,7 @@ class WebFilter extends Filter {
       }
 
     case None =>
-      chain.doFilter(request, response);
+      chain.doFilter( request, response )
     }
   }
 }
@@ -90,6 +100,8 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, servletC
 
 trait Weblet {
   def matches( ctx:WebContext ) = true
+
+  val locks:List[WebLock] = Nil
 
   def handle( ctx:WebContext ):Unit
 }

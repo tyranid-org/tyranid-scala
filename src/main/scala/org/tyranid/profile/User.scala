@@ -25,7 +25,8 @@ import net.liftweb.http.{ RedirectResponse, S }
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ Record, Scope }
-import org.tyranid.session.Session
+import org.tyranid.session.{ Session, ThreadData }
+import org.tyranid.web.{ WebContext, WebLock }
 
 trait UserMeta {
   def isLoggedIn = { 
@@ -62,6 +63,18 @@ trait UserMeta {
 
   // TODO:  Make this more sophisticated, allow the entire user to be retrieved instead of just the name, and/or maybe something like ProfileItem
   def nameFor( userId:ObjectId ) = "TODO"
+}
+
+case object UserLoginLock extends WebLock {
+
+  def open( ctx:WebContext, td:ThreadData ):Boolean = {
+    val user = td.user
+    return user != null && user.loggedIn
+  }
+
+  def block( ctx:WebContext ) {
+    ctx.res.sendRedirect( "/user/login?l=" + ctx.req.uriAndQueryString.encUrl )
+  }
 }
 
 object User extends UserMeta {

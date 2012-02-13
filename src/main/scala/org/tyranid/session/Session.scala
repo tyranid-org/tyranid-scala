@@ -97,6 +97,7 @@ class ThreadData {
 
   private var tyrData:Session = _
 
+  // rename tyr to session once lift is removed
   def tyr:Session = {
     if ( tyrData == null ) {
       tyrData =
@@ -116,6 +117,10 @@ class ThreadData {
     tyrData
   }
 
+  def user:User = {
+    if ( tyr != null ) tyr.user
+    else               null
+  }
 }
 
 
@@ -179,7 +184,34 @@ trait Session {
   def clearAllEditing = editings.clear
 
 
+  /*
+   * * *   Notifications
+   */
 
+  @volatile private var notes:List[Notification] = Nil
+
+  def notice( msg:AnyRef ) = notes ::= Notification( "notice",  msg.toString )
+  def warn( msg:AnyRef )   = notes ::= Notification( "warning", msg.toString )
+  def error( msg:AnyRef )  = notes ::= Notification( "error",   msg.toString )
+
+  def popNotes = {
+    val n = notes
+    notes = Nil
+    n
+  }
 }
+
+object Notification {
+
+  def box:NodeSeq = {
+    val sess = Session()
+
+    <div class="notify">
+     { sess.popNotes.map { note => <div class={ note.level }>{ Unparsed( note.msg ) }</div> } }
+    </div>
+  }
+}
+
+case class Notification( level:String, msg:String )
 
 

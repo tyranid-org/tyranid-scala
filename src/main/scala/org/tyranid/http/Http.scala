@@ -61,6 +61,26 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
       println( key + " : " + value )
     }
   }
+
+  def uriAndQueryString = {
+    val qs = req.getQueryString
+
+    val sb = new StringBuilder
+    sb ++= req.getServletPath
+    if ( qs.notBlank )
+      sb += '?' ++= qs
+
+    sb.toString
+  }
+
+  def deleteCookie( name:String ) = {
+    val cookies = req.getCookies
+
+    if ( cookies != null )
+      cookies.find( _.getName == name ).foreach {
+        _.setMaxAge( 0 )
+      }
+  }
 }
 
 case class HttpServletResponseOps( res:HttpServletResponse ) {
