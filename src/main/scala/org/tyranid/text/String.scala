@@ -227,8 +227,16 @@ class StringImp( s:String ) {
         0
       }
 
-  def toLaxDouble = if ( s.isBlank ) 0
-                    else             s.replaceAll( ",", "" ).replaceAll( " ", "" ).toDouble
+  def toLaxDouble = 
+    if ( s.isBlank )
+      0
+    else
+      try {
+        s.replaceAll( ",", "" ).replaceAll( " ", "" ).toDouble
+      } catch {
+      case e:NumberFormatException =>
+        0
+      }
 
   def toLaxLong =
     if ( s.isBlank )
