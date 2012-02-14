@@ -601,9 +601,7 @@ case class Grid( query:Query ) {
     rows.filter( r => selecteds( r.id ) ).foreach { report.selectedRows += _.id }
 
 
-    <div class="header">
-     { query.label }
-    </div> ++
+    <div class="title"><span>{ query.label }</span></div>
     <table class="def" id="def">
      <tr>
       <td>
