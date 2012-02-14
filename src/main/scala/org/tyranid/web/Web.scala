@@ -66,6 +66,7 @@ class WebFilter extends Filter {
 
     val thread = ThreadData()
     thread.http = ctx.req.getSession( false )
+    thread.ctx = ctx
 
     AccessLog.log( ctx, thread.http, thread.tyr )
     

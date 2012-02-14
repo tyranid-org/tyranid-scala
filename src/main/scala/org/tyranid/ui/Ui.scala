@@ -29,22 +29,12 @@ import org.tyranid.Imp._
 import org.tyranid.db.{ Record, Path, Scope, View, ViewAttribute }
 import org.tyranid.logic.Invalid
 
-object Glyph {
-  val Checkmark = Unparsed( "&#10004;" )
-}
-
 object Opts {
   val Empty = Opts()
 }
 
 case class Opts( opts:(String,String)* )
 
-
-object Focus {
-
-  def apply( id:String ) =
-    <script>{ Unparsed( """$( $('""" + id + """').focus() );""" ) }</script>
-}
 
 object Button {
 

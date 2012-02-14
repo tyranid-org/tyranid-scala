@@ -25,6 +25,7 @@ import scala.xml.{ Node, NodeSeq, Unparsed }
 import org.tyranid.Imp._
 import org.tyranid.profile.User
 import org.tyranid.report.Query
+import org.tyranid.web.WebContext
 
 
 object WebSession {
@@ -121,6 +122,11 @@ class ThreadData {
     if ( tyr != null ) tyr.user
     else               null
   }
+
+
+  // --- WebContext
+
+  @volatile var ctx:WebContext = _
 }
 
 
