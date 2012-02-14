@@ -83,7 +83,6 @@ object User extends UserMeta {
 
   private[profile] lazy val _ReqLoggedIn =
     If( isLoggedIn _,  () => {
-spam( "HERE 1" )
       RedirectResponse( "/log/in?l=" + S.uriAndQueryString.open_!.encUrl )
     } )
     
