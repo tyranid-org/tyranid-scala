@@ -73,7 +73,7 @@ case object UserLoginLock extends WebLock {
   }
 
   def block( ctx:WebContext ) {
-    ctx.res.sendRedirect( "/sign/in?l=" + ctx.req.uriAndQueryString.encUrl )
+    ctx.res.sendRedirect( "/log/in?l=" + ctx.req.uriAndQueryString.encUrl )
   }
 }
 
@@ -84,11 +84,11 @@ object User extends UserMeta {
   private[profile] lazy val _ReqLoggedIn =
     If( isLoggedIn _,  () => {
 spam( "HERE 1" )
-      RedirectResponse( "/sign/in?l=" + S.uriAndQueryString.open_!.encUrl )
+      RedirectResponse( "/log/in?l=" + S.uriAndQueryString.open_!.encUrl )
     } )
     
   private[profile] lazy val _ReqAdmin    =
-    If( isAdmin _,     () => RedirectResponse( "/sign/in" ) )
+    If( isAdmin _,     () => RedirectResponse( "/log/in" ) )
 }
 
 trait User extends Record {

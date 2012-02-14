@@ -5,7 +5,7 @@ import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import javax.servlet.{ Filter, FilterChain, FilterConfig, ServletRequest, ServletResponse }
-import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
+import javax.servlet.http.{ Cookie, HttpServlet, HttpServletRequest, HttpServletResponse }
 
 import org.apache.http.{ Header, NameValuePair }
 import org.apache.http.client.methods.{ HttpRequestBase, HttpDelete, HttpGet, HttpPost }
@@ -80,15 +80,6 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
     else
       null
   }
-
-  def deleteCookie( name:String ) = {
-    val cookies = req.getCookies
-
-    if ( cookies != null )
-      cookies.find( _.getName == name ).foreach {
-        _.setMaxAge( 0 )
-      }
-  }
 }
 
 case class HttpServletResponseOps( res:HttpServletResponse ) {
@@ -126,6 +117,13 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     out.close
 
     res.getOutputStream.close
+  }
+
+  def deleteCookie( name:String, path:String = "/" ) = {
+    val cookie = new Cookie( name, "" )
+    cookie.setMaxAge( 0 )
+    cookie.setPath( path )
+    res.addCookie( cookie )
   }
 }
 
