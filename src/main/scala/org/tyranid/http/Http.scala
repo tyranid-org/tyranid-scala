@@ -73,6 +73,14 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
     sb.toString
   }
 
+  def cookieValue( name:String ) = {
+    val cookies = req.getCookies
+    if ( cookies != null )
+      req.getCookies.find( _.getName == Tyr.loginCookieName ).map( _.getValue ) getOrElse null
+    else
+      null
+  }
+
   def deleteCookie( name:String ) = {
     val cookies = req.getCookies
 
