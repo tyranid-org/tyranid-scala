@@ -717,7 +717,7 @@ $( initGroup )
 """ ) }</script>
     </head> ++
     { query.grouping != null |*
-      <div id="groupdial" style="padding:8px;">
+      <div id="groupdial" style="padding:8px; display:none;">
        <table>
         <tr>
          <td style="width:160px;"><label for="addGroup_i">Add to Existing Group</label></td>
