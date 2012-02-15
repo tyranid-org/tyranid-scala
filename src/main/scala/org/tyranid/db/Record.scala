@@ -36,9 +36,9 @@ import org.tyranid.ui.{ UiObj }
  * * *  ViewAttribute
  */
 
-class ViewAttribute( val view:View,
-                     val att:Attribute,
-                     val index:Int ) extends Valid with Path with PathNode {
+case class ViewAttribute( val view:View,
+                          val att:Attribute,
+                          val index:Int ) extends Valid with Path with PathNode {
 
   def temporary = att.temporary
 

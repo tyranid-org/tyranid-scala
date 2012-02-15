@@ -41,6 +41,8 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   var required:Boolean = false
   var search:Searchable = NoSearch
 
+  
+  override def toString = entity.name + "." + name
 
   /**
    * Indicates whether this va is persisted in the database or is just used as a temporary form field.

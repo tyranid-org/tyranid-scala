@@ -76,6 +76,8 @@ class StringImp( s:String ) {
 
     sb.toString
   }
+  
+  def escapeRegex = s.replace( ".", "\\." ).replace( "@", "\\@" )
 
   def toUrl = new java.net.URL( Uri.completeUri( s ) )
 
