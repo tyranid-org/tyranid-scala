@@ -33,7 +33,7 @@ import org.tyranid.ui.Field
 
 object DbFile {
 
-  def apply( bucketPrefix:String ):DbFile = new DbFile( Tyr.s3Buckets( bucketPrefix ) )
+  def apply( bucketPrefix:String ):DbFile = new DbFile( B.s3Buckets( bucketPrefix ) )
 }
 
 class DbFile( bucket:S3Bucket ) extends Domain {

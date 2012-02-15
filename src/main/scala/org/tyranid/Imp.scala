@@ -45,7 +45,8 @@ object Debug {
  */
 object Imp {
 
-  def Tyr = org.tyranid.boot.Boot.instance
+  def T = org.tyranid.session.ThreadData()
+  def B = org.tyranid.boot.Boot.instance
 
   /**
    * Try a block of code that returns a string, if it succeeds return the string, otherwise return the exception message.

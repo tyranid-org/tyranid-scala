@@ -106,12 +106,12 @@ class ThreadData {
           http.getAttribute( WebSession.HttpSessionKey ) match {
           case s:Session => s
           case _         =>
-            val s = Tyr.newSession()
+            val s = B.newSession()
             http.setAttribute( WebSession.HttpSessionKey, s )
             s
           }
         } else {
-          Tyr.newSession()
+          B.newSession()
         }
     }
 
@@ -157,7 +157,7 @@ object Session extends SessionMeta
 
 trait Session {
 
-  private var userVar = Tyr.newUser()
+  private var userVar = B.newUser()
 
   def user:User           = userVar
   def user_=( user:User ) = userVar = user

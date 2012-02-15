@@ -34,7 +34,7 @@ import org.tyranid.ui.Field
 
 object DbImage {
 
-  def apply( bucketPrefix:String ):DbImage = new DbImage( Tyr.s3Buckets( bucketPrefix ) )
+  def apply( bucketPrefix:String ):DbImage = new DbImage( B.s3Buckets( bucketPrefix ) )
 }
 
 class DbImage( bucket:S3Bucket ) extends DbFile( bucket ) {

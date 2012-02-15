@@ -16,7 +16,7 @@ import org.tyranid.web.{ WebContext, Weblet }
 
 object LinkedIn {
 
-  lazy val oauth = OAuth( key = Tyr.linkedInApiKey, secret = Tyr.linkedInSecretKey )
+  lazy val oauth = OAuth( key = B.linkedInApiKey, secret = B.linkedInSecretKey )
 
   def exchangeToken( cookie:Cookie ) {
 
@@ -30,7 +30,7 @@ object LinkedIn {
     for ( fieldName <- json( 'signature_order ).as[Array[String]] )
       text ++= json( fieldName ).toString
 
-    val calcSignature = OAuth.hmacSha1( text.toString, Tyr.linkedInSecretKey )
+    val calcSignature = OAuth.hmacSha1( text.toString, B.linkedInSecretKey )
 
     if ( calcSignature != signature )
       throw new RuntimeException( "Failed signature match." )
@@ -63,7 +63,7 @@ object LinkedIn {
     val session = Session()
     val user = session.user
 
-    val usersdb = Mongo.connect.db( Tyr.profileDbName )( "users" )
+    val usersdb = Mongo.connect.db( B.profileDbName )( "users" )
     val existing = usersdb.findOne( Mobj( "liid" -> memberId ) )
     if ( existing != null && existing.id != user.id )
       usersdb.update( Mobj( "_id" -> existing.id ), Mobj( $unset -> Mobj( "liid" -> 1, "lit" -> 1, "lits" -> 1 ) ) )
@@ -87,7 +87,7 @@ object LinkedInlet extends Weblet {
     ctx.path match {
     case "/linkedin/exchange" =>
 
-      val cookieName = "linkedin_oauth_" + Tyr.linkedInApiKey
+      val cookieName = "linkedin_oauth_" + B.linkedInApiKey
       ctx.req.getCookies.find( _.getName == cookieName ) match {
       case Some( cookie ) =>
         LinkedIn.exchangeToken( cookie )

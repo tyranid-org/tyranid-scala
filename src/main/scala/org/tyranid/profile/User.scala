@@ -33,14 +33,14 @@ trait UserMeta {
     if ( Session().user.loggedIn )
       true
     else {
-      if ( Tyr.loginCookieName == null || Session().user.isLoggingOut )
+      if ( B.loginCookieName == null || Session().user.isLoggingOut )
         false
       else {
-        val savedCookie = S.cookieValue( Tyr.loginCookieName ) openOr null
+        val savedCookie = S.cookieValue( B.loginCookieName ) openOr null
 
         var user = { 
           if ( savedCookie != null )
-            Record.byTid( savedCookie, only = Tyr.userEntity ).map( _.asInstanceOf[User] ) getOrElse null
+            Record.byTid( savedCookie, only = B.userEntity ).map( _.asInstanceOf[User] ) getOrElse null
           else 
             null
         }

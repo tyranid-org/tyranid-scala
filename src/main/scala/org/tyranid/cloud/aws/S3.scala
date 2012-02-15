@@ -26,17 +26,17 @@ import org.tyranid.io.IOUtils
 import org.tyranid.Imp._
 
 case class S3Bucket( prefix:String, cfDistributionId:String = "", cfDomain:String = "" ) {
-  val name = prefix + Tyr.envSuffix + Tyr.bucketSuffix
+  val name = prefix + B.envSuffix + B.bucketSuffix
 
   def url( path:String ) =
-    if ( cfDomain.isBlank || Tyr.envSuffix.notBlank )
+    if ( cfDomain.isBlank || B.envSuffix.notBlank )
       "https://s3.amazonaws.com/" + name + "/" + path
     else
       "https://" + cfDomain + ".cloudfront.net/" + path
 }
 
 object S3 {
-  private val s3 = new AmazonS3Client( Tyr.awsCredentials )
+  private val s3 = new AmazonS3Client( B.awsCredentials )
 
   def write( bucket:S3Bucket, key:String, file:java.io.File ) = s3.putObject( bucket.name, key, file )
   

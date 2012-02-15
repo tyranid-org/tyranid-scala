@@ -44,7 +44,7 @@ case class DbReCaptcha( theme:String ) extends Domain {
 
      <script type="text/javascript">{ Unparsed( """
        function showRecaptcha(element) {
-         Recaptcha.create( """" + Tyr.reCaptchaPublicKey + """", element, {
+         Recaptcha.create( """" + B.reCaptchaPublicKey + """", element, {
            theme: """" + theme + """",
            callback: Recaptcha.focus_response_field});
        }
@@ -70,7 +70,7 @@ case class DbReCaptcha( theme:String ) extends Domain {
           val passedCaptcha =
             "https://www.google.com/recaptcha/api/verify".POST(
               form = Map(
-                "privatekey" -> Tyr.reCaptchaPrivateKey,
+                "privatekey" -> B.reCaptchaPrivateKey,
                 "remoteip"   -> S.containerRequest.map(_.remoteAddress).openOr("localhost"),
                 "challenge"  -> S.param( "recaptcha_challenge_field" ).openOr( "" ),
                 "response"   -> S.param( "recaptcha_response_field" ).openOr( "" )

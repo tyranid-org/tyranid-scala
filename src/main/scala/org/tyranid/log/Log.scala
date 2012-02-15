@@ -28,7 +28,6 @@ import org.tyranid.db.{ DbChar, DbDateTime, DbInt, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
 import org.tyranid.report.{ Field, Run, MongoQuery }
-import org.tyranid.session.{ Session, ThreadData }
 
 
 object Log extends MongoEntity( tid = "a0Bu" ) {
@@ -56,7 +55,7 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
       "on" -> new Date
     )
 
-    val thread = ThreadData()
+    val thread = T
     val session = thread.tyr
 
     if ( session != null ) {
@@ -130,7 +129,7 @@ object LogQuery extends MongoQuery {
       def cell( run:Run, r:Record ) = {
         r.oid( 'uid ) match {
         case null => Unparsed( "" )
-        case uid  => Unparsed( Tyr.userMeta.nameFor( uid ) )
+        case uid  => Unparsed( B.userMeta.nameFor( uid ) )
         }
       }
     },

@@ -92,7 +92,7 @@ object Imp {
   }
 
   object Mongo {
-    lazy val connect = new com.mongodb.Mongo( Tyr.mongoHost )
+    lazy val connect = new com.mongodb.Mongo( B.mongoHost )
 
     val EmptyArray = Mlist()
   }

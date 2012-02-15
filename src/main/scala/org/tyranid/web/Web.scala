@@ -53,24 +53,24 @@ class WebFilter extends Filter {
 
   def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ) {
 
-    val tyr = Tyr
+    val boot = B
 
     val ctx = new WebContext( request.asInstanceOf[HttpServletRequest],
                               response.asInstanceOf[HttpServletResponse], filterConfig.getServletContext() )
 
-    if ( tyr.requireSsl )
+    if ( boot.requireSsl )
       ctx.req.getServerPort match {
       case 80 | 8080 => return secureRedirect( ctx )
       case _ =>
       }
 
-    val thread = ThreadData()
+    val thread = T
     thread.http = ctx.req.getSession( false )
     thread.ctx = ctx
 
     AccessLog.log( ctx, thread.http, thread.tyr )
     
-    tyr.weblets.find( pair => ctx.matches( pair._1 ) && pair._2.matches( ctx ) ) match {
+    boot.weblets.find( pair => ctx.matches( pair._1 ) && pair._2.matches( ctx ) ) match {
     case Some( ( path, weblet ) ) =>
       try {
         for ( lock <- weblet.locks )
@@ -134,7 +134,7 @@ object WebTemplate {
       if ( node.label == "content" ) {
         apply( content )
       } else {
-        val template = Tyr.templates.find( p => p._1 == node.label ).map( _._2 ) getOrElse ( throw new WebException( "Missing template " + node.label ) )
+        val template = B.templates.find( p => p._1 == node.label ).map( _._2 ) getOrElse ( throw new WebException( "Missing template " + node.label ) )
         apply( template( node ), e.child )
       }
 
@@ -165,8 +165,8 @@ class WebInit extends GenericServlet {
 
   override def init {
     val bayeux = getServletContext().getAttribute(BayeuxServer.ATTRIBUTE).as[BayeuxServer]
-    Tyr.bayeux = bayeux
-    Tyr.comets.foreach { _.init( bayeux ) }
+    B.bayeux = bayeux
+    B.comets.foreach { _.init( bayeux ) }
   }
 
   def service( req:ServletRequest, res:ServletResponse ) = {

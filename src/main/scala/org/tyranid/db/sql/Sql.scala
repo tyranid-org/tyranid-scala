@@ -38,9 +38,9 @@ object SqlPool {
   	
   private def createOne:Option[Connection] =
     try {
-	    Class.forName( Tyr.dbDriver )
+	    Class.forName( B.dbDriver )
 
-			Some( DriverManager.getConnection( Tyr.dbUrl, Tyr.dbUser, Tyr.dbPw ) )
+			Some( DriverManager.getConnection( B.dbUrl, B.dbUser, B.dbPw ) )
 	  } catch {
 	    case e: Exception => e.printStackTrace; None
 	  }

@@ -12,10 +12,10 @@ object ChromeFrame {
 
   val sniffBox = Unparsed( """
 <!--[if lt IE 8 ]>
-<div class="error"><a href="/chrome/install">Welcome to """ + Tyr.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
+<div class="error"><a href="/chrome/install">Welcome to """ + B.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
 <![endif]-->
 <!--[if IE 8 ]>
-<div class="warning"><a href="/chrome/install">Welcome to """ + Tyr.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
+<div class="warning"><a href="/chrome/install">Welcome to """ + B.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
 <![endif]-->
 """ )
 
@@ -64,7 +64,7 @@ object ChromeFramelet extends Weblet {
           <tyr:chromeShell>
            <p>Your browser is now upgraded.  Thank you!</p>
            { Button.bar(
-              Button.link( "Return to " + Tyr.applicationName + ".", "/", color = "green" ) ) }
+              Button.link( "Return to " + B.applicationName + ".", "/", color = "green" ) ) }
           </tyr:chromeShell> ) )
 
     case _ =>

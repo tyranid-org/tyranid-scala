@@ -55,7 +55,7 @@ case class MongoEntity( tid:String ) extends Entity {
 
 	override lazy val dbName = name.plural
 
-  lazy val db = Mongo.connect.db( Tyr.profileDbName )( dbName )
+  lazy val db = Mongo.connect.db( B.profileDbName )( dbName )
 
   lazy val makeView = MongoView( this )
 

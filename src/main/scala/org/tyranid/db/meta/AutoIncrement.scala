@@ -32,7 +32,7 @@ import org.tyranid.session.Session
 object AutoIncrement {
 
   private lazy val db = {
-    val db = Mongo.connect.db( Tyr.profileDbName )( "auto_increment" )
+    val db = Mongo.connect.db( B.profileDbName )( "auto_increment" )
     if ( db.findOne() == null )
       db.save( Mobj( "_id" -> 1 ) )
     db

@@ -76,7 +76,7 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
   def cookieValue( name:String ) = {
     val cookies = req.getCookies
     if ( cookies != null )
-      req.getCookies.find( _.getName == Tyr.loginCookieName ).map( _.getValue ) getOrElse null
+      req.getCookies.find( _.getName == B.loginCookieName ).map( _.getValue ) getOrElse null
     else
       null
   }

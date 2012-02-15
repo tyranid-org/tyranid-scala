@@ -55,7 +55,7 @@ trait Versioning extends Entity {
         if ( diffs.diffs.nonEmpty )
           log( 'updates ) = PathDiff.toDbObject( diffs.diffs )
 
-        val db = Mongo.connect.db( Tyr.profileDbName )( r.entity.dbName + "_log" )
+        val db = Mongo.connect.db( B.profileDbName )( r.entity.dbName + "_log" )
 
         db.save( log )
       }
