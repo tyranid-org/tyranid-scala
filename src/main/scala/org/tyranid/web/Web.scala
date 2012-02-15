@@ -55,29 +55,29 @@ class WebFilter extends Filter {
 
     val boot = B
 
-    val ctx = new WebContext( request.asInstanceOf[HttpServletRequest],
+    val web = new WebContext( request.asInstanceOf[HttpServletRequest],
                               response.asInstanceOf[HttpServletResponse], filterConfig.getServletContext() )
 
     if ( boot.requireSsl )
-      ctx.req.getServerPort match {
-      case 80 | 8080 => return secureRedirect( ctx )
+      web.req.getServerPort match {
+      case 80 | 8080 => return secureRedirect( web )
       case _ =>
       }
 
     val thread = T
-    thread.http = ctx.req.getSession( false )
-    thread.ctx = ctx
+    thread.http = web.req.getSession( false )
+    thread.web = web
 
-    AccessLog.log( ctx, thread.http, thread.tyr )
+    AccessLog.log( web, thread )
     
-    boot.weblets.find( pair => ctx.matches( pair._1 ) && pair._2.matches( ctx ) ) match {
+    boot.weblets.find( pair => web.matches( pair._1 ) && pair._2.matches( web ) ) match {
     case Some( ( path, weblet ) ) =>
       try {
         for ( lock <- weblet.locks )
-          if ( !lock.open( ctx, thread ) )
-            return lock.block( ctx )
+          if ( !lock.open( web, thread ) )
+            return lock.block( web )
 
-        weblet.handle( FileUploadSupport.checkContext( ctx ) )
+        weblet.handle( FileUploadSupport.checkContext( web ) )
       } catch {
       case e =>
         e.log
@@ -90,7 +90,7 @@ class WebFilter extends Filter {
 }
 
 
-case class WebContext( req:HttpServletRequest, res:HttpServletResponse, servletCtx:ServletContext ) {
+case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:ServletContext ) {
   def matches( path:String ) = {
     // TODO:  check for path separators ... i.e. "/foo" should not match "/foobar" but should match "/foo/bar"
     req.getServletPath.startsWith( path )

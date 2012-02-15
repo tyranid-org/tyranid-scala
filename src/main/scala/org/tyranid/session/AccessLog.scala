@@ -28,20 +28,21 @@ import org.tyranid.web.WebContext
 
 object AccessLog {
 
-  def log( ctx:WebContext, httpSession:HttpSession, session:Session ) {
+  def log( web:WebContext, thread:ThreadData ) {
+    val session = thread.session
 
     if ( !session.loggedUser ) {
       val user = session.user
 
       if ( user.loggedIn ) {
-        Log.log( Log.Access, "ua" -> ctx.req.getHeader( "User-Agent" ) )
+        Log.log( Log.Access, "ua" -> web.req.getHeader( "User-Agent" ) )
         session.loggedUser = true
         session.loggedEntry = true
       }
     }
 
-    if ( !session.loggedEntry && httpSession != null ) {
-      Log.log( Log.Access, "ua" -> ctx.req.getHeader( "User-Agent" ) )
+    if ( !session.loggedEntry && thread.http != null ) {
+      Log.log( Log.Access, "ua" -> web.req.getHeader( "User-Agent" ) )
       session.loggedEntry = true
     }
   }

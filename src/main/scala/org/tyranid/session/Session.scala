@@ -99,7 +99,7 @@ class ThreadData {
   private var tyrData:Session = _
 
   // rename tyr to session once lift is removed
-  def tyr:Session = {
+  def session:Session = {
     if ( tyrData == null ) {
       tyrData =
         if ( http != null ) {
@@ -119,14 +119,14 @@ class ThreadData {
   }
 
   def user:User = {
-    if ( tyr != null ) tyr.user
-    else               null
+    if ( session != null ) session.user
+    else                   null
   }
 
 
   // --- WebContext
 
-  @volatile var ctx:WebContext = _
+  @volatile var web:WebContext = _
 }
 
 
@@ -136,7 +136,7 @@ object SessionMeta {
 
 trait SessionMeta {
 
-  def apply():Session = ThreadData().tyr
+  def apply():Session = ThreadData().session
 
 
   def byHttpSessionId( id:String ) =

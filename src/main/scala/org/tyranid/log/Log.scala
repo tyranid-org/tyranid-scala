@@ -56,7 +56,7 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
     )
 
     val thread = T
-    val session = thread.tyr
+    val session = thread.session
 
     if ( session != null ) {
       val user = session.user
