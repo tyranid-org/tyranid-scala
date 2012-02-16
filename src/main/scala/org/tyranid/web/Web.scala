@@ -5,7 +5,7 @@ import javax.servlet.{ Filter, FilterChain, FilterConfig, GenericServlet, Servle
 import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
 
 import scala.collection.mutable
-import scala.xml.{ Elem, Node, NodeSeq, Text }
+import scala.xml.{ Elem, Node, NodeSeq, Text, TopScope }
 
 import org.cometd.bayeux.server.BayeuxServer
 
@@ -127,16 +127,14 @@ object WebTemplate {
 
    */
 
-  def apply( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq = {
-    val pxml = new WebTemplate().finish( xml, content )
-    //spam( "\n\nBEFORE:\n\n" + xml.toString + "\n\nAFTER:\n\n" + pxml.toString )
-    pxml
-  }
+  def apply( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq =
+    new WebTemplate().finish( xml, content )
 }
 
 class WebTemplate {
 
-  private val heads = new mutable.ArrayBuffer[NodeSeq]()
+  private val heads = new mutable.ArrayBuffer[Node]()
+  private var headFound = false
 
   private def hasTemplates( nodes:NodeSeq ):Boolean = nodes exists hasTemplates
   private def hasTemplates(  node:Node    ):Boolean = ( node.label == "head" || node.prefix == "tyr" ) || hasTemplates( node.child )
@@ -153,7 +151,9 @@ class WebTemplate {
       }
 
     case e:Elem if node.label == "head" =>
-      heads += node.child
+      heads ++= ( node.child map { case e: Elem => e.copy(scope = TopScope) case n => n } )
+      headFound = true
+
       NodeSeq.Empty
 
     case t:Text =>
@@ -166,23 +166,26 @@ class WebTemplate {
         node
     }
 
-  def process( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq =
+  def process( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq = {
     if ( hasTemplates( xml ) )
       xml.flatMap( node => bindNode( node, content ) )
     else
       xml
+  }
 
   def finish( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq = {
     val pxml = process( xml, content )
 
-    if ( heads.size != 0 ) {
+    if ( headFound ) {
 
       pxml.flatMap { node =>
         node match {
         case e:Elem if node.label == "html" =>
           val head = <head>{ heads }</head>
 
-          new Elem( node.prefix, node.label, node.attributes, node.scope, ( head ++ node.child ):_* )
+          val htmlContents = head ++ node.child
+
+          new Elem( node.prefix, node.label, node.attributes, node.scope, htmlContents:_* )
 
         case other =>
           other
