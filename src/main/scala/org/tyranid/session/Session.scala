@@ -118,10 +118,9 @@ class ThreadData {
     tyrData
   }
 
-  def user:User = {
+  def user:User =
     if ( session != null ) session.user
     else                   null
-  }
 
 
   // --- WebContext

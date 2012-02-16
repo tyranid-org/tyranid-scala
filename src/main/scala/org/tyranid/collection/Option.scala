@@ -23,5 +23,17 @@ class OptionImp[A]( opt:Option[A] ) {
 		case Some( obj ) => getter( obj )
 		case None        => fallback
 	}
+
+  /**
+   * This filters the sequence of A to members of subtype B and returns a Seq of
+   * subtype B.
+   *
+   * equivalent to:  seq.filter( _.isInstanceOf[B] ).map( _.asInstanceOf[B] )
+   */
+  def of[ B <: A : Manifest ]:Option[B] = {
+    val cls = manifest[B].erasure
+    opt.filter( obj => cls.isAssignableFrom( obj.getClass ) ).map( _.asInstanceOf[B] )
+  }
+
 }
 

@@ -60,7 +60,10 @@ object Imp {
         e.getMessage
     }
 
-  def spam( msg:String ) = println( "SPAM: " + msg )
+  def spam( msg:AnyRef ) =
+    if ( msg != null ) println( "SPAM: " + msg.toString )
+    else               println( "SPAM: null" )
+
   def look[T]( msg:String, block: => T ): T = {
     spam( "look[" + msg + "]=>[...evaluating...]" )
     val result = block

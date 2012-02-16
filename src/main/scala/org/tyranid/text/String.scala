@@ -38,7 +38,10 @@ class StringImp( s:String ) {
 
 	def splitFirst( sep:Char ) = {
 		val idx = s.indexOf( sep )
-		( s.substring( 0, idx ), s.substring( idx+1 ) )
+    if ( idx != -1 )
+      ( s.substring( 0, idx ), s.substring( idx+1 ) )
+    else
+      ( s, null )
 	}
 
   /*
@@ -56,6 +59,8 @@ class StringImp( s:String ) {
 
 	def encOAuthUrl = OAuth.encOAuthUrl( s )
 	def decOAuthUrl = OAuth.decOAuthUrl( s )
+
+  def toPatternI = Pattern.compile( s, Pattern.CASE_INSENSITIVE )
 
   def encJson = {
     val sb = new StringBuilder

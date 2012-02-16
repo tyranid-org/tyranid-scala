@@ -17,6 +17,7 @@
 
 package org.tyranid.profile
 
+
 import java.util.TimeZone
 
 import org.bson.types.ObjectId
@@ -24,34 +25,28 @@ import org.bson.types.ObjectId
 import net.liftweb.http.{ RedirectResponse, S }
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ Record, Scope }
+import org.tyranid.db.Record
 import org.tyranid.session.{ Session, ThreadData }
 import org.tyranid.web.{ WebContext, WebLock }
 
+
 trait UserMeta {
   def isLoggedIn = { 
-    if ( Session().user.loggedIn )
+    val session = Session()
+
+    if ( session.user.loggedIn )
       true
-    else {
-      if ( B.loginCookieName == null || Session().user.isLoggingOut )
+    else if ( B.loginCookieName == null || session.user.isLoggingOut )
         false
-      else {
-        val savedCookie = S.cookieValue( B.loginCookieName ) openOr null
+    else {
+      LoginCookie.getUser match {
+      case Some( user ) =>
+        user.loggedIn = true
+        session.user = user
+        true
 
-        var user = { 
-          if ( savedCookie != null )
-            Record.byTid( savedCookie, only = B.userEntity ).map( _.asInstanceOf[User] ) getOrElse null
-          else 
-            null
-        }
-
-        if ( user == null )
-          false
-        else {
-          user.loggedIn = true
-          Session().user = user
-          true
-        }
+      case None =>
+        false
       }
     }
   }

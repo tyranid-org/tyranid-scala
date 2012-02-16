@@ -22,7 +22,12 @@ case class RestException( code:String, message:String ) extends Exception
 
 case class HttpServletRequestOps( req:HttpServletRequest ) {
 
-  def s( param:String ):String      = req.getParameter( param )
+  def s( param:String ):String = req.getParameter( param )
+  def b( param:String ):Boolean = {
+    val s = req.getParameter( param )
+    s != null && s.toLaxBoolean
+  }
+
   def oid( param:String ) = new org.bson.types.ObjectId( s( param ) )
   
   def a( param:String ):Seq[String] =
@@ -76,7 +81,7 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
   def cookieValue( name:String ) = {
     val cookies = req.getCookies
     if ( cookies != null )
-      req.getCookies.find( _.getName == B.loginCookieName ).map( _.getValue ) getOrElse null
+      req.getCookies.find( _.getName == name ).map( _.getValue ) getOrElse null
     else
       null
   }
