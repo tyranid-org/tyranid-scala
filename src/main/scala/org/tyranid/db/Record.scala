@@ -96,6 +96,8 @@ trait View {
     uis.getOrElseUpdate( name, ui.bind( this ) )
   }
 
+  def ui( name:String ) = synchronized { uis( name ) }
+
   def path( path:String ):Path = Path.parse( this, path )
 
   def paths( paths:Seq[String] ) = paths.map( path => Path.parse( this, path ) )
@@ -333,6 +335,8 @@ case class Scope( rec:Record,
 
   def draw    ( name:String, ui: => UiObj ) = rec.view.ui( name, ui ).draw    ( this )
   def drawLift( name:String, ui: => UiObj ) = rec.view.ui( name, ui ).drawLift( this )
+
+  def extract( name:String ) = rec.view.ui( name ).extract( this )
 }
 
 

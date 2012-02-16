@@ -102,6 +102,9 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   def forward( url:String )  = ctx.getRequestDispatcher( url ).forward( req, res )
 
   def redirect( url:String ) = res.sendRedirect( url )
+
+  def template( template:NodeSeq, status:Int = 200 ) =
+    res.html( WebTemplate( template ), status )
 }
 
 trait Weblet {

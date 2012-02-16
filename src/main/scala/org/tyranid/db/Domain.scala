@@ -90,6 +90,10 @@ trait Domain extends Valid {
     else 
       input
   }
+
+  def extract( s:Scope, f:Field ) {
+    s.rec( f.va.name ) = T.web.req.s( f.id )
+  }
     
   /**
    * These are the class(es) that should be added to the input container.
@@ -107,17 +111,16 @@ abstract class DbIntish extends Domain {
 
   override def tid( r:Record, va:ViewAttribute ) = Base64.toString( r i va )
 
-  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxText( s.rec s f.va.name, v => { 
-      if ( s.rec( f.va.name ) != v ) {
-        s.rec( f.va.name ) = v.toLaxInt; f.updateDisplayCmd( s ) 
-      } }, opts.map( ElemAttr.pairToBasic ):_* )
-
   override def uiLift( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
     SHtml.ajaxText( s.rec s f.va.name, v => { 
       if ( s.rec( f.va.name ) != v ) {
         s.rec( f.va.name ) = v.toLaxInt; f.updateDisplayCmd( s ) 
       } }, opts.map( ElemAttr.pairToBasic ):_* )
+
+  override def extract( s:Scope, f:Field ) {
+    s.rec( f.va.name ) = T.web.req.i( f.id )
+  }
+    
 }
 
 object DbInt extends DbIntish {

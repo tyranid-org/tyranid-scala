@@ -23,6 +23,10 @@ case class RestException( code:String, message:String ) extends Exception
 case class HttpServletRequestOps( req:HttpServletRequest ) {
 
   def s( param:String ):String = req.getParameter( param )
+  def i( param:String ):Int = {
+    val s = req.getParameter( param )
+    s != null |* s.toLaxInt
+  }
   def b( param:String ):Boolean = {
     val s = req.getParameter( param )
     s != null && s.toLaxBoolean

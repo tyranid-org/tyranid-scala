@@ -70,6 +70,8 @@ trait UiObj {
 
   def draw    ( scope:Scope ):NodeSeq = NodeSeq.Empty
   def drawLift( scope:Scope ):NodeSeq = NodeSeq.Empty
+
+  def extract( scope:Scope ):Unit
 }
 
 
@@ -84,15 +86,34 @@ object Field {
     sb ++= "<input value=\"" ++= s.rec.s( f.va.name ) ++= "\""
 
     var typ = "text"
+    var id = f.id
 
     for ( opt <- opts )
       opt match {
-      case ( "id", v )   => sb ++= " id=\"" ++= v += '"'
+      case ( "id", v )   =>
+        if ( id != null && v != id )
+          throw new RuntimeException( "Form element being named " + v + " and " + id )
+
+        id = v
+
+      case ( "name", v ) =>
+        if ( f.id != null && v != f.id )
+          throw new RuntimeException( "Form element being named " + v + " and " + id )
+
+        id = v
+
       case ( "type", v ) => typ = v
       case ( x, v )       => throw new RuntimeException( "Unknown field option " + x + " = " + v )
       }
 
-    sb ++= " type=\"" ++= typ ++= "\"/>"
+    if ( id == null ) {
+      id = /* TODO: form id + '_' + */ f.va.name
+      f.id = id
+    } else if ( id != f.id ) {
+      f.id = id
+    }
+
+    sb ++= " name=\"" + id + "\" id=\"" + id + "\" type=\"" ++= typ ++= "\"/>"
 
     Unparsed( sb.toString )
   }
@@ -100,12 +121,19 @@ object Field {
 
 case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolean = true, inputOnly:Boolean = false, onSet:Option[ ( Field ) => JsCmd ] = None, focus:Boolean = false ) extends UiObj {
 
+  var id:String = null
+
   var path:Path = null
   def va = path.leaf
 
   def bind( view:View ) = {
     path = view.path( name )
     this // TODO:  return an immutable version
+  }
+
+  def extract( pScope:Scope ) = {
+    val scope = pScope.at( path )
+    va.att.domain.extract( scope, this )
   }
 
   private def invalidLines( invalids:Seq[Invalid] ) =
@@ -181,6 +209,10 @@ case class Row( fields:Field* ) extends UiObj {
       field.bind( view )
     this // TODO:  return an immutable version
   }
+
+  def extract( scope:Scope ) =
+    for ( field <- fields )
+      field.extract( scope )
 }
 
 case class Grid( rows:Row* ) extends UiObj {
@@ -196,6 +228,10 @@ case class Grid( rows:Row* ) extends UiObj {
 
     this // TODO:  return an immutable version
   }
+
+  def extract( scope:Scope ) =
+    for ( row <- rows )
+      row.extract( scope )
 
   override def draw( pScope:Scope ) = {
     val scope = pScope.copy( initialDraw = true )
