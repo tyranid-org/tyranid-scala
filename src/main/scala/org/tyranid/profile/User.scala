@@ -67,8 +67,8 @@ case object UserLoginLock extends WebLock {
     return user != null && user.loggedIn
   }
 
-  def block( ctx:WebContext ) {
-    ctx.res.sendRedirect( "/log/in?l=" + ctx.req.uriAndQueryString.encUrl )
+  def block( web:WebContext ) {
+    web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
   }
 }
 

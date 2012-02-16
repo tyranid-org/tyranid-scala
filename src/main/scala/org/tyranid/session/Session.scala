@@ -166,6 +166,24 @@ trait Session {
 
 
   /*
+   * * *   Login
+   */
+
+  def login( user:User ) = {
+    this.user = user
+    user.loggedIn = true
+  }
+
+  def logout = {
+    val u = B.newUser()
+    u.loggedIn = false
+    u.isLoggingOut = true
+    user = u
+    org.tyranid.profile.LoginCookie.remove
+  }
+
+
+  /*
    * * *   Reports
    */
 

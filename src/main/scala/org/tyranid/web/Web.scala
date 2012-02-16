@@ -4,6 +4,7 @@ package org.tyranid.web
 import javax.servlet.{ Filter, FilterChain, FilterConfig, GenericServlet, ServletException, ServletRequest, ServletResponse, ServletContext }
 import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
 
+import scala.collection.mutable
 import scala.xml.{ Elem, Node, NodeSeq, Text }
 
 import org.cometd.bayeux.server.BayeuxServer
@@ -52,11 +53,11 @@ class WebFilter extends Filter {
   }
 
   def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ) {
-
     val boot = B
 
     val web = new WebContext( request.asInstanceOf[HttpServletRequest],
                               response.asInstanceOf[HttpServletResponse], filterConfig.getServletContext() )
+spam( "filter entered, path=" + web.path )
 
     if ( boot.requireSsl )
       web.req.getServerPort match {
@@ -97,6 +98,10 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   }
 
   def path = req.getServletPath
+
+  def forward( url:String )  = ctx.getRequestDispatcher( url ).forward( req, res )
+
+  def redirect( url:String ) = res.sendRedirect( url )
 }
 
 trait Weblet {
@@ -113,8 +118,6 @@ object WebTemplate {
 
      +.  error message substitution
 
-     +.  head merge (or some equivalent)
-
      +.  intelligent javascript includes
 
      +.  better caching / performance:
@@ -124,36 +127,74 @@ object WebTemplate {
 
    */
 
+  def apply( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq = {
+    val pxml = new WebTemplate().finish( xml, content )
+    //spam( "\n\nBEFORE:\n\n" + xml.toString + "\n\nAFTER:\n\n" + pxml.toString )
+    pxml
+  }
+}
+
+class WebTemplate {
+
+  private val heads = new mutable.ArrayBuffer[NodeSeq]()
+
   private def hasTemplates( nodes:NodeSeq ):Boolean = nodes exists hasTemplates
-  private def hasTemplates(  node:Node    ):Boolean = node.prefix == "tyr" || hasTemplates( node.child )
+  private def hasTemplates(  node:Node    ):Boolean = ( node.label == "head" || node.prefix == "tyr" ) || hasTemplates( node.child )
 
   private def bindNode( node:Node, content:NodeSeq ):NodeSeq =
     node match {
     case e:Elem if node.prefix == "tyr" =>
     
       if ( node.label == "content" ) {
-        apply( content )
+        process( content )
       } else {
         val template = B.templates.find( p => p._1 == node.label ).map( _._2 ) getOrElse ( throw new WebException( "Missing template " + node.label ) )
-        apply( template( node ), e.child )
+        process( template( node ), e.child )
       }
+
+    case e:Elem if node.label == "head" =>
+      heads += node.child
+      NodeSeq.Empty
 
     case t:Text =>
       t
 
     case other =>
       if ( hasTemplates( node ) )
-        new Elem( node.prefix, node.label, node.attributes, node.scope, apply( node.child, content ):_* ) 
+        new Elem( node.prefix, node.label, node.attributes, node.scope, process( node.child, content ):_* ) 
       else
         node
     }
 
-  def apply( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq =
+  def process( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq =
     if ( hasTemplates( xml ) )
       xml.flatMap( node => bindNode( node, content ) )
     else
       xml
+
+  def finish( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq = {
+    val pxml = process( xml, content )
+
+    if ( heads.size != 0 ) {
+
+      pxml.flatMap { node =>
+        node match {
+        case e:Elem if node.label == "html" =>
+          val head = <head>{ heads }</head>
+
+          new Elem( node.prefix, node.label, node.attributes, node.scope, ( head ++ node.child ):_* )
+
+        case other =>
+          other
+        }
+      }
+
+    } else {
+      pxml
+    }
+  }
 }
+
 
 
 /*

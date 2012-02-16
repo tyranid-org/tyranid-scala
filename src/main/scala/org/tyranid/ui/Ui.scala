@@ -68,7 +68,8 @@ trait UiObj {
 
   def bind( view:View ):UiObj
 
-  def draw( scope:Scope ):NodeSeq = NodeSeq.Empty
+  def draw    ( scope:Scope ):NodeSeq = NodeSeq.Empty
+  def drawLift( scope:Scope ):NodeSeq = NodeSeq.Empty
 }
 
 
@@ -76,6 +77,25 @@ object Field {
 
   implicit def string2Field( name:String ) = Field( name )
   implicit def symbol2Field( name:Symbol ) = Field( name.name )
+
+  def input( s:Scope, f:Field, opts:(String,String)* ):NodeSeq = {
+    val sb = new StringBuilder
+
+    sb ++= "<input value=\"" ++= s.rec.s( f.va.name ) ++= "\""
+
+    var typ = "text"
+
+    for ( opt <- opts )
+      opt match {
+      case ( "id", v )   => sb ++= " id=\"" ++= v += '"'
+      case ( "type", v ) => typ = v
+      case ( x, v )       => throw new RuntimeException( "Unknown field option " + x + " = " + v )
+      }
+
+    sb ++= " type=\"" ++= typ ++= "\"/>"
+
+    Unparsed( sb.toString )
+  }
 }
 
 case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolean = true, inputOnly:Boolean = false, onSet:Option[ ( Field ) => JsCmd ] = None, focus:Boolean = false ) extends UiObj {
@@ -105,6 +125,23 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolea
       <div id={ va.name + "_c" } class={ "fieldc" + ( !invalids.isEmpty |* " invalid" ) }>
        <div class="labelc">{ va.label( rec, opts.opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
        <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( scope, this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
+       <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
+      </div>
+    }
+
+  override def drawLift( pScope:Scope ) =
+    if ( inputOnly ) {
+      va.att.domain.uiLift( pScope.at( path ), this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* )
+    } else {
+      val scope = pScope.at( path )
+      val invalids = va.invalids( scope )
+      val rec = scope.rec
+      rec.invalids( va.index ) = !invalids.isEmpty
+    
+      va.att.domain.show( scope ) |*
+      <div id={ va.name + "_c" } class={ "fieldc" + ( !invalids.isEmpty |* " invalid" ) }>
+       <div class="labelc">{ va.label( rec, opts.opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
+       <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.uiLift( scope, this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
        <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
       </div>
     }
@@ -167,6 +204,16 @@ case class Grid( rows:Row* ) extends UiObj {
       <tr>{
         for ( f <- row.fields ) yield
           <td colspan={ f.span.toString } class="cell">{ f.draw( scope ) }</td>
+      }</tr>
+  }
+
+  override def drawLift( pScope:Scope ) = {
+    val scope = pScope.copy( initialDraw = true )
+    
+    for ( row <- rows ) yield
+      <tr>{
+        for ( f <- row.fields ) yield
+          <td colspan={ f.span.toString } class="cell">{ f.drawLift( scope ) }</td>
       }</tr>
   }
 }

@@ -331,7 +331,8 @@ case class Scope( rec:Record,
 
   def required = rec.hasSubmitted |* s.filter( _.isBlank ).map( s => Invalid( this, "Please fill in." ) )
 
-  def draw( name:String, ui: => UiObj ) = rec.view.ui( name, ui ).draw( this )
+  def draw    ( name:String, ui: => UiObj ) = rec.view.ui( name, ui ).draw    ( this )
+  def drawLift( name:String, ui: => UiObj ) = rec.view.ui( name, ui ).drawLift( this )
 }
 
 

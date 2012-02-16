@@ -67,6 +67,8 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
     }
   }
 
+  def path = req.getServletPath
+
   def uriAndQueryString = {
     val qs = req.getQueryString
 
@@ -78,13 +80,12 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
     sb.toString
   }
 
-  def cookieValue( name:String ) = {
+  def cookie( name:String ):Option[Cookie] = {
     val cookies = req.getCookies
-    if ( cookies != null )
-      req.getCookies.find( _.getName == name ).map( _.getValue ) getOrElse null
-    else
-      null
+    cookies != null |* cookies.find( _.getName == name )
   }
+
+  def cookieValue( name:String ) = cookie( name ).map( _.getValue ) getOrElse null
 }
 
 case class HttpServletResponseOps( res:HttpServletResponse ) {

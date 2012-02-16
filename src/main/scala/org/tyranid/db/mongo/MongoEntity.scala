@@ -48,6 +48,9 @@ case object DbMongoId extends Domain {
   override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
     SHtml.text( s.rec s f.va, v => s.rec( f.va ) = v, "class" -> "textInput" ) 
 
+  override def uiLift( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
+    SHtml.text( s.rec s f.va, v => s.rec( f.va ) = v, "class" -> "textInput" ) 
+
   //override def inputcClasses = " select"
 }
 

@@ -61,6 +61,17 @@ object Imp {
   val $unset       = "$unset"
   val $where       = "$where"
 
+  /*
+  def $newset( vals: ( String, Any )* ):(String,Any) = {
+    val o = new BasicDBObject
+
+    for ( v <- vals )
+      o.put( v._1, v._2 )
+
+    "$set" -> new DBObjectImp( o )
+  }
+  */
+
   def $push( field:String, value:Any ) = Mobj( "$push" -> Mobj( field -> value ) )
 
 	implicit def mongoImp( mongo:com.mongodb.Mongo ) = new MongoImp( mongo )

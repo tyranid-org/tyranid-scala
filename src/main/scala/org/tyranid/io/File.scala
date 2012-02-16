@@ -81,6 +81,19 @@ class DbFile( bucket:S3Bucket ) extends Domain {
 //        <img src={ url( s.rec s f.va ) } style='float:left;'/>
       }
       }
+      <div>TODO</div>
+    </div>
+
+  override def uiLift( s:Scope, f:Field, opts:(String,String)* ): NodeSeq =
+    /*SHtml.text( s.rec s f.va, v => s.rec( f.va ) = v, "class" -> "textInput" ) ++ */
+    <div class='thumbnail'>
+      { 
+      if ( ( s.rec s f.va ).isBlank ) { // TODO:  Replace this with a blank/default image for ALL images
+//        <img src='https://d33lorp9dhlilu.cloudfront.net/generic-image.png' style='float:left;'/>
+      } else {
+//        <img src={ url( s.rec s f.va ) } style='float:left;'/>
+      }
+      }
       <div> { SHtml.fileUpload( save( s.rec, f ) _ ) }</div>
     </div>
 }
@@ -101,6 +114,9 @@ object DbLocalFile extends Domain {
     }
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ): NodeSeq =
+    <div class='thumbnail'><div> { SHtml.fileUpload( save( s.rec, f ) _ ) }</div></div>
+
+  override def uiLift( s:Scope, f:Field, opts:(String,String)* ): NodeSeq =
     <div class='thumbnail'><div> { SHtml.fileUpload( save( s.rec, f ) _ ) }</div></div>
 }
 

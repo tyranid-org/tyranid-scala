@@ -18,13 +18,20 @@ object LinkedIn {
 
   lazy val oauth = OAuth( key = B.linkedInApiKey, secret = B.linkedInSecretKey )
 
-  def exchangeToken( cookie:Cookie ) {
+  def exchangeToken:Boolean = {
+
+    val cookieName = "linkedin_oauth_" + B.linkedInApiKey
+    val cookie =
+      T.web.req.cookie( cookieName ).getOrElse {
+        log( Log.LinkedIn, "m" -> ( "/linkedin/exchange missing " + cookieName + " cookie.  Cannot exchange linked in bearer token for a server token." ) )
+        return false
+      }
 
     val json = cookie.getValue.decUrl.parseJson.as[mutable.Map[String,Any]]
 
     val memberId    = json( 'member_id ).as[String]
     val accessToken = json( 'access_token ).as[String]
-    val signature = json( 'signature ).as[String]
+    val signature   = json( 'signature ).as[String]
 
     val text = new StringBuilder
     for ( fieldName <- json( 'signature_order ).as[Array[String]] )
@@ -71,6 +78,7 @@ object LinkedIn {
     // this way of getting the users db is a hack, need to move more knowledge of user schema into tyranid
     usersdb.update( Mobj( "_id" -> user.id ), Mobj( $set -> update ) )
     user.copy( update )
+    true
   }
 
   def tokenFor( user:User ) = Token( key = user.s( 'lit ), secret = user.s( 'lits ) )
@@ -80,26 +88,17 @@ object LinkedIn {
 
 object LinkedInlet extends Weblet {
 
-  def handle( ctx:WebContext ) {
+  def handle( web:WebContext ) {
     val s = Session()
     val u = s.user
 
-    ctx.path match {
+    web.path match {
     case "/linkedin/exchange" =>
-
-      val cookieName = "linkedin_oauth_" + B.linkedInApiKey
-      ctx.req.getCookies.find( _.getName == cookieName ) match {
-      case Some( cookie ) =>
-        LinkedIn.exchangeToken( cookie )
-
-      case None =>
-        log( Log.LinkedIn, "m" -> ( "/linkedin/exchange missing " + cookieName + " cookie.  Cannot exchange linked in bearer token for a server token." ) )
-      }
-
-      ctx.res.ok
+      LinkedIn.exchangeToken
+      web.res.ok
 
     case _ =>
-      ctx.res.ok
+      web.res.ok
     }
   }
 }

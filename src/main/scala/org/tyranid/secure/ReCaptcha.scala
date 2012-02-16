@@ -59,6 +59,27 @@ case class DbReCaptcha( theme:String ) extends Domain {
      """ ) } </script>
     </tail>;
 
+  override def uiLift( s:Scope, f:Field, opts:(String,String)* ) =
+    <head>
+     <script type="text/javascript" src="https://www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>
+
+     <script type="text/javascript">{ Unparsed( """
+       function showRecaptcha(element) {
+         Recaptcha.create( """" + B.reCaptchaPublicKey + """", element, {
+           theme: """" + theme + """",
+           callback: Recaptcha.focus_response_field});
+       }
+      """ ) } </script>
+    </head>
+
+    <div id="recaptcha_div"></div>
+      
+    <tail>
+    <script type="text/javascript">{ Unparsed( """
+       showRecaptcha('recaptcha_div');      
+     """ ) } </script>
+    </tail>;
+
   override def inputcClasses = " recaptcha"
 
   override val validations =

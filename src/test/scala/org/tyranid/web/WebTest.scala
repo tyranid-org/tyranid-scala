@@ -19,6 +19,8 @@ package org.tyranid.web
 
 import java.util.{ Calendar, Date, TimeZone }
 
+import scala.xml.Unparsed
+
 import org.scalatest.FunSuite
 
 import org.tyranid.Imp._
@@ -45,6 +47,18 @@ class WebSuite extends FunSuite {
         <div><p>Test</p><tyr:content/></div>,
         <input/> ).toString ===
       <div><p>Test</p><input></input></div>.toString )
+
+    assert(
+      WebTemplate(
+        <html><head><s>foo</s></head><d><p>Test</p><tyr:content/></d></html>,
+        <p><head><s>bar</s></head><i/></p> ).toString ===
+      <html><head><s>foo</s><s>bar</s></head><d><p>Test</p><p><i></i></p></d></html>.toString )
+
+    assert(
+      WebTemplate(
+        Unparsed( """<!DOCTYPE html>""" ) ++ <html><head><s>foo</s></head><d><p>Test</p><tyr:content/></d></html>,
+        <p><head><s>bar</s></head><head><script>{ Unparsed( "var js = 'foo';" ) }</script></head><i/></p> ).toString ===
+      ( Unparsed( """<!DOCTYPE html>""" ) ++ <html><head><s>foo</s><s>bar</s><script>{ Unparsed( "var js = 'foo';" ) }</script></head><d><p>Test</p><p><i></i></p></d></html> ).toString )
   }
 }
 
