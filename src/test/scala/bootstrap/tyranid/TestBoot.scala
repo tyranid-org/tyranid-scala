@@ -9,6 +9,9 @@ import org.tyranid.test.db.{ Session, User }
 
 class Boot extends org.tyranid.boot.Bootable {
   val applicationName = "Tyranid Test Suite"
+  val domain = "localhost"
+  val website = "http://localhost"
+  val systemEmail = "info@tyranid.org"
 
   val weblets = Nil
 
@@ -21,6 +24,8 @@ class Boot extends org.tyranid.boot.Bootable {
   val comets = Nil
 
   lazy val userMeta = User
+
+  val version = 1
 
   def boot = {
 
