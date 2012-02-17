@@ -23,6 +23,7 @@ import scala.collection.mutable
 import scala.xml.{ Node, NodeSeq, Unparsed }
 
 import org.tyranid.Imp._
+import org.tyranid.math.Base62
 import org.tyranid.profile.User
 import org.tyranid.report.Query
 import org.tyranid.web.WebContext
@@ -156,6 +157,8 @@ object Session extends SessionMeta
 
 trait Session {
 
+  lazy val id = Base62.make( 10 )
+
   private var userVar = B.newUser()
 
   def user:User           = userVar
@@ -192,7 +195,15 @@ trait Session {
   private val reports = mutable.Map[String,org.tyranid.report.Report]()
 
   def reportFor( query:Query ) = reports.synchronized {
-    reports.getOrElseUpdate( query.name, query.newReport )
+    reports.getOrElseUpdate( query.name, {
+      spam( "placing new " + query.name + " on session " + id )
+      query.newReport
+    } )
+  }
+
+  def reportFor( queryName:String ) = reports.synchronized {
+    spam( "looking up " + queryName + " on session " + id )
+    reports( queryName )
   }
 
 

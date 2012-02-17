@@ -34,7 +34,8 @@ import org.tyranid.db.{ Entity, Path, Record, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.session.Session
-import org.tyranid.ui.{ Button, Checkbox, Glyph, Input }
+import org.tyranid.ui.{ Button, Checkbox, Glyph, Input, Select }
+import org.tyranid.web.{ Weblet, WebContext }
 
 
 case class Grouping( entity:MongoEntity, keyName:String, value: () => AnyRef ) {
@@ -56,7 +57,7 @@ trait Query {
   def run( run:Run ):Iterable[Record]
 
   def newReport = {
-    var r = new Report
+    var r = Report( this )
     r.columns ++= defaultFields
     r.hidden ++= allFields.filter( p => !r.columns.contains( p ) ).sortBy( _.label )
     r
@@ -228,7 +229,7 @@ trait MongoQuery extends Query {
   def thumbnail( path:String, sec:String = "Standard", label:String = null )   = ThumbnailField( sec, view.path( path ), l = label )
 }
 
-class Report {
+case class Report( query:Query ) {
 
   @volatile var name:String = _
 
@@ -343,6 +344,48 @@ class Report {
              else             o.i( $gte ).toString },
            "style" -> "width:80px;" )
   }
+
+
+  /*
+   * * *  Searching
+   */
+
+  def searchTitle =
+    if ( selectedColumns.isEmpty ) Text( "search all fields" )
+    else                           Unparsed( "search <span class='hitext'>highlighted</span> fields" )
+
+  val sections = "Standard" +: query.allFields.map( _.section ).filter( _ != "Standard" ).sorted.distinct
+
+
+  /*
+   * * *  Field Dropdowns
+   */
+
+  def section = {
+    if ( onSection.isBlank )
+      onSection = sections( 0 )
+
+    onSection
+  }
+
+  def calcFields = query.allFields.filter( f => f.section == section && !columns.contains( f ) ).sortBy( _.label )
+
+  def recalcFields {
+    fields = calcFields
+    if ( !fields.find( _.name == field ).isDefined )
+       onField = ""
+  }
+
+  var fields = calcFields
+
+  def field = {
+    if ( onField.isBlank )
+      onField = if ( fields.size > 0 ) fields( 0 ).name
+                else                   ""
+
+    onField
+  }
+
 }
 
 case class Run( report:Report, grid:Grid ) {
@@ -361,7 +404,7 @@ case class Run( report:Report, grid:Grid ) {
     // TODO:  get IDs on these ...{ report.columns.map( p => <th class="colh" id={ p.name_ }>{ col( p ) }</th> ) }
     <tr class={ grid.rowClass }>
      { query.selectable |* 
-        <td>{ SHtml.ajaxCheckbox( report.selectedRows.contains( rec.id ), (v:Boolean) => { report.selectedRows( rec.id ) = v; Noop } ) }</td> }
+        <td>{ Unparsed( "<input class='rcb' type=\"checkbox\"" + ( report.selectedRows.contains( rec.id ) |* " checked" ) + "/>" ) }</td> }
      {
       for ( f <- report.columns ) yield {
         val cls = f.cellClass
@@ -394,49 +437,6 @@ case class Grid( query:Query ) {
     !odd |* "even"
   }
 
-  def exec( js:String ) = {
-    if ( js.startsWith( "!" ) ) {
-      val fp = query.by( js.substring(1) )
-
-      val empty = report.selectedColumns.isEmpty
-      report.selectedColumns( fp.name ) = !report.selectedColumns( fp.name )
-
-      empty != report.selectedColumns.isEmpty |*
-        SetHtml( "searchTitle", searchTitle )
-    } else {
-      val ( fn, tn ) = js.splitFirst( ':' )
-
-      val fp = query.by( fn )
-
-      if ( tn == "def" ) {
-        if ( report.selectedColumns( fn ) ) {
-          report.selectedColumns.foreach { n => report.remove( query.by( n ) ) }
-          report.selectedColumns.clear
-        } else {
-          report.remove( fp )
-        }
-      } else if ( tn == "_end" ) {
-        report.add( fp )
-      } else {
-        val tp = query.by( tn )
-
-        if ( report.selectedColumns( fn ) && !report.selectedColumns( tn ) ) {
-          val columns = report.columns.filter( f => report.selectedColumns( f.name ) )
-
-          for ( c <- columns )
-            report.insertBefore( insert = c, before = tp )
-
-          //TODO:  if selections, insert everything before insert ... (if insert is selected, don't move it)
-        } else {
-          report.insertBefore( insert = fp, before = tp )
-        }
-      }
-
-      recalcFields
-      redraw
-    }
-  }
-
   private def initReport:JsCmd = JsCmds.Run( "initReport();" )
 
   private def redraw:JsCmd =
@@ -444,90 +444,17 @@ case class Grid( query:Query ) {
     initReport
 
 
-  /*
-   * * *  Navigation
-   */
-
-  private def prev = {
-    report.offset -= report.pageSize
-    if ( report.offset < 0 ) report.offset = 0
-    redraw
-  }
-
-  private def next = {
-    report.offset += report.pageSize
-    redraw
-  }
-
-
-  /*
-   * * *  Search
-   */
-
-  def searchTitle =
-    if ( report.selectedColumns.isEmpty ) Text( "search all fields" )
-    else                                  Unparsed( "search <span class='hitext'>highlighted</span> fields" )
-
-
-  /*
-   * * *  Field Dropdowns
-   */
-
-  private val sections = "Standard" +: query.allFields.map( _.section ).filter( _ != "Standard" ).sorted.distinct
-
-  private def calcFields = query.allFields.filter( f => f.section == section && !report.columns.contains( f ) ).sortBy( _.label )
-  private def recalcFields {
-    fields = calcFields
-    if ( !fields.find( _.name == field ).isDefined )
-       report.onField = ""
-  }
-
-  private var fields     = calcFields
-
-  private def section = {
-    if ( report.onSection.isBlank )
-      report.onSection = sections( 0 )
-
-    report.onSection
-  }
-
-  private def field = {
-    if ( report.onField.isBlank )
-      report.onField = if ( fields.size > 0 ) fields( 0 ).name
-                       else                   ""
-
-    report.onField
-  }
-
   private def sectionDropdown =
-    SHtml.ajaxSelect(
-      sections.map( sec => sec -> sec ),
-      Full( section ),
-      v => {
-        report.onSection = v
-        recalcFields
-        SetHtml( "repfd", fieldDropdown ) &
-        SetHtml( "repab", addBox ) &
-        initReport
-      },
-      "style" -> "width:150px; max-width:150px;" )
+    Select( "gSections", report.section, report.sections.map( sec => sec -> sec ), "style" -> "width:150px; max-width:150px;" )
 
   private def fieldDropdown =
-    if ( fields.size == 0 )
-    Unparsed( "<select style='width:150px;' disabled><option>none left</option></select>" )
+    if ( report.fields.size == 0 )
+      Unparsed( "<select style='width:150px;' disabled><option>none left</option></select>" )
     else
-    SHtml.ajaxSelect(
-      fields.map( f => f.name -> f.label ),
-      Full( field ),
-      v => {
-        report.onField = v
-        SetHtml( "repab", addBox ) &
-        initReport
-      },
-      "style" -> "width:150px; max-width:150px;" )
+      Select( "gFields", report.field, report.fields.map( f => f.name -> f.label ), "style" -> "width:150px; max-width:150px;" )
 
   private def addBox:NodeSeq =
-    fields.find( _.name == field ).flatten(
+    report.fields.find( _.name == report.field ).flatten(
       f => <div id={ f.name } class="cola"><div><span>Add</span></div></div>,
       <div class="colna"><div><span>N/A</span></div></div>
     )
@@ -618,7 +545,7 @@ case class Grid( query:Query ) {
     redraw
   }
 
-  private def innerDraw = {
+  def innerDraw = {
     val run = new Run( report, this )
     val rows = query.run( run ).toSeq
 
@@ -639,12 +566,10 @@ case class Grid( query:Query ) {
          <td style="padding:0;">
           <table>
            <tr>
-            { Seq(
-                query.searchScreen.notBlank |* Some( Button.link( "Change Search", query.searchScreen, color = "grey" ) ),
-                report.offset > 0 |* Some( Button.ajaxButton( "Prev", () => prev, color = "grey" ) ),
-                Some( Button.ajaxButton( "Next", () => next, color = "grey" ) ),
-                query.grouping != null |* Some( Button.ajaxButton( "Group", () => group( rows ), color = "grey" ) )
-              ).flatten.map( btn => <td>{ btn }</td> ) }
+            { ( query.searchScreen.notBlank |* <td><a href={ query.searchScreen } class="greyBtn">Change Search</a></td> ) ++
+              ( report.offset > 0 |* <td><button id="gPrev" class="greyBtn">Prev</button></td> ) ++
+              <td><button id="gNext" class="greyBtn">Next</button></td> ++
+              ( query.grouping != null |* <td><button id="gGroup" class="greyBtn">Group</button></td> ) }
            </tr>
           </table>
          </td>
@@ -659,14 +584,7 @@ case class Grid( query:Query ) {
         </tr>
         <tr>
          <td>{ 
-           SHtml.ajaxSelect(
-             ( "" -> "All" ) +: run.groups.map( g => g.s( 'name ) -> g.s( 'name ) ),
-             if ( report.groupFilter.notBlank ) Full( report.groupFilter ) else Empty,
-             v => {
-               report.groupFilter = v
-               redraw
-             },
-             "style" -> "width:120px; max-width:120px;" )
+           Select( "gGroups", report.groupFilter, ( "" -> "All" ) +: run.groups.map( g => g.s( 'name ) -> g.s( 'name ) ), "style" -> "width:120px; max-width:120px;" )
          }</td>
         </tr>
        </table>
@@ -677,13 +595,13 @@ case class Grid( query:Query ) {
       <td>
        <table class="tile" style="width:226px; height:54px;">
         <tr>
-         <td id="searchTitle" class="label">{ searchTitle }</td>
+         <td id="searchTitle" class="label">{ report.searchTitle }</td>
         </tr>
         <tr>
          <td>
           <form method="get" class="searchBox" action="/search/results" onsubmit="this.submit();return false;">
 	         <fieldset>
-            { SHtml.text( "", v => println( "do something with " + v ), "placeholder" -> "Search", "class" -> "field" ) }
+            <input type="text" value="" placeholder="Search" class="field"/>
 		        <input type="image" class="btn" name="submit" src="/images/search-btn.png" alt="Go"/>
 	         </fieldset>
           </form>
@@ -724,21 +642,76 @@ case class Grid( query:Query ) {
      <script src="/cjs/report.js" type="text/javascript"/>
      <script>{ Unparsed( """
 
-function gridexec( id ) {
-  """ + SHtml.ajaxCall( JsRaw( "id" ), exec _ )._2.toJsCmd + """;
+function gridselect( id ) {
+  $.get('/grid/select', {q:'""" + query.name + """', js:id}, function(d) {
+    if ( d != '' )
+      $('#searchTitle').html(d);
+  });
 }
 
-function initGroup() {
-  $( "#groupdial" ).dialog( {
+function gridexec( id ) {
+  $.get('/grid/exec', {q:'""" + query.name + """', js:id}, function(d) {
+    $('#""" + id + """').html(d);
+    initReport();
+  });
+}
+
+$(document).ready(function(){
+
+  $('#""" + id + """').on('click', '#gPrev', function(e){
+    $.get('/grid/prev', { q:'""" + query.name + """' }, function(d) {
+      $('#""" + id + """').html(d);
+      initReport();
+    })
+  });
+
+  $('#""" + id + """').on('click', '#gNext', function(e){
+    $.get('/grid/next', { q:'""" + query.name + """' }, function(d) {
+      $('#""" + id + """').html(d);
+      initReport();
+    })
+  });
+
+  $('#""" + id + """').on('click', '#gGroup', function(e){
+    // invoke group( rows )
+  });
+
+  $('#""" + id + """').on('onChange', '#gGroups', function(e){
+    // report.groupFilter = value of select
+    // redraw
+  });
+
+  $('#""" + id + """').on('click', '#gGroupOkay', function(e){
+    // invoke doGroup
+  });
+
+  $( "#groupdial" ).dialog({
     autoOpen:false,
     title:"Groups",
     modal:true,
     resizable:false,
     width:360
-  } );
-}
+  });
 
-$( initGroup )
+  $('#""" + id + """').on('onChange', '#gSections', function(e) {
+    // report.onSection = v
+    // report.recalcFields
+    // SetHtml( "repfd", fieldDropdown ) &
+    // SetHtml( "repab", addBox ) &
+    // initReport
+  });
+
+  $('#""" + id + """').on('onChange', '#gSections', function(e) {
+    // report.onField = v
+    // SetHtml( "repab", addBox ) &
+    // initReport
+  });
+
+  $('#""" + id + """').on('onChange', '.rcb', function(e) {
+    // <td>{ SHtml.ajaxCheckbox( report.selectedRows.contains( rec.id ), (v:Boolean) => { report.selectedRows( rec.id ) = v; Noop } ) }</td> }
+  });
+});
+
 
 """ ) }</script>
     </head> ++
@@ -762,7 +735,7 @@ $( initGroup )
           <table>
            <tr>
             <td><button onclick="$('#groupdial').dialog('close'); return false;" class="greyBtn">Cancel</button></td>
-            <td style="padding-left:8px;">{ Button.ajaxButton( "Okay", () => doGroup, color = "green" ) }</td>
+            <td style="padding-left:8px;"><button id="gGroupOkay" class="greenBtn">Okay></button></td>
            </tr>
           </table>
          </td>
@@ -773,6 +746,79 @@ $( initGroup )
     <div class="report" id={ id }>
     { innerDraw }
     </div>
+  }
+}
+
+
+object Gridlet extends Weblet {
+
+  def handle( web:WebContext ) {
+    val sess = Session()
+
+    web.path match {
+
+    /*
+     * * *  Navigation
+     */
+
+    case "/grid/prev" =>
+      val report = sess.reportFor( web.req.s( 'q ) )
+      report.offset -= report.pageSize
+      if ( report.offset < 0 ) report.offset = 0
+      web.res.html( new Grid( report.query ).innerDraw )
+
+    case "/grid/next" =>
+      val report = sess.reportFor( web.req.s( 'q ) )
+      report.offset += report.pageSize
+      web.res.html( new Grid( report.query ).innerDraw )
+
+    case "/grid/select" =>
+      val report = sess.reportFor( web.req.s( 'q ) )
+      val js = web.req.s( 'js )
+      val query = report.query
+      val fp = query.by( js.substring(1) )
+
+      val empty = report.selectedColumns.isEmpty
+      report.selectedColumns( fp.name ) = !report.selectedColumns( fp.name )
+
+      web.res.html(
+        empty != report.selectedColumns.isEmpty |* report.searchTitle )
+
+    case "/grid/exec" =>
+      val report = sess.reportFor( web.req.s( 'q ) )
+      val query = report.query
+      val js = web.req.s( 'js )
+      val ( fn, tn ) = js.splitFirst( ':' )
+
+      val fp = query.by( fn )
+
+      if ( tn == "def" ) {
+        if ( report.selectedColumns( fn ) ) {
+          report.selectedColumns.foreach { n => report.remove( query.by( n ) ) }
+          report.selectedColumns.clear
+        } else {
+          report.remove( fp )
+        }
+      } else if ( tn == "_end" ) {
+        report.add( fp )
+      } else {
+        val tp = query.by( tn )
+
+        if ( report.selectedColumns( fn ) && !report.selectedColumns( tn ) ) {
+          val columns = report.columns.filter( f => report.selectedColumns( f.name ) )
+
+          for ( c <- columns )
+            report.insertBefore( insert = c, before = tp )
+
+          //TODO:  if selections, insert everything before insert ... (if insert is selected, don't move it)
+        } else {
+          report.insertBefore( insert = fp, before = tp )
+        }
+      }
+
+      report.recalcFields
+      web.res.html( new Grid( report.query ).innerDraw )
+    }
   }
 }
 
