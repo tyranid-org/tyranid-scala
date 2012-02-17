@@ -76,7 +76,13 @@ trait Bootable {
   val applicationName:String
 
   val domain:String
-  val website:String
+  
+  // DEV assumes the DNS is in your hosts file
+  val website =
+    if ( DEV )        "https://test." + domain + ":8443"
+    else if ( STAGE ) "https://stage." + domain
+    else              "https://app." + domain
+
   val systemEmail:String
 
   val weblets:List[(String,Weblet)]

@@ -14,6 +14,8 @@ import org.tyranid.session.{ AccessLog, ThreadData }
 
 
 case class WebException( message:String ) extends Exception
+case class WebForwardException( forward:String ) extends Exception
+case class WebRedirectException( redirect:String ) extends Exception
 
 trait WebLock {
 
@@ -83,6 +85,10 @@ spam( "filter entered, path=" + web.path )
 
         weblet.handle( FileUploadSupport.checkContext( web ) )
       } catch {
+      case re:WebRedirectException =>
+        web.res.sendRedirect( re.redirect )
+      case fe:WebForwardException =>
+        web.ctx.getRequestDispatcher( fe.forward ).forward( web.req, web.res )
       case e =>
         e.log
       }
@@ -102,10 +108,10 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
 
   def path = req.getServletPath
 
-  def forward( url:String )  = ctx.getRequestDispatcher( url ).forward( req, res )
+  def forward( url:String )  = throw WebForwardException( url )
 
-  def redirect( url:String ) = res.sendRedirect( url )
-
+  def redirect( url:String ) = throw WebRedirectException( url )
+  
   def template( template:NodeSeq, status:Int = 200 ) =
     res.html( WebTemplate( template ), status )
 }
