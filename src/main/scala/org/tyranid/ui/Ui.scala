@@ -71,13 +71,9 @@ object Select {
 
     for ( opt <- opts )
       opt match {
-      case ( "class", v ) =>
-        sb ++= " class=\"" ++= v += '"'
-
-      case ( "style", v ) =>
-        sb ++= " style=\"" ++= v += '"'
-
-      case ( x, v )       => throw new RuntimeException( "Unknown Select.field option " + x + " = " + v )
+      case ( "class", v ) => sb ++= " class=\"" ++= v += '"'
+      case ( "style", v ) => sb ++= " style=\"" ++= v += '"'
+      case ( n,       v ) => throw new RuntimeException( "Unknown Select.field option " + n + " = " + v )
       }
 
     sb += '>'
