@@ -338,7 +338,7 @@ case class Scope( rec:Record,
   def submit( rec:Record, ui:UiObj ) = {
     rec.submit
     ui.extract( this )
-    return rec.invalids( this )
+    rec.invalids( this )
   }
 }
 
