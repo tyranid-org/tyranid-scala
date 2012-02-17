@@ -86,7 +86,7 @@ object Checkbox {
   def apply( name:String, value:Boolean, opts:(String,String)* ) = {
     val sb = new StringBuilder
 
-    sb ++= "<input value=\"" ++= ( value |* "1" ) += '"'
+    sb ++= "<input "
 
     var typ = "checkbox"
 
@@ -98,7 +98,10 @@ object Checkbox {
       case ( n,       v ) => throw new RuntimeException( "Unknown field option " + n + " = " + v )
       }
 
-    sb ++= " name=\"" + name + "\" id=\"" + name + "\" type=\"" ++= typ ++= "\"/>"
+    if ( value )
+      sb ++= " checked"
+
+    sb ++= " value=\"1\"" ++= " name=\"" + name + "\" id=\"" + name + "\" type=\"" ++= typ ++= "\"/>"
 
     Unparsed( sb.toString )
   }
