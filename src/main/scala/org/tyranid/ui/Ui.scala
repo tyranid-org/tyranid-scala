@@ -81,9 +81,32 @@ object Input {
   }
 }
 
+object Checkbox {
+
+  def apply( name:String, value:Boolean, opts:(String,String)* ) = {
+    val sb = new StringBuilder
+
+    sb ++= "<input value=\"" ++= ( value |* "1" ) += '"'
+
+    var typ = "checkbox"
+
+    for ( opt <- opts )
+      opt match {
+      case ( "class", v ) => sb ++= " class=\"" ++= v += '"'
+      case ( "style", v ) => sb ++= " style=\"" ++= v += '"'
+      case ( "type",  v ) => typ = v
+      case ( n,       v ) => throw new RuntimeException( "Unknown field option " + n + " = " + v )
+      }
+
+    sb ++= " name=\"" + name + "\" id=\"" + name + "\" type=\"" ++= typ ++= "\"/>"
+
+    Unparsed( sb.toString )
+  }
+}
+
 object Select {
 
-  def apply( name:String, values:Seq[ (String,String) ], opts:(String,String)* ) = {
+  def apply( name:String, value:String, values:Seq[ (String,String) ], opts:(String,String)* ) = {
 
     val sb = new StringBuilder
 
@@ -99,7 +122,10 @@ object Select {
     sb += '>'
 
     for ( v <- values ) {
-      sb ++= "<option value=\"" ++= v._1 ++= "\">" ++= v._2 ++= "</option>"
+      sb ++= "<option value=\"" ++= v._1 += '"'
+      if ( v == value )
+        sb ++= " selected"
+      sb += '>' ++= v._2 ++= "</option>"
     }
 
 
