@@ -260,12 +260,14 @@ trait Record extends Valid with BsonObject {
 
   var extraVaValidations:List[ ( ViewAttribute, ( Scope ) => Option[Invalid] ) ] = Nil
 
-  def invalids( scope:Scope ):Iterable[Invalid] =
-    ( for ( va <- view.vas;
+  def invalids( scope:Scope ):Iterable[Invalid] = invalids( scope, view.vas )
+
+  def invalids( scope:Scope, vas:Iterable[ViewAttribute] ):Iterable[Invalid] =
+    ( for ( va <- vas;
             vaScope = scope.at( va );
             invalid <- va.invalids( vaScope ) )
         yield invalid ) ++
-    ( for ( va <- view.vas;
+    ( for ( va <- vas;
             if va.att.domain.isInstanceOf[Entity];
             r = rec( va );
             invalid <- r.invalids( scope.at( va ) ) )
@@ -315,12 +317,12 @@ case class Scope( rec:Record,
     var r = rec
     var pi = 0
     while ( pi < plen ) {
-      val va = path.pathAt( pi ).asInstanceOf[ViewAttribute]
+      val va = path.pathAt( pi ).as[ViewAttribute]
       r = r.rec( va )
       pi += 1
     }
 
-    val va = path.pathAt( pi ).asInstanceOf[ViewAttribute]
+    val va = path.pathAt( pi ).as[ViewAttribute]
 
     if ( va.att.domain.isInstanceOf[Entity] )
       copy( rec = r.rec( va ), path = None )
@@ -338,7 +340,7 @@ case class Scope( rec:Record,
   def submit( rec:Record, ui:UiObj ) = {
     rec.submit
     ui.extract( this )
-    rec.invalids( this )
+    rec.invalids( this, ui.fields.map( _.va ) )
   }
 }
 

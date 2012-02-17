@@ -72,6 +72,8 @@ trait UiObj {
   def drawLift( scope:Scope ):NodeSeq = NodeSeq.Empty
 
   def extract( scope:Scope ):Unit
+
+  def fields:Iterable[Field]
 }
 
 
@@ -135,6 +137,8 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolea
     val scope = pScope.at( path )
     va.att.domain.extract( scope, this )
   }
+
+  def fields = Seq( this )
 
   private def invalidLines( invalids:Seq[Invalid] ) =
     for ( invalid <- invalids )
@@ -233,6 +237,8 @@ case class Grid( rows:Row* ) extends UiObj {
   def extract( scope:Scope ) =
     for ( row <- rows )
       row.extract( scope )
+
+  def fields = rows flatMap { _.fields }
 
   override def draw( pScope:Scope ) = {
     val scope = pScope.copy( initialDraw = true )
