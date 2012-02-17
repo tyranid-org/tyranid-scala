@@ -34,7 +34,7 @@ import org.tyranid.db.{ Entity, Path, Record, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.session.Session
-import org.tyranid.ui.{ Button, Glyph }
+import org.tyranid.ui.{ Button, Checkbox, Glyph, Input }
 
 
 case class Grouping( entity:MongoEntity, keyName:String, value: () => AnyRef ) {
@@ -234,6 +234,9 @@ class Report {
 
   // TODO:  make this database-agnostic
   val search        = Mobj()
+  val searchProps   = mutable.Map[String,String]()
+
+
   val parameters    = Mobj()
   @volatile var sort:DBObject = null
   @volatile var offset:Int = 0
@@ -270,53 +273,76 @@ class Report {
 
   def label( title:String, attr:String ) = <label for={ attr }>{ title }</label>
 
-  def bool( title:String, attr:String ) =
-    SHtml.checkbox(
-      search.b( attr ),
-      ( v:Boolean ) => {
-        if ( v ) search( attr ) = v
-        else     search.remove( attr )
-      } ) ++ label( title, attr )
+  def extract = {
+    val r = T.web.req
 
-  def boolExists( title:String, attr:String ) =
-    SHtml.checkbox(
-      search.s( attr ).notBlank,
-      ( v:Boolean ) => {
-        if ( v ) search( attr ) = Mobj( $gt -> "" )
-        else     search.remove( attr )
-      } ) ++ label( title, attr )
+    for ( n <- searchProps.keys ) {
+      searchProps( n ) match {
+      case "bool" =>
+        if ( r.b( n ) ) search( n ) = true
+        else            search.remove( n )
 
-  def textUpper( attr:String, width:Int ) =
-    SHtml.text( search.s( attr ),
-    ( v:String ) => {
-      if ( v.notBlank ) search( attr ) = v.toUpperCase
-      else              search.remove( attr )
-    },
-    "style" -> ( "width:" + width.toString + "px;" ) )
+      case "boolExists" =>
+        if ( r.b( n ) ) search( n ) = Mobj( $gt -> "" )
+        else            search.remove( n )
 
-  def textUpperSubst( attr:String, width:Int ) =
-    SHtml.text(
-      { val regex = search.o( attr )
-        regex != null |* regex.s( $regex )
-      },
-      ( v:String ) => {
-        if ( v.notBlank ) search( attr ) = Mobj( $regex -> v.toUpperCase )
-        else              search.remove( attr )
-      },
-      "style" -> ( "width:" + width.toString + "px;" ) )
+      case "textUpper" =>
+        val v = r.s( n )
 
-  def intGte( attr:String ) =
-    SHtml.text(
-      { val o = search.o( attr )
+        if ( v.notBlank ) search( n ) = v.toUpperCase
+        else              search.remove( n )
+        
+      case "textUpperSubst" =>
+        val v = r.s( n )
+        if ( v.notBlank ) search( n ) = Mobj( $regex -> v.toUpperCase )
+        else              search.remove( n )
 
-        if ( o == null ) ""
-        else             o.i( $gte ).toString },
-      ( v:String ) => {
-        val i = v.toLaxInt
+      case "intGte" =>
+        val i = r.i( n )
 
-        if ( i == 0 ) search.remove( attr )
-        else          search( attr ) = Mobj( $gte -> i ) },
-      "style" -> "width:80px;" )
+        if ( i == 0 ) search.remove( n )
+        else          search( n ) = Mobj( $gte -> i )
+      }
+    }
+  }
+
+  def bool( title:String, attr:String ) = {
+    searchProps( attr ) = "bool"
+    Checkbox( attr, search.b( attr ) ) ++ label( title, attr )
+  }
+
+  def boolExists( title:String, attr:String ) = {
+    searchProps( attr ) = "boolExists"
+    Checkbox( attr, search.s( attr ).notBlank ) ++ label( title, attr )
+  }
+
+  def text( attr:String, opts:(String,String)* ) = {
+    searchProps( attr ) = "textUpper"
+    Input( attr, search.s( attr ), opts:_* )
+  }
+
+  def textUpper( attr:String, width:Int ) = {
+    searchProps( attr ) = "textUpper"
+    Input( attr, search.s( attr ), "style" -> ( "width:" + width.toString + "px;" ) )
+  }
+
+  def textUpperSubst( attr:String, width:Int ) = {
+    searchProps( attr ) = "textUpperSubst"
+    Input( attr,
+           { val regex = search.o( attr )
+             regex != null |* regex.s( $regex )
+           }, "style" -> ( "width:" + width.toString + "px;" ) )
+  }
+
+  def intGte( attr:String ) = {
+    searchProps( attr ) = "intGte"
+    Input( attr,
+           { val o = search.o( attr )
+
+             if ( o == null ) ""
+             else             o.i( $gte ).toString },
+           "style" -> "width:80px;" )
+  }
 }
 
 case class Run( report:Report, grid:Grid ) {
