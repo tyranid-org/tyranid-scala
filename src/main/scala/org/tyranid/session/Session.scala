@@ -164,6 +164,8 @@ trait Session {
   var loggedEntry = false
   var loggedUser  = false
 
+  var passedCaptcha = false
+
 
   /*
    * * *   Login

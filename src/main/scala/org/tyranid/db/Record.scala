@@ -263,8 +263,7 @@ trait Record extends Valid with BsonObject {
   def invalids( scope:Scope ):Iterable[Invalid] =
     ( for ( va <- view.vas;
             vaScope = scope.at( va );
-            invalidOpt <- va.validations.map( validator => validator( vaScope ) );
-            invalid <- invalidOpt )
+            invalid <- va.invalids( vaScope ) )
         yield invalid ) ++
     ( for ( va <- view.vas;
             if va.att.domain.isInstanceOf[Entity];
@@ -333,10 +332,8 @@ case class Scope( rec:Record,
 
   def required = rec.hasSubmitted |* s.filter( _.isBlank ).map( s => Invalid( this, "Please fill in." ) )
 
-  def draw    ( name:String, ui: => UiObj ) = rec.view.ui( name, ui ).draw    ( this )
+  def draw    ( ui:UiObj ) = ui.draw( this )
   def drawLift( name:String, ui: => UiObj ) = rec.view.ui( name, ui ).drawLift( this )
-
-  def extract( name:String ) = rec.view.ui( name ).extract( this )
 }
 
 

@@ -78,6 +78,9 @@ spam( "filter entered, path=" + web.path )
           if ( !lock.open( web, thread ) )
             return lock.block( web )
 
+        if ( thread.http == null )
+          thread.http = web.req.getSession( true )
+
         weblet.handle( FileUploadSupport.checkContext( web ) )
       } catch {
       case e =>
