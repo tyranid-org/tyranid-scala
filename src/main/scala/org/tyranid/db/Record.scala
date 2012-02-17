@@ -334,6 +334,12 @@ case class Scope( rec:Record,
 
   def draw    ( ui:UiObj ) = ui.draw( this )
   def drawLift( name:String, ui: => UiObj ) = rec.view.ui( name, ui ).drawLift( this )
+
+  def submit( rec:Record, ui:UiObj ) = {
+    rec.submit
+    ui.extract( this )
+    return rec.invalids( this )
+  }
 }
 
 
