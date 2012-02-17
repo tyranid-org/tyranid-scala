@@ -59,6 +59,26 @@ object Button {
 }
 
 object Input {
+
+  def apply( name:String, value:String, opts:(String,String)* ) = {
+    val sb = new StringBuilder
+
+    sb ++= "<input value=\"" ++= value ++= "\""
+
+    var typ = "text"
+
+    for ( opt <- opts )
+      opt match {
+      case ( "class", v ) => sb ++= " class=\"" ++= v += '"'
+      case ( "style", v ) => sb ++= " style=\"" ++= v += '"'
+      case ( "type",  v ) => typ = v
+      case ( n,       v ) => throw new RuntimeException( "Unknown field option " + n + " = " + v )
+      }
+
+    sb ++= " name=\"" + name + "\" id=\"" + name + "\" type=\"" ++= typ ++= "\"/>"
+
+    Unparsed( sb.toString )
+  }
 }
 
 object Select {
@@ -114,30 +134,22 @@ object Field {
   implicit def symbol2Field( name:Symbol ) = Field( name.name )
 
   def input( s:Scope, f:Field, opts:(String,String)* ):NodeSeq = {
-    val sb = new StringBuilder
 
-    sb ++= "<input value=\"" ++= s.rec.s( f.va.name ) ++= "\""
-
-    var typ = "text"
     var id = f.id
 
-    for ( opt <- opts )
-      opt match {
-      case ( "id", v )   =>
+    val opts2 = opts.flatMap {
+      _ match {
+      case ( "id" | "name", v )   =>
         if ( id != null && v != id )
           throw new RuntimeException( "Form element being named " + v + " and " + id )
 
         id = v
+        None
 
-      case ( "name", v ) =>
-        if ( f.id != null && v != f.id )
-          throw new RuntimeException( "Form element being named " + v + " and " + id )
-
-        id = v
-
-      case ( "type", v ) => typ = v
-      case ( x, v )       => throw new RuntimeException( "Unknown field option " + x + " = " + v )
+      case p =>
+        Some( p )
       }
+    }
 
     if ( id == null ) {
       id = /* TODO: form id + '_' + */ f.va.name
@@ -146,9 +158,7 @@ object Field {
       f.id = id
     }
 
-    sb ++= " name=\"" + id + "\" id=\"" + id + "\" type=\"" ++= typ ++= "\"/>"
-
-    Unparsed( sb.toString )
+    Input( id, s.rec.s( f.va.name ), opts2:_* )
   }
 }
 
