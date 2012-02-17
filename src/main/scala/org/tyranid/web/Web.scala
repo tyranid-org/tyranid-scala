@@ -57,7 +57,7 @@ class WebFilter extends Filter {
   def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ) {
     val boot = B
 
-    val web = new WebContext( request.asInstanceOf[HttpServletRequest],
+    var web = new WebContext( request.asInstanceOf[HttpServletRequest],
                               response.asInstanceOf[HttpServletResponse], filterConfig.getServletContext() )
 spam( "filter entered, path=" + web.path )
 
@@ -83,7 +83,9 @@ spam( "filter entered, path=" + web.path )
         if ( thread.http == null )
           thread.http = web.req.getSession( true )
 
-        weblet.handle( FileUploadSupport.checkContext( web ) )
+        val web2 = FileUploadSupport.checkContext( web )
+        thread.web = web2
+        weblet.handle( web2 )
       } catch {
       case re:WebRedirectException =>
         web.res.sendRedirect( re.redirect )

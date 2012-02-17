@@ -92,6 +92,7 @@ trait Domain extends Valid {
   }
 
   def extract( s:Scope, f:Field ) {
+    println( "extract!" )
     s.rec( f.va.name ) = T.web.req.s( f.id )
   }
     

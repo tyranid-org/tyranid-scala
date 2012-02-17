@@ -19,20 +19,18 @@ object FileUploadSupport {
     val req = ctx.req
     val res = ctx.res
     
-    val req2 =
-      if (ServletFileUpload.isMultipartContent(req)) {
-        val bodyParams = extractMultipartParams(req)
-        var mergedParams = bodyParams.formParams
-        // Add the query string parameters
-        req.getParameterMap.asInstanceOf[JMap[String, Array[String]]] foreach {
-          case (name, values) =>
-            val formValues = mergedParams.getOrElse(name, List.empty)
-            mergedParams += name -> (values.toList ++ formValues)
-        }
-        
-        ctx.copy( req = wrapRequest( req, mergedParams ) )
+    if (ServletFileUpload.isMultipartContent(req)) {
+      val bodyParams = extractMultipartParams(req)
+      var mergedParams = bodyParams.formParams
+      // Add the query string parameters
+      req.getParameterMap.asInstanceOf[JMap[String, Array[String]]] foreach {
+        case (name, values) =>
+          val formValues = mergedParams.getOrElse(name, List.empty)
+          mergedParams += name -> (values.toList ++ formValues)
       }
-    
+      
+      ctx.copy( req = wrapRequest( req, mergedParams ) )
+    } else
       ctx
   }
   
