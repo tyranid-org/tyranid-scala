@@ -39,7 +39,52 @@ object DbImage {
 
 class DbImage( bucket:S3Bucket ) extends DbFile( bucket ) {
 
-  override def ui( s:Scope, f:Field, opts:(String,String)* ): NodeSeq =
+  override def ui( s:Scope, f:Field, opts:(String,String)* ): NodeSeq = {
+    println( "image id: " + f.id )
+    
+    //SHtml.fileUpload( save( s.rec, f ) _ )
+    /*SHtml.text( s.rec s f.va, v => s.rec( f.va ) = v, "class" -> "textInput" ) ++ */
+    <div class='thumbnail'>
+      { 
+        var id = f.id
+
+        if ( ( s.rec s f.va ).isBlank ) { // TODO:  Replace this with a blank/default image for ALL images
+//        <img src='https://d33lorp9dhlilu.cloudfront.net/generic-image.png' style='float:left;'/>
+        } else {
+//        <img src={ url( s.rec s f.va ) } style='float:left;'/>
+        }
+        
+        for ( opt <- opts )
+          opt match {
+          case ( "id", v )   =>
+            if ( id != null && v != id )
+              throw new RuntimeException( "Form element being named " + v + " and " + id )
+
+            id = v
+
+          case ( "name", v ) =>
+            if ( f.id != null && v != f.id )
+              throw new RuntimeException( "Form element being named " + v + " and " + id )
+
+            id = v
+
+          case ( "type", v ) => 
+          case ( x, v )       => throw new RuntimeException( "Unknown field option " + x + " = " + v )
+        }
+
+        if ( id == null ) {
+          id = /* TODO: form id + '_' + */ f.va.name
+          f.id = id
+        } else if ( id != f.id ) {
+          f.id = id
+        }
+        
+        <div><file name={ id } type="file"/></div>
+      }
+    </div>
+  }
+  
+  override def uiLift( s:Scope, f:Field, opts:(String,String)* ): NodeSeq =
     /*SHtml.text( s.rec s f.va, v => s.rec( f.va ) = v, "class" -> "textInput" ) ++ */
     <div class='thumbnail'>
       { 
@@ -51,6 +96,7 @@ class DbImage( bucket:S3Bucket ) extends DbFile( bucket ) {
       }
       <div> { SHtml.fileUpload( save( s.rec, f ) _ ) }</div>
     </div>
+      
 }
 
 object Image {
