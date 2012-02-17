@@ -17,6 +17,8 @@
 
 package org.tyranid.boot
 
+import java.net.InetAddress
+
 import scala.xml.NodeSeq
 
 import org.cometd.bayeux.server.BayeuxServer
@@ -46,6 +48,9 @@ object Boot {
         instance = boot.asInstanceOf[Bootable]
 
         instance.boot
+
+        println( "*** " + instance.applicationName + " booted ... mode: " + instance.mode.toUpperCase + ", version: " + instance.version + " ***" )
+
       } catch {
       case e:ClassCastException =>
         throw new RuntimeException( "bootstrap.tyranid.Boot does not extend org.tyranid.boot.Boot" )
@@ -70,6 +75,10 @@ trait Bootable {
 
   val applicationName:String
 
+  val domain:String
+  val website:String
+  val systemEmail:String
+
   val weblets:List[(String,Weblet)]
 
   val templates:List[(String, ( NodeSeq ) => NodeSeq )]
@@ -87,7 +96,22 @@ trait Bootable {
   val userMeta:UserMeta
   @volatile var userEntity:Entity = null
   @volatile var newSession:() => Session = null
-  @volatile var loginCookieName:String = null
+
+  val loginCookieName:String = null
+
+  lazy val hostName = InetAddress.getLocalHost.getHostName
+
+  lazy val DEV = hostName.indexOf( "macbook" ) != -1 || hostName.indexOf( "iMac" ) != -1 || hostName.indexOf( "imac" ) != -1 || hostName.indexOf( "-mac-" ) != -1 || hostName.indexOf( ".local" ) != -1
+  lazy val STAGE = !DEV && hostName.indexOf( "-x" ) != -1
+  lazy val PRODUCTION = !( DEV || STAGE )
+
+  def mode =
+    if ( DEV )        "development"
+    else if ( STAGE ) "stage"
+    else              "production"
+
+  
+  val version:Int
 
   // Environment
   val envSuffix = "" // "-x" or "-dx"
