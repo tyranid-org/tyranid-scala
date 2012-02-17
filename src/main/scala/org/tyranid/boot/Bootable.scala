@@ -78,7 +78,7 @@ trait Bootable {
   val domain:String
   
   // DEV assumes the DNS is in your hosts file
-  val website =
+  lazy val website =
     if ( DEV )        "https://dev." + domain + ":8443"
     else if ( STAGE ) "https://stage." + domain
     else              "https://app." + domain

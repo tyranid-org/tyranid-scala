@@ -58,6 +58,41 @@ object Button {
     </table>
 }
 
+object Input {
+}
+
+object Select {
+
+  def apply( name:String, values:Seq[ (String,String) ], opts:(String,String)* ) = {
+
+    val sb = new StringBuilder
+
+    sb ++= "<select name=\"" ++= name ++= "\" id=\"" ++= name += '"'
+
+    for ( opt <- opts )
+      opt match {
+      case ( "class", v ) =>
+        sb ++= " class=\"" ++= v += '"'
+
+      case ( "style", v ) =>
+        sb ++= " style=\"" ++= v += '"'
+
+      case ( x, v )       => throw new RuntimeException( "Unknown Select.field option " + x + " = " + v )
+      }
+
+    sb += '>'
+
+    for ( v <- values ) {
+      sb ++= "<option value=\"" ++= v._1 ++= "\">" ++= v._2 ++= "</option>"
+    }
+
+
+    sb ++= "</select>"
+
+    Unparsed( sb.toString )
+  }
+}
+
 
 /*
  * * *   UI
