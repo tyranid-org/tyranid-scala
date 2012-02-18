@@ -16,6 +16,7 @@ import org.tyranid.session.{ AccessLog, ThreadData }
 case class WebException( message:String ) extends Exception
 case class WebForwardException( forward:String ) extends Exception
 case class WebRedirectException( redirect:String ) extends Exception
+case class WebIgnoreException extends Exception
 
 trait WebLock {
 
@@ -91,6 +92,8 @@ spam( "filter entered, path=" + web.path )
         web.res.sendRedirect( re.redirect )
       case fe:WebForwardException =>
         web.ctx.getRequestDispatcher( fe.forward ).forward( web.req, web.res )
+      case ie:WebIgnoreException =>
+        chain.doFilter( request, response )
       case e =>
         e.log
       }
