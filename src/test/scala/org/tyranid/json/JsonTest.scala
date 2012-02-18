@@ -37,6 +37,7 @@ class JsonSuite extends FunSuite {
   test( "stringify" ) {
     val data = Seq(
       "cat",                                       "\"cat\"",
+      "a\"b",                                      "\"a\\\"b\"",
       5,                                           "5",
       List( 1, 2, 3 ),                             "[1,2,3]",
       List( 1, "cat", 3 ),                         """[1,"cat",3]""",

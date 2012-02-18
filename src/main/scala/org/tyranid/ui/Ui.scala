@@ -126,7 +126,7 @@ object Select {
 
     for ( v <- values ) {
       sb ++= "<option value=\"" ++= v._1 += '"'
-      if ( v == value )
+      if ( v._1 == value )
         sb ++= " selected"
       sb += '>' ++= v._2 ++= "</option>"
     }
