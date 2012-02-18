@@ -61,7 +61,7 @@ trait Domain extends Valid {
 	def show( s:Scope ) = true
 
   def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq = {
-    val input = Field.input( s, f, opts:_* )
+    val input = Field.text( s, f, opts:_* )
 
       /*
         if ( s.rec( f.va.name ) != v ) {
@@ -310,15 +310,13 @@ trait DbDateLike extends Domain {
     } ::
     super.validations
 
-  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxText(
-      ( s.rec t f.va.name ).toDateStr,
-      v => { 
-        if ( s.rec( f.va.name ) != v ) {
-          s.rec( f.va.name ) = v.toLaxDate; f.updateDisplayCmd( s ) 
-        }
-      },
-      opts.map( ElemAttr.pairToBasic ):_* )
+  override def ui( s:Scope, f:Field, opts:(String,String)* ) = {
+    val input = Field.input( s, f, s.rec.t( f.va.name ).toDateStr, opts:_* )
+    if ( f.focus )
+      throw new RuntimeException( "TODO:  handle focus on load" )
+    else 
+      input
+  }
 
   override def uiLift( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
     SHtml.ajaxText(
@@ -329,6 +327,10 @@ trait DbDateLike extends Domain {
         }
       },
       opts.map( ElemAttr.pairToBasic ):_* )
+
+  override def extract( s:Scope, f:Field ) {
+    s.rec( f.va.name ) = T.web.req.s( f.id ).toLaxDate
+  }
 }
 
 object DbDate extends DbDateLike

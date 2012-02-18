@@ -162,7 +162,10 @@ object Field {
   implicit def string2Field( name:String ) = Field( name )
   implicit def symbol2Field( name:Symbol ) = Field( name.name )
 
-  def input( s:Scope, f:Field, opts:(String,String)* ):NodeSeq = {
+  def text( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
+    input( s, f, s.rec.s( f.va.name ), opts:_* )
+
+  def input( s:Scope, f:Field, value:String, opts:(String,String)* ):NodeSeq = {
 
     var id = f.id
 
@@ -187,7 +190,7 @@ object Field {
       f.id = id
     }
 
-    Input( id, s.rec.s( f.va.name ), opts2:_* )
+    Input( id, value, opts2:_* )
   }
 }
 
