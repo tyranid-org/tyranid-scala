@@ -73,9 +73,13 @@ spam( "filter entered, path=" + web.path )
     thread.web = web
 
     AccessLog.log( web, thread )
-    
-    boot.weblets.find( pair => web.matches( pair._1 ) && pair._2.matches( web ) ) match {
-    case Some( ( path, weblet ) ) =>
+
+    var multipartHandled = false
+
+    for ( pair <- boot.weblets;
+          if web.matches( pair._1 ) && pair._2.matches( web ) ) {
+      val ( path, weblet ) = pair
+
       try {
         for ( lock <- weblet.locks )
           if ( !lock.open( web, thread ) )
@@ -84,23 +88,37 @@ spam( "filter entered, path=" + web.path )
         if ( thread.http == null )
           thread.http = web.req.getSession( true )
 
-        val web2 = FileUploadSupport.checkContext( web )
-        thread.web = web2
-        weblet.handle( web2 )
-      } catch {
-      case re:WebRedirectException =>
-        web.res.sendRedirect( re.redirect )
-      case fe:WebForwardException =>
-        web.ctx.getRequestDispatcher( fe.forward ).forward( web.req, web.res )
-      case ie:WebIgnoreException =>
-        chain.doFilter( request, response )
-      case e =>
-        e.log
-      }
+        val web2:WebContext =
+          if ( !multipartHandled ) {
+            val w = FileUploadSupport.checkContext( web )
+            thread.web = w
+            multipartHandled = true
+            w
+          } else {
+            web
+          }
 
-    case None =>
-      chain.doFilter( request, response )
+        try {
+          weblet.handle( web2 )
+          return // return if it was handled
+
+        } catch {
+        case ie:WebIgnoreException =>
+          ; // continue on and try the next servlet and/or continue to the chaining
+        case re:WebRedirectException =>
+          web.res.sendRedirect( re.redirect )
+          return
+        case fe:WebForwardException =>
+          web.ctx.getRequestDispatcher( fe.forward ).forward( web.req, web.res )
+          return
+        case e =>
+          e.log
+          return
+        }
+      }
     }
+
+    chain.doFilter( request, response )
   }
 }
 
