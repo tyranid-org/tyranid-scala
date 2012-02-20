@@ -81,6 +81,30 @@ object Input {
   }
 }
 
+object TextArea {
+
+  def apply( name:String, value:String, opts:(String,String)* ) = {
+    val sb = new StringBuilder
+    sb ++= "<textarea "
+      
+      // Don't do anything with typ yet
+    var typ = "text"
+
+    for ( opt <- opts )
+      opt match {
+      case ( "class", v ) => sb ++= " class=\"" ++= v += '"'
+      case ( "style", v ) => sb ++= " style=\"" ++= v += '"'
+      case ( "type",  v ) => typ = v
+      // look for rows, cols
+      case ( n,       v ) => throw new RuntimeException( "Unknown field option " + n + " = " + v )
+      }
+
+    sb ++= " name=\"" + name + "\" id=\"" + name + "\">" ++= value ++= "</textarea>" 
+
+    Unparsed( sb.toString )
+  }
+}
+
 object Checkbox {
 
   def apply( name:String, value:Boolean, opts:(String,String)* ) = {
@@ -166,7 +190,16 @@ object Field {
     input( s, f, s.rec.s( f.va.name ), opts:_* )
 
   def input( s:Scope, f:Field, value:String, opts:(String,String)* ):NodeSeq = {
-
+    val ret = optsMapper( s, f, value, opts:_* )
+    Input( ret._1, ret._2, ret._3:_*  )
+  }
+  
+  def textArea( s:Scope, f:Field, value:String, opts:(String,String)* ):NodeSeq = {
+    val ret = optsMapper( s, f, value, opts:_* )
+    TextArea( ret._1, ret._2, ret._3:_*  )
+  }
+  
+  private def optsMapper( s:Scope, f:Field, value:String, opts:(String,String)* ):( String, String, Seq[(String,String)] ) = { 
     var id = f.id
 
     val opts2 = opts.flatMap {
@@ -190,8 +223,9 @@ object Field {
       f.id = id
     }
 
-    Input( id, value, opts2:_* )
+    return ( id, value, opts2 )
   }
+  
 }
 
 case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolean = true, inputOnly:Boolean = false, onSet:Option[ ( Field ) => JsCmd ] = None, focus:Boolean = false ) extends UiObj {

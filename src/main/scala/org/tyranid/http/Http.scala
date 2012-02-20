@@ -27,6 +27,10 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
     val s = req.getParameter( param )
     s != null |* s.toLaxInt
   }
+  def l( param:String ):Long = {
+    val s = req.getParameter( param )
+    s != null |* s.toLaxLong
+  }
   def b( param:String ):Boolean = {
     val s = req.getParameter( param )
     s != null && s.toLaxBoolean

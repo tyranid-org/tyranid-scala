@@ -746,5 +746,3 @@ object Reportlet extends Weblet {
     }
   }
 }
-
-

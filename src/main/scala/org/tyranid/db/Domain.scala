@@ -92,7 +92,6 @@ trait Domain extends Valid {
   }
 
   def extract( s:Scope, f:Field ) {
-    println( "extract!" )
     s.rec( f.va.name ) = T.web.req.s( f.id )
   }
     
@@ -187,11 +186,19 @@ case class DbChar( len:Int ) extends LimitedText {
 case class DbLargeChar( len:Int ) extends LimitedText {
 	val sqlName = "CHAR(" + len + ")"
 	
-  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxTextarea( s.rec s f.va.name, v => { 
-      if ( s.rec( f.va.name ) != v ) {
-        s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) 
-      } }, opts.map( ElemAttr.pairToBasic ):_* )
+  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq = {
+    val ta = Field.textArea( s, f, s.rec.s( f.va.name ), opts:_* )
+    
+    if ( f.focus )
+      throw new RuntimeException( "TODO:  handle focus on load" )
+    else 
+      ta
+	}
+    
+//    SHtml.ajaxTextarea( s.rec s f.va.name, v => { 
+//      if ( s.rec( f.va.name ) != v ) {
+//        s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) 
+//      } }, opts.map( ElemAttr.pairToBasic ):_* )
 	
   override def uiLift( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
     SHtml.ajaxTextarea( s.rec s f.va.name, v => { 
