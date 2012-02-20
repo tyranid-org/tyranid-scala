@@ -106,11 +106,13 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     res.setContentType( if ( jsonpCallback != null ) "text/javascript" else "application/json" )
     res.setStatus( status )
 
+    val outputJson = if ( json == null ) "{}" else json.toJsonStr
+    
     out( 
       if ( jsonpCallback != null ) {
-        jsonpCallback + "(" + json.toJsonStr + ")"
+        jsonpCallback + "(" + outputJson + ")"
       } else {
-        json.toJsonStr 
+        outputJson
       }
     )
   }
