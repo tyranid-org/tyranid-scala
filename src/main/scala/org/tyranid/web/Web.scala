@@ -5,6 +5,7 @@ import javax.servlet.{ Filter, FilterChain, FilterConfig, GenericServlet, Servle
 import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
 
 import scala.collection.mutable
+import scala.util.control.ControlThrowable
 import scala.xml.{ Elem, Node, NodeSeq, Text, TopScope }
 
 import org.cometd.bayeux.server.BayeuxServer
@@ -13,10 +14,11 @@ import org.tyranid.Imp._
 import org.tyranid.session.{ AccessLog, ThreadData }
 
 
-case class WebException( message:String ) extends Exception
-case class WebForwardException( forward:String ) extends Exception
-case class WebRedirectException( redirect:String ) extends Exception
-case class WebIgnoreException extends Exception
+case class WebException( message:String )          extends Exception
+
+case class WebForwardException( forward:String )   extends ControlThrowable
+case class WebRedirectException( redirect:String ) extends ControlThrowable
+case class WebIgnoreException                      extends ControlThrowable
 
 trait WebLock {
 
@@ -55,7 +57,7 @@ class WebFilter extends Filter {
     ctx.res.sendRedirect( sb.toString )
   }
 
-  def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ) {
+  def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ):Unit = try {
     val boot = B
 
     var web = new WebContext( request.asInstanceOf[HttpServletRequest],
@@ -111,7 +113,7 @@ spam( "filter entered, path=" + web.path )
         case fe:WebForwardException =>
           web.ctx.getRequestDispatcher( fe.forward ).forward( web.req, web.res )
           return
-        case e =>
+        case e:Exception =>
           e.log
           return
         }
@@ -119,6 +121,11 @@ spam( "filter entered, path=" + web.path )
     }
 
     chain.doFilter( request, response )
+  } catch {
+  case t:ControlThrowable =>
+    throw t
+  case t =>
+    t.log
   }
 }
 
