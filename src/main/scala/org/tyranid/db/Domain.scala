@@ -397,17 +397,20 @@ case class DbLink( toEntity:Entity ) extends Domain {
 										}
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ) =
-    SHtml.ajaxSelect( ( "" -> "-Please Select-" ) +: toEntity.idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq,
-                      Full( s.rec s f.va ),
-                      v => {
-                        toEntity.idType match {
-                        case IdType.ID_32 => s.rec( f.va ) = v.toLaxInt
-                        case IdType.ID_64 => s.rec( f.va ) = v.toLaxLong
-                        case _            => s.rec( f.va ) = v
-                        }
-                        f.updateDisplayCmd( s )
-                      },
-                      opts.map( ElemAttr.pairToBasic ):_* )
+    Field.select(
+      s, f, s.rec s f.va,
+      ( "" -> "-Please Select-" ) +: toEntity.idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq,
+      opts:_* )
+
+  override def extract( s:Scope, f:Field ) {
+    val v = T.web.req.s( f.id )
+
+    toEntity.idType match {
+    case IdType.ID_32 => s.rec( f.va ) = v.toLaxInt
+    case IdType.ID_64 => s.rec( f.va ) = v.toLaxLong
+    case _            => s.rec( f.va ) = v
+    }
+  }
 
   override def uiLift( s:Scope, f:Field, opts:(String,String)* ) =
     SHtml.ajaxSelect( ( "" -> "-Please Select-" ) +: toEntity.idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq,

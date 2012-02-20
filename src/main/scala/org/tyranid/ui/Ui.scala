@@ -194,6 +194,11 @@ object Field {
     Input( ret._1, ret._2, ret._3:_*  )
   }
   
+  def select( s:Scope, f:Field, value:String, values:Seq[ (String,String) ], opts:(String,String)* ) = {
+    val ret = optsMapper( s, f, value, opts:_* )
+    Select( ret._1, ret._2, values, ret._3:_* )
+  }
+
   def textArea( s:Scope, f:Field, value:String, opts:(String,String)* ):NodeSeq = {
     val ret = optsMapper( s, f, value, opts:_* )
     TextArea( ret._1, ret._2, ret._3:_*  )
