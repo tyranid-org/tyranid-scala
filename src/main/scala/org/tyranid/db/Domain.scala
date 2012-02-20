@@ -350,11 +350,14 @@ case class DbLink( toEntity:Entity ) extends Domain {
   override def extract( s:Scope, f:Field ) {
     val v = T.web.req.s( f.id )
 
-    toEntity.idType match {
-    case IdType.ID_32 => s.rec( f.va ) = v.toLaxInt
-    case IdType.ID_64 => s.rec( f.va ) = v.toLaxLong
-    case _            => s.rec( f.va ) = v
-    }
+    if ( v.isBlank )
+      s.rec( f.va ) = null
+    else
+      toEntity.idType match {
+      case IdType.ID_32 => s.rec( f.va ) = v.toLaxInt
+      case IdType.ID_64 => s.rec( f.va ) = v.toLaxLong
+      case _            => s.rec( f.va ) = v
+      }
   }
 
   override def inputcClasses = " select"
