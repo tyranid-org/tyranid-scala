@@ -269,8 +269,8 @@ trait Record extends Valid with BsonObject {
         yield invalid ) ++
     ( for ( va <- vas;
             if va.att.domain.isInstanceOf[Entity];
-            r = rec( va );
-            invalid <- r.invalids( scope.at( va ) ) )
+            vaScope = scope.at( va );
+            invalid <- vaScope.rec.invalids( vaScope ) )
         yield invalid )
 
 
@@ -339,7 +339,12 @@ case class Scope( rec:Record,
   def submit( rec:Record, ui:UiObj ) = {
     rec.submit
     ui.extract( this )
-    rec.invalids( this, ui.fields.map( _.va ) )
+
+    for ( f <- ui.fields;
+          path = f.path;
+          pathScope = this.at( path );
+          invalid <- path.leaf.invalids( pathScope ) )
+      yield invalid
   }
 }
 
