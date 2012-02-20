@@ -15,9 +15,9 @@ object FileUploadSupport {
   case class BodyParams(fileParams: FileMultiParams, formParams: Map[String, List[String]])
   val BodyParamsKey = "org.tyranid.web.fileupload.bodyParams"
 
-  def checkContext( ctx:WebContext ): WebContext = {
-    val req = ctx.req
-    val res = ctx.res
+  def checkContext( web:WebContext ): WebContext = {
+    val req = web.req
+    val res = web.res
     
     if (ServletFileUpload.isMultipartContent(req)) {
       val bodyParams = extractMultipartParams(req)
@@ -29,9 +29,9 @@ object FileUploadSupport {
           mergedParams += name -> (values.toList ++ formValues)
       }
       
-      ctx.copy( req = wrapRequest( req, mergedParams ) )
+      web.copy( req = wrapRequest( req, mergedParams ) )
     } else
-      ctx
+      web
   }
   
   private def extractMultipartParams( req: HttpServletRequest ): BodyParams =
@@ -76,7 +76,7 @@ object FileUploadSupport {
 
   private def wrapRequest(req: HttpServletRequest, formMap: Map[String, Seq[String]]) =
     new HttpServletRequestWrapper(req) {
-      override def getParameter(name: String) = formMap.get(name) map { _.head } getOrElse null
+      override def getParameter(name: String) = { formMap.get(name) map { _.head } getOrElse null }
       override def getParameterNames = formMap.keysIterator
       override def getParameterValues(name: String) = formMap.get(name) map { _.toArray } getOrElse null
       override def getParameterMap = new JHashMap[String, Array[String]] ++ (formMap transform { (k, v) => v.toArray })

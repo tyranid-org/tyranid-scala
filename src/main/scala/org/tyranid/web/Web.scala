@@ -90,18 +90,14 @@ spam( "filter entered, path=" + web.path )
         if ( thread.http == null )
           thread.http = web.req.getSession( true )
 
-        val web2:WebContext =
-          if ( !multipartHandled ) {
-            val w = FileUploadSupport.checkContext( web )
-            thread.web = w
-            multipartHandled = true
-            w
-          } else {
-            web
-          }
+        if ( !multipartHandled ) {
+          web = FileUploadSupport.checkContext( web )
+          thread.web = web
+          multipartHandled = true
+        }
 
         try {
-          weblet.handle( web2 )
+          weblet.handle( web )
           return // return if it was handled
 
         } catch {
