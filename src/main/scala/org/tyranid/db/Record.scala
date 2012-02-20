@@ -65,7 +65,7 @@ case class ViewAttribute( val view:View,
   override def validations = att.validations
 
   def invalids( scope:Scope ) = {
-    require( scope.va.get == this )
+    require( scope.va == None || scope.va.get == this )
 
     ( for ( invalidOpt <- validations.map( validator => validator( scope ) );
             invalid <- invalidOpt )
