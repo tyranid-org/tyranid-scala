@@ -49,7 +49,7 @@ object Input {
   def apply( name:String, value:String, opts:(String,String)* ) = {
     val sb = new StringBuilder
 
-    sb ++= "<input value=\"" ++= value ++= "\""
+    sb ++= "<input value=\"" ++= ( if ( value == null ) "" else value ) ++= "\""
 
     var typ = "text"
 
@@ -85,7 +85,7 @@ object TextArea {
       case ( n,       v ) => throw new RuntimeException( "Unknown field option " + n + " = " + v )
       }
 
-    sb ++= " name=\"" + name + "\" id=\"" + name + "\">" ++= value ++= "</textarea>" 
+    sb ++= " name=\"" + name + "\" id=\"" + name + "\">" ++= ( if ( value == null ) "" else value ) ++= "</textarea>" 
 
     Unparsed( sb.toString )
   }
