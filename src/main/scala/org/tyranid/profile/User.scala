@@ -22,8 +22,6 @@ import java.util.TimeZone
 
 import org.bson.types.ObjectId
 
-import net.liftweb.http.{ RedirectResponse, S }
-
 import org.tyranid.Imp._
 import org.tyranid.db.Record
 import org.tyranid.session.{ Session, ThreadData }
@@ -53,9 +51,6 @@ trait UserMeta {
   
   def isAdmin    = Session().user.admin
 
-  lazy val ReqLoggedIn = User._ReqLoggedIn
-  lazy val ReqAdmin    = User._ReqAdmin
-
   // TODO:  Make this more sophisticated, allow the entire user to be retrieved instead of just the name, and/or maybe something like ProfileItem
   def nameFor( userId:ObjectId ) = "TODO"
 }
@@ -73,16 +68,6 @@ case object UserLoginLock extends WebLock {
 }
 
 object User extends UserMeta {
-
-  import net.liftweb.sitemap.Loc._
-
-  private[profile] lazy val _ReqLoggedIn =
-    If( isLoggedIn _,  () => {
-      RedirectResponse( "/log/in?l=" + S.uriAndQueryString.open_!.encUrl )
-    } )
-    
-  private[profile] lazy val _ReqAdmin    =
-    If( isAdmin _,     () => RedirectResponse( "/log/in" ) )
 }
 
 trait User extends Record {

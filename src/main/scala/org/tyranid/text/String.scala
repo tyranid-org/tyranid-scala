@@ -50,9 +50,6 @@ class StringImp( s:String ) {
   def splitAmp = StringImp.AmpersandPattern.split( s )
 
 
-	/**
-	 * Named this way to be similar to Lift's "encJs" method on Strings.
-	 */
 	def encUrl = java.net.URLEncoder.encode( s, "UTF-8" ) 
 	def decUrl = java.net.URLDecoder.decode( s, "UTF-8" )
   //def decUrl = new org.apache.commons.codec.net.URLCodec( "UTF-8" ).decode( s )
@@ -165,8 +162,6 @@ class StringImp( s:String ) {
 	def toXml = scala.xml.XML.loadString( s )
 
   def toNodeSeq = if ( s != null ) Text( s ) else NodeSeq.Empty
-
-  def toLiftJson = _root_.net.liftweb.json.JsonParser.parse( s )
 
   def toJson = org.tyranid.json.Json.parse( s )
 

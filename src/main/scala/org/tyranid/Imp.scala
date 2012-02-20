@@ -24,22 +24,6 @@ import scala.xml.NodeSeq
 import org.tyranid.log.Log
 
 
-object Debug {
-  def check( xml: => NodeSeq ):NodeSeq = {
-    try {
-      xml
-    } catch {
-      case e:_root_.net.liftweb.http.ResponseShortcutException =>
-        throw e
-      case t:Throwable =>
-        t.printStackTrace
-        Log.log( Log.StackTrace, "m" -> "Internal site problem", "ex" -> t )
-        
-        <div class="error">Internal site problem, please try again later.</div>
-    }
-  }
-}
-
 /**
  * IMPlicit IMPorts.
  */

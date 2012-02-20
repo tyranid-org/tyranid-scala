@@ -24,8 +24,6 @@ import org.bson.BSONObject
 import org.bson.types.ObjectId
 import com.mongodb.{ BasicDBObject, DB, DBCollection, DBObject }
 
-import net.liftweb.http.SHtml
-
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbLink, Domain, Entity, Record, Scope, View, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
@@ -46,10 +44,7 @@ case object DbMongoId extends Domain {
   }
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.text( s.rec s f.va, v => s.rec( f.va ) = v, "class" -> "textInput" ) 
-
-  override def uiLift( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.text( s.rec s f.va, v => s.rec( f.va ) = v, "class" -> "textInput" ) 
+    Field.input( s, f, s.rec.s( f.va ), "class" -> "textInput" ) 
 
   //override def inputcClasses = " select"
 }

@@ -21,17 +21,12 @@ import java.util.Date
 
 import scala.xml.{ NodeSeq, Unparsed }
 
-import net.liftweb.common.Full
-import net.liftweb.http.SHtml
-import net.liftweb.http.SHtml.ElemAttr
-
 import org.tyranid.Imp._
 import org.tyranid.logic.{ Valid, Invalid }
 import org.tyranid.math.Base64
 import org.tyranid.time.{ Time }
 import org.tyranid.ui.Field
 
-import net.liftweb.http.js.JsCmds.{FocusOnLoad}
 
 /*
  * * *   Domains
@@ -76,21 +71,6 @@ trait Domain extends Valid {
       input
   }
     
-  def uiLift( s:Scope, f:Field, opts:(String,String)* ):NodeSeq = {
-    var input =
-      SHtml.ajaxText( s.rec s f.va.name, v => { 
-        if ( s.rec( f.va.name ) != v ) {
-          s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) 
-        }
-      }, opts.map( ElemAttr.pairToBasic ):_* )
-        
-    
-    if ( f.focus )
-      FocusOnLoad( input )
-    else 
-      input
-  }
-
   def extract( s:Scope, f:Field ) {
     s.rec( f.va.name ) = T.web.req.s( f.id )
   }
@@ -110,12 +90,6 @@ abstract class DbIntish extends Domain {
 	override lazy val idType = IdType.ID_32
 
   override def tid( r:Record, va:ViewAttribute ) = Base64.toString( r i va )
-
-  override def uiLift( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxText( s.rec s f.va.name, v => { 
-      if ( s.rec( f.va.name ) != v ) {
-        s.rec( f.va.name ) = v.toLaxInt; f.updateDisplayCmd( s ) 
-      } }, opts.map( ElemAttr.pairToBasic ):_* )
 
   override def extract( s:Scope, f:Field ) {
     s.rec( f.va.name ) = T.web.req.i( f.id )
@@ -199,12 +173,6 @@ case class DbLargeChar( len:Int ) extends LimitedText {
 //      if ( s.rec( f.va.name ) != v ) {
 //        s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) 
 //      } }, opts.map( ElemAttr.pairToBasic ):_* )
-	
-  override def uiLift( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxTextarea( s.rec s f.va.name, v => { 
-      if ( s.rec( f.va.name ) != v ) {
-        s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) 
-      } }, opts.map( ElemAttr.pairToBasic ):_* )
 }
 
 case class DbVarChar( len:Int ) extends LimitedText {
@@ -222,12 +190,6 @@ object DbPassword extends DbVarChar( 64 ) {
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ) =
     super.ui( s, f, ( opts ++ Seq( "type" -> "password" ) ):_* )
-
-  override def uiLift( s:Scope, f:Field, opts:(String,String)* ) =
-    SHtml.ajaxText( s.rec s f.va.name, v => { 
-      if ( s.rec( f.va.name ) != v ) {
-        s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) 
-      } }, ( opts ++ Seq( "type" -> "password" ) ).map( ElemAttr.pairToBasic ):_* )
 
   override def validations =
     ( ( scope:Scope ) => {
@@ -283,9 +245,6 @@ object DbBoolean extends Domain {
     s.rec( f.va.name ) = T.web.req.b( f.id )
   }
 
-  override def uiLift( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxCheckbox( ( s.rec s f.va.name ) == "Y", (v:Boolean) => { if ( v ) s.rec( f.va.name ) = "Y" else s.rec( f.va.name ) = "N"; f.updateDisplayCmd( s ) }, opts.map( ElemAttr.pairToBasic ):_* )
-    
   override def inputcClasses = " checkbox"
 }
 
@@ -332,16 +291,6 @@ trait DbDateLike extends Domain {
   override def extract( s:Scope, f:Field ) {
     s.rec( f.va.name ) = T.web.req.s( f.id ).toLaxDate
   }
-
-  override def uiLift( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxText(
-      ( s.rec t f.va.name ).toDateStr,
-      v => { 
-        if ( s.rec( f.va.name ) != v ) {
-          s.rec( f.va.name ) = v.toLaxDate; f.updateDisplayCmd( s ) 
-        }
-      },
-      opts.map( ElemAttr.pairToBasic ):_* )
 }
 
 object DbDate extends DbDateLike
@@ -351,25 +300,17 @@ object DbDateTime extends DbDateLike {
 
   override def dateOnly = false
 
-  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxText(
-      ( s.rec t f.va.name ).toDateTimeStr,
-      v => { 
-        if ( s.rec( f.va.name ) != v ) {
-          s.rec( f.va.name ) = v.toLaxDateTime; f.updateDisplayCmd( s ) 
-        }
-      },
-      opts.map( ElemAttr.pairToBasic ):_* )
+  override def ui( s:Scope, f:Field, opts:(String,String)* ) = {
+    val input = Field.input( s, f, s.rec.t( f.va.name ).toDateTimeStr, opts:_* )
+    if ( f.focus )
+      throw new RuntimeException( "TODO:  handle focus on load" )
+    else 
+      input
+  }
 
-  override def uiLift( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxText(
-      ( s.rec t f.va.name ).toDateTimeStr,
-      v => { 
-        if ( s.rec( f.va.name ) != v ) {
-          s.rec( f.va.name ) = v.toLaxDateTime; f.updateDisplayCmd( s ) 
-        }
-      },
-      opts.map( ElemAttr.pairToBasic ):_* )
+  override def extract( s:Scope, f:Field ) {
+    s.rec( f.va.name ) = T.web.req.s( f.id ).toLaxDateTime
+  }
 }
 
 
@@ -415,19 +356,6 @@ case class DbLink( toEntity:Entity ) extends Domain {
     case _            => s.rec( f.va ) = v
     }
   }
-
-  override def uiLift( s:Scope, f:Field, opts:(String,String)* ) =
-    SHtml.ajaxSelect( ( "" -> "-Please Select-" ) +: toEntity.idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq,
-                      Full( s.rec s f.va ),
-                      v => {
-                        toEntity.idType match {
-                        case IdType.ID_32 => s.rec( f.va ) = v.toLaxInt
-                        case IdType.ID_64 => s.rec( f.va ) = v.toLaxLong
-                        case _            => s.rec( f.va ) = v
-                        }
-                        f.updateDisplayCmd( s )
-                      },
-                      opts.map( ElemAttr.pairToBasic ):_* )
 
   override def inputcClasses = " select"
 

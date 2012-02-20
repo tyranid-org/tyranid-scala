@@ -24,8 +24,6 @@ import scala.collection.mutable
 import scala.collection.JavaConversions._
 import scala.xml.NodeSeq
 
-import net.liftweb.http.{ SHtml }
-
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.{ Domain, Record, Scope }

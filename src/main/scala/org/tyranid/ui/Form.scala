@@ -20,11 +20,6 @@ package org.tyranid.ui
 import scala.collection.mutable
 import scala.xml.{ Node, NodeSeq, Unparsed }
 
-import net.liftweb.http.{ S, SHtml }
-import net.liftweb.http.js.JsCmd
-import net.liftweb.http.js.JsCmds._
-import net.liftweb.http.js.JE.JsRaw
-
 import org.tyranid.Imp._
 import org.tyranid.db.{ Record, Path, Scope, View, ViewAttribute }
 import org.tyranid.logic.Invalid

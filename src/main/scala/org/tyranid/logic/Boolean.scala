@@ -19,10 +19,6 @@ package org.tyranid.logic
 
 import scala.xml.NodeSeq
 
-import _root_.net.liftweb.common.{ Box, Empty }
-import _root_.net.liftweb.http.js.JsCmd
-import _root_.net.liftweb.http.js.JsCmds.Noop
-
 sealed trait Tern[+A] {
   def |[ B >: A ]( b: => B ): B
 }
@@ -65,8 +61,6 @@ class BooleanImp( bval:Boolean ) {
   def |*[T]( v: => Double    ):Double    = if ( bval ) v else 0.0
   def |*   ( v: => NodeSeq   ):NodeSeq   = if ( bval ) v else NodeSeq.Empty
   def |*[T]( v: => Option[T] ):Option[T] = if ( bval ) v else None
-  def |*   ( v: => JsCmd     ):JsCmd     = if ( bval ) v else Noop
-  def |*[T]( v: => Box[T]    ):Box[T]    = if ( bval ) v else Empty
   def |*[T]( v: => List[T]   ):List[T]   = if ( bval ) v else Nil
   def |*[T]( v: => Unit      ):Unit      = if ( bval ) v
 

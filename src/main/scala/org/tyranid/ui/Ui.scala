@@ -20,11 +20,6 @@ package org.tyranid.ui
 import scala.collection.mutable
 import scala.xml.{ Node, NodeSeq, Unparsed }
 
-import net.liftweb.http.{ S, SHtml }
-import net.liftweb.http.js.JsCmd
-import net.liftweb.http.js.JsCmds._
-import net.liftweb.http.js.JE.JsRaw
-
 import org.tyranid.Imp._
 import org.tyranid.db.{ Record, Path, Scope, View, ViewAttribute }
 import org.tyranid.logic.Invalid
@@ -40,15 +35,6 @@ object Button {
 
   def link( name:String, href:String, color:String ) =
     <a class={ color + "Btn" } href={ href }><span>{ name }</span></a>
-
-  def submit( name:String, act:() => Unit, color:String ) =
-    SHtml.submit( name, act, "class" -> ( color + "Btn" ) )
-
-  def ajaxButton( name:String, act:() => JsCmd, color:String ) =
-    SHtml.ajaxButton( name, act, "class" -> ( color + "Btn" ) )
-
-  def button( name:String, act:( String ) => JsCmd, color:String, inline:Boolean = false ) =
-    <button class={ color + "Btn" } style={ inline |* "display:inline;" } onclick={ SHtml.ajaxCall( JsRaw( "''" ), act )._2.toJsCmd }>{ Unparsed( name ) }</button>
 
   def bar( buttons:Node* ) =
     <table class="btnbar">
@@ -173,7 +159,6 @@ trait UiObj {
   def bind( view:View ):UiObj
 
   def draw    ( scope:Scope ):NodeSeq = NodeSeq.Empty
-  def drawLift( scope:Scope ):NodeSeq = NodeSeq.Empty
 
   def extract( scope:Scope ):Unit
 
@@ -237,7 +222,7 @@ object Field {
   }
 }
 
-case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolean = true, inputOnly:Boolean = false, onSet:Option[ ( Field ) => JsCmd ] = None, focus:Boolean = false ) extends UiObj {
+case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolean = true, inputOnly:Boolean = false, focus:Boolean = false ) extends UiObj {
 
   var id:String = null
 
@@ -278,23 +263,7 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolea
       </div>
     }
 
-  override def drawLift( pScope:Scope ) =
-    if ( inputOnly ) {
-      va.att.domain.uiLift( pScope.at( path ), this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* )
-    } else {
-      val scope = pScope.at( path )
-      val invalids = va.invalids( scope )
-      val rec = scope.rec
-      rec.invalids( va.index ) = !invalids.isEmpty
-    
-      va.att.domain.show( scope ) |*
-      <div id={ va.name + "_c" } class={ "fieldc" + ( !invalids.isEmpty |* " invalid" ) }>
-       <div class="labelc">{ va.label( rec, opts.opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
-       <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.uiLift( scope, this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
-       <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
-      </div>
-    }
-
+    /*
   def updateDisplayCmd( scope:Scope ):JsCmd = {
     
     val onSetCmd = onSet.flatten( _( this ), Noop )
@@ -321,6 +290,7 @@ case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolea
       JsRaw( "$('#" + va.name + "_c').addClass('invalid');" )
     }
   }
+  */
 }
 
 case class Row( fields:Field* ) extends UiObj {
@@ -363,16 +333,6 @@ case class Grid( rows:Row* ) extends UiObj {
       <tr>{
         for ( f <- row.fields ) yield
           <td colspan={ f.span.toString } class="cell">{ f.draw( scope ) }</td>
-      }</tr>
-  }
-
-  override def drawLift( pScope:Scope ) = {
-    val scope = pScope.copy( initialDraw = true )
-    
-    for ( row <- rows ) yield
-      <tr>{
-        for ( f <- row.fields ) yield
-          <td colspan={ f.span.toString } class="cell">{ f.drawLift( scope ) }</td>
       }</tr>
   }
 }

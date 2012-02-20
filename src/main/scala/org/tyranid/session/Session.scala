@@ -72,27 +72,12 @@ class ThreadData {
 
   private var httpData:HttpSession = _
 
-  def http:HttpSession = {
-
-    if ( httpData == null )
-      net.liftweb.http.S.session.foreach { assignFromLiftSession _ }
-
-    httpData
-  }
+  def http:HttpSession = httpData
 
   def http_=( obj:HttpSession ) = {
     httpData = obj
     tyrData = null
   }
-
-
-  def assignFromLiftSession( liftSession:net.liftweb.http.LiftSession ) =
-    http = {
-      val liftSess = liftSession.httpSession.open_!.asInstanceOf[net.liftweb.http.provider.servlet.HTTPServletSession]
-      val field = liftSess.getClass.getDeclaredField( "session" )
-      field.setAccessible( true )
-      field.get( liftSess ).asInstanceOf[javax.servlet.http.HttpSession]
-    }
 
 
   // --- Tyranid Session
