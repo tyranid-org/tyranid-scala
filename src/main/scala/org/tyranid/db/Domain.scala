@@ -276,9 +276,13 @@ object DbFedEin extends DbChar( 9 ) {
 object DbBoolean extends Domain {
 	val sqlName = "CHAR(1)"
 	  
-  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxCheckbox( ( s.rec s f.va.name ) == "Y", (v:Boolean) => { if ( v ) s.rec( f.va.name ) = "Y" else s.rec( f.va.name ) = "N"; f.updateDisplayCmd( s ) }, opts.map( ElemAttr.pairToBasic ):_* )
+  override def ui( s:Scope, f:Field, opts:(String,String)* ) =
+    Field.checkbox( s, f, s.rec.b( f.va.name ), opts:_* )
     
+  override def extract( s:Scope, f:Field ) {
+    s.rec( f.va.name ) = T.web.req.b( f.id )
+  }
+
   override def uiLift( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
     SHtml.ajaxCheckbox( ( s.rec s f.va.name ) == "Y", (v:Boolean) => { if ( v ) s.rec( f.va.name ) = "Y" else s.rec( f.va.name ) = "N"; f.updateDisplayCmd( s ) }, opts.map( ElemAttr.pairToBasic ):_* )
     
@@ -325,6 +329,10 @@ trait DbDateLike extends Domain {
       input
   }
 
+  override def extract( s:Scope, f:Field ) {
+    s.rec( f.va.name ) = T.web.req.s( f.id ).toLaxDate
+  }
+
   override def uiLift( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
     SHtml.ajaxText(
       ( s.rec t f.va.name ).toDateStr,
@@ -334,10 +342,6 @@ trait DbDateLike extends Domain {
         }
       },
       opts.map( ElemAttr.pairToBasic ):_* )
-
-  override def extract( s:Scope, f:Field ) {
-    s.rec( f.va.name ) = T.web.req.s( f.id ).toLaxDate
-  }
 }
 
 object DbDate extends DbDateLike

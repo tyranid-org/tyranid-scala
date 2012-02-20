@@ -186,25 +186,30 @@ object Field {
   implicit def string2Field( name:String ) = Field( name )
   implicit def symbol2Field( name:Symbol ) = Field( name.name )
 
+  def checkbox( s:Scope, f:Field, value:Boolean, opts:(String,String)* ):NodeSeq = {
+    val ret = optsMapper( s, f, opts:_* )
+    Checkbox( ret._1, value, ret._2:_*  )
+  }
+
   def text( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
     input( s, f, s.rec.s( f.va.name ), opts:_* )
 
   def input( s:Scope, f:Field, value:String, opts:(String,String)* ):NodeSeq = {
-    val ret = optsMapper( s, f, value, opts:_* )
-    Input( ret._1, ret._2, ret._3:_*  )
+    val ret = optsMapper( s, f, opts:_* )
+    Input( ret._1, value, ret._2:_*  )
   }
   
   def select( s:Scope, f:Field, value:String, values:Seq[ (String,String) ], opts:(String,String)* ) = {
-    val ret = optsMapper( s, f, value, opts:_* )
-    Select( ret._1, ret._2, values, ret._3:_* )
+    val ret = optsMapper( s, f, opts:_* )
+    Select( ret._1, value, values, ret._2:_* )
   }
 
   def textArea( s:Scope, f:Field, value:String, opts:(String,String)* ):NodeSeq = {
-    val ret = optsMapper( s, f, value, opts:_* )
-    TextArea( ret._1, ret._2, ret._3:_*  )
+    val ret = optsMapper( s, f, opts:_* )
+    TextArea( ret._1, value, ret._2:_*  )
   }
   
-  private def optsMapper( s:Scope, f:Field, value:String, opts:(String,String)* ):( String, String, Seq[(String,String)] ) = { 
+  private def optsMapper( s:Scope, f:Field, opts:(String,String)* ):( String, Seq[(String,String)] ) = { 
     var id = f.id
 
     val opts2 = opts.flatMap {
@@ -228,9 +233,8 @@ object Field {
       f.id = id
     }
 
-    return ( id, value, opts2 )
+    return ( id, opts2 )
   }
-  
 }
 
 case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolean = true, inputOnly:Boolean = false, onSet:Option[ ( Field ) => JsCmd ] = None, focus:Boolean = false ) extends UiObj {
