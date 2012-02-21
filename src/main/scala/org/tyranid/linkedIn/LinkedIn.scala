@@ -53,32 +53,46 @@ object LinkedIn {
 
     val str = exchangeUrl.POST( content = OAuth.encParams( params ), contentType = "application/x-www-form-urlencoded" )
 
-    val update = Mobj()
+    val session = Session()
+    val user = session.user
 
-    update( 'liid ) = memberId
+    user( 'liid ) = memberId
     for ( rslt <- str.splitAmp;
           ( key, value ) = rslt.splitFirst( '=' ) ) {
       key match {
-      case "oauth_token"                    => update( 'lit )  = value
-      case "oauth_token_secret"             => update( 'lits ) = value
+      case "oauth_token"                    => user( 'lit )  = value
+      case "oauth_token_secret"             => user( 'lits ) = value
       case "oauth_expires_in"               => // should be 0
       case "oauth_authorization_expires_in" => // should be 0
       case _ =>
       }
     }
 
-    val session = Session()
-    val user = session.user
-
-    val usersdb = Mongo.connect.db( B.profileDbName )( "users" )
-    val existing = usersdb.findOne( Mobj( "liid" -> memberId ) )
+    val existing = User.db.findOne( Mobj( "liid" -> memberId ) )
     if ( existing != null && user.id != null && existing.id != user.id )
-      usersdb.update( Mobj( "_id" -> existing.id ), Mobj( $unset -> Mobj( "liid" -> 1, "lit" -> 1, "lits" -> 1 ) ) )
+      User.db.update( Mobj( "_id" -> existing.id ), Mobj( $unset -> Mobj( "liid" -> 1, "lit" -> 1, "lits" -> 1 ) ) )
 
-    // this way of getting the users db is a hack, need to move more knowledge of user schema into tyranid
-    usersdb.update( Mobj( "_id" -> user.id ), Mobj( $set -> update ) )
-    user.copy( update )
+    if ( !user.isNew )
+      saveAttributes( user )
+
     true
+  }
+
+  def copyAttributes( from:User, to:User ) = {
+    to( 'liid ) = from.s( 'liid )
+    to( 'lit )  = from.s( 'lit )
+    to( 'lits ) = from.s( 'lits )
+  }
+
+  def saveAttributes( user:User ) {
+    User.db.update(
+      Mobj( "_id" -> user.id ),
+      Mobj( $set -> Mobj(
+        "liid" -> user.s( 'liid ),
+        "lit"  -> user.s( 'lit ),
+        "lits" -> user.s( 'lits ) )
+      )
+    )
   }
 
   def tokenFor( user:User ) = Token( key = user.s( 'lit ), secret = user.s( 'lits ) )

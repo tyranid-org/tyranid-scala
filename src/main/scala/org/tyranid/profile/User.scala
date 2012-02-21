@@ -24,6 +24,7 @@ import org.bson.types.ObjectId
 
 import org.tyranid.Imp._
 import org.tyranid.db.Record
+import org.tyranid.db.mongo.Imp._
 import org.tyranid.session.{ Session, ThreadData }
 import org.tyranid.web.{ WebContext, WebLock }
 
@@ -68,6 +69,8 @@ case object UserLoginLock extends WebLock {
 }
 
 object User extends UserMeta {
+
+  lazy val db = Mongo.connect.db( B.profileDbName )( "users" )
 }
 
 trait User extends Record {

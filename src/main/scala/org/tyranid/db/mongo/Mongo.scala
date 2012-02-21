@@ -171,7 +171,7 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
 
   def rename( from:String, to:String ) = obj.put( to, obj.removeField( from ) )
 
-  def isNew = !has( "_id" )
+  override def isNew = !has( "_id" )
 
 
   /*

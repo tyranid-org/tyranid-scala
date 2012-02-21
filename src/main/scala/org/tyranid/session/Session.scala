@@ -17,6 +17,8 @@
 
 package org.tyranid.session
 
+import java.util.Date
+
 import javax.servlet.http.{ HttpSession, HttpSessionEvent, HttpSessionListener }
 
 import scala.collection.mutable
@@ -162,6 +164,7 @@ trait Session {
   def login( user:User ) = {
     this.user = user
     user.loggedIn = true
+    user( 'lastLogin ) = new Date
   }
 
   def logout = {

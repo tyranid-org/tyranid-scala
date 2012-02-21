@@ -37,6 +37,8 @@ trait BsonObject extends Deep {
 
   def deep:BsonObject
 
+  def isNew:Boolean = has( "_id" )
+
   def copy( other:BsonObject ) =
     for ( key <- other.keys )
       update( key, other( key ) )
