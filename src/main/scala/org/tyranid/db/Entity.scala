@@ -170,6 +170,8 @@ trait Entity extends Domain with DbItem {
    * * *  Records
    */
 
+  def records:Iterable[Record] = Nil
+  
   def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException // ... yet
 
   def save( r:Record ) {

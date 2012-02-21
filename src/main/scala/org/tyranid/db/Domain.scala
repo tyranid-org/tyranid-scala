@@ -341,11 +341,37 @@ case class DbLink( toEntity:Entity ) extends Domain {
 		                case IdType.ID_COMPLEX => throw new ModelException( toEntity.name + " has a complex ID and cannot be linked to." )
 										}
 
-  override def ui( s:Scope, f:Field, opts:(String,String)* ) =
+  override def ui( s:Scope, f:Field, opts:(String,String)* ) = {
+    
+    /*
+     * a.  model-based linking
+     * 
+     *     see if there is anything else on the form that links to something in toEntity
+     * 
+     *     for example:  if toEntity == region, and region has a country -> Country,
+     *                   and there is a country -> Country in f.form, restrict the search to that
+     * 
+     * b.  Field.filter: ( rec:Record ) => Boolean
+     * 
+     * 
+     * 
+     * 
+     */
+    
+    val idLabels = f.filter match {
+    case Some( filter ) =>
+      toEntity.records.filter( filter ).map( _.idLabel )
+    case None =>
+      toEntity.idLabels
+    }
+      
+    val values = idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq
+    
     Field.select(
       s, f, s.rec s f.va,
-      ( "" -> "-Please Select-" ) +: toEntity.idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq,
+      ( "" -> "-Please Select-" ) +: values,
       opts:_* )
+  }
 
   override def extract( s:Scope, f:Field ) {
     val v = T.web.req.s( f.id )
