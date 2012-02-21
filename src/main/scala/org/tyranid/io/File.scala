@@ -54,7 +54,7 @@ class DbFile( bucket:S3Bucket ) extends CommonFile {
       } else 
         null
 
-    if ( fileItem != null ) {
+    if ( fileItem != null && fileItem.getName().notBlank ) {
       val extension = fileItem.getName().suffix( '.' ).replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
       
       val r = s.rec
