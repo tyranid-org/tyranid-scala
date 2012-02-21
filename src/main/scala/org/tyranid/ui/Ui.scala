@@ -120,7 +120,7 @@ object Checkbox {
 object Select {
 
   def apply( name:String, value:String, values:Seq[ (String,String) ], opts:(String,String)* ) = {
-
+    var selectOptions = values
     val sb = new StringBuilder
 
     sb ++= "<select name=\"" ++= name ++= "\" id=\"" ++= name += '"'
@@ -129,12 +129,13 @@ object Select {
       opt match {
       case ( "class", v ) => sb ++= " class=\"" ++= v += '"'
       case ( "style", v ) => sb ++= " style=\"" ++= v += '"'
+      case ( "sort", v ) => ( selectOptions = selectOptions.toSeq.sortBy( _._2 ) )
       case ( n,       v ) => throw new RuntimeException( "Unknown Select.field option " + n + " = " + v )
       }
 
     sb += '>'
 
-    for ( v <- values ) {
+    for ( v <- selectOptions ) {
       sb ++= "<option value=\"" ++= v._1 += '"'
       if ( v._1 == value )
         sb ++= " selected"
@@ -222,8 +223,10 @@ object Field {
   }
 }
 
-case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1, edit:Boolean = true, inputOnly:Boolean = false, focus:Boolean = false ) extends UiObj {
-
+case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1,
+                  edit:Boolean = true, inputOnly:Boolean = false, focus:Boolean = false,
+                  filter:Option[ ( Record ) => Boolean ] = None ) extends UiObj {
+  
   var id:String = null
 
   var path:Path = null

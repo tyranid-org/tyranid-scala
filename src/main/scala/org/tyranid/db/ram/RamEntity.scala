@@ -67,6 +67,7 @@ case class RamEntity( tid:String ) extends Entity {
     case id     => id.toString
     }
 
+  override def records = staticRecords
   override def idLabels:Seq[(AnyRef,String)] = staticRecords.map( _.idLabel )
 }
 
