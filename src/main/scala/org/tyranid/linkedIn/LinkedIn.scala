@@ -6,6 +6,8 @@ import javax.servlet.http.Cookie
 import scala.collection.mutable
 import scala.xml.Unparsed
 
+import com.mongodb.DBObject
+
 import org.tyranid.Imp._
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.oauth.{ OAuth, Token }
@@ -70,7 +72,7 @@ object LinkedIn {
 
     val existing = User.db.findOne( Mobj( "liid" -> memberId ) )
     if ( existing != null && user.id != null && existing.id != user.id )
-      User.db.update( Mobj( "_id" -> existing.id ), Mobj( $unset -> Mobj( "liid" -> 1, "lit" -> 1, "lits" -> 1 ) ) )
+      removeAttributes( existing )
 
     if ( !user.isNew )
       saveAttributes( user )
@@ -93,6 +95,13 @@ object LinkedIn {
         "lits" -> user.s( 'lits ) )
       )
     )
+  }
+
+  def removeAttributes( user:DBObject ) {
+    user.remove( 'liid )
+    user.remove( 'lit )
+    user.remove( 'lits )
+    User.db.update( Mobj( "_id" -> user.id ), Mobj( $unset -> Mobj( "liid" -> 1, "lit" -> 1, "lits" -> 1 ) ) )
   }
 
   def tokenFor( user:User ) = Token( key = user.s( 'lit ), secret = user.s( 'lits ) )
