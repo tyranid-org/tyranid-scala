@@ -285,6 +285,18 @@ case class Report( query:Query ) {
         if ( r.b( n ) ) search( n ) = Mobj( $gt -> "" )
         else            search.remove( n )
 
+      case "text" =>
+        val v = r.s( n )
+
+        if ( v.notBlank ) search( n ) = v
+        else              search.remove( n )
+        
+      case "textParam" =>
+        val v = r.s( n )
+
+        if ( v.notBlank ) parameters( n ) = v
+        else              parameters.remove( n )
+        
       case "textUpper" =>
         val v = r.s( n )
 
@@ -316,8 +328,13 @@ case class Report( query:Query ) {
   }
 
   def text( attr:String, opts:(String,String)* ) = {
-    searchProps( attr ) = "textUpper"
+    searchProps( attr ) = "text"
     Input( attr, search.s( attr ), opts:_* )
+  }
+
+  def textParam( attr:String, opts:(String,String)* ) = {
+    searchProps( attr ) = "textParam"
+    Input( attr, parameters.s( attr ), opts:_* )
   }
 
   def textUpper( attr:String, width:Int ) = {
