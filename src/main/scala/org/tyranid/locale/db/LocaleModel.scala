@@ -35,8 +35,6 @@ object Region extends RamEntity( tid = "a01t" ) {
     staticRecords.find( _( abbrIdx ) == s ).flatten( _.id.asInstanceOf[Int], 0 )
   }
 
-  def US = 4306
-  
   def codeForId( id:Int ) = staticIdIndex.get( id ).flatten( _.s( 'abbr ), "" )
   
   def regionsForCountry( cid:Int ):Seq[Record] = {
@@ -4321,6 +4319,8 @@ object Country extends RamEntity( tid = "a02t" ) {
   "name"   is DbChar(64) is 'label;
   "code"   is DbChar(4)  ; 
 
+  def US = 4306
+    
   def idForCode( s:String ):Int = {
     val codeIdx = staticView( 'code ).index
     
