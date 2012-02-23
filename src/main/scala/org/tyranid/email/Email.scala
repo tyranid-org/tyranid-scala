@@ -56,6 +56,19 @@ object Email {
   def apply( subject:String, text:String, to:String, from:String ) {
     Email( subject, text ).addTo( to ).from( from ).send
   }
+  
+  @throws(classOf[AddressException])
+  def getInetAddress( emailAddress:String, displayName:String = null ) : InternetAddress = {
+    if ( displayName.notBlank ) {
+      try {
+        return new InternetAddress( emailAddress, displayName )
+      } catch { 
+        case uee:UnsupportedEncodingException => 
+      }
+    }
+
+    return new InternetAddress( emailAddress )
+  }
 }
 
 case class Email( subject:String, text:String, html:String=null ) {
@@ -99,7 +112,7 @@ case class Email( subject:String, text:String, html:String=null ) {
     if ( emailAddresses != null ) {
       for ( emailAddress <- emailAddresses ) {
         try {
-          add( recipientType, getInetAddress( emailAddress, null ) )
+          add( recipientType, Email.getInetAddress( emailAddress ) )
         } catch { 
           case e:AddressException => 
             e.log
@@ -122,22 +135,9 @@ case class Email( subject:String, text:String, html:String=null ) {
     }
   }
 
-  @throws(classOf[AddressException])
-  private def getInetAddress( emailAddress:String, displayName:String ) : InternetAddress = {
-    if ( displayName.notBlank ) {
-      try {
-        return new InternetAddress( emailAddress, displayName )
-      } catch { 
-        case uee:UnsupportedEncodingException => 
-      }
-    }
-
-    return new InternetAddress( emailAddress )
-  }
-
   def replyTo( _replyToEmailAddress:String ) : Email = {
     try {
-      replyTo = getInetAddress( _replyToEmailAddress, null )
+      replyTo = Email.getInetAddress( _replyToEmailAddress )
     } catch { 
       case ae:AddressException => 
     }
@@ -147,7 +147,7 @@ case class Email( subject:String, text:String, html:String=null ) {
 
   def from(_fromEmailAddress:String) : Email = {
     try {
-      from = getInetAddress( _fromEmailAddress, null )
+      from = Email.getInetAddress( _fromEmailAddress )
     } catch { 
       case ae:AddressException => 
     }

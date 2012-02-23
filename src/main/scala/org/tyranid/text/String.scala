@@ -31,6 +31,7 @@ import org.tyranid.time.{ Time }
 
 object StringImp {
   val AmpersandPattern = Pattern.compile( "&" )
+  val CommaPattern = Pattern.compile( "," )
 }
 
 class StringImp( s:String ) {
@@ -48,6 +49,7 @@ class StringImp( s:String ) {
    * Faster than s.split( "&" )
    */
   def splitAmp = StringImp.AmpersandPattern.split( s )
+  def splitComma = StringImp.CommaPattern.split( s )
 
 
 	def encUrl = java.net.URLEncoder.encode( s, "UTF-8" ) 
