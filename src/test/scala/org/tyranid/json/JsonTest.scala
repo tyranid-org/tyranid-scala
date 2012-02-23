@@ -85,5 +85,36 @@ class JsonSuite extends FunSuite {
     for ( d <- data )
       assert( d._1.parseJson.getClass === d._2 )
   }
+
+  test( "parse1" ) {
+    val jsonStr = """
+{"positions": {
+  "_total": 4,
+  "values": [
+    {"company": {
+      "industry": "Internet"
+    }},
+    {"company": {
+      "industry": "Internet",
+      "size": "11-50 employees",
+      "type": "Privately Held"
+    }},
+    {"company": {
+      "industry": "Internet"
+    }},
+    {"company": {
+      "industry": "Computer Software",
+      "size": "51-200 employees",
+      "type": "Privately Held"
+    }}
+  ]
+}}
+"""
+
+    val json = jsonStr.parseJsonObject
+
+    assert( json.o( 'positions ).a_?( 'values ).size === 4 )
+
+  }
 }
 

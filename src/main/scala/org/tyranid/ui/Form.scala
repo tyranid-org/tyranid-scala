@@ -50,6 +50,16 @@ object Focus {
 
 object Form {
 
+  // probably swap this convention ... text() takes a NodeSeq, stext() takes a String ?
+  def htext( label:String, value:NodeSeq, href:String = null, controlClass:String = "control" ) =
+    <div class={ controlClass }>
+     <div class="left">{ label }:</div>
+     <div class="right">
+      { href != null |* <a href={ href } class="greyBtn">Edit</a> }
+      <div class="text">{ value }</div>
+     </div>
+    </div>
+
   def text( label:String, value:String, href:String = null, controlClass:String = "control" ) =
     <div class={ controlClass }>
      <div class="left">{ label }:</div>

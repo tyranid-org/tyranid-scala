@@ -30,6 +30,16 @@ object Opts {
 
 case class Opts( opts:(String,String)* )
 
+object Link {
+
+  def fromUrl( url:String ) =
+    if ( url.isBlank ) {
+      NodeSeq.Empty
+    } else {
+      val u = url.asUrl
+      <a href={ u }>{ u }</a>
+    }
+}
 
 object Button {
 
