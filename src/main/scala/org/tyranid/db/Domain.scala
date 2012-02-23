@@ -168,6 +168,9 @@ case class DbLargeChar( len:Int ) extends LimitedText {
     else 
       ta
 	}
+	
+  override def inputcClasses = "large"
+
     
 //    SHtml.ajaxTextarea( s.rec s f.va.name, v => { 
 //      if ( s.rec( f.va.name ) != v ) {

@@ -143,11 +143,11 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
 }
 
 trait Weblet {
-  def matches( ctx:WebContext ) = true
+  def matches( web:WebContext ) = true
 
   val locks:List[WebLock] = Nil
 
-  def handle( ctx:WebContext ):Unit
+  def handle( web:WebContext ):Unit
 }
 
 

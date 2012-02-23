@@ -75,17 +75,20 @@ object TextArea {
       
       // Don't do anything with typ yet
     var typ = "text"
-
+    var rows = ""
+    var cols = ""
+      
     for ( opt <- opts )
       opt match {
       case ( "class", v ) => sb ++= " class=\"" ++= v += '"'
       case ( "style", v ) => sb ++= " style=\"" ++= v += '"'
       case ( "type",  v ) => typ = v
-      // look for rows, cols
+      case ( "rows",  v ) => rows = v
+      case ( "cols",  v ) => cols = v
       case ( n,       v ) => throw new RuntimeException( "Unknown field option " + n + " = " + v )
       }
 
-    sb ++= " name=\"" + name + "\" id=\"" + name + "\">" ++= ( if ( value == null ) "" else value ) ++= "</textarea>" 
+    sb ++= " name=\"" + name + "\" id=\"" + name + "\"" + ( rows |* " rows=\"" + rows + "\"" ) + ( cols |* " cols=\"" + cols + "\"" ) + ">" ++= ( value |* value ) ++= "</textarea>" 
 
     Unparsed( sb.toString )
   }
