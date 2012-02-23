@@ -37,9 +37,16 @@ case class Grouping( entity:MongoEntity, keyName:String, value: () => AnyRef ) {
   def list = entity.db.find( Mobj( keyName -> value() ) ).toSeq
 }
 
+object Query {
+
+  val byName = mutable.Map[String,Query]()
+
+}
+
 trait Query {
 
   val name:String
+
   def label = name.camelCaseToSpaceUpper
 
   val allFields:Seq[Field]
@@ -70,7 +77,14 @@ trait Query {
 
   val grouping:Grouping = null
 
-  def draw = Session().reportFor( this ).draw
+  lazy val init = {
+    Query.byName( name ) = this
+  }
+
+  def draw = {
+    Query.synchronized { init }
+    Session().reportFor( this.name ).draw
+  }
   
   def extraActions: NodeSeq = Text("")
 }
@@ -445,7 +459,7 @@ case class Report( query:Query ) {
     records.filter( r => tmp( r.id ) ).foreach { selectedIds += _.id }
 
 
-    <div class="title"><span>{ query.label }</span></div> ++
+    <div class="title">{ query.label }</div> ++
     <table class="def" id="def">
      <tr>
       <td>
@@ -555,7 +569,7 @@ case class Report( query:Query ) {
        </div>
       </div>
     } ++
-    <div class="report" id={ id }>
+    <div class="report greyBox" id={ id }>
     { innerDraw }
     </div>
 }

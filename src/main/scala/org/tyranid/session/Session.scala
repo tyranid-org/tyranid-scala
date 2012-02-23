@@ -182,16 +182,8 @@ trait Session {
 
   private val reports = mutable.Map[String,org.tyranid.report.Report]()
 
-  def reportFor( query:Query ) = reports.synchronized {
-    reports.getOrElseUpdate( query.name, {
-      spam( "placing new " + query.name + " on session " + id )
-      query.newReport
-    } )
-  }
-
   def reportFor( queryName:String ) = reports.synchronized {
-    spam( "looking up " + queryName + " on session " + id )
-    reports( queryName )
+    reports.getOrElseUpdate( queryName, Query.byName( queryName ).newReport )
   }
 
 
