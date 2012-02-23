@@ -50,7 +50,34 @@ object Focus {
 
 object Form {
 
+  def text( label:String, value:String, href:String = null, controlClass:String = "control" ) =
+    <div class={ controlClass }>
+     <div class="left">{ label }:</div>
+     <div class="right">
+      { href != null |* <a href={ href } class="greyBtn">Edit</a> }
+      <div class="text">{ value }</div>
+     </div>
+    </div>
 
+  def thumbnail( label:String, src:String, href:String = null, style:String = "width:60px; height:60px;", controlClass:String = "control" ) =
+    <div class="control">
+     <div class="left">{ label }:</div>
+     <div class="right">
+      { href != null |* <a href={ href } class="greyBtn">Edit</a> }
+      <div class="photoPreview">
+       <img style={ style } src={ src }/>
+      </div>
+     </div>
+    </div>
+
+  def btns( buttons:NodeSeq ) =
+    <div class="control">
+     <div class="right">
+      <div class="btns bottom">
+       { buttons }
+      </div>
+     </div>
+    </div>
 }
 
 
