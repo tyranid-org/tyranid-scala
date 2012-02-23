@@ -49,6 +49,9 @@ class StringImp( s:String ) {
    */
   def splitAmp = StringImp.AmpersandPattern.split( s )
 
+  def asUrl =
+    if ( s.isBlank || s.startsWith( "https://" ) || s.startsWith( "http://" ) ) s
+    else                                                                        "http://" + s
 
 	def encUrl = java.net.URLEncoder.encode( s, "UTF-8" ) 
 	def decUrl = java.net.URLDecoder.decode( s, "UTF-8" )
@@ -166,7 +169,7 @@ class StringImp( s:String ) {
   def toJson = org.tyranid.json.Json.parse( s )
 
   def parseJson = org.tyranid.json.JsonDecoder( s )
-  def parseJsonObject = parseJson.as[collection.Map[String,Any]]
+  def parseJsonObject = parseJson.as[ObjectMap]
   //def parseJsonArray  = parseJson.as[ // TODO ]
 
   def matches( r:Regex ) = r.pattern.matcher( s ).matches

@@ -38,6 +38,12 @@ class ObjectMapImp[A]( map:scala.collection.Map[String,Any] ) {
     case None      => ObjectMapImp.EmptyAnyRefArray
     }
 
+  def o( key:String ) =
+    map.get( key ) match {
+    case Some( v ) => v.as[ObjectMap]
+    case None      => null
+    }
+
   def b( key:String ) =
     map.get( key ) match {
     case Some( v ) => v.coerceBoolean

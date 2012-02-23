@@ -107,6 +107,29 @@ object LinkedIn {
   def tokenFor( user:User ) = Token( key = user.s( 'lit ), secret = user.s( 'lits ) )
 
   def GET( url:String, user:User ) = oauth.GET( "https://api.linkedin.com/v1" + url, tokenFor( user ), headers = Map( "x-li-format" -> "json" ) )
+
+
+
+  /*
+   * * *   Companies
+   */
+
+  def guessCompany( user:User, fields:String, domain:String = null, multi:Boolean ) = {
+
+    val companies = mutable.ArrayBuffer[ObjectMap]()
+
+    if ( domain.notBlank )
+      companies ++= GET( "/companies:" + fields + "?email-domain=" + domain.encUrl, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
+
+    if ( multi || companies.size == 0 ) {
+      val ids = GET( "/people/~:(positions:(company:(id)))", user ).parseJsonObject.o( 'positions ).a_?( 'values ).of[ObjectMap].map( _.o( 'company ).s( 'id ) ).filter( _.notBlank )
+
+      if ( ids.size > 0 )
+        companies ++= GET( "/companies::(" + ids.mkString( "," ) + "):" + fields, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
+    }
+
+    companies
+  }
 }
 
 object LinkedInlet extends Weblet {

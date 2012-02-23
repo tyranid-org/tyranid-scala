@@ -29,6 +29,8 @@ import org.tyranid.log.Log
  */
 object Imp {
 
+  type ObjectMap = scala.collection.mutable.LinkedHashMap[String,Any]
+
   def T = org.tyranid.session.ThreadData()
   def B = org.tyranid.boot.Boot.instance
 
