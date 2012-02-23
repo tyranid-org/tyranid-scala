@@ -102,10 +102,14 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     res.setStatus( 200 )
   }
 
-  def json( json:Any, status:Int = 200, jsonpCallback:String = null ) = {
+  def json( json:Any, status:Int = 200, jsonpCallback:String = null, headers:Map[String,String] = null ) = {
     res.setContentType( if ( jsonpCallback != null ) "text/javascript" else "application/json" )
     res.setStatus( status )
 
+    if ( headers != null )
+      for ( h <- headers ) 
+        res.setHeader( h._1, h._2 )
+    
     val outputJson = if ( json == null ) "{}" else json.toJsonStr
     
     out( 
@@ -117,9 +121,14 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     )
   }
 
-  def html( xml:NodeSeq, status:Int = 200 ) = {
+  def html( xml:NodeSeq, status:Int = 200, headers:Map[String,String] = null ) = {
     res.setContentType( "text/html" )
     res.setStatus( status )
+    
+    if ( headers != null )
+      for ( h <- headers ) 
+        res.setHeader( h._1, h._2 )
+        
     out( xml.toString() )
   }
 
