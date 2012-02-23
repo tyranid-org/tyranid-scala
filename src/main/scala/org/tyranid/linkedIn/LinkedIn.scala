@@ -114,18 +114,24 @@ object LinkedIn {
    * * *   Companies
    */
 
-  def guessCompany( user:User, fields:String, domain:String = null, multi:Boolean ) = {
+  def loadCompanies( user:User, fields:String, domain:String = null, multi:Boolean, id:String ) = {
 
     val companies = mutable.ArrayBuffer[ObjectMap]()
 
-    if ( domain.notBlank )
-      companies ++= GET( "/companies:" + fields + "?email-domain=" + domain.encUrl, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
+    if ( id.notBlank ) {
+      companies ++= GET( "/companies::(" + id + "):" + fields, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
 
-    if ( multi || companies.size == 0 ) {
-      val ids = GET( "/people/~:(positions:(company:(id)))", user ).parseJsonObject.o( 'positions ).a_?( 'values ).of[ObjectMap].map( _.o( 'company ).s( 'id ) ).filter( _.notBlank )
+    } else {
+      if ( domain.notBlank )
+        companies ++= GET( "/companies:" + fields + "?email-domain=" + domain.encUrl, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
 
-      if ( ids.size > 0 )
-        companies ++= GET( "/companies::(" + ids.mkString( "," ) + "):" + fields, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
+      if ( multi || companies.size == 0 ) {
+        val ids = GET( "/people/~:(positions:(company:(id)))", user ).parseJsonObject.o( 'positions ).a_?( 'values ).of[ObjectMap].map( _.o( 'company ).s( 'id ) ).
+          filter( id => id.notBlank && !companies.exists( _.s( 'id ) == id ) )
+
+        if ( ids.size > 0 )
+          companies ++= GET( "/companies::(" + ids.mkString( "," ) + "):" + fields, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
+      }
     }
 
     companies
