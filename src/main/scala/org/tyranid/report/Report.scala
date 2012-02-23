@@ -71,6 +71,8 @@ trait Query {
   val grouping:Grouping = null
 
   def draw = Session().reportFor( this ).draw
+  
+  def extraActions: NodeSeq = Text("")
 }
 
 trait Field {
@@ -459,7 +461,7 @@ case class Report( query:Query ) {
               ( offset > 0 |* <td><button id="rPrev" class="greyBtn">Prev</button></td> ) ++
               <td><button id="rNext" class="greyBtn">Next</button></td> ++
               ( query.grouping != null |* <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
-            { extraActions } 
+            { query.extraActions } 
            </tr>
           </table>
          </td>
@@ -526,8 +528,6 @@ case class Report( query:Query ) {
     </div>
   }
 
-  def extraActions = Text
-  
   def draw =
     <head>
      <script src="/js/report.js" type="text/javascript"/>
