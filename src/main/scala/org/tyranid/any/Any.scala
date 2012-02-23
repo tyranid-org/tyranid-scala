@@ -17,6 +17,12 @@
 
 package org.tyranid.any
 
+import java.util.Date
+
+import scala.collection.mutable.LinkedHashMap
+
+import org.tyranid.Imp._
+
 
 class AnyImp[T <: Any]( v:T ) {
 
@@ -24,5 +30,47 @@ class AnyImp[T <: Any]( v:T ) {
   def as[U] = v.asInstanceOf[U]
 
   def toJsonStr = new org.tyranid.json.JsonString( v ).toString
+
+  def coerceBoolean:Boolean =
+    v match {
+    case b:java.lang.Boolean => b
+    case s:String            => s.toLaxBoolean
+    case null                => false
+    }
+
+  def coerceDouble = 
+    v match {
+    case i:java.lang.Integer => i.doubleValue
+    case d:java.lang.Number  => d.doubleValue
+    case s:String            => s.toLaxDouble
+    case null                => 0
+    }
+
+  def coerceInt =
+    v match {
+    case i:java.lang.Integer => i.intValue
+    case s:String            => s.toLaxInt
+    case null                => 0
+    }
+
+  def coerceLong =
+    v match {
+    case n:java.lang.Number => n.longValue
+    case s:String           => s.toLaxLong
+    case null               => 0
+    }
+
+  def coerceDate =
+    v match {
+    case d:Date   => d
+    case s:String => s.toLaxDate // TODO:  replace with more generic parsing method
+    case null     => null
+    }
+
+  def coerceString =
+    if ( v != null ) v.toString else ""
+
+  def asJsonObject =
+    if ( v != null ) v.as[LinkedHashMap[String,Any]] else null
 }
 

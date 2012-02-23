@@ -15,25 +15,30 @@
  *
  */
 
-package org.tyranid.any
+package org.tyranid.collection
+
+import scala.collection.mutable
+
+import org.scalatest.FunSuite
 
 import org.tyranid.Imp._
 
 
-class AnyRefImp[T <: AnyRef]( ref:T ) {
+class MapSuite extends FunSuite {
 
-  /**
-   * Elvis operator.
-   */
-  def ?|( default: => T ):T =
-    if ( ref != null ) ref
-    else               default
+  test( "objectMap" ) {
+    val map = mutable.Map(
+      "int"   -> 1,
+      "str"   -> "a string",
+      "boo"   -> false,
+      "three" -> "3"
+    )
 
-  /**
-   * null-safe toString().  Need a better name.
-   */
-  def safeString:String =
-    if ( ref != null ) ref.toString
-    else               ""
+    assert( map.i( 'int )   === 1 )
+    assert( map.s( 'str )   === "a string" )
+    assert( map.b( 'boo )   === false )
+    assert( map.i( 'three ) === 3 )
+    assert( map.l( 'three ) === 3L )
+  }
 }
 

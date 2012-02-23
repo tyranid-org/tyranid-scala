@@ -166,6 +166,8 @@ class StringImp( s:String ) {
   def toJson = org.tyranid.json.Json.parse( s )
 
   def parseJson = org.tyranid.json.JsonDecoder( s )
+  def parseJsonObject = parseJson.as[collection.Map[String,Any]]
+  //def parseJsonArray  = parseJson.as[ // TODO ]
 
   def matches( r:Regex ) = r.pattern.matcher( s ).matches
 

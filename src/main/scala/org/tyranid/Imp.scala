@@ -69,26 +69,27 @@ object Imp {
   val Log = org.tyranid.log.Log
   def log( event:Int, opts:(String,Any)* ) = org.tyranid.log.Log.log( event, opts:_* )
 
-	implicit def anyImp[ T <: Any ]( v:T )                  = new org.tyranid.any.AnyImp[T]( v )
-	implicit def anyRefImp[ T <: AnyRef ]( v:T )            = new org.tyranid.any.AnyRefImp[T]( v )
-	implicit def boolean( v:Boolean )                       = new org.tyranid.logic.BooleanImp( v )
-	implicit def calendarImp( v:Calendar )                  = new org.tyranid.time.CalendarImp( v )
-	implicit def charImp( v:Char )                          = new org.tyranid.text.CharImp( v )
-	implicit def dateImp( v:Date )                          = new org.tyranid.time.DateImp( v )
-	implicit def option[A]( v:Option[A] )                   = new org.tyranid.collection.OptionImp( v )
-  //implicit def int( v:Integer )                           = new org.tyranid.math.IntImp( v )
-  implicit def long( v:Long )                             = new org.tyranid.math.LongImp( v )
-	implicit def string( v:String )                         = new org.tyranid.text.StringImp( v )
-  implicit def array[A]( a:Array[A] )                     = new org.tyranid.collection.ArrayImp( a )
-  implicit def seqImp[A]( a:Seq[A] )                      = new org.tyranid.collection.SeqImp( a )
-  implicit def byteArray( ba:Array[Byte] )                = new org.tyranid.math.ByteArray( ba )
-	implicit def symbol( v:Symbol )                         = v.name
-	implicit def throwableImp( t:Throwable )                = new org.tyranid.logic.ThrowableImp( t )
-	implicit def jackson( v:org.codehaus.jackson.JsonNode ) = new org.tyranid.json.JsonNodeImp( v )
+	implicit def anyImp[ T <: Any ]( v:T )                          = new org.tyranid.any.AnyImp[T]( v )
+	implicit def anyRefImp[ T <: AnyRef ]( v:T )                    = new org.tyranid.any.AnyRefImp[T]( v )
+	implicit def boolean( v:Boolean )                               = new org.tyranid.logic.BooleanImp( v )
+	implicit def calendarImp( v:Calendar )                          = new org.tyranid.time.CalendarImp( v )
+	implicit def charImp( v:Char )                                  = new org.tyranid.text.CharImp( v )
+	implicit def dateImp( v:Date )                                  = new org.tyranid.time.DateImp( v )
+	implicit def option[A]( v:Option[A] )                           = new org.tyranid.collection.OptionImp( v )
+  //implicit def int( v:Integer )                                   = new org.tyranid.math.IntImp( v )
+  implicit def long( v:Long )                                     = new org.tyranid.math.LongImp( v )
+	implicit def string( v:String )                                 = new org.tyranid.text.StringImp( v )
+  implicit def array[A]( a:Array[A] )                             = new org.tyranid.collection.ArrayImp( a )
+  implicit def objectMapImp( v:scala.collection.Map[String,Any] ) = new org.tyranid.collection.ObjectMapImp( v )
+  implicit def seqImp[A]( a:Seq[A] )                              = new org.tyranid.collection.SeqImp( a )
+  implicit def byteArray( ba:Array[Byte] )                        = new org.tyranid.math.ByteArray( ba )
+	implicit def symbol( v:Symbol )                                 = v.name
+	implicit def throwableImp( t:Throwable )                        = new org.tyranid.logic.ThrowableImp( t )
+	implicit def jackson( v:org.codehaus.jackson.JsonNode )         = new org.tyranid.json.JsonNodeImp( v )
 
   import javax.servlet.http.{ HttpServletRequest, HttpServletResponse }
-  implicit def servletRequest ( v:HttpServletRequest  )   = new org.tyranid.http.HttpServletRequestOps ( v )
-  implicit def servletResponse( v:HttpServletResponse )   = new org.tyranid.http.HttpServletResponseOps( v )
+  implicit def servletRequest ( v:HttpServletRequest  )           = new org.tyranid.http.HttpServletRequestOps ( v )
+  implicit def servletResponse( v:HttpServletResponse )           = new org.tyranid.http.HttpServletResponseOps( v )
 
 }
 

@@ -53,45 +53,16 @@ trait BsonObject extends Deep {
     case null          => Mongo.EmptyArray
     case a:BasicDBList => a
     }
-  def a( key:String )         = apply( key ).asInstanceOf[BasicDBList]
-  def b( key:String ):Boolean =
-    apply( key ) match {
-    case b:java.lang.Boolean => b
-    case s:String            => s.toLaxBoolean
-    case null                => false
-    }
-  def d( key:String )         = 
-    apply( key ) match {
-    case i:java.lang.Integer => i.doubleValue
-    case d:java.lang.Number => d.doubleValue
-    case s:String => s.toLaxDouble
-    case null => 0
-    }
-  def i( key:String )         =
-    apply( key ) match {
-    case i:java.lang.Integer => i.intValue
-    case s:String => s.toLaxInt
-    case null => 0
-    }
-  def l( key:String )         =
-    apply( key ) match {
-    case n:java.lang.Number => n.longValue
-    case s:String           => s.toLaxLong
-    case null => 0
-    }
-  def o( key:String )         = apply( key ).asInstanceOf[BsonObject]
-  def oid( key:String )       = apply( key ).asInstanceOf[ObjectId]
-  //def r( key:String )       = apply( key ).asInstanceOf[Long]
-  def s( key:String ):String = {
-    val v = apply( key )
-    if ( v != null ) v.toString else ""
-  }
-  def t( key:String )         =
-    apply( key ) match {
-    case d:Date   => d
-    case s:String => s.toLaxDate // TODO:  replace with more generic parsing method
-    case null     => null
-    }
+  def a( key:String )   = apply( key ).asInstanceOf[BasicDBList]
+  def b( key:String )   = apply( key ).coerceBoolean
+  def d( key:String )   = apply( key ).coerceDouble
+  def i( key:String )   = apply( key ).coerceInt
+  def l( key:String )   = apply( key ).coerceLong
+  def o( key:String )   = apply( key ).asInstanceOf[BsonObject]
+  def oid( key:String ) = apply( key ).asInstanceOf[ObjectId]
+  //def r( key:String ) = apply( key ).asInstanceOf[Long]
+  def s( key:String )   = apply( key ).coerceString
+  def t( key:String )   = apply( key ).coerceDate
 
 
   /*

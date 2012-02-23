@@ -29,11 +29,11 @@ object LinkedIn {
         return false
       }
 
-    val json = cookie.getValue.decUrl.parseJson.as[mutable.Map[String,Any]]
+    val json = cookie.getValue.decUrl.parseJsonObject
 
-    val memberId    = json( 'member_id ).as[String]
-    val accessToken = json( 'access_token ).as[String]
-    val signature   = json( 'signature ).as[String]
+    val memberId    = json.s( 'member_id )
+    val accessToken = json.s( 'access_token )
+    val signature   = json.s( 'signature )
 
     val text = new StringBuilder
     for ( fieldName <- json( 'signature_order ).as[Array[String]] )
@@ -106,7 +106,7 @@ object LinkedIn {
 
   def tokenFor( user:User ) = Token( key = user.s( 'lit ), secret = user.s( 'lits ) )
 
-  def GET( url:String, user:User ) = oauth.GET( url, tokenFor( user ), headers = Map( "x-li-format" -> "json" ) )
+  def GET( url:String, user:User ) = oauth.GET( "https://api.linkedin.com/v1" + url, tokenFor( user ), headers = Map( "x-li-format" -> "json" ) )
 }
 
 object LinkedInlet extends Weblet {
