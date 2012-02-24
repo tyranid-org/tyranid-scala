@@ -224,7 +224,7 @@ object DbDunsNumber extends DbChar( 11 ) {
   override def inputcClasses = " dunsnumber"
 }
 
-object DbFedEin extends DbChar( 9 ) {
+object DbFedEin extends DbChar( 10 ) {
   override def inputcClasses = " fein"
 }
 

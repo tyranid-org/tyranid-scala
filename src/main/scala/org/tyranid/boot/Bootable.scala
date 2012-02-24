@@ -105,6 +105,7 @@ trait Bootable {
   @volatile var newUser:() => User = null
   val userMeta:UserMeta
   @volatile var userEntity:Entity = null
+  @volatile var orgEntity:Entity = null
   @volatile var newSession:() => Session = null
 
   val loginCookieName:String = null

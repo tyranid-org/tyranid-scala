@@ -29,28 +29,26 @@ object LongImp {
 case class LongImp( l:Long ) {
   def toBytesString = {
     if ( l >= LongImp.tb )
-      String.format( "%2.2d terabytes", double2Double( ( l / LongImp.tb ).asInstanceOf[Double] ) )
+      String.format( "%2.2f terabytes", double2Double( ( l / LongImp.tb ).asInstanceOf[Double] ) )
     else if ( l >= LongImp.gb ) 
-      String.format( "%1.2d gigabytes", double2Double( ( l / LongImp.gb ).asInstanceOf[Double] ) )
+      String.format( "%1.2f gigabytes", double2Double( ( l / LongImp.gb ).asInstanceOf[Double] ) )
     else if ( l >= LongImp.mb ) 
-      String.format( "%1.2d megabytes", double2Double( ( l / LongImp.mb ).asInstanceOf[Double] ) )
+      String.format( "%1.2f megabytes", double2Double( ( l / LongImp.mb ).asInstanceOf[Double] ) )
     else if ( l >= LongImp.kb )
-      String.format( "%1.2d kilobytes", double2Double( ( l / LongImp.kb ).asInstanceOf[Double] ) )
+      String.format( "%1.2f kilobytes", double2Double( ( l / LongImp.kb ).asInstanceOf[Double] ) )
     else 
       l + " bytes"
   }
   
   def toBytesAbbrString = {
-    println( "l=" + l + ", tb = " + LongImp.tb )
-    
     if ( l >= LongImp.tb )
-      String.format( "%2.2d TB", double2Double( ( l / LongImp.tb ).asInstanceOf[Double] ) )
+      String.format( "%2.2f TB", double2Double( ( l / LongImp.tb ).asInstanceOf[Double] ) )
     else if ( l >= LongImp.gb ) 
-      String.format( "%1.2d GB", double2Double( ( l / LongImp.gb ).asInstanceOf[Double] ) )
+      String.format( "%1.2f GB", double2Double( ( l / LongImp.gb ).asInstanceOf[Double] ) )
     else if ( l >= LongImp.mb ) 
-      String.format( "%1.2d MB", double2Double( ( l / LongImp.mb ).asInstanceOf[Double] ) )
+      String.format( "%1.2f MB", double2Double( ( l / LongImp.mb ).asInstanceOf[Double] ) )
     else if ( l >= LongImp.kb )
-      String.format( "%1.2d KB", double2Double( ( l / LongImp.kb ).asInstanceOf[Double] ) )
+      String.format( "%1.2f KB", double2Double( ( l / LongImp.kb ).asInstanceOf[Double] ) )
     else 
       l + " B"
   }
