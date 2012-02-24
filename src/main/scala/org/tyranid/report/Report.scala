@@ -63,10 +63,11 @@ trait Query {
     r.hidden ++= allFields.filter( p => !r.columns.contains( p ) ).sortBy( _.label )
     r
   }
-
+  
   def by( name:String ) = allFields.find( _.name == name ).get
 
   val searchScreen:String = null
+  val tableGridStyle:String = null
 
   def selectable = grouping != null
 
@@ -93,7 +94,6 @@ trait Field {
   def section = "Standard"
 
   def name:String
-
   def label = name.camelCaseToSpaceUpper
 
   def header( run:Run ) = <th id={ name } class={ if ( run.report.selectedColumns( name ) ) "colh hi" else "colh" } style={ headerStyle }><div><span>{ headerCell }</span></div></th>
@@ -102,7 +102,6 @@ trait Field {
 
   def cellClass:String = null
   def cell( run:Run, rec:Record ):NodeSeq
-
 }
 
 trait PathField extends Field {
@@ -112,10 +111,10 @@ trait PathField extends Field {
 }
 
 // TODO:  merge this functionality with Domain
-case class StringField( sec:String, path:Path, l:String = null ) extends PathField {
+case class StringField( sec:String, path:Path, l:String = null, cellCls:String = null ) extends PathField {
 
   override def section = sec
-
+  override def cellClass = cellCls
   override def label = if ( l.notBlank ) l else path.label
 
   def cell( run:Run, r:Record ) = Text( path s r )
@@ -235,7 +234,7 @@ trait MongoQuery extends Query {
   def dateTime( path:String, sec:String = "Standard", label:String = null )    = DateTimeField( sec, view.path( path ), l = label )
   def boolean( path:String, sec:String = "Standard", label:String = null )     = BooleanField( sec, view.path( path ), l = label )
   def exists( path:String, sec:String = "Standard", label:String = null )      = ExistsField( sec, view.path( path ), l = label )
-  def string( path:String, sec:String = "Standard", label:String = null )      = StringField( sec, view.path( path ), l = label )
+  def string( path:String, sec:String = "Standard", label:String = null, cellClass:String = null )      = StringField( sec, view.path( path ), l = label, cellCls = cellClass )
   def multistring( path:String, sec:String = "Standard", label:String = null ) = MultilineStringField( sec, view.path( path ), l = label )
   def link( path:String, sec:String = "Standard", label:String = null )        = LinkField( sec, view.path( path ), l = label )
   def thumbnail( path:String, sec:String = "Standard", label:String = null )   = ThumbnailField( sec, view.path( path ), l = label )
@@ -531,7 +530,7 @@ case class Report( query:Query ) {
      </tr>
     </table> ++
     <div class="grid">
-     <table>
+     <table style={ query.tableGridStyle }>
       <thead>
        { run.header }
       </thead>
