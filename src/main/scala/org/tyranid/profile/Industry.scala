@@ -29,7 +29,9 @@ import org.tyranid.db.mongo.{ MongoEntity }
 import org.tyranid.db.meta.AutoIncrement
 
 
-object BusinessCategory extends MongoEntity( tid = "a0Ot" ) {
+object Industry extends MongoEntity( tid = "a0Ot" ) {
+	override lazy val dbName = "businessCategories"
+
   "sectorId"        is DbInt               ;
   "sectorName"      is DbChar(30)          ;
   "industryGroupId" is DbInt               ;
@@ -43,6 +45,6 @@ object BusinessCategory extends MongoEntity( tid = "a0Ot" ) {
 
   def cache = mutable.HashMap[ObjectId,DBObject]()
 
-  def get( id:ObjectId ) = cache.getOrElseUpdate( id, BusinessCategory.db.findOne( id ) )
+  def get( id:ObjectId ) = cache.getOrElseUpdate( id, Industry.db.findOne( id ) )
 }
 
