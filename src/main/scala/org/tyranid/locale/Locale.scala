@@ -15,7 +15,7 @@
  *
  */
 
-package org.tyranid.locale.db
+package org.tyranid.locale
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbInt, DbChar, DbLink, Record }

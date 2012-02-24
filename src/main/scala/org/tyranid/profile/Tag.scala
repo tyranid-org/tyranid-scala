@@ -15,7 +15,7 @@
  *
  */
 
-package org.tyranid.profile.db
+package org.tyranid.profile
 
 import scala.collection.mutable
 
