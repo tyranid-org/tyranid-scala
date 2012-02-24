@@ -11,6 +11,7 @@ import scala.xml.{ Elem, Node, NodeSeq, Text, TopScope }
 import org.cometd.bayeux.server.BayeuxServer
 
 import org.tyranid.Imp._
+import org.tyranid.profile.User
 import org.tyranid.session.{ AccessLog, ThreadData }
 
 
@@ -108,6 +109,15 @@ spam( "filter entered, path=" + web.path )
           return
         case fe:WebForwardException =>
           web.ctx.getRequestDispatcher( fe.forward ).forward( web.req, web.res )
+          return
+        case re:org.tyranid.secure.SecureException =>
+          if ( !User.isLoggedIn ) {
+            web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
+          } else {
+            thread.session.warn( "Access denied." )
+            web.redirect( "/" )
+          }
+
           return
         case e:Exception =>
           e.log

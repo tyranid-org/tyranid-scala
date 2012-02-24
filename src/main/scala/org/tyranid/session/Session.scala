@@ -114,6 +114,14 @@ class ThreadData {
   // --- WebContext
 
   @volatile var web:WebContext = _
+
+
+  /*
+   * * *  Security
+   */
+
+  def viewing( ref:AnyRef ) = B.access( this, org.tyranid.secure.Viewing, ref )
+  def editing( ref:AnyRef ) = B.access( this, org.tyranid.secure.Editing, ref )
 }
 
 
@@ -182,16 +190,8 @@ trait Session {
 
   private val reports = mutable.Map[String,org.tyranid.report.Report]()
 
-  def reportFor( query:Query ) = reports.synchronized {
-    reports.getOrElseUpdate( query.name, {
-      spam( "placing new " + query.name + " on session " + id )
-      query.newReport
-    } )
-  }
-
   def reportFor( queryName:String ) = reports.synchronized {
-    spam( "looking up " + queryName + " on session " + id )
-    reports( queryName )
+    reports.getOrElseUpdate( queryName, Query.byName( queryName ).newReport )
   }
 
 

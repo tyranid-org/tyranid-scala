@@ -25,7 +25,8 @@ import org.cometd.bayeux.server.BayeuxServer
 
 import org.tyranid.db.Entity
 import org.tyranid.profile.{ User, UserMeta }
-import org.tyranid.session.Session
+import org.tyranid.secure.AccessType
+import org.tyranid.session.{ Session, ThreadData }
 import org.tyranid.web.{ Weblet, CometService }
 
 
@@ -96,6 +97,9 @@ trait Bootable {
   def boot:Unit
 
   val requireSsl = false
+
+
+  def access( thread:ThreadData, accessType:AccessType, ref:AnyRef )
 
 
   @volatile var newUser:() => User = null

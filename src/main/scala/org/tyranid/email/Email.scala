@@ -1,9 +1,5 @@
 package org.tyranid.email
 
-import org.tyranid.Imp._
-import org.tyranid.email.db.EmailConfig;
-import org.tyranid.db.mongo.Imp._
-
 import java.io.{ File, UnsupportedEncodingException }
 import java.util.{ Date, Properties }
 
@@ -15,6 +11,22 @@ import javax.mail.internet._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+
+import org.tyranid.Imp._
+import org.tyranid.db.{ DbChar, DbInt, DbPassword }
+import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.mongo.MongoEntity
+
+
+object EmailConfig extends MongoEntity( tid = "a0At" ) {
+  "id"           is DbInt is 'key;
+  "host"         is DbChar(40);
+  "port"         is DbInt;
+  "authUser"     is DbChar(40);
+  "authPassword" is DbPassword;
+  
+  override lazy val dbName = name
+}
 
 
 object Email {
