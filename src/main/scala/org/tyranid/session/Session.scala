@@ -114,6 +114,14 @@ class ThreadData {
   // --- WebContext
 
   @volatile var web:WebContext = _
+
+
+  /*
+   * * *  Security
+   */
+
+  def viewing( ref:AnyRef ) = B.access( this, org.tyranid.secure.Viewing, ref )
+  def editing( ref:AnyRef ) = B.access( this, org.tyranid.secure.Editing, ref )
 }
 
 

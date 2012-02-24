@@ -4,6 +4,8 @@ package bootstrap.tyranid
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
+import org.tyranid.secure.AccessType
+import org.tyranid.session.ThreadData
 import org.tyranid.test.db.{ Session, User }
 
 
@@ -25,6 +27,9 @@ class Boot extends org.tyranid.boot.Bootable {
   lazy val userMeta = User
 
   val version = 1
+
+  def access( thread:ThreadData, accessType:AccessType, ref:AnyRef ) {
+  }
 
   def boot = {
 
