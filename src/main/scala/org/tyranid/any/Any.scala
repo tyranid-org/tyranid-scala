@@ -49,6 +49,7 @@ class AnyImp[T <: Any]( v:T ) {
   def coerceInt =
     v match {
     case i:java.lang.Integer => i.intValue
+    case n:java.lang.Number  => n.intValue
     case s:String            => s.toLaxInt
     case null                => 0
     }
