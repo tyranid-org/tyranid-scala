@@ -206,6 +206,21 @@ object Industry extends RamEntity( tid = "a0O5" ) {
 
   // for gics, name is "subIndustry"
 
+  def lookupLinkedIn( linkedInIndustryName:String ):Long = {
+
+    for ( rec <- records ) {
+      val id = rec.l( 'id )
+
+      if ( id >= 200000000 &&
+           id <= 299999999 &&
+           rec.s( 'name ).equalsIgnoreCase( linkedInIndustryName ) )
+        return id
+    }
+
+    log( Log.LinkedIn, "m" -> ( "Missing Industry Code for \"" + linkedInIndustryName + "\"" ) )
+    -1
+  }
+
   static(
 ( "id",     "category",        "name",                                           "description" ),
 ( 110101010, null,             "Oil & Gas Drilling",                             "Drilling contractors or owners of drilling rigs that contract their services for drilling wells" ),

@@ -32,6 +32,9 @@ import org.tyranid.time.{ Time }
 object StringImp {
   val AmpersandPattern = Pattern.compile( "&" )
   val CommaPattern = Pattern.compile( "," )
+
+  val UnicodeLeftQuote  = 8220
+  val UnicodeRightQuote = 8221
 }
 
 class StringImp( s:String ) {
@@ -84,7 +87,35 @@ class StringImp( s:String ) {
     sb.toString
   }
   
-  def escapeRegex = s.replace( ".", "\\." ).replace( "@", "\\@" ).replace( "+", "\\+" )
+  def encUnicode:String = {
+
+    for ( i <- 0 until s.length ) {
+      Character.codePointAt( s, i ) match {
+      case StringImp.UnicodeLeftQuote | StringImp.UnicodeRightQuote =>
+        val sb = new StringBuilder( s.substring( 0, i ) )
+
+        for ( j <- i until s.length ) {
+          val ch = s.charAt( j )
+
+          Character.codePointAt( s, j ) match {
+          case StringImp.UnicodeLeftQuote | StringImp.UnicodeRightQuote =>
+            sb ++= "&#" ++= Character.codePointAt( s, j ).toString += ';'
+
+          case _ =>
+            sb += ch
+          }
+        }
+
+        return sb.toString
+
+      case _ =>
+      }
+    }
+
+    s
+  }
+
+  def encRegex = s.replace( ".", "\\." ).replace( "@", "\\@" ).replace( "+", "\\+" )
 
   def toUrl = new java.net.URL( Uri.completeUri( s ) )
 

@@ -69,6 +69,15 @@ object Form {
      </div>
     </div>
 
+  def int( label:String, value:Int, href:String = null, controlClass:String = "control" ) =
+    <div class={ controlClass }>
+     <div class="left">{ label }</div>
+     <div class="right">
+      { href != null |* <a href={ href } class="greyBtn">Edit</a> }
+      <div class="text">{ value }</div>
+     </div>
+    </div>
+
   def thumbnail( label:String, src:String, href:String = null, style:String = "width:60px; height:60px;", controlClass:String = "control" ) =
     <div class="control">
      <div class="left">{ label }</div>
