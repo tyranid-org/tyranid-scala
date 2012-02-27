@@ -30,56 +30,6 @@ import org.tyranid.db.meta.AutoIncrement
 import org.tyranid.db.ram.RamEntity
 
 
-object Industry extends MongoEntity( tid = "a0O0" ) {
-	override lazy val dbName = "businessCategories"
-
-  "sectorId"        is DbInt               ;
-  "sectorName"      is DbChar(30)          ;
-  "industryGroupId" is DbInt               ;
-  "industryGroup"   is DbChar(30)          ;
-  "industryId"      is DbInt               ;
-  "industry"        is DbChar(40)          ;
-  "subIndustryId"   is DbLong              ;//is Req( UserRole.Admin ); // subIndustryId
-  "subIndustry"     is DbChar(50) is 'label;
-  "description"     is DbChar(400)         ;
-
-  def cache = mutable.HashMap[ObjectId,DBObject]()
-
-  def get( id:ObjectId ) = cache.getOrElseUpdate( id, Industry.db.findOne( id ) )
-
-  //temporary
-  def old2new( rec:org.tyranid.db.Record, name:String ) {
-    var a = rec.a( name )
-
-    if ( a == null ) {
-      a = new com.mongodb.BasicDBList
-      rec( name ) = a
-    }
-
-    var updates = false
-
-    for ( i <- 0 until a.size ) {
-      a( i ) match {
-      case oid:ObjectId =>
-
-        val old = Industry.db.findOne( Mobj( "_id" -> oid ) )
-        a( i ) = old.i( 'subIndustryId ) + 100000000
-        updates = true
-
-      case _ =>
-      }
-    }
-
-    if ( updates )
-      rec.save
-  }
-
-  def old2new( rec:org.tyranid.db.Record ) {
-    old2new( rec, "buyingCategories" )
-    old2new( rec, "sellingCategories" )
-  }
-}
-
 object IndustryType extends RamEntity( tid = "a0Ou" ) {
   "id"              is DbInt              is 'key;
   "name"            is DbChar(30)         ;
@@ -246,7 +196,7 @@ object LinkedInCategory extends RamEntity( tid = "a0O4" ) {
   ( "tran", "Transportation" ) )
 }
 
-object NewIndustry extends RamEntity( tid = "a0O5" ) {
+object Industry extends RamEntity( tid = "a0O5" ) {
 	override lazy val dbName = "businessCategories"
 
   "id"             is DbInt              is 'key;
