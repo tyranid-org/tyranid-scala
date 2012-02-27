@@ -112,10 +112,10 @@ spam( "filter entered, path=" + web.path )
           return
         case re:org.tyranid.secure.SecureException =>
           if ( !User.isLoggedIn ) {
-            web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
+            web.res.sendRedirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
           } else {
             thread.session.warn( "Access denied." )
-            web.redirect( "/" )
+            web.res.sendRedirect( "/" )
           }
 
           return
