@@ -19,7 +19,7 @@ package org.tyranid.db.sql
 
 import scala.collection.mutable.{ ArrayBuffer, HashMap }
 
-import org.tyranid.Imp.{ string, symbol }
+import org.tyranid.Imp.{ stringImp, symbol }
 import org.tyranid.db.{ Attribute, DbIntSerial, DbChar, Entity, ModelException, Record, Schema, ViewAttribute }
 import org.tyranid.db.tuple.{ TupleView, Tuple }
 

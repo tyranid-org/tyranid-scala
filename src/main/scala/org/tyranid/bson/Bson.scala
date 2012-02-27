@@ -53,6 +53,13 @@ trait BsonObject extends Deep {
     case null          => Mongo.EmptyArray
     case a:BasicDBList => a
     }
+  def a_!( key:String ) =
+    apply( key ) match {
+    case null          => val a = new BasicDBList
+                          update( key, a )
+                          a
+    case a:BasicDBList => a
+    }
   def a( key:String )   = apply( key ).asInstanceOf[BasicDBList]
   def b( key:String )   = apply( key ).coerceBoolean
   def d( key:String )   = apply( key ).coerceDouble

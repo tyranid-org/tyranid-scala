@@ -29,7 +29,8 @@ object Region extends RamEntity( tid = "a01t" ) {
   "country" is DbLink(Country) ;
   "abbr"    is DbChar(2)       ; 
 
-  def idForAbbr( s:String ):Int = {
+  def idForAbbr( code:String ):Int = {
+    val s = code.toUpperCase
     val abbrIdx = staticView( 'abbr ).index
   
     staticRecords.find( _( abbrIdx ) == s ).flatten( _.id.asInstanceOf[Int], 0 )
@@ -4321,7 +4322,8 @@ object Country extends RamEntity( tid = "a02t" ) {
 
   def US = 4306
     
-  def idForCode( s:String ):Int = {
+  def idForCode( code:String ):Int = {
+    val s = code.toUpperCase
     val codeIdx = staticView( 'code ).index
     
     staticRecords.find( _( codeIdx ) == s ).flatten( _.id.asInstanceOf[Int], 0 )

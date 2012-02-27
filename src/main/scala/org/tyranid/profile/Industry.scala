@@ -206,10 +206,10 @@ object Industry extends RamEntity( tid = "a0O5" ) {
 
   // for gics, name is "subIndustry"
 
-  def lookupLinkedIn( linkedInIndustryName:String ):Long = {
+  def lookupLinkedIn( linkedInIndustryName:String ):Int = {
 
     for ( rec <- records ) {
-      val id = rec.l( 'id )
+      val id = rec.i( 'id )
 
       if ( id >= 200000000 &&
            id <= 299999999 &&
