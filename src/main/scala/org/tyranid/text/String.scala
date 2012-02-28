@@ -248,6 +248,7 @@ class StringImp( s:String ) {
 	def toLaxBoolean =
 		lowerWord match {
 		case ""
+       | "0"
 	     | "n" | "no"
 		   | "f" | "false"
 			 | "off"         => false
