@@ -39,6 +39,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   var label:String = name.camelCaseToSpaceUpper
   var help:NodeSeq = NodeSeq.Empty
   var required:Boolean = false
+  var internal:Boolean = false
   var search:Searchable = NoSearch
 
   
@@ -65,6 +66,9 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
     case "label"     => isLabel = true
     case "required"  => required = true; localValidations ::= ( _.required )
     case "temporary" => temporary = true
+
+    // for example, "aid" is internal because it is not exposed to the end-user
+    case "internal"  => internal = true
     }
 
     this
