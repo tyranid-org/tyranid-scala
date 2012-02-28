@@ -505,10 +505,10 @@ case class Report( query:Query ) {
         <tr>
          <td>
           <form method="get" class="searchBox" action="/search/results" onsubmit="this.submit();return false;">
-	         <fieldset>
+	         <div>
             <input type="text" value="" placeholder="Search" class="field"/>
 		        <input type="image" class="btn" name="submit" src="/images/search-btn.png" alt="Go"/>
-	         </fieldset>
+	         </div>
           </form>
          </td>
         </tr>
