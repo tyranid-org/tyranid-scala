@@ -134,7 +134,7 @@ object LinkedIn {
       val ids = GET( "/people/~:(positions:(company:(id)))", user ).parseJsonObject.o( 'positions ).a_?( 'values ).of[ObjectMap].map( _.o( 'company ).s( 'id ) ).
         filter( id => id.notBlank && !companies.exists( _.s( 'id ) == id ) )
 
-      if ( ids.size > 0 )
+      if ( ids.nonEmpty )
         companies ++= companiesById( user, ids:_* )
     }
 
@@ -172,7 +172,7 @@ object LinkedIn {
     val spec = c.o( 'specialties )
     if ( spec != null ) {
       val arr = spec.a_?( 'values )
-      if ( arr.size > 0 )
+      if ( arr.nonEmpty )
         org( 'specialties ) = Mlist( arr:_* )
     }
 

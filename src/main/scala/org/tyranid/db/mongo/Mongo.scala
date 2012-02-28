@@ -286,6 +286,7 @@ case class DBListImp( obj:BasicDBList ) extends DBListWrap with Seq[Any] {
   def apply( key:String )         = obj.get( key )
   def update( key:String, v:Any ) = obj.put( key, v )
 
+
   /*
    * * *  Helper methods for when the list is a list of DBObjects
    */
