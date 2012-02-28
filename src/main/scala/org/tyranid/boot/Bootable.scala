@@ -24,6 +24,7 @@ import scala.xml.NodeSeq
 import org.cometd.bayeux.server.BayeuxServer
 
 import org.tyranid.db.Entity
+import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.profile.{ User, UserMeta }
 import org.tyranid.secure.AccessType
 import org.tyranid.session.{ Session, ThreadData }
@@ -104,8 +105,9 @@ trait Bootable {
 
   @volatile var newUser:() => User = null
   val userMeta:UserMeta
-  @volatile var userEntity:Entity = null
-  @volatile var orgEntity:Entity = null
+  @volatile var userEntity:MongoEntity = null
+  @volatile var orgEntity:MongoEntity = null
+  @volatile var locationEntity:MongoEntity = null
   @volatile var newSession:() => Session = null
 
   val loginCookieName:String = null

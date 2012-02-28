@@ -10,8 +10,10 @@ import com.mongodb.DBObject
 
 import org.tyranid.Imp._
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.mongo.MongoEntity
+import org.tyranid.locale.{ Country, LocationType, Region }
 import org.tyranid.oauth.{ OAuth, Token }
-import org.tyranid.profile.User
+import org.tyranid.profile.{ Industry, User }
 import org.tyranid.session.Session
 import org.tyranid.web.{ WebContext, Weblet }
 
@@ -114,27 +116,107 @@ object LinkedIn {
    * * *   Companies
    */
 
-  def loadCompanies( user:User, fields:String, domain:String = null, multi:Boolean, id:String ) = {
+  val companyFields = "(id,name,website-url,industry,square-logo-url,employee-count-range,description,twitter-id,blog-rss-url,founded-year,locations:(is-headquarters,description,address:(street1,street2,city,state,postal-code,country-code,region-code),contact-info))"
+
+  def companiesById( user:User, ids:String* ):Seq[ObjectMap] =
+    GET( "/companies::(" + ids.mkString( "," ) + "):" + companyFields, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
+
+  def loadCompanies( user:User, domain:String = null, positions:Boolean = false, multi:Boolean = false ):Seq[ObjectMap] = {
 
     val companies = mutable.ArrayBuffer[ObjectMap]()
 
-    if ( id.notBlank ) {
-      companies ++= GET( "/companies::(" + id + "):" + fields, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
+    if ( domain.notBlank )
+      companies ++= GET( "/companies:" + companyFields + "?email-domain=" + domain.encUrl, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
 
-    } else {
-      if ( domain.notBlank )
-        companies ++= GET( "/companies:" + fields + "?email-domain=" + domain.encUrl, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
+    if ( positions && ( multi || companies.size == 0 ) ) {
+      val ids = GET( "/people/~:(positions:(company:(id)))", user ).parseJsonObject.o( 'positions ).a_?( 'values ).of[ObjectMap].map( _.o( 'company ).s( 'id ) ).
+        filter( id => id.notBlank && !companies.exists( _.s( 'id ) == id ) )
 
-      if ( multi || companies.size == 0 ) {
-        val ids = GET( "/people/~:(positions:(company:(id)))", user ).parseJsonObject.o( 'positions ).a_?( 'values ).of[ObjectMap].map( _.o( 'company ).s( 'id ) ).
-          filter( id => id.notBlank && !companies.exists( _.s( 'id ) == id ) )
-
-        if ( ids.size > 0 )
-          companies ++= GET( "/companies::(" + ids.mkString( "," ) + "):" + fields, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
-      }
+      if ( ids.size > 0 )
+        companies ++= companiesById( user, ids:_* )
     }
 
     companies
+  }
+
+  def importCompany( c:ObjectMap, org:DBObject ) = {
+
+    def string( liName:String, name:String ) = {
+      val v = c.s( liName )
+      if ( v.notBlank )
+        org( name ) = v
+    }
+
+    string( 'id,            'liid )
+    string( 'squareLogoUrl, 'thumbnail )
+    string( 'websiteUrl,    'website )
+
+    val numEmployees = c.o( 'employeeCountRange ).s( 'name )
+    if ( numEmployees.notBlank )
+      org( 'numEmployees ) = numEmployees
+
+    string( 'description,    'desc )
+    string( 'twitterId,      'twitter )
+    string( 'blogRssUrl,     'blog )
+
+    val foundedYear = c.i( 'foundedYear )
+    if ( foundedYear != 0 )
+      org( 'foundedYear ) = foundedYear
+
+    val industryCode = Industry.lookupLinkedIn( c.s( 'industry ) )
+    if ( industryCode > 0 )
+      org.a_!( 'sellingCategories ).add( industryCode.box )
+
+    val ls = c.o( 'locations )
+    if ( ls != null ) {
+      val existingLocations = B.locationEntity.db.find( Mobj( "org" -> org.id ) ).toSeq
+
+      // only import locations if we don't have existing locations already
+      if ( existingLocations.size == 0 ) {
+        for ( l <- ls.a_?( 'values ).of[ObjectMap] ) {
+
+          val loc = Mobj()
+          loc( 'thumbnail ) = "/icon_company.png"
+          loc( 'org )       = org.id
+
+          val desc = l.s( 'description )
+          if ( desc.notBlank )
+            loc( 'additionalInformation ) = desc
+
+          val ci = l.o( 'contactInfo )
+          if ( ci != null ) {
+            val ph = ci.s( 'phone1 )
+            if ( ph.notBlank )
+              loc( 'phone ) = ph
+          }
+
+          val a = l.o( 'address )
+
+          val addr = Mobj()
+          addr( 'street1 )    = a.s( 'street1 )
+          addr( 'street2 )    = a.s( 'street2 )
+          addr( 'city )       = a.s( 'city )
+          addr( 'state )      = Region.idForAbbr( a.s( 'state ) )
+          addr( 'postalCode ) = a.s( 'postalCode )
+
+          // linkedin also provides "regionCode" ... we're not using it (yet)
+
+          addr( 'country )    = Country.idForCode( a.s( 'countryCode ) )
+          loc( 'address ) = addr
+
+          if ( l.b( 'isHeadquarters ) )
+            loc( 'type ) = LocationType.HeadquartersId
+
+          B.locationEntity.db.save( loc )
+
+          if ( l.b( 'isHeadquarters ) ) {
+            org( 'hq ) = loc.id
+          }
+        }
+      }
+    }
+
+    B.orgEntity.as[MongoEntity].db.save( org )
   }
 }
 
