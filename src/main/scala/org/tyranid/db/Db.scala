@@ -21,7 +21,9 @@ import scala.collection.mutable.{ ArrayBuffer, HashMap }
 
 import org.tyranid.Imp.stringImp
 
-class ModelException( msg: String ) extends RuntimeException( msg )
+class ModelException( msg:String ) extends RuntimeException( msg )
+
+class MissingAttributeException( msg:String ) extends ModelException( msg )
 
 object Imp {
 

@@ -137,7 +137,7 @@ trait Entity extends Domain with DbItem {
       attribs.find( _.name == name ).get
     } catch {
       case e:java.util.NoSuchElementException =>
-        throw new ModelException( "Could not find attribute " + name + " in entity " + this.name )
+        throw new MissingAttributeException( "Could not find attribute " + name + " in entity " + this.name )
     }
 
 	def attByDbName( dbName:String ) = attribs.find( _.dbName == dbName ).get

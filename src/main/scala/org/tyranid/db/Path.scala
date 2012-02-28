@@ -146,9 +146,20 @@ object PathValue {
     if ( obj == null )
       return Nil
 
-    for ( key <- obj.keySet;
-          if key != "_id" )
-      yield PathValue( Path.parse( root, key ), obj( key ) )
+    obj.keySet.
+      filter( key => key != "_id" && key != "id" ).
+      flatMap { key =>
+
+        try {
+          Some( PathValue( Path.parse( root, key ), obj( key ) ) )
+        } catch {
+        case e:MissingAttributeException =>
+          // DEER-FIVE
+          // If an old attribute was removed it will still hang around in old version records, this just ignores it for now
+          // an alternative way to handle this would be to make a temporary "one-off" ViewAttribute for attributes it can't find
+          None
+        }
+      }
   }
 
   def toDbObject( pathValues:Iterable[PathValue] ):DBObject = {
@@ -175,10 +186,22 @@ object PathDiff {
     if ( obj == null )
       return Nil
 
-    for ( key <- obj.keySet;
-          if key != "_id";
-          diffs = obj.o( key ) )
-      yield PathDiff( Path.parse( root, key ), diffs( 'a ), diffs( 'b ) )
+    obj.keySet.
+      filter( key => key != "_id" && key != "id" ).
+      flatMap { key =>
+
+        val diffs = obj.o( key )
+
+        try {
+          Some( PathDiff( Path.parse( root, key ), diffs( 'a ), diffs( 'b ) ) )
+        } catch {
+        case e:MissingAttributeException =>
+          // DEER-FIVE
+          // If an old attribute was removed it will still hang around in old version records, this just ignores it for now
+          // an alternative way to handle this would be to make a temporary "one-off" ViewAttribute for attributes it can't find
+          None
+        }
+      }
   }
 
   def toDbObject( pathDiffs:Iterable[PathDiff] ):DBObject = {
