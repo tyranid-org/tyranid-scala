@@ -116,7 +116,9 @@ object LinkedIn {
    * * *   Companies
    */
 
-  val companyFields = "(id,name,website-url,industry,square-logo-url,employee-count-range,description,twitter-id,blog-rss-url,founded-year,locations:(is-headquarters,description,address:(street1,street2,city,state,postal-code,country-code,region-code),contact-info))"
+  val companyFields =
+    "(id,name,website-url,industry,specialties,square-logo-url,employee-count-range,description,twitter-id,blog-rss-url," +
+    "founded-year,locations:(is-headquarters,description,address:(street1,street2,city,state,postal-code,country-code,region-code),contact-info))"
 
   def companiesById( user:User, ids:String* ):Seq[ObjectMap] =
     GET( "/companies::(" + ids.mkString( "," ) + "):" + companyFields, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
@@ -166,6 +168,13 @@ object LinkedIn {
     val industryCode = Industry.lookupLinkedIn( c.s( 'industry ) )
     if ( industryCode > 0 )
       org.a_!( 'sellingCategories ).add( industryCode.box )
+
+    val spec = c.o( 'specialties )
+    if ( spec != null ) {
+      val arr = spec.a_?( 'values )
+      if ( arr.size > 0 )
+        org( 'specialties ) = Mlist( arr:_* )
+    }
 
     val ls = c.o( 'locations )
     if ( ls != null ) {

@@ -21,7 +21,7 @@ import java.util.Date
 import java.util.regex.Pattern
 
 import scala.util.matching.Regex
-import scala.xml.{ NodeSeq, Text }
+import scala.xml.{ NodeSeq, Text, Unparsed }
 
 import org.tyranid.Imp._
 import org.tyranid.http.Http
@@ -119,8 +119,8 @@ class StringImp( s:String ) {
 
   def toUrl = new java.net.URL( Uri.completeUri( s ) )
 
-  def toHtmlPreserveWhitespace =
-    s.split( "\n\n" ).map( para => <p>{ para.replace( "\n", "<br/>" ) }</p> )
+  def toHtmlPreserveWhitespace:NodeSeq =
+    s.replace( "\n \n", "\n\n" ).split( "\n\n" ).map( para => <p>{ Unparsed( para.replace( "\n", "<br/>" ) ) }</p> ).toSeq
 
 	def isBlank  = ( s == null || s.length == 0 )
 	def notBlank = ( s != null && s.length >  0 )
