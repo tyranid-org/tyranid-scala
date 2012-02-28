@@ -44,6 +44,8 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   
   override def toString = entity.name + "." + name
 
+  def see( v:Any ) = domain.see( v )
+
   /**
    * Indicates whether this va is persisted in the database or is just used as a temporary form field.
    */
@@ -74,6 +76,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   def is( anno:AttributeAnnotation ) = annotations ::= anno
 
   def annotated[ T <: AttributeAnnotation :Manifest ] = annotations.findOf[T]
+
 
 
 	var isKey = false

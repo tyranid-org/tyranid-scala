@@ -47,7 +47,7 @@ trait Domain extends Valid {
 
   def isSet( v:Any ) = v != null
 
-	def see( v:AnyRef ) =
+	def see( v:Any ) =
 		v match {
 		case null => ""
 		case v    => v.toString
@@ -391,7 +391,7 @@ case class DbLink( toEntity:Entity ) extends Domain {
 
   override def inputcClasses = " select"
 
-	override def see( v:AnyRef ) =
+	override def see( v:Any ) =
 		v match {
 		case null => ""
 		case n:Number => toEntity.labelFor( n )

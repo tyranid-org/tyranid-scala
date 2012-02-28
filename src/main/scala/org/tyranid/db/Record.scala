@@ -46,6 +46,7 @@ case class ViewAttribute( val view:View,
   override def label = att.label
 
   def label( r:Record, opts:(String,String)* ):NodeSeq = <label for={ name }>{ label }</label>
+  def see( v:Any ) = att.see( v )
 
   def toView = View.from( att.domain )
 

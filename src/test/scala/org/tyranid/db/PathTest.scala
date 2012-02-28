@@ -135,5 +135,18 @@ class PathSuite extends FunSuite {
     assert( Path.parse( v, "dims.height" ).get( obj ) == 20 )
     assert( Path.parse( v, "tags.0"      ).get( obj ) == "acme" )
   }
+
+  test( "display" ) {
+
+    val obj = Widget.make
+    val v = obj.view
+
+    obj( 'cert ) = Certification.CertifiedId
+
+    val pvs = Path.flatten( obj )
+
+    assert( pvs.size === 1 )
+    assert( pvs( 0 ).displayValue === "Certified" )
+  }
 }
 

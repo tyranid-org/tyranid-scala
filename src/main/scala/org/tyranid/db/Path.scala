@@ -163,6 +163,8 @@ object PathValue {
 
 case class PathValue( path:Path, value:Any ) extends Pathable {
   override def toString = path.name + "=" + value.toString
+
+  def displayValue = path.leaf.see( value )
 }
 
 object PathDiff {
@@ -191,6 +193,9 @@ object PathDiff {
 
 case class PathDiff( path:Path, a:Any, b:Any ) extends Pathable {
   override def toString = path.name + ": " + a.toString + " => " + b.toString
+
+  def displayA = path.leaf.see( a )
+  def displayB = path.leaf.see( b )
 }
 
 object Path {
