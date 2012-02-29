@@ -58,7 +58,7 @@ trait PathNode {
 case class ArrayIndex( idx:Int ) extends PathNode {
 
   def name  = idx.toString
-  def label = name
+  def label = "#" + ( idx + 1 )
 }
 
 trait Path extends Pathable {
@@ -67,7 +67,24 @@ trait Path extends Pathable {
 
   def name  = ( 0 until pathSize ).map( i => pathAt( i ).name ).mkString( "." )
   def name_ = ( 0 until pathSize ).map( i => pathAt( i ).name ).mkString( "_" )
-  def label = ( 0 until pathSize ).map( i => pathAt( i ).label ).mkString( " . " )
+
+  def label = {
+    val sb = new StringBuilder
+
+    for ( i <- 0 until pathSize )
+      pathAt( i ) match {
+      case ai:ArrayIndex =>
+        sb += ' ' ++= ai.label
+
+      case p =>
+        if ( i > 0 )
+          sb ++= " . "
+
+        sb ++= p.label
+      }
+
+    sb.toString
+  }
 
   def pathSize:Int
   def pathAt( idx:Int ):PathNode

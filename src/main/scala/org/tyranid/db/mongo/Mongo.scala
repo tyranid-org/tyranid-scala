@@ -105,7 +105,9 @@ object Imp {
   object Mongo {
     lazy val connect = new com.mongodb.Mongo( B.mongoHost )
 
-    val EmptyArray = Mlist()
+    object EmptyArray extends BasicDBList {
+      override def put( idx:Int, obj:AnyRef ) = throw new RuntimeException( "modifying immutable empty array" )
+    }
   }
 }
 

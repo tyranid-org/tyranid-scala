@@ -158,6 +158,34 @@ trait Weblet {
   val locks:List[WebLock] = Nil
 
   def handle( web:WebContext ):Unit
+
+  def init( webletPath:String ) {
+    this.webletPath = webletPath
+  }
+
+  private var webletPath:String = _
+
+  /*
+   * Weblet path
+   */
+  def wpath = webletPath
+
+  /*
+   * Relative path.  Full path = wpath + rpath
+   */
+  def rpath = {
+    val path = T.web.path
+
+    if ( path.startsWith( webletPath ) ) {
+      val p = path.substring( webletPath.length )
+      if ( p == "" )
+        "/"
+      else
+        p
+    } else {
+      null
+    }
+  }
 }
 
 

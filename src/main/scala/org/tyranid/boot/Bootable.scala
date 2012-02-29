@@ -51,6 +51,9 @@ object Boot {
 
         instance.boot
 
+        for ( ( path, weblet ) <- instance.weblets )
+          weblet.init( path )
+
         println( "*** " + instance.applicationName + " booted ... mode: " + instance.mode.toUpperCase + ", version: " + instance.version + " ***" )
 
       } catch {
