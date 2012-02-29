@@ -69,6 +69,36 @@ object Form {
      </div>
     </div>
 
+  def text2( label1:String,label2:String, value1:String, value2:String, href:String = null, controlClass:String = "control" ) =
+    <div class={ controlClass }>
+     <div class="left">{ label1 }</div>
+     <div class="right">
+      { href != null |* <a href={ href } class="greyBtn">Edit</a> }
+      <div class="text">{ value1 }</div>
+     </div>
+     <div class="left" style="clear:both;">{ label2 }</div>
+     <div class="right">
+      <div class="text">{ value2 }</div>
+     </div>
+    </div>
+
+  def text3( label1:String, label2:String, label3:String, value1:String, value2:String, value3:String, href:String = null, controlClass:String = "control" ) =
+    <div class={ controlClass }>
+     <div class="left">{ label1 }</div>
+     <div class="right">
+      { href != null |* <a href={ href } class="greyBtn">Edit</a> }
+      <div class="text">{ value1 }</div>
+     </div>
+     <div class="left" style="clear:both;">{ label2 }</div>
+     <div class="right">
+      <div class="text">{ value2 }</div>
+     </div>
+     <div class="left" style="clear:both;">{ label3 }</div>
+     <div class="right">
+      <div class="text">{ value3 }</div>
+     </div>
+    </div>
+      
   def int( label:String, value:Int, href:String = null, controlClass:String = "control" ) =
     <div class={ controlClass }>
      <div class="left">{ label }</div>
