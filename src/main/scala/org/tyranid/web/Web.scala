@@ -121,6 +121,8 @@ spam( "filter entered, path=" + web.path )
           return
         case e:Exception =>
           e.log
+
+          web.template( <tyr:errorPage/> )
           return
         }
       }

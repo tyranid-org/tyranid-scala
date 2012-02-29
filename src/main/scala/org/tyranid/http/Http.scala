@@ -1,6 +1,7 @@
 
 package org.tyranid.http
 
+import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.xml.NodeSeq
 
@@ -55,24 +56,21 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
   }
   
   def dump = {
-    var enumer = req.getAttributeNames()
 
-    println( "--Attributes--" )
-      
-    while ( enumer.hasMoreElements() ) {
-      val key = enumer.nextElement()
-      val value = req.getAttribute( key.asInstanceOf[String] )
-      println( key + " : " + value )
-    }
+    spam( "** requestURI=" + T.web.req.getRequestURL )
 
-    println( "--Parameters--" )
-    enumer = req.getParameterNames();
+    println( "** attributes" )
+    for ( n <- req.getAttributeNames )
+      println( "  " + n + " = " + req.getAttribute( n.as[String] ) )
 
-    while ( enumer.hasMoreElements() ) {
-      val key = enumer.nextElement()
-      val value = req.getParameter( key.asInstanceOf[String] )
-      println( key + " : " + value )
-    }
+    println( "** parameters" )
+    for ( n <- req.getParameterNames )
+      println( "  " + n + " = " + req.getParameter( n.as[String] ) )
+
+    println( "** headers" )
+    for ( n <- req.getHeaderNames )
+      for ( v <- req.getHeaders( n.as[String] ) )
+        println( "  " + n + " = " + v )
   }
 
   def path = req.getServletPath

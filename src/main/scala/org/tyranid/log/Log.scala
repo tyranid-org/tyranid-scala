@@ -36,8 +36,14 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
   val Access     = 1
   val StackTrace = 2
   val LinkedIn   = 3
+  val Error404   = 4
 
-  val Events = Array( "n/a", "Access", "StackTrace", "LinkedIn" )
+  val Events = Array( 
+    "n/a",
+    "Access",
+    "StackTrace",
+    "LinkedIn",
+    "404" )
 
 
   "id"                  is DbMongoId      is 'key;
