@@ -360,7 +360,8 @@ case class DbLink( toEntity:Entity ) extends Domain {
      * 
      * 
      */
-    
+
+    println( f.va.name )
     val idLabels = f.filter match {
     case Some( filter ) =>
       toEntity.records.filter( filter ).map( _.idLabel )
