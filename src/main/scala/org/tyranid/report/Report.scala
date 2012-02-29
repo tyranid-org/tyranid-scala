@@ -423,13 +423,13 @@ case class Report( query:Query ) {
     if ( fields.size == 0 )
       Unparsed( "<select style='width:150px;' disabled><option>none left</option></select>" )
     else
-      Select( "gFields", field, fields.map( f => f.name -> f.label ), "style" -> "width:150px; max-width:150px;" )
+      Select( "rFields", field, fields.map( f => f.name -> f.label ), "style" -> "width:150px; max-width:150px;" )
 
   def addBox:NodeSeq =
-    fields.find( _.name == field ).flatten(
-      f => <div id={ f.name } class="cola"><div><span>Add</span></div></div>,
-      <div class="colna"><div><span>N/A</span></div></div>
-    )
+    if ( field.notBlank )
+      <div id="_add" class="cola"><div><span>Add</span></div></div>
+    else
+      <div id="_add" class="colna"><div><span>N/A</span></div></div>
 
 
   /*
@@ -569,7 +569,8 @@ case class Report( query:Query ) {
       </div>
     } ++
     <div class="report greyBox" id={ id }>
-    { innerDraw }
+    { recalcFields
+      innerDraw }
     </div>
 }
 
@@ -621,22 +622,22 @@ object Reportlet extends Weblet {
     val report = sess.reportFor( web.req.s( 'q ) )
     val query = report.query
 
-    web.path match {
+    rpath match {
 
     /*
      * * *  Navigation
      */
 
-    case "/report/prev" =>
+    case "/prev" =>
       report.offset -= report.pageSize
       if ( report.offset < 0 ) report.offset = 0
       web.res.html( report.innerDraw )
 
-    case "/report/next" =>
+    case "/next" =>
       report.offset += report.pageSize
       web.res.html( report.innerDraw )
 
-    case "/report/select" =>
+    case "/select" =>
       val fp = query.by( web.req.s( 'f ) )
 
       val empty = report.selectedColumns.isEmpty
@@ -645,14 +646,18 @@ object Reportlet extends Weblet {
       web.res.html(
         empty != report.selectedColumns.isEmpty |* report.searchTitle )
 
-    case "/report/drag" =>
+    case "/drag" =>
       val js = web.req.s( 'js )
       val ( fn, tn ) = js.splitFirst( ':' )
 
-      val fp = query.by( fn )
+      val efn =
+        if ( fn == "_add" ) report.onField
+        else                fn
+
+      val fp = query.by( efn )
 
       if ( tn == "def" ) {
-        if ( report.selectedColumns( fn ) ) {
+        if ( report.selectedColumns( efn ) ) {
           report.selectedColumns.foreach { n => report.remove( query.by( n ) ) }
           report.selectedColumns.clear
         } else {
@@ -663,7 +668,7 @@ object Reportlet extends Weblet {
       } else {
         val tp = query.by( tn )
 
-        if ( report.selectedColumns( fn ) && !report.selectedColumns( tn ) ) {
+        if ( report.selectedColumns( efn ) && !report.selectedColumns( tn ) ) {
           val columns = report.columns.filter( f => report.selectedColumns( f.name ) )
 
           for ( c <- columns )
@@ -678,7 +683,7 @@ object Reportlet extends Weblet {
       report.recalcFields
       web.res.html( report.innerDraw )
 
-    case "/report/selectRow" =>
+    case "/selectRow" =>
       // TODO:  make this generic based on query's entity id field
       val rowId = new ObjectId( web.req.s( 'id ) )
       if ( report.selectedIds( rowId ) )
@@ -688,7 +693,7 @@ object Reportlet extends Weblet {
 
       web.res.ok
 
-    case "/report/section" =>
+    case "/section" =>
       report.onSection = web.req.s( 'v )
       report.recalcFields
       web.res.json(
@@ -698,11 +703,15 @@ object Reportlet extends Weblet {
         )
       )
 
-    case "/report/groups" =>
+    case "/field" =>
+      report.onField = web.req.s( 'v )
+      web.res.ok
+
+    case "/groups" =>
       report.groupFilter = web.req.s( 'gn )
       web.res.html( report.innerDraw )
 
-    case "/report/group" =>
+    case "/group" =>
       report.selectedRecords = report.records.filter( r => report.selectedIds( r.id ) )
 
       if ( report.selectedRecords.size == 0 ) {
@@ -738,19 +747,19 @@ object Reportlet extends Weblet {
           </tr> )
       }
 
-    case "/report/group/add" =>
+    case "/group/add" =>
       report.addGroupName = web.req.s( 'v )
       web.res.ok
 
-    case "/report/group/new" =>
+    case "/group/new" =>
       report.newGroupName = web.req.s( 'v )
       web.res.ok
 
-    case "/report/group/remove" =>
+    case "/group/remove" =>
       report.removeGroupName = web.req.s( 'v )
       web.res.ok
 
-    case "/report/group/okay" =>
+    case "/group/okay" =>
       val grouping = query.grouping
 
       if ( report.addGroupName.notBlank ) {
