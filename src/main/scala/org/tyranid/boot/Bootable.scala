@@ -89,6 +89,7 @@ trait Bootable {
     else              "https://app." + domain
 
   val systemEmail:String
+  val alertEmail:String
 
   val weblets:List[(String,Weblet)]
 

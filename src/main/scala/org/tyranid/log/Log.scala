@@ -27,6 +27,7 @@ import org.tyranid.Imp._
 import org.tyranid.db.{ DbChar, DbDateTime, DbInt, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
+import org.tyranid.email.Email
 import org.tyranid.report.{ Field, Run, MongoQuery }
 
 
@@ -64,11 +65,15 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
     val thread = T
     val session = thread.session
 
-    if ( session != null ) {
-      val user = session.user
-      if ( user != null )
-        l( "uid" ) = user.id
-    }
+    var user =
+      if ( session != null ) {
+        val user = session.user
+        if ( user != null )
+          l( "uid" ) = user.id
+        user
+      } else {
+        null
+      }
 
     val http = thread.http
     if ( http != null )
@@ -76,9 +81,12 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
 
     // TODO:  maybe log comet sid ?
 
+    var throwable:Throwable = null
+
     for ( opt <- opts ) {
       opt match {
       case ( "ex", t:Throwable ) =>
+        throwable = t
         val lines = t.getStackTrace
 
         val m = t.getMessage + '\n' + t.getClass.getSimpleName
@@ -104,6 +112,41 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
     }
 
     db.save( l )
+
+    if ( event == StackTrace && B.PRODUCTION ) {
+      val sb = new StringBuilder
+
+      if ( user != null )
+        sb ++= "User: " ++= user.fullName += '\n'
+      sb ++= "On: " ++= l.t( 'on ).toDateTimeStr += '\n'
+      var ua = l.s( 'ua )
+      if ( ua.isBlank ) {
+        try {
+          ua = T.web.req.getHeader( "User-Agent" )
+        } catch {
+        case e =>
+          e.printStackTrace
+        }
+      }
+
+      if ( ua.notBlank )
+        sb ++= "User-Agent: " ++= ua += '\n'
+
+      sb ++= "Stack Trace:\n\n" + throwable.getStackTrace.map( _.toString ).mkString( "\n" )
+
+      background {
+        try {
+          Email( subject = "Volerro Stack Trace",
+                 text = sb.toString ).
+            addTo( B.alertEmail ).
+            from( "no-reply@" + B.domain ).
+            send
+        } catch {
+        case e =>
+          e.printStackTrace
+        }
+      }
+    }
   }
 }
 
