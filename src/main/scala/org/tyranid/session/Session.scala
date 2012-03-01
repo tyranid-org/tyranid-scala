@@ -17,33 +17,55 @@
 
 package org.tyranid.session
 
-import javax.servlet.http.HttpSession
+import java.util.Date
+
+import javax.servlet.http.{ HttpSession, HttpSessionEvent, HttpSessionListener }
 
 import scala.collection.mutable
 import scala.xml.{ Node, NodeSeq, Unparsed }
 
 import org.tyranid.Imp._
-import org.tyranid.Bind
+import org.tyranid.math.Base62
 import org.tyranid.profile.User
 import org.tyranid.report.Query
+import org.tyranid.web.WebContext
 
+
+object WebSession {
+
+  val sessions = mutable.Map[String,HttpSession]()
+
+  val CometHttpSessionIdKey = "tyrSessId"
+  val HttpSessionKey = "tyrSess"
+}
+
+class WebSessionListener extends HttpSessionListener {
+ 
+  def sessionCreated( e:HttpSessionEvent ) {
+    val session = e.getSession
+    WebSession.sessions( session.getId ) = session
+  }
+ 
+  def sessionDestroyed( e:HttpSessionEvent ) {
+    WebSession.sessions.remove( e.getSession.getId )
+  }	
+}
 
 object ThreadData {
 
   private val data = new ThreadLocal[ThreadData]()
 
   def apply():ThreadData = {
-    var sess = data.get
+    var td = data.get
 
-    if ( sess == null ) {
-      sess = new ThreadData
-      data.set( sess )
+    if ( td == null ) {
+      td = new ThreadData
+      data.set( td )
     }
 
-    sess
+    td
   }
 
-  val HttpSessionKey = "tyrSess"
 }
 
 class ThreadData {
@@ -52,13 +74,7 @@ class ThreadData {
 
   private var httpData:HttpSession = _
 
-  def http:HttpSession = {
-
-    if ( httpData == null )
-      net.liftweb.http.S.session.foreach { assignFromLiftSession _ }
-
-    httpData
-  }
+  def http:HttpSession = httpData
 
   def http_=( obj:HttpSession ) = {
     httpData = obj
@@ -70,38 +86,46 @@ class ThreadData {
   }
 
 
-  def assignFromLiftSession( liftSession:net.liftweb.http.LiftSession ) =
-    http = {
-      val liftSess = liftSession.httpSession.open_!.asInstanceOf[net.liftweb.http.provider.servlet.HTTPServletSession]
-      val field = liftSess.getClass.getDeclaredField( "session" )
-      field.setAccessible( true )
-      field.get( liftSess ).asInstanceOf[javax.servlet.http.HttpSession]
-    }
-
-
   // --- Tyranid Session
 
   private var tyrData:Session = _
 
-  def tyr:Session = {
+  // rename tyr to session once lift is removed
+  def session:Session = {
     if ( tyrData == null ) {
       tyrData =
         if ( http != null ) {
-          http.getAttribute( ThreadData.HttpSessionKey ) match {
+          http.getAttribute( WebSession.HttpSessionKey ) match {
           case s:Session => s
           case _         =>
-            val s = Bind.NewSession()
-            http.setAttribute( ThreadData.HttpSessionKey, s )
+            val s = B.newSession()
+            http.setAttribute( WebSession.HttpSessionKey, s )
             s
           }
         } else {
-          Bind.NewSession()
+          B.newSession()
         }
     }
 
     tyrData
   }
 
+  def user:User =
+    if ( session != null ) session.user
+    else                   null
+
+
+  // --- WebContext
+
+  @volatile var web:WebContext = _
+
+
+  /*
+   * * *  Security
+   */
+
+  def viewing( ref:AnyRef ) = B.access( this, org.tyranid.secure.Viewing, ref )
+  def editing( ref:AnyRef ) = B.access( this, org.tyranid.secure.Editing, ref )
 }
 
 
@@ -111,7 +135,68 @@ object SessionMeta {
 
 trait SessionMeta {
 
-  def apply():Session = ThreadData().tyr
+  def apply():Session = ThreadData().session
+
+
+  def byHttpSessionId( id:String ) =
+    WebSession.sessions( id ) match {
+    case s:HttpSession => from( s )
+    case _             => null
+    }
+
+  def from( httpSession:HttpSession ) =
+    httpSession.getAttribute( WebSession.HttpSessionKey ) match {
+    case s:Session => s
+    case _         => null
+    }
+}
+
+
+object Session extends SessionMeta
+
+trait Session {
+
+  lazy val id = Base62.make( 10 )
+
+  private var userVar = B.newUser()
+
+  def user:User           = userVar
+  def user_=( user:User ) = userVar = user
+
+  var loggedEntry = false
+  var loggedUser  = false
+
+  var passedCaptcha = false
+
+
+  /*
+   * * *   Login
+   */
+
+  def login( user:User ) = {
+    this.user = user
+    user.loggedIn = true
+    user( 'lastLogin ) = new Date
+  }
+
+  def logout = {
+    val u = B.newUser()
+    u.loggedIn = false
+    u.isLoggingOut = true
+    user = u
+    org.tyranid.profile.LoginCookie.remove
+  }
+
+
+  /*
+   * * *   Reports
+   */
+
+  private val reports = mutable.Map[String,org.tyranid.report.Report]()
+
+  def reportFor( queryName:String ) = reports.synchronized {
+    reports.getOrElseUpdate( queryName, Query.byName( queryName ).newReport )
+  }
 
 
   /*
@@ -125,29 +210,36 @@ trait SessionMeta {
   def doneEditing[ T: Manifest ] =
     editings.remove( manifest[T].erasure )
   def clearAllEditing = editings.clear
-}
-
-trait Session {
-
-  private var userVar = Bind.NewUser()
-
-  def user:User           = userVar
-  def user_=( user:User ) = userVar = user
 
 
   /*
-   * * *   Reports
+   * * *   Notifications
    */
 
-  private val reports = mutable.Map[String,org.tyranid.report.Report]()
+  @volatile private var notes:List[Notification] = Nil
 
-  def reportFor( query:Query ) = reports.synchronized {
-    reports.getOrElseUpdate( query.name, query.newReport )
+  def notice( msg:AnyRef ) = notes ::= Notification( "notice",  msg.toString )
+  def warn( msg:AnyRef )   = notes ::= Notification( "warning", msg.toString )
+  def error( msg:AnyRef )  = notes ::= Notification( "error",   msg.toString )
+
+  def popNotes = {
+    val n = notes
+    notes = Nil
+    n
   }
 }
 
-object Session extends SessionMeta {
+object Notification {
+
+  def box:NodeSeq = {
+    val sess = Session()
+
+    <div class="notify">
+     { sess.popNotes.map { note => <div class={ note.level }>{ Unparsed( note.msg ) }</div> } }
+    </div>
+  }
 }
 
+case class Notification( level:String, msg:String )
 
 

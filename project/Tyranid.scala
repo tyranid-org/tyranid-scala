@@ -7,11 +7,7 @@ object Tyranid extends Build {
   import less.Plugin.LessKeys
   import coffeescript.Plugin.CoffeeKeys
 
-  val liftVersion = "2.4-M4"
-
   val commonLibs = Seq(
-    "net.liftweb"              %% "lift-webkit"              % liftVersion       % "compile->default", // Lift, Scala Web Framework
-
     "net.databinder"            %% "dispatch-http"            % "0.8.6"         % "compile->default",
 
     "org.codehaus.jackson"      % "jackson-core-asl"         % "1.9.0"           % "compile->default", // JSON Parsing Library

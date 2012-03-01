@@ -19,7 +19,6 @@ package org.tyranid.secure
 
 import org.scalatest.FunSuite
 
-import org.tyranid.Bind
 import org.tyranid.Imp._
 
 

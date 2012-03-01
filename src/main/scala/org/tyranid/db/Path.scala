@@ -58,7 +58,7 @@ trait PathNode {
 case class ArrayIndex( idx:Int ) extends PathNode {
 
   def name  = idx.toString
-  def label = name
+  def label = "#" + ( idx + 1 )
 }
 
 trait Path extends Pathable {
@@ -67,7 +67,24 @@ trait Path extends Pathable {
 
   def name  = ( 0 until pathSize ).map( i => pathAt( i ).name ).mkString( "." )
   def name_ = ( 0 until pathSize ).map( i => pathAt( i ).name ).mkString( "_" )
-  def label = ( 0 until pathSize ).map( i => pathAt( i ).label ).mkString( " . " )
+
+  def label = {
+    val sb = new StringBuilder
+
+    for ( i <- 0 until pathSize )
+      pathAt( i ) match {
+      case ai:ArrayIndex =>
+        sb += ' ' ++= ai.label
+
+      case p =>
+        if ( i > 0 )
+          sb ++= " . "
+
+        sb ++= p.label
+      }
+
+    sb.toString
+  }
 
   def pathSize:Int
   def pathAt( idx:Int ):PathNode
@@ -146,9 +163,20 @@ object PathValue {
     if ( obj == null )
       return Nil
 
-    for ( key <- obj.keySet;
-          if key != "_id" )
-      yield PathValue( Path.parse( root, key ), obj( key ) )
+    obj.keySet.
+      filter( key => key != "_id" && key != "id" ).
+      flatMap { key =>
+
+        try {
+          Some( PathValue( Path.parse( root, key ), obj( key ) ) )
+        } catch {
+        case e:MissingAttributeException =>
+          // DEER-FIVE
+          // If an old attribute was removed it will still hang around in old version records, this just ignores it for now
+          // an alternative way to handle this would be to make a temporary "one-off" ViewAttribute for attributes it can't find
+          None
+        }
+      }
   }
 
   def toDbObject( pathValues:Iterable[PathValue] ):DBObject = {
@@ -163,6 +191,8 @@ object PathValue {
 
 case class PathValue( path:Path, value:Any ) extends Pathable {
   override def toString = path.name + "=" + value.toString
+
+  def displayValue = path.leaf.see( value )
 }
 
 object PathDiff {
@@ -173,10 +203,22 @@ object PathDiff {
     if ( obj == null )
       return Nil
 
-    for ( key <- obj.keySet;
-          if key != "_id";
-          diffs = obj.o( key ) )
-      yield PathDiff( Path.parse( root, key ), diffs( 'a ), diffs( 'b ) )
+    obj.keySet.
+      filter( key => key != "_id" && key != "id" ).
+      flatMap { key =>
+
+        val diffs = obj.o( key )
+
+        try {
+          Some( PathDiff( Path.parse( root, key ), diffs( 'a ), diffs( 'b ) ) )
+        } catch {
+        case e:MissingAttributeException =>
+          // DEER-FIVE
+          // If an old attribute was removed it will still hang around in old version records, this just ignores it for now
+          // an alternative way to handle this would be to make a temporary "one-off" ViewAttribute for attributes it can't find
+          None
+        }
+      }
   }
 
   def toDbObject( pathDiffs:Iterable[PathDiff] ):DBObject = {
@@ -191,6 +233,9 @@ object PathDiff {
 
 case class PathDiff( path:Path, a:Any, b:Any ) extends Pathable {
   override def toString = path.name + ": " + a.toString + " => " + b.toString
+
+  def displayA = path.leaf.see( a )
+  def displayB = path.leaf.see( b )
 }
 
 object Path {
@@ -284,7 +329,7 @@ object Path {
           val value = arr( i )
 
           dom match {
-          case en:MongoEntity => record( ipath, en.recify( arr( 0 ), parent = null /* TODO:  should pass in parent ? */, rec => arr( 0 ) = rec ) )
+          case en:MongoEntity => record( ipath, en.recify( arr( i ), parent = null /* TODO:  should pass in parent ? */, rec => arr( i ) = rec ) )
           case arr:DbArray    => array( ipath, value.asInstanceOf[BasicDBList] )
           case dom            => simple( ipath, value )
           }

@@ -24,9 +24,6 @@ import scala.collection.mutable
 import scala.collection.JavaConversions._
 import scala.xml.NodeSeq
 
-import net.liftweb.http.{ FileParamHolder, SHtml }
-
-import org.tyranid.Bind
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.{ Domain, Record, Scope }
@@ -35,23 +32,10 @@ import org.tyranid.ui.Field
 
 object DbImage {
 
-  def apply( bucketPrefix:String ):DbImage = new DbImage( Bind.S3Buckets( bucketPrefix ) )
+  def apply( bucketPrefix:String ):DbImage = new DbImage( B.s3Buckets( bucketPrefix ) )
 }
 
 class DbImage( bucket:S3Bucket ) extends DbFile( bucket ) {
-
-  override def ui( s:Scope, f:Field, opts:(String,String)* ): NodeSeq =
-    /*SHtml.text( s.rec s f.va, v => s.rec( f.va ) = v, "class" -> "textInput" ) ++ */
-    <div class='thumbnail'>
-      { 
-      if ( ( s.rec s f.va ).isBlank ) { // TODO:  Replace this with a blank/default image for ALL images
-//        <img src='http://d33lorp9dhlilu.cloudfront.net/generic-image.png' style='float:left;'/>
-      } else {
-//        <img src={ url( s.rec s f.va ) } style='float:left;'/>
-      }
-      }
-      <div> { SHtml.fileUpload( save( s.rec, f ) _ ) }</div>
-    </div>
 }
 
 object Image {
@@ -127,7 +111,7 @@ object Image {
 		  println( "dimensions test failed for " + url.getPath )
 		} catch {
 			case e:IOException =>
-				e.printStackTrace
+				e.log
 
 		} finally {
 			if ( iis != null )

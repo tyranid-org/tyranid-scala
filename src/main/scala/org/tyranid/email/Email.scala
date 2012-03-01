@@ -1,9 +1,5 @@
 package org.tyranid.email
 
-import org.tyranid.Imp._
-import org.tyranid.email.db.EmailConfig;
-import org.tyranid.db.mongo.Imp._
-
 import java.io.{ File, UnsupportedEncodingException }
 import java.util.{ Date, Properties }
 
@@ -15,6 +11,22 @@ import javax.mail.internet._
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+
+import org.tyranid.Imp._
+import org.tyranid.db.{ DbChar, DbInt, DbPassword }
+import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.mongo.MongoEntity
+
+
+object EmailConfig extends MongoEntity( tid = "a0At" ) {
+  "id"           is DbInt is 'key;
+  "host"         is DbChar(40);
+  "port"         is DbInt;
+  "authUser"     is DbChar(40);
+  "authPassword" is DbPassword;
+  
+  override lazy val dbName = name
+}
 
 
 object Email {
@@ -43,14 +55,31 @@ object Email {
     case n  => email.substring( n+1 )
     }
     
-  def domainPart( email:String ) = {
-    val emailParser = """([\w\d\-\_\.]+)(\+\d+)?@([\w\d\-]+)([\w\d\.])+""".r
-    val emailParser( name, num, domain, com ) = email
-    domain
-  }
+  def domainPart( email:String ) =
+    try {
+      val emailParser = """([\w\d\-\_\.]+)(\+\d+)?@([\w\d\-]+)([\w\d\.])+""".r
+      val emailParser( name, num, domain, com ) = email
+      domain
+    } catch {
+    case e:MatchError =>
+      email
+    }
 
   def apply( subject:String, text:String, to:String, from:String ) {
     Email( subject, text ).addTo( to ).from( from ).send
+  }
+  
+  @throws(classOf[AddressException])
+  def getInetAddress( emailAddress:String, displayName:String = null ) : InternetAddress = {
+    if ( displayName.notBlank ) {
+      try {
+        return new InternetAddress( emailAddress, displayName )
+      } catch { 
+        case uee:UnsupportedEncodingException => 
+      }
+    }
+
+    return new InternetAddress( emailAddress )
   }
 }
 
@@ -95,10 +124,10 @@ case class Email( subject:String, text:String, html:String=null ) {
     if ( emailAddresses != null ) {
       for ( emailAddress <- emailAddresses ) {
         try {
-          add( recipientType, getInetAddress( emailAddress, null ) )
+          add( recipientType, Email.getInetAddress( emailAddress ) )
         } catch { 
           case e:AddressException => 
-            log( exception = e )
+            e.log
         }
       }
     }
@@ -118,22 +147,9 @@ case class Email( subject:String, text:String, html:String=null ) {
     }
   }
 
-  @throws(classOf[AddressException])
-  private def getInetAddress( emailAddress:String, displayName:String ) : InternetAddress = {
-    if ( displayName.notBlank ) {
-      try {
-        return new InternetAddress( emailAddress, displayName )
-      } catch { 
-        case uee:UnsupportedEncodingException => 
-      }
-    }
-
-    return new InternetAddress( emailAddress )
-  }
-
   def replyTo( _replyToEmailAddress:String ) : Email = {
     try {
-      replyTo = getInetAddress( _replyToEmailAddress, null )
+      replyTo = Email.getInetAddress( _replyToEmailAddress )
     } catch { 
       case ae:AddressException => 
     }
@@ -143,7 +159,7 @@ case class Email( subject:String, text:String, html:String=null ) {
 
   def from(_fromEmailAddress:String) : Email = {
     try {
-      from = getInetAddress( _fromEmailAddress, null )
+      from = Email.getInetAddress( _fromEmailAddress )
     } catch { 
       case ae:AddressException => 
     }

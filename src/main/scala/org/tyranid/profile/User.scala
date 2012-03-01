@@ -17,67 +17,67 @@
 
 package org.tyranid.profile
 
+
 import java.util.TimeZone
 
-import net.liftweb.http.{ RedirectResponse, S }
+import org.bson.types.ObjectId
 
-import org.tyranid.Bind
 import org.tyranid.Imp._
-import org.tyranid.db.{ Record, Scope }
-import org.tyranid.session.Session
+import org.tyranid.db.Record
+import org.tyranid.db.mongo.Imp._
+import org.tyranid.session.{ Session, ThreadData }
+import org.tyranid.web.{ WebContext, WebLock }
+
 
 trait UserMeta {
   def isLoggedIn = { 
-    if ( Session().user.loggedIn )
+    val session = Session()
+
+    if ( session.user.loggedIn )
       true
-    else {
-      if ( Bind.LoginCookieName == null || Session().user.isLoggingOut )
+    else if ( B.loginCookieName == null || session.user.isLoggingOut )
         false
-      else {
-        val savedCookie = S.cookieValue( Bind.LoginCookieName ) openOr null
+    else {
+      LoginCookie.getUser match {
+      case Some( user ) =>
+        user.loggedIn = true
+        session.user = user
+        true
 
-        var user = { 
-          if ( savedCookie != null )
-            Record.byTid( savedCookie, only = Bind.UserEntity ).map( _.asInstanceOf[User] ) getOrElse null
-          else 
-            null
-        }
-
-        if ( user == null )
-          false
-        else {
-          user.loggedIn = true
-          Session().user = user
-          true
-        }
+      case None =>
+        false
       }
     }
   }
   
   def isAdmin    = Session().user.admin
 
-  lazy val ReqLoggedIn = User._ReqLoggedIn
-  lazy val ReqAdmin    = User._ReqAdmin
+  // TODO:  Make this more sophisticated, allow the entire user to be retrieved instead of just the name, and/or maybe something like ProfileItem
+  def nameFor( userId:ObjectId ) = "TODO"
+}
+
+case object UserLoginLock extends WebLock {
+
+  def open( ctx:WebContext, td:ThreadData ):Boolean = {
+    val user = td.user
+    return user != null && user.loggedIn
+  }
+
+  def block( web:WebContext ) {
+    web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
+  }
 }
 
 object User extends UserMeta {
 
-  import net.liftweb.sitemap.Loc._
-
-  private[profile] lazy val _ReqLoggedIn =
-    If( isLoggedIn _,  () => {
-      RedirectResponse("/user/login?l=" + S.uriAndQueryString.open_!.encUrl )
-    } )
-    
-  private[profile] lazy val _ReqAdmin    =
-    If( isAdmin _,     () => RedirectResponse("/user/login") )
+  lazy val db = Mongo.connect.db( B.profileDbName )( "users" )
 }
 
 trait User extends Record {
 
-  var loggedIn = false
+  var loggedIn     = false
   var isLoggingOut = false
-  var admin    = false
+  var admin        = false
 
   def fullName = s( 'firstName ) + " " + s( 'lastName )
 

@@ -18,30 +18,54 @@
 package org.tyranid.text
 
 import java.util.Date
+import java.util.regex.Pattern
 
 import scala.util.matching.Regex
-import scala.xml.{ NodeSeq, Text }
+import scala.xml.{ NodeSeq, Text, Unparsed }
 
 import org.tyranid.Imp._
 import org.tyranid.http.Http
+import org.tyranid.net.Uri
+import org.tyranid.oauth.OAuth
 import org.tyranid.time.{ Time }
 
+object StringImp {
+  val AmpersandPattern = Pattern.compile( "&" )
+  val CommaPattern = Pattern.compile( "," )
+
+  val UnicodeLeftQuote  = 8220
+  val UnicodeRightQuote = 8221
+}
 
 class StringImp( s:String ) {
 	def denull = if ( s == null ) "" else s
 
 	def splitFirst( sep:Char ) = {
 		val idx = s.indexOf( sep )
-		( s.substring( 0, idx ), s.substring( idx+1 ) )
+    if ( idx != -1 )
+      ( s.substring( 0, idx ), s.substring( idx+1 ) )
+    else
+      ( s, null )
 	}
 
+  /*
+   * Faster than s.split( "&" )
+   */
+  def splitAmp = StringImp.AmpersandPattern.split( s )
+  def splitComma = StringImp.CommaPattern.split( s )
 
-	/**
-	 * Named this way to be similar to Lift's "encJs" method on Strings.
-	 */
+  def asUrl =
+    if ( s.isBlank || s.startsWith( "https://" ) || s.startsWith( "http://" ) ) s
+    else                                                                        "http://" + s
+
 	def encUrl = java.net.URLEncoder.encode( s, "UTF-8" ) 
 	def decUrl = java.net.URLDecoder.decode( s, "UTF-8" )
   //def decUrl = new org.apache.commons.codec.net.URLCodec( "UTF-8" ).decode( s )
+
+	def encOAuthUrl = OAuth.encOAuthUrl( s )
+	def decOAuthUrl = OAuth.decOAuthUrl( s )
+
+  def toPatternI = Pattern.compile( s, Pattern.CASE_INSENSITIVE )
 
   def encJson = {
     val sb = new StringBuilder
@@ -55,13 +79,48 @@ class StringImp( s:String ) {
       case '\r' => sb ++= "\\r"
       case '\t' => sb ++= "\\t"
       case '\\' => sb ++= "\\"
-      case '"'  => sb ++= "\""
+      case '"'  => sb ++= "\\\""
       case ch   => sb += ch
       }
     }
 
     sb.toString
   }
+  
+  def encUnicode:String = {
+
+    for ( i <- 0 until s.length ) {
+      Character.codePointAt( s, i ) match {
+      case StringImp.UnicodeLeftQuote | StringImp.UnicodeRightQuote =>
+        val sb = new StringBuilder( s.substring( 0, i ) )
+
+        for ( j <- i until s.length ) {
+          val ch = s.charAt( j )
+
+          Character.codePointAt( s, j ) match {
+          case StringImp.UnicodeLeftQuote | StringImp.UnicodeRightQuote =>
+            sb ++= "&#" ++= Character.codePointAt( s, j ).toString += ';'
+
+          case _ =>
+            sb += ch
+          }
+        }
+
+        return sb.toString
+
+      case _ =>
+      }
+    }
+
+    s
+  }
+
+  def encRegex = s.replace( ".", "\\." ).replace( "@", "\\@" ).replace( "+", "\\+" )
+
+  def toUrl = new java.net.URL( Uri.completeUri( s ) )
+
+  def toHtmlPreserveWhitespace:NodeSeq =
+    s.replace( "\n \n", "\n\n" ).split( "\n\n" ).map( para => <p>{ Unparsed( para.replace( "\n", "<br/>" ) ) }</p> ).toSeq
 
 	def isBlank  = ( s == null || s.length == 0 )
 	def notBlank = ( s != null && s.length >  0 )
@@ -140,9 +199,11 @@ class StringImp( s:String ) {
 
   def toNodeSeq = if ( s != null ) Text( s ) else NodeSeq.Empty
 
-  def toLiftJson = _root_.net.liftweb.json.JsonParser.parse( s )
-
   def toJson = org.tyranid.json.Json.parse( s )
+
+  def parseJson = org.tyranid.json.JsonDecoder( s )
+  def parseJsonObject = parseJson.as[ObjectMap]
+  //def parseJsonArray  = parseJson.as[ // TODO ]
 
   def matches( r:Regex ) = r.pattern.matcher( s ).matches
 
@@ -187,6 +248,7 @@ class StringImp( s:String ) {
 	def toLaxBoolean =
 		lowerWord match {
 		case ""
+       | "0"
 	     | "n" | "no"
 		   | "f" | "false"
 			 | "off"         => false
@@ -206,8 +268,16 @@ class StringImp( s:String ) {
         0
       }
 
-  def toLaxDouble = if ( s.isBlank ) 0
-                    else             s.replaceAll( ",", "" ).replaceAll( " ", "" ).toDouble
+  def toLaxDouble = 
+    if ( s.isBlank )
+      0
+    else
+      try {
+        s.replaceAll( ",", "" ).replaceAll( " ", "" ).toDouble
+      } catch {
+      case e:NumberFormatException =>
+        0
+      }
 
   def toLaxLong =
     if ( s.isBlank )
@@ -357,8 +427,13 @@ class StringImp( s:String ) {
    * * *   HTTP / URLs
    */
 
-  def    GET( query:Map[String,String] = null )                       = Http.   GET( s, query = query )
-  def   POST( form:Map[String,String] = null, content:String = null ) = Http.  POST( s, content = content, form = form )
-  def DELETE( query:Map[String,String] = null )                       = Http.DELETE( s, query = query )
+  def GET( query:collection.Map[String,String] = null, headers:collection.Map[String,String] = null ) =
+    Http.GET( s, query = query, headers )
+
+  def POST( form:collection.Map[String,String] = null, content:String = null, contentType:String = null, headers:collection.Map[String,String] = null ) =
+    Http.POST( s, content, form, contentType, headers )
+
+  def DELETE( query:collection.Map[String,String] = null ) =
+    Http.DELETE( s, query = query )
 }
 

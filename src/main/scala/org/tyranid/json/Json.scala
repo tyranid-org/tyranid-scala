@@ -23,6 +23,7 @@ import org.codehaus.jackson.JsonNode
 import org.codehaus.jackson.node.{ ArrayNode, JsonNodeFactory, MissingNode, ObjectNode }
 
 import org.tyranid.Imp._
+import org.bson.types.ObjectId
 
 object Jobj {
   def apply = JsonNodeFactory.instance.objectNode
@@ -141,6 +142,7 @@ case class JsonString( root:Any ) {
     case d:java.lang.Double  => sb ++= d.toString
     case l:java.lang.Long    => sb ++= l.toString
     case f:java.lang.Float   => sb ++= f.toString
+    case oid:ObjectId        => sb += '"' ++= oid.toString += '"'
 	case u => println( "Don't know how to turn " + u + " into JSON" ); sb ++= "\"\"" 
     }
 }

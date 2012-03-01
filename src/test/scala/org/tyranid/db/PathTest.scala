@@ -88,6 +88,25 @@ class PathSuite extends FunSuite {
     assert( diff.bs( 0 ).value === 2 )
   }
 
+  test( "arrayDiff" ) {
+
+    val a = Widget.make
+    a( 'name ) = "test"
+    a( 'prices ) = Mlist( Mobj( "price" -> 1.0 ), Mobj( "price" -> 2.0 ) )
+
+    val b = Widget.make
+    b( 'name ) = "test"
+    b( 'prices ) = Mlist( Mobj( "price" -> 3.0 ), Mobj( "price" -> 2.0 ) )
+
+    var diff = Path.diff( a, b )
+
+    assert( diff.as.size === 0 )
+    assert( diff.bs.size === 0 )
+    assert( diff.diffs.size === 1 )
+    assert( diff.diffs( 0 ).a === 1 )
+    assert( diff.diffs( 0 ).b === 3 )
+  }
+
   test( "pathNames" ) {
     val view = Widget.makeView
     val paths = Array(
@@ -134,6 +153,19 @@ class PathSuite extends FunSuite {
     assert( Path.parse( v, "name"        ).get( obj ) == "test" )
     assert( Path.parse( v, "dims.height" ).get( obj ) == 20 )
     assert( Path.parse( v, "tags.0"      ).get( obj ) == "acme" )
+  }
+
+  test( "display" ) {
+
+    val obj = Widget.make
+    val v = obj.view
+
+    obj( 'cert ) = Certification.CertifiedId
+
+    val pvs = Path.flatten( obj )
+
+    assert( pvs.size === 1 )
+    assert( pvs( 0 ).displayValue === "Certified" )
   }
 }
 

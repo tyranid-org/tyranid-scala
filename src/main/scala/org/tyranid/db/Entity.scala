@@ -39,8 +39,13 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   var label:String = name.camelCaseToSpaceUpper
   var help:NodeSeq = NodeSeq.Empty
   var required:Boolean = false
+  var internal:Boolean = false
   var search:Searchable = NoSearch
 
+  
+  override def toString = entity.name + "." + name
+
+  def see( v:Any ) = domain.see( v )
 
   /**
    * Indicates whether this va is persisted in the database or is just used as a temporary form field.
@@ -61,6 +66,9 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
     case "label"     => isLabel = true
     case "required"  => required = true; localValidations ::= ( _.required )
     case "temporary" => temporary = true
+
+    // for example, "aid" is internal because it is not exposed to the end-user
+    case "internal"  => internal = true
     }
 
     this
@@ -72,6 +80,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   def is( anno:AttributeAnnotation ) = annotations ::= anno
 
   def annotated[ T <: AttributeAnnotation :Manifest ] = annotations.findOf[T]
+
 
 
 	var isKey = false
@@ -132,7 +141,7 @@ trait Entity extends Domain with DbItem {
       attribs.find( _.name == name ).get
     } catch {
       case e:java.util.NoSuchElementException =>
-        throw new ModelException( "Could not find attribute " + name + " in entity " + this.name )
+        throw new MissingAttributeException( "Could not find attribute " + name + " in entity " + this.name )
     }
 
 	def attByDbName( dbName:String ) = attribs.find( _.dbName == dbName ).get
@@ -168,6 +177,8 @@ trait Entity extends Domain with DbItem {
    * * *  Records
    */
 
+  def records:Iterable[Record] = Nil
+  
   def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException // ... yet
 
   def save( r:Record ) {

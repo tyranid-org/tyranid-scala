@@ -39,7 +39,18 @@ case class RamEntity( tid:String ) extends Entity {
     v
   }
 
-  def makeView:View = throw new UnsupportedOperationException
+  lazy val makeView:View = {
+    val v = new TupleView
+
+    val len = attribs.size
+    val vas = new Array[ViewAttribute]( len )
+
+    for ( i <- 0 until len )
+      vas( i ) = new ViewAttribute( v, attribs( i ), i )
+
+    v.leaves = vas
+    v
+  }
 
 	def create {}
 	def drop   { /* TODO */ }
@@ -56,7 +67,10 @@ case class RamEntity( tid:String ) extends Entity {
     case id     => id.toString
     }
 
+  override def records = staticRecords
   override def idLabels:Seq[(AnyRef,String)] = staticRecords.map( _.idLabel )
+
+  def byId( id:Long ) = staticIdIndex.get( id )
 }
 
 

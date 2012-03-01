@@ -15,7 +15,7 @@
  *
  */
 
-package org.tyranid.locale.db
+package org.tyranid.locale
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbInt, DbChar, DbLink, Record }
@@ -29,13 +29,14 @@ object Region extends RamEntity( tid = "a01t" ) {
   "country" is DbLink(Country) ;
   "abbr"    is DbChar(2)       ; 
 
-  def idForAbbr( s:String ):Int = {
+  def idForAbbr( code:String ):Int = {
+    val s = code.toUpperCase
     val abbrIdx = staticView( 'abbr ).index
   
     staticRecords.find( _( abbrIdx ) == s ).flatten( _.id.asInstanceOf[Int], 0 )
   }
 
-  def codeForId( id:Int ) = staticIdIndex( id ).s( 'abbr )
+  def codeForId( id:Int ) = staticIdIndex.get( id ).flatten( _.s( 'abbr ), "" )
   
   def regionsForCountry( cid:Int ):Seq[Record] = {
     val countryIdx = staticView( 'country ).index
@@ -119,7 +120,6 @@ object Region extends RamEntity( tid = "a01t" ) {
   s(   59,   "Puerto Rico",                                "43",     4306,     "PR" )
   s(   60,   "Palau",                                      "70",     4306,     "PW" )
   s(   61,   "Virgin Islands",                             "52",     4306,     "VI" )
-  /*
   s(   62,   "Canillo",                                    "02",     4077 )
   s(   63,   "Encamp",                                     "03",     4077 )
   s(   64,   "La Massana",                                 "04",     4077 )
@@ -4312,7 +4312,6 @@ object Region extends RamEntity( tid = "a01t" ) {
   s(   4536, "Boqueron",                                   "24",     4261 )
   s(   4537, "Negros Occidental",                          "45",     4252 )
   s(   4538, "Liban-Sud",                                  "02",     4203 )
-  */
   }
 }
 
@@ -4321,7 +4320,10 @@ object Country extends RamEntity( tid = "a02t" ) {
   "name"   is DbChar(64) is 'label;
   "code"   is DbChar(4)  ; 
 
-  def idForCode( s:String ):Int = {
+  def US = 4306
+    
+  def idForCode( code:String ):Int = {
+    val s = code.toUpperCase
     val codeIdx = staticView( 'code ).index
     
     staticRecords.find( _( codeIdx ) == s ).flatten( _.id.asInstanceOf[Int], 0 )

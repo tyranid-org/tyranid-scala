@@ -40,6 +40,8 @@ class Tuple( val view:TupleView ) extends Record {
   // TODO:  need to clean up id/_id code
   override def id = apply( "id" )
 
+  def keys = view.leaves.map( _.name )
+
   val parent = null
 
 	val values = new Array[AnyRef]( view.leafCount )
@@ -69,7 +71,7 @@ class Tuple( val view:TupleView ) extends Record {
 		sb.toString
 	}
 
-	def isNew = view.ekeys.indexWhere( va => values( va.index ) == null ) != -1
+	override def isNew = view.ekeys.indexWhere( va => values( va.index ) == null ) != -1
 
   def rec( va:ViewAttribute ):Tuple = throw new UnsupportedOperationException
 }

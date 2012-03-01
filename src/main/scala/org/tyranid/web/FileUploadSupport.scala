@@ -15,25 +15,23 @@ object FileUploadSupport {
   case class BodyParams(fileParams: FileMultiParams, formParams: Map[String, List[String]])
   val BodyParamsKey = "org.tyranid.web.fileupload.bodyParams"
 
-  def checkContext( ctx:WebContext ): WebContext = {
-    val req = ctx.req
-    val res = ctx.res
+  def checkContext( web:WebContext ): WebContext = {
+    val req = web.req
+    val res = web.res
     
-    val req2 =
-      if (ServletFileUpload.isMultipartContent(req)) {
-        val bodyParams = extractMultipartParams(req)
-        var mergedParams = bodyParams.formParams
-        // Add the query string parameters
-        req.getParameterMap.asInstanceOf[JMap[String, Array[String]]] foreach {
-          case (name, values) =>
-            val formValues = mergedParams.getOrElse(name, List.empty)
-            mergedParams += name -> (values.toList ++ formValues)
-        }
-        
-        ctx.copy( req = wrapRequest( req, mergedParams ) )
+    if (ServletFileUpload.isMultipartContent(req)) {
+      val bodyParams = extractMultipartParams(req)
+      var mergedParams = bodyParams.formParams
+      // Add the query string parameters
+      req.getParameterMap.asInstanceOf[JMap[String, Array[String]]] foreach {
+        case (name, values) =>
+          val formValues = mergedParams.getOrElse(name, List.empty)
+          mergedParams += name -> (values.toList ++ formValues)
       }
-    
-      ctx
+      
+      web.copy( req = wrapRequest( req, mergedParams ) )
+    } else
+      web
   }
   
   private def extractMultipartParams( req: HttpServletRequest ): BodyParams =
@@ -78,12 +76,14 @@ object FileUploadSupport {
 
   private def wrapRequest(req: HttpServletRequest, formMap: Map[String, Seq[String]]) =
     new HttpServletRequestWrapper(req) {
-      override def getParameter(name: String) = formMap.get(name) map { _.head } getOrElse null
+      override def getParameter(name: String) = { formMap.get(name) map { _.head } getOrElse null }
       override def getParameterNames = formMap.keysIterator
       override def getParameterValues(name: String) = formMap.get(name) map { _.toArray } getOrElse null
       override def getParameterMap = new JHashMap[String, Array[String]] ++ (formMap transform { (k, v) => v.toArray })
     }
 
+  val maxFileSize = 1024 * 1000 * 1000 * 2 // 2G
+  
   /**
    * Creates a new file upload handler to parse the request.  By default, it
    * creates a `ServletFileUpload` instance with the file item factory 
@@ -93,8 +93,11 @@ object FileUploadSupport {
    *
    * @return a new file upload handler.
    */
-  protected def newServletFileUpload: ServletFileUpload = 
-    new ServletFileUpload(fileItemFactory)
+  protected def newServletFileUpload: ServletFileUpload = { 
+    val sfu = new ServletFileUpload(fileItemFactory)
+    sfu.setSizeMax( maxFileSize )
+    sfu
+  }
 
   /**
    * The file item factory used by the default implementation of 
@@ -104,7 +107,7 @@ object FileUploadSupport {
    * [non-scaladoc] This method predates newServletFileUpload.  If I had it 
    * to do over again, we'd have that instead of this.  Oops.
    */
-  protected def fileItemFactory: FileItemFactory = new DiskFileItemFactory
+  protected def fileItemFactory: FileItemFactory = new DiskFileItemFactory()
 
   /*
   protected def fileMultiParams:FileMultiParams = extractMultipartParams(request).fileParams

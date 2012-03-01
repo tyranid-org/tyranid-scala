@@ -17,13 +17,15 @@
 
 package org.tyranid.db.mongo
 
+import scala.collection.JavaConversions._
+
 import org.bson.BSONObject
 import org.bson.types.ObjectId
+
 import com.mongodb.{ BasicDBList, BasicDBObject, DB, DBCollection, DBCursor, DBObject }
 
 import org.tyranid.Imp._
 import org.tyranid.any.Deep
-import org.tyranid.Bind
 import org.tyranid.bson.{ BsonObject, BsonList }
 
 
@@ -59,6 +61,19 @@ object Imp {
   val $unset       = "$unset"
   val $where       = "$where"
 
+  /*
+  def $newset( vals: ( String, Any )* ):(String,Any) = {
+    val o = new BasicDBObject
+
+    for ( v <- vals )
+      o.put( v._1, v._2 )
+
+    "$set" -> new DBObjectImp( o )
+  }
+  */
+
+  def $push( field:String, value:Any ) = Mobj( "$push" -> Mobj( field -> value ) )
+
 	implicit def mongoImp( mongo:com.mongodb.Mongo ) = new MongoImp( mongo )
 	implicit def dbImp( db:DB )                      = new DBImp( db )
 	implicit def collectionImp( coll:DBCollection )  = new DBCollectionImp( coll )
@@ -88,13 +103,11 @@ object Imp {
   }
 
   object Mongo {
-    lazy val connect = {
-      //println( "CONNECTING USING " + Bind.MongoHost )
-      //new Exception().printStackTrace
-      new com.mongodb.Mongo( Bind.MongoHost )
-    }
+    lazy val connect = new com.mongodb.Mongo( B.mongoHost )
 
-    val EmptyArray = Mlist()
+    object EmptyArray extends BasicDBList {
+      override def put( idx:Int, obj:AnyRef ) = throw new RuntimeException( "modifying immutable empty array" )
+    }
   }
 }
 
@@ -160,12 +173,14 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
 
   def rename( from:String, to:String ) = obj.put( to, obj.removeField( from ) )
 
-  def isNew = !has( "_id" )
+  override def isNew = !has( "_id" )
 
 
   /*
    * * *   BsonObject
    */
+
+  def keys = obj.keySet.toSeq
 
   override def o( key:String ):DBObjectWrap =
     apply( key ) match {
@@ -272,6 +287,7 @@ case class DBListImp( obj:BasicDBList ) extends DBListWrap with Seq[Any] {
 
   def apply( key:String )         = obj.get( key )
   def update( key:String, v:Any ) = obj.put( key, v )
+
 
   /*
    * * *  Helper methods for when the list is a list of DBObjects

@@ -4,11 +4,16 @@ package bootstrap.tyranid
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
-import org.tyranid.Bind
+import org.tyranid.secure.AccessType
+import org.tyranid.session.ThreadData
 import org.tyranid.test.db.{ Session, User }
 
 
 class Boot extends org.tyranid.boot.Bootable {
+  val applicationName = "Tyranid Test Suite"
+  val domain          = "localhost"
+  val systemEmail     = "info@tyranid.org"
+  val alertEmail      = "info@tyranid.org"
 
   val weblets = Nil
 
@@ -18,13 +23,22 @@ class Boot extends org.tyranid.boot.Bootable {
     "sample" -> ( ( xml:NodeSeq ) => <p>Sample</p> ) ::
     Nil
 
+  val comets = Nil
+
+  lazy val userMeta = User
+
+  val version = 1
+
+  def access( thread:ThreadData, accessType:AccessType, ref:AnyRef ) {
+  }
+
   def boot = {
 
     // Mongo
-    Bind.ProfileDbName = "test"
+    profileDbName = "test"
 
-    Bind.NewUser    = () => new User
-    Bind.NewSession = () => new Session
+    newUser    = () => new User
+    newSession = () => new Session
   }
 }
 

@@ -18,19 +18,8 @@
 package org.tyranid.io
 
 import java.io.{ IOException, FileOutputStream, InputStream, OutputStream }
-import java.net.URL
 
-import scala.collection.mutable
-import scala.collection.JavaConversions._
-import scala.xml.NodeSeq
-
-import net.liftweb.http.{ FileParamHolder, SHtml }
-
-import org.tyranid.Bind
 import org.tyranid.Imp._
-import org.tyranid.cloud.aws.{ S3, S3Bucket }
-import org.tyranid.db.{ Domain, Record, Scope }
-import org.tyranid.ui.Field
 
 object IOUtils {
   def transfer( input: InputStream, out: OutputStream ) {

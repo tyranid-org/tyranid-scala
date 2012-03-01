@@ -15,11 +15,15 @@
  *
  */
 
-package org.tyranid.logic
+package org.tyranid.linkedIn
+
+import org.scalatest.FunSuite
+
+import org.tyranid.Imp._
 
 
-class AnyImp[T <: Any]( v:T ) {
+class LinkedInSuite extends FunSuite {
+  org.tyranid.boot.Boot.boot
 
-  def toJsonStr = new org.tyranid.json.JsonString( v ).toString
 }
 

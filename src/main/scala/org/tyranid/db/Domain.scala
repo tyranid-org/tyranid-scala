@@ -19,11 +19,7 @@ package org.tyranid.db
 
 import java.util.Date
 
-import scala.xml.NodeSeq
-
-import net.liftweb.common.Full
-import net.liftweb.http.SHtml
-import net.liftweb.http.SHtml.ElemAttr
+import scala.xml.{ NodeSeq, Unparsed }
 
 import org.tyranid.Imp._
 import org.tyranid.logic.{ Valid, Invalid }
@@ -31,7 +27,6 @@ import org.tyranid.math.Base64
 import org.tyranid.time.{ Time }
 import org.tyranid.ui.Field
 
-import net.liftweb.http.js.JsCmds.{FocusOnLoad}
 
 /*
  * * *   Domains
@@ -52,7 +47,7 @@ trait Domain extends Valid {
 
   def isSet( v:Any ) = v != null
 
-	def see( v:AnyRef ) =
+	def see( v:Any ) =
 		v match {
 		case null => ""
 		case v    => v.toString
@@ -61,21 +56,25 @@ trait Domain extends Valid {
 	def show( s:Scope ) = true
 
   def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq = {
-      var input =
-        SHtml.ajaxText( s.rec s f.va.name, v => { 
-          if ( s.rec( f.va.name ) != v ) {
-            s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) 
-          } }, opts.map( ElemAttr.pairToBasic ):_* )
-        
-    
-      if ( f.focus )
-        FocusOnLoad( input )
-      else 
-        input
-    }
-    
+    val input = Field.text( s, f, opts:_* )
 
+      /*
+        if ( s.rec( f.va.name ) != v ) {
+          s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) 
+        }
+      }, opts.map( ElemAttr.pairToBasic ):_* )
+      */
 
+    if ( f.focus )
+      throw new RuntimeException( "TODO:  handle focus on load" )
+    else 
+      input
+  }
+    
+  def extract( s:Scope, f:Field ) {
+    s.rec( f.va.name ) = T.web.req.s( f.id )
+  }
+    
   /**
    * These are the class(es) that should be added to the input container.
    */
@@ -92,11 +91,10 @@ abstract class DbIntish extends Domain {
 
   override def tid( r:Record, va:ViewAttribute ) = Base64.toString( r i va )
 
-  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxText( s.rec s f.va.name, v => { 
-      if ( s.rec( f.va.name ) != v ) {
-        s.rec( f.va.name ) = v.toLaxInt; f.updateDisplayCmd( s ) 
-      } }, opts.map( ElemAttr.pairToBasic ):_* )
+  override def extract( s:Scope, f:Field ) {
+    s.rec( f.va.name ) = T.web.req.i( f.id )
+  }
+    
 }
 
 object DbInt extends DbIntish {
@@ -162,11 +160,22 @@ case class DbChar( len:Int ) extends LimitedText {
 case class DbLargeChar( len:Int ) extends LimitedText {
 	val sqlName = "CHAR(" + len + ")"
 	
-  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxTextarea( s.rec s f.va.name, v => { 
-      if ( s.rec( f.va.name ) != v ) {
-        s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) 
-      } }, opts.map( ElemAttr.pairToBasic ):_* )
+  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq = {
+    val ta = Field.textArea( s, f, s.rec.s( f.va.name ), opts:_* )
+    
+    if ( f.focus )
+      throw new RuntimeException( "TODO:  handle focus on load" )
+    else 
+      ta
+	}
+	
+  override def inputcClasses = "large"
+
+    
+//    SHtml.ajaxTextarea( s.rec s f.va.name, v => { 
+//      if ( s.rec( f.va.name ) != v ) {
+//        s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) 
+//      } }, opts.map( ElemAttr.pairToBasic ):_* )
 }
 
 case class DbVarChar( len:Int ) extends LimitedText {
@@ -183,10 +192,7 @@ case class DbLowerChar( len:Int ) extends LimitedText {
 object DbPassword extends DbVarChar( 64 ) {
 
   override def ui( s:Scope, f:Field, opts:(String,String)* ) =
-    SHtml.ajaxText( s.rec s f.va.name, v => { 
-      if ( s.rec( f.va.name ) != v ) {
-        s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) 
-      } }, ( opts ++ Seq( "type" -> "password" ) ).map( ElemAttr.pairToBasic ):_* )
+    super.ui( s, f, ( opts ++ Seq( "type" -> "password" ) ):_* )
 
   override def validations =
     ( ( scope:Scope ) => {
@@ -218,7 +224,7 @@ object DbDunsNumber extends DbChar( 11 ) {
   override def inputcClasses = " dunsnumber"
 }
 
-object DbFedEin extends DbChar( 9 ) {
+object DbFedEin extends DbChar( 10 ) {
   override def inputcClasses = " fein"
 }
 
@@ -235,9 +241,13 @@ object DbFedEin extends DbChar( 9 ) {
 object DbBoolean extends Domain {
 	val sqlName = "CHAR(1)"
 	  
-  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxCheckbox( ( s.rec s f.va.name ) == "Y", (v:Boolean) => { if ( v ) s.rec( f.va.name ) = "Y" else s.rec( f.va.name ) = "N"; f.updateDisplayCmd( s ) }, opts.map( ElemAttr.pairToBasic ):_* )
+  override def ui( s:Scope, f:Field, opts:(String,String)* ) =
+    Field.checkbox( s, f, s.rec.b( f.va.name ), opts:_* )
     
+  override def extract( s:Scope, f:Field ) {
+    s.rec( f.va.name ) = T.web.req.b( f.id )
+  }
+
   override def inputcClasses = " checkbox"
 }
 
@@ -273,15 +283,17 @@ trait DbDateLike extends Domain {
     } ::
     super.validations
 
-  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxText(
-      ( s.rec t f.va.name ).toDateStr,
-      v => { 
-        if ( s.rec( f.va.name ) != v ) {
-          s.rec( f.va.name ) = v.toLaxDate; f.updateDisplayCmd( s ) 
-        }
-      },
-      opts.map( ElemAttr.pairToBasic ):_* )
+  override def ui( s:Scope, f:Field, opts:(String,String)* ) = {
+    val input = Field.input( s, f, s.rec.t( f.va.name ).toDateStr, opts:_* )
+    if ( f.focus )
+      throw new RuntimeException( "TODO:  handle focus on load" )
+    else 
+      input
+  }
+
+  override def extract( s:Scope, f:Field ) {
+    s.rec( f.va.name ) = T.web.req.s( f.id ).toLaxDate
+  }
 }
 
 object DbDate extends DbDateLike
@@ -291,15 +303,17 @@ object DbDateTime extends DbDateLike {
 
   override def dateOnly = false
 
-  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    SHtml.ajaxText(
-      ( s.rec t f.va.name ).toDateTimeStr,
-      v => { 
-        if ( s.rec( f.va.name ) != v ) {
-          s.rec( f.va.name ) = v.toLaxDateTime; f.updateDisplayCmd( s ) 
-        }
-      },
-      opts.map( ElemAttr.pairToBasic ):_* )
+  override def ui( s:Scope, f:Field, opts:(String,String)* ) = {
+    val input = Field.input( s, f, s.rec.t( f.va.name ).toDateTimeStr, opts:_* )
+    if ( f.focus )
+      throw new RuntimeException( "TODO:  handle focus on load" )
+    else 
+      input
+  }
+
+  override def extract( s:Scope, f:Field ) {
+    s.rec( f.va.name ) = T.web.req.s( f.id ).toLaxDateTime
+  }
 }
 
 
@@ -330,22 +344,55 @@ case class DbLink( toEntity:Entity ) extends Domain {
 		                case IdType.ID_COMPLEX => throw new ModelException( toEntity.name + " has a complex ID and cannot be linked to." )
 										}
 
-  override def ui( s:Scope, f:Field, opts:(String,String)* ) =
-    SHtml.ajaxSelect( ( "" -> "-Please Select-" ) +: toEntity.idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq,
-                      Full( s.rec s f.va ),
-                      v => {
-                        toEntity.idType match {
-                        case IdType.ID_32 => s.rec( f.va ) = v.toLaxInt
-                        case IdType.ID_64 => s.rec( f.va ) = v.toLaxLong
-                        case _            => s.rec( f.va ) = v
-                        }
-                        f.updateDisplayCmd( s )
-                      },
-                      opts.map( ElemAttr.pairToBasic ):_* )
+  override def ui( s:Scope, f:Field, opts:(String,String)* ) = {
+    
+    /*
+     * a.  model-based linking
+     * 
+     *     see if there is anything else on the form that links to something in toEntity
+     * 
+     *     for example:  if toEntity == region, and region has a country -> Country,
+     *                   and there is a country -> Country in f.form, restrict the search to that
+     * 
+     * b.  Field.filter: ( rec:Record ) => Boolean
+     * 
+     * 
+     * 
+     * 
+     */
+
+    println( f.va.name )
+    val idLabels = f.filter match {
+    case Some( filter ) =>
+      toEntity.records.filter( filter ).map( _.idLabel )
+    case None =>
+      toEntity.idLabels
+    }
+      
+    val values = idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq
+    
+    Field.select(
+      s, f, s.rec s f.va,
+      ( "" -> "-Please Select-" ) +: values,
+      opts:_* )
+  }
+
+  override def extract( s:Scope, f:Field ) {
+    val v = T.web.req.s( f.id )
+
+    if ( v.isBlank )
+      s.rec( f.va ) = null
+    else
+      toEntity.idType match {
+      case IdType.ID_32 => s.rec( f.va ) = v.toLaxInt
+      case IdType.ID_64 => s.rec( f.va ) = v.toLaxLong
+      case _            => s.rec( f.va ) = v
+      }
+  }
 
   override def inputcClasses = " select"
 
-	override def see( v:AnyRef ) =
+	override def see( v:Any ) =
 		v match {
 		case null => ""
 		case n:Number => toEntity.labelFor( n )

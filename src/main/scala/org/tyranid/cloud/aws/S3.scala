@@ -23,21 +23,20 @@ import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.{ AmazonS3Exception, GroupGrantee, ObjectMetadata, Permission, S3Object, GetObjectRequest }
 
 import org.tyranid.io.IOUtils
-import org.tyranid.Bind
 import org.tyranid.Imp._
 
 case class S3Bucket( prefix:String, cfDistributionId:String = "", cfDomain:String = "" ) {
-  val name = prefix + Bind.EnvSuffix + Bind.BucketSuffix
+  val name = prefix + B.envSuffix + B.bucketSuffix
 
   def url( path:String ) =
-    if ( cfDomain.isBlank || Bind.EnvSuffix.notBlank )
+    if ( cfDomain.isBlank || B.envSuffix.notBlank )
       "https://s3.amazonaws.com/" + name + "/" + path
     else
       "https://" + cfDomain + ".cloudfront.net/" + path
 }
 
 object S3 {
-  private val s3 = new AmazonS3Client( Bind.AwsCredentials )
+  private val s3 = new AmazonS3Client( B.awsCredentials )
 
   def write( bucket:S3Bucket, key:String, file:java.io.File ) = s3.putObject( bucket.name, key, file )
   
@@ -82,7 +81,7 @@ object S3 {
       s3.setObjectAcl( bucket.name, key, acl )
     } catch {
       case e:AmazonS3Exception =>
-        log( "S3 Exception", e )
+        log( Log.StackTrace, "m" -> "S3 Exception", "ex" -> e )
     }
   }
   
@@ -107,11 +106,8 @@ object S3 {
 		  f
       }
 	} catch {
-      case e: AmazonS3Exception => {
-        e.printStackTrace()
-        println( e.getMessage() )
-      }
-      
+    case e: AmazonS3Exception =>
+      e.log
       null
     }
   }
@@ -124,11 +120,8 @@ object S3 {
         obj.getObjectContent()
 
 	} catch {
-      case e: AmazonS3Exception => {
-        e.printStackTrace()
-        println( e.getMessage() )
-      }
-      
+    case e: AmazonS3Exception =>
+      e.log
       null
     }
   }

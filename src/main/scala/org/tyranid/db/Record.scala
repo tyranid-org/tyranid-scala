@@ -36,9 +36,9 @@ import org.tyranid.ui.{ UiObj }
  * * *  ViewAttribute
  */
 
-class ViewAttribute( val view:View,
-                     val att:Attribute,
-                     val index:Int ) extends Valid with Path with PathNode {
+case class ViewAttribute( val view:View,
+                          val att:Attribute,
+                          val index:Int ) extends Valid with Path with PathNode {
 
   def temporary = att.temporary
 
@@ -46,6 +46,7 @@ class ViewAttribute( val view:View,
   override def label = att.label
 
   def label( r:Record, opts:(String,String)* ):NodeSeq = <label for={ name }>{ label }</label>
+  def see( v:Any ) = att.see( v )
 
   def toView = View.from( att.domain )
 
@@ -65,7 +66,7 @@ class ViewAttribute( val view:View,
   override def validations = att.validations
 
   def invalids( scope:Scope ) = {
-    require( scope.va.get == this )
+    require( scope.va == None || scope.va.get == this )
 
     ( for ( invalidOpt <- validations.map( validator => validator( scope ) );
             invalid <- invalidOpt )
@@ -95,6 +96,8 @@ trait View {
   def ui( name:String, ui: => UiObj ) = synchronized {
     uis.getOrElseUpdate( name, ui.bind( this ) )
   }
+
+  def ui( name:String ) = synchronized { uis( name ) }
 
   def path( path:String ):Path = Path.parse( this, path )
 
@@ -258,16 +261,17 @@ trait Record extends Valid with BsonObject {
 
   var extraVaValidations:List[ ( ViewAttribute, ( Scope ) => Option[Invalid] ) ] = Nil
 
-  def invalids( scope:Scope ):Iterable[Invalid] =
-    ( for ( va <- view.vas;
+  def invalids( scope:Scope ):Iterable[Invalid] = invalids( scope, view.vas )
+
+  def invalids( scope:Scope, vas:Iterable[ViewAttribute] ):Iterable[Invalid] =
+    ( for ( va <- vas;
             vaScope = scope.at( va );
-            invalidOpt <- va.validations.map( validator => validator( vaScope ) );
-            invalid <- invalidOpt )
+            invalid <- va.invalids( vaScope ) )
         yield invalid ) ++
-    ( for ( va <- view.vas;
+    ( for ( va <- vas;
             if va.att.domain.isInstanceOf[Entity];
-            r = rec( va );
-            invalid <- r.invalids( scope.at( va ) ) )
+            vaScope = scope.at( va );
+            invalid <- vaScope.rec.invalids( vaScope ) )
         yield invalid )
 
 
@@ -314,12 +318,12 @@ case class Scope( rec:Record,
     var r = rec
     var pi = 0
     while ( pi < plen ) {
-      val va = path.pathAt( pi ).asInstanceOf[ViewAttribute]
+      val va = path.pathAt( pi ).as[ViewAttribute]
       r = r.rec( va )
       pi += 1
     }
 
-    val va = path.pathAt( pi ).asInstanceOf[ViewAttribute]
+    val va = path.pathAt( pi ).as[ViewAttribute]
 
     if ( va.att.domain.isInstanceOf[Entity] )
       copy( rec = r.rec( va ), path = None )
@@ -331,7 +335,18 @@ case class Scope( rec:Record,
 
   def required = rec.hasSubmitted |* s.filter( _.isBlank ).map( s => Invalid( this, "Please fill in." ) )
 
-  def draw( name:String, ui: => UiObj ) = rec.view.ui( name, ui ).draw( this )
+  def draw    ( ui:UiObj ) = ui.draw( this )
+
+  def submit( rec:Record, ui:UiObj ) = {
+    rec.submit
+    ui.extract( this )
+
+    for ( f <- ui.fields;
+          path = f.path;
+          pathScope = this.at( path );
+          invalid <- path.leaf.invalids( pathScope ) )
+      yield invalid
+  }
 }
 
 

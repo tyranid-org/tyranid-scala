@@ -15,23 +15,12 @@
  *
  */
 
-package org.tyranid.logic
+package org.tyranid.math
 
+import org.tyranid.Imp._
 
-class AnyRefImp[T <: AnyRef]( ref:T ) {
+case class IntImp( i:Int ) {
 
-  /**
-   * Elvis operator.
-   */
-  def ?|( default: => T ):T =
-    if ( ref != null ) ref
-    else               default
-
-  /**
-   * null-safe toString().  Need a better name.
-   */
-  def safeString:String =
-    if ( ref != null ) ref.toString
-    else               ""
+  def box = Int.box( i )
 }
 

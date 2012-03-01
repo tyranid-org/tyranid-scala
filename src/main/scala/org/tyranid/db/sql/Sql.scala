@@ -19,7 +19,7 @@ package org.tyranid.db.sql
 
 import java.sql.{ Connection, DriverManager, SQLException }
 
-import org.tyranid.Bind
+import org.tyranid.Imp._
 import org.tyranid.db.Entity
 
 
@@ -38,9 +38,9 @@ object SqlPool {
   	
   private def createOne:Option[Connection] =
     try {
-	    Class.forName( Bind.DbDriver )
+	    Class.forName( B.dbDriver )
 
-			Some( DriverManager.getConnection( Bind.DbUrl, Bind.DbUser, Bind.DbPw ) )
+			Some( DriverManager.getConnection( B.dbUrl, B.dbUser, B.dbPw ) )
 	  } catch {
 	    case e: Exception => e.printStackTrace; None
 	  }

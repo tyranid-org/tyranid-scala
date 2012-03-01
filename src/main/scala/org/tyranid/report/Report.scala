@@ -20,21 +20,16 @@ package org.tyranid.report
 import scala.collection.mutable
 import scala.xml.{ NodeSeq, Text, Unparsed }
 
+import org.bson.types.ObjectId
 import com.mongodb.DBObject
-
-import net.liftweb.common.{ Full, Empty }
-import net.liftweb.http.SHtml
-import net.liftweb.http.js.JsCmd
-import net.liftweb.http.js.JsCmds
-import net.liftweb.http.js.JsCmds.{ Noop, SetHtml }
-import net.liftweb.http.js.JE.JsRaw
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ Entity, Path, Record, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.session.Session
-import org.tyranid.ui.{ Button, Glyph }
+import org.tyranid.ui.{ Button, Checkbox, Glyph, Input, Select }
+import org.tyranid.web.{ Weblet, WebContext }
 
 
 case class Grouping( entity:MongoEntity, keyName:String, value: () => AnyRef ) {
@@ -42,9 +37,16 @@ case class Grouping( entity:MongoEntity, keyName:String, value: () => AnyRef ) {
   def list = entity.db.find( Mobj( keyName -> value() ) ).toSeq
 }
 
+object Query {
+
+  val byName = mutable.Map[String,Query]()
+
+}
+
 trait Query {
 
   val name:String
+
   def label = name.camelCaseToSpaceUpper
 
   val allFields:Seq[Field]
@@ -56,15 +58,16 @@ trait Query {
   def run( run:Run ):Iterable[Record]
 
   def newReport = {
-    var r = new Report
+    var r = Report( this )
     r.columns ++= defaultFields
     r.hidden ++= allFields.filter( p => !r.columns.contains( p ) ).sortBy( _.label )
     r
   }
-
+  
   def by( name:String ) = allFields.find( _.name == name ).get
 
   val searchScreen:String = null
+  val tableGridStyle:String = null
 
   def selectable = grouping != null
 
@@ -74,13 +77,23 @@ trait Query {
   //)
 
   val grouping:Grouping = null
+
+  lazy val init = {
+    Query.byName( name ) = this
+  }
+
+  def draw = {
+    Query.synchronized { init }
+    Session().reportFor( this.name ).draw
+  }
+  
+  def extraActions: NodeSeq = Text("")
 }
 
 trait Field {
   def section = "Standard"
 
   def name:String
-
   def label = name.camelCaseToSpaceUpper
 
   def header( run:Run ) = <th id={ name } class={ if ( run.report.selectedColumns( name ) ) "colh hi" else "colh" } style={ headerStyle }><div><span>{ headerCell }</span></div></th>
@@ -89,7 +102,6 @@ trait Field {
 
   def cellClass:String = null
   def cell( run:Run, rec:Record ):NodeSeq
-
 }
 
 trait PathField extends Field {
@@ -99,13 +111,22 @@ trait PathField extends Field {
 }
 
 // TODO:  merge this functionality with Domain
-case class StringField( sec:String, path:Path, l:String = null ) extends PathField {
+case class StringField( sec:String, path:Path, l:String = null, cellCls:String = null ) extends PathField {
+
+  override def section = sec
+  override def cellClass = cellCls
+  override def label = if ( l.notBlank ) l else path.label
+
+  def cell( run:Run, r:Record ) = Text( path s r )
+}
+
+case class MultilineStringField( sec:String, path:Path, l:String = null ) extends PathField {
 
   override def section = sec
 
   override def label = if ( l.notBlank ) l else path.label
 
-  def cell( run:Run, r:Record ) = Text( path s r )
+  def cell( run:Run, r:Record ) = Unparsed( path.s( r ).replace( "\n", "<br/>" ) )
 }
 
 case class BooleanField( sec:String, path:Path, l:String = null ) extends PathField {
@@ -138,6 +159,45 @@ case class DateField( sec:String, path:Path, l:String = null ) extends PathField
   }
 }
 
+case class DateTimeField( sec:String, path:Path, l:String = null ) extends PathField {
+
+  override def section = sec
+
+  override def label = if ( l.notBlank ) l else path.label
+
+  def cell( run:Run, r:Record ) = {
+    val date = path.t( r )
+    Unparsed( "<nobr>" + ( if ( date != null ) date.toDateTimeStr else "" ) + "</nobr>" )
+  }
+}
+
+case class LinkField( sec:String, path:Path, l:String = null ) extends PathField {
+
+  override def section = sec
+
+  override def label = if ( l.notBlank ) l else path.label
+
+  def cell( run:Run, r:Record ) = {
+    val base = path.s( r )
+
+    try {
+      <a href={ base.toUrl.toString }>{ base }</a>
+    } catch {
+    case e:Exception =>
+      Text( base )
+    }
+  }
+}
+
+case class ThumbnailField( sec:String, path:Path, l:String = null ) extends PathField {
+
+  override def section = sec
+
+  override def label = if ( l.notBlank ) l else path.label
+
+  def cell( run:Run, r:Record ) = <img src={ path s r } style="width:50px; height:50px;"/>
+}
+
 trait MongoQuery extends Query {
   val entity:MongoEntity
 
@@ -148,9 +208,11 @@ trait MongoQuery extends Query {
 
     val report = run.report
 
-    run.groupFilter match {
-    case Some( gf ) => report.search( "_id" ) = Mobj( $in -> gf.a_?( 'ids ) )
-    case None       => report.search.remove( "_id" )
+    if ( grouping != null ) {
+      run.groupFilter match {
+      case Some( gf ) => report.search( "_id" ) = Mobj( $in -> gf.a_?( 'ids ) )
+      case None       => report.search.remove( "_id" )
+      }
     }
 
     report.search
@@ -168,18 +230,27 @@ trait MongoQuery extends Query {
     part.toIterable.map( o => entity.apply( o ) )
   }
 
-  def date( path:String, sec:String = "Standard", label:String = null ) = DateField( sec, view.path( path ), l = label )
-  def boolean( path:String, sec:String = "Standard", label:String = null ) = BooleanField( sec, view.path( path ), l = label )
-  def exists( path:String, sec:String = "Standard", label:String = null ) = ExistsField( sec, view.path( path ), l = label )
-  def string( path:String, sec:String = "Standard", label:String = null ) = StringField( sec, view.path( path ), l = label )
+  def date( path:String, sec:String = "Standard", label:String = null )        = DateField( sec, view.path( path ), l = label )
+  def dateTime( path:String, sec:String = "Standard", label:String = null )    = DateTimeField( sec, view.path( path ), l = label )
+  def boolean( path:String, sec:String = "Standard", label:String = null )     = BooleanField( sec, view.path( path ), l = label )
+  def exists( path:String, sec:String = "Standard", label:String = null )      = ExistsField( sec, view.path( path ), l = label )
+  def string( path:String, sec:String = "Standard", label:String = null, cellClass:String = null )      = StringField( sec, view.path( path ), l = label, cellCls = cellClass )
+  def multistring( path:String, sec:String = "Standard", label:String = null ) = MultilineStringField( sec, view.path( path ), l = label )
+  def link( path:String, sec:String = "Standard", label:String = null )        = LinkField( sec, view.path( path ), l = label )
+  def thumbnail( path:String, sec:String = "Standard", label:String = null )   = ThumbnailField( sec, view.path( path ), l = label )
 }
 
-class Report {
+case class Report( query:Query ) {
+
+  val id = "_report" // TODO:  modify this by session
 
   @volatile var name:String = _
 
   // TODO:  make this database-agnostic
   val search        = Mobj()
+  val searchProps   = mutable.Map[String,String]()
+
+
   val parameters    = Mobj()
   @volatile var sort:DBObject = null
   @volatile var offset:Int = 0
@@ -194,7 +265,7 @@ class Report {
   val columns = mutable.ArrayBuffer[Field]()
 
   val selectedColumns = mutable.Set[String]()
-  val selectedRows = mutable.Set[AnyRef]()
+  val selectedIds = mutable.Set[AnyRef]()
 
   def remove( remove:Field ) = {
     columns -= remove
@@ -216,340 +287,178 @@ class Report {
 
   def label( title:String, attr:String ) = <label for={ attr }>{ title }</label>
 
-  def bool( title:String, attr:String ) =
-    SHtml.checkbox(
-      search.b( attr ),
-      ( v:Boolean ) => {
-        if ( v ) search( attr ) = v
-        else     search.remove( attr )
-      } ) ++ label( title, attr )
+  def extract = {
+    val r = T.web.req
 
-  def boolExists( title:String, attr:String ) =
-    SHtml.checkbox(
-      search.s( attr ).notBlank,
-      ( v:Boolean ) => {
-        if ( v ) search( attr ) = Mobj( $gt -> "" )
-        else     search.remove( attr )
-      } ) ++ label( title, attr )
+    for ( n <- searchProps.keys ) {
+      searchProps( n ) match {
+      case "bool" =>
+        if ( r.b( n ) ) search( n ) = true
+        else            search.remove( n )
 
-  def textUpper( attr:String, width:Int ) =
-    SHtml.text( search.s( attr ),
-    ( v:String ) => {
-      if ( v.notBlank ) search( attr ) = v.toUpperCase
-      else              search.remove( attr )
-    },
-    "style" -> ( "width:" + width.toString + "px;" ) )
+      case "boolExists" =>
+        if ( r.b( n ) ) search( n ) = Mobj( $gt -> "" )
+        else            search.remove( n )
 
-  def textUpperSubst( attr:String, width:Int ) =
-    SHtml.text(
-      { val regex = search.o( attr )
-        regex != null |* regex.s( $regex )
-      },
-      ( v:String ) => {
-        if ( v.notBlank ) search( attr ) = Mobj( $regex -> v.toUpperCase )
-        else              search.remove( attr )
-      },
-      "style" -> ( "width:" + width.toString + "px;" ) )
+      case "text" =>
+        val v = r.s( n )
 
-  def intGte( attr:String ) =
-    SHtml.text(
-      { val o = search.o( attr )
+        if ( v.notBlank ) search( n ) = v
+        else              search.remove( n )
+        
+      case "textParam" =>
+        val v = r.s( n )
 
-        if ( o == null ) ""
-        else             o.i( $gte ).toString },
-      ( v:String ) => {
-        val i = v.toLaxInt
+        if ( v.notBlank ) parameters( n ) = v
+        else              parameters.remove( n )
+        
+      case "textUpper" =>
+        val v = r.s( n )
 
-        if ( i == 0 ) search.remove( attr )
-        else          search( attr ) = Mobj( $gte -> i ) },
-      "style" -> "width:80px;" )
-}
+        if ( v.notBlank ) search( n ) = v.toUpperCase
+        else              search.remove( n )
+        
+      case "textUpperSubst" =>
+        val v = r.s( n )
+        if ( v.notBlank ) search( n ) = Mobj( $regex -> v.toUpperCase )
+        else              search.remove( n )
 
-case class Run( report:Report, grid:Grid ) {
+      case "intGte" =>
+        val i = r.i( n )
 
-  def query = grid.query
-
-  val cache = mutable.HashMap[String,AnyRef]()
-
-  val header =
-    <tr>
-     { query.selectable |* <td></td> }
-     { report.columns.map( _.header( this ) ) }
-    </tr>
-
-  def row( rec:Record ) = {
-    // TODO:  get IDs on these ...{ report.columns.map( p => <th class="colh" id={ p.name_ }>{ col( p ) }</th> ) }
-    <tr class={ grid.rowClass }>
-     { query.selectable |* 
-        <td>{ SHtml.ajaxCheckbox( report.selectedRows.contains( rec.id ), (v:Boolean) => { report.selectedRows( rec.id ) = v; Noop } ) }</td> }
-     {
-      for ( f <- report.columns ) yield {
-        val cls = f.cellClass
-
-        if ( cls != null )
-          <td class={ cls }>{ f.cell( this, rec ) }</td>
-        else
-          <td>{ f.cell( this, rec ) }</td>
+        if ( i == 0 ) search.remove( n )
+        else          search( n ) = Mobj( $gte -> i )
       }
-     }
-    </tr>
-  }
-
-  lazy val groups = query.grouping.list
-
-  def groupsFor( id:AnyRef ) = groups.filter( _.a_?( 'ids ).contains( id ) ).map( _.s( 'name ) ).mkString( ", " )
-
-  def groupFilter = groups.find( _.s( 'name ) == report.groupFilter )
-}
-
-case class Grid( query:Query ) {
-
-  val report = Session().reportFor( query )
-
-  val id = "grid" // TODO:  modify this by session
-  var odd = false
-
-  def rowClass = {
-    odd = !odd
-    !odd |* "even"
-  }
-
-  def exec( js:String ) = {
-    if ( js.startsWith( "!" ) ) {
-      val fp = query.by( js.substring(1) )
-
-      val empty = report.selectedColumns.isEmpty
-      report.selectedColumns( fp.name ) = !report.selectedColumns( fp.name )
-
-      empty != report.selectedColumns.isEmpty |*
-        SetHtml( "searchTitle", searchTitle )
-    } else {
-      val ( fn, tn ) = js.splitFirst( ':' )
-
-      val fp = query.by( fn )
-
-      if ( tn == "def" ) {
-        if ( report.selectedColumns( fn ) ) {
-          report.selectedColumns.foreach { n => report.remove( query.by( n ) ) }
-          report.selectedColumns.clear
-        } else {
-          report.remove( fp )
-        }
-      } else if ( tn == "_end" ) {
-        report.add( fp )
-      } else {
-        val tp = query.by( tn )
-
-        if ( report.selectedColumns( fn ) && !report.selectedColumns( tn ) ) {
-          val columns = report.columns.filter( f => report.selectedColumns( f.name ) )
-
-          for ( c <- columns )
-            report.insertBefore( insert = c, before = tp )
-
-          //TODO:  if selections, insert everything before insert ... (if insert is selected, don't move it)
-        } else {
-          report.insertBefore( insert = fp, before = tp )
-        }
-      }
-
-      recalcFields
-      redraw
     }
   }
 
-  private def initReport:JsCmd = JsCmds.Run( "initReport();" )
+  def bool( title:String, attr:String ) = {
+    searchProps( attr ) = "bool"
+    Checkbox( attr, search.b( attr ) ) ++ label( title, attr )
+  }
 
-  private def redraw:JsCmd =
-    SetHtml( id, innerDraw ) &
-    initReport
+  def boolExists( title:String, attr:String ) = {
+    searchProps( attr ) = "boolExists"
+    Checkbox( attr, search.s( attr ).notBlank ) ++ label( title, attr )
+  }
+
+  def text( attr:String, opts:(String,String)* ) = {
+    searchProps( attr ) = "text"
+    Input( attr, search.s( attr ), opts:_* )
+  }
+
+  def textParam( attr:String, opts:(String,String)* ) = {
+    searchProps( attr ) = "textParam"
+    Input( attr, parameters.s( attr ), opts:_* )
+  }
+
+  def textUpper( attr:String, width:Int ) = {
+    searchProps( attr ) = "textUpper"
+    Input( attr, search.s( attr ), "style" -> ( "width:" + width.toString + "px;" ) )
+  }
+
+  def textUpperSubst( attr:String, width:Int ) = {
+    searchProps( attr ) = "textUpperSubst"
+    Input( attr,
+           { val regex = search.o( attr )
+             regex != null |* regex.s( $regex )
+           }, "style" -> ( "width:" + width.toString + "px;" ) )
+  }
+
+  def intGte( attr:String ) = {
+    searchProps( attr ) = "intGte"
+    Input( attr,
+           { val o = search.o( attr )
+
+             if ( o == null ) ""
+             else             o.i( $gte ).toString },
+           "style" -> "width:80px;" )
+  }
 
 
   /*
-   * * *  Navigation
-   */
-
-  private def prev = {
-    report.offset -= report.pageSize
-    if ( report.offset < 0 ) report.offset = 0
-    redraw
-  }
-
-  private def next = {
-    report.offset += report.pageSize
-    redraw
-  }
-
-
-  /*
-   * * *  Search
+   * * *  Searching
    */
 
   def searchTitle =
-    if ( report.selectedColumns.isEmpty ) Text( "search all fields" )
-    else                                  Unparsed( "search <span class='hitext'>highlighted</span> fields" )
+    if ( selectedColumns.isEmpty ) Text( "search all fields" )
+    else                           Unparsed( "search <span class='hitext'>highlighted</span> fields" )
+
+  val sections = "Standard" +: query.allFields.map( _.section ).filter( _ != "Standard" ).sorted.distinct
 
 
   /*
    * * *  Field Dropdowns
    */
 
-  private val sections = "Standard" +: query.allFields.map( _.section ).filter( _ != "Standard" ).sorted.distinct
+  def section = {
+    if ( onSection.isBlank )
+      onSection = sections( 0 )
 
-  private def calcFields = query.allFields.filter( f => f.section == section && !report.columns.contains( f ) ).sortBy( _.label )
-  private def recalcFields {
+    onSection
+  }
+
+  def calcFields = query.allFields.filter( f => f.section == section && !columns.contains( f ) ).sortBy( _.label )
+
+  def recalcFields {
     fields = calcFields
     if ( !fields.find( _.name == field ).isDefined )
-       report.onField = ""
+       onField = ""
   }
 
-  private var fields     = calcFields
+  var fields = calcFields
 
-  private def section = {
-    if ( report.onSection.isBlank )
-      report.onSection = sections( 0 )
+  def field = {
+    if ( onField.isBlank )
+      onField = if ( fields.size > 0 ) fields( 0 ).name
+                else                   ""
 
-    report.onSection
+    onField
   }
 
-  private def field = {
-    if ( report.onField.isBlank )
-      report.onField = if ( fields.size > 0 ) fields( 0 ).name
-                       else                   ""
+  def sectionDropdown =
+    Select( "rSections", section, sections.map( sec => sec -> sec ), "style" -> "width:150px; max-width:150px;" )
 
-    report.onField
-  }
-
-  private def sectionDropdown =
-    SHtml.ajaxSelect(
-      sections.map( sec => sec -> sec ),
-      Full( section ),
-      v => {
-        report.onSection = v
-        recalcFields
-        SetHtml( "repfd", fieldDropdown ) &
-        SetHtml( "repab", addBox ) &
-        initReport
-      },
-      "style" -> "width:150px; max-width:150px;" )
-
-  private def fieldDropdown =
+  def fieldDropdown =
     if ( fields.size == 0 )
-    Unparsed( "<select style='width:150px;' disabled><option>none left</option></select>" )
+      Unparsed( "<select style='width:150px;' disabled><option>none left</option></select>" )
     else
-    SHtml.ajaxSelect(
-      fields.map( f => f.name -> f.label ),
-      Full( field ),
-      v => {
-        report.onField = v
-        SetHtml( "repab", addBox ) &
-        initReport
-      },
-      "style" -> "width:150px; max-width:150px;" )
+      Select( "rFields", field, fields.map( f => f.name -> f.label ), "style" -> "width:150px; max-width:150px;" )
 
-  private def addBox:NodeSeq =
-    fields.find( _.name == field ).flatten(
-      f => <div id={ f.name } class="cola"><div><span>Add</span></div></div>,
-      <div class="colna"><div><span>N/A</span></div></div>
-    )
+  def addBox:NodeSeq =
+    if ( field.notBlank )
+      <div id="_add" class="cola"><div><span>Add</span></div></div>
+    else
+      <div id="_add" class="colna"><div><span>N/A</span></div></div>
 
 
   /*
    * * *  Groups
    */
 
-  private var addGroupName = ""
-  private var newGroupName = ""
-  private var removeGroupName = ""
+  var addGroupName = ""
+  var newGroupName = ""
+  var removeGroupName = ""
 
-  private var selectedRows:Seq[Record] = _
-  private var groups:Seq[DBObject] = _
-
-  private def group( rows:Seq[Record] ) = {
-    selectedRows = rows.filter( r => report.selectedRows( r.id ) )
-
-    if ( selectedRows.size == 0 ) {
-      JsCmds.Run( "alert( 'No rows selected.' );" )
-    } else {
-      groups = query.grouping.list.toSeq
-
-      addGroupName = ""
-      newGroupName = ""
-      removeGroupName = ""
-
-      val intersection = groups.filter( g => selectedRows.forall( r => g.a_?( 'ids ).contains( r.id ) ) )
-      val union        = groups.filter( g => selectedRows.exists( r => g.a_?( 'ids ).contains( r.id ) ) )
-
-      val addGroup =
-        SHtml.ajaxSelect(
-          ( "" -> "" ) +: groups.filter( g => !intersection.contains( g ) ).map( g => ( g.s( 'name ), g.s( 'name ) ) ),
-          Empty,
-          v => {
-            addGroupName = v
-            Noop
-          },
-          "id" -> "addGroup_i", "style" -> "width:160px; max-width:160px;" )
-
-      val newGroup = SHtml.ajaxText( "", v => { newGroupName = v; Noop }, "id" -> "newGroup_i", "style" -> "width:120px;" )
-
-      val removeGroup =
-        SHtml.ajaxSelect(
-          ( "" -> "" ) +: union.filter( !_.b( 'builtin ) ).map( g => ( g.s( 'name ), g.s( 'name ) ) ),
-          Empty,
-          v => {
-            removeGroupName = v
-            Noop
-          },
-          "id" -> "removeGroup_i", "style" -> "width:160px; max-width:160px;" )
+  var records:Seq[Record] = _
+  var selectedRecords:Seq[Record] = _
+  var groups:Seq[DBObject] = _
 
 
-      SetHtml( "addGroup", addGroup ) &
-      SetHtml( "newGroup", newGroup ) &
-      SetHtml( "removeGroup", removeGroup ) &
-      JsCmds.Run( "$( '#groupdial' ).dialog( 'open' )" )
-    }
-  }
+  /*
+   * * *  Rendering
+   */
 
-  private def doGroup = {
-    val grouping = query.grouping
+  def innerDraw = {
+    val run = new Run( this )
+    records = query.run( run ).toSeq
 
-    if ( addGroupName.notBlank ) {
-      groups.find( _.s( 'name ) == addGroupName ) foreach { g =>
-        g( 'ids ) = Mlist( ( g.a_?( 'ids ) ++ selectedRows.map( _.id ) ).distinct:_* )
-        grouping.entity.db.save( g )
-      }
-    }
-
-    if ( newGroupName.notBlank ) {
-      grouping.entity.db.save(
-        Mobj(
-          "name" -> newGroupName,
-           grouping.keyName -> grouping.value(),
-           "ids" -> Mlist( selectedRows.map( _.id ):_* ) ) )
-    }
-
-    if ( removeGroupName.notBlank ) {
-      groups.find( _.s( 'name ) == removeGroupName ) foreach { g =>
-        g( 'ids ) = Mlist( g.a_?( 'ids ).filter( id => !selectedRows.exists( _.id == id ) ):_* )
-        grouping.entity.db.save( g )
-      }
-    }
-
-    JsCmds.Run( "$( '#groupdial' ).dialog( 'close' )" ) &
-    redraw
-  }
-
-  private def innerDraw = {
-    val run = new Run( report, this )
-    val rows = query.run( run ).toSeq
-
-    val selecteds = report.selectedRows.clone
-    report.selectedRows.clear
-    rows.filter( r => selecteds( r.id ) ).foreach { report.selectedRows += _.id }
+    val tmp = selectedIds.clone
+    selectedIds.clear
+    records.filter( r => tmp( r.id ) ).foreach { selectedIds += _.id }
 
 
-    <div class="header">
-     { query.label }
-    </div> ++
+    <div class="title">{ query.label }</div> ++
     <table class="def" id="def">
      <tr>
       <td>
@@ -561,12 +470,11 @@ case class Grid( query:Query ) {
          <td style="padding:0;">
           <table>
            <tr>
-            { Seq(
-                query.searchScreen.notBlank |* Some( Button.link( "Change Search", query.searchScreen, color = "grey" ) ),
-                report.offset > 0 |* Some( Button.ajaxButton( "Prev", () => prev, color = "grey" ) ),
-                Some( Button.ajaxButton( "Next", () => next, color = "grey" ) ),
-                query.grouping != null |* Some( Button.ajaxButton( "Group", () => group( rows ), color = "grey" ) )
-              ).flatten.map( btn => <td>{ btn }</td> ) }
+            { ( query.searchScreen.notBlank |* <td><a href={ query.searchScreen } class="greyBtn">Change Search</a></td> ) ++
+              ( offset > 0 |* <td><button id="rPrev" class="greyBtn">Prev</button></td> ) ++
+              <td><button id="rNext" class="greyBtn">Next</button></td> ++
+              ( query.grouping != null |* <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
+            { query.extraActions } 
            </tr>
           </table>
          </td>
@@ -581,14 +489,7 @@ case class Grid( query:Query ) {
         </tr>
         <tr>
          <td>{ 
-           SHtml.ajaxSelect(
-             ( "" -> "All" ) +: run.groups.map( g => g.s( 'name ) -> g.s( 'name ) ),
-             if ( report.groupFilter.notBlank ) Full( report.groupFilter ) else Empty,
-             v => {
-               report.groupFilter = v
-               redraw
-             },
-             "style" -> "width:120px; max-width:120px;" )
+           Select( "rGroups", groupFilter, ( "" -> "All" ) +: run.groups.map( g => g.s( 'name ) -> g.s( 'name ) ), "style" -> "width:120px; max-width:120px;" )
          }</td>
         </tr>
        </table>
@@ -604,10 +505,10 @@ case class Grid( query:Query ) {
         <tr>
          <td>
           <form method="get" class="searchBox" action="/search/results" onsubmit="this.submit();return false;">
-	         <fieldset>
-            { SHtml.text( "", v => println( "do something with " + v ), "placeholder" -> "Search", "class" -> "field" ) }
-		        <input type="image" class="btn" name="submit" src="http://www.volerro.com/wp-content/themes/platformpro/images/search-btn.png" alt="Go"/>
-	         </fieldset>
+	         <div>
+            <input type="text" value="" placeholder="Search" class="field"/>
+		        <input type="image" class="btn" name="submit" src="/images/search-btn.png" alt="Go"/>
+	         </div>
           </form>
          </td>
         </tr>
@@ -617,85 +518,273 @@ case class Grid( query:Query ) {
        <table class="tile" style="width:298px; height:54px;">
         <tr>
          <td class="label">section</td>
-         <td id="repcd" style="width:160px;">{ sectionDropdown }</td>
-         <td rowspan="2" id="repab" style="width:130px;">{ addBox }</td>
+         <td style="width:160px;">{ sectionDropdown }</td>
+         <td rowspan="2" id="gab" style="width:130px;">{ addBox }</td>
         </tr>
         <tr>
          <td class="label">field</td>
-         <td id="repfd" style="width:160px;">{ fieldDropdown }</td>
+         <td id="gfd" style="width:160px;">{ fieldDropdown }</td>
         </tr>
        </table>
       </td>
      </tr>
     </table> ++
     <div class="grid">
-     <table>
+     <table style={ query.tableGridStyle }>
       <thead>
        { run.header }
       </thead>
       <tbody>
-       { rows.map( r => run.row( r ) ) }
+       { records.map( r => run.row( r ) ) }
       </tbody>
      </table>
     </div>
   }
 
-  def draw = {
-
+  def draw =
     <head>
-     <script src="/cjs/report.js" type="text/javascript"/>
-     <script>{ Unparsed( """
-
-function gridexec( id ) {
-  """ + SHtml.ajaxCall( JsRaw( "id" ), exec _ )._2.toJsCmd + """;
-}
-
-function initGroup() {
-  $( "#groupdial" ).dialog( {
-    autoOpen:false,
-    title:"Groups",
-    modal:true,
-    resizable:false,
-    width:360
-  } );
-}
-
-$( initGroup )
-
-""" ) }</script>
+     <script src="/js/report.js" type="text/javascript"/>
+     <script>{ Unparsed( "window.reportObj = { qn:'" + query.name + "', id:'" + id + "' };" ) }</script>
     </head> ++
     { query.grouping != null |*
-      <div id="groupdial" style="padding:8px;">
-       <table>
+      <div id="rGroupDlg" style="padding:8px; display:none;">
+       <table id="rGroupDlg_c">
         <tr>
-         <td style="width:160px;"><label for="addGroup_i">Add to Existing Group</label></td>
-         <td id="addGroup"/>
+         <td style="width:160px;"><label for="rGroupAdd">Add to Existing Group</label></td>
+         <td/>
         </tr>
         <tr>
-         <td><label for="newGroup_i">Add to New Group</label></td>
-         <td id="newGroup"/>
+         <td><label for="rGroupNew">Add to New Group</label></td>
+         <td/>
         </tr>
         <tr>
-         <td><label for="removeGroup_i">Remove Group</label></td>
-         <td id="removeGroup"/>
-        </tr>
-        <tr>
-         <td style="padding:8px 0 0;">
-          <table>
-           <tr>
-            <td><button onclick="$('#groupdial').dialog('close'); return false;" class="greyBtn">Cancel</button></td>
-            <td style="padding-left:8px;">{ Button.ajaxButton( "Okay", () => doGroup, color = "green" ) }</td>
-           </tr>
-          </table>
-         </td>
+         <td><label for="rGroupRemove">Remove Group</label></td>
+         <td/>
         </tr>
        </table>
+       <div class="btns">
+        <button onclick="$('#rGroupDlg').dialog('close'); return false;" class="greyBtn">Cancel</button>
+        <button id="rGroupOkay" class="greenBtn">Okay</button>
+       </div>
       </div>
     } ++
-    <div class="report" id={ id }>
-    { innerDraw }
+    <div class="report greyBox" id={ id }>
+    { recalcFields
+      innerDraw }
     </div>
-  }
 }
 
+case class Run( report:Report ) {
 
+  def query = report.query
+
+  var odd = false
+  val cache = mutable.HashMap[String,AnyRef]()
+
+  def rowClass = {
+    odd = !odd
+    !odd |* "even"
+  }
+
+  val header =
+    <tr>
+     { query.selectable |* <td></td> }
+     { report.columns.map( _.header( this ) ) }
+    </tr>
+
+  def row( rec:Record ) =
+    <tr id={ rec.id.toString } class={ rowClass }>
+     { query.selectable |* 
+        <td>{ Unparsed( "<input class='rcb' type=\"checkbox\"" + ( report.selectedIds.contains( rec.id ) |* " checked" ) + "/>" ) }</td> }
+     {
+      for ( f <- report.columns ) yield {
+        val cls = f.cellClass
+
+        if ( cls != null )
+          <td class={ cls }>{ f.cell( this, rec ) }</td>
+        else
+          <td>{ f.cell( this, rec ) }</td>
+      }
+     }
+    </tr>
+
+  lazy val groups = query.grouping.list
+
+  def groupsFor( id:AnyRef ) = groups.filter( _.a_?( 'ids ).contains( id ) ).map( _.s( 'name ) ).mkString( ", " )
+
+  def groupFilter = groups.find( _.s( 'name ) == report.groupFilter )
+}
+
+object Reportlet extends Weblet {
+
+  def handle( web:WebContext ) {
+    val sess = Session()
+    val report = sess.reportFor( web.req.s( 'q ) )
+    val query = report.query
+
+    rpath match {
+
+    /*
+     * * *  Navigation
+     */
+
+    case "/prev" =>
+      report.offset -= report.pageSize
+      if ( report.offset < 0 ) report.offset = 0
+      web.res.html( report.innerDraw )
+
+    case "/next" =>
+      report.offset += report.pageSize
+      web.res.html( report.innerDraw )
+
+    case "/select" =>
+      val fp = query.by( web.req.s( 'f ) )
+
+      val empty = report.selectedColumns.isEmpty
+      report.selectedColumns( fp.name ) = !report.selectedColumns( fp.name )
+
+      web.res.html(
+        empty != report.selectedColumns.isEmpty |* report.searchTitle )
+
+    case "/drag" =>
+      val js = web.req.s( 'js )
+      val ( fn, tn ) = js.splitFirst( ':' )
+
+      val efn =
+        if ( fn == "_add" ) report.onField
+        else                fn
+
+      val fp = query.by( efn )
+
+      if ( tn == "def" ) {
+        if ( report.selectedColumns( efn ) ) {
+          report.selectedColumns.foreach { n => report.remove( query.by( n ) ) }
+          report.selectedColumns.clear
+        } else {
+          report.remove( fp )
+        }
+      } else if ( tn == "_end" ) {
+        report.add( fp )
+      } else {
+        val tp = query.by( tn )
+
+        if ( report.selectedColumns( efn ) && !report.selectedColumns( tn ) ) {
+          val columns = report.columns.filter( f => report.selectedColumns( f.name ) )
+
+          for ( c <- columns )
+            report.insertBefore( insert = c, before = tp )
+
+          //TODO:  if selections, insert everything before insert ... (if insert is selected, don't move it)
+        } else {
+          report.insertBefore( insert = fp, before = tp )
+        }
+      }
+
+      report.recalcFields
+      web.res.html( report.innerDraw )
+
+    case "/selectRow" =>
+      // TODO:  make this generic based on query's entity id field
+      val rowId = new ObjectId( web.req.s( 'id ) )
+      if ( report.selectedIds( rowId ) )
+        report.selectedIds -= rowId
+      else
+        report.selectedIds += rowId
+
+      web.res.ok
+
+    case "/section" =>
+      report.onSection = web.req.s( 'v )
+      report.recalcFields
+      web.res.json(
+        Map(
+          "gfd" -> report.fieldDropdown.toString,
+          "gab" -> report.addBox.toString
+        )
+      )
+
+    case "/field" =>
+      report.onField = web.req.s( 'v )
+      web.res.ok
+
+    case "/groups" =>
+      report.groupFilter = web.req.s( 'gn )
+      web.res.html( report.innerDraw )
+
+    case "/group" =>
+      report.selectedRecords = report.records.filter( r => report.selectedIds( r.id ) )
+
+      if ( report.selectedRecords.size == 0 ) {
+        web.res.html( NodeSeq.Empty )
+      } else {
+        report.groups = query.grouping.list.toSeq
+
+        report.addGroupName = ""
+        report.newGroupName = ""
+        report.removeGroupName = ""
+
+        val intersection = report.groups.filter( g => report.selectedRecords.forall( r => g.a_?( 'ids ).contains( r.id ) ) )
+        val union        = report.groups.filter( g => report.selectedRecords.exists( r => g.a_?( 'ids ).contains( r.id ) ) )
+
+        web.res.html(
+          <tr>
+           <td style="width:160px;"><label for="rGroupAdd">Add to Existing Group</label></td>
+           <td>
+            { Select( "rGroupAdd", "", ( "" -> "" ) +: report.groups.filter( g => !intersection.contains( g ) ).map( g => ( g.s( 'name ), g.s( 'name ) ) ), "style" -> "width:160px; max-width:160px;" ) }
+           </td>
+          </tr> ++
+          <tr>
+           <td><label for="rGroupNew">Add to New Group</label></td>
+           <td>
+            { Input( "rGroupNew", "", "style" -> "width:120px;" ) }
+           </td>
+          </tr>
+          <tr> ++
+           <td><label for="rGroupRemove">Remove Group</label></td>
+           <td>
+            { Select( "rGroupRemove", "", ( "" -> "" ) +: union.filter( !_.b( 'builtin ) ).map( g => ( g.s( 'name ), g.s( 'name ) ) ), "style" -> "width:160px; max-width:160px;" ) }
+           </td>
+          </tr> )
+      }
+
+    case "/group/add" =>
+      report.addGroupName = web.req.s( 'v )
+      web.res.ok
+
+    case "/group/new" =>
+      report.newGroupName = web.req.s( 'v )
+      web.res.ok
+
+    case "/group/remove" =>
+      report.removeGroupName = web.req.s( 'v )
+      web.res.ok
+
+    case "/group/okay" =>
+      val grouping = query.grouping
+
+      if ( report.addGroupName.notBlank ) {
+        report.groups.find( _.s( 'name ) == report.addGroupName ) foreach { g =>
+          g( 'ids ) = Mlist( ( g.a_?( 'ids ) ++ report.selectedIds ).distinct:_* )
+          grouping.entity.db.save( g )
+        }
+      }
+
+      if ( report.newGroupName.notBlank ) {
+        grouping.entity.db.save(
+          Mobj(
+            "name" -> report.newGroupName,
+             grouping.keyName -> grouping.value(),
+             "ids" -> Mlist( report.selectedIds.toSeq:_* ) ) )
+      }
+
+      if ( report.removeGroupName.notBlank ) {
+        report.groups.find( _.s( 'name ) == report.removeGroupName ) foreach { g =>
+          g( 'ids ) = Mlist( g.a_?( 'ids ).filter( id => !report.selectedIds.exists( _ == id ) ):_* )
+          grouping.entity.db.save( g )
+        }
+      }
+
+      web.res.html( report.innerDraw )
+    }
+  }
+}
