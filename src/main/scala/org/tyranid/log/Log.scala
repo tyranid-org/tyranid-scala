@@ -24,7 +24,7 @@ import javax.servlet.http.HttpSession
 import scala.xml.Unparsed
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbDateTime, DbInt, Record }
+import org.tyranid.db.{ DbChar, DbDateTime, DbInt, Record, DbLong }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
 import org.tyranid.email.Email
@@ -38,19 +38,25 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
   val StackTrace = 2
   val LinkedIn   = 3
   val Error404   = 4
+  val Scraper    = 5
+  val Import     = 6
 
   val Events = Array( 
     "n/a",
     "Access",
     "StackTrace",
     "LinkedIn",
-    "404" )
+    "404",
+    "Scraper",
+    "Import" )
 
 
   "id"                  is DbMongoId      is 'key;
   "e"                   is DbInt          as "Event";
   "on"                  is DbDateTime     ;
   "m"                   is DbChar(1024)   as "Message";
+  "du"                  is DbLong         as "Duration in MS";
+  "ct"                  is DbInt          as "Count";
   "ex"                  is DbChar(1024)   as "Stack Trace";
   "sid"                 is DbChar(64)     as "Session";
   "uid"                 is DbMongoId      as "User";
