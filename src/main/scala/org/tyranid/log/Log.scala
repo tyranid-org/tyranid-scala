@@ -114,6 +114,7 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
     db.save( l )
 
     if ( event == StackTrace && B.PRODUCTION ) {
+println( "*** stack trace entering" )
       val sb = new StringBuilder
 
       if ( user != null )
@@ -136,6 +137,7 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
 
       background {
         try {
+println( "*** sending email" )
           Email( subject = "Volerro Stack Trace",
                  text = sb.toString ).
             addTo( B.alertEmail ).

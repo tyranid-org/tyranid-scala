@@ -14,6 +14,9 @@ object Errorlet extends Weblet {
       log( Log.Error404, "m" -> web.req.getAttribute( "javax.servlet.forward.request_uri" ) )
 
       web.template( <tyr:404/> )
+
+    case "/throw" =>
+      throw new RuntimeException( "test exception" )
     }
   }
 }
