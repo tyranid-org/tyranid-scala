@@ -329,7 +329,7 @@ object Path {
           val value = arr( i )
 
           dom match {
-          case en:MongoEntity => record( ipath, en.recify( arr( 0 ), parent = null /* TODO:  should pass in parent ? */, rec => arr( 0 ) = rec ) )
+          case en:MongoEntity => record( ipath, en.recify( arr( i ), parent = null /* TODO:  should pass in parent ? */, rec => arr( i ) = rec ) )
           case arr:DbArray    => array( ipath, value.asInstanceOf[BasicDBList] )
           case dom            => simple( ipath, value )
           }

@@ -13,6 +13,7 @@ class Boot extends org.tyranid.boot.Bootable {
   val applicationName = "Tyranid Test Suite"
   val domain          = "localhost"
   val systemEmail     = "info@tyranid.org"
+  val alertEmail      = "info@tyranid.org"
 
   val weblets = Nil
 
