@@ -15,7 +15,7 @@
  *
  */
 
-package org.tyranid.linkedIn
+package org.tyranid.social.linkedIn
 
 import org.scalatest.FunSuite
 

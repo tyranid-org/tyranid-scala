@@ -1,5 +1,5 @@
 
-package org.tyranid.linkedIn
+package org.tyranid.social.linkedIn
 
 import javax.servlet.http.Cookie
 
