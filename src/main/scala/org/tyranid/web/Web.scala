@@ -165,6 +165,10 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
 }
 
 trait Weblet {
+  def redirectIfNotLoggedIn( web:WebContext ) = 
+    if ( !org.tyranid.profile.User.isLoggedIn )
+     web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
+
   def matches( web:WebContext ) = true
 
   val locks:List[WebLock] = Nil
