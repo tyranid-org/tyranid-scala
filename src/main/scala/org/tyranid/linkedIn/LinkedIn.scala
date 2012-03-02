@@ -153,6 +153,9 @@ object LinkedIn {
     string( 'squareLogoUrl, 'thumbnail )
     string( 'websiteUrl,    'website )
 
+    if ( org.s( 'name ).isBlank )
+      string( 'name,          'name )
+
     val numEmployees = c.o( 'employeeCountRange ).s( 'name )
     if ( numEmployees.notBlank )
       org( 'numEmployees ) = numEmployees
@@ -226,6 +229,23 @@ object LinkedIn {
     }
 
     B.orgEntity.as[MongoEntity].db.save( org )
+  }
+
+  def createCompany( user:User, domain:String ):DBObject = {
+
+    loadCompanies( user, domain ) foreach { company =>
+
+      val org = Mobj()
+      org( 'domain ) = domain
+
+      importCompany( company, org )
+
+      B.orgEntity.db.save( org )
+
+      return org
+    }
+
+    return null
   }
 }
 
