@@ -618,6 +618,7 @@ case class Run( report:Report ) {
 object Reportlet extends Weblet {
 
   def handle( web:WebContext ) {
+    redirectIfNotLoggedIn( web )
     val sess = Session()
     val report = sess.reportFor( web.req.s( 'q ) )
     val query = report.query
