@@ -190,7 +190,17 @@ object LogQuery extends MongoQuery {
     },
     multistring( "m" ),
     string( "ua" ),
-    multistring( "ex" )
+    multistring( "ex" ),
+    new Field {
+      def name = "ct"
+      override def label = "Count"
+      def cell( run:Run, r:Record ) = Unparsed( Log.Events( r.i( 'ct ) ) )
+    },
+    new Field {
+      def name = "du"
+      override def label = "Duration (ms)"
+      def cell( run:Run, r:Record ) = Unparsed( Log.Events( r.i( 'du ) ) )
+    }
   )
 
   val defaultFields = allFields.take( 4 )

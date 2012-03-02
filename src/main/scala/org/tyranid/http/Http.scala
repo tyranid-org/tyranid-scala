@@ -59,18 +59,18 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
 
     spam( "** requestURI=" + T.web.req.getRequestURL )
 
-    println( "** attributes" )
+    spam( "** attributes" )
     for ( n <- req.getAttributeNames )
-      println( "  " + n + " = " + req.getAttribute( n.as[String] ) )
+      spam( "  " + n + " = " + req.getAttribute( n.as[String] ) )
 
-    println( "** parameters" )
+    spam( "** parameters" )
     for ( n <- req.getParameterNames )
-      println( "  " + n + " = " + req.getParameter( n.as[String] ) )
+      spam( "  " + n + " = " + req.getParameter( n.as[String] ) )
 
-    println( "** headers" )
+    spam( "** headers" )
     for ( n <- req.getHeaderNames )
       for ( v <- req.getHeaders( n.as[String] ) )
-        println( "  " + n + " = " + v )
+        spam( "  " + n + " = " + v )
   }
 
   def path = req.getServletPath
