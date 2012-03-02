@@ -11,9 +11,18 @@ object Errorlet extends Weblet {
     rpath match {
     case "/404" =>
 
-      log( Log.Error404, "m" -> web.req.getAttribute( "javax.servlet.forward.request_uri" ) )
+      val originalUrl = web.req.getAttribute( "javax.servlet.forward.request_uri" )
+
+      if ( originalUrl != null )
+        log( Log.Error404, "m" -> originalUrl )
 
       web.template( <tyr:404/> )
+
+    case "/throw" =>
+      throw new RuntimeException( "test exception" )
+
+    case _ =>
+      _404
     }
   }
 }

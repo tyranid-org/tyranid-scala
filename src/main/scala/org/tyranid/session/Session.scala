@@ -78,6 +78,10 @@ class ThreadData {
 
   def http_=( obj:HttpSession ) = {
     httpData = obj
+    clear
+  }
+
+  def clear {
     tyrData = null
   }
 
