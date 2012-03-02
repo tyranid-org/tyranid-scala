@@ -25,5 +25,11 @@ class ThrowableImp( t:Throwable ) {
     t.printStackTrace
     Log.log( Log.StackTrace, "ex" -> t )
   }
+
+  def logWith( opts:(String,Any)* ) = {
+    println( opts )
+    t.printStackTrace
+    Log.log( Log.StackTrace, ( opts :+ ( "ex" -> t ) ):_* )
+  }
 }
 

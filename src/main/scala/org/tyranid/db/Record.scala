@@ -123,10 +123,16 @@ object Record {
 
     val ( entityTid, recordTid ) = tid.splitAt( 4 )
 
-    Entity.
-      byTid( entityTid ).
-      filter( e => only == null || only == e ).
-      flatMap( entity => entity.byRecordTid( recordTid ) )
+    try {
+      Entity.
+        byTid( entityTid ).
+        filter( e => only == null || only == e ).
+        flatMap( entity => entity.byRecordTid( recordTid ) )
+    } catch {
+    case e =>
+      e.logWith( "m" -> ( "tid[" + tid + "]" )  )
+      None
+    }
   }
 
 }

@@ -139,7 +139,11 @@ println( "*** stack trace entering" )
       if ( ua.notBlank )
         sb ++= "User-Agent: " ++= ua += '\n'
 
-      sb ++= "Stack Trace:\n\n" + throwable.getStackTrace.map( _.toString ).mkString( "\n" )
+      val msg = l.s( 'm )
+      if ( msg.notBlank )
+        sb ++= "Message:\n\n" + msg
+
+      sb ++= "\n\nStack Trace:\n\n" + throwable.getStackTrace.map( _.toString ).mkString( "\n" )
 
       background {
         try {
