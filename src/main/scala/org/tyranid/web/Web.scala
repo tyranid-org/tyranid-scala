@@ -31,12 +31,6 @@ case class WebIgnoreException                      extends ControlThrowable
 case class Web404Exception                         extends ControlThrowable
 
 
-trait WebLock {
-
-  def open( ctx:WebContext, td:ThreadData ):Boolean
-  def block( ctx:WebContext ):Unit
-}
-
 class WebFilter extends Filter {
 
   var filterConfig:FilterConfig = _
@@ -94,10 +88,6 @@ spam( "filter entered, path=" + web.path )
       val ( path, weblet ) = pair
 
       try {
-        for ( lock <- weblet.locks )
-          if ( !lock.open( web, thread ) )
-            return lock.block( web )
-
         if ( thread.http == null )
           thread.http = web.req.getSession( true )
 
@@ -170,8 +160,6 @@ trait Weblet {
      web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
 
   def matches( web:WebContext ) = true
-
-  val locks:List[WebLock] = Nil
 
   def handle( web:WebContext ):Unit
 

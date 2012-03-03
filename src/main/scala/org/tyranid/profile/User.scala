@@ -26,7 +26,7 @@ import org.tyranid.Imp._
 import org.tyranid.db.Record
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.session.{ Session, ThreadData }
-import org.tyranid.web.{ WebContext, WebLock }
+import org.tyranid.web.WebContext
 
 
 trait UserMeta {
@@ -54,18 +54,6 @@ trait UserMeta {
 
   // TODO:  Make this more sophisticated, allow the entire user to be retrieved instead of just the name, and/or maybe something like ProfileItem
   def nameFor( userId:ObjectId ) = "TODO"
-}
-
-case object UserLoginLock extends WebLock {
-
-  def open( ctx:WebContext, td:ThreadData ):Boolean = {
-    val user = td.user
-    return user != null && user.loggedIn
-  }
-
-  def block( web:WebContext ) {
-    web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
-  }
 }
 
 object User extends UserMeta {
