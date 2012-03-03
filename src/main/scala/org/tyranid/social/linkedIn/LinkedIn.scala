@@ -72,7 +72,7 @@ object LinkedIn {
       }
     }
 
-    val existing = User.db.findOne( Mobj( "liid" -> memberId ) )
+    val existing = B.User.db.findOne( Mobj( "liid" -> memberId ) )
     if ( existing != null && user.id != null && existing.id != user.id )
       removeAttributes( existing )
 
@@ -89,7 +89,7 @@ object LinkedIn {
   }
 
   def saveAttributes( user:User ) {
-    User.db.update(
+    B.User.db.update(
       Mobj( "_id" -> user.id ),
       Mobj( $set -> Mobj(
         "liid" -> user.s( 'liid ),
@@ -103,7 +103,7 @@ object LinkedIn {
     user.remove( 'liid )
     user.remove( 'lit )
     user.remove( 'lits )
-    User.db.update( Mobj( "_id" -> user.id ), Mobj( $unset -> Mobj( "liid" -> 1, "lit" -> 1, "lits" -> 1 ) ) )
+    B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $unset -> Mobj( "liid" -> 1, "lit" -> 1, "lits" -> 1 ) ) )
   }
 
   def tokenFor( user:User ) = Token( key = user.s( 'lit ), secret = user.s( 'lits ) )
@@ -181,7 +181,7 @@ object LinkedIn {
 
     val ls = c.o( 'locations )
     if ( ls != null ) {
-      val existingLocations = B.locationEntity.db.find( Mobj( "org" -> org.id ) ).toSeq
+      val existingLocations = B.Location.db.find( Mobj( "org" -> org.id ) ).toSeq
 
       // only import locations if we don't have existing locations already
       if ( existingLocations.size == 0 ) {
@@ -219,7 +219,7 @@ object LinkedIn {
           if ( l.b( 'isHeadquarters ) )
             loc( 'type ) = LocationType.HeadquartersId
 
-          B.locationEntity.db.save( loc )
+          B.Location.db.save( loc )
 
           if ( l.b( 'isHeadquarters ) ) {
             org( 'hq ) = loc.id
@@ -228,7 +228,7 @@ object LinkedIn {
       }
     }
 
-    B.orgEntity.as[MongoEntity].db.save( org )
+    B.Org.db.save( org )
   }
 
   def createCompany( user:User, domain:String ):DBObject = {
@@ -240,7 +240,7 @@ object LinkedIn {
 
       importCompany( company, org )
 
-      B.orgEntity.db.save( org )
+      B.Org.db.save( org )
 
       return org
     }

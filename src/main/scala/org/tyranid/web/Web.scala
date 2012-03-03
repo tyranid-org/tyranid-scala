@@ -111,7 +111,7 @@ spam( "filter entered, path=" + web.path )
           web.ctx.getRequestDispatcher( fe.forward ).forward( web.req, web.res )
           return
         case re:org.tyranid.secure.SecureException =>
-          if ( !User.isLoggedIn ) {
+          if ( !B.User.isLoggedIn ) {
             web.res.sendRedirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
           } else {
             thread.session.warn( "Access denied." )
@@ -156,7 +156,7 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
 
 trait Weblet {
   def redirectIfNotLoggedIn( web:WebContext ) = 
-    if ( !org.tyranid.profile.User.isLoggedIn )
+    if ( !B.User.isLoggedIn )
      web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
 
   def matches( web:WebContext ) = true

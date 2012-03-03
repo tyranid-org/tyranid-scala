@@ -25,7 +25,7 @@ import org.cometd.bayeux.server.BayeuxServer
 
 import org.tyranid.db.Entity
 import org.tyranid.db.mongo.MongoEntity
-import org.tyranid.profile.{ User, UserMeta }
+import org.tyranid.profile.{ OrgMeta, User, UserMeta }
 import org.tyranid.secure.AccessType
 import org.tyranid.session.{ Session, ThreadData }
 import org.tyranid.web.{ Weblet, CometService }
@@ -109,9 +109,9 @@ trait Bootable {
 
   @volatile var newUser:() => User = null
   val userMeta:UserMeta
-  @volatile var userEntity:MongoEntity = null
-  @volatile var orgEntity:MongoEntity = null
-  @volatile var locationEntity:MongoEntity = null
+  @volatile var User:UserMeta = null
+  @volatile var Org:OrgMeta = null
+  @volatile var Location:MongoEntity = null
   @volatile var newSession:() => Session = null
 
   val loginCookieName:String = null

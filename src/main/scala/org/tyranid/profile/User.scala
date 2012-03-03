@@ -23,13 +23,35 @@ import java.util.TimeZone
 import org.bson.types.ObjectId
 
 import org.tyranid.Imp._
-import org.tyranid.db.Record
+import org.tyranid.db.{ DbBoolean, DbChar, DbEmail, DbLink, DbPassword, Record }
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
+import org.tyranid.image.DbImage
+import org.tyranid.secure.DbReCaptcha
 import org.tyranid.session.{ Session, ThreadData }
 import org.tyranid.web.WebContext
 
 
-trait UserMeta {
+class UserMeta extends MongoEntity( "a01v" ) {
+  "id"             is DbMongoId           is 'key;
+  "email"          is DbEmail             is 'label is 'required;
+  "password"       is DbPassword          is 'required;
+  "password2"      is DbPassword          is 'required is 'temporary as "Repeat Password";
+  "thumbnail"      is DbImage( "public" ) as "Profile Image";
+
+  "recaptcha"      is DbReCaptcha( "white" ) is 'temporary as "Verify you are human";
+
+  "stayLoggedIn"   is DbBoolean           as "Keep me logged in for two weeks";
+  "activationCode" is DbChar(8)           ;
+  "resetCode"      is DbChar(8)           ;
+  "loginToken"     is DbChar(10)          ;
+
+  "org"            is DbLink( B.Org )     ;
+
+  "liid"           is DbChar(90)          ; // LinkedIn member id if linked
+  "lit"            is DbChar(90)          ; // LinkedIn OAuth 1.0a token
+  "lits"           is DbChar(90)          ; // LinkedIn OAuth 1.0a token secret
+
   def isLoggedIn = { 
     val session = Session()
 
@@ -54,11 +76,6 @@ trait UserMeta {
 
   // TODO:  Make this more sophisticated, allow the entire user to be retrieved instead of just the name, and/or maybe something like ProfileItem
   def nameFor( userId:ObjectId ) = "TODO"
-}
-
-object User extends UserMeta {
-
-  lazy val db = Mongo.connect.db( B.profileDbName )( "users" )
 }
 
 trait User extends Record {

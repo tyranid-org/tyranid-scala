@@ -4,6 +4,7 @@ package bootstrap.tyranid
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
+import org.tyranid.cloud.aws.S3Bucket
 import org.tyranid.secure.AccessType
 import org.tyranid.session.ThreadData
 import org.tyranid.test.db.{ Session, User }
@@ -36,6 +37,12 @@ class Boot extends org.tyranid.boot.Bootable {
 
     // Mongo
     profileDbName = "test"
+
+    awsCredentials = new com.amazonaws.auth.BasicAWSCredentials( "TODO", "TODO" )
+    bucketSuffix = ".tyranid.org"
+    apply( S3Bucket( prefix = "public" ) )
+
+    User = org.tyranid.test.db.User
 
     newUser    = () => new User
     newSession = () => new Session

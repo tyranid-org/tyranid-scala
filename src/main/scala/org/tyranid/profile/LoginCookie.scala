@@ -30,7 +30,7 @@ object LoginCookie {
     if ( cv != null ) {
       cv.splitFirst( '|' ) match {
       case ( tid, token ) =>
-        return Record.byTid( tid, only = B.userEntity ).
+        return Record.byTid( tid, only = B.User ).
          map( _.asInstanceOf[User] ).
          // loginToken is an attribute that exists on user
          filter( _.s( 'loginToken ) == token )
@@ -51,7 +51,7 @@ object LoginCookie {
     T.web.res.addCookie(cookie)
             
     user( "loginToken" ) = loginToken
-    B.userEntity.as[MongoEntity].db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "loginToken" -> loginToken ) ) )
+    B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "loginToken" -> loginToken ) ) )
   }
 
   def remove = T.web.res.deleteCookie( B.loginCookieName )
