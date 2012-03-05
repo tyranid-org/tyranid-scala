@@ -10,11 +10,12 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
+import org.tyranid.company.Industry
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.locale.{ Country, LocationType, Region }
 import org.tyranid.oauth.{ OAuth, Token }
-import org.tyranid.profile.{ Industry, Org, User }
+import org.tyranid.profile.{ Org, User }
 import org.tyranid.session.Session
 import org.tyranid.web.{ WebContext, Weblet }
 
