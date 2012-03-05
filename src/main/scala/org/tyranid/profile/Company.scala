@@ -19,9 +19,10 @@ package org.tyranid.profile
 
 import org.tyranid.db.Record
 
-object Company {
+
+trait CompanyMeta extends OrgMeta {
 }
 
-trait Company extends Record {
+trait Company extends Org {
 }
 

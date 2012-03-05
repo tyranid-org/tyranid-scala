@@ -25,7 +25,7 @@ import org.bson.types.ObjectId
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbBoolean, DbChar, DbEmail, DbLink, DbPassword, Record }
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
+import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.image.DbImage
 import org.tyranid.secure.DbReCaptcha
 import org.tyranid.session.{ Session, ThreadData }
@@ -78,7 +78,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   def nameFor( userId:ObjectId ) = "TODO"
 }
 
-trait User extends Record {
+trait User extends MongoRecord {
 
   var loggedIn     = false
   var isLoggingOut = false
