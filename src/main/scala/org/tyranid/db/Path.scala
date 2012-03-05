@@ -116,6 +116,7 @@ trait Path extends Pathable {
         case va:ViewAttribute => cur match {
                                  case o:BsonObject    => o( va.name )
                                  case o:BasicDBObject => o( va.name )
+                                 case _ => null
                                  }
         case ai:ArrayIndex    => cur.asInstanceOf[BasicDBList].get( ai.idx )
         }
