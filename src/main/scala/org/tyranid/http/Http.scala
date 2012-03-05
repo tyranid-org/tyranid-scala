@@ -1,6 +1,8 @@
 
 package org.tyranid.http
 
+import java.util.Date
+
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.xml.NodeSeq
@@ -156,6 +158,11 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
 
 
 object Http {
+
+  def expireCacheControlHeaders( ageMs:Long ) =
+    Map( "Pragma" -> "public",
+         "Cache-Control" -> ( "max_age=" + ( ageMs / 1000 ) ),
+         "Expires" -> new Date( System.currentTimeMillis + ageMs ).toRfc1123 )
 
   def extractQueryString( url:String, params:mutable.Map[String,String], oauth:Boolean = false ) = {
     val idx = url.indexOf( '?' )

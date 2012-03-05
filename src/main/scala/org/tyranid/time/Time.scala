@@ -17,6 +17,7 @@
 
 package org.tyranid.time
 
+import java.text.SimpleDateFormat
 import java.util.{ Calendar, Date, TimeZone }
 
 import org.tyranid.Imp._
@@ -141,34 +142,38 @@ class DateImp( d:Date ) {
     ( firstOfLastWeek.getTime, firstOfWeek.getTime )
   }
 
-  def toDateStr = {
+  def toDateStr =
     if ( d == null ) null
-    else             Time.DateFormat.format( d );
-  }
+    else             Time.DateFormat.format( d )
   
-  def toDateTimeStr = {
+  def toDateTimeStr =
     if ( d == null ) null
-    else             Time.DateTimeFormat.format( d );
-  }
+    else             Time.DateTimeFormat.format( d )
+
+  def toRfc1123 =
+    if ( d == null ) null
+    else             Time.Rfc1123Format.format( d )
 }
 
 object Time {
-  val DateFormat     = new java.text.SimpleDateFormat( "MM/dd/yyyy" )
-  val DateTimeFormat = new java.text.SimpleDateFormat( "MM/dd/yyyy HH:mm:ss" )
+  val DateFormat     = new SimpleDateFormat( "MM/dd/yyyy" )
+  val DateTimeFormat = new SimpleDateFormat( "MM/dd/yyyy HH:mm:ss" )
+  val Rfc1123Format  = new SimpleDateFormat( "EEE, dd MMM yyyyy HH:mm:ss z" )
 
-  val OneMinuteMs    =               60 * 1000
-  val FiveMinutesMs  =           5 * 60 * 1000
-  val HalfHourMs     =          30 * 60 * 1000
-  val OneHourMs      =          60 * 60 * 1000
-  val OneDayMs       =     24 * 60 * 60 * 1000
-  val OneWeekMs      = 7 * 24 * 60 * 60 * 1000
+  val OneMinuteMs    =                 60 * 1000
+  val FiveMinutesMs  =             5 * 60 * 1000
+  val HalfHourMs     =            30 * 60 * 1000
+  val OneHourMs      =            60 * 60 * 1000
+  val OneDayMs       =       24 * 60 * 60 * 1000
+  val OneWeekMs      =   7 * 24 * 60 * 60 * 1000
+  val OneYearMs      = 365 * 24 * 60 * 60 * 1000
   
-	val MonthNames     = Array( "january", "february", "march", "april", "may", "june",
-		                          "july", "august", "september", "october", "november", "december" )
-	val WeekDayNames   = Array( "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday" )
-	val AmPmNames      = Array( "am", "pm" )
-	val FillerWords    = Array( "on", "at" )
-	val RelativeWords  = Array( "tomorrow", "yesterday", "today", "next", "this", "last", "now" )
+  val MonthNames     = Array( "january", "february", "march", "april", "may", "june",
+                              "july", "august", "september", "october", "november", "december" )
+  val WeekDayNames   = Array( "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday" )
+  val AmPmNames      = Array( "am", "pm" )
+  val FillerWords    = Array( "on", "at" )
+  val RelativeWords  = Array( "tomorrow", "yesterday", "today", "next", "this", "last", "now" )
 
   def fourDigitYear( year:Int, len:Int ) =
     if ( len == 4 || year >= 100 ) year
