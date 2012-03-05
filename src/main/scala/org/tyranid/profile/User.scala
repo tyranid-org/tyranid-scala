@@ -21,6 +21,7 @@ package org.tyranid.profile
 import java.util.TimeZone
 
 import org.bson.types.ObjectId
+import com.mongodb.DBObject
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbBoolean, DbChar, DbEmail, DbLink, DbPassword, Record }
@@ -76,6 +77,8 @@ class UserMeta extends MongoEntity( "a01v" ) {
 
   // TODO:  Make this more sophisticated, allow the entire user to be retrieved instead of just the name, and/or maybe something like ProfileItem
   def nameFor( userId:ObjectId ) = "TODO"
+
+  override def apply( obj:DBObject ):User = throw new UnsupportedOperationException
 }
 
 trait User extends MongoRecord {

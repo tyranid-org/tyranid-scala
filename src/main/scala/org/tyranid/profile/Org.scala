@@ -21,6 +21,7 @@ package org.tyranid.profile
 import java.util.TimeZone
 
 import org.bson.types.ObjectId
+import com.mongodb.DBObject
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbBoolean, DbChar, DbEmail, DbLink, DbLowerChar, DbPassword, DbUrl, Record }
@@ -34,6 +35,7 @@ import org.tyranid.web.WebContext
 
 class OrgMeta extends MongoEntity( "a02v" ) {
 
+  override def apply( obj:DBObject ):Org = throw new UnsupportedOperationException()
 }
 
 trait Org extends MongoRecord {

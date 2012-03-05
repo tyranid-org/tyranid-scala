@@ -233,7 +233,7 @@ object LinkedIn {
     B.Org.db.save( org )
   }
 
-  def createCompany( user:User, domain:String ):DBObject = {
+  def createCompany( user:User, domain:String ):Org = {
 
     loadCompanies( user, domain ) foreach { company =>
 
@@ -244,15 +244,36 @@ object LinkedIn {
 
       B.Org.db.save( org )
 
-      return org
+      return B.Org( org )
     }
 
     return null
   }
 
   def createCompanies( fromOrgId:ObjectId, domains:Seq[String] ):Seq[Org] = {
-    Nil
 
+    val users = B.Org.db.find( Mobj( "org" -> fromOrgId, "liid" -> Mobj( $exists -> true ) ) ).toSeq
+    val uIdx = 0
+
+    domains.flatMap { domain =>
+
+      // 1. find the company, if it doesn't exist create it
+
+      val existing = B.Org.db.findOne( Mobj( "domain" -> domain ) )
+
+      if ( existing == null ) {
+        //try {
+          Option( createCompany( B.User( users( uIdx ) ), domain ) )
+        //} catch {
+          // throttle exception
+            //uidx += 1
+            // if ( uidx > users.size )
+            //     exhausted tokens
+        //}
+      } else {
+        None
+      }
+    }
   }
 }
 
