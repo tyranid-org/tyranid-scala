@@ -6,14 +6,16 @@ import javax.servlet.http.Cookie
 import scala.collection.mutable
 import scala.xml.Unparsed
 
+import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
+import org.tyranid.company.Industry
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.locale.{ Country, LocationType, Region }
 import org.tyranid.oauth.{ OAuth, Token }
-import org.tyranid.profile.{ Industry, User }
+import org.tyranid.profile.{ Org, User }
 import org.tyranid.session.Session
 import org.tyranid.web.{ WebContext, Weblet }
 
@@ -246,6 +248,11 @@ object LinkedIn {
     }
 
     return null
+  }
+
+  def createCompanies( fromOrgId:ObjectId, domains:Seq[String] ):Seq[Org] = {
+    Nil
+
   }
 }
 

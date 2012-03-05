@@ -25,7 +25,7 @@ import org.bson.types.ObjectId
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbBoolean, DbChar, DbEmail, DbLink, DbLowerChar, DbPassword, DbUrl, Record }
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
+import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.image.DbImage
 import org.tyranid.secure.DbReCaptcha
 import org.tyranid.session.{ Session, ThreadData }
@@ -34,6 +34,9 @@ import org.tyranid.web.WebContext
 
 class OrgMeta extends MongoEntity( "a02v" ) {
 
+}
+
+trait Org extends MongoRecord {
 }
 
 
