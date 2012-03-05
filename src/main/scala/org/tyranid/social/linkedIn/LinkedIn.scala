@@ -257,8 +257,6 @@ object LinkedIn {
 
     domains.flatMap { domain =>
 
-      // 1. find the company, if it doesn't exist create it
-
       val existing = B.Org.db.findOne( Mobj( "domain" -> domain ) )
 
       if ( existing == null ) {
