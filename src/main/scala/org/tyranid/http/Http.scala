@@ -8,7 +8,7 @@ import scala.xml.NodeSeq
 import javax.servlet.{ Filter, FilterChain, FilterConfig, ServletRequest, ServletResponse }
 import javax.servlet.http.{ Cookie, HttpServlet, HttpServletRequest, HttpServletResponse }
 
-import org.apache.http.{ Header, NameValuePair }
+import org.apache.http.{ Header, NameValuePair, HttpResponse }
 import org.apache.http.client.methods.{ HttpRequestBase, HttpDelete, HttpGet, HttpPost }
 import org.apache.http.entity.StringEntity
 import org.apache.http.client.entity.UrlEncodedFormEntity
@@ -20,6 +20,9 @@ import org.tyranid.Imp._
 
 
 case class RestException( code:String, message:String ) extends Exception
+
+case class Http403Exception( response:HttpResponse ) extends Exception
+
 
 case class HttpServletRequestOps( req:HttpServletRequest ) {
 
@@ -195,7 +198,12 @@ object Http {
     val response = client.execute( request )
     val entity = response.getEntity
 
-    entity != null |* EntityUtils.toString( entity )
+    val str = entity != null |* EntityUtils.toString( entity )
+
+    response.getStatusLine.getStatusCode match {
+    case 403 => throw new Http403Exception( response )
+    case _   => str
+    }
   }
 
   private def convertHeaders( headers:collection.Map[String,String] ) =

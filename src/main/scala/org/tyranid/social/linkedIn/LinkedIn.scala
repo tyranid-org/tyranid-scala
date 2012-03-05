@@ -3,6 +3,7 @@ package org.tyranid.social.linkedIn
 
 import javax.servlet.http.Cookie
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.xml.Unparsed
 
@@ -13,6 +14,7 @@ import org.tyranid.Imp._
 import org.tyranid.company.Industry
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
+import org.tyranid.http.Http403Exception
 import org.tyranid.locale.{ Country, LocationType, Region }
 import org.tyranid.oauth.{ OAuth, Token }
 import org.tyranid.profile.{ Org, User }
@@ -253,25 +255,28 @@ object LinkedIn {
   def createCompanies( fromOrgId:ObjectId, domains:Seq[String] ):Seq[Org] = {
 
     val users = B.Org.db.find( Mobj( "org" -> fromOrgId, "liid" -> Mobj( $exists -> true ) ) ).toSeq
-    val uIdx = 0
+    var uIdx = 0
 
-    domains.flatMap { domain =>
+    domains.
+      filter( domain => !B.Org.db.exists( Mobj( "domain" -> domain ) ) ).
+      flatMap { domain =>
 
-      val existing = B.Org.db.findOne( Mobj( "domain" -> domain ) )
+        def attemptCreate:Option[Org] =
+          try {
+            Option( createCompany( B.User( users( uIdx ) ), domain ) )
+          } catch {
+          case e:Http403Exception =>
+            // this is probably a throttle exception ?
 
-      if ( existing == null ) {
-        //try {
-          Option( createCompany( B.User( users( uIdx ) ), domain ) )
-        //} catch {
-          // throttle exception
-            //uidx += 1
-            // if ( uidx > users.size )
-            //     exhausted tokens
-        //}
-      } else {
-        None
+            uIdx += 1
+            if ( uIdx > users.size )
+              throw e // we're totally exhausted
+
+            attemptCreate
+          }
+        
+        attemptCreate
       }
-    }
   }
 }
 
