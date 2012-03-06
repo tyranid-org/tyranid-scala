@@ -289,8 +289,8 @@ object LinkedInlet extends Weblet {
     val s = Session()
     val u = s.user
 
-    web.path match {
-    case "/linkedin/exchange" =>
+    rpath match {
+    case "/exchange" =>
       B.linkedIn.exchangeToken
       web.res.ok
 
