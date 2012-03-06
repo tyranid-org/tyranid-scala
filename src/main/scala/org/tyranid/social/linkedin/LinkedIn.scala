@@ -292,6 +292,11 @@ $(document).ready(function() {
   def createCompanies( fromOrgId:ObjectId, domains:Seq[String] ):Seq[Org] = {
 
     val users = B.User.db.find( Mobj( "org" -> fromOrgId, "liid" -> Mobj( $exists -> true ) ) ).toSeq
+
+    if ( users.length == 0 ) {
+      // TODO: Do something here if the org does not have any users
+      return Vector()
+    }
     
     var uIdx = 0
 
