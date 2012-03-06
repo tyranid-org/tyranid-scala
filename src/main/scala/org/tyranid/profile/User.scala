@@ -59,7 +59,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
     if ( session.user.loggedIn )
       true
     else if ( B.loginCookieName == null || session.user.isLoggingOut )
-        false
+      false
     else {
       LoginCookie.getUser match {
       case Some( user ) =>
