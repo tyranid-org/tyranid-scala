@@ -28,35 +28,7 @@ object Loginlet extends Weblet {
     <form method="post" action={ wpath + "/in" } id="f">
      <div class="loginBox">
       <head>
-       <script type="text/javascript" src="//platform.linkedin.com/in.js">
-         api_key:{ B.linkedIn.apiKey }
-         authorize: true
-         credentials_cookie: true
-         onLoad: onLinkedInLoad
-       </script>
-       <script type="text/javascript">{ Unparsed("""
-
-""" + ( loggingOut |* "window.liLogOut = true;" ) + """
-
-function onLinkedInAuth() {
-  if ( !window.liLogOut )
-    window.location.assign( '""" + wpath + """/linkedin' );
-  else
-    delete window.liLogOut
-}
-
-function onLinkedInLoad() {
-""" + ( loggingOut |* """
-  IN.User.logout();
-""" ) + """
-}
-
-$(document).ready(function() {
-  $('#forgot').click(function(e) {
-    window.location.assign( '""" + wpath + """/forgot?un=' + encodeURIComponent( $("#un").val() ) );
-  });
-});
-""") }</script>
+       { B.linkedIn != null |* B.linkedIn.loginScript( this ) }
       </head>
       <div class="title">
        Log In
@@ -92,7 +64,7 @@ $(document).ready(function() {
        { web.req.s( 'na ).isBlank |*
        <hr style="margin-top:12px;"/> ++
        <div>
-        <script type="IN/Login" data-onAuth="onLinkedInAuth"/>
+        { B.linkedIn != null |* <script type="IN/Login" data-onAuth="onLinkedInAuth"/> }
        </div> }
       </div>
      </div>

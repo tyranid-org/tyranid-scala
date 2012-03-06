@@ -216,10 +216,10 @@ object WebTemplate {
 class WebTemplate {
 
   private val heads = new mutable.ArrayBuffer[Node]()
-  private var headFound = false
+  private val tails = new mutable.ArrayBuffer[Node]()
 
   private def hasTemplates( nodes:NodeSeq ):Boolean = nodes exists hasTemplates
-  private def hasTemplates(  node:Node    ):Boolean = ( node.label == "head" || node.prefix == "tyr" ) || hasTemplates( node.child )
+  private def hasTemplates(  node:Node    ):Boolean = ( node.label == "head" || node.label == "tail" || node.prefix == "tyr" ) || hasTemplates( node.child )
 
   private def bindNode( node:Node, content:NodeSeq ):NodeSeq =
     node match {
@@ -233,19 +233,21 @@ class WebTemplate {
       }
 
     case e:Elem if node.label == "head" =>
-      heads ++= ( node.child map { case e: Elem => e.copy(scope = TopScope) case n => n } )
-      headFound = true
-
+      heads ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
       NodeSeq.Empty
 
-    case t:Text =>
-      t
+    case e:Elem if node.label == "tail" =>
+      tails ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
+      NodeSeq.Empty
 
-    case other =>
+    case e:Elem =>
       if ( hasTemplates( node ) )
-        new Elem( node.prefix, node.label, node.attributes, node.scope, process( node.child, content ):_* ) 
+        e.copy( child = process( node.child, content ) ) 
       else
         node
+
+    case n =>
+      n
     }
 
   def process( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq = {
@@ -258,19 +260,25 @@ class WebTemplate {
   def finish( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq = {
     val pxml = process( xml, content )
 
-    if ( headFound ) {
-
+    if ( heads.nonEmpty || tails.nonEmpty ) {
       pxml.flatMap { node =>
         node match {
         case e:Elem if node.label == "html" =>
-          val head = <head>{ heads }</head>
+          val content =
+            ( heads.nonEmpty |* <head>{ heads }</head> ) ++
+            ( if ( tails.nonEmpty )
+                node.child.flatMap { node =>
+                  node match {
+                  case e:Elem if node.label == "body" => e.copy( child = ( node.child ++ tails ) )
+                  case n                              => n
+                  }
+                }
+              else
+                node.child )
 
-          val htmlContents = head ++ node.child
+          e.copy( child = content )
 
-          new Elem( node.prefix, node.label, node.attributes, node.scope, htmlContents:_* )
-
-        case other =>
-          other
+        case n => n
         }
       }
 
@@ -279,7 +287,6 @@ class WebTemplate {
     }
   }
 }
-
 
 
 /*
