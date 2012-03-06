@@ -30,6 +30,7 @@ object Loginlet extends Weblet {
       <head>
        { B.linkedIn != null |* B.linkedIn.loginScript( this ) }
       </head>
+      { B.facebook != null |* B.facebook.apiScript( this ) }
       <div class="title">
        Log In
       </div>
@@ -62,10 +63,11 @@ object Loginlet extends Weblet {
         </tr>
        </table>
        { web.req.s( 'na ).isBlank |*
-       <hr style="margin-top:12px;"/> ++
-       <div>
-        { B.linkedIn != null |* <script type="IN/Login" data-onAuth="onLinkedInAuth"/> }
-       </div> }
+         <hr style="margin-top:12px;"/> ++
+         { B.linkedIn != null |* <div>{ B.linkedIn.loginButton }</div> } ++
+         { B.linkedIn != null && B.facebook != null |* <hr style="margin:4px 0 8px;"/> } ++
+         { B.facebook != null |* <div>{ B.facebook.loginButton }</div> }
+       }
       </div>
      </div>
      <a href={ wpath + "/register" } style="float:left; margin-top:4px;">Join { B.applicationName }!</a>

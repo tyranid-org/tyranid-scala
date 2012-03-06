@@ -55,14 +55,15 @@ class BooleanImp( bval:Boolean ) {
    * </span>
    */
 
-  def |*   ( v: => String    ):String    = if ( bval ) v else ""
-  def |*[T]( v: => Int       ):Int       = if ( bval ) v else 0
-  def |*[T]( v: => Long      ):Long      = if ( bval ) v else 0L
-  def |*[T]( v: => Double    ):Double    = if ( bval ) v else 0.0
-  def |*   ( v: => NodeSeq   ):NodeSeq   = if ( bval ) v else NodeSeq.Empty
-  def |*[T]( v: => Option[T] ):Option[T] = if ( bval ) v else None
-  def |*[T]( v: => List[T]   ):List[T]   = if ( bval ) v else Nil
-  def |*[T]( v: => Unit      ):Unit      = if ( bval ) v
+  def |*                      ( v: => String    ):String    = if ( bval ) v else ""
+  def |*[T]                   ( v: => Int       ):Int       = if ( bval ) v else 0
+  def |*[T]                   ( v: => Long      ):Long      = if ( bval ) v else 0L
+  def |*[T]                   ( v: => Double    ):Double    = if ( bval ) v else 0.0
+  def |*                      ( v: => NodeSeq   ):NodeSeq   = if ( bval ) v else NodeSeq.Empty
+  def |*[T]                   ( v: => Option[T] ):Option[T] = if ( bval ) v else None
+  def |*[T]                   ( v: => List[T]   ):List[T]   = if ( bval ) v else Nil
+  def |*[T]                   ( v: => Unit      ):Unit      = if ( bval ) v
+  def |*[T >: Null <: AnyRef ]( v: => T         ):T         = if ( bval ) v else null
 
   /**
    * C's ternary operator.  It uses | instead of :.  Inspired by Lift's similar operator.

@@ -17,8 +17,8 @@ object Facebook {
 case class FbApp( apiKey:String, secret:String ) {
 
   def apiScript( weblet:Weblet ) = {
-    <div id="fb-root"></div>
-    <script>{ Unparsed( """
+    <head>
+     <script>{ Unparsed( """
   window.fbAsyncInit = function() {
     FB.init({
       appId      : '""" + apiKey + """',
@@ -40,9 +40,13 @@ case class FbApp( apiKey:String, secret:String ) {
      ref.parentNode.insertBefore(js, ref);
    }(document));
 """ ) }</script>
+    </head>
+    <tail>
+     <div id="fb-root"></div>
+    </tail>
   }
 
-  def loginButton = <fb:login-button/>
+  def loginButton = <fb:login-button>Sign In with Facebook</fb:login-button>
 }
 
 object Facebooklet extends Weblet {
