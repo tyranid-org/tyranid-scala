@@ -11,7 +11,6 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.email.Email
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
-import org.tyranid.profile.{ LoginCookie, User }
 import org.tyranid.social.linkedin.LinkedIn
 import org.tyranid.ui.{ Button, Grid, Row, Field, Focus }
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
@@ -26,7 +25,7 @@ object Loginlet extends Weblet {
     val web = thread.web
     val loggingOut = web.req.s( 'lo ).notBlank
 
-    <form method="post" action="/log/in" id="f">
+    <form method="post" action={ wpath + "/in" } id="f">
      <div class="loginBox">
       <head>
        <script type="text/javascript" src="//platform.linkedin.com/in.js">
@@ -41,7 +40,7 @@ object Loginlet extends Weblet {
 
 function onLinkedInAuth() {
   if ( !window.liLogOut )
-    window.location.assign( '/log/linkedin' );
+    window.location.assign( '""" + wpath + """/linkedin' );
   else
     delete window.liLogOut
 }
@@ -54,7 +53,7 @@ function onLinkedInLoad() {
 
 $(document).ready(function() {
   $('#forgot').click(function(e) {
-    window.location.assign( '/log/forgot?un=' + encodeURIComponent( $("#un").val() ) );
+    window.location.assign( '""" + wpath + """/forgot?un=' + encodeURIComponent( $("#un").val() ) );
   });
 });
 """) }</script>
@@ -97,7 +96,7 @@ $(document).ready(function() {
        </div> }
       </div>
      </div>
-     <a href="/log/register" style="float:left; margin-top:4px;">Join { B.applicationName }!</a>
+     <a href={ wpath + "/register" } style="float:left; margin-top:4px;">Join { B.applicationName }!</a>
      <a href="#" id="forgot" style="float:right; margin-top:4px;">Forgot password ?</a>
     </form>
   }
@@ -348,6 +347,7 @@ $(document).ready(function() {
 
         sess.notice( "Instructions for changing your password have been sent to " + email + "." )
 
+        // TODO:  move this to email templates
         Email(subject = B.applicationName + " account access", text = """
 Hello """ + dbUser.s( 'firstName ) + """,
 
@@ -387,13 +387,13 @@ The """ + B.applicationName + """ Team
     }
   }
 
-  def sendActivation( user:org.tyranid.profile.User ) = {
+  def sendActivation( user:User ) = {
     val activationCode = Base62.make(8)
     user('activationCode) = activationCode
 
     T.session.notice( "Thank you!  You should be receiving an email shortly to verify your account." )
 
-    background { B.emailTemplates.welcome( user.as[User], activationCode ) }
+    background { B.emailTemplates.welcome( user, activationCode ) }
   }
 
   def validateEmail( email:String ) =
