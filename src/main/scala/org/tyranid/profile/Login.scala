@@ -16,7 +16,6 @@ import org.tyranid.ui.{ Button, Grid, Row, Field, Focus }
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
 
 
-
 object Loginlet extends Weblet {
 
   def box = {
@@ -25,38 +24,11 @@ object Loginlet extends Weblet {
     val web = thread.web
     val loggingOut = web.req.s( 'lo ).notBlank
 
+    // TODO:  make (at least parts of) this more template-based
     <form method="post" action={ wpath + "/in" } id="f">
      <div class="loginBox">
       <head>
-       <script type="text/javascript" src="//platform.linkedin.com/in.js">
-         api_key:{ B.linkedIn.apiKey }
-         authorize: true
-         credentials_cookie: true
-         onLoad: onLinkedInLoad
-       </script>
-       <script type="text/javascript">{ Unparsed("""
-
-""" + ( loggingOut |* "window.liLogOut = true;" ) + """
-
-function onLinkedInAuth() {
-  if ( !window.liLogOut )
-    window.location.assign( '""" + wpath + """/linkedin' );
-  else
-    delete window.liLogOut
-}
-
-function onLinkedInLoad() {
-""" + ( loggingOut |* """
-  IN.User.logout();
-""" ) + """
-}
-
-$(document).ready(function() {
-  $('#forgot').click(function(e) {
-    window.location.assign( '""" + wpath + """/forgot?un=' + encodeURIComponent( $("#un").val() ) );
-  });
-});
-""") }</script>
+       { B.linkedIn != null |* B.linkedIn.loginScript( this ) }
       </head>
       <div class="title">
        Log In
@@ -92,7 +64,7 @@ $(document).ready(function() {
        { web.req.s( 'na ).isBlank |*
        <hr style="margin-top:12px;"/> ++
        <div>
-        <script type="IN/Login" data-onAuth="onLinkedInAuth"/>
+        { B.linkedIn != null |* <script type="IN/Login" data-onAuth="onLinkedInAuth"/> }
        </div> }
       </div>
      </div>
@@ -106,13 +78,13 @@ $(document).ready(function() {
 
     rpath match {
     case "/in" | "/" =>
-      val email    = web.req.s('un)
-      val password = web.req.s('pw)
-      val redirect = web.req.s('l)
+      val email    = web.req.s( 'un )
+      val password = web.req.s( 'pw )
+      val redirect = web.req.s( 'l  )
 
-      val user: User =
+      val user =
         if ( email.isBlank )
-          LoginCookie.getUser.of[User].getOrElse(null)
+          LoginCookie.getUser.getOrElse(null)
         else
           getUserByEmailPassword( email, password )
 
@@ -120,7 +92,7 @@ $(document).ready(function() {
         if (user != null)
           notActivatedYet
         else if ( email.isBlank )
-          sess.warn( "Please log in.")
+          sess.warn( "Please log in." )
 
         web.redirect(redirect.isBlank ? "/" | ("/?l=" + redirect.encUrl))
       } else {
@@ -267,8 +239,8 @@ $(document).ready(function() {
 
       val user =
         sess.user match {
-          case null => B.newUser()
-          case u    => if ( u.isNew ) u else B.newUser()
+        case null => B.newUser()
+        case u    => if ( u.isNew ) u else B.newUser()
         }
 
       sess.user = user
@@ -281,16 +253,7 @@ $(document).ready(function() {
           }) ::
           Nil
 
-      val ui = user.view.ui(
-        "register",
-        Grid(
-          Row('email),
-          Row('password, 'password2),
-          Row('firstName, 'lastName),
-          Row('secondEmail),
-          Row('phone),
-          Row('title),
-          Row(Field('recaptcha, span = 2))))
+      val ui = user.view.ui( "register" )
 
       user.isAdding = true
       

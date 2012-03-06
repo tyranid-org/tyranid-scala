@@ -35,12 +35,12 @@ class WebSuite extends FunSuite {
     assert(
       WebTemplate(
         <tyr:shell><div><p>Test</p></div></tyr:shell> ).toString ===
-      <html><head></head><body><h1>hi there</h1><div><p>Test</p></div></body></html>.toString )
+      <html><body><h1>hi there</h1><div><p>Test</p></div></body></html>.toString )
 
     assert(
       WebTemplate(
         <tyr:shell><tyr:sample/></tyr:shell> ).toString ===
-      <html><head></head><body><h1>hi there</h1><p>Sample</p></body></html>.toString )
+      <html><body><h1>hi there</h1><p>Sample</p></body></html>.toString )
 
     assert(
       WebTemplate(
@@ -59,6 +59,17 @@ class WebSuite extends FunSuite {
         Unparsed( """<!DOCTYPE html>""" ) ++ <html xmlns="https://www.w3.org/1999/xhtml"><head><script>foo</script></head><d><p>Test</p><tyr:content/></d></html>,
         <p><head><s>bar</s></head><head><script>{ Unparsed( "var js = 'foo';" ) }</script></head><i/></p> ).toString ===
       ( Unparsed( """<!DOCTYPE html>""" ) ++ <html xmlns="https://www.w3.org/1999/xhtml"><head><script>foo</script><s>bar</s><script>{ Unparsed( "var js = 'foo';" ) }</script></head><d><p>Test</p><p><i></i></p></d></html> ).toString )
+
+    assert(
+      WebTemplate(
+        <html><body><tail><p>hi</p></tail><div><p>Test</p></div></body></html> ).toString ===
+      <html><body><div><p>Test</p></div><p>hi</p></body></html>.toString )
+
+    assert(
+      WebTemplate(
+        <tyr:shell><tail><div>foo</div></tail><div><p>Test</p></div></tyr:shell> ).toString ===
+      <html><body><h1>hi there</h1><div><p>Test</p></div><div>foo</div></body></html>.toString )
+
   }
 }
 

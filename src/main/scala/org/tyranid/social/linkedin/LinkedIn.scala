@@ -53,6 +53,43 @@ case class LiApp( apiKey:String, secret:String ) {
 
   lazy val oauth = OAuth( key = apiKey, secret = secret )
 
+  def loginScript( weblet:Weblet ) = {
+    val loggingOut = T.web.req.s( 'lo ).notBlank
+
+    <script type="text/javascript" src="//platform.linkedin.com/in.js">
+       api_key:{ apiKey }
+       authorize: true
+       credentials_cookie: true
+       onLoad: onLinkedInLoad
+    </script>
+    <script type="text/javascript">{ Unparsed("""
+
+""" + ( loggingOut |* "window.liLogOut = true;" ) + """
+
+function onLinkedInAuth() {
+  if ( !window.liLogOut )
+    window.location.assign( '""" + weblet.wpath + """/linkedin' );
+  else
+    delete window.liLogOut
+}
+
+function onLinkedInLoad() {
+""" + ( loggingOut |* """
+  IN.User.logout();
+""" ) + """
+}
+
+$(document).ready(function() {
+  $('#forgot').click(function(e) {
+    window.location.assign( '""" + weblet.wpath + """/forgot?un=' + encodeURIComponent( $("#un").val() ) );
+  });
+});
+""") }</script>
+  }
+
+  def loginButton =
+    <script type="IN/Login" data-onAuth="onLinkedInAuth"/>
+
   def exchangeToken:Boolean = {
 
     val cookieName = "linkedin_oauth_" + apiKey
@@ -244,11 +281,8 @@ case class LiApp( apiKey:String, secret:String ) {
 
       val org = Mobj()
       org( 'domain ) = domain
-
       importCompany( company, org )
-
       B.Org.db.save( org )
-
       return B.Org( org )
     }
 
