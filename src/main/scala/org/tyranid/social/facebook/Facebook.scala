@@ -16,7 +16,7 @@ object Facebook {
 
 case class FbApp( apiKey:String, secret:String ) {
 
-  def apiScript( weblet:Weblet ) = {
+  def loginButton( weblet:Weblet ) = {
     <head>
      <script>{ Unparsed( """
   window.fbAsyncInit = function() {
@@ -28,7 +28,9 @@ case class FbApp( apiKey:String, secret:String ) {
       xfbml      : true  // parse XFBML
     });
 
-    // Additional initialization code here
+    FB.Event.subscribe('auth.login', function () {
+      window.location = '//""" + B.domain + """';
+    });
   };
 
   // Load the SDK Asynchronously
@@ -44,9 +46,8 @@ case class FbApp( apiKey:String, secret:String ) {
     <tail>
      <div id="fb-root"></div>
     </tail>
+    <fb:login-button>Sign In with Facebook</fb:login-button>
   }
-
-  def loginButton = <fb:login-button>Sign In with Facebook</fb:login-button>
 }
 
 object Facebooklet extends Weblet {

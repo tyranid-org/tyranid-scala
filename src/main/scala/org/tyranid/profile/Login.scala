@@ -24,13 +24,9 @@ object Loginlet extends Weblet {
     val web = thread.web
     val loggingOut = web.req.s( 'lo ).notBlank
 
-    // TODO:  make (at least parts of) this more template-based
+    // TODO:  make this more template-based
     <form method="post" action={ wpath + "/in" } id="f">
      <div class="loginBox">
-      <head>
-       { B.linkedIn != null |* B.linkedIn.loginScript( this ) }
-      </head>
-      { B.facebook != null |* B.facebook.apiScript( this ) }
       <div class="title">
        Log In
       </div>
@@ -64,9 +60,9 @@ object Loginlet extends Weblet {
        </table>
        { web.req.s( 'na ).isBlank |*
          <hr style="margin-top:12px;"/> ++
-         { B.linkedIn != null |* <div>{ B.linkedIn.loginButton }</div> } ++
+         { B.linkedIn != null |* <div>{ B.linkedIn.loginButton( this ) }</div> } ++
          { B.linkedIn != null && B.facebook != null |* <hr style="margin:4px 0 8px;"/> } ++
-         { B.facebook != null |* <div>{ B.facebook.loginButton }</div> }
+         { B.facebook != null |* <div>{ B.facebook.loginButton( this ) }</div> }
        }
       </div>
      </div>

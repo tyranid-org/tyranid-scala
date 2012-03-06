@@ -19,7 +19,7 @@ package org.tyranid
 
 import java.util.{ Calendar, Date }
 
-import scala.xml.NodeSeq
+import scala.xml.{ NodeSeq, Unparsed }
 
 import org.tyranid.log.Log
 

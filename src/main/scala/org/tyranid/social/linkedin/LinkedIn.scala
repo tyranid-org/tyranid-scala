@@ -53,16 +53,17 @@ case class LiApp( apiKey:String, secret:String ) {
 
   lazy val oauth = OAuth( key = apiKey, secret = secret )
 
-  def loginScript( weblet:Weblet ) = {
+  def loginButton( weblet:Weblet ) = {
     val loggingOut = T.web.req.s( 'lo ).notBlank
-
-    <script type="text/javascript" src="//platform.linkedin.com/in.js">
-       api_key:{ apiKey }
-       authorize: true
-       credentials_cookie: true
-       onLoad: onLinkedInLoad
-    </script>
-    <script type="text/javascript">{ Unparsed("""
+    
+    <head>
+     <script type="text/javascript" src="//platform.linkedin.com/in.js">
+        api_key:{ apiKey }
+        authorize: true
+        credentials_cookie: true
+        onLoad: onLinkedInLoad
+     </script>
+     <script type="text/javascript">{ Unparsed("""
 
 """ + ( loggingOut |* "window.liLogOut = true;" ) + """
 
@@ -85,10 +86,9 @@ $(document).ready(function() {
   });
 });
 """) }</script>
-  }
-
-  def loginButton =
-    <script type="IN/Login" data-onAuth="onLinkedInAuth"/>
+     </head>
+     <script type="IN/Login" data-onAuth="onLinkedInAuth"/>
+   }
 
   def exchangeToken:Boolean = {
 
