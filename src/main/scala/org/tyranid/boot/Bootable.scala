@@ -25,6 +25,7 @@ import org.cometd.bayeux.server.BayeuxServer
 
 import org.tyranid.db.Entity
 import org.tyranid.db.mongo.MongoEntity
+import org.tyranid.email.EmailTemplate
 import org.tyranid.profile.{ OrgMeta, User, UserMeta }
 import org.tyranid.secure.AccessType
 import org.tyranid.session.{ Session, ThreadData }
@@ -96,6 +97,7 @@ trait Bootable {
   val weblets:List[(String,Weblet)]
 
   val templates:List[(String, ( NodeSeq ) => NodeSeq )]
+  val emailTemplates:EmailTemplate
 
   val comets:Seq[CometService]
 
