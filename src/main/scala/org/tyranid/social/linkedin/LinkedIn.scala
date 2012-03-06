@@ -49,9 +49,9 @@ object LinkedIn {
 }
 
 
-case class LiApp( apiKey:String, secretKey:String ) {
+case class LiApp( apiKey:String, secret:String ) {
 
-  lazy val oauth = OAuth( key = apiKey, secret = secretKey )
+  lazy val oauth = OAuth( key = apiKey, secret = secret )
 
   def exchangeToken:Boolean = {
 
@@ -72,7 +72,7 @@ case class LiApp( apiKey:String, secretKey:String ) {
     for ( fieldName <- json( 'signature_order ).as[Array[String]] )
       text ++= json( fieldName ).toString
 
-    val calcSignature = OAuth.hmacSha1( text.toString, secretKey )
+    val calcSignature = OAuth.hmacSha1( text.toString, secret )
 
     if ( calcSignature != signature )
       throw new RuntimeException( "Failed signature match." )
