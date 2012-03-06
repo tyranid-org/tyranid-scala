@@ -155,6 +155,8 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
 }
 
 trait Weblet {
+  val rootPath = "/"
+    
   def redirectIfNotLoggedIn( web:WebContext ) = 
     if ( !B.User.isLoggedIn )
      web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )

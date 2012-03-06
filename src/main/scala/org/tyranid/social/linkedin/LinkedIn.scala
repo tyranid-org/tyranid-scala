@@ -291,7 +291,7 @@ $(document).ready(function() {
 
   def createCompanies( fromOrgId:ObjectId, domains:Seq[String] ):Seq[Org] = {
 
-    val users = B.Org.db.find( Mobj( "org" -> fromOrgId, "liid" -> Mobj( $exists -> true ) ) ).toSeq
+    val users = B.User.db.find( Mobj( "org" -> fromOrgId, "liid" -> Mobj( $exists -> true ) ) ).toSeq
     var uIdx = 0
 
     domains.
