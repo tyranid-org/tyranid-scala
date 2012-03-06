@@ -200,12 +200,12 @@ object LogQuery extends MongoQuery {
     new Field {
       def name = "ct"
       override def label = "Count"
-      def cell( run:Run, r:Record ) = Unparsed( Log.Events( r.i( 'ct ) ) )
+      def cell( run:Run, r:Record ) = Unparsed( r.s( 'ct ) )
     },
     new Field {
       def name = "du"
       override def label = "Duration (ms)"
-      def cell( run:Run, r:Record ) = Unparsed( Log.Events( r.i( 'du ) ) )
+      def cell( run:Run, r:Record ) = Unparsed( r.s( 'du ) )
     }
   )
 
