@@ -281,6 +281,7 @@ $(document).ready(function() {
 
       val org = Mobj()
       org( 'domain ) = domain
+      org( 'vname ) = domain
       importCompany( company, org )
       B.Org.db.save( org )
       return B.Org( org )
