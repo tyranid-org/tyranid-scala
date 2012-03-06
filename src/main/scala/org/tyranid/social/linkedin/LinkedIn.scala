@@ -1,5 +1,5 @@
 
-package org.tyranid.social.linkedIn
+package org.tyranid.social.linkedin
 
 import javax.servlet.http.Cookie
 
@@ -23,12 +23,39 @@ import org.tyranid.web.{ WebContext, Weblet }
 
 
 object LinkedIn {
+  def copyAttributes( from:User, to:User ) = {
+    to( 'liid ) = from.s( 'liid )
+    to( 'lit )  = from.s( 'lit )
+    to( 'lits ) = from.s( 'lits )
+  }
 
-  lazy val oauth = OAuth( key = B.linkedInApiKey, secret = B.linkedInSecretKey )
+  def saveAttributes( user:User ) {
+    B.User.db.update(
+      Mobj( "_id" -> user.id ),
+      Mobj( $set -> Mobj(
+        "liid" -> user.s( 'liid ),
+        "lit"  -> user.s( 'lit ),
+        "lits" -> user.s( 'lits ) )
+      )
+    )
+  }
+
+  def removeAttributes( user:DBObject ) {
+    user.remove( 'liid )
+    user.remove( 'lit )
+    user.remove( 'lits )
+    B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $unset -> Mobj( "liid" -> 1, "lit" -> 1, "lits" -> 1 ) ) )
+  }
+}
+
+
+case class LiApp( apiKey:String, secretKey:String ) {
+
+  lazy val oauth = OAuth( key = apiKey, secret = secretKey )
 
   def exchangeToken:Boolean = {
 
-    val cookieName = "linkedin_oauth_" + B.linkedInApiKey
+    val cookieName = "linkedin_oauth_" + apiKey
     val cookie =
       T.web.req.cookie( cookieName ).getOrElse {
         log( Log.LinkedIn, "m" -> ( "/linkedin/exchange missing " + cookieName + " cookie.  Cannot exchange linked in bearer token for a server token." ) )
@@ -45,7 +72,7 @@ object LinkedIn {
     for ( fieldName <- json( 'signature_order ).as[Array[String]] )
       text ++= json( fieldName ).toString
 
-    val calcSignature = OAuth.hmacSha1( text.toString, B.linkedInSecretKey )
+    val calcSignature = OAuth.hmacSha1( text.toString, secretKey )
 
     if ( calcSignature != signature )
       throw new RuntimeException( "Failed signature match." )
@@ -78,36 +105,12 @@ object LinkedIn {
 
     val existing = B.User.db.findOne( Mobj( "liid" -> memberId ) )
     if ( existing != null && user.id != null && existing.id != user.id )
-      removeAttributes( existing )
+      LinkedIn.removeAttributes( existing )
 
     if ( !user.isNew )
-      saveAttributes( user )
+      LinkedIn.saveAttributes( user )
 
     true
-  }
-
-  def copyAttributes( from:User, to:User ) = {
-    to( 'liid ) = from.s( 'liid )
-    to( 'lit )  = from.s( 'lit )
-    to( 'lits ) = from.s( 'lits )
-  }
-
-  def saveAttributes( user:User ) {
-    B.User.db.update(
-      Mobj( "_id" -> user.id ),
-      Mobj( $set -> Mobj(
-        "liid" -> user.s( 'liid ),
-        "lit"  -> user.s( 'lit ),
-        "lits" -> user.s( 'lits ) )
-      )
-    )
-  }
-
-  def removeAttributes( user:DBObject ) {
-    user.remove( 'liid )
-    user.remove( 'lit )
-    user.remove( 'lits )
-    B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $unset -> Mobj( "liid" -> 1, "lit" -> 1, "lits" -> 1 ) ) )
   }
 
   def tokenFor( user:User ) = Token( key = user.s( 'lit ), secret = user.s( 'lits ) )
@@ -288,7 +291,7 @@ object LinkedInlet extends Weblet {
 
     web.path match {
     case "/linkedin/exchange" =>
-      LinkedIn.exchangeToken
+      B.linkedIn.exchangeToken
       web.res.ok
 
     case _ =>

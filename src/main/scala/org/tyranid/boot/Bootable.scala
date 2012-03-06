@@ -28,6 +28,8 @@ import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.profile.{ OrgMeta, User, UserMeta }
 import org.tyranid.secure.AccessType
 import org.tyranid.session.{ Session, ThreadData }
+import org.tyranid.social.facebook.FbApp
+import org.tyranid.social.linkedin.LiApp
 import org.tyranid.web.{ Weblet, CometService }
 
 
@@ -145,8 +147,10 @@ trait Bootable {
   @volatile var dbDriver      = "org.postgresql.Driver"
 
   // LinkedIn
-  val linkedInApiKey    = ""
-  val linkedInSecretKey = ""
+  val linkedIn:LiApp = null
+
+  // LinkedIn
+  val facebook:FbApp = null
 
   // ReCaptcha
   val reCaptchaPublicKey      = ""
