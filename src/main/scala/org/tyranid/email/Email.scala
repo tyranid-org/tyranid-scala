@@ -1,11 +1,10 @@
+
 package org.tyranid.email
 
 import java.io.{ File, UnsupportedEncodingException }
 import java.util.{ Date, Properties }
 
 import javax.activation._
-import javax.mail.Authenticator;
-
 import javax.mail._
 import javax.mail.internet._
 
@@ -16,6 +15,7 @@ import org.tyranid.Imp._
 import org.tyranid.db.{ DbChar, DbInt, DbPassword }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
+import org.tyranid.profile.User
 
 
 object EmailConfig extends MongoEntity( tid = "a0At" ) {
@@ -81,6 +81,12 @@ object Email {
 
     return new InternetAddress( emailAddress )
   }
+}
+
+trait EmailTemplate {
+
+  def welcome( user:User, activationCode:String )
+
 }
 
 case class Email( subject:String, text:String, html:String=null ) {

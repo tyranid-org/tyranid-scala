@@ -24,6 +24,8 @@ class Boot extends org.tyranid.boot.Bootable {
     "sample" -> ( ( xml:NodeSeq ) => <p>Sample</p> ) ::
     Nil
 
+  val emailTemplates = null
+
   val comets = Nil
 
   lazy val userMeta = User
