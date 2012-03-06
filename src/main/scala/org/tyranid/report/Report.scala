@@ -47,8 +47,9 @@ trait Query {
 
   val name:String
 
-  def label = name.camelCaseToSpaceUpper
-
+  def label:AnyRef = name.camelCaseToSpaceUpper
+  def labelNode:NodeSeq = null
+  
   val allFields:Seq[Field]
 
   val defaultFields:Seq[Field]
@@ -457,8 +458,11 @@ case class Report( query:Query ) {
     selectedIds.clear
     records.filter( r => tmp( r.id ) ).foreach { selectedIds += _.id }
 
-
-    <div class="title">{ query.label }</div> ++
+    ( if ( query.labelNode != null ) {
+      query.labelNode
+    } else {
+      <div class="title">{ query.label }</div>
+    } ) ++
     <table class="def" id="def">
      <tr>
       <td>
