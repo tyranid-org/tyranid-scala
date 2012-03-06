@@ -146,11 +146,11 @@ trait Bootable {
   @volatile var dbPw:String   = ""
   @volatile var dbDriver      = "org.postgresql.Driver"
 
-  // LinkedIn
-  val linkedIn:LiApp = null
+  // Facebook
+  val facebook:FbApp = null
 
   // LinkedIn
-  val facebook:FbApp = null
+  val linkedIn:LiApp = null
 
   // ReCaptcha
   val reCaptchaPublicKey      = ""
