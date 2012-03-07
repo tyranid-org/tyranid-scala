@@ -78,6 +78,7 @@ function onLinkedInAuth() {
 function onLinkedInLoad() {
 """ + ( loggingOut |* """
   IN.User.logout();
+  setTimeout( "delete window.liLogOut;", 1200 );
 """ ) + """
 }
 
