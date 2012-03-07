@@ -8,7 +8,7 @@ import org.tyranid.Imp._;
 
 
 // maybe this shouldn't be a ControlThrowable ?
-case class SecureException extends scala.util.control.ControlThrowable
+case class SecureException() extends scala.util.control.ControlThrowable
 
 
 sealed trait AccessType
