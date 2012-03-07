@@ -14,6 +14,7 @@ import org.tyranid.Imp._
 import org.tyranid.company.Industry
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
+import org.tyranid.email.Email
 import org.tyranid.http.Http403Exception
 import org.tyranid.locale.{ Country, LocationType, Region }
 import org.tyranid.oauth.{ OAuth, Token }
@@ -281,7 +282,7 @@ $(document).ready(function() {
 
       val org = Mobj()
       org( 'domain ) = domain
-      org( 'vname ) = domain
+      org( 'vname ) = Email.domainPart( "junk@" + domain )
       importCompany( company, org )
       B.Org.db.save( org )
       return B.Org( org )
