@@ -163,7 +163,7 @@ $(document).ready(function() {
    */
 
   val companyFields =
-    "(id,name,website-url,industry,specialties,square-logo-url,employee-count-range,description,twitter-id,blog-rss-url," +
+    "(id,name,website-url,industry,specialties,logo-url,square-logo-url,employee-count-range,description,twitter-id,blog-rss-url," +
     "founded-year,locations:(is-headquarters,description,address:(street1,street2,city,state,postal-code,country-code,region-code),contact-info))"
 
   def companiesById( user:User, ids:String* ):Seq[ObjectMap] =
@@ -196,8 +196,11 @@ $(document).ready(function() {
     }
 
     string( 'id,            'liid )
-    string( 'squareLogoUrl, 'thumbnail )
     string( 'websiteUrl,    'website )
+
+    val logo = c.s( 'squareLogoUrl ) or c.s( 'logoUrl )
+    if ( logo.notBlank )
+      org( 'thumbnail ) = logo
 
     if ( org.s( 'name ).isBlank )
       string( 'name,          'name )
