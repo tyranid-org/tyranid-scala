@@ -11,11 +11,15 @@ import org.tyranid.http.Http
 import org.tyranid.math.Base64
 import org.tyranid.profile.User
 import org.tyranid.session.Session
+import org.tyranid.social.SoApp
 import org.tyranid.time.Time
 import org.tyranid.web.{ Weblet, WebContext }
 
 
-object Facebook {
+case class FbApp( apiKey:String, secret:String ) extends SoApp {
+
+  val networkCode = "fb"
+  val networkName = "Facebook"
 
   def copyAttributes( from:User, to:User ) = {
     to( 'fbid ) = from.s( 'fbid )
@@ -40,9 +44,6 @@ object Facebook {
     user.remove( 'fbte )
     B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $unset -> Mobj( "fbid" -> 1, "fbt" -> 1, "fbte" -> 1 ) ) )
   }
-}
-
-case class FbApp( apiKey:String, secret:String ) {
 
   def loginButton( weblet:Weblet ) = {
     <head>
@@ -109,7 +110,7 @@ case class FbApp( apiKey:String, secret:String ) {
       split( "&" ).map( _.splitFirst( '=' ) )
 
     val accessToken = params.find( _._1 == "access_token" ).get._2
-    val expires     = System.currentTimeMillis + params.find( _._2 == "expires" ).get._2.toLong * 1000
+    val expires     = System.currentTimeMillis + params.find( _._1 == "expires" ).get._2.toLong * 1000
 
     spam( "uid=" + uid )
     spam( "accessToken=" + accessToken )
@@ -124,12 +125,29 @@ case class FbApp( apiKey:String, secret:String ) {
 
     val existing = B.User.db.findOne( Mobj( "fbid" -> uid ) )
     if ( existing != null && user.id != null && existing.id != user.id )
-      Facebook.removeAttributes( existing )
+      removeAttributes( existing )
 
     if ( !user.isNew )
-      Facebook.saveAttributes( user )
+      saveAttributes( user )
 
     true
+  }
+
+
+  /*
+   * * *   People
+   */
+
+  def importUser( user:User, uid:String ) = {
+    val profile = "https://graph.facebook.com/me".GET( Map( "access_token" -> user.s( 'fbt ) ) )
+    spam( "profile:\n\n" + profile )
+
+    //user( 'firstName ) = profile( 'firstName )
+    //user( 'lastName )  = profile( 'lastName )
+    //user( 'thumbnail ) =
+      //if ( profile.contains( 'pictureUrl ) ) profile( 'pictureUrl )
+      //else                                   "/icon_individual.png"
+    //user( 'title )     = profile( 'headline )
   }
 }
 

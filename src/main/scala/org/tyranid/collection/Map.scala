@@ -21,6 +21,7 @@ import org.tyranid.Imp._
 
 
 object ObjectMapImp {
+  val EmptyObject = scala.collection.immutable.Map[String,Any]()
   val EmptyAnyRefArray = new Array[AnyRef]( 0 )
 }
 
@@ -42,6 +43,12 @@ class ObjectMapImp[A]( map:scala.collection.Map[String,Any] ) {
     map.get( key ) match {
     case Some( v ) => v.as[ObjectMap]
     case None      => null
+    }
+
+  def o_?( key:String ) =
+    map.get( key ) match {
+    case Some( v ) => v.as[ObjectMap]
+    case None      => ObjectMapImp.EmptyObject
     }
 
   def b( key:String ) =

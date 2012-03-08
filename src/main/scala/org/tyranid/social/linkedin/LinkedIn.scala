@@ -21,10 +21,17 @@ import org.tyranid.net.Uri
 import org.tyranid.oauth.{ OAuth, Token }
 import org.tyranid.profile.{ Org, User }
 import org.tyranid.session.Session
+import org.tyranid.social.SoApp
 import org.tyranid.web.{ WebContext, Weblet }
 
 
-object LinkedIn {
+case class LiApp( apiKey:String, secret:String ) extends SoApp {
+
+  val networkCode = "li"
+  val networkName = "LinkedIn"
+
+  lazy val oauth = OAuth( key = apiKey, secret = secret )
+
   def copyAttributes( from:User, to:User ) = {
     to( 'liid ) = from.s( 'liid )
     to( 'lit )  = from.s( 'lit )
@@ -48,12 +55,6 @@ object LinkedIn {
     user.remove( 'lits )
     B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $unset -> Mobj( "liid" -> 1, "lit" -> 1, "lits" -> 1 ) ) )
   }
-}
-
-
-case class LiApp( apiKey:String, secret:String ) {
-
-  lazy val oauth = OAuth( key = apiKey, secret = secret )
 
   def loginButton( weblet:Weblet ) = {
     val loggingOut = T.web.req.s( 'lo ).notBlank
@@ -145,10 +146,10 @@ $(document).ready(function() {
 
     val existing = B.User.db.findOne( Mobj( "liid" -> memberId ) )
     if ( existing != null && user.id != null && existing.id != user.id )
-      LinkedIn.removeAttributes( existing )
+      removeAttributes( existing )
 
     if ( !user.isNew )
-      LinkedIn.saveAttributes( user )
+      saveAttributes( user )
 
     true
   }
@@ -157,6 +158,21 @@ $(document).ready(function() {
 
   def GET( url:String, user:User ) = oauth.GET( "https://api.linkedin.com/v1" + url, tokenFor( user ), headers = Map( "x-li-format" -> "json" ) )
 
+
+  /*
+   * * *   People
+   */
+
+  def importUser( user:User, uid:String ) = {
+    val profile = GET( "/people/id=" + uid + ":(id,first-name,last-name,picture-url,headline)", user ).parseJsonObject
+
+    user( 'firstName ) = profile( 'firstName )
+    user( 'lastName )  = profile( 'lastName )
+    user( 'thumbnail ) =
+      if ( profile.contains( 'pictureUrl ) ) profile( 'pictureUrl )
+      else                                   "/icon_individual.png"
+    user( 'title )     = profile( 'headline )
+  }
 
 
   /*
@@ -171,6 +187,7 @@ $(document).ready(function() {
     GET( "/companies::(" + ids.mkString( "," ) + "):" + companyFields, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
 
   def loadCompanies( user:User, domain:String = null, positions:Boolean = false, multi:Boolean = false, bestMatch:Boolean = false ):Seq[ObjectMap] = {
+    val domainPart = domain != null |* Uri.domainPart( domain ).toLowerCase
 
     var companies = mutable.ArrayBuffer[ObjectMap]()
 
@@ -185,13 +202,15 @@ $(document).ready(function() {
         companies ++= companiesById( user, ids:_* )
     }
 
-    if ( companies.size == 0 && domain.notBlank ) {
+    def domainPartPresent = companies.exists( c => Uri.lowerDomainChars( c.s( 'name ) ).contains( domainPart ) )
+
+    if ( domain.notBlank && ( companies.size == 0 || !domainPartPresent ) ) {
       var terms = Uri.nameForDomain( domain )
       if ( terms.notBlank )
         companies ++= GET( "/company-search:(companies:" + companyFields + ")?keywords=" + terms.encUrl, user ).parseJsonObject.o( 'companies ).a_?( 'values ).of[ObjectMap]
 
-      if ( companies.size == 0 ) {
-        terms = Uri.domainPart( domain ).toLowerCase
+      if ( companies.size == 0 || !domainPartPresent ) {
+        terms = domainPart.toLowerCase
         companies ++= GET( "/company-search:(companies:" + companyFields + ")?keywords=" + domain.encUrl, user ).parseJsonObject.o( 'companies ).a_?( 'values ).of[ObjectMap]
       }
 
@@ -200,8 +219,6 @@ $(document).ready(function() {
     }
 
     if ( bestMatch && companies.size > 1 ) {
-      val domainPart = Uri.domainPart( domain )
-
       // exact name match
       var candidates = companies.filter( _.s( 'name ).toLowerCase == domainPart )
       if ( candidates.size > 0 )
@@ -245,7 +262,7 @@ $(document).ready(function() {
     if ( org.s( 'name ).isBlank )
       string( 'name,          'name )
 
-    val numEmployees = c.o( 'employeeCountRange ).s( 'name )
+    val numEmployees = c.o_?( 'employeeCountRange ).s( 'name )
     if ( numEmployees.notBlank )
       org( 'numEmployees ) = numEmployees
 
@@ -261,12 +278,9 @@ $(document).ready(function() {
     if ( industryCode > 0 )
       org.a_!( 'sellingCategories ).add( industryCode.box )
 
-    val spec = c.o( 'specialties )
-    if ( spec != null ) {
-      val arr = spec.a_?( 'values )
-      if ( arr.nonEmpty )
-        org( 'specialties ) = Mlist( arr:_* )
-    }
+    val spec = c.o_?( 'specialties ).a_?( 'values )
+    if ( spec.nonEmpty )
+      org( 'specialties ) = Mlist( spec:_* )
 
     val ls = c.o( 'locations )
     if ( ls != null ) {
@@ -284,26 +298,25 @@ $(document).ready(function() {
           if ( desc.notBlank )
             loc( 'additionalInformation ) = desc
 
-          val ci = l.o( 'contactInfo )
-          if ( ci != null ) {
-            val ph = ci.s( 'phone1 )
-            if ( ph.notBlank )
-              loc( 'phone ) = ph
-          }
+          val ph = l.o_?( 'contactInfo ).s( 'phone1 )
+          if ( ph.notBlank )
+            loc( 'phone ) = ph
 
           val a = l.o( 'address )
 
-          val addr = Mobj()
-          addr( 'street1 )    = a.s( 'street1 )
-          addr( 'street2 )    = a.s( 'street2 )
-          addr( 'city )       = a.s( 'city )
-          addr( 'state )      = Region.idForAbbr( a.s( 'state ) )
-          addr( 'postalCode ) = a.s( 'postalCode )
+          if ( a != null ) {
+            val addr = Mobj()
+            addr( 'street1 )    = a.s( 'street1 )
+            addr( 'street2 )    = a.s( 'street2 )
+            addr( 'city )       = a.s( 'city )
+            addr( 'state )      = Region.idForAbbr( a.s( 'state ) )
+            addr( 'postalCode ) = a.s( 'postalCode )
 
-          // linkedin also provides "regionCode" ... we're not using it (yet)
+            // linkedin also provides "regionCode" ... we're not using it (yet)
 
-          addr( 'country )    = Country.idForCode( a.s( 'countryCode ) )
-          loc( 'address ) = addr
+            addr( 'country )    = Country.idForCode( a.s( 'countryCode ) )
+            loc( 'address ) = addr
+          }
 
           if ( l.b( 'isHeadquarters ) )
             loc( 'type ) = LocationType.HeadquartersId

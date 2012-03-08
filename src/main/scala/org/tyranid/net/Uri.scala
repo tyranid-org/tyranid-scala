@@ -21,31 +21,50 @@ object Uri {
     "http://" + base
   }
 
-  def nameForDomain( domain:String ) = {
-    val s = ( "http://" + domain ).GET().toLowerCase
+  def nameForDomain( domain:String ):String =
+    try {
+      val s = ( "http://" + domain ).GET().toLowerCase
 
-    var idx = s.indexOf( "<title>" )
+      var idx = s.indexOf( "<title>" )
 
-    if ( idx != -1 ) {
-      idx += 7 // skip past <title>
-      val sb = new StringBuilder
+      if ( idx != -1 ) {
+        idx += 7 // skip past <title>
+        val sb = new StringBuilder
 
-      while ( idx < s.length ) {
-        s.charAt( idx ) match {
-        case '<' | '-' | '|' =>
-          idx = s.length
+        while ( idx < s.length ) {
+          s.charAt( idx ) match {
+          case '<' | '-' | '|' =>
+            idx = s.length
         
-        case ch =>
-          sb += ch
+          case ch =>
+            sb += ch
+          }
+
+          idx += 1
         }
 
-        idx += 1
+        sb.toString.trim
+      } else {
+        null
+      }
+    } catch {
+    case e:java.net.UnknownHostException =>
+      return null
+    }
+
+  /*
+   * Example:  AT&T, returns att
+   */
+  def lowerDomainChars( domain:String ) = {
+    val sb = new StringBuilder
+
+    for ( ch <- domain )
+      ch match {
+      case ch if ch.isLetterOrDigit || ch == '-' => sb += ch.toLower
+      case _ =>
       }
 
-      sb.toString.trim
-    } else {
-      null
-    }
+    sb.toString
   }
 }
 

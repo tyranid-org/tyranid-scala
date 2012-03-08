@@ -20,7 +20,7 @@ package org.tyranid.bson
 import java.util.Date
 
 import org.bson.types.ObjectId
-import com.mongodb.{ BasicDBList, DBObject }
+import com.mongodb.{ BasicDBObject, BasicDBList, DBObject }
 
 import org.tyranid.Imp._
 import org.tyranid.any.Deep
@@ -61,15 +61,31 @@ trait BsonObject extends Deep {
     case a:BasicDBList => a
     }
   def a( key:String )   = apply( key ).asInstanceOf[BasicDBList]
+
   def b( key:String )   = apply( key ).coerceBoolean
   def d( key:String )   = apply( key ).coerceDouble
   def i( key:String )   = apply( key ).coerceInt
   def l( key:String )   = apply( key ).coerceLong
-  def o( key:String )   = apply( key ).asInstanceOf[BsonObject]
-  def oid( key:String ) = apply( key ).asInstanceOf[ObjectId]
   //def r( key:String ) = apply( key ).asInstanceOf[Long]
   def s( key:String )   = apply( key ).coerceString
   def t( key:String )   = apply( key ).coerceDate
+
+  def o_?( key:String ):BsonObject =
+    apply( key ) match {
+    case null            => Mongo.EmptyObject
+    case o:DBObject      => o
+    }
+  def o_!( key:String ):BsonObject =
+    apply( key ) match {
+    case null            => val o = new BasicDBObject
+                            update( key, o )
+                            o
+    case o:DBObject      => o
+    }
+  def o( key:String )   = apply( key ).asInstanceOf[BsonObject]
+
+  def oid( key:String ) = apply( key ).asInstanceOf[ObjectId]
+
 
 
   /*
