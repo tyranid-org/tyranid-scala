@@ -313,8 +313,8 @@ The """ + B.applicationName + """ Team
         case u    => if ( u.isNew ) u else B.newUser()
       }
 
-    val liid = user.s( app.idName )
-    if ( liid.isBlank )
+    val uid = user.s( app.idName )
+    if ( uid.isBlank )
       web.redirect( "/" )
 
     if ( web.req.s( 'create ).notBlank ) {
@@ -324,7 +324,7 @@ The """ + B.applicationName + """ Team
       if ( !validateUnusedEmail( email ) )
         web.redirect( web.path )
 
-      app.importUser( user, liid )
+      app.importUser( user, uid )
 
       user( 'email )     = email
       user( 'createdOn ) = new Date
@@ -382,7 +382,7 @@ The """ + B.applicationName + """ Team
         <div class="contents">
          <div>
           If you already have an existing { B.applicationName } account, please log in with it below.
-          <p>This will link your existing { B.applicationName } account with your " + app.networkName + " account.</p>
+          <p>This will link your existing { B.applicationName } account with your { app.networkName } account.</p>
          </div>
          <form method="post" action={ web.path } id="f">
           <table>

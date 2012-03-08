@@ -9,7 +9,7 @@ import org.tyranid.Imp._
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.http.Http
 import org.tyranid.math.Base64
-import org.tyranid.profile.User
+import org.tyranid.profile.{ Gender, User }
 import org.tyranid.session.Session
 import org.tyranid.social.SoApp
 import org.tyranid.time.Time
@@ -139,15 +139,21 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
    */
 
   def importUser( user:User, uid:String ) = {
-    val profile = "https://graph.facebook.com/me".GET( Map( "access_token" -> user.s( 'fbt ) ) )
+    val profile = "https://graph.facebook.com/me".GET( Map( "access_token" -> user.s( 'fbt ) ) ).parseJsonObject
     spam( "profile:\n\n" + profile )
 
-    //user( 'firstName ) = profile( 'firstName )
-    //user( 'lastName )  = profile( 'lastName )
+    user( 'firstName ) = profile.s( 'first_name )
+    user( 'lastName )  = profile.s( 'last_name )
+
+    val gender = Gender.by( profile.s( 'gender ) )
+    if ( gender != null )
+      user( 'gender ) = gender.id
+
+    user( 'thumbnail ) = "https://graph.facebook.com/" + uid + "/picture?type=square"
+
     //user( 'thumbnail ) =
       //if ( profile.contains( 'pictureUrl ) ) profile( 'pictureUrl )
       //else                                   "/icon_individual.png"
-    //user( 'title )     = profile( 'headline )
   }
 }
 

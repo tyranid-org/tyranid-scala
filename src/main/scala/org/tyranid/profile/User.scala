@@ -40,6 +40,8 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "password2"      is DbPassword          is 'required is 'temporary as "Repeat Password";
   "thumbnail"      is DbImage( "public" ) as "Profile Image";
 
+  "gender"         is DbLink(Gender)      ;
+
   "recaptcha"      is DbReCaptcha( "white" ) is 'temporary as "Verify you are human";
 
   "stayLoggedIn"   is DbBoolean           as "Keep me logged in for two weeks";
