@@ -76,9 +76,23 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
     for ( n <- req.getHeaderNames )
       for ( v <- req.getHeaders( n.as[String] ) )
         spam( "  " + n + " = " + v )
+
+    spam( "** cookies" )
+    for ( c <- cookies )
+      spam( "  " + c.getName + " = " + c.getValue +
+            ( c.getDomain != null |* "\n    Domain = " + c.getDomain ) +
+            ( c.getPath != null |* "\n    Path = " + c.getPath ) +
+            ( c.getMaxAge != -1 |* "\n    MaxAge = " + c.getMaxAge ) +
+            ( c.getSecure |* "\n    Secure = true" ) )
   }
 
   def path = req.getServletPath
+
+  def cookies:Array[Cookie] =
+    req.getCookies match {
+    case null => Array()
+    case arr  => arr
+    }
 
   def uriAndQueryString = {
     val qs = req.getQueryString

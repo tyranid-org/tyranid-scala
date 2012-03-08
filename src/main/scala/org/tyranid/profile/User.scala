@@ -24,7 +24,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbBoolean, DbChar, DbEmail, DbLink, DbPassword, Record }
+import org.tyranid.db.{ DbBoolean, DbChar, DbEmail, DbLink, DbLong, DbPassword, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.image.DbImage
@@ -52,6 +52,10 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "liid"           is DbChar(90)          ; // LinkedIn member id if linked
   "lit"            is DbChar(90)          ; // LinkedIn OAuth 1.0a token
   "lits"           is DbChar(90)          ; // LinkedIn OAuth 1.0a token secret
+
+  "fbid"           is DbChar(90)          ; // Facebook id if linked
+  "fbt"            is DbChar(90)          ; // Facebook OAuth 2.0 token
+  "fbte"           is DbLong              ; // Facebook token expiration
 
   def isLoggedIn = { 
     val session = Session()

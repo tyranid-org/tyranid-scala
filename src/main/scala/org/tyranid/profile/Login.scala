@@ -106,18 +106,15 @@ object Loginlet extends Weblet {
       sess.logout
       web.redirect( "/?lo=1" )
 
-    case "/linkedin" =>
-      if ( B.linkedIn.exchangeToken ) {
-        val liid = sess.user.s('liid)
-        val user = B.User(B.User.db.findOne(Mobj("liid" -> liid)))
+    case "/facebook" =>
+      if ( B.facebook.exchangeToken )
+        socialLogin( "li" )
 
-        if ( user == null )
-          web.redirect( wpath + "/registerli" )
-        else if ( user.s( 'activationCode ).notBlank )
-          notActivatedYet
-        else
-          sess.login(user)
-      }
+      web.redirect("/")
+
+    case "/linkedin" =>
+      if ( B.linkedIn.exchangeToken )
+        socialLogin( "li" )
 
       web.redirect("/")
 
@@ -394,6 +391,20 @@ The """ + B.applicationName + """ Team
       sess.warn( "Invalid login.  Please try again." )
 
     user
+  }
+
+  def socialLogin( network:String ) = {
+    val sess = T.session
+    val socialIdName = network + "id"
+    val socialId = sess.user.s( socialIdName )
+    val user = B.User( B.User.db.findOne( Mobj( socialIdName -> socialId ) ) )
+
+    if ( user == null )
+      T.web.redirect( wpath + "/register" + network )
+    else if ( user.s( 'activationCode ).notBlank )
+      notActivatedYet
+    else
+      sess.login( user )
   }
 
   def notActivatedYet = {

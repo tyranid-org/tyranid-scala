@@ -40,6 +40,7 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
   val Error404   = 4
   val Scraper    = 5
   val Import     = 6
+  val Facebook   = 7
 
   val Events = Array( 
     "n/a",
@@ -48,7 +49,8 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
     "LinkedIn",
     "404",
     "Scraper",
-    "Import" )
+    "Import",
+    "Facebook" )
 
 
   "id"                  is DbMongoId      is 'key;

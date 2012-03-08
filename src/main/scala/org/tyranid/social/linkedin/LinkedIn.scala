@@ -97,7 +97,7 @@ $(document).ready(function() {
     val cookieName = "linkedin_oauth_" + apiKey
     val cookie =
       T.web.req.cookie( cookieName ).getOrElse {
-        log( Log.LinkedIn, "m" -> ( "/linkedin/exchange missing " + cookieName + " cookie.  Cannot exchange linked in bearer token for a server token." ) )
+        log( Log.LinkedIn, "m" -> ( "Linkedin exchange missing " + cookieName + " cookie.  Cannot exchange linked in bearer token for a server token." ) )
         return false
       }
 
