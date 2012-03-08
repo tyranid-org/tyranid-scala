@@ -202,6 +202,9 @@ $(document).ready(function() {
     if ( logo.notBlank )
       org( 'thumbnail ) = logo
 
+    if ( org.s( 'thumbnail ).isBlank )
+      org( 'thumbnail ) = "/icon_company.png"
+
     if ( org.s( 'name ).isBlank )
       string( 'name,          'name )
 
