@@ -109,7 +109,7 @@ case class FbApp( apiKey:String, secret:String ) {
       split( "&" ).map( _.splitFirst( '=' ) )
 
     val accessToken = params.find( _._1 == "access_token" ).get._2
-    val expires     = System.currentTimeMillis + params.find( _._2 == "expires" ).get._2.toLong
+    val expires     = System.currentTimeMillis + params.find( _._2 == "expires" ).get._2.toLong * 1000
 
     spam( "uid=" + uid )
     spam( "accessToken=" + accessToken )
