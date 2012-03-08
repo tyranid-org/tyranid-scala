@@ -17,6 +17,7 @@ import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.email.Email
 import org.tyranid.http.Http403Exception
 import org.tyranid.locale.{ Country, LocationType, Region }
+import org.tyranid.net.Uri
 import org.tyranid.oauth.{ OAuth, Token }
 import org.tyranid.profile.{ Org, User }
 import org.tyranid.session.Session
@@ -169,9 +170,9 @@ $(document).ready(function() {
   def companiesById( user:User, ids:String* ):Seq[ObjectMap] =
     GET( "/companies::(" + ids.mkString( "," ) + "):" + companyFields, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
 
-  def loadCompanies( user:User, domain:String = null, positions:Boolean = false, multi:Boolean = false ):Seq[ObjectMap] = {
+  def loadCompanies( user:User, domain:String = null, positions:Boolean = false, multi:Boolean = false, bestMatch:Boolean = false ):Seq[ObjectMap] = {
 
-    val companies = mutable.ArrayBuffer[ObjectMap]()
+    var companies = mutable.ArrayBuffer[ObjectMap]()
 
     if ( domain.notBlank )
       companies ++= GET( "/companies:" + companyFields + "?email-domain=" + domain.encUrl, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
@@ -182,6 +183,42 @@ $(document).ready(function() {
 
       if ( ids.nonEmpty )
         companies ++= companiesById( user, ids:_* )
+    }
+
+    if ( companies.size == 0 && domain.notBlank ) {
+      var terms = Uri.nameForDomain( domain )
+      if ( terms.notBlank )
+        companies ++= GET( "/company-search:(companies:" + companyFields + ")?keywords=" + terms.encUrl, user ).parseJsonObject.o( 'companies ).a_?( 'values ).of[ObjectMap]
+
+      if ( companies.size == 0 ) {
+        terms = Uri.domainPart( domain ).toLowerCase
+        companies ++= GET( "/company-search:(companies:" + companyFields + ")?keywords=" + domain.encUrl, user ).parseJsonObject.o( 'companies ).a_?( 'values ).of[ObjectMap]
+      }
+
+      // An additional/alternative approach would be to split up the word into its component strings ... i.e. "mygreatdomain" becomes "my great domain"
+      //    see http://stackoverflow.com/questions/195010/how-can-i-split-multiple-joined-words
+    }
+
+    if ( bestMatch && companies.size > 1 ) {
+      val domainPart = Uri.domainPart( domain )
+
+      // exact name match
+      var candidates = companies.filter( _.s( 'name ).toLowerCase == domainPart )
+      if ( candidates.size > 0 )
+        companies = candidates
+
+      // website match
+      val websiteUrl = ( "//www." + domain ).toLowerCase
+      candidates = companies.filter( _.s( 'websiteUrl ).toLowerCase.endsWith( websiteUrl ) )
+      if ( candidates.size > 0 )
+        companies = candidates
+
+      // smallest-name ... i.e. "AT&T" subsumes "AT&T Mobility" because the former exists as a substring of the latter
+      var candidate = companies.minBy( _.s( 'name ).size ) 
+      val shortestName = candidate.s( 'name ).toLowerCase
+
+      if ( companies.forall( _.s( 'name ).toLowerCase.contains( shortestName ) ) )
+        return Seq( candidate )
     }
 
     companies
@@ -285,11 +322,11 @@ $(document).ready(function() {
 
   def createCompany( user:User, domain:String ):Org = {
 
-    loadCompanies( user, domain ) foreach { company =>
+    loadCompanies( user, domain, bestMatch = true ) foreach { company =>
 
       val org = Mobj()
       org( 'domain ) = domain
-      org( 'vname ) = Email.domainPart( "junk@" + domain )
+      org( 'vname ) = Uri.domainPart( domain )
       importCompany( company, org )
       B.Org.db.save( org )
       return B.Org( org )
