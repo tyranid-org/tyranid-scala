@@ -15,10 +15,9 @@
  *
  */
 
-package org.tyranid.db.meta
+package org.tyranid.db
 
 import org.tyranid.Imp._
-import org.tyranid.db.Entity
 
 
 object Tid {
@@ -28,7 +27,7 @@ object Tid {
      tids.flatMap(
        _ match {
       case tid if tid.startsWith( B.Org.tid ) =>
-        Some( B.Org.tidToId( tid ) )
+        None//Some( B.Org.tidToId( tid ) )
 
       case tid =>
         None
