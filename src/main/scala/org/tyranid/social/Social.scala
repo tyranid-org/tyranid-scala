@@ -16,11 +16,14 @@ object Social {
   def createCompanies( fromOrgId:ObjectId, domains:Seq[String] ):Seq[Org] =
     B.linkedIn.createCompanies( fromOrgId, domains )
 
-  def appFor( network:String ) =
-    network match {
-    case "fb" => B.facebook
-    case "li" => B.linkedIn
-    }
+  def appFor( networkCode:String ) =
+    networks.find( _.networkCode == networkCode ).get
+
+  lazy val networks =
+    Seq(
+      B.linkedIn != null |* Some( B.linkedIn ),
+      B.facebook != null |* Some( B.facebook )
+    ).flatten
 }
 
 trait SoApp {

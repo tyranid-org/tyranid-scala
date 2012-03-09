@@ -58,7 +58,7 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     });
 
     FB.Event.subscribe('auth.login', function () {
-      window.location = '""" + weblet.wpath + """/facebook';
+      window.location = '""" + weblet.wpath + """/infb';
     });
   };
 
@@ -149,11 +149,15 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     if ( gender != null )
       user( 'gender ) = gender.id
 
-    user( 'thumbnail ) = "https://graph.facebook.com/" + uid + "/picture?type=square"
+    if ( profile.s( 'timezone ).notBlank )
+      user( 'tzOff ) = profile.i( 'timezone )
 
-    //user( 'thumbnail ) =
-      //if ( profile.contains( 'pictureUrl ) ) profile( 'pictureUrl )
-      //else                                   "/icon_individual.png"
+    if ( profile.s( 'locale ).notBlank ) {
+      val ( language, country ) = profile.s( 'locale ).splitFirst( '_' )
+    }
+
+    user( 'thumbnail ) = "https://graph.facebook.com/" + uid + "/picture?type=square"
+    // "/icon_individual.png"
   }
 }
 

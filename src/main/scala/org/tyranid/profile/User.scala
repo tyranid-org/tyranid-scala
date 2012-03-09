@@ -24,10 +24,11 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbBoolean, DbChar, DbEmail, DbLink, DbLong, DbPassword, Record }
+import org.tyranid.db.{ DbBoolean, DbChar, DbDouble, DbEmail, DbLink, DbLong, DbPassword, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.image.DbImage
+import org.tyranid.locale.Country
 import org.tyranid.secure.DbReCaptcha
 import org.tyranid.session.{ Session, ThreadData }
 import org.tyranid.web.WebContext
@@ -40,7 +41,9 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "password2"      is DbPassword          is 'required is 'temporary as "Repeat Password";
   "thumbnail"      is DbImage( "public" ) as "Profile Image";
 
+  "tzOff"          is DbDouble            ; // timezone offset in hours ... i.e. -6
   "gender"         is DbLink(Gender)      ;
+  "country"        is DbLink(Country)     ;
 
   "recaptcha"      is DbReCaptcha( "white" ) is 'temporary as "Verify you are human";
 

@@ -72,7 +72,7 @@ case class LiApp( apiKey:String, secret:String ) extends SoApp {
 
 function onLinkedInAuth() {
   if ( !window.liLogOut )
-    window.location.assign( '""" + weblet.wpath + """/linkedin' );
+    window.location.assign( '""" + weblet.wpath + """/inli' );
   else
     delete window.liLogOut
 }
@@ -165,6 +165,8 @@ $(document).ready(function() {
 
   def importUser( user:User, uid:String ) = {
     val profile = GET( "/people/id=" + uid + ":(id,first-name,last-name,picture-url,headline)", user ).parseJsonObject
+
+    // TODO:  location:(country:(code))
 
     user( 'firstName ) = profile( 'firstName )
     user( 'lastName )  = profile( 'lastName )
@@ -318,7 +320,7 @@ $(document).ready(function() {
             loc( 'address ) = addr
           }
 
-          if ( l.b( 'isHeadquarters ) )
+          if ( l.b( 'isHeadquarters ) || ( desc.notBlank && desc.toLowerCase.contains( "headquarter" ) ) )
             loc( 'type ) = LocationType.HeadquartersId
 
           B.Location.db.save( loc )

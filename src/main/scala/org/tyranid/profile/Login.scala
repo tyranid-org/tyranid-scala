@@ -3,8 +3,6 @@ package org.tyranid.profile
 
 import java.util.Date
 
-import scala.xml.Unparsed
-
 import org.tyranid.Imp._
 import org.tyranid.db.Scope
 import org.tyranid.db.mongo.Imp._
@@ -31,7 +29,7 @@ object Loginlet extends Weblet {
        Log In
       </div>
       <div class="contents">
-       <table>
+       <table style="margin-bottom:8px;">
         <tr>
          <td>
           <label for="un">Email:</label>
@@ -59,10 +57,9 @@ object Loginlet extends Weblet {
         </tr>
        </table>
        { web.req.s( 'na ).isBlank |*
-         <hr style="margin-top:12px;"/> ++
-         { B.linkedIn != null |* <div>{ B.linkedIn.loginButton( this ) }</div> } ++
-         { B.linkedIn != null && B.facebook != null |* <hr style="margin:4px 0 8px;"/> } ++
-         { B.facebook != null |* <div>{ B.facebook.loginButton( this ) }</div> }
+           Social.networks.map { network =>
+             <hr style="margin:4px 0 8px;"/> ++
+             network.loginButton( this ) }
        }
       </div>
      </div>
@@ -106,19 +103,14 @@ object Loginlet extends Weblet {
       sess.logout
       web.redirect( "/?lo=1" )
 
-    case "/facebook" =>
-      socialLogin( "fb" )
+    case s if s.startsWith( "/in" ) =>
+      socialLogin( s.substring( 3 ) )
 
-    case "/linkedin" =>
-      socialLogin( "li" )
+    case s if s.startsWith( "/register" ) =>
+      val network = s.substring( 9 )
 
-    case "/registerfb" =>
-      socialRegister( "fb" )
-
-    case "/registerli" =>
-      socialRegister( "li" )
-
-    case "/register" =>
+      if ( network.notBlank )
+        return socialRegister( network )
 
       val user =
         sess.user match {

@@ -4321,6 +4321,8 @@ object Country extends RamEntity( tid = "a02t" ) {
   "code"   is DbChar(4)  ; 
 
   def US = 4306
+
+  def idByIso3166_2( code:String ) = idForCode( code )
     
   def idForCode( code:String ):Int = {
     val s = code.toUpperCase
