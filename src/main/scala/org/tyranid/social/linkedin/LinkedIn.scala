@@ -199,7 +199,7 @@ $(document).ready(function() {
       companies ++= GET( "/companies:" + companyFields + "?email-domain=" + domain.encUrl, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
 
     if ( positions && ( multi || companies.size == 0 ) ) {
-      val ids = GET( "/people/~:(positions:(company:(id)))", user ).parseJsonObject.o( 'positions ).a_?( 'values ).of[ObjectMap].map( _.o( 'company ).s( 'id ) ).
+      val ids = GET( "/people/~:(positions:(company:(id)))", user ).parseJsonObject.o( 'positions ).a_?( 'values ).of[ObjectMap].map( _.o_?( 'company ).s( 'id ) ).
         filter( id => id.notBlank && !companies.exists( _.s( 'id ) == id ) )
 
       if ( ids.nonEmpty )
@@ -211,11 +211,11 @@ $(document).ready(function() {
     if ( domain.notBlank && ( companies.size == 0 || !domainPartPresent ) ) {
       var terms = Uri.nameForDomain( domain )
       if ( terms.notBlank )
-        companies ++= GET( "/company-search:(companies:" + companyFields + ")?keywords=" + terms.encUrl, user ).parseJsonObject.o( 'companies ).a_?( 'values ).of[ObjectMap]
+        companies ++= GET( "/company-search:(companies:" + companyFields + ")?keywords=" + terms.encUrl, user ).parseJsonObject.o_?( 'companies ).a_?( 'values ).of[ObjectMap]
 
       if ( companies.size == 0 || !domainPartPresent ) {
         terms = domainPart.toLowerCase
-        companies ++= GET( "/company-search:(companies:" + companyFields + ")?keywords=" + domain.encUrl, user ).parseJsonObject.o( 'companies ).a_?( 'values ).of[ObjectMap]
+        companies ++= GET( "/company-search:(companies:" + companyFields + ")?keywords=" + domain.encUrl, user ).parseJsonObject.o_?( 'companies ).a_?( 'values ).of[ObjectMap]
       }
 
       // An additional/alternative approach would be to split up the word into its component strings ... i.e. "mygreatdomain" becomes "my great domain"
@@ -224,7 +224,7 @@ $(document).ready(function() {
 
     if ( bestMatch && companies.size > 1 ) {
       // exact name match
-      var candidates = companies.filter( _.s( 'name ).toLowerCase == domainPart )
+      var candidates = companies.filter( _.s( 'name ).toLowerCase.contains( domainPart ) )
       if ( candidates.size > 0 )
         companies = candidates
 
@@ -288,10 +288,9 @@ $(document).ready(function() {
 
     val ls = c.o( 'locations )
     if ( ls != null ) {
-      val existingLocations = B.Location.db.find( Mobj( "org" -> org.id ) ).toSeq
 
       // only import locations if we don't have existing locations already
-      if ( existingLocations.size == 0 ) {
+      if ( org.isNew || B.Location.db.find( Mobj( "org" -> org.id ) ).toSeq.nonEmpty ) {
         for ( l <- ls.a_?( 'values ).of[ObjectMap] ) {
 
           val loc = Mobj()

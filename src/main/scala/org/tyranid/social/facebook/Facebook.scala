@@ -61,6 +61,11 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     FB.Event.subscribe('auth.login', function () {
       window.location = '""" + weblet.wpath + """/infb';
     });
+
+    FB.getLoginStatus( function( resp ) {
+      if ( resp.status == 'connected' )
+        window.location = '""" + weblet.wpath + """/infb';
+    });
   };
 
   // Load the SDK Asynchronously
