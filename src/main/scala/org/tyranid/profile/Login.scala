@@ -57,7 +57,7 @@ object Loginlet extends Weblet {
         </tr>
        </table>
        { web.req.s( 'na ).isBlank |*
-           Social.networks.map { network =>
+           Social.networks.flatMap { network =>
              <hr style="margin:4px 0 8px;"/> ++
              network.loginButton( this ) }
        }

@@ -63,7 +63,9 @@ class BooleanImp( bval:Boolean ) {
   def |*[T]                   ( v: => Option[T] ):Option[T] = if ( bval ) v else None
   def |*[T]                   ( v: => List[T]   ):List[T]   = if ( bval ) v else Nil
   def |*[T]                   ( v: => Unit      ):Unit      = if ( bval ) v
-  def |*[T >: Null <: AnyRef ]( v: => T         ):T         = if ( bval ) v else null
+
+
+  def |**[T >: Null <: AnyRef ]( v: => T         ):T         = if ( bval ) v else null
 
   /**
    * C's ternary operator.  It uses | instead of :.  Inspired by Lift's similar operator.

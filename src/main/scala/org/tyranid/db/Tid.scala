@@ -17,22 +17,15 @@
 
 package org.tyranid.db
 
+import org.bson.types.ObjectId
+
 import org.tyranid.Imp._
+import org.tyranid.math.Base64
 
 
 object Tid {
 
-  def toIds( tids:Seq[String], entity:Entity ) = {
-    val ids =
-     tids.flatMap(
-       _ match {
-      case tid if tid.startsWith( B.Org.tid ) =>
-        None//Some( B.Org.tidToId( tid ) )
-
-      case tid =>
-        None
-      } ).
-      distinct
-  }
+  def toIds( tids:Seq[String], entity:Entity ) =
+    tids.filter( _.startsWith( entity.tid ) ).map( tid => new ObjectId( Base64.toBytes( tid.substring( 4 ) ) ) )
 }
 
