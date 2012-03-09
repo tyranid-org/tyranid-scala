@@ -17,514 +17,519 @@
 
 package org.tyranid.locale
 
+import scala.collection.mutable
+
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbInt, DbChar, DbLink, Record }
+import org.tyranid.db.{ DbInt, DbChar, Record }
 import org.tyranid.db.ram.RamEntity
 
 
 object Language extends RamEntity( tid = "a0Hw" ) {
-/*
+
+  // source:  http://www.loc.gov/standards/iso639-2/ascii_8bits.html
+
+  // changelist:  http://www.loc.gov/standards/iso639-2/php/code_changes.php
+
   "id"     is DbInt      is 'key;
+  "bib3"   is DbChar(3)  ;
+  "ter3"   is DbChar(3)  ;
+  "al2"    is DbChar(2)  as "ISO 639-1";
   "name"   is DbChar(64) is 'label;
+  "frName" is DbChar(64) ;
 
-  val HeadquartersId = 1
+  private val iso639_1Idx = mutable.HashMap[String, Int]()
+
+  def idByIso630_1( code:String ) =
+    iso639_1Idx.getOrElseUpdate( code, staticRecords.find( _.s( 'al2 ) == code ).flatten( _.i( 'id ), 0 ) )
+
   static(
-  (           "id", "name"       ),
-  ( HeadquartersId, "Headquarters" ),
-  (              2, "Distribution Center" ),
-  (              3, "Factory"      ),
-  (              4, "Domicile"     ),
-  (              5, "Crossdock"    ),
-  (              6, "Branch Office"aar||aa|Afar|afar
+  ( "id", "bib3", "ter3", "al2", "name", "frName" ),
 
-  ( "abk||ab|Abkhazian|abkhaze
-  ( "ace|||Achinese|aceh
-  ( "ach|||Acoli|acoli
-  ( "ada|||Adangme|adangme
-  ( "ady|||Adyghe; Adygei|adyghé
-  ( "afa|||Afro-Asiatic languages|afro-asiatiques, langues
-  ( "afh|||Afrihili|afrihili
-  ( "afr||af|Afrikaans|afrikaans
-  ( "ain|||Ainu|aïnou
-  ( "aka||ak|Akan|akan
-  ( "akk|||Akkadian|akkadien
-  ( "alb|sqi|sq|Albanian|albanais
-  ( "ale|||Aleut|aléoute
-  ( "alg|||Algonquian languages|algonquines, langues
-  ( "alt|||Southern Altai|altai du Sud
-  ( "amh||am|Amharic|amharique
-  ( "ang|||English, Old (ca.450-1100)|anglo-saxon (ca.450-1100)
-  ( "anp|||Angika|angika
-  ( "apa|||Apache languages|apaches, langues
-  ( "ara||ar|Arabic|arabe
-  ( "arc|||Official Aramaic (700-300 BCE); Imperial Aramaic (700-300 BCE)|araméen d'empire (700-300 BCE)
-  ( "arg||an|Aragonese|aragonais
-  ( "arm|hye|hy|Armenian|arménien
-  ( "arn|||Mapudungun; Mapuche|mapudungun; mapuche; mapuce
-  ( "arp|||Arapaho|arapaho
-  ( "art|||Artificial languages|artificielles, langues
-  ( "arw|||Arawak|arawak
-  ( "asm||as|Assamese|assamais
-  ( "ast|||Asturian; Bable; Leonese; Asturleonese|asturien; bable; léonais; asturoléonais
-  ( "ath|||Athapascan languages|athapascanes, langues
-  ( "aus|||Australian languages|australiennes, langues
-  ( "ava||av|Avaric|avar
-  ( "ave||ae|Avestan|avestique
-  ( "awa|||Awadhi|awadhi
-  ( "aym||ay|Aymara|aymara
-  ( "aze||az|Azerbaijani|azéri
-  ( "bad|||Banda languages|banda, langues
-  ( "bai|||Bamileke languages|bamiléké, langues
-  ( "bak||ba|Bashkir|bachkir
-  ( "bal|||Baluchi|baloutchi
-  ( "bam||bm|Bambara|bambara
-  ( "ban|||Balinese|balinais
-  ( "baq|eus|eu|Basque|basque
-  ( "bas|||Basa|basa
-  ( "bat|||Baltic languages|baltes, langues
-  ( "bej|||Beja; Bedawiyet|bedja
-  ( "bel||be|Belarusian|biélorusse
-  ( "bem|||Bemba|bemba
-  ( "ben||bn|Bengali|bengali
-  ( "ber|||Berber languages|berbères, langues
-  ( "bho|||Bhojpuri|bhojpuri
-  ( "bih||bh|Bihari languages|langues biharis
-  ( "bik|||Bikol|bikol
-  ( "bin|||Bini; Edo|bini; edo
-  ( "bis||bi|Bislama|bichlamar
-  ( "bla|||Siksika|blackfoot
-  ( "bnt|||Bantu (Other)|bantoues, autres langues
-  ( "bos||bs|Bosnian|bosniaque
-  ( "bra|||Braj|braj
-  ( "bre||br|Breton|breton
-  ( "btk|||Batak languages|batak, langues
-  ( "bua|||Buriat|bouriate
-  ( "bug|||Buginese|bugi
-  ( "bul||bg|Bulgarian|bulgare
-  ( "bur|mya|my|Burmese|birman
-  ( "byn|||Blin; Bilin|blin; bilen
-  ( "cad|||Caddo|caddo
-  ( "cai|||Central American Indian languages|amérindiennes de L'Amérique centrale, langues
-  ( "car|||Galibi Carib|karib; galibi; carib
-  ( "cat||ca|Catalan; Valencian|catalan; valencien
-  ( "cau|||Caucasian languages|caucasiennes, langues
-  ( "ceb|||Cebuano|cebuano
-  ( "cel|||Celtic languages|celtiques, langues; celtes, langues
-  ( "cha||ch|Chamorro|chamorro
-  ( "chb|||Chibcha|chibcha
-  ( "che||ce|Chechen|tchétchène
-  ( "chg|||Chagatai|djaghataï
-  ( "chi|zho|zh|Chinese|chinois
-  ( "chk|||Chuukese|chuuk
-  ( "chm|||Mari|mari
-  ( "chn|||Chinook jargon|chinook, jargon
-  ( "cho|||Choctaw|choctaw
-  ( "chp|||Chipewyan; Dene Suline|chipewyan
-  ( "chr|||Cherokee|cherokee
-  ( "chu||cu|Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old Church Slavonic|slavon d'église; vieux slave; slavon liturgique; vieux bulgare
-  ( "chv||cv|Chuvash|tchouvache
-  ( "chy|||Cheyenne|cheyenne
-  ( "cmc|||Chamic languages|chames, langues
-  ( "cop|||Coptic|copte
-  ( "cor||kw|Cornish|cornique
-  ( "cos||co|Corsican|corse
-  ( "cpe|||Creoles and pidgins, English based|créoles et pidgins basés sur l'anglais
-  ( "cpf|||Creoles and pidgins, French-based |créoles et pidgins basés sur le français
-  ( "cpp|||Creoles and pidgins, Portuguese-based |créoles et pidgins basés sur le portugais
-  ( "cre||cr|Cree|cree
-  ( "crh|||Crimean Tatar; Crimean Turkish|tatar de Crimé
-  ( "crp|||Creoles and pidgins |créoles et pidgins
-  ( "csb|||Kashubian|kachoube
-  ( "cus|||Cushitic languages|couchitiques, langues
-  ( "cze|ces|cs|Czech|tchèque
-  ( "dak|||Dakota|dakota
-  ( "dan||da|Danish|danois
-  ( "dar|||Dargwa|dargwa
-  ( "day|||Land Dayak languages|dayak, langues
-  ( "del|||Delaware|delaware
-  ( "den|||Slave (Athapascan)|esclave (athapascan)
-  ( "dgr|||Dogrib|dogrib
-  ( "din|||Dinka|dinka
-  ( "div||dv|Divehi; Dhivehi; Maldivian|maldivien
-  ( "doi|||Dogri|dogri
-  ( "dra|||Dravidian languages|dravidiennes, langues
-  ( "dsb|||Lower Sorbian|bas-sorabe
-  ( "dua|||Duala|douala
-  ( "dum|||Dutch, Middle (ca.1050-1350)|néerlandais moyen (ca. 1050-1350)
-  ( "dut|nld|nl|Dutch; Flemish|néerlandais; flamand
-  ( "dyu|||Dyula|dioula
-  ( "dzo||dz|Dzongkha|dzongkha
-  ( "efi|||Efik|efik
-  ( "egy|||Egyptian (Ancient)|égyptien
-  ( "eka|||Ekajuk|ekajuk
-  ( "elx|||Elamite|élamite
-  ( "eng||en|English|anglais
-  ( "enm|||English, Middle (1100-1500)|anglais moyen (1100-1500)
-  ( "epo||eo|Esperanto|espéranto
-  ( "est||et|Estonian|estonien
-  ( "ewe||ee|Ewe|éwé
-  ( "ewo|||Ewondo|éwondo
-  ( "fan|||Fang|fang
-  ( "fao||fo|Faroese|féroïen
-  ( "fat|||Fanti|fanti
-  ( "fij||fj|Fijian|fidjien
-  ( "fil|||Filipino; Pilipino|filipino; pilipino
-  ( "fin||fi|Finnish|finnois
-  ( "fiu|||Finno-Ugrian languages|finno-ougriennes, langues
-  ( "fon|||Fon|fon
-  ( "fre|fra|fr|French|français
-  ( "frm|||French, Middle (ca.1400-1600)|français moyen (1400-1600)
-  ( "fro|||French, Old (842-ca.1400)|français ancien (842-ca.1400)
-  ( "frr|||Northern Frisian|frison septentrional
-  ( "frs|||Eastern Frisian|frison oriental
-  ( "fry||fy|Western Frisian|frison occidental
-  ( "ful||ff|Fulah|peul
-  ( "fur|||Friulian|frioulan
-  ( "gaa|||Ga|ga
-  ( "gay|||Gayo|gayo
-  ( "gba|||Gbaya|gbaya
-  ( "gem|||Germanic languages|germaniques, langues
-  ( "geo|kat|ka|Georgian|géorgien
-  ( "ger|deu|de|German|allemand
-  ( "gez|||Geez|guèze
-  ( "gil|||Gilbertese|kiribati
-  ( "gla||gd|Gaelic; Scottish Gaelic|gaélique; gaélique écossais
-  ( "gle||ga|Irish|irlandais
-  ( "glg||gl|Galician|galicien
-  ( "glv||gv|Manx|manx; mannois
-  ( "gmh|||German, Middle High (ca.1050-1500)|allemand, moyen haut (ca. 1050-1500)
-  ( "goh|||German, Old High (ca.750-1050)|allemand, vieux haut (ca. 750-1050)
-  ( "gon|||Gondi|gond
-  ( "gor|||Gorontalo|gorontalo
-  ( "got|||Gothic|gothique
-  ( "grb|||Grebo|grebo
-  ( "grc|||Greek, Ancient (to 1453)|grec ancien (jusqu'à 1453)
-  ( "gre|ell|el|Greek, Modern (1453-)|grec moderne (après 1453)
-  ( "grn||gn|Guarani|guarani
-  ( "gsw|||Swiss German; Alemannic; Alsatian|suisse alémanique; alémanique; alsacien
-  ( "guj||gu|Gujarati|goudjrati
-  ( "gwi|||Gwich'in|gwich'in
-  ( "hai|||Haida|haida
-  ( "hat||ht|Haitian; Haitian Creole|haïtien; créole haïtien
-  ( "hau||ha|Hausa|haoussa
-  ( "haw|||Hawaiian|hawaïen
-  ( "heb||he|Hebrew|hébreu
-  ( "her||hz|Herero|herero
-  ( "hil|||Hiligaynon|hiligaynon
-  ( "him|||Himachali languages; Western Pahari languages|langues himachalis; langues paharis occidentales
-  ( "hin||hi|Hindi|hindi
-  ( "hit|||Hittite|hittite
-  ( "hmn|||Hmong; Mong|hmong
-  ( "hmo||ho|Hiri Motu|hiri motu
-  ( "hrv||hr|Croatian|croate
-  ( "hsb|||Upper Sorbian|haut-sorabe
-  ( "hun||hu|Hungarian|hongrois
-  ( "hup|||Hupa|hupa
-  ( "iba|||Iban|iban
-  ( "ibo||ig|Igbo|igbo
-  ( "ice|isl|is|Icelandic|islandais
-  ( "ido||io|Ido|ido
-  ( "iii||ii|Sichuan Yi; Nuosu|yi de Sichuan
-  ( "ijo|||Ijo languages|ijo, langues
-  ( "iku||iu|Inuktitut|inuktitut
-  ( "ile||ie|Interlingue; Occidental|interlingue
-  ( "ilo|||Iloko|ilocano
-  ( "ina||ia|Interlingua (International Auxiliary Language Association)|interlingua (langue auxiliaire internationale)
-  ( "inc|||Indic languages|indo-aryennes, langues
-  ( "ind||id|Indonesian|indonésien
-  ( "ine|||Indo-European languages|indo-européennes, langues
-  ( "inh|||Ingush|ingouche
-  ( "ipk||ik|Inupiaq|inupiaq
-  ( "ira|||Iranian languages|iraniennes, langues
-  ( "iro|||Iroquoian languages|iroquoises, langues
-  ( "ita||it|Italian|italien
-  ( "jav||jv|Javanese|javanais
-  ( "jbo|||Lojban|lojban
-  ( "jpn||ja|Japanese|japonais
-  ( "jpr|||Judeo-Persian|judéo-persan
-  ( "jrb|||Judeo-Arabic|judéo-arabe
-  ( "kaa|||Kara-Kalpak|karakalpak
-  ( "kab|||Kabyle|kabyle
-  ( "kac|||Kachin; Jingpho|kachin; jingpho
-  ( "kal||kl|Kalaallisut; Greenlandic|groenlandais
-  ( "kam|||Kamba|kamba
-  ( "kan||kn|Kannada|kannada
-  ( "kar|||Karen languages|karen, langues
-  ( "kas||ks|Kashmiri|kashmiri
-  ( "kau||kr|Kanuri|kanouri
-  ( "kaw|||Kawi|kawi
-  ( "kaz||kk|Kazakh|kazakh
-  ( "kbd|||Kabardian|kabardien
-  ( "kha|||Khasi|khasi
-  ( "khi|||Khoisan languages|khoïsan, langues
-  ( "khm||km|Central Khmer|khmer central
-  ( "kho|||Khotanese; Sakan|khotanais; sakan
-  ( "kik||ki|Kikuyu; Gikuyu|kikuyu
-  ( "kin||rw|Kinyarwanda|rwanda
-  ( "kir||ky|Kirghiz; Kyrgyz|kirghiz
-  ( "kmb|||Kimbundu|kimbundu
-  ( "kok|||Konkani|konkani
-  ( "kom||kv|Komi|kom
-  ( "kon||kg|Kongo|kongo
-  ( "kor||ko|Korean|coréen
-  ( "kos|||Kosraean|kosrae
-  ( "kpe|||Kpelle|kpellé
-  ( "krc|||Karachay-Balkar|karatchai balkar
-  ( "krl|||Karelian|carélien
-  ( "kro|||Kru languages|krou, langues
-  ( "kru|||Kurukh|kurukh
-  ( "kua||kj|Kuanyama; Kwanyama|kuanyama; kwanyama
-  ( "kum|||Kumyk|koumyk
-  ( "kur||ku|Kurdish|kurde
-  ( "kut|||Kutenai|kutenai
-  ( "lad|||Ladino|judéo-espagnol
-  ( "lah|||Lahnda|lahnda
-  ( "lam|||Lamba|lamba
-  ( "lao||lo|Lao|lao
-  ( "lat||la|Latin|latin
-  ( "lav||lv|Latvian|letton
-  ( "lez|||Lezghian|lezghien
-  ( "lim||li|Limburgan; Limburger; Limburgish|limbourgeois
-  ( "lin||ln|Lingala|lingala
-  ( "lit||lt|Lithuanian|lituanien
-  ( "lol|||Mongo|mongo
-  ( "loz|||Lozi|lozi
-  ( "ltz||lb|Luxembourgish; Letzeburgesch|luxembourgeois
-  ( "lua|||Luba-Lulua|luba-lulua
-  ( "lub||lu|Luba-Katanga|luba-katanga
-  ( "lug||lg|Ganda|ganda
-  ( "lui|||Luiseno|luiseno
-  ( "lun|||Lunda|lunda
-  ( "luo|||Luo (Kenya and Tanzania)|luo (Kenya et Tanzanie)
-  ( "lus|||Lushai|lushai
-  ( "mac|mkd|mk|Macedonian|macédonien
-  ( "mad|||Madurese|madourais
-  ( "mag|||Magahi|magahi
-  ( "mah||mh|Marshallese|marshall
-  ( "mai|||Maithili|maithili
-  ( "mak|||Makasar|makassar
-  ( "mal||ml|Malayalam|malayalam
-  ( "man|||Mandingo|mandingue
-  ( "mao|mri|mi|Maori|maori
-  ( "map|||Austronesian languages|austronésiennes, langues
-  ( "mar||mr|Marathi|marathe
-  ( "mas|||Masai|massaï
-  ( "may|msa|ms|Malay|malais
-  ( "mdf|||Moksha|moksa
-  ( "mdr|||Mandar|mandar
-  ( "men|||Mende|mendé
-  ( "mga|||Irish, Middle (900-1200)|irlandais moyen (900-1200)
-  ( "mic|||Mi'kmaq; Micmac|mi'kmaq; micmac
-  ( "min|||Minangkabau|minangkabau
-  ( "mis|||Uncoded languages|langues non codées
-  ( "mkh|||Mon-Khmer languages|môn-khmer, langues
-  ( "mlg||mg|Malagasy|malgache
-  ( "mlt||mt|Maltese|maltais
-  ( "mnc|||Manchu|mandchou
-  ( "mni|||Manipuri|manipuri
-  ( "mno|||Manobo languages|manobo, langues
-  ( "moh|||Mohawk|mohawk
-  ( "mon||mn|Mongolian|mongol
-  ( "mos|||Mossi|moré
-  ( "mul|||Multiple languages|multilingue
-  ( "mun|||Munda languages|mounda, langues
-  ( "mus|||Creek|muskogee
-  ( "mwl|||Mirandese|mirandais
-  ( "mwr|||Marwari|marvari
-  ( "myn|||Mayan languages|maya, langues
-  ( "myv|||Erzya|erza
-  ( "nah|||Nahuatl languages|nahuatl, langues
-  ( "nai|||North American Indian languages|nord-amérindiennes, langues
-  ( "nap|||Neapolitan|napolitain
-  ( "nau||na|Nauru|nauruan
-  ( "nav||nv|Navajo; Navaho|navaho
-  ( "nbl||nr|Ndebele, South; South Ndebele|ndébélé du Sud
-  ( "nde||nd|Ndebele, North; North Ndebele|ndébélé du Nord
-  ( "ndo||ng|Ndonga|ndonga
-  ( "nds|||Low German; Low Saxon; German, Low; Saxon, Low|bas allemand; bas saxon; allemand, bas; saxon, bas
-  ( "nep||ne|Nepali|népalais
-  ( "new|||Nepal Bhasa; Newari|nepal bhasa; newari
-  ( "nia|||Nias|nias
-  ( "nic|||Niger-Kordofanian languages|nigéro-kordofaniennes, langues
-  ( "niu|||Niuean|niué
-  ( "nno||nn|Norwegian Nynorsk; Nynorsk, Norwegian|norvégien nynorsk; nynorsk, norvégien
-  ( "nob||nb|Bokmål, Norwegian; Norwegian Bokmål|norvégien bokmål
-  ( "nog|||Nogai|nogaï; nogay
-  ( "non|||Norse, Old|norrois, vieux
-  ( "nor||no|Norwegian|norvégien
-  ( "nqo|||N'Ko|n'ko
-  ( "nso|||Pedi; Sepedi; Northern Sotho|pedi; sepedi; sotho du Nord
-  ( "nub|||Nubian languages|nubiennes, langues
-  ( "nwc|||Classical Newari; Old Newari; Classical Nepal Bhasa|newari classique
-  ( "nya||ny|Chichewa; Chewa; Nyanja|chichewa; chewa; nyanja
-  ( "nym|||Nyamwezi|nyamwezi
-  ( "nyn|||Nyankole|nyankolé
-  ( "nyo|||Nyoro|nyoro
-  ( "nzi|||Nzima|nzema
-  ( "oci||oc|Occitan (post 1500); Provençal|occitan (après 1500); provençal
-  ( "oji||oj|Ojibwa|ojibwa
-  ( "ori||or|Oriya|oriya
-  ( "orm||om|Oromo|galla
-  ( "osa|||Osage|osage
-  ( "oss||os|Ossetian; Ossetic|ossète
-  ( "ota|||Turkish, Ottoman (1500-1928)|turc ottoman (1500-1928)
-  ( "oto|||Otomian languages|otomi, langues
-  ( "paa|||Papuan languages|papoues, langues
-  ( "pag|||Pangasinan|pangasinan
-  ( "pal|||Pahlavi|pahlavi
-  ( "pam|||Pampanga; Kapampangan|pampangan
-  ( "pan||pa|Panjabi; Punjabi|pendjabi
-  ( "pap|||Papiamento|papiamento
-  ( "pau|||Palauan|palau
-  ( "peo|||Persian, Old (ca.600-400 B.C.)|perse, vieux (ca. 600-400 av. J.-C.)
-  ( "per|fas|fa|Persian|persan
-  ( "phi|||Philippine languages|philippines, langues
-  ( "phn|||Phoenician|phénicien
-  ( "pli||pi|Pali|pali
-  ( "pol||pl|Polish|polonais
-  ( "pon|||Pohnpeian|pohnpei
-  ( "por||pt|Portuguese|portugais
-  ( "pra|||Prakrit languages|prâkrit, langues
-  ( "pro|||Provençal, Old (to 1500)|provençal ancien (jusqu'à 1500)
-  ( "pus||ps|Pushto; Pashto|pachto
-  ( "qaa-qtz|||Reserved for local use|réservée à l'usage local
-  ( "que||qu|Quechua|quechua
-  ( "raj|||Rajasthani|rajasthani
-  ( "rap|||Rapanui|rapanui
-  ( "rar|||Rarotongan; Cook Islands Maori|rarotonga; maori des îles Cook
-  ( "roa|||Romance languages|romanes, langues
-  ( "roh||rm|Romansh|romanche
-  ( "rom|||Romany|tsigane
-  ( "rum|ron|ro|Romanian; Moldavian; Moldovan|roumain; moldave
-  ( "run||rn|Rundi|rundi
-  ( "rup|||Aromanian; Arumanian; Macedo-Romanian|aroumain; macédo-roumain
-  ( "rus||ru|Russian|russe
-  ( "sad|||Sandawe|sandawe
-  ( "sag||sg|Sango|sango
-  ( "sah|||Yakut|iakoute
-  ( "sai|||South American Indian (Other)|indiennes d'Amérique du Sud, autres langues
-  ( "sal|||Salishan languages|salishennes, langues
-  ( "sam|||Samaritan Aramaic|samaritain
-  ( "san||sa|Sanskrit|sanskrit
-  ( "sas|||Sasak|sasak
-  ( "sat|||Santali|santal
-  ( "scn|||Sicilian|sicilien
-  ( "sco|||Scots|écossais
-  ( "sel|||Selkup|selkoupe
-  ( "sem|||Semitic languages|sémitiques, langues
-  ( "sga|||Irish, Old (to 900)|irlandais ancien (jusqu'à 900)
-  ( "sgn|||Sign Languages|langues des signes
-  ( "shn|||Shan|chan
-  ( "sid|||Sidamo|sidamo
-  ( "sin||si|Sinhala; Sinhalese|singhalais
-  ( "sio|||Siouan languages|sioux, langues
-  ( "sit|||Sino-Tibetan languages|sino-tibétaines, langues
-  ( "sla|||Slavic languages|slaves, langues
-  ( "slo|slk|sk|Slovak|slovaque
-  ( "slv||sl|Slovenian|slovène
-  ( "sma|||Southern Sami|sami du Sud
-  ( "sme||se|Northern Sami|sami du Nord
-  ( "smi|||Sami languages|sames, langues
-  ( "smj|||Lule Sami|sami de Lule
-  ( "smn|||Inari Sami|sami d'Inari
-  ( "smo||sm|Samoan|samoan
-  ( "sms|||Skolt Sami|sami skolt
-  ( "sna||sn|Shona|shona
-  ( "snd||sd|Sindhi|sindhi
-  ( "snk|||Soninke|soninké
-  ( "sog|||Sogdian|sogdien
-  ( "som||so|Somali|somali
-  ( "son|||Songhai languages|songhai, langues
-  ( "sot||st|Sotho, Southern|sotho du Sud
-  ( "spa||es|Spanish; Castilian|espagnol; castillan
-  ( "srd||sc|Sardinian|sarde
-  ( "srn|||Sranan Tongo|sranan tongo
-  ( "srp||sr|Serbian|serbe
-  ( "srr|||Serer|sérère
-  ( "ssa|||Nilo-Saharan languages|nilo-sahariennes, langues
-  ( "ssw||ss|Swati|swati
-  ( "suk|||Sukuma|sukuma
-  ( "sun||su|Sundanese|soundanais
-  ( "sus|||Susu|soussou
-  ( "sux|||Sumerian|sumérien
-  ( "swa||sw|Swahili|swahili
-  ( "swe||sv|Swedish|suédois
-  ( "syc|||Classical Syriac|syriaque classique
-  ( "syr|||Syriac|syriaque
-  ( "tah||ty|Tahitian|tahitien
-  ( "tai|||Tai languages|tai, langues
-  ( "tam||ta|Tamil|tamoul
-  ( "tat||tt|Tatar|tatar
-  ( "tel||te|Telugu|télougou
-  ( "tem|||Timne|temne
-  ( "ter|||Tereno|tereno
-  ( "tet|||Tetum|tetum
-  ( "tgk||tg|Tajik|tadjik
-  ( "tgl||tl|Tagalog|tagalog
-  ( "tha||th|Thai|thaï
-  ( "tib|bod|bo|Tibetan|tibétain
-  ( "tig|||Tigre|tigré
-  ( "tir||ti|Tigrinya|tigrigna
-  ( "tiv|||Tiv|tiv
-  ( "tkl|||Tokelau|tokelau
-  ( "tlh|||Klingon; tlhIngan-Hol|klingon
-  ( "tli|||Tlingit|tlingit
-  ( "tmh|||Tamashek|tamacheq
-  ( "tog|||Tonga (Nyasa)|tonga (Nyasa)
-  ( "ton||to|Tonga (Tonga Islands)|tongan (Îles Tonga)
-  ( "tpi|||Tok Pisin|tok pisin
-  ( "tsi|||Tsimshian|tsimshian
-  ( "tsn||tn|Tswana|tswana
-  ( "tso||ts|Tsonga|tsonga
-  ( "tuk||tk|Turkmen|turkmène
-  ( "tum|||Tumbuka|tumbuka
-  ( "tup|||Tupi languages|tupi, langues
-  ( "tur||tr|Turkish|turc
-  ( "tut|||Altaic languages|altaïques, langues
-  ( "tvl|||Tuvalu|tuvalu
-  ( "twi||tw|Twi|twi
-  ( "tyv|||Tuvinian|touva
-  ( "udm|||Udmurt|oudmourte
-  ( "uga|||Ugaritic|ougaritique
-  ( "uig||ug|Uighur; Uyghur|ouïgour
-  ( "ukr||uk|Ukrainian|ukrainien
-  ( "umb|||Umbundu|umbundu
-  ( "und|||Undetermined|indéterminée
-  ( "urd||ur|Urdu|ourdou
-  ( "uzb||uz|Uzbek|ouszbek
-  ( "vai|||Vai|vaï
-  ( "ven||ve|Venda|venda
-  ( "vie||vi|Vietnamese|vietnamien
-  ( "vol||vo|Volapük|volapük
-  ( "vot|||Votic|vote
-  ( "wak|||Wakashan languages|wakashanes, langues
-  ( "wal|||Walamo|walamo
-  ( "war|||Waray|waray
-  ( "was|||Washo|washo
-  ( "wel|cym|cy|Welsh|gallois
-  ( "wen|||Sorbian languages|sorabes, langues
-  ( "wln||wa|Walloon|wallon
-  ( "wol||wo|Wolof|wolof
-  ( "xal|||Kalmyk; Oirat|kalmouk; oïrat
-  ( "xho||xh|Xhosa|xhosa
-  ( "yao|||Yao|yao
-  ( "yap|||Yapese|yapois
-  ( "yid||yi|Yiddish|yiddish
-  ( "yor||yo|Yoruba|yoruba
-  ( "ypk|||Yupik languages|yupik, langues
-  ( "zap|||Zapotec|zapotèque
-  ( "zbl|||Blissymbols; Blissymbolics; Bliss|symboles Bliss; Bliss
-  ( "zen|||Zenaga|zenaga
-  ( "zha||za|Zhuang; Chuang|zhuang; chuang
-  ( "znd|||Zande languages|zandé, langues
-  ( "zul||zu|Zulu|zoulou
-  ( "zun|||Zuni|zuni
-  ( "zxx|||No linguistic content; Not applicable|pas de contenu linguistique; non applicable
-  ( "zza|||Zaza; Dimili; Dimli; Kirdki; Kirmanjki; Zazaki|zaza; dimili; dimli; kirdki; kirmanjki; zazaki ) )
-  ( "}
-  ( "
-  ( "
-*/
-
+  (   1, "aar", null,  "aa", "Afar", "afar" ),
+  (   2, "abk", null,  "ab", "Abkhazian", "abkhaze" ),
+  (   3, "ace", null,  null, "Achinese", "aceh" ),
+  (   4, "ach", null,  null, "Acoli", "acoli" ),
+  (   5, "ada", null,  null, "Adangme", "adangme" ),
+  (   6, "ady", null,  null, "Adyghe; Adygei", "adyghé" ),
+  (   7, "afa", null,  null, "Afro-Asiatic languages", "afro-asiatiques, langues" ),
+  (   8, "afh", null,  null, "Afrihili", "afrihili" ),
+  (   9, "afr", null,  "af", "Afrikaans", "afrikaans" ),
+  (  10, "ain", null,  null, "Ainu", "aïnou" ),
+  (  11, "aka", null,  "ak", "Akan", "akan" ),
+  (  12, "akk", null,  null, "Akkadian", "akkadien" ),
+  (  13, "alb", "sqi", "sq", "Albanian", "albanais" ),
+  (  14, "ale", null,  null, "Aleut", "aléoute" ),
+  (  15, "alg", null,  null, "Algonquian languages", "algonquines, langues" ),
+  (  16, "alt", null,  null, "Southern Altai", "altai du Sud" ),
+  (  17, "amh", null,  "am", "Amharic", "amharique" ),
+  (  18, "ang", null,  null, "English, Old (ca.450-1100)", "anglo-saxon (ca.450-1100)" ),
+  (  19, "anp", null,  null, "Angika", "angika" ),
+  (  20, "apa", null,  null, "Apache languages", "apaches, langues" ),
+  (  21, "ara", null,  "ar", "Arabic", "arabe" ),
+  (  22, "arc", null,  null, "Official Aramaic (700-300 BCE); Imperial Aramaic (700-300 BCE)", "araméen d'empire (700-300 BCE)" ),
+  (  23, "arg", null,  "an", "Aragonese", "aragonais" ),
+  (  24, "arm", "hye", "hy", "Armenian", "arménien" ),
+  (  25, "arn", null,  null, "Mapudungun; Mapuche", "mapudungun; mapuche; mapuce" ),
+  (  26, "arp", null,  null, "Arapaho", "arapaho" ),
+  (  27, "art", null,  null, "Artificial languages", "artificielles, langues" ),
+  (  28, "arw", null,  null, "Arawak", "arawak" ),
+  (  29, "asm", null,  "as", "Assamese", "assamais" ),
+  (  30, "ast", null,  null, "Asturian; Bable; Leonese; Asturleonese", "asturien; bable; léonais; asturoléonais" ),
+  (  31, "ath", null,  null, "Athapascan languages", "athapascanes, langues" ),
+  (  32, "aus", null,  null, "Australian languages", "australiennes, langues" ),
+  (  33, "ava", null,  "av", "Avaric", "avar" ),
+  (  34, "ave", null,  "ae", "Avestan", "avestique" ),
+  (  35, "awa", null,  null, "Awadhi", "awadhi" ),
+  (  36, "aym", null,  "ay", "Aymara", "aymara" ),
+  (  37, "aze", null,  "az", "Azerbaijani", "azéri" ),
+  (  38, "bad", null,  null, "Banda languages", "banda, langues" ),
+  (  39, "bai", null,  null, "Bamileke languages", "bamiléké, langues" ),
+  (  40, "bak", null,  "ba", "Bashkir", "bachkir" ),
+  (  41, "bal", null,  null, "Baluchi", "baloutchi" ),
+  (  42, "bam", null,  "bm", "Bambara", "bambara" ),
+  (  43, "ban", null,  null, "Balinese", "balinais" ),
+  (  44, "baq", "eus", "eu", "Basque", "basque" ),
+  (  45, "bas", null,  null, "Basa", "basa" ),
+  (  46, "bat", null,  null, "Baltic languages", "baltes, langues" ),
+  (  47, "bej", null,  null, "Beja; Bedawiyet", "bedja" ),
+  (  48, "bel", null,  "be", "Belarusian", "biélorusse" ),
+  (  49, "bem", null,  null, "Bemba", "bemba" ),
+  (  50, "ben", null,  "bn", "Bengali", "bengali" ),
+  (  51, "ber", null,  null, "Berber languages", "berbères, langues" ),
+  (  52, "bho", null,  null, "Bhojpuri", "bhojpuri" ),
+  (  53, "bih", null,  "bh", "Bihari languages", "langues biharis" ),
+  (  54, "bik", null,  null, "Bikol", "bikol" ),
+  (  55, "bin", null,  null, "Bini; Edo", "bini; edo" ),
+  (  56, "bis", null,  "bi", "Bislama", "bichlamar" ),
+  (  57, "bla", null,  null, "Siksika", "blackfoot" ),
+  (  58, "bnt", null,  null, "Bantu (Other)", "bantoues, autres langues" ),
+  (  59, "bos", null,  "bs", "Bosnian", "bosniaque" ),
+  (  60, "bra", null,  null, "Braj", "braj" ),
+  (  61, "bre", null,  "br", "Breton", "breton" ),
+  (  62, "btk", null,  null, "Batak languages", "batak, langues" ),
+  (  63, "bua", null,  null, "Buriat", "bouriate" ),
+  (  64, "bug", null,  null, "Buginese", "bugi" ),
+  (  65, "bul", null,  "bg", "Bulgarian", "bulgare" ),
+  (  66, "bur", "mya", "my", "Burmese", "birman" ),
+  (  67, "byn", null,  null, "Blin; Bilin", "blin; bilen" ),
+  (  68, "cad", null,  null, "Caddo", "caddo" ),
+  (  69, "cai", null,  null, "Central American Indian languages", "amérindiennes de L'Amérique centrale, langues" ),
+  (  70, "car", null,  null, "Galibi Carib", "karib; galibi; carib" ),
+  (  71, "cat", null,  "ca", "Catalan; Valencian", "catalan; valencien" ),
+  (  72, "cau", null,  null, "Caucasian languages", "caucasiennes, langues" ),
+  (  73, "ceb", null,  null, "Cebuano", "cebuano" ),
+  (  74, "cel", null,  null, "Celtic languages", "celtiques, langues; celtes, langues" ),
+  (  75, "cha", null,  "ch", "Chamorro", "chamorro" ),
+  (  76, "chb", null,  null, "Chibcha", "chibcha" ),
+  (  77, "che", null,  "ce", "Chechen", "tchétchène" ),
+  (  78, "chg", null,  null, "Chagatai", "djaghataï" ),
+  (  79, "chi", "zho", "zh", "Chinese", "chinois" ),
+  (  80, "chk", null,  null, "Chuukese", "chuuk" ),
+  (  81, "chm", null,  null, "Mari", "mari" ),
+  (  82, "chn", null,  null, "Chinook jargon", "chinook, jargon" ),
+  (  83, "cho", null,  null, "Choctaw", "choctaw" ),
+  (  84, "chp", null,  null, "Chipewyan; Dene Suline", "chipewyan" ),
+  (  85, "chr", null,  null, "Cherokee", "cherokee" ),
+  (  86, "chu", null,  "cu", "Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old Church Slavonic", "slavon d'église; vieux slave; slavon liturgique; vieux bulgare" ),
+  (  87, "chv", null,  "cv", "Chuvash", "tchouvache" ),
+  (  88, "chy", null,  null, "Cheyenne", "cheyenne" ),
+  (  89, "cmc", null,  null, "Chamic languages", "chames, langues" ),
+  (  90, "cop", null,  null, "Coptic", "copte" ),
+  (  91, "cor", null,  "kw", "Cornish", "cornique" ),
+  (  92, "cos", null,  "co", "Corsican", "corse" ),
+  (  93, "cpe", null,  null, "Creoles and pidgins, English based", "créoles et pidgins basés sur l'anglais" ),
+  (  94, "cpf", null,  null, "Creoles and pidgins, French-based ", "créoles et pidgins basés sur le français" ),
+  (  95, "cpp", null,  null, "Creoles and pidgins, Portuguese-based ", "créoles et pidgins basés sur le portugais" ),
+  (  96, "cre", null,  "cr", "Cree", "cree" ),
+  (  97, "crh", null,  null, "Crimean Tatar; Crimean Turkish", "tatar de Crimé" ),
+  (  98, "crp", null,  null, "Creoles and pidgins ", "créoles et pidgins" ),
+  (  99, "csb", null,  null, "Kashubian", "kachoube" ),
+  ( 100, "cus", null,  null, "Cushitic languages", "couchitiques, langues" ),
+  ( 101, "cze", "ces", "cs", "Czech", "tchèque" ),
+  ( 102, "dak", null,  null, "Dakota", "dakota" ),
+  ( 103, "dan", null,  "da", "Danish", "danois" ),
+  ( 104, "dar", null,  null, "Dargwa", "dargwa" ),
+  ( 105, "day", null,  null, "Land Dayak languages", "dayak, langues" ),
+  ( 106, "del", null,  null, "Delaware", "delaware" ),
+  ( 107, "den", null,  null, "Slave (Athapascan)", "esclave (athapascan)" ),
+  ( 108, "dgr", null,  null, "Dogrib", "dogrib" ),
+  ( 109, "din", null,  null, "Dinka", "dinka" ),
+  ( 110, "div", null,  "dv", "Divehi; Dhivehi; Maldivian", "maldivien" ),
+  ( 111, "doi", null,  null, "Dogri", "dogri" ),
+  ( 112, "dra", null,  null, "Dravidian languages", "dravidiennes, langues" ),
+  ( 113, "dsb", null,  null, "Lower Sorbian", "bas-sorabe" ),
+  ( 114, "dua", null,  null, "Duala", "douala" ),
+  ( 115, "dum", null,  null, "Dutch, Middle (ca.1050-1350)", "néerlandais moyen (ca. 1050-1350)" ),
+  ( 116, "dut", "nld", "nl", "Dutch; Flemish", "néerlandais; flamand" ),
+  ( 117, "dyu", null,  null, "Dyula", "dioula" ),
+  ( 118, "dzo", null,  "dz", "Dzongkha", "dzongkha" ),
+  ( 119, "efi", null,  null, "Efik", "efik" ),
+  ( 120, "egy", null,  null, "Egyptian (Ancient)", "égyptien" ),
+  ( 121, "eka", null,  null, "Ekajuk", "ekajuk" ),
+  ( 122, "elx", null,  null, "Elamite", "élamite" ),
+  ( 123, "eng", null,  "en", "English", "anglais" ),
+  ( 124, "enm", null,  null, "English, Middle (1100-1500)", "anglais moyen (1100-1500)" ),
+  ( 125, "epo", null,  "eo", "Esperanto", "espéranto" ),
+  ( 126, "est", null,  "et", "Estonian", "estonien" ),
+  ( 127, "ewe", null,  "ee", "Ewe", "éwé" ),
+  ( 128, "ewo", null,  null, "Ewondo", "éwondo" ),
+  ( 129, "fan", null,  null, "Fang", "fang" ),
+  ( 130, "fao", null,  "fo", "Faroese", "féroïen" ),
+  ( 131, "fat", null,  null, "Fanti", "fanti" ),
+  ( 132, "fij", null,  "fj", "Fijian", "fidjien" ),
+  ( 133, "fil", null,  null, "Filipino; Pilipino", "filipino; pilipino" ),
+  ( 134, "fin", null,  "fi", "Finnish", "finnois" ),
+  ( 135, "fiu", null,  null, "Finno-Ugrian languages", "finno-ougriennes, langues" ),
+  ( 136, "fon", null,  null, "Fon", "fon" ),
+  ( 137, "fre", "fra", "fr", "French", "français" ),
+  ( 138, "frm", null,  null, "French, Middle (ca.1400-1600)", "français moyen (1400-1600)" ),
+  ( 139, "fro", null,  null, "French, Old (842-ca.1400)", "français ancien (842-ca.1400)" ),
+  ( 140, "frr", null,  null, "Northern Frisian", "frison septentrional" ),
+  ( 141, "frs", null,  null, "Eastern Frisian", "frison oriental" ),
+  ( 142, "fry", null,  "fy", "Western Frisian", "frison occidental" ),
+  ( 143, "ful", null,  "ff", "Fulah", "peul" ),
+  ( 144, "fur", null,  null, "Friulian", "frioulan" ),
+  ( 145, "gaa", null,  null, "Ga", "ga" ),
+  ( 146, "gay", null,  null, "Gayo", "gayo" ),
+  ( 147, "gba", null,  null, "Gbaya", "gbaya" ),
+  ( 148, "gem", null,  null, "Germanic languages", "germaniques, langues" ),
+  ( 149, "geo", "kat", "ka", "Georgian", "géorgien" ),
+  ( 150, "ger", "deu", "de", "German", "allemand" ),
+  ( 151, "gez", null,  null, "Geez", "guèze" ),
+  ( 152, "gil", null,  null, "Gilbertese", "kiribati" ),
+  ( 153, "gla", null,  "gd", "Gaelic; Scottish Gaelic", "gaélique; gaélique écossais" ),
+  ( 154, "gle", null,  "ga", "Irish", "irlandais" ),
+  ( 155, "glg", null,  "gl", "Galician", "galicien" ),
+  ( 156, "glv", null,  "gv", "Manx", "manx; mannois" ),
+  ( 157, "gmh", null,  null, "German, Middle High (ca.1050-1500)", "allemand, moyen haut (ca. 1050-1500)" ),
+  ( 158, "goh", null,  null, "German, Old High (ca.750-1050)", "allemand, vieux haut (ca. 750-1050)" ),
+  ( 159, "gon", null,  null, "Gondi", "gond" ),
+  ( 160, "gor", null,  null, "Gorontalo", "gorontalo" ),
+  ( 161, "got", null,  null, "Gothic", "gothique" ),
+  ( 162, "grb", null,  null, "Grebo", "grebo" ),
+  ( 163, "grc", null,  null, "Greek, Ancient (to 1453)", "grec ancien (jusqu'à 1453)" ),
+  ( 164, "gre", "ell", "el", "Greek, Modern (1453-)", "grec moderne (après 1453)" ),
+  ( 165, "grn", null,  "gn", "Guarani", "guarani" ),
+  ( 166, "gsw", null,  null, "Swiss German; Alemannic; Alsatian", "suisse alémanique; alémanique; alsacien" ),
+  ( 167, "guj", null,  "gu", "Gujarati", "goudjrati" ),
+  ( 168, "gwi", null,  null, "Gwich'in", "gwich'in" ),
+  ( 169, "hai", null,  null, "Haida", "haida" ),
+  ( 170, "hat", null,  "ht", "Haitian; Haitian Creole", "haïtien; créole haïtien" ),
+  ( 171, "hau", null,  "ha", "Hausa", "haoussa" ),
+  ( 172, "haw", null,  null, "Hawaiian", "hawaïen" ),
+  ( 173, "heb", null,  "he", "Hebrew", "hébreu" ),
+  ( 174, "her", null,  "hz", "Herero", "herero" ),
+  ( 175, "hil", null,  null, "Hiligaynon", "hiligaynon" ),
+  ( 176, "him", null,  null, "Himachali languages; Western Pahari languages", "langues himachalis; langues paharis occidentales" ),
+  ( 177, "hin", null,  "hi", "Hindi", "hindi" ),
+  ( 178, "hit", null,  null, "Hittite", "hittite" ),
+  ( 179, "hmn", null,  null, "Hmong; Mong", "hmong" ),
+  ( 180, "hmo", null,  "ho", "Hiri Motu", "hiri motu" ),
+  ( 181, "hrv", null,  "hr", "Croatian", "croate" ),
+  ( 182, "hsb", null,  null, "Upper Sorbian", "haut-sorabe" ),
+  ( 183, "hun", null,  "hu", "Hungarian", "hongrois" ),
+  ( 184, "hup", null,  null, "Hupa", "hupa" ),
+  ( 185, "iba", null,  null, "Iban", "iban" ),
+  ( 186, "ibo", null,  "ig", "Igbo", "igbo" ),
+  ( 187, "ice", "isl", "is", "Icelandic", "islandais" ),
+  ( 188, "ido", null,  "io", "Ido", "ido" ),
+  ( 189, "iii", null,  "ii", "Sichuan Yi; Nuosu", "yi de Sichuan" ),
+  ( 190, "ijo", null,  null, "Ijo languages", "ijo, langues" ),
+  ( 191, "iku", null,  "iu", "Inuktitut", "inuktitut" ),
+  ( 192, "ile", null,  "ie", "Interlingue; Occidental", "interlingue" ),
+  ( 193, "ilo", null,  null, "Iloko", "ilocano" ),
+  ( 194, "ina", null,  "ia", "Interlingua (International Auxiliary Language Association)", "interlingua (langue auxiliaire internationale)" ),
+  ( 195, "inc", null,  null, "Indic languages", "indo-aryennes, langues" ),
+  ( 196, "ind", null,  "id", "Indonesian", "indonésien" ),
+  ( 197, "ine", null,  null, "Indo-European languages", "indo-européennes, langues" ),
+  ( 198, "inh", null,  null, "Ingush", "ingouche" ),
+  ( 199, "ipk", null,  "ik", "Inupiaq", "inupiaq" ),
+  ( 200, "ira", null,  null, "Iranian languages", "iraniennes, langues" ),
+  ( 201, "iro", null,  null, "Iroquoian languages", "iroquoises, langues" ),
+  ( 202, "ita", null,  "it", "Italian", "italien" ),
+  ( 203, "jav", null,  "jv", "Javanese", "javanais" ),
+  ( 204, "jbo", null,  null, "Lojban", "lojban" ),
+  ( 205, "jpn", null,  "ja", "Japanese", "japonais" ),
+  ( 206, "jpr", null,  null, "Judeo-Persian", "judéo-persan" ),
+  ( 207, "jrb", null,  null, "Judeo-Arabic", "judéo-arabe" ),
+  ( 208, "kaa", null,  null, "Kara-Kalpak", "karakalpak" ),
+  ( 209, "kab", null,  null, "Kabyle", "kabyle" ),
+  ( 210, "kac", null,  null, "Kachin; Jingpho", "kachin; jingpho" ),
+  ( 211, "kal", null,  "kl", "Kalaallisut; Greenlandic", "groenlandais" ),
+  ( 212, "kam", null,  null, "Kamba", "kamba" ),
+  ( 213, "kan", null,  "kn", "Kannada", "kannada" ),
+  ( 214, "kar", null,  null, "Karen languages", "karen, langues" ),
+  ( 215, "kas", null,  "ks", "Kashmiri", "kashmiri" ),
+  ( 216, "kau", null,  "kr", "Kanuri", "kanouri" ),
+  ( 217, "kaw", null,  null, "Kawi", "kawi" ),
+  ( 218, "kaz", null,  "kk", "Kazakh", "kazakh" ),
+  ( 219, "kbd", null,  null, "Kabardian", "kabardien" ),
+  ( 220, "kha", null,  null, "Khasi", "khasi" ),
+  ( 221, "khi", null,  null, "Khoisan languages", "khoïsan, langues" ),
+  ( 222, "khm", null,  "km", "Central Khmer", "khmer central" ),
+  ( 223, "kho", null,  null, "Khotanese; Sakan", "khotanais; sakan" ),
+  ( 224, "kik", null,  "ki", "Kikuyu; Gikuyu", "kikuyu" ),
+  ( 225, "kin", null,  "rw", "Kinyarwanda", "rwanda" ),
+  ( 226, "kir", null,  "ky", "Kirghiz; Kyrgyz", "kirghiz" ),
+  ( 227, "kmb", null,  null, "Kimbundu", "kimbundu" ),
+  ( 228, "kok", null,  null, "Konkani", "konkani" ),
+  ( 229, "kom", null,  "kv", "Komi", "kom" ),
+  ( 230, "kon", null,  "kg", "Kongo", "kongo" ),
+  ( 231, "kor", null,  "ko", "Korean", "coréen" ),
+  ( 232, "kos", null,  null, "Kosraean", "kosrae" ),
+  ( 233, "kpe", null,  null, "Kpelle", "kpellé" ),
+  ( 234, "krc", null,  null, "Karachay-Balkar", "karatchai balkar" ),
+  ( 235, "krl", null,  null, "Karelian", "carélien" ),
+  ( 236, "kro", null,  null, "Kru languages", "krou, langues" ),
+  ( 237, "kru", null,  null, "Kurukh", "kurukh" ),
+  ( 238, "kua", null,  "kj", "Kuanyama; Kwanyama", "kuanyama; kwanyama" ),
+  ( 239, "kum", null,  null, "Kumyk", "koumyk" ),
+  ( 240, "kur", null,  "ku", "Kurdish", "kurde" ),
+  ( 241, "kut", null,  null, "Kutenai", "kutenai" ),
+  ( 242, "lad", null,  null, "Ladino", "judéo-espagnol" ),
+  ( 243, "lah", null,  null, "Lahnda", "lahnda" ),
+  ( 244, "lam", null,  null, "Lamba", "lamba" ),
+  ( 245, "lao", null,  "lo", "Lao", "lao" ),
+  ( 246, "lat", null,  "la", "Latin", "latin" ),
+  ( 247, "lav", null,  "lv", "Latvian", "letton" ),
+  ( 248, "lez", null,  null, "Lezghian", "lezghien" ),
+  ( 249, "lim", null,  "li", "Limburgan; Limburger; Limburgish", "limbourgeois" ),
+  ( 250, "lin", null,  "ln", "Lingala", "lingala" ),
+  ( 251, "lit", null,  "lt", "Lithuanian", "lituanien" ),
+  ( 252, "lol", null,  null, "Mongo", "mongo" ),
+  ( 253, "loz", null,  null, "Lozi", "lozi" ),
+  ( 254, "ltz", null,  "lb", "Luxembourgish; Letzeburgesch", "luxembourgeois" ),
+  ( 255, "lua", null,  null, "Luba-Lulua", "luba-lulua" ),
+  ( 256, "lub", null,  "lu", "Luba-Katanga", "luba-katanga" ),
+  ( 257, "lug", null,  "lg", "Ganda", "ganda" ),
+  ( 258, "lui", null,  null, "Luiseno", "luiseno" ),
+  ( 259, "lun", null,  null, "Lunda", "lunda" ),
+  ( 260, "luo", null,  null, "Luo (Kenya and Tanzania)", "luo (Kenya et Tanzanie)" ),
+  ( 261, "lus", null,  null, "Lushai", "lushai" ),
+  ( 262, "mac", "mkd", "mk", "Macedonian", "macédonien" ),
+  ( 263, "mad", null,  null, "Madurese", "madourais" ),
+  ( 264, "mag", null,  null, "Magahi", "magahi" ),
+  ( 265, "mah", null,  "mh", "Marshallese", "marshall" ),
+  ( 266, "mai", null,  null, "Maithili", "maithili" ),
+  ( 267, "mak", null,  null, "Makasar", "makassar" ),
+  ( 268, "mal", null,  "ml", "Malayalam", "malayalam" ),
+  ( 269, "man", null,  null, "Mandingo", "mandingue" ),
+  ( 270, "mao", "mri", "mi", "Maori", "maori" ),
+  ( 271, "map", null,  null, "Austronesian languages", "austronésiennes, langues" ),
+  ( 272, "mar", null,  "mr", "Marathi", "marathe" ),
+  ( 273, "mas", null,  null, "Masai", "massaï" ),
+  ( 274, "may", "msa", "ms", "Malay", "malais" ),
+  ( 275, "mdf", null,  null, "Moksha", "moksa" ),
+  ( 276, "mdr", null,  null, "Mandar", "mandar" ),
+  ( 277, "men", null,  null, "Mende", "mendé" ),
+  ( 278, "mga", null,  null, "Irish, Middle (900-1200)", "irlandais moyen (900-1200)" ),
+  ( 279, "mic", null,  null, "Mi'kmaq; Micmac", "mi'kmaq; micmac" ),
+  ( 280, "min", null,  null, "Minangkabau", "minangkabau" ),
+  ( 281, "mis", null,  null, "Uncoded languages", "langues non codées" ),
+  ( 282, "mkh", null,  null, "Mon-Khmer languages", "môn-khmer, langues" ),
+  ( 283, "mlg", null,  "mg", "Malagasy", "malgache" ),
+  ( 284, "mlt", null,  "mt", "Maltese", "maltais" ),
+  ( 285, "mnc", null,  null, "Manchu", "mandchou" ),
+  ( 286, "mni", null,  null, "Manipuri", "manipuri" ),
+  ( 287, "mno", null,  null, "Manobo languages", "manobo, langues" ),
+  ( 288, "moh", null,  null, "Mohawk", "mohawk" ),
+  ( 289, "mon", null,  "mn", "Mongolian", "mongol" ),
+  ( 290, "mos", null,  null, "Mossi", "moré" ),
+  ( 291, "mul", null,  null, "Multiple languages", "multilingue" ),
+  ( 292, "mun", null,  null, "Munda languages", "mounda, langues" ),
+  ( 293, "mus", null,  null, "Creek", "muskogee" ),
+  ( 294, "mwl", null,  null, "Mirandese", "mirandais" ),
+  ( 295, "mwr", null,  null, "Marwari", "marvari" ),
+  ( 296, "myn", null,  null, "Mayan languages", "maya, langues" ),
+  ( 297, "myv", null,  null, "Erzya", "erza" ),
+  ( 298, "nah", null,  null, "Nahuatl languages", "nahuatl, langues" ),
+  ( 299, "nai", null,  null, "North American Indian languages", "nord-amérindiennes, langues" ),
+  ( 300, "nap", null,  null, "Neapolitan", "napolitain" ),
+  ( 301, "nau", null,  "na", "Nauru", "nauruan" ),
+  ( 302, "nav", null,  "nv", "Navajo; Navaho", "navaho" ),
+  ( 303, "nbl", null,  "nr", "Ndebele, South; South Ndebele", "ndébélé du Sud" ),
+  ( 304, "nde", null,  "nd", "Ndebele, North; North Ndebele", "ndébélé du Nord" ),
+  ( 305, "ndo", null,  "ng", "Ndonga", "ndonga" ),
+  ( 306, "nds", null,  null, "Low German; Low Saxon; German, Low; Saxon, Low", "bas allemand; bas saxon; allemand, bas; saxon, bas" ),
+  ( 307, "nep", null,  "ne", "Nepali", "népalais" ),
+  ( 308, "new", null,  null, "Nepal Bhasa; Newari", "nepal bhasa; newari" ),
+  ( 309, "nia", null,  null, "Nias", "nias" ),
+  ( 310, "nic", null,  null, "Niger-Kordofanian languages", "nigéro-kordofaniennes, langues" ),
+  ( 311, "niu", null,  null, "Niuean", "niué" ),
+  ( 312, "nno", null,  "nn", "Norwegian Nynorsk; Nynorsk, Norwegian", "norvégien nynorsk; nynorsk, norvégien" ),
+  ( 313, "nob", null,  "nb", "Bokmål, Norwegian; Norwegian Bokmål", "norvégien bokmål" ),
+  ( 314, "nog", null,  null, "Nogai", "nogaï; nogay" ),
+  ( 315, "non", null,  null, "Norse, Old", "norrois, vieux" ),
+  ( 316, "nor", null,  "no", "Norwegian", "norvégien" ),
+  ( 317, "nqo", null,  null, "N'Ko", "n'ko" ),
+  ( 318, "nso", null,  null, "Pedi; Sepedi; Northern Sotho", "pedi; sepedi; sotho du Nord" ),
+  ( 319, "nub", null,  null, "Nubian languages", "nubiennes, langues" ),
+  ( 320, "nwc", null,  null, "Classical Newari; Old Newari; Classical Nepal Bhasa", "newari classique" ),
+  ( 321, "nya", null,  "ny", "Chichewa; Chewa; Nyanja", "chichewa; chewa; nyanja" ),
+  ( 322, "nym", null,  null, "Nyamwezi", "nyamwezi" ),
+  ( 323, "nyn", null,  null, "Nyankole", "nyankolé" ),
+  ( 324, "nyo", null,  null, "Nyoro", "nyoro" ),
+  ( 325, "nzi", null,  null, "Nzima", "nzema" ),
+  ( 326, "oci", null,  "oc", "Occitan (post 1500); Provençal", "occitan (après 1500); provençal" ),
+  ( 327, "oji", null,  "oj", "Ojibwa", "ojibwa" ),
+  ( 328, "ori", null,  "or", "Oriya", "oriya" ),
+  ( 329, "orm", null,  "om", "Oromo", "galla" ),
+  ( 330, "osa", null,  null, "Osage", "osage" ),
+  ( 331, "oss", null,  "os", "Ossetian; Ossetic", "ossète" ),
+  ( 332, "ota", null,  null, "Turkish, Ottoman (1500-1928)", "turc ottoman (1500-1928)" ),
+  ( 333, "oto", null,  null, "Otomian languages", "otomi, langues" ),
+  ( 334, "paa", null,  null, "Papuan languages", "papoues, langues" ),
+  ( 335, "pag", null,  null, "Pangasinan", "pangasinan" ),
+  ( 336, "pal", null,  null, "Pahlavi", "pahlavi" ),
+  ( 337, "pam", null,  null, "Pampanga; Kapampangan", "pampangan" ),
+  ( 338, "pan", null,  "pa", "Panjabi; Punjabi", "pendjabi" ),
+  ( 339, "pap", null,  null, "Papiamento", "papiamento" ),
+  ( 340, "pau", null,  null, "Palauan", "palau" ),
+  ( 341, "peo", null,  null, "Persian, Old (ca.600-400 B.C.)", "perse, vieux (ca. 600-400 av. J.-C.)" ),
+  ( 342, "per", "fas", "fa", "Persian", "persan" ),
+  ( 343, "phi", null,  null, "Philippine languages", "philippines, langues" ),
+  ( 344, "phn", null,  null, "Phoenician", "phénicien" ),
+  ( 345, "pli", null,  "pi", "Pali", "pali" ),
+  ( 346, "pol", null,  "pl", "Polish", "polonais" ),
+  ( 347, "pon", null,  null, "Pohnpeian", "pohnpei" ),
+  ( 348, "por", null,  "pt", "Portuguese", "portugais" ),
+  ( 349, "pra", null,  null, "Prakrit languages", "prâkrit, langues" ),
+  ( 350, "pro", null,  null, "Provençal, Old (to 1500)", "provençal ancien (jusqu'à 1500)" ),
+  ( 351, "pus", null,  "ps", "Pushto; Pashto", "pachto" ),
+  ( 352, "qaa-qtz", null, null, "Reserved for local use", "réservée à l'usage local" ),
+  ( 353, "que", null,  "qu", "Quechua", "quechua" ),
+  ( 354, "raj", null,  null, "Rajasthani", "rajasthani" ),
+  ( 355, "rap", null,  null, "Rapanui", "rapanui" ),
+  ( 356, "rar", null,  null, "Rarotongan; Cook Islands Maori", "rarotonga; maori des îles Cook" ),
+  ( 357, "roa", null,  null, "Romance languages", "romanes, langues" ),
+  ( 358, "roh", null,  "rm", "Romansh", "romanche" ),
+  ( 359, "rom", null,  null, "Romany", "tsigane" ),
+  ( 360, "rum", "ron", "ro", "Romanian; Moldavian; Moldovan", "roumain; moldave" ),
+  ( 361, "run", null,  "rn", "Rundi", "rundi" ),
+  ( 362, "rup", null,  null, "Aromanian; Arumanian; Macedo-Romanian", "aroumain; macédo-roumain" ),
+  ( 363, "rus", null,  "ru", "Russian", "russe" ),
+  ( 364, "sad", null,  null, "Sandawe", "sandawe" ),
+  ( 365, "sag", null,  "sg", "Sango", "sango" ),
+  ( 366, "sah", null,  null, "Yakut", "iakoute" ),
+  ( 367, "sai", null,  null, "South American Indian (Other)", "indiennes d'Amérique du Sud, autres langues" ),
+  ( 368, "sal", null,  null, "Salishan languages", "salishennes, langues" ),
+  ( 369, "sam", null,  null, "Samaritan Aramaic", "samaritain" ),
+  ( 370, "san", null,  "sa", "Sanskrit", "sanskrit" ),
+  ( 371, "sas", null,  null, "Sasak", "sasak" ),
+  ( 372, "sat", null,  null, "Santali", "santal" ),
+  ( 373, "scn", null,  null, "Sicilian", "sicilien" ),
+  ( 374, "sco", null,  null, "Scots", "écossais" ),
+  ( 375, "sel", null,  null, "Selkup", "selkoupe" ),
+  ( 376, "sem", null,  null, "Semitic languages", "sémitiques, langues" ),
+  ( 377, "sga", null,  null, "Irish, Old (to 900)", "irlandais ancien (jusqu'à 900)" ),
+  ( 378, "sgn", null,  null, "Sign Languages", "langues des signes" ),
+  ( 379, "shn", null,  null, "Shan", "chan" ),
+  ( 380, "sid", null,  null, "Sidamo", "sidamo" ),
+  ( 381, "sin", null,  "si", "Sinhala; Sinhalese", "singhalais" ),
+  ( 382, "sio", null,  null, "Siouan languages", "sioux, langues" ),
+  ( 383, "sit", null,  null, "Sino-Tibetan languages", "sino-tibétaines, langues" ),
+  ( 384, "sla", null,  null, "Slavic languages", "slaves, langues" ),
+  ( 385, "slo", "slk", "sk", "Slovak", "slovaque" ),
+  ( 386, "slv", null,  "sl", "Slovenian", "slovène" ),
+  ( 387, "sma", null,  null, "Southern Sami", "sami du Sud" ),
+  ( 388, "sme", null,  "se", "Northern Sami", "sami du Nord" ),
+  ( 389, "smi", null,  null, "Sami languages", "sames, langues" ),
+  ( 390, "smj", null,  null, "Lule Sami", "sami de Lule" ),
+  ( 391, "smn", null,  null, "Inari Sami", "sami d'Inari" ),
+  ( 392, "smo", null,  "sm", "Samoan", "samoan" ),
+  ( 393, "sms", null,  null, "Skolt Sami", "sami skolt" ),
+  ( 394, "sna", null,  "sn", "Shona", "shona" ),
+  ( 395, "snd", null,  "sd", "Sindhi", "sindhi" ),
+  ( 396, "snk", null,  null, "Soninke", "soninké" ),
+  ( 397, "sog", null,  null, "Sogdian", "sogdien" ),
+  ( 398, "som", null,  "so", "Somali", "somali" ),
+  ( 399, "son", null,  null, "Songhai languages", "songhai, langues" ),
+  ( 400, "sot", null,  "st", "Sotho, Southern", "sotho du Sud" ),
+  ( 401, "spa", null,  "es", "Spanish; Castilian", "espagnol; castillan" ),
+  ( 402, "srd", null,  "sc", "Sardinian", "sarde" ),
+  ( 403, "srn", null,  null, "Sranan Tongo", "sranan tongo" ),
+  ( 404, "srp", null,  "sr", "Serbian", "serbe" ),
+  ( 405, "srr", null,  null, "Serer", "sérère" ),
+  ( 406, "ssa", null,  null, "Nilo-Saharan languages", "nilo-sahariennes, langues" ),
+  ( 407, "ssw", null,  "ss", "Swati", "swati" ),
+  ( 408, "suk", null,  null, "Sukuma", "sukuma" ),
+  ( 409, "sun", null,  "su", "Sundanese", "soundanais" ),
+  ( 410, "sus", null,  null, "Susu", "soussou" ),
+  ( 411, "sux", null,  null, "Sumerian", "sumérien" ),
+  ( 412, "swa", null,  "sw", "Swahili", "swahili" ),
+  ( 413, "swe", null,  "sv", "Swedish", "suédois" ),
+  ( 414, "syc", null,  null, "Classical Syriac", "syriaque classique" ),
+  ( 415, "syr", null,  null, "Syriac", "syriaque" ),
+  ( 416, "tah", null,  "ty", "Tahitian", "tahitien" ),
+  ( 417, "tai", null,  null, "Tai languages", "tai, langues" ),
+  ( 418, "tam", null,  "ta", "Tamil", "tamoul" ),
+  ( 419, "tat", null,  "tt", "Tatar", "tatar" ),
+  ( 420, "tel", null,  "te", "Telugu", "télougou" ),
+  ( 421, "tem", null,  null, "Timne", "temne" ),
+  ( 422, "ter", null,  null, "Tereno", "tereno" ),
+  ( 423, "tet", null,  null, "Tetum", "tetum" ),
+  ( 424, "tgk", null,  "tg", "Tajik", "tadjik" ),
+  ( 425, "tgl", null,  "tl", "Tagalog", "tagalog" ),
+  ( 426, "tha", null,  "th", "Thai", "thaï" ),
+  ( 427, "tib", "bod", "bo", "Tibetan", "tibétain" ),
+  ( 428, "tig", null,  null, "Tigre", "tigré" ),
+  ( 429, "tir", null,  "ti", "Tigrinya", "tigrigna" ),
+  ( 430, "tiv", null,  null, "Tiv", "tiv" ),
+  ( 431, "tkl", null,  null, "Tokelau", "tokelau" ),
+  ( 432, "tlh", null,  null, "Klingon; tlhIngan-Hol", "klingon" ),
+  ( 433, "tli", null,  null, "Tlingit", "tlingit" ),
+  ( 434, "tmh", null,  null, "Tamashek", "tamacheq" ),
+  ( 435, "tog", null,  null, "Tonga (Nyasa)", "tonga (Nyasa)" ),
+  ( 436, "ton", null,  "to", "Tonga (Tonga Islands)", "tongan (Îles Tonga)" ),
+  ( 437, "tpi", null,  null, "Tok Pisin", "tok pisin" ),
+  ( 438, "tsi", null,  null, "Tsimshian", "tsimshian" ),
+  ( 439, "tsn", null,  "tn", "Tswana", "tswana" ),
+  ( 440, "tso", null,  "ts", "Tsonga", "tsonga" ),
+  ( 441, "tuk", null,  "tk", "Turkmen", "turkmène" ),
+  ( 442, "tum", null,  null, "Tumbuka", "tumbuka" ),
+  ( 443, "tup", null,  null, "Tupi languages", "tupi, langues" ),
+  ( 444, "tur", null,  "tr", "Turkish", "turc" ),
+  ( 445, "tut", null,  null, "Altaic languages", "altaïques, langues" ),
+  ( 446, "tvl", null,  null, "Tuvalu", "tuvalu" ),
+  ( 447, "twi", null,  "tw", "Twi", "twi" ),
+  ( 448, "tyv", null,  null, "Tuvinian", "touva" ),
+  ( 449, "udm", null,  null, "Udmurt", "oudmourte" ),
+  ( 450, "uga", null,  null, "Ugaritic", "ougaritique" ),
+  ( 451, "uig", null,  "ug", "Uighur; Uyghur", "ouïgour" ),
+  ( 452, "ukr", null,  "uk", "Ukrainian", "ukrainien" ),
+  ( 453, "umb", null,  null, "Umbundu", "umbundu" ),
+  ( 454, "und", null,  null, "Undetermined", "indéterminée" ),
+  ( 455, "urd", null,  "ur", "Urdu", "ourdou" ),
+  ( 456, "uzb", null,  "uz", "Uzbek", "ouszbek" ),
+  ( 457, "vai", null,  null, "Vai", "vaï" ),
+  ( 458, "ven", null,  "ve", "Venda", "venda" ),
+  ( 459, "vie", null,  "vi", "Vietnamese", "vietnamien" ),
+  ( 460, "vol", null,  "vo", "Volapük", "volapük" ),
+  ( 461, "vot", null,  null, "Votic", "vote" ),
+  ( 462, "wak", null,  null, "Wakashan languages", "wakashanes, langues" ),
+  ( 463, "wal", null,  null, "Walamo", "walamo" ),
+  ( 464, "war", null,  null, "Waray", "waray" ),
+  ( 465, "was", null,  null, "Washo", "washo" ),
+  ( 466, "wel", "cym", "cy", "Welsh", "gallois" ),
+  ( 467, "wen", null,  null, "Sorbian languages", "sorabes, langues" ),
+  ( 468, "wln", null,  "wa", "Walloon", "wallon" ),
+  ( 469, "wol", null,  "wo", "Wolof", "wolof" ),
+  ( 470, "xal", null,  null, "Kalmyk; Oirat", "kalmouk; oïrat" ),
+  ( 471, "xho", null,  "xh", "Xhosa", "xhosa" ),
+  ( 472, "yao", null,  null, "Yao", "yao" ),
+  ( 473, "yap", null,  null, "Yapese", "yapois" ),
+  ( 474, "yid", null,  "yi", "Yiddish", "yiddish" ),
+  ( 475, "yor", null,  "yo", "Yoruba", "yoruba" ),
+  ( 476, "ypk", null,  null, "Yupik languages", "yupik, langues" ),
+  ( 477, "zap", null,  null, "Zapotec", "zapotèque" ),
+  ( 478, "zbl", null,  null, "Blissymbols; Blissymbolics; Bliss", "symboles Bliss; Bliss" ),
+  ( 479, "zen", null,  null, "Zenaga", "zenaga" ),
+  ( 480, "zha", null,  "za", "Zhuang; Chuang", "zhuang; chuang" ),
+  ( 481, "znd", null,  null, "Zande languages", "zandé, langues" ),
+  ( 482, "zul", null,  "zu", "Zulu", "zoulou" ),
+  ( 483, "zun", null,  null, "Zuni", "zuni" ),
+  ( 484, "zxx", null,  null, "No linguistic content; Not applicable", "pas de contenu linguistique; non applicable" ),
+  ( 485, "zza", null,  null, "Zaza; Dimili; Dimli; Kirdki; Kirmanjki; Zazaki", "zaza; dimili; dimli; kirdki; kirmanjki; zazaki ) )" )
+  )
 }
 

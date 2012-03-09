@@ -8,6 +8,7 @@ import com.mongodb.DBObject
 import org.tyranid.Imp._
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.http.Http
+import org.tyranid.locale.{ Country, Language }
 import org.tyranid.math.Base64
 import org.tyranid.profile.{ Gender, User }
 import org.tyranid.session.Session
@@ -154,6 +155,9 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
 
     if ( profile.s( 'locale ).notBlank ) {
       val ( language, country ) = profile.s( 'locale ).splitFirst( '_' )
+
+      user( 'lang )    = Language.idByIso630_1( language )
+      user( 'country ) = Country.idByIso3166_2( country )
     }
 
     user( 'thumbnail ) = "https://graph.facebook.com/" + uid + "/picture?type=square"

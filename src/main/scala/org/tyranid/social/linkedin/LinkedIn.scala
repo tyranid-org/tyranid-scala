@@ -164,9 +164,7 @@ $(document).ready(function() {
    */
 
   def importUser( user:User, uid:String ) = {
-    val profile = GET( "/people/id=" + uid + ":(id,first-name,last-name,picture-url,headline)", user ).parseJsonObject
-
-    // TODO:  location:(country:(code))
+    val profile = GET( "/people/id=" + uid + ":(id,first-name,last-name,picture-url,headline,location:(country:(code)))", user ).parseJsonObject
 
     user( 'firstName ) = profile( 'firstName )
     user( 'lastName )  = profile( 'lastName )
@@ -174,6 +172,10 @@ $(document).ready(function() {
       if ( profile.contains( 'pictureUrl ) ) profile( 'pictureUrl )
       else                                   "/icon_individual.png"
     user( 'title )     = profile( 'headline )
+
+    val country = profile.o( 'location ).o( 'country ).s( 'code )
+    if ( country.notBlank )
+      user( 'country ) = Country.idByIso3166_2( country )
   }
 
 

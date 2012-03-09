@@ -28,7 +28,7 @@ import org.tyranid.db.{ DbBoolean, DbChar, DbDouble, DbEmail, DbLink, DbLong, Db
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.image.DbImage
-import org.tyranid.locale.Country
+import org.tyranid.locale.{ Country, Language }
 import org.tyranid.secure.DbReCaptcha
 import org.tyranid.session.{ Session, ThreadData }
 import org.tyranid.web.WebContext
@@ -44,6 +44,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "tzOff"          is DbDouble            ; // timezone offset in hours ... i.e. -6
   "gender"         is DbLink(Gender)      ;
   "country"        is DbLink(Country)     ;
+  "lang"           is DbLink(Language)    ;
 
   "recaptcha"      is DbReCaptcha( "white" ) is 'temporary as "Verify you are human";
 
