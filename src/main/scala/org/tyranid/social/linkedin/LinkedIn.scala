@@ -22,6 +22,7 @@ import org.tyranid.oauth.{ OAuth, Token }
 import org.tyranid.profile.{ Org, User }
 import org.tyranid.session.Session
 import org.tyranid.social.SoApp
+import org.tyranid.ui.Form
 import org.tyranid.web.{ WebContext, Weblet }
 
 
@@ -29,6 +30,8 @@ case class LiApp( apiKey:String, secret:String ) extends SoApp {
 
   val networkCode = "li"
   val networkName = "LinkedIn"
+
+  val logo = "/images/linkedin_logo.png"
 
   lazy val oauth = OAuth( key = apiKey, secret = secret )
 
@@ -93,6 +96,34 @@ $(document).ready(function() {
      </head>
      <script type="IN/Login" data-onAuth="onLinkedInAuth"/>
    }
+
+  def linkButton = {
+    <head>
+     <script src="//platform.linkedin.com/in.js">
+       api_key: { B.linkedIn.apiKey }
+       authorize: true
+       credentials_cookie: true
+     </script>
+     <script>{ Unparsed( """
+       function onLinkedInAuth() {
+         $.post('/linkedin/exchange', function(data) {
+           window.location.reload( true );
+         });
+       }
+     """ ) }</script>
+    </head>
+    <script type="IN/Login" data-onAuth="onLinkedInAuth"/>
+  }
+
+  def linkPreview( user:User ) = {
+    val memberId = user.s( 'liid )
+    val profile = B.linkedIn.GET( "/people/id=" + memberId + ":(id,first-name,last-name,picture-url)", user ).parseJsonObject
+
+    { Form.text( "First Name", profile.s( 'firstName ) ) } ++
+    { Form.text( "Last Name", profile.s( 'lastName ) ) } ++
+    { profile.contains( 'pictureUrl ) |*
+      Form.thumbnail( "Profile Image", profile.s( 'pictureUrl ) ) }
+  }
 
   def exchangeToken:Boolean = {
 

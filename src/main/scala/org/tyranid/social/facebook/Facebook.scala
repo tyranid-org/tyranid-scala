@@ -14,6 +14,7 @@ import org.tyranid.profile.{ Gender, User }
 import org.tyranid.session.Session
 import org.tyranid.social.SoApp
 import org.tyranid.time.Time
+import org.tyranid.ui.Form
 import org.tyranid.web.{ Weblet, WebContext }
 
 
@@ -21,6 +22,8 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
 
   val networkCode = "fb"
   val networkName = "Facebook"
+
+  val logo = "/images/facebook_logo.png"
 
   def copyAttributes( from:User, to:User ) = {
     to( 'fbid ) = from.s( 'fbid )
@@ -47,8 +50,12 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
   }
 
   def loginButton( weblet:Weblet ) = {
+    val loggingOut = T.web.req.s( 'lo ).notBlank
+
     <head>
      <script>{ Unparsed( """
+""" + ( loggingOut |* "window.fbLogOut = true;" ) + """
+
   window.fbAsyncInit = function() {
     FB.init({
       appId      : '""" + apiKey + """',
@@ -63,8 +70,14 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     });
 
     FB.getLoginStatus( function( resp ) {
-      if ( resp.status == 'connected' )
-        window.location = '""" + weblet.wpath + """/infb';
+      if ( resp.status == 'connected' ) {
+        if ( !window.fbLogOut ) {
+          window.location = '""" + weblet.wpath + """/infb';
+        } else {
+          FB.logout();
+          delete window.fbLogOut;
+        }
+      }
     });
   };
 
@@ -84,9 +97,27 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     <fb:login-button>Sign In with Facebook</fb:login-button>
   }
 
+  def linkButton = {
+    <div>TODO</div>
+  }
+
+  def linkPreview( user:User ) = {
+    val uid = user.s( 'fbid )
+    val profile = "https://graph.facebook.com/me".GET( Map( "access_token" -> user.s( 'fbt ) ) ).parseJsonObject
+
+    spam( "profile:" + profile )
+
+    Form.text( "First Name", profile.s( 'first_name ) ) ++
+    Form.text( "Last Name", profile.s( 'last_name ) ) ++
+    Form.thumbnail( "Profile Image", "https://graph.facebook.com/" + uid + "/picture?type=square" )
+  }
+
   def exchangeToken:Boolean = {
 
     val t = T
+
+
+    // 1.  extract client-side code from the javascript api's fbsr_ cookie
 
     val cookieName = "fbsr_" + apiKey
     val cookieValue = t.web.req.cookieValue( cookieName )
@@ -111,16 +142,24 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     val code = json.s( 'code )
     //val issuedAt = json.s( 'issued_at )
 
-    val params =
+
+    // 2.  exchange client-side Code for a short-lived server-side token
+
+    val shortLivedAccessToken = 
       "https://graph.facebook.com/oauth/access_token".POST( Map( "client_id" -> apiKey, "client_secret" -> secret, "redirect_uri" -> "", "code" -> code ) ).
+      split( "&" ).map( _.splitFirst( '=' ) ).
+      find( _._1 == "access_token" ).get._2
+
+    val params =
+      "https://graph.facebook.com/oauth/access_token".POST( Map( "client_id" -> apiKey, "client_secret" -> secret, "grant_type" -> "fb_exchange_token", "fb_exchange_token" -> shortLivedAccessToken ) ).
       split( "&" ).map( _.splitFirst( '=' ) )
 
     val accessToken = params.find( _._1 == "access_token" ).get._2
     val expires     = System.currentTimeMillis + params.find( _._1 == "expires" ).get._2.toLong * 1000
 
-    spam( "uid=" + uid )
-    spam( "accessToken=" + accessToken )
-    spam( "expires=" + expires )
+    //spam( "uid=" + uid )
+    //spam( "accessToken=" + accessToken )
+    //spam( "expires=" + expires )
 
     val session = t.session
     val user = session.user
@@ -146,7 +185,6 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
 
   def importUser( user:User, uid:String ) = {
     val profile = "https://graph.facebook.com/me".GET( Map( "access_token" -> user.s( 'fbt ) ) ).parseJsonObject
-    spam( "profile:\n\n" + profile )
 
     user( 'firstName ) = profile.s( 'first_name )
     user( 'lastName )  = profile.s( 'last_name )

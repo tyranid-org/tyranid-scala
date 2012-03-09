@@ -31,10 +31,14 @@ trait SoApp {
 
   lazy val idName = networkCode + "id"
 
+  val logo:String
+
   def copyAttributes( from:User, to:User ):Unit
   def saveAttributes( user:User ):Unit
   def removeAttributes( user:DBObject ):Unit
   def loginButton( weblet:Weblet ):NodeSeq
+  def linkButton:NodeSeq
+  def linkPreview( user:User ):NodeSeq
   def exchangeToken:Boolean
 
   def importUser( user:User, uid:String )
