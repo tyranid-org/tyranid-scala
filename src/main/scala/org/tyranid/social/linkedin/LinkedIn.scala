@@ -320,14 +320,14 @@ $(document).ready(function() {
             loc( 'address ) = addr
           }
 
-          if ( l.b( 'isHeadquarters ) || ( desc.notBlank && desc.toLowerCase.contains( "headquarter" ) ) )
+          val hq = l.b( 'isHeadquarters ) || ( desc.notBlank && desc.toLowerCase.contains( "headquarter" ) )
+          if ( hq )
             loc( 'type ) = LocationType.HeadquartersId
 
           B.Location.db.save( loc )
 
-          if ( l.b( 'isHeadquarters ) ) {
+          if ( hq )
             org( 'hq ) = loc.id
-          }
         }
       }
     }
