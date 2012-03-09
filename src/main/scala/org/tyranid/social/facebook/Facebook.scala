@@ -49,6 +49,17 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $unset -> Mobj( "fbid" -> 1, "fbt" -> 1, "fbte" -> 1 ) ) )
   }
 
+  private val loadFacebookApi = """
+  // Load the SDK Asynchronously
+  (function(d){
+     var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
+     if (d.getElementById(id)) {return;}
+     js = d.createElement('script'); js.id = id; js.async = true;
+     js.src = "//connect.facebook.net/en_US/all.js";
+     ref.parentNode.insertBefore(js, ref);
+   }(document));
+"""
+
   def loginButton( weblet:Weblet ) = {
     val loggingOut = T.web.req.s( 'lo ).notBlank
 
@@ -81,15 +92,7 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     });
   };
 
-  // Load the SDK Asynchronously
-  (function(d){
-     var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
-     if (d.getElementById(id)) {return;}
-     js = d.createElement('script'); js.id = id; js.async = true;
-     js.src = "//connect.facebook.net/en_US/all.js";
-     ref.parentNode.insertBefore(js, ref);
-   }(document));
-""" ) }</script>
+""" + loadFacebookApi ) }</script>
     </head>
     <tail>
      <div id="fb-root"></div>
@@ -98,14 +101,44 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
   }
 
   def linkButton = {
-    <div>TODO</div>
+    <head>
+     <script>{ Unparsed( """
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId      : '""" + apiKey + """',
+      channelUrl : '//""" + B.domain + """/facebook/channel',
+      status     : true, // check login status
+      cookie     : true, // enable cookies to allow the server to access the session
+      xfbml      : true  // parse XFBML
+    });
+
+    function exchange() {
+      $.post('/facebook/exchange', function(data) {
+        window.location.reload( true );
+      });
+    }
+
+    FB.Event.subscribe('auth.login', function() {
+      exchange();
+    });
+
+    FB.getLoginStatus( function( resp ) {
+      if ( resp.status == 'connected' )
+        exchange();
+    });
+  };
+
+""" + loadFacebookApi ) }</script>
+    </head>
+    <tail>
+     <div id="fb-root"></div>
+    </tail>
+    <fb:login-button>Sign In with Facebook</fb:login-button>
   }
 
   def linkPreview( user:User ) = {
     val uid = user.s( 'fbid )
     val profile = "https://graph.facebook.com/me".GET( Map( "access_token" -> user.s( 'fbt ) ) ).parseJsonObject
-
-    spam( "profile:" + profile )
 
     Form.text( "First Name", profile.s( 'first_name ) ) ++
     Form.text( "Last Name", profile.s( 'last_name ) ) ++
@@ -143,12 +176,15 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     //val issuedAt = json.s( 'issued_at )
 
 
-    // 2.  exchange client-side Code for a short-lived server-side token
+    // 2.  exchange client-side code for a short-lived server-side token
 
     val shortLivedAccessToken = 
       "https://graph.facebook.com/oauth/access_token".POST( Map( "client_id" -> apiKey, "client_secret" -> secret, "redirect_uri" -> "", "code" -> code ) ).
       split( "&" ).map( _.splitFirst( '=' ) ).
       find( _._1 == "access_token" ).get._2
+
+
+    // 3.  exchange short-lived server-side token for a long-term server-side access token
 
     val params =
       "https://graph.facebook.com/oauth/access_token".POST( Map( "client_id" -> apiKey, "client_secret" -> secret, "grant_type" -> "fb_exchange_token", "fb_exchange_token" -> shortLivedAccessToken ) ).
@@ -157,10 +193,6 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     val accessToken = params.find( _._1 == "access_token" ).get._2
     val expires     = System.currentTimeMillis + params.find( _._1 == "expires" ).get._2.toLong * 1000
 
-    //spam( "uid=" + uid )
-    //spam( "accessToken=" + accessToken )
-    //spam( "expires=" + expires )
-
     val session = t.session
     val user = session.user
 
@@ -168,6 +200,7 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     user( 'fbt )  = accessToken
     user( 'fbte ) = expires
 
+    // TODO:  the following can be moved up to SoApp
     val existing = B.User.db.findOne( Mobj( "fbid" -> uid ) )
     if ( existing != null && user.id != null && existing.id != user.id )
       removeAttributes( existing )
@@ -220,6 +253,10 @@ object Facebooklet extends Weblet {
         <script src="//connect.facebook.net/en_US/all.js"/>,
         headers = Http.expireCacheControlHeaders( ageMs = Time.OneYearMs )
       )
+
+    case "/exchange" =>
+      B.facebook.exchangeToken
+      web.res.ok
 
     case _ =>
       _404
