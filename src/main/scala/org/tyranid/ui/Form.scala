@@ -60,20 +60,22 @@ object Form {
      </div>
     </div>
 
-  def text( label:String, value:String, href:String = null, controlClass:String = "control" ) =
+  def text( label:String, value:String, href:String = null, editBtnId:String = null, redirectHref:String = null, controlClass:String = "control", dialogTitle:String = null, opts:Seq[(String,String)] = null ) =
     <div class={ controlClass }>
      <div class="left">{ label }</div>
      <div class="right">
-      { href != null |* <a href={ href } class="greyBtn">Edit</a> }
+      { href != null |* <a href={ href } class="greyBtn" id={ editBtnId }>Edit</a> }
+      { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, if ( dialogTitle == null ) label else dialogTitle, opts ) }
       <div class="text">{ value }</div>
      </div>
     </div>
 
-  def text2( label1:String,label2:String, value1:String, value2:String, href:String = null, controlClass:String = "control" ) =
+  def text2( label1:String, label2:String, value1:String, value2:String, href:String = null, editBtnId:String = null, redirectHref:String = null, controlClass:String = "control", dialogTitle:String = null, opts:Seq[(String,String)] = null ) =
     <div class={ controlClass }>
      <div class="left">{ label1 }</div>
      <div class="right">
-      { href != null |* <a href={ href } class="greyBtn">Edit</a> }
+      { href != null |* <a href={ href } class="greyBtn" id={ editBtnId }>Edit</a> }
+      { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, if ( dialogTitle == null ) label1 else dialogTitle, opts ) }
       <div class="text">{ value1 }</div>
      </div>
      <div class="left" style="clear:both;">{ label2 }</div>
@@ -82,11 +84,12 @@ object Form {
      </div>
     </div>
 
-  def text3( label1:String, label2:String, label3:String, value1:String, value2:String, value3:String, href:String = null, controlClass:String = "control" ) =
+  def text3( label1:String, label2:String, label3:String, value1:String, value2:String, value3:String, href:String = null, editBtnId:String = null, redirectHref:String = null, controlClass:String = "control", dialogTitle:String = null, opts:Seq[(String,String)] = null ) =
     <div class={ controlClass }>
      <div class="left">{ label1 }</div>
      <div class="right">
-      { href != null |* <a href={ href } class="greyBtn">Edit</a> }
+      { href != null |* <a href={ href } class="greyBtn" id={ editBtnId }>Edit</a> }
+      { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, if ( dialogTitle == null ) label1 else dialogTitle, opts ) }
       <div class="text">{ value1 }</div>
      </div>
      <div class="left" style="clear:both;">{ label2 }</div>
@@ -108,16 +111,18 @@ object Form {
      </div>
     </div>
 
-  def thumbnail( label:String, src:String, href:String = null, style:String = "width:60px; height:60px;", controlClass:String = "control" ) =
+  def thumbnail( label:String, src:String, href:String = null, editBtnId:String = null, redirectHref:String = null, style:String = "width:60px; height:60px;", controlClass:String = "control", dialogTitle:String = null, opts:Seq[(String,String)] = null ) = {
     <div class="control">
      <div class="left">{ label }</div>
      <div class="right">
-      { href != null |* <a href={ href } class="greyBtn">Edit</a> }
+      { href != null |* <a href={ href } class="greyBtn" id={ editBtnId }>Edit</a> }
+      { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, if ( dialogTitle == null ) label else dialogTitle, opts ) }
       <div class="photoPreview">
        <img style={ style } src={ src }/>
       </div>
      </div>
     </div>
+  }
 
   def btns( buttons:NodeSeq ) =
     <div class="control">
@@ -127,6 +132,38 @@ object Form {
       </div>
      </div>
     </div>
+  
+  
+  def dialog( elId: String, postEndpoint:String, redirectEndpoint:String, title:String, opts:Seq[(String,String)] = null ) = 
+    <head>
+      <script>
+        {
+         val optsStr:StringBuffer = new StringBuffer
+
+         if ( opts != null ) {
+           opts.foreach {
+             _ match {
+             case ( n, v ) =>
+               optsStr.append( "vd.option( \"" + n + "\", \"" + v + "\" );" )
+             case _ =>
+             }
+           }    
+         }
+
+         Unparsed("""
+$( document ).ready( function() {
+  $( '#""" + elId + """' ).on( 'click', function( e ) {
+    var vd = new VDialog( """" + postEndpoint + """", """" + redirectEndpoint + """", """" + title + """" ); """ +
+    optsStr.toString +
+""" vd.open();
+    return false;
+  });
+});
+        """)
+        }
+      </script>
+    </head>
+  
 }
 
 
