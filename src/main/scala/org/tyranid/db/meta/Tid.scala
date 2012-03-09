@@ -15,32 +15,25 @@
  *
  */
 
-package org.tyranid.profile
-
-
-import java.util.TimeZone
-
-import org.bson.types.ObjectId
-import com.mongodb.DBObject
+package org.tyranid.db.meta
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbBoolean, DbChar, DbEmail, DbLink, DbLowerChar, DbPassword, DbUrl, Record }
-import org.tyranid.db.mongo.Imp._
-import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
-import org.tyranid.image.DbImage
-import org.tyranid.secure.DbReCaptcha
-import org.tyranid.session.{ Session, ThreadData }
-import org.tyranid.web.WebContext
+import org.tyranid.db.Entity
 
 
-class OrgMeta extends MongoEntity( "a02v" ) {
+object Tid {
 
-  override def apply( obj:DBObject ):Org = throw new UnsupportedOperationException()
+  def toIds( tids:Seq[String], entity:Entity ) = {
+    val ids =
+     tids.flatMap(
+       _ match {
+      case tid if tid.startsWith( B.Org.tid ) =>
+        Some( B.Org.tidToId( tid ) )
 
-
+      case tid =>
+        None
+      } ).
+      distinct
+  }
 }
-
-trait Org extends MongoRecord {
-}
-
 

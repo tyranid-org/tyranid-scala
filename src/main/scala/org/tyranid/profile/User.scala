@@ -53,7 +53,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "resetCode"      is DbChar(8)           ;
   "loginToken"     is DbChar(10)          ;
 
-  "org"            is DbLink( B.Org )     ;
+  "org"            is DbLink(B.Org)       ;
 
   "liid"           is DbChar(90)          ; // LinkedIn member id if linked
   "lit"            is DbChar(90)          ; // LinkedIn OAuth 1.0a token
@@ -89,6 +89,13 @@ class UserMeta extends MongoEntity( "a01v" ) {
   def nameFor( userId:ObjectId ) = "TODO"
 
   override def apply( obj:DBObject ):User = throw new UnsupportedOperationException
+
+
+  def flatten( tids:Seq[String] ) = {
+
+    val ids = Tid.toIds( tids, B.Org )
+ 
+  }
 }
 
 trait User extends MongoRecord {

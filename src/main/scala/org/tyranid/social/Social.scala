@@ -12,18 +12,17 @@ import org.tyranid.web.Weblet
 
 
 object Social {
+  lazy val networks =
+    Seq(
+      B.linkedIn != null |* Some( B.linkedIn ),
+      B.facebook != null |* Some( B.facebook )
+    ).flatten
 
   def createCompanies( fromOrgId:ObjectId, domains:Seq[String] ):Seq[Org] =
     B.linkedIn.createCompanies( fromOrgId, domains )
 
   def appFor( networkCode:String ) =
     networks.find( _.networkCode == networkCode ).get
-
-  lazy val networks =
-    Seq(
-      B.linkedIn != null |* Some( B.linkedIn ),
-      B.facebook != null |* Some( B.facebook )
-    ).flatten
 }
 
 trait SoApp {
