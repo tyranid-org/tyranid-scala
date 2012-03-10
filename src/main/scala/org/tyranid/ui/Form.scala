@@ -60,13 +60,13 @@ object Form {
      </div>
     </div>
 
-  def text( label:String, value:String, href:String = null, editBtnId:String = null, redirectHref:String = null, controlClass:String = "control", dialogTitle:String = null, opts:Seq[(String,String)] = null ) =
+  def text( label:String, value:String, href:String = null, editBtnId:String = null, redirectHref:String = null, controlClass:String = "control", dialogTitle:String = null, opts:Seq[(String,String)] = null, link:Boolean = false ) =
     <div class={ controlClass }>
      <div class="left">{ label }</div>
      <div class="right">
       { href != null |* <a href={ href } class="greyBtn" id={ editBtnId }>Edit</a> }
       { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, if ( dialogTitle == null ) label else dialogTitle, opts ) }
-      <div class="text">{ value }</div>
+      <div class="text">{ if ( link ) <a href={value.toUrl.toString()} target="_blank">{ value }</a> else { value } }</div>
      </div>
     </div>
 
