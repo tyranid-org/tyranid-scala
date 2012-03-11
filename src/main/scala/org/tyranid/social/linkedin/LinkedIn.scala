@@ -402,9 +402,12 @@ $(document).ready(function() {
             Option( createCompany( B.User( users( uIdx ) ), domain ) )
           } catch {
           case e:Http403Exception =>
+            e.printStackTrace()
+              println( "I think we reached our LinkedIn limit for a user: " + e.getMessage )
             // this is probably a throttle exception ?
 
-            uIdx += 1
+            uIdx = uIdx + 1
+            
             if ( uIdx > users.size )
               throw e // we're totally exhausted
 

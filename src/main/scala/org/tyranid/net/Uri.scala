@@ -50,6 +50,9 @@ object Uri {
     } catch {
     case e:java.net.UnknownHostException =>
       return null
+    case other =>
+      other.printStackTrace()
+      return null
     }
 
   /*
