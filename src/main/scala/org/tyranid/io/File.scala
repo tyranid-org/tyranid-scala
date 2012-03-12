@@ -66,6 +66,9 @@ class DbFile( bucket:S3Bucket ) extends CommonFile {
       val path = r.entityTid + "/" + r.recordTid + "/" + f.va.att.name + "." + extension
       var in = fileItem.getInputStream()
       
+      ///val s3Obj = S3.getObject( bucket, path )
+      
+      
       S3.write( bucket, path, fileItem.getSize(), fileItem.getContentType(), in )
       in.close
       
