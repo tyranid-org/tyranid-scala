@@ -361,7 +361,7 @@ The """ + B.applicationName + """ Team
              <label for="un">Email:</label>
             </td>
             <td>
-             <input type="text" id="un" name="un" style="width:240px;" value={ user.s('email) }/>
+             <input type="text" id="un" name="un" style="width:240px;" value={ user.s( 'email ) }/>
              { Focus("#un") }
             </td>
            </tr>
