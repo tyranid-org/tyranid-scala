@@ -94,6 +94,8 @@ trait View {
   private val uis = mutable.Map[String,UiObj]()
 
   def ui( name:String, ui: => UiObj ) = synchronized {
+//    println( name + " = " + ui )
+    
     uis.getOrElseUpdate( name, ui.bind( this ) )
   }
 
