@@ -17,23 +17,45 @@
 
 package org.tyranid.io
 
-import java.io.{ IOException, FileOutputStream, InputStream, OutputStream }
+import scala.annotation.tailrec
+
+import java.io.{ IOException, FileOutputStream, InputStream, InputStreamReader, OutputStream }
 
 import org.tyranid.Imp._
 
-object IOUtils {
-  def transfer( input: InputStream, out: OutputStream ) {
-  	val buffer = new Array[Byte](8192)
-  		
-  	def transfer() {
-  		val read = input.read( buffer )
+
+class InputStreamImp( is:InputStream ) {
+
+  def asString = {
+    val buffer = new Array[Char]( 0x10000 )
+    val sb = new StringBuilder
+    val in = new InputStreamReader( is, "UTF-8" )
+    var read = 0
+
+    do {
+      read = in.read( buffer, 0, buffer.length )
+      if ( read >0 ) {
+        sb.append( buffer, 0, read )
+      }
+    } while ( read >= 0 )
+
+    is.close
+    sb.toString
+  }
+
+  def transferTo( to:OutputStream ) {
+  	val buffer = new Array[Byte]( 8192 )
+
+    @tailrec def transfer {
+  		val read = is.read( buffer )
+
   		if ( read >= 0 ) {
-  			out.write( buffer, 0, read )
-  			transfer()
+  			to.write( buffer, 0, read )
+  			transfer
   		}
   	}
   		
-  	transfer()
+  	transfer
   }
 }
 

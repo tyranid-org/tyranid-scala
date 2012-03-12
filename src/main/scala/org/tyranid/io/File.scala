@@ -109,7 +109,7 @@ object DbLocalFile extends CommonFile {
       val tmpName = "/tmp/" + System.currentTimeMillis + "_" + fileItem.getName()
       var fops = new FileOutputStream( new java.io.File( tmpName ) )
       var in = fileItem.getInputStream
-      IOUtils.transfer( in, fops )
+      in.transferTo( fops )
       in.close
       fops.close
       

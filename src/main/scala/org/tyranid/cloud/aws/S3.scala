@@ -22,8 +22,8 @@ import java.io.{ ByteArrayInputStream, FileOutputStream, InputStream }
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.{ AmazonS3Exception, GroupGrantee, ObjectMetadata, Permission, S3Object, GetObjectRequest }
 
-import org.tyranid.io.IOUtils
 import org.tyranid.Imp._
+
 
 case class S3Bucket( prefix:String, cfDistributionId:String = "", cfDomain:String = "" ) {
   val name = prefix + B.envSuffix + B.bucketSuffix
@@ -101,7 +101,7 @@ object S3 {
 		  //f.mkdirs()
 			
 		  var fops = new FileOutputStream( f )
-		  IOUtils.transfer( obj.getObjectContent(), fops );
+		  obj.getObjectContent.transferTo( fops )
 		  fops.close
 		  f
       }

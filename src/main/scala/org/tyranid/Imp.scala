@@ -17,6 +17,7 @@
 
 package org.tyranid
 
+import java.io.InputStream
 import java.util.{ Calendar, Date }
 
 import scala.xml.{ NodeSeq, Unparsed }
@@ -88,6 +89,7 @@ object Imp {
 	implicit def symbol( v:Symbol )                                 = v.name
 	implicit def throwableImp( t:Throwable )                        = new org.tyranid.logic.ThrowableImp( t )
 	implicit def jackson( v:org.codehaus.jackson.JsonNode )         = new org.tyranid.json.JsonNodeImp( v )
+	implicit def inputStreamImp( v:InputStream )                    = new org.tyranid.io.InputStreamImp( v )
 
   import javax.servlet.http.{ HttpServletRequest, HttpServletResponse }
   implicit def servletRequest ( v:HttpServletRequest  )           = new org.tyranid.http.HttpServletRequestOps ( v )
