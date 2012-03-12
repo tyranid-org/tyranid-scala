@@ -218,6 +218,7 @@ object Http {
   private def execute( request:HttpRequestBase ) = {
     val httpParams = new BasicHttpParams
     HttpConnectionParams.setConnectionTimeout( httpParams, 30000 ) // 30s
+    HttpConnectionParams.setSoTimeout( httpParams, 30000 ) // 30s
     val client = new DefaultHttpClient( httpParams )
     val response = client.execute( request )
     val entity = response.getEntity
