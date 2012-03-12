@@ -317,54 +317,54 @@ $(document).ready(function() {
     if ( spec.nonEmpty )
       org( 'specialties ) = Mlist( spec:_* )
 
+    B.Org( org ).save
+
     val ls = c.o( 'locations )
-    if ( ls != null ) {
+    if ( ls != null &&
+         ( // only import locations if we don't have existing locations already
+           org.isNew || B.Location.db.find( Mobj( "org" -> org.id ) ).toSeq.nonEmpty ) ) {
+      for ( l <- ls.a_?( 'values ).of[ObjectMap] ) {
 
-      // only import locations if we don't have existing locations already
-      if ( org.isNew || B.Location.db.find( Mobj( "org" -> org.id ) ).toSeq.nonEmpty ) {
-        for ( l <- ls.a_?( 'values ).of[ObjectMap] ) {
+        val loc = Mobj()
+        loc( 'thumbnail ) = "/icon_company.png"
+        loc( 'org )       = org.id
 
-          val loc = Mobj()
-          loc( 'thumbnail ) = "/icon_company.png"
-          loc( 'org )       = org.id
+        val desc = l.s( 'description )
+        if ( desc.notBlank )
+          loc( 'additionalInformation ) = desc
 
-          val desc = l.s( 'description )
-          if ( desc.notBlank )
-            loc( 'additionalInformation ) = desc
+        val ph = l.o_?( 'contactInfo ).s( 'phone1 )
+        if ( ph.notBlank )
+          loc( 'phone ) = ph
 
-          val ph = l.o_?( 'contactInfo ).s( 'phone1 )
-          if ( ph.notBlank )
-            loc( 'phone ) = ph
+        val a = l.o( 'address )
 
-          val a = l.o( 'address )
+        if ( a != null ) {
+          val addr = Mobj()
+          addr( 'street1 )    = a.s( 'street1 )
+          addr( 'street2 )    = a.s( 'street2 )
+          addr( 'city )       = a.s( 'city )
+          addr( 'state )      = Region.idForAbbr( a.s( 'state ) )
+          addr( 'postalCode ) = a.s( 'postalCode )
 
-          if ( a != null ) {
-            val addr = Mobj()
-            addr( 'street1 )    = a.s( 'street1 )
-            addr( 'street2 )    = a.s( 'street2 )
-            addr( 'city )       = a.s( 'city )
-            addr( 'state )      = Region.idForAbbr( a.s( 'state ) )
-            addr( 'postalCode ) = a.s( 'postalCode )
+          // linkedin also provides "regionCode" ... we're not using it (yet)
 
-            // linkedin also provides "regionCode" ... we're not using it (yet)
+          addr( 'country )    = Country.idForCode( a.s( 'countryCode ) )
+          loc( 'address ) = addr
+        }
 
-            addr( 'country )    = Country.idForCode( a.s( 'countryCode ) )
-            loc( 'address ) = addr
-          }
+        val hq = l.b( 'isHeadquarters ) || ( desc.notBlank && desc.toLowerCase.contains( "headquarter" ) )
+        if ( hq )
+          loc( 'type ) = LocationType.HeadquartersId
 
-          val hq = l.b( 'isHeadquarters ) || ( desc.notBlank && desc.toLowerCase.contains( "headquarter" ) )
-          if ( hq )
-            loc( 'type ) = LocationType.HeadquartersId
+        B.Location.db.save( loc )
 
-          B.Location.db.save( loc )
-
-          if ( hq )
-            org( 'hq ) = loc.id
+        if ( hq ) {
+          org( 'hq ) = loc.id
+          B.Org( org ).save
         }
       }
     }
-
-    B.Org( org ).save
   }
 
   def createCompany( user:User, domain:String ):Org = {
