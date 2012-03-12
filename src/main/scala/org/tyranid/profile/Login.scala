@@ -282,12 +282,14 @@ The """ + B.applicationName + """ Team
       val socialId = sess.user.s( socialIdName )
       val user = B.User( B.User.db.findOne( Mobj( socialIdName -> socialId ) ) )
 
-      if ( user == null )
+      if ( user == null ) {
         T.web.redirect( wpath + "/register" + network )
-      else if ( user.s( 'activationCode ).notBlank )
+      } else if ( user.s( 'activationCode ).notBlank ) {
         notActivatedYet
-      else
+      } else {
         sess.login( user )
+        LoginCookie.set(user)
+      }
     }
 
     T.web.redirect("/")
@@ -336,6 +338,7 @@ The """ + B.applicationName + """ Team
         app.saveAttributes( existing )
 
         sess.login( existing )
+        LoginCookie.set(user)
 
         sess.notice( "Your " + B.applicationName + " and " + app.networkName + " accounts are now linked." )
         web.redirect( "/" )
