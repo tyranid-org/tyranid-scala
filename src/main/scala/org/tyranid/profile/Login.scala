@@ -3,6 +3,8 @@ package org.tyranid.profile
 
 import java.util.Date
 
+import scala.xml.Unparsed
+
 import org.tyranid.Imp._
 import org.tyranid.db.Scope
 import org.tyranid.db.mongo.Imp._
@@ -24,6 +26,15 @@ object Loginlet extends Weblet {
 
     // TODO:  make this more template-based
     <form method="post" action={ wpath + "/in" } id="f">
+     <head>
+      <script>{ Unparsed( """
+$(document).ready(function() {
+  $('#forgot').click(function(e) {
+    window.location.assign( '""" + wpath + """/forgot?un=' + encodeURIComponent( $("#un").val() ) );
+  });
+});
+""" ) }</script>
+     </head>
      <div class="loginBox">
       <div class="title">
        Log In
@@ -148,8 +159,23 @@ object Loginlet extends Weblet {
 
       web.template(
         <tyr:shell>
-          <div class="fieldhc">Create a New Account with { B.applicationName }</div>
-          <form method="post" action={ web.path } id="f">
+         <div class="plainBox">
+          <div class="title">Use Social Login to Automatically Register</div>
+          <div class="contents">
+           Sign in using a Social Network to quickly create an account automatically:
+           <div>{
+            Social.networks.flatMap { network =>
+             <hr style="margin:4px 0 8px;"/> ++
+             network.loginButton( this ) }
+            }
+           </div>
+          </div>
+         </div>
+         <div class="plainBox">
+          <div class="title">Manually Register</div>
+          <div class="contents">
+           Or alternatively fill out the following form to create a new account:
+           <form method="post" action={ web.path } id="f">
             <table>
               { Scope(user, saving = true, captcha = true).draw(ui) }
             </table>
@@ -157,7 +183,9 @@ object Loginlet extends Weblet {
               <input type="submit" class="greenBtn" value="Save &amp; Register" name="saving"/>
               <a href="/" class="greyBtn">Cancel</a>
             </div>
-          </form>
+           </form>
+          </div>
+         </div>
         </tyr:shell> )
 
     case "/forgot" =>

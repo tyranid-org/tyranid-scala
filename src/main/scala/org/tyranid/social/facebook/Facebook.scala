@@ -63,7 +63,8 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
   def loginButton( weblet:Weblet ) = {
     val loggingOut = T.web.req.s( 'lo ).notBlank
 
-    <head>
+    <top>
+     <div id="fb-root"></div>
      <script>{ Unparsed( """
 """ + ( loggingOut |* "window.fbLogOut = true;" ) + """
 
@@ -93,15 +94,13 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
   };
 
 """ + loadFacebookApi ) }</script>
-    </head>
-    <tail>
-     <div id="fb-root"></div>
-    </tail>
+    </top>
     <fb:login-button>Sign In with Facebook</fb:login-button>
   }
 
   def linkButton = {
-    <head>
+    <top>
+     <div id="fb-root"></div>
      <script>{ Unparsed( """
   window.fbAsyncInit = function() {
     FB.init({
@@ -129,10 +128,7 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
   };
 
 """ + loadFacebookApi ) }</script>
-    </head>
-    <tail>
-     <div id="fb-root"></div>
-    </tail>
+    </top>
     <fb:login-button>Sign In with Facebook</fb:login-button>
   }
 

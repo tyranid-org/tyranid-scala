@@ -218,10 +218,11 @@ object WebTemplate {
 class WebTemplate {
 
   private val heads = new mutable.ArrayBuffer[Node]()
+  private val tops  = new mutable.ArrayBuffer[Node]()
   private val tails = new mutable.ArrayBuffer[Node]()
 
   private def hasTemplates( nodes:NodeSeq ):Boolean = nodes exists hasTemplates
-  private def hasTemplates(  node:Node    ):Boolean = ( node.label == "head" || node.label == "tail" || node.prefix == "tyr" ) || hasTemplates( node.child )
+  private def hasTemplates(  node:Node    ):Boolean = ( node.label == "head" || node.label == "top" || node.label == "tail" || node.prefix == "tyr" ) || hasTemplates( node.child )
 
   private def bindNode( node:Node, content:NodeSeq ):NodeSeq =
     node match {
@@ -236,6 +237,10 @@ class WebTemplate {
 
     case e:Elem if node.label == "head" =>
       heads ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
+      NodeSeq.Empty
+
+    case e:Elem if node.label == "top" =>
+      tops ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
       NodeSeq.Empty
 
     case e:Elem if node.label == "tail" =>
@@ -262,16 +267,16 @@ class WebTemplate {
   def finish( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq = {
     val pxml = process( xml, content )
 
-    if ( heads.nonEmpty || tails.nonEmpty ) {
+    if ( heads.nonEmpty || tops.nonEmpty || tails.nonEmpty ) {
       pxml.flatMap { node =>
         node match {
         case e:Elem if node.label == "html" =>
           val content =
             ( heads.nonEmpty |* <head>{ heads }</head> ) ++
-            ( if ( tails.nonEmpty )
+            ( if ( tops.nonEmpty || tails.nonEmpty )
                 node.child.flatMap { node =>
                   node match {
-                  case e:Elem if node.label == "body" => e.copy( child = ( node.child ++ tails ) )
+                  case e:Elem if node.label == "body" => e.copy( child = ( tops ++ node.child ++ tails ) )
                   case n                              => n
                   }
                 }

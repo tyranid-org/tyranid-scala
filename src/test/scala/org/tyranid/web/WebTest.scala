@@ -70,6 +70,10 @@ class WebSuite extends FunSuite {
         <tyr:shell><tail><div>foo</div></tail><div><p>Test</p></div></tyr:shell> ).toString ===
       <html><body><h1>hi there</h1><div><p>Test</p></div><div>foo</div></body></html>.toString )
 
+    assert(
+      WebTemplate(
+        <tyr:shell><tail><div>foo</div></tail><div><p>Test</p></div><top><p>top</p></top></tyr:shell> ).toString ===
+      <html><body><p>top</p><h1>hi there</h1><div><p>Test</p></div><div>foo</div></body></html>.toString )
   }
 }
 

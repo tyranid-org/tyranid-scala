@@ -86,12 +86,6 @@ function onLinkedInLoad() {
   setTimeout( "delete window.liLogOut;", 1200 );
 """ ) + """
 }
-
-$(document).ready(function() {
-  $('#forgot').click(function(e) {
-    window.location.assign( '""" + weblet.wpath + """/forgot?un=' + encodeURIComponent( $("#un").val() ) );
-  });
-});
 """) }</script>
      </head>
      <script type="IN/Login" data-onAuth="onLinkedInAuth"/>
