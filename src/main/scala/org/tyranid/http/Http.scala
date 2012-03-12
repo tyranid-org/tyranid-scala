@@ -16,6 +16,7 @@ import org.apache.http.entity.StringEntity
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.message.{ BasicHeader, BasicNameValuePair }
+import org.apache.http.params.{ BasicHttpParams, HttpConnectionParams }
 import org.apache.http.util.EntityUtils
 
 import org.tyranid.Imp._
@@ -215,7 +216,9 @@ object Http {
     }
 
   private def execute( request:HttpRequestBase ) = {
-    val client = new DefaultHttpClient
+    val httpParams = new BasicHttpParams
+    HttpConnectionParams.setConnectionTimeout( httpParams, 30000 ) // 30s
+    val client = new DefaultHttpClient( httpParams )
     val response = client.execute( request )
     val entity = response.getEntity
 
