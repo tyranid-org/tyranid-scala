@@ -364,7 +364,7 @@ $(document).ready(function() {
       }
     }
 
-    B.Org.db.save( org )
+    B.Org( org ).save
   }
 
   def createCompany( user:User, domain:String ):Org = {
