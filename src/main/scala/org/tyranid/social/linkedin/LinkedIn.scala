@@ -317,12 +317,13 @@ $(document).ready(function() {
     if ( spec.nonEmpty )
       org( 'specialties ) = Mlist( spec:_* )
 
+    val isNew = org.isNew
     B.Org( org ).save
 
     val ls = c.o( 'locations )
     if ( ls != null &&
          ( // only import locations if we don't have existing locations already
-           org.isNew || B.Location.db.find( Mobj( "org" -> org.id ) ).toSeq.nonEmpty ) ) {
+           isNew || B.Location.db.find( Mobj( "org" -> org.id ) ).toSeq.isEmpty ) ) {
       for ( l <- ls.a_?( 'values ).of[ObjectMap] ) {
 
         val loc = Mobj()
