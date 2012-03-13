@@ -116,7 +116,7 @@ function onLinkedInLoad() {
     { Form.text( "First Name", profile.s( 'firstName ) ) } ++
     { Form.text( "Last Name", profile.s( 'lastName ) ) } ++
     { profile.contains( 'pictureUrl ) |*
-      Form.thumbnail( "Profile Image", profile.s( 'pictureUrl ) ) }
+      Form.thumbnail( "Profile Image", profile.s( 'pictureUrl ), href = "/linkedin/useThumbnail", hrefLabel = "Use Picture" ) }
   }
 
 
@@ -425,6 +425,18 @@ object LinkedInlet extends Weblet {
     case "/exchange" =>
       B.linkedIn.exchangeToken
       web.res.ok
+
+    case "/useThumbnail" =>
+      val uid = u.s( 'liid )
+      val profile = B.linkedIn.GET( "/people/id=" + uid + ":(id,picture-url)", u ).parseJsonObject
+
+      if ( profile.contains( 'pictureUrl ) ) {
+        u( 'thumbnail ) = profile.s( 'pictureUrl )
+        s.notice( "Your " + B.applicationName + " profile image has been set to your LinkedIn profile image." )
+        B.User.db.update( Mobj( "_id" -> u.id ), Mobj( $set -> Mobj( "thumbnail" -> u.s( 'thumbnail ) ) ) )
+      }
+
+      T.web.redirect( "/user/edit" )
 
     case _ =>
       web.res.ok

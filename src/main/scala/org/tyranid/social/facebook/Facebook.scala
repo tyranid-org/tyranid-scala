@@ -138,7 +138,7 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
 
     Form.text( "First Name", profile.s( 'first_name ) ) ++
     Form.text( "Last Name", profile.s( 'last_name ) ) ++
-    Form.thumbnail( "Profile Image", "https://graph.facebook.com/" + uid + "/picture?type=square" )
+    Form.thumbnail( "Profile Image", "https://graph.facebook.com/" + uid + "/picture?type=square", href = "/facebook/useThumbnail", hrefLabel = "Use Picture" )
   }
 
 
@@ -250,6 +250,12 @@ object Facebooklet extends Weblet {
     case "/exchange" =>
       B.facebook.exchangeToken
       web.res.ok
+
+    case "/useThumbnail" =>
+      u( 'thumbnail ) = "https://graph.facebook.com/" + u.s( 'fbid ) + "/picture?type=square"
+      B.User.db.update( Mobj( "_id" -> u.id ), Mobj( $set -> Mobj( "thumbnail" -> u.s( 'thumbnail ) ) ) )
+      s.notice( "Your " + B.applicationName + " profile image has been set to your Facebook profile image." )
+      T.web.redirect( "/user/edit" )
 
     case _ =>
       _404

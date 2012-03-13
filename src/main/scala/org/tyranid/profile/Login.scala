@@ -167,8 +167,7 @@ $(document).ready(function() {
             Social.networks.flatMap { network =>
              <hr style="margin:4px 0 8px;"/> ++
              network.loginButton( this ) }
-            }
-           </div>
+           }</div>
           </div>
          </div>
          <div class="plainBox">

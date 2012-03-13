@@ -111,11 +111,12 @@ object Form {
      </div>
     </div>
 
-  def thumbnail( label:String, src:String, href:String = null, editBtnId:String = null, redirectHref:String = null, style:String = "width:60px; height:60px;", controlClass:String = "control", dialogTitle:String = null, opts:Seq[(String,String)] = null ) = {
+  def thumbnail( label:String, src:String, href:String = null, editBtnId:String = null, redirectHref:String = null, style:String = "width:60px; height:60px;",
+                 controlClass:String = "control", dialogTitle:String = null, opts:Seq[(String,String)] = null, hrefLabel:String = "Edit" ) = {
     <div class="control">
      <div class="left">{ label }</div>
      <div class="right">
-      { href != null |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="greyBtn" id={ editBtnId }>Edit</a> }
+      { href != null |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="greyBtn" id={ editBtnId }>{ hrefLabel }</a> }
       { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, if ( dialogTitle == null ) label else dialogTitle, opts ) }
       <div class="photoPreview">
        <img style={ style } src={ src }/>
