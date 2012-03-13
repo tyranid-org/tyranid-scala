@@ -29,7 +29,7 @@ object LoginCookie {
     val cv = T.web.req.cookieValue( B.loginCookieName )
     if ( cv != null ) {
       cv.splitFirst( '|' ) match {
-      case ( tid, token ) =>
+      case ( tid, token ) if !tid.endsWith( "null" ) =>
         return Record.byTid( tid, only = B.User ).
          map( _.asInstanceOf[User] ).
          // loginToken is an attribute that exists on user

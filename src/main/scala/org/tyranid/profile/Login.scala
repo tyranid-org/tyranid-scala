@@ -102,7 +102,8 @@ $(document).ready(function() {
 
         web.redirect(redirect.isBlank ? "/" | ("/?l=" + redirect.encUrl))
       } else {
-        sess.login(user)
+        copySocialLogins( sessionUser = sess.user, existingUser = user )
+        sess.login( user )
 
         if ( web.req.b( 'save ) )
           LoginCookie.set(user)
@@ -300,6 +301,14 @@ The """ + B.applicationName + """ Team
     user
   }
 
+  private def copySocialLogins( sessionUser:User, existingUser:User ) {
+    for ( app <- Social.networks;
+          if sessionUser.s( app.idName ).notBlank ) {
+      app.copyAttributes( from = sessionUser, to = existingUser )
+      app.saveAttributes( existingUser )
+    }
+  }
+
   private def findUser( firstTryNetwork:String ):User = {
     val sess = T.session
     val app = Social.appFor( firstTryNetwork )
@@ -313,33 +322,28 @@ The """ + B.applicationName + """ Team
           if uid.notBlank ) {
       val user = B.User( B.User.db.findOne( Mobj( app.idName -> uid ) ) )
 
-      if ( user != null ) {
-        for ( app2 <- networks;
-              if app2 != app;
-              if suser.s( app.idName ).notBlank ) {
-          app2.copyAttributes( from = suser, to = user )
-          app2.saveAttributes( user )
-        }
-
+      if ( user != null )
         return user
-      }
     }
 
     null
   }
 
+  def dumpLoginState = {
+    val sess = T.session
+    val user = sess.user
+
+    println( "*** Session ID: " + sess.id )
+
+    for ( app <- Social.networks;
+          if user.s( app.idName ).notBlank )
+      println( "*** " + app.networkName + " " + app.idName + " = " + user.s( app.idName ) )
+  }
+
   def socialLogin( network:String ) = {
     val sess = T.session
-    var any = false
 
-    for ( app <- Social.networks if app.isActive ) {
-      if ( app.exchangeToken ) {
-spam( "*** EXCHANGED " + app.networkName )
-        any = true
-      }
-    }
-
-    if ( !any )
+    if ( !Social.appFor( network ).exchangeToken )
       T.web.redirect( "/" )
 
     val user = findUser( network )
@@ -349,6 +353,7 @@ spam( "*** EXCHANGED " + app.networkName )
     } else if ( user.s( 'activationCode ).notBlank ) {
       notActivatedYet
     } else {
+      copySocialLogins( sess.user, user )
       sess.login( user )
       LoginCookie.set( user )
       T.web.redirect( "/" )
@@ -394,9 +399,7 @@ spam( "*** EXCHANGED " + app.networkName )
       val existing = getUserByEmailPassword( web.req.s( 'un ), web.req.s( 'pw ) )
 
       if ( existing != null ) {
-        app.copyAttributes( from = user, to = existing )
-        app.saveAttributes( existing )
-
+        copySocialLogins( sessionUser = user, existingUser = existing )
         sess.login( existing )
         LoginCookie.set(user)
 
