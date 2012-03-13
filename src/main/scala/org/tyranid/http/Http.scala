@@ -80,7 +80,7 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
 
     spam( "** cookies" )
     for ( c <- cookies )
-      spam( "  " + c.getName + " = " + c.getValue +
+      spam( "  " + c.getName + " = " + c.getValue.literal +
             ( c.getDomain != null |* "\n    Domain = " + c.getDomain ) +
             ( c.getPath != null |* "\n    Path = " + c.getPath ) +
             ( c.getMaxAge != -1 |* "\n    MaxAge = " + c.getMaxAge ) +
@@ -111,7 +111,7 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
     cookies != null |* cookies.find( _.getName == name )
   }
 
-  def cookieValue( name:String ) = cookie( name ).map( _.getValue ) getOrElse null
+  def cookieValue( name:String ):String = cookie( name ).map( _.getValue ) getOrElse null
 }
 
 case class HttpServletResponseOps( res:HttpServletResponse ) {

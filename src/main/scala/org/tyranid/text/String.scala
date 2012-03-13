@@ -40,6 +40,10 @@ object StringImp {
 class StringImp( s:String ) {
 	def denull = if ( s == null ) "" else s
 
+  def literal =
+    if ( s == null ) "null"
+    else             "\"" + s.replace( "\"", "\\\"" ) + "\""
+
 	def splitFirst( sep:Char ) = {
 		val idx = s.indexOf( sep )
     if ( idx != -1 )

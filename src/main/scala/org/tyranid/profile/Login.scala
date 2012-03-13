@@ -301,26 +301,59 @@ The """ + B.applicationName + """ Team
     user
   }
 
-  def socialLogin( network:String ) = {
-    val app = Social.appFor( network )
+  private def findUser( firstTryNetwork:String ):User = {
+    val sess = T.session
+    val app = Social.appFor( firstTryNetwork )
 
-    if ( app.exchangeToken ) {
-      val sess = T.session
-      val socialIdName = network + "id"
-      val socialId = sess.user.s( socialIdName )
-      val user = B.User( B.User.db.findOne( Mobj( socialIdName -> socialId ) ) )
+    val networks = app +: Social.networks.filter( _ != app )
 
-      if ( user == null ) {
-        T.web.redirect( wpath + "/register" + network )
-      } else if ( user.s( 'activationCode ).notBlank ) {
-        notActivatedYet
-      } else {
-        sess.login( user )
-        LoginCookie.set(user)
+    val suser = sess.user
+
+    for ( app <- networks;
+          uid = suser.s( app.idName );
+          if uid.notBlank ) {
+      val user = B.User( B.User.db.findOne( Mobj( app.idName -> uid ) ) )
+
+      if ( user != null ) {
+        for ( app2 <- networks;
+              if app2 != app;
+              if suser.s( app.idName ).notBlank ) {
+          app2.copyAttributes( from = suser, to = user )
+          app2.saveAttributes( user )
+        }
+
+        return user
       }
     }
 
-    T.web.redirect("/")
+    null
+  }
+
+  def socialLogin( network:String ) = {
+    val sess = T.session
+    var any = false
+
+    for ( app <- Social.networks if app.isActive ) {
+      if ( app.exchangeToken ) {
+spam( "*** EXCHANGED " + app.networkName )
+        any = true
+      }
+    }
+
+    if ( !any )
+      T.web.redirect( "/" )
+
+    val user = findUser( network )
+
+    if ( user == null ) {
+      T.web.redirect( wpath + "/register" + network )
+    } else if ( user.s( 'activationCode ).notBlank ) {
+      notActivatedYet
+    } else {
+      sess.login( user )
+      LoginCookie.set( user )
+      T.web.redirect( "/" )
+    }
   }
 
   def socialRegister( network:String ) = {
@@ -430,6 +463,20 @@ The """ + B.applicationName + """ Team
           <div class="btns" style="padding-top:16px;">
            <input name="link" type="submit" class="greenBtn" value={ "Link your Existing " + B.applicationName + " Account to " + app.networkName }/>
           </div>
+          {
+            val otherNetworks = Social.networks.filter( !_.isActive )
+            otherNetworks.nonEmpty |*
+          <hr style="margin:24px 0 0; border-color:#ccc;"/> ++
+          <div class="plainBox">
+           <div class="title">If you used a different Social Network to log in with { B.applicationName } in the past, you can log in with it here.</div>
+           <div class="contents">
+            <div>{
+             otherNetworks.flatMap { network =>
+              <div>{ network.loginButton( this ) }</div>
+             }
+            }</div>
+           </div>
+          </div> }
          </form>
         </div>
        </div>

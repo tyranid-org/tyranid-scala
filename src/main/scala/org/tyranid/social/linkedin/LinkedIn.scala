@@ -110,8 +110,8 @@ function onLinkedInLoad() {
   }
 
   def linkPreview( user:User ) = {
-    val memberId = user.s( 'liid )
-    val profile = B.linkedIn.GET( "/people/id=" + memberId + ":(id,first-name,last-name,picture-url)", user ).parseJsonObject
+    val uid = user.s( 'liid )
+    val profile = B.linkedIn.GET( "/people/id=" + uid + ":(id,first-name,last-name,picture-url)", user ).parseJsonObject
 
     { Form.text( "First Name", profile.s( 'firstName ) ) } ++
     { Form.text( "Last Name", profile.s( 'lastName ) ) } ++
@@ -119,9 +119,16 @@ function onLinkedInLoad() {
       Form.thumbnail( "Profile Image", profile.s( 'pictureUrl ) ) }
   }
 
+
+  private val cookieName = "linkedin_oauth_" + apiKey
+
+  def isActive = {
+    val cv = T.web.req.cookieValue( cookieName )
+    cv.notBlank && cv != "null"
+  }
+
   def exchangeToken:Boolean = {
 
-    val cookieName = "linkedin_oauth_" + apiKey
     val cookie =
       T.web.req.cookie( cookieName ).getOrElse {
         log( Log.LinkedIn, "m" -> ( "Linkedin exchange missing " + cookieName + " cookie.  Cannot exchange linked in bearer token for a server token." ) )
@@ -130,7 +137,7 @@ function onLinkedInLoad() {
 
     val json = cookie.getValue.decUrl.parseJsonObject
 
-    val memberId    = json.s( 'member_id )
+    val uid         = json.s( 'member_id )
     val accessToken = json.s( 'access_token )
     val signature   = json.s( 'signature )
 
@@ -157,7 +164,7 @@ function onLinkedInLoad() {
     val session = Session()
     val user = session.user
 
-    user( 'liid ) = memberId
+    user( 'liid ) = uid
     for ( rslt <- str.splitAmp;
           ( key, value ) = rslt.splitFirst( '=' ) ) {
       key match {
@@ -169,13 +176,7 @@ function onLinkedInLoad() {
       }
     }
 
-    val existing = B.User.db.findOne( Mobj( "liid" -> memberId ) )
-    if ( existing != null && user.id != null && existing.id != user.id )
-      removeAttributes( existing )
-
-    if ( !user.isNew )
-      saveAttributes( user )
-
+    exchangeAttributes( user )
     true
   }
 

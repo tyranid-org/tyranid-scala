@@ -141,6 +141,11 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     Form.thumbnail( "Profile Image", "https://graph.facebook.com/" + uid + "/picture?type=square" )
   }
 
+
+  private val cookieName = "fbsr_" + apiKey
+
+  def isActive = T.web.req.cookieValue( cookieName ).notBlank
+
   def exchangeToken:Boolean = {
 
     val t = T
@@ -148,7 +153,6 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
 
     // 1.  extract client-side code from the javascript api's fbsr_ cookie
 
-    val cookieName = "fbsr_" + apiKey
     val cookieValue = t.web.req.cookieValue( cookieName )
 
     if ( cookieValue == null ) {
@@ -196,14 +200,7 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     user( 'fbt )  = accessToken
     user( 'fbte ) = expires
 
-    // TODO:  the following can be moved up to SoApp
-    val existing = B.User.db.findOne( Mobj( "fbid" -> uid ) )
-    if ( existing != null && user.id != null && existing.id != user.id )
-      removeAttributes( existing )
-
-    if ( !user.isNew )
-      saveAttributes( user )
-
+    exchangeAttributes( user )
     true
   }
 
