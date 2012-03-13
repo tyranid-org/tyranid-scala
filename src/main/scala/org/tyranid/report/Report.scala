@@ -502,6 +502,7 @@ case class Report( query:Query ) {
       <td style="width:410px; padding:0;">
       </td>
       <td>
+      { if ( !B.PRODUCTION )
        <table class="tile" style="width:226px; height:54px;">
         <tr>
          <td id="searchTitle" class="label">{ searchTitle }</td>
@@ -517,6 +518,7 @@ case class Report( query:Query ) {
          </td>
         </tr>
        </table>
+      }
       </td>
       <td>
        <table class="tile" style="width:298px; height:54px;">
