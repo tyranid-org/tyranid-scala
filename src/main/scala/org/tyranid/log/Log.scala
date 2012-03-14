@@ -27,7 +27,7 @@ import org.tyranid.Imp._
 import org.tyranid.db.{ DbChar, DbDateTime, DbInt, Record, DbLong }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
-import org.tyranid.email.Email
+import org.tyranid.email.AWSEmail
 import org.tyranid.http.UserAgent
 import org.tyranid.report.{ Field, Run, MongoQuery }
 
@@ -152,7 +152,7 @@ println( "*** stack trace entering" )
       background {
         try {
 println( "*** sending email" )
-          Email( subject = "Volerro Stack Trace",
+          AWSEmail( subject = "Volerro Stack Trace",
                  text = sb.toString ).
             addTo( B.alertEmail ).
             from( "no-reply@" + B.domain ).

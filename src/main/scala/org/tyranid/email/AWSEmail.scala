@@ -16,16 +16,60 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.profile.User
 
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.auth.BasicAWSCredentials;
+//import com.amazonaws.services.simpleemail.*;
+//import com.amazonaws.services.simpleemail.model.*;
 
-object AwsEmail {
+object AWSEmail {
   def apply( subject:String, text:String, to:String, from:String ) {
-    AwsEmail( subject, text ).addTo( to ).from( from ).send
+    AWSEmail( subject, text ).addTo( to ).from( from ).send
   }
 }
 
-case class AwsEmail( subject:String, text:String, html:String=null ) extends Email {
+case class AWSEmail( subject:String, text:String, html:String=null ) extends Email {
   @throws(classOf[MessagingException])
   override def compose:Email = {
+  /*  
+        
+            SendEmailRequest request = new SendEmailRequest()
+                .withSource("bob@example.com");
+                
+            List<String> toAddresses = new ArrayList<String>();
+            toAddresses.add("andrew@example.com");
+            Destination dest = new Destination().withToAddresses(toAddresses);
+            request.setDestination(dest);
+    
+            Content subjContent = new Content().withData("Test of Amazon SES");
+            Message msg = new Message().withSubject(subjContent);
+                
+                // Include a body in both text and HTML formats
+                Content textContent = new Content().withData("Hello - I hope you're having a good day.");
+            Content htmlContent = new Content().withData("<h1>Hello - I hope you're having a good day.</h1>");
+            Body body = new Body().withHtml(htmlContent).withText(textContent);
+            msg.setBody(body);
+ 
+            request.setMessage(msg);
+          
+                // Set AWS access credentials
+                AmazonSimpleEmailServiceClient client = 
+                    new AmazonSimpleEmailServiceClient(
+                        new BasicAWSCredentials(
+                            "Access_key_ID_goes_here", 
+                            "Secret_key_goes_here"));
+                            
+            // Call Amazon SES to send the message 
+            try {
+              client.sendEmail(request);
+            } catch (AmazonClientException e) {
+              System.out.println(e.getMessage());
+            } catch (Exception e) {
+              e.printStackTrace();
+            }         
+          }
+  */
+  
+    /*
     if ( message == null ) {
       var session:Session = getMailSession
       message = new MimeMessage( session )
@@ -110,14 +154,17 @@ case class AwsEmail( subject:String, text:String, html:String=null ) extends Ema
         }
       }
     }
-
+  */
     this
   }
   
   @throws(classOf[MessagingException])
   override def send():Email = {
+    /*
     compose()
     Transport.send(message)
+    
+    */
     this
   }
 }

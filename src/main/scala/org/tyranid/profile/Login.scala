@@ -8,7 +8,7 @@ import scala.xml.Unparsed
 import org.tyranid.Imp._
 import org.tyranid.db.Scope
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.email.Email
+import org.tyranid.email.AWSEmail
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
 import org.tyranid.social.Social
@@ -214,7 +214,7 @@ $(document).ready(function() {
         sess.notice( "Instructions for changing your password have been sent to " + email + "." )
 
         // TODO:  move this to email templates
-        Email(subject = B.applicationName + " account access", text = """
+        AWSEmail(subject = B.applicationName + " account access", text = """
 Hello """ + dbUser.s( 'firstName ) + """,
 
 You can access your """ + B.applicationName + """ account with the link below:
