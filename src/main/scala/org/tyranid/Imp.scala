@@ -47,7 +47,7 @@ object Imp {
         e.getMessage
     }
 
-  def spam( msg:AnyRef ) =
+  def spam( msg:Any ) =
     if ( msg != null ) println( "SPAM: " + msg.toString )
     else               println( "SPAM: null" )
 

@@ -283,7 +283,7 @@ class TimeParser {
 	private def timeZoneFound( tp:Int ) {
 		if ( timeZones > 0 )
 			fail( "duplicate time zone information was found at \"" + text.substring( tks( tp ).pos ) + "\"." )
-		
+
 		timeZones += 1
 	}
 
@@ -311,7 +311,7 @@ class TimeParser {
     
     // ISO 8601 parsing ... i.e. 2008-01-02T02:30Z
 		if (   tp + 7 < tcount && tks( tp+5 ).s == "T"
-        && t.year && tks( tp+1 ).ch == '-' && tks( tp+2 ).month && tks( tp+3 ).ch == '-' && tks( tp+4 ).dayOfMonth
+        && t.year && tks( tp+1 ).sep( '-' ) && tks( tp+2 ).month && tks( tp+3 ).sep( '-' ) && tks( tp+4 ).dayOfMonth
         && tks( tp+6 ).hour ) {
 
       year       = Time.fourDigitYear( t.i, t.len )
@@ -323,10 +323,10 @@ class TimeParser {
       timeFound( tp )
       tp += 7
 
-      if ( tp + 2 < tcount && tks( tp ).ch == ':' && tks( tp+1 ).second ) {
+      if ( tp + 2 < tcount && tks( tp ).sep( ':' ) && tks( tp+1 ).second ) {
         minute = tks( tp+1 ).i
         tp += 2
-        if ( tp + 2 < tcount && tks( tp ).ch == ':' && tks( tp+1 ).second ) {
+        if ( tp + 2 < tcount && tks( tp ).sep( ':' ) && tks( tp+1 ).second ) {
           second = tks( tp+1 ).i
           tp += 2
         } else {
@@ -338,9 +338,41 @@ class TimeParser {
 
       timeMilli
 
-      if ( tp >= tcount || tks( tp ).s != "z" )
+      if ( tp < tcount ) {
+        if ( tks( tp ).str( "z" ) ) {
+          tp += 1
+          timeZoneFound( tp )
+        } else if ( tks( tp ).sep( '-' ) || tks( tp ).sep( '+' ) ) {
+          val minus = tks( tp ).sep( '-' )
+          tp += 1
+          var h = 0
+          var m = 0
+
+          if ( tp + 3 <= tcount && tks( tp ).hour && tks( tp+1 ).sep( ':' ) && tks( tp+2 ).minute ) {
+            h = tks( tp     ).i
+            m = tks( tp + 2 ).i
+            tp += 3
+          } else if ( tp + 1 < tcount && tks( tp ).t == Type.INT && tks( tp ).len == 4 ) {
+            h = t.i
+            m = h % 100; h /= 100
+            tp += 1
+          } else if ( tp + 1 < tcount && tks( tp ).hour ) {
+            h = tks( tp ).i
+            tp += 1
+          } else {
+            fail( "an invalid ISO 8601 time zone format was found: \"" + text.substring( tks( tp ).pos ) + "\"." )
+          }
+
+          tzOffsetMin = h * 60 + m
+          if ( minus ) tzOffsetMin *= -1
+          timeZoneFound( tp )
+        } else {
+          fail( "an invalid ISO 8601 time zone format was found: \"" + text.substring( tks( tp ).pos ) + "\"." )
+        }
+
+      } else {
         fail( "an invalid ISO 8601 format was found -- it was missing a 'Z' at the end." )
-      tp += 1
+      }
 
       return true
     }
@@ -509,38 +541,40 @@ class TimeParser {
 		val t = tks( tp )
 		
 		try {
-			if ( t.len == 6 && t.t == Type.INT ) {
-				var h = t.i
-				val s = h % 100; h /= 100
-				val m = h % 100; h /= 100
+      if ( t.t == Type.INT ) {
+        if ( t.len == 6 ) {
+          var h = t.i
+          val s = h % 100; h /= 100
+          val m = h % 100; h /= 100
 				
-				if ( h < 24 && m < 60 && s < 60 ) {
-					hour   = h
-					minute = m
-					second = s
-					timeFound( tp )
-					tp += 1
+          if ( h < 24 && m < 60 && s < 60 ) {
+            hour   = h
+            minute = m
+            second = s
+            timeFound( tp )
+            tp += 1
 					
-					timeMilli
-					ampm
-					return true
-				}
-			}
+            timeMilli
+            ampm
+            return true
+          }
+        }
 			
-			if ( t.len == 4 && t.t == Type.INT ) {
-				var h = t.i
-				val m = h % 100; h /= 100
+        if ( t.len == 4 ) {
+          var h = t.i
+          val m = h % 100; h /= 100
 				
-				if ( h < 24 && m < 60 ) {
-					hour   = h
-					minute = m
-					timeFound( tp )
-					tp += 1
+          if ( h < 24 && m < 60 ) {
+            hour   = h
+            minute = m
+            timeFound( tp )
+            tp += 1
 					
-					ampm
-					return true
-				}
-			}
+            ampm
+            return true
+          }
+        }
+      }
 			
 			if ( t.hour ) {
 				if ( tp+1<tcount && tks( tp+1 ).otherSepThan( ':' ) )
@@ -613,6 +647,7 @@ class TimeParser {
   private var second = 0
   private var milli = 0
   private var tz = Time.Utc
+  private var tzOffsetMin = 0
   private var dateOnly = false
 
 	private var tp = 0
@@ -626,6 +661,7 @@ class TimeParser {
     second = 0
     milli = 0
     tz = Time.Utc
+    tzOffsetMin = 0
 		this.text = text
     this.dateOnly = dateOnly
 
@@ -634,7 +670,7 @@ class TimeParser {
 		dates = 0
 		times = 0
 		timeZones = 0
-		
+
 		dayOfWeek = 0
 		rollDaysNeeded = 0
 		rollToDayOfWeek = false
@@ -677,6 +713,9 @@ class TimeParser {
     dv.setTimeZone( tz )
     dv.set( year, month, dayOfMonth, hour, minute, second )
     dv.set( Calendar.MILLISECOND, milli )
+
+    if ( tzOffsetMin != 0 )
+      dv.add( Calendar.MINUTE, tzOffsetMin )
 
 		if ( rollDaysNeeded != 0 && dayOfWeek == 0 )
 			dv.add( Calendar.DAY_OF_MONTH, rollDaysNeeded )
@@ -741,7 +780,7 @@ class TimeParser {
 				}
 				
 				ch match { // is it a character?
-				case '/' | '-' | ':' | '.' | ',' =>
+				case '/' | '-' | '+' | ':' | '.' | ',' =>
 					val t = tks( tcount )
           tcount += 1
 					t.t = Type.CHAR
