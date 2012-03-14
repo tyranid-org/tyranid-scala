@@ -47,8 +47,11 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
     
     request = new SendEmailRequest().withSource( from.getAddress() )
                 
-    if ( replyTo != null && replyTo != from ) 
-      request.setReplyToAddresses( java.util.Arrays.asList( Array[String]( replyTo.getAddress() ) ).as[java.util.List[String]] )
+    if ( replyTo != null && replyTo != from )  {
+      val toAddresses = new java.util.ArrayList[String]()
+      toAddresses.add( replyTo.getAddress() )
+      request.setReplyToAddresses( toAddresses )
+    }
       
     if ( primaryRecipients == null ) 
       throw new MessagingException( "The primary recipients must be set on this email message." )
