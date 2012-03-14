@@ -21,13 +21,14 @@ import java.util.Date
 
 import javax.servlet.http.HttpSession
 
-import scala.xml.Unparsed
+import scala.xml.{ Text, Unparsed }
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbChar, DbDateTime, DbInt, Record, DbLong }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
 import org.tyranid.email.Email
+import org.tyranid.http.UserAgent
 import org.tyranid.report.{ Field, Run, MongoQuery }
 
 
@@ -198,7 +199,20 @@ object LogQuery extends MongoQuery {
       }
     },
     multistring( "m" ),
-    string( "ua" ),
+    new Field {
+      def name = "ua"
+      override def label = "User Agent"
+      def cell( run:Run, r:Record ) = {
+        Text(
+          r( 'ua ) match {
+          case s:String             => r( 'ua ) = UserAgent.idFor( s )
+                                       r.save
+                                       s
+          case id:java.lang.Integer => UserAgent.uaFor( id )
+          case _                    => "error"
+          } )
+      }
+    },
     string( "ip" ),
     multistring( "ex" ),
     new Field {

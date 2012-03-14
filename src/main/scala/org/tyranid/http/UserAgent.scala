@@ -26,14 +26,24 @@ import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.db.meta.AutoIncrement
 
 
-object UserAgent extends MongoEntity( tid = "a0Bv" ) {
+object UserAgent extends MongoEntity( tid = "a0Dt" ) {
   "id"          is DbIntSerial   is 'key;
   "ua"          is DbChar(256)   as "User Agent";
 
-  private val cache = mutable.HashMap[String,Int]()
+  private val idByUa = mutable.HashMap[String,Int]()
+  private val uaById = mutable.HashMap[Int,String]()
+
+  def uaFor( id:Int ) = synchronized {
+    uaById.getOrElseUpdate( id, {
+      db.findOne( Mobj( "_id" -> id ) ) match {
+      case null => "unknown"
+      case to   => to.s( "ua" )
+      }
+    } )
+  }
 
   def idFor( ua:String ) = synchronized {
-    cache.getOrElseUpdate( ua, {
+    idByUa.getOrElseUpdate( ua, {
       db.findOne( Mobj( "ua" -> ua ) ) match {
       case null =>
         val id = AutoIncrement( "userAgent" )
