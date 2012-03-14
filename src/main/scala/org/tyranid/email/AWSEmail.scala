@@ -25,7 +25,7 @@ object AwsEmail {
 
 case class AwsEmail( subject:String, text:String, html:String=null ) extends Email {
   @throws(classOf[MessagingException])
-  override def compose():Email = {
+  override def compose:Email = {
     if ( message == null ) {
       var session:Session = getMailSession
       message = new MimeMessage( session )

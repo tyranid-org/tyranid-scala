@@ -65,10 +65,6 @@ object Email {
       email
     }
 
-  def apply( subject:String, text:String, to:String, from:String ) {
-    Email( subject, text ).addTo( to ).from( from ).send
-  }
-  
   @throws(classOf[AddressException])
   def getInetAddress( emailAddress:String, displayName:String = null ) : InternetAddress = {
     if ( displayName.notBlank ) {
@@ -89,21 +85,24 @@ trait EmailTemplate {
 
 }
 
-case class Email( subject:String, text:String, html:String=null ) {
-  private var emailSession:Session = null;
-  private var replyTo:InternetAddress = null
-  private var from:InternetAddress = null
-  private var primaryRecipients = ArrayBuffer[InternetAddress]()
-  private var ccRecipients:ArrayBuffer[InternetAddress] = null
-  private var bccRecipients:ArrayBuffer[InternetAddress] = null
-  private var message:MimeMessage = null
-  private var sendDate:Date = null
-  private var attachments:ArrayBuffer[File] = null
-  private var defaultFrom:Boolean = false;
-  
-  def getMimeMessage() : MimeMessage = {
-    return message
-  }
+trait Email {
+
+  val subject:String
+  val text:String
+  val html:String
+
+  def send:Email
+  def compose:Email
+
+  var replyTo:InternetAddress = null
+  var from:InternetAddress = null
+  var primaryRecipients = ArrayBuffer[InternetAddress]()
+  var ccRecipients:ArrayBuffer[InternetAddress] = null
+  var bccRecipients:ArrayBuffer[InternetAddress] = null
+  var sendDate:Date = null
+  var attachments:ArrayBuffer[File] = null
+  var defaultFrom:Boolean = false;
+
 
   def addTo( emailAddress:String )  = {
     if ( emailAddress.notBlank ) 
@@ -181,15 +180,27 @@ case class Email( subject:String, text:String, html:String=null ) {
     this
   }
 
+  def guessContentType( f:File ):String = {
+    new MimetypesFileTypeMap().getContentType( f );
+  }
+}
+
+case class JavaEmail( subject:String, text:String, html:String=null ) extends Email {
+  private var emailSession:Session = null;
+  
+  var message:MimeMessage = null
+
+  def getMimeMessage = message
+
   @throws(classOf[MessagingException])
-  def send():Email = {
-    compose()
+  def send:Email = {
+    compose
     Transport.send(message)
     this
   }
 
   @throws(classOf[MessagingException])
-  def compose():Email = {
+  def compose:Email = {
     if ( message == null ) {
       var session:Session = getMailSession
       message = new MimeMessage( session )
@@ -278,10 +289,6 @@ case class Email( subject:String, text:String, html:String=null ) {
     this
   }
 
-  private def guessContentType( f:File ):String = {
-    new MimetypesFileTypeMap().getContentType( f );
-  }
-  
   private def getMailSession:Session  = {
     if ( emailSession == null ) {
       var emailConfig = EmailConfig.db.findOne()
