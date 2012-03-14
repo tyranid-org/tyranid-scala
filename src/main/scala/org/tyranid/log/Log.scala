@@ -209,7 +209,7 @@ object LogQuery extends MongoQuery {
                                        r.save
                                        s
           case id:java.lang.Integer => UserAgent.uaFor( id )
-          case _                    => "error"
+          case _                    => ""
           } )
       }
     },

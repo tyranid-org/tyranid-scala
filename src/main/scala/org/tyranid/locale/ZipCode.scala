@@ -20,23 +20,23 @@ package org.tyranid.locale
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbInt, DbChar, DbLink, Record }
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.mongo.MongoEntity
+
 
 case class LatLong( lat:Double, long:Double )
 
-object ZipCode {
 
-  lazy val zipdatadb = {
-    val db = Mongo.connect.db( B.profileDbName )( "zipdata" )
-    db.ensureIndex( Mobj( "ZipCode" -> 1 ) )
-    db
-  }
+object ZipCode extends MongoEntity( tid = "a0Ft" ) {
+
+  override lazy val dbName = "zipdata"
 
   def latLongFor( zipCode:Int ) = {
 
-    val obj = zipdatadb.findOne( Mobj( "ZipCode" -> zipCode ) )
+    val obj = db.findOne( Mobj( "ZipCode" -> zipCode ) )
     obj != null |* Some( LatLong( lat = obj.d( 'Latitude ), long = obj.d( 'Longitude ) ) )
   }
 
   
+  db.ensureIndex( Mobj( "ZipCode" -> 1 ) )
 }
 

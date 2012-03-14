@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2011 Tyranid (   http://tyranid.org>
+ * Copyright (c) 2008-2011 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,17 @@
 
 package org.tyranid.locale
 
+import org.scalatest.FunSuite
+
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbInt, DbChar, DbLink, Record }
-import org.tyranid.db.mongo.MongoEntity
 
 
-object Weather {
+class WeatherSuite extends FunSuite {
 
+  test( "foo" ) {
 
+    spam( "http://alerts.weather.gov/cap/us.php?x=0".GET().toXml )
+
+  }
 }
-
-/*
- * CAP = Common Alerting Protocol
- * 
- * https://wiki.citizen.apps.gov/nws_developers/index.php/Category:Common_Alerting_Protocol
- */
-object Cap extends MongoEntity( tid = "a0Et" ) {
-  //"id"          is DbIntSerial   is 'key;
-  //"ua"          is DbChar(256)   as "User Agent";
-}
-
 
