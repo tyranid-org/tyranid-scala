@@ -22,13 +22,13 @@ object AWSEmail {
   }
   
   private def throttle = synchronized {
-    if ( currentCount > 5 && System.currentTimeMillis - lastSent > 1000 ) 
+    if ( currentCount > 5 && System.currentTimeMillis - lastSent < 1000 ) 
       Thread.sleep( 1000 )
 
-    if ( currentCount > 4 )
+    if ( currentCount > 5 )
       currentCount = 1
     else 
-      currentCount = currentCount + 1 
+      currentCount += 1 
 
     AWSEmail.lastSent = System.currentTimeMillis
   }
