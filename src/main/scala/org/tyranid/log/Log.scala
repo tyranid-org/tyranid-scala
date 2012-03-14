@@ -63,6 +63,7 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
   "sid"                 is DbChar(64)     as "Session";
   "uid"                 is DbMongoId      as "User";
   "ua"                  is DbChar(256)    as "User Agent";
+  "ip"                  is DbChar(32)     as "IP"; // req.getRemoteAddr
 
   def log( event:Int, opts:(String,Any)* ) = {
     val l = Mobj(
@@ -198,6 +199,7 @@ object LogQuery extends MongoQuery {
     },
     multistring( "m" ),
     string( "ua" ),
+    string( "ip" ),
     multistring( "ex" ),
     new Field {
       def name = "ct"
