@@ -107,5 +107,7 @@ trait User extends MongoRecord {
   @volatile var timeZone:TimeZone =
     // TODO:  persist time zone in user record, edit it in UI, etc.
     TimeZone.getDefault
+
+  def org:Org = null
 }
 

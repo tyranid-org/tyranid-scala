@@ -9,10 +9,14 @@ import java.security.{ InvalidAlgorithmParameterException, InvalidKeyException, 
 import javax.crypto.{ Cipher, CipherOutputStream, NoSuchPaddingException }
 import javax.crypto.spec.{ IvParameterSpec, SecretKeySpec }
 
+import scala.collection.mutable
+
 import org.apache.commons.codec.digest.DigestUtils
 
 import org.tyranid.Imp._
 import org.tyranid.math.Base64
+import org.tyranid.session.Session
+import org.tyranid.web.{ Weblet, WebContext }
 
 
 object Multipass {
@@ -70,6 +74,36 @@ case class Multipass( accountKey:String, apiKey:String, initVector:Array[Byte] =
           "\", \"customer_name\":\"" + name + "\"" +
           tags.map( t => ", \"customer_custom_" + t._1 + "\":\"" + t._2 + "\"" ).mkString +
           " }" )
+  }
+}
+
+object Multipasslet extends Weblet {
+  lazy val tokener = B.assistly
+
+  def handle( web:WebContext ) {
+    val sess = Session()
+    val user = sess.user
+
+    web.path match {
+    case "/multipass" | "/multipass/login" =>
+      T.editing( user )
+
+      val tags = mutable.ArrayBuffer[(String,String)]()
+
+      val org = user.org
+      if ( org != null ) {
+        tags += ( "org_id" -> user.org.tid )
+        tags += ( "org" -> user.org.name )
+      }
+
+      web.redirect(
+        "http://volerro.assistly.com/customer/authentication/multipass/callback?multipass=" +
+        tokener.props(
+          user.tid, redirect = "", email = user.s( 'email ), name = user.fullName, tags:_* ) )
+
+    case "/multipass/logout" =>
+      web.res.ok
+    }
   }
 }
 

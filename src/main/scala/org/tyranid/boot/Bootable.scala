@@ -27,7 +27,7 @@ import org.tyranid.db.Entity
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.email.EmailTemplate
 import org.tyranid.profile.{ OrgMeta, User, UserMeta }
-import org.tyranid.secure.AccessType
+import org.tyranid.secure.{ AccessType, Multipass }
 import org.tyranid.session.{ Session, ThreadData }
 import org.tyranid.social.facebook.FbApp
 import org.tyranid.social.linkedin.LiApp
@@ -159,8 +159,7 @@ trait Bootable {
   val reCaptchaPrivateKey     = ""
 
   // Assistly
-  val assistlySiteKey = ""
-  val assistlyMultipassKey = ""
+  val assistly:Multipass = null
 
   // AWS
   import org.tyranid.cloud.aws.S3Bucket
