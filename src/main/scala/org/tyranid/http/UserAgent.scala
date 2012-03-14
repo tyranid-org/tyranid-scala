@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2011 Tyranid (   http://tyranid.org>
+ * Copyright (c) 2008-2011 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  *
  */
 
-package org.tyranid.profile
+package org.tyranid.http
 
 import scala.collection.mutable
 
@@ -26,18 +26,18 @@ import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.db.meta.AutoIncrement
 
 
-object Tag extends MongoEntity( tid = "a0Ct" ) {
+object UserAgent extends MongoEntity( tid = "a0Bv" ) {
   "id"          is DbIntSerial   is 'key;
-  "name"        is DbChar(64)    is 'label;
+  "ua"          is DbChar(256)   as "User Agent";
 
-  private val tags = mutable.HashMap[String,Int]()
+  private val cache = mutable.HashMap[String,Int]()
 
-  def idFor( tag:String ) = synchronized {
-    tags.getOrElseUpdate( tag, {
-      db.findOne( Mobj( "name" -> tag ) ) match {
+  def idFor( ua:String ) = synchronized {
+    cache.getOrElseUpdate( ua, {
+      db.findOne( Mobj( "ua" -> ua ) ) match {
       case null =>
-        val id = AutoIncrement( "tag" )
-        db.save( Mobj( "_id" -> id, "name" -> tag ) )
+        val id = AutoIncrement( "userAgent" )
+        db.save( Mobj( "_id" -> id, "ua" -> ua ) )
         id
 
       case to =>
@@ -46,4 +46,5 @@ object Tag extends MongoEntity( tid = "a0Ct" ) {
     } )
   }
 }
+
 

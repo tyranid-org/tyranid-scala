@@ -101,8 +101,10 @@ object DbInt extends DbIntish {
 	val sqlName = "INT"
 }
 
+// TODO:  more tightly link to org.tyranid.db.meta.AutoIncrement ?
 object DbIntSerial extends DbIntish {
 	val sqlName = "SERIAL"
+
 	override def isAuto = true
 }
 
