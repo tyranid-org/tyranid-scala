@@ -220,9 +220,13 @@ function onLinkedInLoad() {
     val domainPart = domain != null |* Uri.domainPart( domain ).toLowerCase
 
     var companies = mutable.ArrayBuffer[ObjectMap]()
+    var found = false
 
-    if ( domain.notBlank )
+    if ( domain.notBlank ) {
       companies ++= GET( "/companies:" + companyFields + "?email-domain=" + domain.encUrl, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
+      if ( companies.size > 0 )
+        found = true
+    }
 
     if ( positions && ( multi || companies.size == 0 ) ) {
       val ids = GET( "/people/~:(positions:(company:(id)))", user ).parseJsonObject.o( 'positions ).a_?( 'values ).of[ObjectMap].map( _.o_?( 'company ).s( 'id ) ).
@@ -249,16 +253,21 @@ function onLinkedInLoad() {
     }
 
     if ( bestMatch && companies.size > 1 ) {
+
       // exact name match
       var candidates = companies.filter( _.s( 'name ).toLowerCase.contains( domainPart ) )
-      if ( candidates.size > 0 )
+      if ( candidates.size > 0 ) {
         companies = candidates
+        found = true
+      }
 
       // website match
       val websiteUrl = ( "//www." + domain ).toLowerCase
       candidates = companies.filter( _.s( 'websiteUrl ).toLowerCase.endsWith( websiteUrl ) )
-      if ( candidates.size > 0 )
+      if ( candidates.size > 0 ) {
         companies = candidates
+        found = true
+      }
 
       // smallest-name ... i.e. "AT&T" subsumes "AT&T Mobility" because the former exists as a substring of the latter
       var candidate = companies.minBy( _.s( 'name ).size ) 
@@ -266,6 +275,9 @@ function onLinkedInLoad() {
 
       if ( companies.forall( _.s( 'name ).toLowerCase.contains( shortestName ) ) )
         return Seq( candidate )
+
+      if ( !found )
+        return Nil
     }
 
     companies

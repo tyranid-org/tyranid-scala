@@ -37,12 +37,15 @@ object Email {
     "@gmail.com",
     "@hotmail.com",
     "@inbox.com",
+    "@live.com",
     "@lycos.com",
     "@mac.com",
     "@mail.com",
     "@me.com",
+    "@mediacomcc.com",
     "@msn.com",
-    "@yahoo.com" )
+    "@yahoo.com",
+    ".net" )
 
   def isWellKnownProvider( email:String ) = {
     val lemail = email.toLowerCase
@@ -118,7 +121,7 @@ trait Email {
     this
   }
 
-  def addBcc( emailAddress:String ): Email = {
+  def addBcc( emailAddress:String ):Email = {
     if ( emailAddress.notBlank ) 
       return add( Message.RecipientType.BCC, emailAddress.split( "," ) : _* )
 
@@ -152,7 +155,7 @@ trait Email {
     }
   }
 
-  def replyTo( _replyToEmailAddress:String ) : Email = {
+  def replyTo( _replyToEmailAddress:String ):Email = {
     try {
       replyTo = Email.getInetAddress( _replyToEmailAddress )
     } catch { 
@@ -162,7 +165,7 @@ trait Email {
     this
   }
 
-  def from(_fromEmailAddress:String) : Email = {
+  def from(_fromEmailAddress:String):Email = {
     try {
       from = Email.getInetAddress( _fromEmailAddress )
     } catch { 
