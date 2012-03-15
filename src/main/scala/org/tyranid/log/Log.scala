@@ -124,13 +124,16 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
     db.save( l )
 
     if ( event == StackTrace && B.PRODUCTION ) {
-println( "*** stack trace entering" )
+      println( "*** stack trace entering" )
       val sb = new StringBuilder
 
       if ( user != null )
         sb ++= "User: " ++= user.fullName += '\n'
+          
       sb ++= "On: " ++= l.t( 'on ).toDateTimeStr += '\n'
+        
       var ua = l.s( 'ua )
+      
       if ( ua.isBlank ) {
         try {
           ua = T.web.req.getHeader( "User-Agent" )
@@ -144,6 +147,7 @@ println( "*** stack trace entering" )
         sb ++= "User-Agent: " ++= ua += '\n'
 
       val msg = l.s( 'm )
+      
       if ( msg.notBlank )
         sb ++= "Message:\n\n" + msg
 
@@ -151,18 +155,33 @@ println( "*** stack trace entering" )
 
       background {
         try {
-println( "*** sending email" )
-          AWSEmail( subject = "Volerro Stack Trace",
-                 text = sb.toString ).
-            addTo( B.alertEmail ).
-            from( "no-reply@" + B.domain ).
-            send
+          val stackTraceText = sb.toString()
+      
+          if ( !shouldIgnore( stackTraceText ) ) {
+            println( "*** sending email" )
+            
+            AWSEmail( subject = "Volerro Stack Trace",
+                   text = stackTraceText ).
+              addTo( B.alertEmail ).
+              from( "no-reply@" + B.domain ).
+              send
+          }
         } catch {
         case e =>
           e.printStackTrace
         }
       }
     }
+  }
+  
+  val ignoredExceptions = List( "org.eclipse.jetty.io.EofException" )
+  
+  private def shouldIgnore( stackTraceText:String ):Boolean = {
+    for ( ignore <- ignoredExceptions )
+      if ( stackTraceText.contains( ignore ) )
+        return true
+    
+    return false
   }
 }
 
