@@ -392,7 +392,9 @@ function onLinkedInLoad() {
 
   def createCompanies( fromOrgId:ObjectId, domains:Seq[String] ):Seq[Org] = {
 
-    val users = B.User.db.find( Mobj( "org" -> fromOrgId, "liid" -> Mobj( $exists -> true ) ) ).toSeq
+    val appUsers = B.User.db.find( Mobj( "org" -> B.appOrgId, "liid" -> Mobj( $exists -> true ) ) ).toSeq
+
+    val users = B.User.db.find( Mobj( "org" -> fromOrgId, "liid" -> Mobj( $exists -> true ) ) ).toSeq ++ appUsers
 
     if ( users.length == 0 ) {
       // TODO: Do something here if the org does not have any users
