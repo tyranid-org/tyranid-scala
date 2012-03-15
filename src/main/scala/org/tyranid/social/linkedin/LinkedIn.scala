@@ -252,10 +252,10 @@ function onLinkedInLoad() {
       //    see http://stackoverflow.com/questions/195010/how-can-i-split-multiple-joined-words
     }
 
-    if ( bestMatch && companies.size > 1 ) {
+    if ( bestMatch ) {
 
       // exact name match
-      var candidates = companies.filter( _.s( 'name ).toLowerCase.contains( domainPart ) )
+      var candidates = companies.filter( c => Uri.lowerDomainChars( c.s( 'name ) ).contains( domainPart ) )
       if ( candidates.size > 0 ) {
         companies = candidates
         found = true
@@ -269,15 +269,15 @@ function onLinkedInLoad() {
         found = true
       }
 
+      if ( !found )
+        return Nil
+
       // smallest-name ... i.e. "AT&T" subsumes "AT&T Mobility" because the former exists as a substring of the latter
       var candidate = companies.minBy( _.s( 'name ).size ) 
       val shortestName = candidate.s( 'name ).toLowerCase
 
       if ( companies.forall( _.s( 'name ).toLowerCase.contains( shortestName ) ) )
         return Seq( candidate )
-
-      if ( !found )
-        return Nil
     }
 
     companies
