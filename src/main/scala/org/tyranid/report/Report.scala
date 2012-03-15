@@ -549,7 +549,7 @@ case class Report( query:Query ) {
 
   def draw =
     <head>
-     <script src="/js/report.js" type="text/javascript"/>
+     <script src={ B.buildPrefix + "/js/report.js" } type="text/javascript"/>
      <script>{ Unparsed( "window.reportObj = { qn:'" + query.name + "', id:'" + id + "' };" ) }</script>
     </head> ++
     { query.grouping != null |*
