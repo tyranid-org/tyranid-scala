@@ -31,6 +31,11 @@ case class WebIgnoreException()                     extends ControlThrowable
 case class Web404Exception()                        extends ControlThrowable
 
 
+object WebFilter {
+
+  val versionPattern = "^/v[0-9]+/.*".r
+}
+
 class WebFilter extends Filter {
 
   var filterConfig:FilterConfig = _
@@ -82,6 +87,15 @@ spam( "filter entered, path=" + web.path )
     AccessLog.log( web, thread )
 
     var multipartHandled = false
+
+    val path = web.req.getServletPath
+    if ( path.matches( WebFilter.versionPattern ) ) {
+      val slash = path.indexOf( '/', 1 )
+      if ( slash != -1 ) {
+        web.ctx.getRequestDispatcher( path.substring( slash ) ).forward( web.req, web.res )
+        return
+      }
+    }
 
     for ( pair <- boot.weblets;
           if web.matches( pair._1 ) && pair._2.matches( web ) ) {
