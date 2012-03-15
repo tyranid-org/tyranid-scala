@@ -57,7 +57,7 @@ object Boot {
         for ( ( path, weblet ) <- instance.weblets )
           weblet.init( path )
 
-        println( "*** " + instance.applicationName + " booted ... mode: " + instance.mode.toUpperCase + ", version: " + instance.version + " ***" )
+        println( "*** " + instance.applicationName + " booted ... mode: " + instance.mode.toUpperCase + ", build: " + instance.build + " ***" )
 
       } catch {
       case e:ClassCastException =>
@@ -132,7 +132,9 @@ trait Bootable {
     else              "production"
 
   
-  val version:Int
+  val build:Int
+
+  lazy val buildPrefix = "/v" + build
 
   // Environment
   val envSuffix = "" // "-x" or "-dx"

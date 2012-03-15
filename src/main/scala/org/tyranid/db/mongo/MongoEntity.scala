@@ -70,7 +70,8 @@ case class MongoEntity( tid:String ) extends Entity {
   def apply( obj:DBObject ) =
     if ( obj != null ) MongoRecord( makeView, obj ) else null
 
-  def toTid( oid:ObjectId ) = tid + Base64.toString( oid.toByteArray )
+  def toTid( oid:ObjectId )       = tid + toRecordTid( oid )
+  def toRecordTid( oid:ObjectId ) = Base64.toString( oid.toByteArray )
   
   def tidToOid( tid:String ) = {
 
