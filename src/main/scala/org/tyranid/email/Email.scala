@@ -44,6 +44,7 @@ object Email {
     "@me.com",
     "@mediacomcc.com",
     "@msn.com",
+    "@netamumail.com",
     "@yahoo.com",
     ".net" )
 
