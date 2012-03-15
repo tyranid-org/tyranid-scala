@@ -43,6 +43,7 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
   "title"       is DbChar(256)   ;
   "summary"     is DbChar(512)   ;
   "event"       is DbChar(64)    ;
+  "effective"   is DbDateTime    ;
 
 
   def parse( entry:Node ) = {
@@ -52,10 +53,14 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
     val id = entry \ "id" text
 
 
-    o( '_id ) = id.substring( id.indexOf( "x=" ) + 2 )
+    o( '_id )       = id.substring( id.indexOf( "x=" ) + 2 )
+    o( 'updated )   = ( entry \ "updated" ).text.parseDate()
+    o( 'published ) = ( entry \ "published" ).text.parseDate()
+    o( 'title )     = ( entry \ "title" ).text
+    o( 'summary )   = ( entry \ "summary" ).text
+    o( 'effective ) = ( entry \ "effective" ).text.parseDate()
 
-    o( 'updated ) = entry \ "updated" text 
-
+    Cap( o )
   }
 }
 

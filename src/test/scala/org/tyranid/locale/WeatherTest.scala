@@ -23,10 +23,48 @@ import org.tyranid.Imp._
 
 
 class WeatherSuite extends FunSuite {
+  org.tyranid.boot.Boot.boot
 
-  test( "foo" ) {
+  test( "parsing" ) {
 
-    spam( "http://alerts.weather.gov/cap/us.php?x=0".GET().toXml )
+    val entryXml =
+      <entry>
+       <id>http://alerts.weather.gov/cap/wwacapget.php?x=AK124CA02D0EAC.WinterWeatherAdvisory.124CA02E66D0AK.AFCWSWAER.b760c0302c81f7c80ead2873b0cba35a</id>
+       <updated>2012-03-14T04:19:00-08:00</updated>
+       <published>2012-03-14T04:19:00-08:00</published>
+       <author>
+        <name>w-nws.webmaster@noaa.gov</name>
+       </author>
+       <title>Winter Weather Advisory issued March 14 at 4:19AM AKDT until March 14 at 1:00PM AKDT by NWS</title>
+       <link href='http://alerts.weather.gov/cap/wwacapget.php?x=AK124CA02D0EAC.WinterWeatherAdvisory.124CA02E66D0AK.AFCWSWAER.b760c0302c81f7c80ead2873b0cba35a'/>
+       <summary>...WINTER WEATHER ADVISORY FOR BLOWING SNOW IN EFFECT UNTIL 1 PM AKDT THIS AFTERNOON FROM WHITTER TO EASTERN TURNAGAIN ARM... THE NATIONAL WEATHER SERVICE IN ANCHORAGE HAS ISSUED A WINTER WEATHER ADVISORY FOR BLOWING SNOW...WHICH IS IN EFFECT UNTIL 1 PM AKDT THIS AFTERNOON. * LOCATION...WHITTIER TO EASTERN TURNAGAIN ARM.</summary>
+       <cap:event>Winter Weather Advisory</cap:event>
+       <cap:effective>2012-03-14T04:19:00-08:00</cap:effective>
+       <cap:expires>2012-03-14T13:00:00-08:00</cap:expires>
+       <cap:status>Actual</cap:status>
+       <cap:msgType>Alert</cap:msgType>
+       <cap:category>Met</cap:category>
+       <cap:urgency>Expected</cap:urgency>
+       <cap:severity>Minor</cap:severity>
+       <cap:certainty>Likely</cap:certainty>
+       <cap:areaDesc>Western Prince William Sound</cap:areaDesc>
+       <cap:geocode>
+        <valueName>FIPS6</valueName>
+        <value>002020 002122 002261</value>
+        <valueName>UGC</valueName>
+        <value>AKZ125</value>
+       </cap:geocode>
+       <cap:parameter>
+        <valueName>VTEC</valueName>
+        <value>/X.NEW.PAFC.WW.Y.0027.120314T1219Z-120314T2100Z/</value>
+       </cap:parameter>
+      </entry>
+
+    val entry = Cap.parse( entryXml )
+
+    assert( entry.s( 'id ) === "AK124CA02D0EAC.WinterWeatherAdvisory.124CA02E66D0AK.AFCWSWAER.b760c0302c81f7c80ead2873b0cba35a" )
+
+    //spam( "http://alerts.weather.gov/cap/us.php?x=0".GET().toXml )
 
   }
 }
