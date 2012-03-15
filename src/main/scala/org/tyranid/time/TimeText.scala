@@ -352,11 +352,11 @@ class TimeParser {
             h = tks( tp     ).i
             m = tks( tp + 2 ).i
             tp += 3
-          } else if ( tp + 1 < tcount && tks( tp ).t == Type.INT && tks( tp ).len == 4 ) {
-            h = t.i
+          } else if ( tp < tcount && tks( tp ).t == Type.INT && tks( tp ).len == 4 ) {
+            h = tks( tp ).i
             m = h % 100; h /= 100
             tp += 1
-          } else if ( tp + 1 < tcount && tks( tp ).hour ) {
+          } else if ( tp < tcount && tks( tp ).hour ) {
             h = tks( tp ).i
             tp += 1
           } else {
