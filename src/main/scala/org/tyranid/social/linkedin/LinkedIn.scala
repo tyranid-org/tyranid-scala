@@ -11,6 +11,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
+import org.tyranid.cloud.aws.S3
 import org.tyranid.company.Industry
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
@@ -24,7 +25,6 @@ import org.tyranid.session.Session
 import org.tyranid.social.SoApp
 import org.tyranid.ui.Form
 import org.tyranid.web.{ WebContext, Weblet }
-
 
 case class LiApp( apiKey:String, secret:String ) extends SoApp {
 
@@ -295,6 +295,7 @@ function onLinkedInLoad() {
     string( 'websiteUrl,    'website )
 
     val logo = c.s( 'squareLogoUrl ) or c.s( 'logoUrl )
+    
     if ( logo.notBlank )
       org( 'thumbnail ) = logo
 
@@ -373,8 +374,20 @@ function onLinkedInLoad() {
         }
       }
     }
+
+    val url = org.s( 'thumbnail )
+      
+    if ( url notBlank ) {
+      org( 'thumbnail ) = S3.fromUrl( url, pathFor( B.Org.tid, B.Org.toRecordTid( org.oid( "_id" ) ), "thumbnail", url ) )
+      B.Org( org ).save
+    }
   }
 
+  def pathFor( entityTid:String, recordTid:String, fieldName:String, url:String ) {
+    val extension = url.suffix( '.' ).replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
+    ( entityTid + "/" + recordTid + "/" + fieldName + "." + extension )
+  }
+  
   def createCompany( user:User, domain:String ):Org = {
 
     loadCompanies( user, domain, bestMatch = true ) foreach { company =>
@@ -443,7 +456,7 @@ object LinkedInlet extends Weblet {
       val profile = B.linkedIn.GET( "/people/id=" + uid + ":(id,picture-url)", u ).parseJsonObject
 
       if ( profile.contains( 'pictureUrl ) ) {
-        u( 'thumbnail ) = profile.s( 'pictureUrl )
+        u( 'thumbnail ) = S3.fromUrl( profile.s( 'pictureUrl ), "" )
         s.notice( "Your " + B.applicationName + " profile image has been set to your LinkedIn profile image." )
         B.User.db.update( Mobj( "_id" -> u.id ), Mobj( $set -> Mobj( "thumbnail" -> u.s( 'thumbnail ) ) ) )
       }

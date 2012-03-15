@@ -22,6 +22,8 @@ import java.io.{ ByteArrayInputStream, FileOutputStream, InputStream }
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.{ AmazonS3Exception, GroupGrantee, ObjectMetadata, Permission, S3Object, GetObjectRequest }
 
+import com.mongodb.DBObject
+
 import org.tyranid.Imp._
 
 
@@ -129,4 +131,31 @@ object S3 {
   def getObject( bucket:S3Bucket, key:String ) = {
     s3.getObject( new GetObjectRequest( bucket.name, key ) )
   }  
+  
+  def fromUrl( url:String, path:String ):String = {
+    /*
+      val extension = url.suffix( '.' ).replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
+      
+      val r = s.rec
+      r.recordTid match {
+      case null | "null" | "-invalid" => r.save
+      case _ =>
+      }
+      
+      val path = r.entityTid + "/" + r.recordTid + "/" + f.va.att.name + "." + extension
+      var in = fileItem.getInputStream()
+      
+      ///val s3Obj = S3.getObject( bucket, path )
+      
+      
+      S3.write( bucket, path, fileItem.getSize(), fileItem.getContentType(), in )
+      in.close
+      
+      S3.access( bucket, path, public = true )
+      
+      r( f.va ) = bucket.url( path )
+    
+     */
+    url
+  }
 }
