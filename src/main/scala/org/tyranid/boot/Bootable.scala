@@ -24,6 +24,7 @@ import scala.xml.NodeSeq
 import org.cometd.bayeux.server.BayeuxServer
 
 import org.tyranid.db.Entity
+import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.email.EmailTemplate
 import org.tyranid.profile.{ OrgMeta, User, UserMeta }
@@ -110,13 +111,14 @@ trait Bootable {
 
   def access( thread:ThreadData, accessType:AccessType, ref:AnyRef )
 
-
   @volatile var newUser:() => User = null
   val userMeta:UserMeta
   @volatile var User:UserMeta = null
   @volatile var Org:OrgMeta = null
   @volatile var Location:MongoEntity = null
   @volatile var newSession:() => Session = null
+
+  lazy val appOrgId = Org.db.findOne( Mobj( "name" -> applicationName ) ).oid
 
   val loginCookieName:String = null
 

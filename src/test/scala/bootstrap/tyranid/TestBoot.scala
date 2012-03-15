@@ -30,7 +30,7 @@ class Boot extends org.tyranid.boot.Bootable {
 
   lazy val userMeta = User
 
-  val version = 1
+  val build = 1
 
   def access( thread:ThreadData, accessType:AccessType, ref:AnyRef ) {
   }
