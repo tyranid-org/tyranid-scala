@@ -19,10 +19,13 @@ package org.tyranid.locale
 
 import scala.xml.Node
 
+import com.mongodb.DBObject
+
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbArray, DbInt, DbChar, DbDateTime, DbLink, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
+import org.tyranid.time.Time
 
 
 object Weather {
@@ -63,15 +66,14 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
 
   "zips"        is DbArray(DbChar(16));
 
+  def idFromEntry( entryXml:Node ) = {
+    val id = ( entryXml \ "id" ).text
+    id.substring( id.indexOf( "x=" ) + 2 )
+  }
 
-  def parse( entry:Node ) = {
+  def parse( o:DBObject, entry:Node ) = {
 
-    val o = Mobj()
-
-    val id = entry \ "id" text
-
-
-    o( '_id )      = id.substring( id.indexOf( "x=" ) + 2 )
+    o( '_id )      = idFromEntry( entry )
     o( 'updated )  = ( entry \ "updated" ).text.parseDate()
     o( 'pub )      = ( entry \ "published" ).text.parseDate()
     o( 'title )    = ( entry \ "title" ).text
@@ -112,16 +114,37 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
 
       o( 'zips ) = Mlist( fips6.split( " " ).flatMap( fips6 => ZipCode.forFips6( fips6 ) ).distinct:_* )
     }
+  }
 
-    Cap( o )
+  def load = {
+
+    for ( entryXml <- "http://alerts.weather.gov/cap/us.php?x=0".GET().toXml \ "entry" ) {
+
+      var entry = db.findOne( Mobj( "_id" -> idFromEntry( entryXml ) ) )
+
+      if ( entry == null )
+        entry = Mobj()
+
+      parse( entry, entryXml )
+      db.save( entry )
+    }
+  }
+
+  def start = background {
+    while ( true ) {
+      trylog {
+        load
+      }
+
+      Thread.sleep( 2 * Time.OneMinuteMs )
+    }
   }
 }
+
 
 /*
  <entry>
   <cap:geocode>
-   <valueName>FIPS6</valueName>
-   <value>002020 002122 002261</value>
    <valueName>UGC</valueName>
    <value>AKZ125</value>
   </cap:geocode>

@@ -35,42 +35,6 @@ object Imp {
   def T = org.tyranid.session.ThreadData()
   def B = org.tyranid.boot.Boot.instance
 
-  /**
-   * Try a block of code that returns a string, if it succeeds return the string, otherwise return the exception message.
-   */
-  def trystr[T]( block: => String ) =
-    try {
-      block
-    } catch {
-      case e =>
-        e.printStackTrace
-        e.getMessage
-    }
-
-  def spam( msg:Any ) =
-    if ( msg != null ) println( "SPAM: " + msg.toString )
-    else               println( "SPAM: null" )
-
-  def look[T]( msg:String, block: => T ): T = {
-    spam( "look[" + msg + "]=>[...evaluating...]" )
-    val result = block
-    spam( "LOOK[" + msg + "]=>[" + ( if ( result != null ) result.toString else "null" ) + "]" )
-    result
-  }
-
-  def background( block: => Unit ) {
-    scala.concurrent.ops.spawn {
-      try {
-        block
-      } catch {
-      case e =>
-        throwableImp( e ).log
-      }
-    }
-  }
-
-  val Log = org.tyranid.log.Log
-  def log( event:Int, opts:(String,Any)* ) = org.tyranid.log.Log.log( event, opts:_* )
 
 	implicit def anyImp[ T <: Any ]( v:T )                          = new org.tyranid.any.AnyImp[T]( v )
 	implicit def anyRefImp[ T <: AnyRef ]( v:T )                    = new org.tyranid.any.AnyRefImp[T]( v )
@@ -95,5 +59,60 @@ object Imp {
   implicit def servletRequest ( v:HttpServletRequest  )           = new org.tyranid.http.HttpServletRequestOps ( v )
   implicit def servletResponse( v:HttpServletResponse )           = new org.tyranid.http.HttpServletResponseOps( v )
 
+
+  /**
+   * Try a block of code that returns a string, if it succeeds return the string, otherwise return the exception message.
+   */
+  def trystr( block: => String ) =
+    try {
+      block
+    } catch {
+    case e =>
+      e.printStackTrace
+      e.getMessage
+    }
+
+  def trylog( block: => Unit ) =
+    try {
+      block
+    } catch {
+    case e => e.log
+    }
+
+  def spam( msg:Any ) =
+    if ( msg != null ) println( "SPAM: " + msg.toString )
+    else               println( "SPAM: null" )
+
+  def look[T]( msg:String, block: => T ): T = {
+    spam( "look[" + msg + "]=>[...evaluating...]" )
+    val result = block
+    spam( "LOOK[" + msg + "]=>[" + ( if ( result != null ) result.toString else "null" ) + "]" )
+    result
+  }
+
+	@volatile private var depth = 1
+	def time[ T ]( title:String )( block: => T ): T = {
+		val startTime = System.currentTimeMillis
+		println( ( ">" * depth ) + " " * 13 + title + " START: " + ( new Date ).toDateTimeStr )
+		depth += 1
+
+		try {
+			block
+		} finally {
+			depth -= 1
+			println( ( "<" * depth ) + " " + "%8d".format( System.currentTimeMillis - startTime ) + "ms. " + " " * title.length + " END" )
+		}
+	}
+
+  def background( block: => Unit ) {
+    scala.concurrent.ops.spawn {
+      trylog {
+        block
+      }
+    }
+  }
+
+  val Log = org.tyranid.log.Log
+  def log( event:Int, opts:(String,Any)* ) = org.tyranid.log.Log.log( event, opts:_* )
 }
 

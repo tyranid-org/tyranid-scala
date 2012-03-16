@@ -57,11 +57,8 @@ object Scheduler {
         if ( nowMs >= task.nextMs ) {
           println( "Scheduler:  running " + task.subject + " at " + new Date().toString )
 
-          try {
+          trylog {
             task.task()
-          } catch {
-            case e =>
-              e.log
           }
 
           while ( task.nextMs < System.currentTimeMillis )

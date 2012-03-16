@@ -270,19 +270,5 @@ object Time {
       sb.toString
     }
   }
-
-	@volatile private var depth = 1
-	def time[ T ]( title:String )( block: => T ): T = {
-		val startTime = System.currentTimeMillis
-		println( ( ">" * depth ) + " " * 13 + title + " START: " + ( new Date ).toDateTimeStr )
-		depth += 1
-
-		try {
-			block
-		} finally {
-			depth -= 1
-			println( ( "<" * depth ) + " " + "%8d".format( System.currentTimeMillis - startTime ) + "ms. " + " " * title.length + " END" )
-		}
-	}
 }
 
