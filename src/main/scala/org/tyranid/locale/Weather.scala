@@ -24,7 +24,7 @@ import com.mongodb.DBObject
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbArray, DbInt, DbChar, DbDateTime, DbLink, Record }
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.db.mongo.MongoEntity
+import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.time.Time
 
 
@@ -66,6 +66,9 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
 
   "zips"        is DbArray(DbChar(16));
 
+  override def apply( obj:DBObject ):Cap =
+    if ( obj != null ) new Cap( obj ) else null    
+
   def idFromEntry( entryXml:Node ) = {
     val id = ( entryXml \ "id" ).text
     id.substring( id.indexOf( "x=" ) + 2 )
@@ -78,17 +81,17 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
     o( 'pub )      = ( entry \ "published" ).text.parseDate()
     o( 'title )    = ( entry \ "title" ).text
     o( 'summary )  = ( entry \ "summary" ).text
-    o( 'event )    = ( entry \ "event" ).text
+    o( 'event )    = ( entry \ "event" ).text.toLowerCase
     o( 'eff )      = ( entry \ "effective" ).text.parseDate()
     o( 'exp )      = ( entry \ "expires" ).text.parseDate()
 
-    o( 'status )   = ( entry \ "status" ).text
-    o( 'msgType )  = ( entry \ "msgType" ).text
-    o( 'cat )      = ( entry \ "category" ).text
+    o( 'status )   = ( entry \ "status" ).text.toLowerCase
+    o( 'msgType )  = ( entry \ "msgType" ).text.toLowerCase
+    o( 'cat )      = ( entry \ "category" ).text.toLowerCase
 
-    o( 'urg )      = ( entry \ "urgency" ).text
-    o( 'sev )      = ( entry \ "severity" ).text
-    o( 'cer )      = ( entry \ "certainty" ).text
+    o( 'urg )      = ( entry \ "urgency" ).text.toLowerCase
+    o( 'sev )      = ( entry \ "severity" ).text.toLowerCase
+    o( 'cer )      = ( entry \ "certainty" ).text.toLowerCase
 
     o( 'areaDesc ) = ( entry \ "areaDesc" ).text
 
@@ -139,6 +142,48 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
       Thread.sleep( 2 * Time.OneMinuteMs )
     }
   }
+
+  def weightFor( zips:Seq[String] ) = {
+
+    // TODO:  add in date querying  (maybe if it is close to expiring or recently-expired it goes down in weight ?)
+
+    db.find( Mobj( "zips" -> Mobj( $in -> Mlist( zips:_* ) ) ) ).map( cap => Cap( cap ).weight ).foldLeft( 0 )( _ max _ )
+  }
+}
+
+class Cap( override val obj:DBObject = Mobj() ) extends MongoRecord( Cap.makeView, obj ) {
+
+  def sevWeight =
+    s( 'sev ) match {
+    case "extreme"   => 100
+    case "severe"    => 75
+    case "moderate"  => 50
+    case "minor"     => 25
+    case "unknown"   => 50
+    case _           => 50
+    }
+
+  def urgWeight =
+    s( 'urg ) match {
+    case "immediate" => 100
+    case "expected"  => 75
+    case "future"    => 50
+    case "past"      => 25
+    case "unknown"   => 50
+    case _           => 50
+    }
+
+  def cerWeight =
+    s( 'cer ) match {
+    case "observed"  => 100
+    case "likely"    => 75
+    case "possible"  => 50
+    case "unlikely"  => 25
+    case "unknown"   => 50
+    case _           => 50
+    }
+
+  def weight = ( sevWeight + urgWeight + cerWeight ) / 3
 }
 
 
