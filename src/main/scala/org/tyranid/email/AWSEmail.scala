@@ -112,7 +112,10 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
         spam(
             "| MessageRejectedException: " + e.getMessage() + "\n" +
             "|  Sent to: " + primaryRecipients.mkString( "," ) + "\n" +
-            "|  Reply to: " + ( if ( replyTo != null && replyTo != from ) replyTo.getAddress() else "" )
+            "|  Reply to: " + ( if ( replyTo != null && replyTo != from ) replyTo.getAddress() else "" ) + "\n" +
+            "|  Subject: " + subject + "\n" +
+            "|  Text: " + text + "\n" +
+            "|  HTML: " + html
         )
         
         throw e
