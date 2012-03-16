@@ -175,6 +175,13 @@ trait Weblet {
     if ( !B.User.isLoggedIn )
      web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
 
+  def redirectIfNotHasOrg( web:WebContext ) = {
+    redirectIfNotLoggedIn( web )
+    
+    if ( !org.tyranid.session.Session().user.has( 'org ) )
+        web.redirect( "/" )
+  }
+     
   def matches( web:WebContext ) = true
 
   def handle( web:WebContext ):Unit
