@@ -58,7 +58,10 @@ object S3 {
   
   def write( bucket:S3Bucket, key:String, contentLength:Long, contentType:String, in:InputStream ) = {
     val md = new ObjectMetadata
-    md.setContentLength( contentLength )
+    
+    if ( contentLength != -1 )
+      md.setContentLength( contentLength )
+      
     md.setContentType( contentType )
 
     try {
@@ -131,31 +134,17 @@ object S3 {
   def getObject( bucket:S3Bucket, key:String ) = {
     s3.getObject( new GetObjectRequest( bucket.name, key ) )
   }  
-  
-  def fromUrl( url:String, path:String ):String = {
-    /*
-      val extension = url.suffix( '.' ).replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
-      
-      val r = s.rec
-      r.recordTid match {
-      case null | "null" | "-invalid" => r.save
-      case _ =>
-      }
-      
-      val path = r.entityTid + "/" + r.recordTid + "/" + f.va.att.name + "." + extension
-      var in = fileItem.getInputStream()
-      
-      ///val s3Obj = S3.getObject( bucket, path )
-      
-      
-      S3.write( bucket, path, fileItem.getSize(), fileItem.getContentType(), in )
-      in.close
-      
-      S3.access( bucket, path, public = true )
-      
-      r( f.va ) = bucket.url( path )
+
+  def storeUrl( bucket:S3Bucket, urlStr:String, path:String ) = {
+    val url = new java.net.URL( urlStr )
+    val conn = url.openConnection
+    val in = conn.getInputStream
     
-     */
-    url
+    S3.write( bucket, path, conn.getContentLength, conn.getContentType(), in )
+    in.close
+      
+    S3.access( bucket, path, public = true )
+    
+    bucket.url( path )
   }
 }

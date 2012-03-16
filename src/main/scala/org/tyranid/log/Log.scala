@@ -174,7 +174,7 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
     }
   }
   
-  val ignoredExceptions = List( "org.eclipse.jetty.io.EofException" )
+  val ignoredExceptions = List( "EofException" )
   
   private def shouldIgnore( stackTraceText:String ):Boolean = {
     for ( ignore <- ignoredExceptions )
