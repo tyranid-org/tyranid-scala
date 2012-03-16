@@ -36,11 +36,16 @@ object ZipCode extends MongoEntity( tid = "a0Ft" ) {
     obj != null |* Some( LatLong( lat = obj.d( 'Latitude ), long = obj.d( 'Longitude ) ) )
   }
 
-  def forFips6( fips6:String ) = {
+  def forFips6( fips6:String ):Seq[String] = {
     // FIPS 6-4:  http://www.itl.nist.gov/fipspubs/co-codes/states.txt
     //            state code + county code
 
-    val split = if ( fips6.length == 5 ) 2 else 3
+    val split =
+      fips6.length match {
+      case 5 => 2
+      case 6 => 3
+      case _ => return Nil
+      }
 
     val stateFips  = fips6.substring( 0, split ).toInt
     val countyFips = fips6.substring( split ).toInt
