@@ -104,8 +104,20 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
     compose
     
     AWSEmail.throttle
-      
-    new AmazonSimpleEmailServiceClient( B.awsCredentials ).sendEmail( request )
+    
+    try {
+      new AmazonSimpleEmailServiceClient( B.awsCredentials ).sendEmail( request )
+    } catch {
+      case e:MessageRejectedException =>
+        spam(
+            "| MessageRejectedException: " + e.getMessage() + "\n" +
+            "|  Sent to: " + primaryRecipients.mkString( "," ) + "\n" +
+            "|  Reply to: " + ( if ( replyTo != null && replyTo != from ) replyTo.getAddress() else "" )
+        )
+        
+        throw e
+    } 
+    
     this
   }
 }

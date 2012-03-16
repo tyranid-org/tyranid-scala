@@ -22,6 +22,8 @@ import java.io.{ ByteArrayInputStream, FileOutputStream, InputStream }
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.{ AmazonS3Exception, GroupGrantee, ObjectMetadata, Permission, S3Object, GetObjectRequest }
 
+import com.mongodb.DBObject
+
 import org.tyranid.Imp._
 
 
@@ -56,7 +58,10 @@ object S3 {
   
   def write( bucket:S3Bucket, key:String, contentLength:Long, contentType:String, in:InputStream ) = {
     val md = new ObjectMetadata
-    md.setContentLength( contentLength )
+    
+    if ( contentLength != -1 )
+      md.setContentLength( contentLength )
+      
     md.setContentType( contentType )
 
     try {
@@ -129,4 +134,17 @@ object S3 {
   def getObject( bucket:S3Bucket, key:String ) = {
     s3.getObject( new GetObjectRequest( bucket.name, key ) )
   }  
+
+  def storeUrl( bucket:S3Bucket, urlStr:String, path:String ) = {
+    val url = new java.net.URL( urlStr )
+    val conn = url.openConnection
+    val in = conn.getInputStream
+    
+    S3.write( bucket, path, conn.getContentLength, conn.getContentType(), in )
+    in.close
+      
+    S3.access( bucket, path, public = true )
+    
+    bucket.url( path )
+  }
 }

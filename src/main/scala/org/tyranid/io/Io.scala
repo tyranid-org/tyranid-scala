@@ -34,9 +34,9 @@ class InputStreamImp( is:InputStream ) {
 
     do {
       read = in.read( buffer, 0, buffer.length )
-      if ( read >0 ) {
-        sb.append( buffer, 0, read )
-      }
+      if ( read > 0 )
+        sb.appendAll( buffer, 0, read )
+      
     } while ( read >= 0 )
 
     is.close

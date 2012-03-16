@@ -11,11 +11,13 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
+import org.tyranid.cloud.aws.S3
 import org.tyranid.company.Industry
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.email.Email
 import org.tyranid.http.Http403Exception
+import org.tyranid.io.File
 import org.tyranid.locale.{ Country, LocationType, Region }
 import org.tyranid.net.Uri
 import org.tyranid.oauth.{ OAuth, Token }
@@ -24,7 +26,6 @@ import org.tyranid.session.Session
 import org.tyranid.social.SoApp
 import org.tyranid.ui.Form
 import org.tyranid.web.{ WebContext, Weblet }
-
 
 case class LiApp( apiKey:String, secret:String ) extends SoApp {
 
@@ -295,8 +296,12 @@ function onLinkedInLoad() {
     string( 'websiteUrl,    'website )
 
     val logo = c.s( 'squareLogoUrl ) or c.s( 'logoUrl )
-    if ( logo.notBlank )
+    var storeInS3 = false
+    
+    if ( logo.notBlank ) {
       org( 'thumbnail ) = logo
+      storeInS3 = true
+    }
 
     if ( org.s( 'thumbnail ).isBlank )
       org( 'thumbnail ) = "/icon_company.png"
@@ -373,6 +378,16 @@ function onLinkedInLoad() {
         }
       }
     }
+
+    if ( storeInS3 ) {
+      val url = org.s( 'thumbnail )
+        
+      if ( url notBlank ) {
+        val bucket = B.s3Buckets( "public" )
+        org( 'thumbnail ) = S3.storeUrl( bucket, url, File.pathFor( B.Org.tid, B.Org.toRecordTid( org.oid( "_id" ) ), "thumbnail", url ) )
+        B.Org( org ).save
+      }
+    }
   }
 
   def createCompany( user:User, domain:String ):Org = {
@@ -443,9 +458,11 @@ object LinkedInlet extends Weblet {
     case "/useThumbnail" =>
       val uid = u.s( 'liid )
       val profile = B.linkedIn.GET( "/people/id=" + uid + ":(id,picture-url)", u ).parseJsonObject
-
+      
       if ( profile.contains( 'pictureUrl ) ) {
-        u( 'thumbnail ) = profile.s( 'pictureUrl )
+        val url = profile.s( 'pictureUrl )
+        val bucket = B.s3Buckets( "public" )
+        u( 'thumbnail ) = S3.storeUrl( bucket, url, File.pathFor( B.User.tid, B.User.toRecordTid( u.oid( "_id" ) ), "thumbnail", url ) )
         s.notice( "Your " + B.applicationName + " profile image has been set to your LinkedIn profile image." )
         B.User.db.update( Mobj( "_id" -> u.id ), Mobj( $set -> Mobj( "thumbnail" -> u.s( 'thumbnail ) ) ) )
       }

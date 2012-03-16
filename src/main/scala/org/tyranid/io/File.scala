@@ -55,19 +55,14 @@ class DbFile( bucket:S3Bucket ) extends CommonFile {
         null
 
     if ( fileItem != null && fileItem.getName().notBlank ) {
-      val extension = fileItem.getName().suffix( '.' ).replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
-      
       val r = s.rec
       r.recordTid match {
       case null | "null" | "-invalid" => r.save
       case _ =>
       }
       
-      val path = r.entityTid + "/" + r.recordTid + "/" + f.va.att.name + "." + extension
+      val path = File.pathFor( r.entityTid, r.recordTid, f.va.att.name, fileItem.getName() )
       var in = fileItem.getInputStream()
-      
-      ///val s3Obj = S3.getObject( bucket, path )
-      
       
       S3.write( bucket, path, fileItem.getSize(), fileItem.getContentType(), in )
       in.close
@@ -85,7 +80,6 @@ class DbFile( bucket:S3Bucket ) extends CommonFile {
       bucket.url( path )
     }
   }
-
 }
 
 object DbLocalFile extends CommonFile {
@@ -119,6 +113,10 @@ object DbLocalFile extends CommonFile {
 }
 
 object File {
+  def pathFor( entityTid:String, recordTid:String, fieldName:String, url:String ) = {
+    val extension = url.suffix( '.' ).replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
+    ( entityTid + "/" + recordTid + "/" + fieldName + "." + extension )
+  }
 }
 
 trait CommonFile extends Domain {

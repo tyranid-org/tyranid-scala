@@ -19,11 +19,14 @@ package org.tyranid.math
 
 import org.tyranid.Imp._
 
+import scala.math
+
 object LongImp {
-  val kb:Long = Math.pow( 2.toDouble, 10.toDouble ).toLong
-  val mb:Long = Math.pow( 2.toDouble, 20.toDouble ).toLong
-  val gb:Long = Math.pow( 2.toDouble, 30.toDouble ).toLong
-  val tb:Long = Math.pow( 2.toDouble, 40.toDouble ).toLong
+  
+  val kb:Long = math.pow( 2.toDouble, 10.toDouble ).toLong
+  val mb:Long = math.pow( 2.toDouble, 20.toDouble ).toLong
+  val gb:Long = math.pow( 2.toDouble, 30.toDouble ).toLong
+  val tb:Long = math.pow( 2.toDouble, 40.toDouble ).toLong
 }
 
 case class LongImp( l:Long ) {
@@ -53,7 +56,7 @@ case class LongImp( l:Long ) {
       l + " B"
   }
   
-  def pow( p:Int ) = Math.pow( l.toDouble, p.toDouble ).toLong
+  def pow( p:Int ) = math.pow( l.toDouble, p.toDouble ).toLong
 }
 
 
