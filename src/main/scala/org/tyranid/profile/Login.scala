@@ -227,9 +227,9 @@ Thank you,
 
 The """ + B.applicationName + """ Team
 """)
-          .addTo(user s 'email)
-          .from(B.systemEmail)
-          .replyTo("no-reply@" + B.domain)
+          .addTo( user s 'email )
+          .from( "no-reply@" + B.domain )
+          .replyTo( "no-reply@" + B.domain )
           .send
 
         web.redirect("/")
