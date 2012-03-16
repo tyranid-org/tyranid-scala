@@ -65,6 +65,7 @@ class WeatherSuite extends FunSuite {
     assert( entry.s( 'id )       === "AK124CA02D0EAC.WinterWeatherAdvisory.124CA02E66D0AK.AFCWSWAER.b760c0302c81f7c80ead2873b0cba35a" )
     assert( entry.t( 'updated )  === "2012.3.13 8:19pm UTC".parseDate() )
     assert( entry.s( 'areaDesc ) === "Western Prince William Sound" )
+    assert( entry.s( 'sev )      === "Minor" )
 
     //spam( "http://alerts.weather.gov/cap/us.php?x=0".GET().toXml )
 
