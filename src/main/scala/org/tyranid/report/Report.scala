@@ -221,14 +221,18 @@ trait MongoQuery extends Query {
 
   def run( run:Run ) = {
     val report = run.report
-    var part = entity.db.find( prepareSearch( run ), Mobj() ).limit( 20 );
+    var part = entity.db.find( prepareSearch( run ), Mobj() ).limit( run.report.pageSize + 1 )
 
     if ( report.offset != 0 )
       part = part.skip( report.offset )
     if ( report.sort != null )
       part = part.sort( report.sort )
     
-    part.toIterable.map( o => entity.apply( o ) )
+    var rows = part.toIterable.map( o => entity.apply( o ) )
+
+    report.hasNext = rows.size > run.report.pageSize
+
+    rows.take( run.report.pageSize )
   }
 
   def date( path:String, sec:String = "Standard", label:String = null )        = DateField( sec, view.path( path ), l = label )
@@ -255,6 +259,7 @@ case class Report( query:Query ) {
   val parameters    = Mobj()
   @volatile var sort:DBObject = null
   @volatile var offset:Int = 0
+  @volatile var hasNext:Boolean = false
   @volatile var pageSize = 20
 
   @volatile var groupFilter = ""
@@ -475,9 +480,9 @@ case class Report( query:Query ) {
           <table>
            <tr>
             { ( query.searchScreen.notBlank |* <td><a href={ query.searchScreen } class="greyBtn">Change Search</a></td> ) ++
-              ( offset > 0 |* <td><button id="rPrev" class="greyBtn">Prev</button></td> ) ++
-              <td><button id="rNext" class="greyBtn">Next</button></td> ++
-              ( query.grouping != null |* <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
+              ( offset > 0                  |* <td><button id="rPrev" class="greyBtn">Prev</button></td> ) ++
+              ( hasNext                     |* <td><button id="rNext" class="greyBtn">Next</button></td> ) ++
+              ( query.grouping != null      |* <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
             { query.extraActions } 
            </tr>
           </table>
