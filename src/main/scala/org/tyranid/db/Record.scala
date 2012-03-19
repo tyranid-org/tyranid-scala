@@ -168,6 +168,8 @@ trait Record extends Valid with BsonObject {
    * Record/Object/Document/Tuple
    */
   def /( va:ViewAttribute )   = apply( va ).asInstanceOf[Record]
+
+  override def oid = id.as[ObjectId]
   
   /**
    * BSON ObjectId
