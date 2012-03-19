@@ -17,6 +17,8 @@
 
 package org.tyranid.db.es
 
+import java.util.Date
+
 import com.mongodb.DBObject
 
 import akka.actor.Actor
@@ -109,6 +111,7 @@ object Es {
         case crec:Record  => enter( crec )
         case dbo:DBObject => enter( rec.rec( va ) )
         case v:Number     => sb ++= v.toString
+        case t:Date       => sb ++= t.getTime.toString
         case v            => sb ++= ( '"' + v.toString.encJson + '"' )
         }
       }
@@ -131,15 +134,10 @@ object Es {
 
       e match {
       case e:MongoEntity =>
-spam( "checking " + e.dbName )
         val v = e.makeView
-        if ( hasSearchData( v ) ) {
-spam( "  hasSearch data, indexing elements" )
-          val cursor = e.db.find()
-
-          for ( obj <- cursor )
+        if ( hasSearchData( v ) )
+          for ( obj <- e.db.find() )
             index( e.make( obj ) )
-        }
 
       case _ =>
       }
