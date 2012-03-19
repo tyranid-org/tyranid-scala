@@ -52,7 +52,8 @@ object ZipCode extends MongoEntity( tid = "a0Ft" ) {
 
     db.find( Mobj( "StateFIPS" -> 2, "CountyFIPS" -> 20 ), Mobj( "ZipCode" -> 1 ) ).toSeq.map( _.s( 'ZipCode ) )
   }
-  
+
+  db.ensureIndex( Mobj( "StateFIPS" -> 1, "CountyFIPS" -> 1 ) )
   db.ensureIndex( Mobj( "ZipCode" -> 1 ) )
 }
 
