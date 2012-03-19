@@ -190,12 +190,12 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
       "https://graph.facebook.com/oauth/access_token".POST( Map( "client_id" -> apiKey, "client_secret" -> secret, "grant_type" -> "fb_exchange_token", "fb_exchange_token" -> shortLivedAccessToken ) ).
       split( "&" ).map( _.splitFirst( '=' ) )
 
-    params.find( _._1 == "access_token" ) match {
+    params.find( _._1 == "access_token" ).map( _._2 ) match {
     case Some( accessToken ) =>
-      val expires     = System.currentTimeMillis + params.find( _._1 == "expires" ).get._2.toLong * 1000
+      val expires   = System.currentTimeMillis + params.find( _._1 == "expires" ).get._2.toLong * 1000
 
-      val session = t.session
-      val user = session.user
+      val session   = t.session
+      val user      = session.user
 
       user( 'fbid ) = uid
       user( 'fbt )  = accessToken

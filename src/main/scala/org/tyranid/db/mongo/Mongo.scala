@@ -241,7 +241,26 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
 
     newobj
   }
-    
+
+  def validateStructure = {
+    for ( key <- keys ) {
+      apply( key ) match {
+      case null =>
+      case b:java.lang.Boolean =>
+      case i:java.lang.Integer =>
+      case l:java.lang.Long =>
+      case d:java.lang.Double =>
+      case o:com.mongodb.DBObject =>
+      case oid:org.bson.types.ObjectId =>
+      case r:java.util.regex.Pattern =>
+      case t:java.util.Date =>
+      case s:String =>
+      case v =>
+        throw new RuntimeException(
+          "BSON-incompatible value found:  " + key + " = " + v + " (" + v.getClass.getSimpleName + ")" )
+      }
+    }
+  }
 }
 
 case class DBObjectImp( obj:DBObject ) extends DBObjectWrap with DBValue {

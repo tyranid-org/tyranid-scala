@@ -59,7 +59,14 @@ case class MongoEntity( tid:String ) extends Entity {
 
   
   override def save( rec:Record ) = {
-    db.save( rec.asInstanceOf[MongoRecord] )
+    try {
+      db.save( rec.as[MongoRecord] )
+    } catch {
+    case e:IllegalArgumentException =>
+      rec.as[MongoRecord].validateStructure // this should throw a more description exception
+      throw e               // if validate passes, throw the original exception
+    }
+
     super.save( rec ) // call after, so that tid is available
   }
 
