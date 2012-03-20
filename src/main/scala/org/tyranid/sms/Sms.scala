@@ -83,6 +83,12 @@ object Smslet extends Weblet {
         val from = web.s( "msisdn" )
         val msgId = web.s( "messageId" )
         
+        val text = web.s( "text" ) match {
+          case "off" =>
+            //B.User.db.find( Mobj( "mobilePhone" -> from ), Mobj( "_id" -> 1 ) )
+          case "on" =>
+          case _ =>
+        }
         
         log( Log.SMS_In, "m" -> ( "from=" + from + ", msgId=" + msgId + ", text=" + web.s( "text" ) ) )
       }
