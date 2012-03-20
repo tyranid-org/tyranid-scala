@@ -287,11 +287,11 @@ case class TextParamSearchField( name:String, l:String = null, opts:Seq[(String,
   }
 }
         
-case class TextUpperSearchField( name:String, l:String, width:Int ) extends SearchField {
+case class TextUpperSearchField( name:String, l:String, opts:Seq[(String,String)] = Nil ) extends SearchField {
 
   override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
 
-  def ui( report:Report ) = Input( name, report.searchValues.s( name ), "style" -> ( "width:" + width.toString + "px;" ) )
+  def ui( report:Report ) = Input( name, report.searchValues.s( name ), opts:_* )
 
   def extract( web:WebContext, report:Report ) = {
     val v = web.req.s( name )
@@ -301,7 +301,7 @@ case class TextUpperSearchField( name:String, l:String, width:Int ) extends Sear
   }
 }
 
-case class TextUpperSubstSearchField( name:String, l:String, width:Int ) extends SearchField {
+case class TextUpperSubstSearchField( name:String, l:String, opts:Seq[(String,String)] = Nil ) extends SearchField {
 
   override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
 
@@ -309,7 +309,8 @@ case class TextUpperSubstSearchField( name:String, l:String, width:Int ) extends
     Input( name,
            { val regex = report.searchValues.o( name )
              regex != null |* regex.s( $regex )
-           }, "style" -> ( "width:" + width.toString + "px;" ) )
+           },
+           opts:_* )
 
   def extract( web:WebContext, report:Report ) = {
     val v = web.req.s( name )
