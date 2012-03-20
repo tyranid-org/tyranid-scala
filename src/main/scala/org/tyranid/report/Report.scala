@@ -52,10 +52,10 @@ trait Query {
   
   val allFields:Seq[Field]
 
-  val searchFields:Seq[SearchField] = Nil
+  val searchFields:Seq[Field] = Nil
 
   lazy val searchFieldsMap = {  
-    val map  = mutable.Map[String,SearchField]()
+    val map  = mutable.Map[String,Field]()
     for ( sf <- searchFields )
       map( sf.name ) = sf
     map
@@ -171,24 +171,13 @@ trait MongoQuery extends Query {
  */
 
 // TODO:  unify this with org.tyranid.ui.Field
-trait AbstractField {
+trait Field {
   def name:String
 
   lazy val label = name.camelCaseToSpaceUpper
 
   def labelUi = <label for={ name }>{ label }</label>
-}
 
-trait SearchField extends AbstractField {
-  val parameter:Boolean = false
-
-  def prepareSearch( run:Run, search:DBObject, value:Any ) = search( name ) = value
-
-  def ui( report:Report ):NodeSeq
-  def extract( web:WebContext, report:Report ):Unit
-}
-
-trait Field extends AbstractField {
   def section = "Standard"
 
   def header( run:Run ) = <th id={ name } class={ if ( run.report.selectedColumns( name ) ) "colh hi" else "colh" } style={ headerStyle }><div><span>{ headerCell }</span></div></th>
@@ -216,6 +205,14 @@ trait Field extends AbstractField {
     else
       Nil
   }
+
+  val parameter:Boolean = false
+
+  def prepareSearch( run:Run, search:DBObject, value:Any ) = search( name ) = value
+
+  // TODO:  rename to searchUi/searchExtract
+  def ui( report:Report ):NodeSeq                   = throw new UnsupportedOperationException
+  def extract( web:WebContext, report:Report ):Unit = throw new UnsupportedOperationException
 }
 
 case class PathField( sec:String, path:Path, l:String = null, cellCls:String = null, displayExists:Boolean ) extends Field {
@@ -235,35 +232,41 @@ case class PathField( sec:String, path:Path, l:String = null, cellCls:String = n
   }
 }
 
-case class BoolSearchField( name:String, l:String = null ) extends SearchField {
+case class BoolSearchField( name:String, l:String = null ) extends Field {
+
+  def cell( run:Run, rec:Record ):NodeSeq = throw new UnsupportedOperationException
 
   override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
 
-  def ui( report:Report ) = Checkbox( name, report.searchValues.b( name ) ) ++ labelUi
+  override def ui( report:Report ) = Checkbox( name, report.searchValues.b( name ) ) ++ labelUi
 
-  def extract( web:WebContext, report:Report ) =
+  override def extract( web:WebContext, report:Report ) =
     if ( web.req.b( name ) ) report.searchValues( name ) = true
     else                     report.searchValues.remove( name )
 }
 
-case class BoolExistsSearchField( name:String, l:String = null ) extends SearchField {
+case class BoolExistsSearchField( name:String, l:String = null ) extends Field {
+
+  def cell( run:Run, rec:Record ):NodeSeq = throw new UnsupportedOperationException
 
   override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
 
-  def ui( report:Report ) = Checkbox( name, report.searchValues.s( name ).notBlank ) ++ labelUi
+  override def ui( report:Report ) = Checkbox( name, report.searchValues.s( name ).notBlank ) ++ labelUi
 
-  def extract( web:WebContext, report:Report ) =
+  override def extract( web:WebContext, report:Report ) =
     if ( web.req.b( name ) ) report.searchValues( name ) = Mobj( $gt -> "" )
     else                     report.searchValues.remove( name )
 }
 
-case class TextSearchField( name:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends SearchField {
+case class TextSearchField( name:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends Field {
+
+  def cell( run:Run, rec:Record ):NodeSeq = throw new UnsupportedOperationException
 
   override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
 
-  def ui( report:Report ) = Input( name, report.searchValues.s( name ), opts:_* )
+  override def ui( report:Report ) = Input( name, report.searchValues.s( name ), opts:_* )
 
-  def extract( web:WebContext, report:Report ) = {
+  override def extract( web:WebContext, report:Report ) = {
     val v = web.req.s( name )
 
     if ( v.notBlank ) report.searchValues( name ) = v
@@ -271,15 +274,17 @@ case class TextSearchField( name:String, l:String = null, opts:Seq[(String,Strin
   }
 }
 
-case class TextParamSearchField( name:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends SearchField {
+case class TextParamSearchField( name:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends Field {
+
+  def cell( run:Run, rec:Record ):NodeSeq = throw new UnsupportedOperationException
 
   override val parameter = true
         
   override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
 
-  def ui( report:Report ) = Input( name, report.searchValues.s( name ), opts:_* )
+  override def ui( report:Report ) = Input( name, report.searchValues.s( name ), opts:_* )
 
-  def extract( web:WebContext, report:Report ) = {
+  override def extract( web:WebContext, report:Report ) = {
     val v = web.req.s( name )
 
     if ( v.notBlank ) report.searchValues( name ) = v
@@ -287,13 +292,15 @@ case class TextParamSearchField( name:String, l:String = null, opts:Seq[(String,
   }
 }
         
-case class TextUpperSearchField( name:String, l:String, opts:Seq[(String,String)] = Nil ) extends SearchField {
+case class TextUpperSearchField( name:String, l:String, opts:Seq[(String,String)] = Nil ) extends Field {
+
+  def cell( run:Run, rec:Record ):NodeSeq = throw new UnsupportedOperationException
 
   override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
 
-  def ui( report:Report ) = Input( name, report.searchValues.s( name ), opts:_* )
+  override def ui( report:Report ) = Input( name, report.searchValues.s( name ), opts:_* )
 
-  def extract( web:WebContext, report:Report ) = {
+  override def extract( web:WebContext, report:Report ) = {
     val v = web.req.s( name )
 
     if ( v.notBlank ) report.searchValues( name ) = v.toUpperCase
@@ -301,18 +308,20 @@ case class TextUpperSearchField( name:String, l:String, opts:Seq[(String,String)
   }
 }
 
-case class TextUpperSubstSearchField( name:String, l:String, opts:Seq[(String,String)] = Nil ) extends SearchField {
+case class TextUpperSubstSearchField( name:String, l:String, opts:Seq[(String,String)] = Nil ) extends Field {
+
+  def cell( run:Run, rec:Record ):NodeSeq = throw new UnsupportedOperationException
 
   override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
 
-  def ui( report:Report ) =
+  override def ui( report:Report ) =
     Input( name,
            { val regex = report.searchValues.o( name )
              regex != null |* regex.s( $regex )
            },
            opts:_* )
 
-  def extract( web:WebContext, report:Report ) = {
+  override def extract( web:WebContext, report:Report ) = {
     val v = web.req.s( name )
 
     if ( v.notBlank ) report.searchValues( name ) = Mobj( $regex -> v.toUpperCase )
@@ -320,11 +329,13 @@ case class TextUpperSubstSearchField( name:String, l:String, opts:Seq[(String,St
   }
 }
 
-case class IntGteSearchField( name:String, l:String = null ) extends SearchField {
+case class IntGteSearchField( name:String, l:String = null ) extends Field {
+
+  def cell( run:Run, rec:Record ):NodeSeq = throw new UnsupportedOperationException
 
   override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
 
-  def ui( report:Report ) =
+  override def ui( report:Report ) =
     Input( name,
            { val o = report.searchValues.o( name )
 
@@ -332,7 +343,7 @@ case class IntGteSearchField( name:String, l:String = null ) extends SearchField
              else             o.i( $gte ).toString },
            "style" -> "width:80px;" )
 
-  def extract( web:WebContext, report:Report ) = {
+  override def extract( web:WebContext, report:Report ) = {
     val i = web.req.i( name )
 
     if ( i == 0 ) report.searchValues.remove( name )
