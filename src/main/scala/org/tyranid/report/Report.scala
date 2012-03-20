@@ -156,14 +156,12 @@ trait MongoQuery extends Query {
     rows.take( run.report.pageSize )
   }
 
-  def date( path:String, sec:String = "Standard", label:String = null )        = DateField( sec, view.path( path ), l = label )
-  def dateTime( path:String, sec:String = "Standard", label:String = null )    = DateTimeField( sec, view.path( path ), l = label )
-  def boolean( path:String, sec:String = "Standard", label:String = null )     = BooleanField( sec, view.path( path ), l = label )
-  def exists( path:String, sec:String = "Standard", label:String = null )      = ExistsField( sec, view.path( path ), l = label )
-  def string( path:String, sec:String = "Standard", label:String = null, cellClass:String = null ) = StringField( sec, view.path( path ), l = label, cellCls = cellClass )
-  def multistring( path:String, sec:String = "Standard", label:String = null ) = MultilineStringField( sec, view.path( path ), l = label )
-  def link( path:String, sec:String = "Standard", label:String = null )        = LinkField( sec, view.path( path ), l = label )
-  def thumbnail( path:String, sec:String = "Standard", label:String = null )   = ThumbnailField( sec, view.path( path ), l = label )
+  def path( path:String,
+            sec:String = "Standard",
+            label:String = null,
+            cellClass:String = null,
+            displayExists:Boolean = false ) =
+    PathField( sec, view.path( path ), l = label, cellCls = cellClass, displayExists = displayExists )
 }
 
 
@@ -172,6 +170,7 @@ trait MongoQuery extends Query {
  * * *   F i e l d s
  */
 
+// TODO:  unify this with org.tyranid.ui.Field
 trait AbstractField {
   def name:String
 
@@ -199,6 +198,8 @@ trait Field extends AbstractField {
   def cellClass:String = null
   def cell( run:Run, rec:Record ):NodeSeq
 
+  def effCell( run:Run, rec:Record ) = cell( run, rec )
+
   def textSearchKeys = Seq( name )
 
   def textSearch( run:Run ):Seq[DBObject] = {
@@ -214,6 +215,23 @@ trait Field extends AbstractField {
       textSearchKeys.map( name => Mobj( name -> searchValue.toPatternI ) )
     else
       Nil
+  }
+}
+
+case class PathField( sec:String, path:Path, l:String = null, cellCls:String = null, displayExists:Boolean ) extends Field {
+  def name = path.name_
+
+  override def section = sec
+  override def cellClass = cellCls
+
+  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
+  def cell( run:Run, r:Record ) = path.leaf.domain.cell( this, r )
+
+  override def effCell( run:Run, rec:Record ) = {
+    if ( displayExists )
+      path.s( rec ).notBlank |* Glyph.Checkmark
+    else
+      cell( run, rec )
   }
 }
 
@@ -320,94 +338,6 @@ case class IntGteSearchField( name:String, l:String = null ) extends SearchField
     else          report.searchValues( name ) = Mobj( $gte -> i )
   }
 }
-
-trait PathField extends Field {
-  val path:Path
-
-  def name = path.name_
-}
-
-// TODO:  merge this functionality with Domain
-case class StringField( sec:String, path:Path, l:String = null, cellCls:String = null ) extends PathField {
-
-  override def section = sec
-  override def cellClass = cellCls
-
-  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
-  def cell( run:Run, r:Record ) = Text( path s r )
-}
-
-case class MultilineStringField( sec:String, path:Path, l:String = null ) extends PathField {
-
-  override def section = sec
-
-  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
-  def cell( run:Run, r:Record ) = Unparsed( path.s( r ).replace( "\n", "<br/>" ) )
-}
-
-case class BooleanField( sec:String, path:Path, l:String = null ) extends PathField {
-
-  override def section = sec
-
-  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
-  def cell( run:Run, r:Record ) = path.b( r ) |* Glyph.Checkmark
-}
-
-case class ExistsField( sec:String, path:Path, l:String = null ) extends PathField {
-
-  override def section = sec
-
-  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
-  def cell( run:Run, r:Record ) = path.s( r ).notBlank |* Glyph.Checkmark
-}
-
-case class DateField( sec:String, path:Path, l:String = null ) extends PathField {
-
-  override def section = sec
-
-  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
-  def cell( run:Run, r:Record ) = {
-    val date = path.t( r )
-    Text( if ( date != null ) date.toDateStr else "" )
-  }
-}
-
-case class DateTimeField( sec:String, path:Path, l:String = null ) extends PathField {
-
-  override def section = sec
-
-  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
-  def cell( run:Run, r:Record ) = {
-    val date = path.t( r )
-    Unparsed( "<nobr>" + ( if ( date != null ) date.toDateTimeStr else "" ) + "</nobr>" )
-  }
-}
-
-case class LinkField( sec:String, path:Path, l:String = null ) extends PathField {
-
-  override def section = sec
-
-  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
-  def cell( run:Run, r:Record ) = {
-    val base = path.s( r )
-
-    try {
-      <a href={ base.toUrl.toString }>{ base }</a>
-    } catch {
-    case e:Exception =>
-      Text( base )
-    }
-  }
-}
-
-case class ThumbnailField( sec:String, path:Path, l:String = null ) extends PathField {
-
-  override def section = sec
-
-  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
-  def cell( run:Run, r:Record ) = <img src={ path s r } style="width:50px; height:50px;"/>
-}
-
 
 
 /*
@@ -592,7 +522,7 @@ case class Report( query:Query ) {
       <td style="width:410px; padding:0;">
       </td>
       <td>
-      { if ( false )// !B.PRODUCTION )
+      { if ( !B.PRODUCTION )
        <table class="tile" style="width:226px; height:54px;">
         <tr>
          <td id="searchTitle" class="label">{ searchTitle }</td>
@@ -697,9 +627,9 @@ case class Run( report:Report ) {
         val cls = f.cellClass
 
         if ( cls != null )
-          <td class={ cls }>{ f.cell( this, rec ) }</td>
+          <td class={ cls }>{ f.effCell( this, rec ) }</td>
         else
-          <td>{ f.cell( this, rec ) }</td>
+          <td>{ f.effCell( this, rec ) }</td>
       }
      }
     </tr>

@@ -50,6 +50,8 @@ case class ViewAttribute( val view:View,
 
   def toView = View.from( att.domain )
 
+  def domain = att.domain
+
 
   /*
    * * *   Path

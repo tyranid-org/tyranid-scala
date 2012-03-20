@@ -28,14 +28,28 @@ import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.{ Domain, Record, Scope }
 import org.tyranid.io.DbFile
+import org.tyranid.report.PathField
 import org.tyranid.ui.Field
 
-object DbImage {
 
-  def apply( bucketPrefix:String ):DbImage = new DbImage( B.s3Buckets( bucketPrefix ) )
+class DbImageish( bucket:S3Bucket ) extends DbFile( bucket )
+
+object DbImage {
+  def apply( bucketPrefix:String ) = new DbImage( B.s3Buckets( bucketPrefix ) )
 }
 
-class DbImage( bucket:S3Bucket ) extends DbFile( bucket ) {
+case class DbImage( bucket:S3Bucket ) extends DbImageish( bucket ) {
+}
+
+
+object DbThumbnail {
+  def apply( bucketPrefix:String ) = new DbThumbnail( B.s3Buckets( bucketPrefix ) )
+}
+
+case class DbThumbnail( bucket:S3Bucket ) extends DbImageish( bucket ) {
+
+  override def cell( pf:PathField, r:Record ) =
+    <img src={ pf.path s r } style="width:50px; height:50px;"/>
 }
 
 object Image {

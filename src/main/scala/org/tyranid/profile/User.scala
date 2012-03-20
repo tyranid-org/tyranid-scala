@@ -27,7 +27,7 @@ import org.tyranid.Imp._
 import org.tyranid.db.{ DbBoolean, DbChar, DbDouble, DbEmail, DbLink, DbLong, DbPassword, DbPhone, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
-import org.tyranid.image.DbImage
+import org.tyranid.image.DbThumbnail
 import org.tyranid.locale.{ Country, Language }
 import org.tyranid.secure.DbReCaptcha
 import org.tyranid.session.{ Session, ThreadData }
@@ -39,7 +39,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "email"          is DbEmail             is 'label is 'required;
   "password"       is DbPassword          is 'required;
   "password2"      is DbPassword          is 'required is 'temporary as "Repeat Password";
-  "thumbnail"      is DbImage( "public" ) as "Profile Image";
+  "thumbnail"      is DbThumbnail( "public" ) as "Profile Image";
 
   "tzOff"          is DbDouble            ; // timezone offset in hours ... i.e. -6
   "gender"         is DbLink(Gender)      ;

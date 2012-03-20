@@ -19,13 +19,14 @@ package org.tyranid.db
 
 import java.util.Date
 
-import scala.xml.{ NodeSeq, Unparsed }
+import scala.xml.{ NodeSeq, Text, Unparsed }
 
 import org.tyranid.Imp._
 import org.tyranid.logic.{ Valid, Invalid }
 import org.tyranid.math.Base64
+import org.tyranid.report.PathField
 import org.tyranid.time.{ Time }
-import org.tyranid.ui.Field
+import org.tyranid.ui.{ Field, Glyph }
 
 
 /*
@@ -79,6 +80,8 @@ trait Domain extends Valid {
    * These are the class(es) that should be added to the input container.
    */
   def inputcClasses = ""
+
+  def cell( pf:PathField, r:Record ):NodeSeq = Text( pf.path s r )
 }
 
 
@@ -172,12 +175,24 @@ case class DbLargeChar( len:Int ) extends LimitedText {
 	}
 	
   override def inputcClasses = "large"
+}
 
+case object DbParagraph extends LimitedText {
+  val len = 8192
+	val sqlName = "CHAR(" + len + ")"
+	
+  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq = {
+    val ta = Field.textArea( s, f, s.rec.s( f.va.name ), opts:_* )
     
-//    SHtml.ajaxTextarea( s.rec s f.va.name, v => { 
-//      if ( s.rec( f.va.name ) != v ) {
-//        s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) 
-//      } }, opts.map( ElemAttr.pairToBasic ):_* )
+    if ( f.focus )
+      throw new RuntimeException( "TODO:  handle focus on load" )
+    else 
+      ta
+	}
+	
+  override def inputcClasses = "large"
+
+  override def cell( pf:PathField, r:Record ):NodeSeq = Unparsed( pf.path.s( r ).replace( "\n", "<br/>" ) )
 }
 
 case class DbVarChar( len:Int ) extends LimitedText {
@@ -208,7 +223,19 @@ object DbPassword extends DbVarChar( 64 ) {
     super.validations
 }
 
-object DbUrl extends DbVarChar( 256 )
+object DbUrl extends DbVarChar( 256 ) {
+
+  override def cell( pf:PathField, r:Record ):NodeSeq = {
+    val base = pf.path.s( r )
+
+    try {
+      <a href={ base.toUrl.toString }>{ base }</a>
+    } catch {
+    case e:Exception =>
+      Text( base )
+    }
+  }
+}
 
 object DbEmail extends DbVarChar( 128 ) {
 
@@ -221,6 +248,7 @@ object DbEmail extends DbVarChar( 128 ) {
 object DbPhone extends DbChar( 14 ) {
   override def inputcClasses = " phone"
 }
+
 
 /*
  * * *   Binary
@@ -243,6 +271,8 @@ object DbBoolean extends Domain {
   }
 
   override def inputcClasses = " checkbox"
+
+  override def cell( pf:PathField, r:Record ) = pf.path.b( r ) |* Glyph.Checkmark
 }
 
 
@@ -288,6 +318,11 @@ trait DbDateLike extends Domain {
   override def extract( s:Scope, f:Field ) {
     s.rec( f.va.name ) = T.web.req.s( f.id ).toLaxDate
   }
+
+  override def cell( pf:PathField, r:Record ):NodeSeq = {
+    val date = pf.path.t( r )
+    Text( if ( date != null ) date.toDateStr else "" )
+  }
 }
 
 object DbDate extends DbDateLike
@@ -307,6 +342,11 @@ object DbDateTime extends DbDateLike {
 
   override def extract( s:Scope, f:Field ) {
     s.rec( f.va.name ) = T.web.req.s( f.id ).toLaxDateTime
+  }
+
+  override def cell( pf:PathField, r:Record ):NodeSeq = {
+    val date = pf.path.t( r )
+    Unparsed( "<nobr>" + ( if ( date != null ) date.toDateTimeStr else "" ) + "</nobr>" )
   }
 }
 

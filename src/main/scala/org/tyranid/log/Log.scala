@@ -24,7 +24,7 @@ import javax.servlet.http.HttpSession
 import scala.xml.{ Text, Unparsed }
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbDateTime, DbInt, Record, DbLong }
+import org.tyranid.db.{ DbChar, DbDateTime, DbInt, DbParagraph, Record, DbLong }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
 import org.tyranid.email.AWSEmail
@@ -61,10 +61,10 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
   "id"                  is DbMongoId      is 'key;
   "e"                   is DbInt          as "Event";
   "on"                  is DbDateTime     ;
-  "m"                   is DbChar(1024)   as "Message";
+  "m"                   is DbParagraph    as "Message";
   "du"                  is DbLong         as "Duration in MS";
   "ct"                  is DbInt          as "Count";
-  "ex"                  is DbChar(1024)   as "Stack Trace";
+  "ex"                  is DbParagraph    as "Stack Trace";
   "sid"                 is DbChar(64)     as "Session";
   "uid"                 is DbMongoId      as "User";
   "ua"                  is DbChar(256)    as "User Agent";
@@ -209,8 +209,8 @@ object LogQuery extends MongoQuery {
       override lazy val label = "Event"
       def cell( run:Run, r:Record ) = Unparsed( Log.Events( r.i( 'e ) ) )
     },
-    dateTime( "on" ),
-    string( "sid" ),
+    path( "on" ),
+    path( "sid" ),
     new Field {
       def name = "uid"
       override lazy val label = "User"
@@ -221,7 +221,7 @@ object LogQuery extends MongoQuery {
         }
       }
     },
-    multistring( "m" ),
+    path( "m" ),
     new Field {
       def name = "ua"
       override lazy val label = "User Agent"
@@ -236,8 +236,8 @@ object LogQuery extends MongoQuery {
           } )
       }
     },
-    string( "ip" ),
-    multistring( "ex" ),
+    path( "ip" ),
+    path( "ex" ),
     new Field {
       def name = "ct"
       override lazy val label = "Count"
