@@ -123,8 +123,15 @@ class StringImp( s:String ) {
 
   def toUrl = new java.net.URL( Uri.completeUri( s ) )
 
+  def toSmsMask:String = {
+    if ( s.length() == 11 )
+      "(" + s.slice(1,3) + ") " + s.slice( 4, 6 ) + "-" + s.slice( 7, 9 ) 
+    
+    null
+  }
+
   def toSmsPhone:String = {
-    if ( s != null && s.length() == 10 ) // (999) 999-9999
+    if ( s != null && s.length() == 14 ) // (999) 999-9999
       "1" + s.replace( "(", "" ).replace( " ", "" ).replace( "-", "" ).replace( ")", "" )
      
     return null

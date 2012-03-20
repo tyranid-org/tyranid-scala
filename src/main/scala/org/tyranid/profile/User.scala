@@ -55,7 +55,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
 
   "mobilePhone"    is DbPhone             ;
   "smsOk"          is DbBoolean           as "SMS Verified";
-  "smsOn"          is DbBoolean           as "SMS Notification";
+  "smsOn"          is DbBoolean           as "SMS Notifications";
   
   "org"            is DbLink(B.Org)       ;
 

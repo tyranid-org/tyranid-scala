@@ -236,13 +236,16 @@ object DbBoolean extends Domain {
 	val sqlName = "CHAR(1)"
 	  
   override def ui( s:Scope, f:Field, opts:(String,String)* ) =
-    Field.checkbox( s, f, s.rec.b( f.va.name ), opts:_* )
+    if ( f.uiStyle == Field.UI_STYLE_TOGGLE )
+      Field.toggleLink( s, f, s.rec.b( f.va.name ), opts:_* )
+    else
+      Field.checkbox( s, f, s.rec.b( f.va.name ), opts:_* )
     
   override def extract( s:Scope, f:Field ) {
     s.rec( f.va.name ) = T.web.req.b( f.id )
   }
 
-  override def inputcClasses = " checkbox"
+  override def inputcClasses = " boolean"
 }
 
 
