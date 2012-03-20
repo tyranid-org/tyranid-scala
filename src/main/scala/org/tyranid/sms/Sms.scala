@@ -20,8 +20,9 @@ package org.tyranid.sms
 import com.nexmo.messaging.sdk.{ NexmoSmsClient, SmsSubmissionResult }
 import com.nexmo.messaging.sdk.messages.TextMessage
 
+import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
 import org.tyranid.Imp._
-//import org.tyranid.Log._
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
 
 object SMS {
@@ -83,14 +84,23 @@ object Smslet extends Weblet {
         val from = web.s( "msisdn" )
         val msgId = web.s( "messageId" )
         
-        val text = web.s( "text" ) match {
+        val text = web.s( "text" )
+        
+        text.toLowerCase match {
           case "off" =>
-            //B.User.db.find( Mobj( "mobilePhone" -> from ), Mobj( "_id" -> 1 ) )
+            val users = B.User.db.find( Mobj( "mobilePhone" -> from ), Mobj( "smsOn" -> 1 ) )
+            
+            for ( u <- users ) if ( u.b( 'smsOn ) )
+              B.User.db.update( Mobj( "_id" -> u.id ), Mobj( $set -> Mobj( "smsOn" -> false ) ) )
           case "on" =>
+            val users = B.User.db.find( Mobj( "mobilePhone" -> from ), Mobj( "smsOn" -> 1 ) )
+            
+            for ( u <- users ) if ( !u.b( 'smsOn ) )
+              B.User.db.update( Mobj( "_id" -> u.id ), Mobj( $set -> Mobj( "smsOn" -> true ) ) )
           case _ =>
         }
         
-        log( Log.SMS_In, "m" -> ( "from=" + from + ", msgId=" + msgId + ", text=" + web.s( "text" ) ) )
+        log( Log.SMS_In, "m" -> ( "from=" + from + ", msgId=" + msgId + ", text=" + text ) )
       }
     }
   }
