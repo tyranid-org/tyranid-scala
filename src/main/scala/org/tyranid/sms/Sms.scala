@@ -20,6 +20,10 @@ package org.tyranid.sms
 import com.nexmo.messaging.sdk.{ NexmoSmsClient, SmsSubmissionResult }
 import com.nexmo.messaging.sdk.messages.TextMessage
 
+import org.tyranid.Imp._
+//import org.tyranid.Log._
+import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
+
 object SMS {
   var enabled = false
 }
@@ -63,6 +67,24 @@ case class NexmoApp( apiKey:String, secret:String, defaultFrom:String ) {
           println( "Remaining-Balance [ " + result.getRemainingBalance() + " ] ..." )
           
         num += 1
+      }
+    }
+  }
+}
+
+object Smslet extends Weblet {
+
+  def handle(web: WebContext) {
+    val sess = T.session
+    
+    rpath match {
+    case "/" =>
+      if ( web.s( "type" ) == "text" ) {
+        val from = web.s( "msisdn" )
+        val msgId = web.s( "messageId" )
+        
+        
+        log( Log.SMS_In, "m" -> ( "from=" + from + ", msgId=" + msgId + ", text=" + web.s( "text" ) ) )
       }
     }
   }
