@@ -62,18 +62,18 @@ object Input {
     sb ++= "<input value=\"" ++= ( if ( value == null ) "" else value ) ++= "\""
 
     var typ = "text"
-    var readonly = false
 
     for ( opt <- opts )
       opt match {
       case ( "class", v ) => sb ++= " class=\"" ++= v += '"'
       case ( "style", v ) => sb ++= " style=\"" ++= v += '"'
       case ( "type",  v ) => typ = v
-      case ( "readonly", v ) => readonly = v.as[String].toLaxBoolean
+      case ( "readonly", v ) => sb ++= " readonly=\"readonly\""
+      case ( "placeholder", v ) => sb ++= " placeholder=\"" ++= v += '"'
       case ( n,       v ) => throw new RuntimeException( "Unknown field option " + n + " = " + v )
       }
 
-    sb ++= " name=\"" + name + "\" id=\"" + name + "\"" + ( readonly |* " readonly=\"readonly\"" ) + " type=\"" ++= typ ++= "\"/>"
+    sb ++= " name=\"" + name + "\" id=\"" + name + "\"" + " type=\"" ++= typ ++= "\"/>"
 
     Unparsed( sb.toString )
   }
