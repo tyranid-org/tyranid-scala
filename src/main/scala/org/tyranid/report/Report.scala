@@ -208,6 +208,17 @@ trait Field {
 
   val parameter:Boolean = false
 
+  val searchOperation:String = { /*
+    "equals",      // boolean, string
+    "exists",      // Mobj( $gt -> "" )
+
+    // TODO:  add DbUpperChar types and use that to factor out the upper from below ("upper" goes away, "upperSubst" goes to "subst")
+    "upper",       // value = v.toUpperCase
+    "upperSubst",  // Mobj( $regex -> v.toUpperCase )
+    "gte"          // Mobj( $gte -> v )      
+    "custom",      // parameter = true
+  */ "" }
+
   def prepareSearch( run:Run, search:DBObject, value:Any ) = search( name ) = value
 
   // TODO:  rename to searchUi/searchExtract
