@@ -103,6 +103,49 @@ trait Field {
 
   def cellClass:String = null
   def cell( run:Run, rec:Record ):NodeSeq
+
+
+  //  this ... ?
+
+  val searchType = "text"
+  val dbName:String = name
+
+  //  or this ... ?
+
+  def search( run:Run, rec:Record ) {
+
+    /*
+
+        use the searchType+dbName to figure out how to map the text field search string into the search (or parameters) object
+
+        need to apply to the final temporary search object since we don't want this persisted in the search field
+
+
+        1.  change searchProps to be a map of String -> SearchField
+
+        case class SearchField( name:String, typ:String )
+
+        2.  merge search + parameters into a single:  val parameters = mutable.Map[String,Any]
+
+        3.  build default prepareSearch() that does:
+
+            a.  creates a new search object from scratch
+
+            b.  iterates over all searchProps, grabs their values from parameters and populates the search object
+
+            c.  cycles through all of the selected columns and call this search() method to fill in the search object()
+
+
+  val search        = Mobj()
+  val searchProps   = mutable.Map[String,String]()
+  val parameters    = Mobj()
+
+
+
+
+
+     */
+  }
 }
 
 trait PathField extends Field {
@@ -251,12 +294,10 @@ case class Report( query:Query ) {
 
   @volatile var name:String = _
 
-  // TODO:  make this database-agnostic
   val search        = Mobj()
   val searchProps   = mutable.Map[String,String]()
-
-
   val parameters    = Mobj()
+
   @volatile var sort:DBObject = null
   @volatile var offset:Int = 0
   @volatile var hasNext:Boolean = false
