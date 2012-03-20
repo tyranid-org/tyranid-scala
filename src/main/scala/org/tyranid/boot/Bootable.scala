@@ -23,6 +23,8 @@ import scala.xml.NodeSeq
 
 import org.cometd.bayeux.server.BayeuxServer
 
+import com.braintreegateway.BraintreeGateway
+
 import org.tyranid.db.Entity
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
@@ -30,6 +32,7 @@ import org.tyranid.email.EmailTemplate
 import org.tyranid.profile.{ OrgMeta, User, UserMeta }
 import org.tyranid.secure.{ AccessType, Multipass }
 import org.tyranid.session.{ Session, ThreadData }
+import org.tyranid.sms.NexmoApp
 import org.tyranid.social.facebook.FbApp
 import org.tyranid.social.linkedin.LiApp
 import org.tyranid.web.{ Weblet, CometService }
@@ -152,6 +155,9 @@ trait Bootable {
   @volatile var dbPw:String   = ""
   @volatile var dbDriver      = "org.postgresql.Driver"
 
+  // SMS
+  val sms:NexmoApp = null
+
   // Facebook
   val facebook:FbApp = null
 
@@ -164,6 +170,10 @@ trait Bootable {
 
   // Assistly
   val assistly:Multipass = null
+
+  // Braintree
+  @volatile var braintreeGateway:BraintreeGateway = null
+  @volatile var braintreeMerchantId:String = null
 
   // AWS
   import org.tyranid.cloud.aws.S3Bucket
