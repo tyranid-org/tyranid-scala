@@ -206,14 +206,14 @@ object LogQuery extends MongoQuery {
   val allFields = Seq(
     new Field {
       def name = "e"
-      override def label = "Event"
+      override lazy val label = "Event"
       def cell( run:Run, r:Record ) = Unparsed( Log.Events( r.i( 'e ) ) )
     },
     dateTime( "on" ),
     string( "sid" ),
     new Field {
       def name = "uid"
-      override def label = "User"
+      override lazy val label = "User"
       def cell( run:Run, r:Record ) = {
         r.oid( 'uid ) match {
         case null => Unparsed( "" )
@@ -224,7 +224,7 @@ object LogQuery extends MongoQuery {
     multistring( "m" ),
     new Field {
       def name = "ua"
-      override def label = "User Agent"
+      override lazy val label = "User Agent"
       def cell( run:Run, r:Record ) = {
         Text(
           r( 'ua ) match {
@@ -240,12 +240,12 @@ object LogQuery extends MongoQuery {
     multistring( "ex" ),
     new Field {
       def name = "ct"
-      override def label = "Count"
+      override lazy val label = "Count"
       def cell( run:Run, r:Record ) = Unparsed( r.s( 'ct ) )
     },
     new Field {
       def name = "du"
-      override def label = "Duration (ms)"
+      override lazy val label = "Duration (ms)"
       def cell( run:Run, r:Record ) = Unparsed( r.s( 'du ) )
     }
   )

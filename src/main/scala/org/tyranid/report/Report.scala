@@ -52,9 +52,40 @@ trait Query {
   
   val allFields:Seq[Field]
 
+  val searchFields:Seq[SearchField] = Nil
+
+  lazy val searchFieldsMap = {  
+    val map  = mutable.Map[String,SearchField]()
+    for ( sf <- searchFields )
+      map( sf.name ) = sf
+    map
+  }
+
   val defaultFields:Seq[Field]
 
-  def prepareSearch( run:Run ) = run.report.search
+  def prepareSearch( run:Run ) = {
+
+    val rep = run.report
+    val search = Mobj()
+
+    for ( sf <- searchFields;
+          value <- rep.searchValues.get( sf.name ) )
+      sf.prepareSearch( run, search, value )
+
+    val textSearches =
+      rep.selectedColumns.
+        toSeq.
+        flatMap( name => allFields.find( _.name == name ) ).
+        flatMap( _.textSearch( run ) )
+
+    textSearches.size match {
+    case 0 =>
+    case 1 => search.copy( textSearches( 0 ) )
+    case n => search( $or ) = Mlist( textSearches:_* )
+    }
+  
+    search
+  }
 
   def run( run:Run ):Iterable[Record]
 
@@ -91,175 +122,22 @@ trait Query {
   def extraActions: NodeSeq = Text("")
 }
 
-trait Field {
-  def section = "Standard"
-
-  def name:String
-  def label = name.camelCaseToSpaceUpper
-
-  def header( run:Run ) = <th id={ name } class={ if ( run.report.selectedColumns( name ) ) "colh hi" else "colh" } style={ headerStyle }><div><span>{ headerCell }</span></div></th>
-  def headerStyle = ""
-  def headerCell:NodeSeq = Text( label )
-
-  def cellClass:String = null
-  def cell( run:Run, rec:Record ):NodeSeq
-
-
-  //  this ... ?
-
-  val searchType = "text"
-  val dbName:String = name
-
-  //  or this ... ?
-
-  def search( run:Run, rec:Record ) {
-
-    /*
-
-        use the searchType+dbName to figure out how to map the text field search string into the search (or parameters) object
-
-        need to apply to the final temporary search object since we don't want this persisted in the search field
-
-
-        1.  change searchProps to be a map of String -> SearchField
-
-        case class SearchField( name:String, typ:String )
-
-        2.  merge search + parameters into a single:  val parameters = mutable.Map[String,Any]
-
-        3.  build default prepareSearch() that does:
-
-            a.  creates a new search object from scratch
-
-            b.  iterates over all searchProps, grabs their values from parameters and populates the search object
-
-            c.  cycles through all of the selected columns and call this search() method to fill in the search object()
-
-
-  val search        = Mobj()
-  val searchProps   = mutable.Map[String,String]()
-  val parameters    = Mobj()
-
-
-
-
-
-     */
-  }
-}
-
-trait PathField extends Field {
-  val path:Path
-
-  def name = path.name_
-}
-
-// TODO:  merge this functionality with Domain
-case class StringField( sec:String, path:Path, l:String = null, cellCls:String = null ) extends PathField {
-
-  override def section = sec
-  override def cellClass = cellCls
-  override def label = if ( l.notBlank ) l else path.label
-
-  def cell( run:Run, r:Record ) = Text( path s r )
-}
-
-case class MultilineStringField( sec:String, path:Path, l:String = null ) extends PathField {
-
-  override def section = sec
-
-  override def label = if ( l.notBlank ) l else path.label
-
-  def cell( run:Run, r:Record ) = Unparsed( path.s( r ).replace( "\n", "<br/>" ) )
-}
-
-case class BooleanField( sec:String, path:Path, l:String = null ) extends PathField {
-
-  override def section = sec
-
-  override def label = if ( l.notBlank ) l else path.label
-
-  def cell( run:Run, r:Record ) = path.b( r ) |* Glyph.Checkmark
-}
-
-case class ExistsField( sec:String, path:Path, l:String = null ) extends PathField {
-
-  override def section = sec
-
-  override def label = if ( l.notBlank ) l else path.label
-
-  def cell( run:Run, r:Record ) = path.s( r ).notBlank |* Glyph.Checkmark
-}
-
-case class DateField( sec:String, path:Path, l:String = null ) extends PathField {
-
-  override def section = sec
-
-  override def label = if ( l.notBlank ) l else path.label
-
-  def cell( run:Run, r:Record ) = {
-    val date = path.t( r )
-    Text( if ( date != null ) date.toDateStr else "" )
-  }
-}
-
-case class DateTimeField( sec:String, path:Path, l:String = null ) extends PathField {
-
-  override def section = sec
-
-  override def label = if ( l.notBlank ) l else path.label
-
-  def cell( run:Run, r:Record ) = {
-    val date = path.t( r )
-    Unparsed( "<nobr>" + ( if ( date != null ) date.toDateTimeStr else "" ) + "</nobr>" )
-  }
-}
-
-case class LinkField( sec:String, path:Path, l:String = null ) extends PathField {
-
-  override def section = sec
-
-  override def label = if ( l.notBlank ) l else path.label
-
-  def cell( run:Run, r:Record ) = {
-    val base = path.s( r )
-
-    try {
-      <a href={ base.toUrl.toString }>{ base }</a>
-    } catch {
-    case e:Exception =>
-      Text( base )
-    }
-  }
-}
-
-case class ThumbnailField( sec:String, path:Path, l:String = null ) extends PathField {
-
-  override def section = sec
-
-  override def label = if ( l.notBlank ) l else path.label
-
-  def cell( run:Run, r:Record ) = <img src={ path s r } style="width:50px; height:50px;"/>
-}
-
 trait MongoQuery extends Query {
   val entity:MongoEntity
 
   lazy val view = entity.makeView
 
   override def prepareSearch( run:Run ) = {
-    super.prepareSearch( run )
-
     val report = run.report
 
-    if ( grouping != null ) {
-      run.groupFilter match {
-      case Some( gf ) => report.search( "_id" ) = Mobj( $in -> gf.a_?( 'ids ) )
-      case None       => report.search.remove( "_id" )
-      }
-    }
+    val search = super.prepareSearch( run )
 
-    report.search
+    if ( grouping != null )
+      run.groupFilter foreach { gf =>
+        search( "_id" ) = Mobj( $in -> gf.a_?( 'ids ) )
+      }
+
+    search
   }
 
   def run( run:Run ) = {
@@ -282,11 +160,259 @@ trait MongoQuery extends Query {
   def dateTime( path:String, sec:String = "Standard", label:String = null )    = DateTimeField( sec, view.path( path ), l = label )
   def boolean( path:String, sec:String = "Standard", label:String = null )     = BooleanField( sec, view.path( path ), l = label )
   def exists( path:String, sec:String = "Standard", label:String = null )      = ExistsField( sec, view.path( path ), l = label )
-  def string( path:String, sec:String = "Standard", label:String = null, cellClass:String = null )      = StringField( sec, view.path( path ), l = label, cellCls = cellClass )
+  def string( path:String, sec:String = "Standard", label:String = null, cellClass:String = null ) = StringField( sec, view.path( path ), l = label, cellCls = cellClass )
   def multistring( path:String, sec:String = "Standard", label:String = null ) = MultilineStringField( sec, view.path( path ), l = label )
   def link( path:String, sec:String = "Standard", label:String = null )        = LinkField( sec, view.path( path ), l = label )
   def thumbnail( path:String, sec:String = "Standard", label:String = null )   = ThumbnailField( sec, view.path( path ), l = label )
 }
+
+
+
+/*
+ * * *   F i e l d s
+ */
+
+trait AbstractField {
+  def name:String
+
+  lazy val label = name.camelCaseToSpaceUpper
+
+  def labelUi = <label for={ name }>{ label }</label>
+}
+
+trait SearchField extends AbstractField {
+  val parameter:Boolean = false
+
+  def prepareSearch( run:Run, search:DBObject, value:Any ) = search( name ) = value
+
+  def ui( report:Report ):NodeSeq
+  def extract( web:WebContext, report:Report ):Unit
+}
+
+trait Field extends AbstractField {
+  def section = "Standard"
+
+  def header( run:Run ) = <th id={ name } class={ if ( run.report.selectedColumns( name ) ) "colh hi" else "colh" } style={ headerStyle }><div><span>{ headerCell }</span></div></th>
+  def headerStyle = ""
+  def headerCell:NodeSeq = Text( label )
+
+  def cellClass:String = null
+  def cell( run:Run, rec:Record ):NodeSeq
+
+  def textSearchKeys = Seq( name )
+
+  def textSearch( run:Run ):Seq[DBObject] = {
+    val searchValue = run.report.textSearchValue
+
+    // TODO:  if we know the underlying data is all-caps or all-lowercase, we don't need a case-insensitive pattern
+
+    // TODO:  handle lookup codes
+
+    // TODO:  multivalue / calculated fields
+
+    if ( searchValue.notBlank )
+      textSearchKeys.map( name => Mobj( name -> searchValue.toPatternI ) )
+    else
+      Nil
+  }
+}
+
+case class BoolSearchField( name:String, l:String = null ) extends SearchField {
+
+  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
+
+  def ui( report:Report ) = Checkbox( name, report.searchValues.b( name ) ) ++ labelUi
+
+  def extract( web:WebContext, report:Report ) =
+    if ( web.req.b( name ) ) report.searchValues( name ) = true
+    else                     report.searchValues.remove( name )
+}
+
+case class BoolExistsSearchField( name:String, l:String = null ) extends SearchField {
+
+  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
+
+  def ui( report:Report ) = Checkbox( name, report.searchValues.s( name ).notBlank ) ++ labelUi
+
+  def extract( web:WebContext, report:Report ) =
+    if ( web.req.b( name ) ) report.searchValues( name ) = Mobj( $gt -> "" )
+    else                     report.searchValues.remove( name )
+}
+
+case class TextSearchField( name:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends SearchField {
+
+  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
+
+  def ui( report:Report ) = Input( name, report.searchValues.s( name ), opts:_* )
+
+  def extract( web:WebContext, report:Report ) = {
+    val v = web.req.s( name )
+
+    if ( v.notBlank ) report.searchValues( name ) = v
+    else              report.searchValues.remove( name )
+  }
+}
+
+case class TextParamSearchField( name:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends SearchField {
+
+  override val parameter = true
+        
+  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
+
+  def ui( report:Report ) = Input( name, report.searchValues.s( name ), opts:_* )
+
+  def extract( web:WebContext, report:Report ) = {
+    val v = web.req.s( name )
+
+    if ( v.notBlank ) report.searchValues( name ) = v
+    else              report.searchValues.remove( name )
+  }
+}
+        
+case class TextUpperSearchField( name:String, l:String, width:Int ) extends SearchField {
+
+  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
+
+  def ui( report:Report ) = Input( name, report.searchValues.s( name ), "style" -> ( "width:" + width.toString + "px;" ) )
+
+  def extract( web:WebContext, report:Report ) = {
+    val v = web.req.s( name )
+
+    if ( v.notBlank ) report.searchValues( name ) = v.toUpperCase
+    else              report.searchValues.remove( name )
+  }
+}
+
+case class TextUpperSubstSearchField( name:String, l:String, width:Int ) extends SearchField {
+
+  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
+
+  def ui( report:Report ) =
+    Input( name,
+           { val regex = report.searchValues.o( name )
+             regex != null |* regex.s( $regex )
+           }, "style" -> ( "width:" + width.toString + "px;" ) )
+
+  def extract( web:WebContext, report:Report ) = {
+    val v = web.req.s( name )
+
+    if ( v.notBlank ) report.searchValues( name ) = Mobj( $regex -> v.toUpperCase )
+    else              report.searchValues.remove( name )
+  }
+}
+
+case class IntGteSearchField( name:String, l:String = null ) extends SearchField {
+
+  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
+
+  def ui( report:Report ) =
+    Input( name,
+           { val o = report.searchValues.o( name )
+
+             if ( o == null ) ""
+             else             o.i( $gte ).toString },
+           "style" -> "width:80px;" )
+
+  def extract( web:WebContext, report:Report ) = {
+    val i = web.req.i( name )
+
+    if ( i == 0 ) report.searchValues.remove( name )
+    else          report.searchValues( name ) = Mobj( $gte -> i )
+  }
+}
+
+trait PathField extends Field {
+  val path:Path
+
+  def name = path.name_
+}
+
+// TODO:  merge this functionality with Domain
+case class StringField( sec:String, path:Path, l:String = null, cellCls:String = null ) extends PathField {
+
+  override def section = sec
+  override def cellClass = cellCls
+
+  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
+  def cell( run:Run, r:Record ) = Text( path s r )
+}
+
+case class MultilineStringField( sec:String, path:Path, l:String = null ) extends PathField {
+
+  override def section = sec
+
+  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
+  def cell( run:Run, r:Record ) = Unparsed( path.s( r ).replace( "\n", "<br/>" ) )
+}
+
+case class BooleanField( sec:String, path:Path, l:String = null ) extends PathField {
+
+  override def section = sec
+
+  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
+  def cell( run:Run, r:Record ) = path.b( r ) |* Glyph.Checkmark
+}
+
+case class ExistsField( sec:String, path:Path, l:String = null ) extends PathField {
+
+  override def section = sec
+
+  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
+  def cell( run:Run, r:Record ) = path.s( r ).notBlank |* Glyph.Checkmark
+}
+
+case class DateField( sec:String, path:Path, l:String = null ) extends PathField {
+
+  override def section = sec
+
+  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
+  def cell( run:Run, r:Record ) = {
+    val date = path.t( r )
+    Text( if ( date != null ) date.toDateStr else "" )
+  }
+}
+
+case class DateTimeField( sec:String, path:Path, l:String = null ) extends PathField {
+
+  override def section = sec
+
+  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
+  def cell( run:Run, r:Record ) = {
+    val date = path.t( r )
+    Unparsed( "<nobr>" + ( if ( date != null ) date.toDateTimeStr else "" ) + "</nobr>" )
+  }
+}
+
+case class LinkField( sec:String, path:Path, l:String = null ) extends PathField {
+
+  override def section = sec
+
+  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
+  def cell( run:Run, r:Record ) = {
+    val base = path.s( r )
+
+    try {
+      <a href={ base.toUrl.toString }>{ base }</a>
+    } catch {
+    case e:Exception =>
+      Text( base )
+    }
+  }
+}
+
+case class ThumbnailField( sec:String, path:Path, l:String = null ) extends PathField {
+
+  override def section = sec
+
+  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
+  def cell( run:Run, r:Record ) = <img src={ path s r } style="width:50px; height:50px;"/>
+}
+
+
+
+/*
+ * * *  R e p o r t
+ */
 
 case class Report( query:Query ) {
 
@@ -294,9 +420,7 @@ case class Report( query:Query ) {
 
   @volatile var name:String = _
 
-  val search        = Mobj()
-  val searchProps   = mutable.Map[String,String]()
-  val parameters    = Mobj()
+  val searchValues  = mutable.Map[String,Any]()
 
   @volatile var sort:DBObject = null
   @volatile var offset:Int = 0
@@ -332,94 +456,12 @@ case class Report( query:Query ) {
     columns.insert( columns.indexOf( before ), insert )
   }
 
-  def label( title:String, attr:String ) = <label for={ attr }>{ title }</label>
+  def label( name:String ) = query.searchFieldsMap( name ).labelUi
+  def ui( name:String )    = query.searchFieldsMap( name ).ui( this )
 
   def extract = {
-    val r = T.web.req
-
-    for ( n <- searchProps.keys ) {
-      searchProps( n ) match {
-      case "bool" =>
-        if ( r.b( n ) ) search( n ) = true
-        else            search.remove( n )
-
-      case "boolExists" =>
-        if ( r.b( n ) ) search( n ) = Mobj( $gt -> "" )
-        else            search.remove( n )
-
-      case "text" =>
-        val v = r.s( n )
-
-        if ( v.notBlank ) search( n ) = v
-        else              search.remove( n )
-        
-      case "textParam" =>
-        val v = r.s( n )
-
-        if ( v.notBlank ) parameters( n ) = v
-        else              parameters.remove( n )
-        
-      case "textUpper" =>
-        val v = r.s( n )
-
-        if ( v.notBlank ) search( n ) = v.toUpperCase
-        else              search.remove( n )
-        
-      case "textUpperSubst" =>
-        val v = r.s( n )
-        if ( v.notBlank ) search( n ) = Mobj( $regex -> v.toUpperCase )
-        else              search.remove( n )
-
-      case "intGte" =>
-        val i = r.i( n )
-
-        if ( i == 0 ) search.remove( n )
-        else          search( n ) = Mobj( $gte -> i )
-      }
-    }
-  }
-
-  def bool( title:String, attr:String ) = {
-    searchProps( attr ) = "bool"
-    Checkbox( attr, search.b( attr ) ) ++ label( title, attr )
-  }
-
-  def boolExists( title:String, attr:String ) = {
-    searchProps( attr ) = "boolExists"
-    Checkbox( attr, search.s( attr ).notBlank ) ++ label( title, attr )
-  }
-
-  def text( attr:String, opts:(String,String)* ) = {
-    searchProps( attr ) = "text"
-    Input( attr, search.s( attr ), opts:_* )
-  }
-
-  def textParam( attr:String, opts:(String,String)* ) = {
-    searchProps( attr ) = "textParam"
-    Input( attr, parameters.s( attr ), opts:_* )
-  }
-
-  def textUpper( attr:String, width:Int ) = {
-    searchProps( attr ) = "textUpper"
-    Input( attr, search.s( attr ), "style" -> ( "width:" + width.toString + "px;" ) )
-  }
-
-  def textUpperSubst( attr:String, width:Int ) = {
-    searchProps( attr ) = "textUpperSubst"
-    Input( attr,
-           { val regex = search.o( attr )
-             regex != null |* regex.s( $regex )
-           }, "style" -> ( "width:" + width.toString + "px;" ) )
-  }
-
-  def intGte( attr:String ) = {
-    searchProps( attr ) = "intGte"
-    Input( attr,
-           { val o = search.o( attr )
-
-             if ( o == null ) ""
-             else             o.i( $gte ).toString },
-           "style" -> "width:80px;" )
+    val web = T.web
+    query.searchFields.foreach { _.extract( web, this ) }
   }
 
 
@@ -432,6 +474,8 @@ case class Report( query:Query ) {
     else                           Unparsed( "search <span class='hitext'>highlighted</span> fields" )
 
   val sections = "Standard" +: query.allFields.map( _.section ).filter( _ != "Standard" ).sorted.distinct
+
+  var textSearchValue:String = ""
 
 
   /*
@@ -548,16 +592,16 @@ case class Report( query:Query ) {
       <td style="width:410px; padding:0;">
       </td>
       <td>
-      { if ( !B.PRODUCTION )
+      { if ( false )// !B.PRODUCTION )
        <table class="tile" style="width:226px; height:54px;">
         <tr>
          <td id="searchTitle" class="label">{ searchTitle }</td>
         </tr>
         <tr>
          <td>
-          <form method="get" class="searchBox" action="/search/results" onsubmit="this.submit();return false;">
+          <form method="get" id="rTextSearchForm" class="searchBox">
 	         <div>
-            <input type="text" value="" placeholder="Search" class="field"/>
+            <input type="text" value={ textSearchValue } id="rTextSearch" name="rTextSearch" placeholder="Search" class="field"/>
 		        <input type="image" class="btn" name="submit" src="/images/search-btn.png" alt="Go"/>
 	         </div>
           </form>
@@ -680,6 +724,10 @@ object Reportlet extends Weblet {
     /*
      * * *  Navigation
      */
+
+    case "/textSearch" =>
+      report.textSearchValue = web.req.s( 'ts )
+      web.res.html( report.innerDraw )
 
     case "/prev" =>
       report.offset -= report.pageSize
