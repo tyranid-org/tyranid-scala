@@ -24,7 +24,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbBoolean, DbChar, DbDouble, DbEmail, DbLink, DbLong, DbPassword, Record }
+import org.tyranid.db.{ DbBoolean, DbChar, DbDouble, DbEmail, DbLink, DbLong, DbPassword, DbPhone, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.image.DbImage
@@ -53,6 +53,10 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "resetCode"      is DbChar(8)           ;
   "loginToken"     is DbChar(10)          ;
 
+  "mobilePhone"    is DbPhone             ;
+  "smsOk"          is DbBoolean           as "SMS Verified";
+  "smsOn"          is DbBoolean           as "SMS Notification";
+  
   "org"            is DbLink(B.Org)       ;
 
   "liid"           is DbChar(90)          ; // LinkedIn member id if linked

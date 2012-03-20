@@ -123,6 +123,13 @@ class StringImp( s:String ) {
 
   def toUrl = new java.net.URL( Uri.completeUri( s ) )
 
+  def toSmsPhone:String = {
+    if ( s != null && s.length() == 10 ) // (999) 999-9999
+      "1" + s.replace( "(", "" ).replace( " ", "" ).replace( "-", "" ).replace( ")", "" )
+     
+    return null
+  }
+  
   def toHtmlPreserveWhitespace:NodeSeq =
     s.replace( "\n \n", "\n\n" ).split( "\n\n" ).map( para => <p>{ Unparsed( para.replace( "\n", "<br/>" ) ) }</p> ).toSeq
 

@@ -21,7 +21,6 @@ import org.scalatest.FunSuite
 
 import org.tyranid.Imp._
 
-
 class LinkedInSuite extends FunSuite {
   org.tyranid.boot.Boot.boot
 
