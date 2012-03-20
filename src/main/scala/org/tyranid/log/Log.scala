@@ -42,6 +42,8 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
   val Scraper    = 5
   val Import     = 6
   val Facebook   = 7
+  val SMS_Out    = 8
+  val SMS_In     = 9
 
   val Events = Array( 
     "n/a",
@@ -51,7 +53,9 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
     "404",
     "Scraper",
     "Import",
-    "Facebook" )
+    "Facebook",
+    "SMS-Out",
+    "SMS-In" )
 
 
   "id"                  is DbMongoId      is 'key;

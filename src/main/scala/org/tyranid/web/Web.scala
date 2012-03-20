@@ -166,6 +166,13 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   
   def template( template:NodeSeq, status:Int = 200 ) =
     res.html( WebTemplate( template ), status )
+    
+  def s( param:String ):String = req.s( param )
+  def i( param:String ):Int = req.i( param )
+  def l( param:String ):Long = req.l( param )
+  def b( param:String ):Boolean = req.b( param )
+  def oid( param:String ) = req.oid( param  )
+  def a( param:String ):Seq[String] = req.a( param )
 }
 
 trait Weblet {
