@@ -100,7 +100,7 @@ object TextArea {
       case ( n,       v ) => throw new RuntimeException( "Unknown field option " + n + " = " + v )
       }
 
-    sb ++= " name=\"" + name + "\" id=\"" + name + "\"" + ( rows |* " rows=\"" + rows + "\"" ) + ( cols |* " cols=\"" + cols + "\"" ) + ">" ++= ( value |* value ) ++= "</textarea>" 
+    sb ++= " name=\"" ++= name ++= "\" id=\"" ++= name ++= "\"" ++= ( rows |* " rows=\"" + rows + "\"" ) ++= ( cols |* " cols=\"" + cols + "\"" ) ++= ">" ++= ( value |* value ) ++= "</textarea>" 
 
     Unparsed( sb.toString )
   }
@@ -126,9 +126,36 @@ object Checkbox {
     if ( value )
       sb ++= " checked"
 
-    sb ++= " value=\"1\"" ++= " name=\"" + name + "\" id=\"" + name + "\" type=\"" ++= typ ++= "\"/>"
+    sb ++= " value=\"1\"" ++= " name=\"" ++= name ++= "\" id=\"" ++= name ++= "\" type=\"" ++= typ ++= "\"/>"
 
     Unparsed( sb.toString )
+  }
+}
+
+object ToggleLink {
+
+  def apply( name:String, value:Boolean, opts:(String,String)* ) = {
+    var label = value ? "Yes" | "No"
+    val sb = new StringBuilder
+
+    sb ++= "<input type=\"hidden\" name=\"" ++= name ++= "\" id=\"" ++= name ++= "\" value=\"" ++= ( if ( value ) "1" else "0" ) ++= "\"/>" ++= label 
+
+    val linkLabel = new StringBuilder
+    linkLabel ++= " (<a"
+      
+    var cssClass = "toggleLink"
+    var toggleLabel = value ? "No" | "Yes"
+    
+    for ( opt <- opts )
+      opt match {
+      case ( "class", v ) => cssClass = v
+      case ( "style", v ) => linkLabel ++= " style=\"" ++= v += '"'
+      case ( "href", v ) => linkLabel ++= " href=\"" ++= v += '"'
+      case ( "labels", v ) => toggleLabel = v.split( "\\|" )( value ? 1 | 0 )
+      case ( n,       v ) => throw new RuntimeException( "Unknown field option " + n + " = " + v )
+      }
+
+    Unparsed( ( sb ++= ( ( if ( toggleLabel notBlank ) ( linkLabel ++= " class=\"" ++= cssClass += '"' ++= ">" ++= toggleLabel ++= "</a>)" ).toString else "" ).toString ) ).toString ) 
   }
 }
 
@@ -183,9 +210,16 @@ trait UiObj {
 
 
 object Field {
+  val UI_STYLE_DEFAULT = 0
+  val UI_STYLE_TOGGLE = 1
 
   implicit def string2Field( name:String ) = Field( name )
   implicit def symbol2Field( name:Symbol ) = Field( name.name )
+
+  def toggleLink( s:Scope, f:Field, value:Boolean, opts:(String,String)* ):NodeSeq = {
+    val ret = optsMapper( s, f, opts:_* )
+    ToggleLink( ret._1, value, ret._2:_*  )
+  }
 
   def checkbox( s:Scope, f:Field, value:Boolean, opts:(String,String)* ):NodeSeq = {
     val ret = optsMapper( s, f, opts:_* )
@@ -240,7 +274,7 @@ object Field {
 
 case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1,
                   inputOnly:Boolean = false, focus:Boolean = false,
-                  filter:Option[ ( Record ) => Boolean ] = None ) extends UiObj {
+                  filter:Option[ ( Record ) => Boolean ] = None, uiStyle:Int=0 ) extends UiObj {
   
   var id:String = null
 

@@ -32,6 +32,25 @@ object AWSEmail {
 
     AWSEmail.lastSent = System.currentTimeMillis
   }
+  
+  /*
+  val verifyCache = mutable.ArrayBuffer[String]()
+  
+  def verifyEmailAddress( email:String ):Boolean = {
+    val verifiedAddresses = client.listVerifiedEmailAddresses().getVerifiedEmailAddresses()
+    
+    if ( verifiedAddresses.contains( email ) )
+      return true
+    
+    val request = new VerifyEmailAddressRequest()
+    request.setEmailAddress( email )
+    client.verifyEmailAddress( request )
+    
+    return false
+  }
+  */
+  
+  val client = new AmazonSimpleEmailServiceClient( B.awsCredentials )
 }
 
 case class AWSEmail( subject:String, text:String, html:String=null ) extends Email {
@@ -39,6 +58,7 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
   
   @throws(classOf[MessagingException])
   override def compose:Email = {
+    //com.amazonaws.services.simpleemail.
     //if (defaultFrom) 
     //  sender( Configs.getDefaultMailFrom() )
 
@@ -46,7 +66,7 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
       throw new MessagingException( "A from must be set on this email message!" )
     
     request = new SendEmailRequest().withSource( from.getAddress() )
-                
+
     if ( replyTo != null && replyTo != from )  {
       val toAddresses = new java.util.ArrayList[String]()
       toAddresses.add( replyTo.getAddress() )
@@ -106,7 +126,7 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
     AWSEmail.throttle
     
     try {
-      new AmazonSimpleEmailServiceClient( B.awsCredentials ).sendEmail( request )
+      AWSEmail.client.sendEmail( request )
     } catch {
       case e:MessageRejectedException =>
         spam(

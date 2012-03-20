@@ -82,6 +82,9 @@ object Smslet extends Weblet {
     case "/" =>
       if ( web.s( "type" ) == "text" ) {
         val from = web.s( "msisdn" )
+        
+        println( "SMS message from: " + from )
+        
         val msgId = web.s( "messageId" )
         
         val text = web.s( "text" )
