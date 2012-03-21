@@ -28,6 +28,7 @@ import org.tyranid.db.{ DbBoolean, DbChar, DbDouble, DbEmail, DbLink, DbLong, Db
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.image.DbThumbnail
+import org.tyranid.sms.SMS
 import org.tyranid.locale.{ Country, Language }
 import org.tyranid.secure.DbReCaptcha
 import org.tyranid.session.{ Session, ThreadData }
@@ -53,9 +54,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "resetCode"      is DbChar(8)           ;
   "loginToken"     is DbChar(10)          ;
 
-  "mobilePhone"    is DbPhone             ;
-  "smsOk"          is DbBoolean           as "SMS Verified";
-  "smsOn"          is DbBoolean           as "SMS Notifications";
+  "sms"            is DbLink(SMS)         ;
   
   "org"            is DbLink(B.Org)       ;
 

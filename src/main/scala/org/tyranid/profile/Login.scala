@@ -191,7 +191,6 @@ $(document).ready(function() {
     case "/forgot" =>
       val forgotCode = web.req.s("a")
 
-      println( "fc: " +forgotCode );
       if ( forgotCode.isBlank ) {
         val email = web.req.s( "un" ) or sess.user.s( 'email )
 
