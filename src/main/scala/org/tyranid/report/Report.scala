@@ -32,6 +32,37 @@ import org.tyranid.ui.{ Button, Checkbox, Glyph, Input, Select }
 import org.tyranid.web.{ Weblet, WebContext }
 
 
+sealed trait Search {
+  def search( run:Run, f:Field, searchObj:DBObject, value:Any ):Unit
+}
+
+object Search {
+
+  case object Equals extends Search {
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = f.transformValue( value )
+  }
+
+  case object Exists extends Search {
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = Mobj( $gt -> "" )
+  }
+
+  case object Subst  extends Search {
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = {
+      // TODO:  if the underlying domain is not uppercase or lowercase this will not work, we need to do a case-insensitive pattern here if that is the case
+      searchObj( f.name ) = Mobj( $regex -> f.transformValue( value ) )
+    }
+  }
+
+  case object Gte    extends Search {
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = Mobj( $gte -> value )
+  }
+
+  case object Custom extends Search {
+    // nothing to do, this is handled in Query subclasses' prepareSearch()
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = {}
+  }
+}
+
 case class Grouping( entity:MongoEntity, keyName:String, value: () => AnyRef ) {
 
   def list = entity.db.find( Mobj( keyName -> value() ) ).toSeq
@@ -53,7 +84,7 @@ trait Query {
   val allFields:Seq[Field]
   
   lazy val dataFields:Seq[Field]   = allFields.filter( _.data )
-  lazy val searchFields:Seq[Field] = allFields.filter( _.search.notBlank )
+  lazy val searchFields:Seq[Field] = allFields.filter( _.search != null )
 
   lazy val allFieldsMap = {  
     val map = mutable.Map[String,Field]()
@@ -170,7 +201,7 @@ trait MongoQuery extends Query {
             cellClass:String = null,
             displayExists:Boolean = false,
             data:Boolean = true,
-            search:String = null,
+            search:Search = null,
             opts:Seq[(String,String)] = Nil ) =
     PathField( sec, view.path( path, sep = '.' ), l = label, cellCls = cellClass, displayExists = displayExists, data = data, search = search, opts = opts )
 }
@@ -222,21 +253,14 @@ trait Field {
 
 
   val data:Boolean
-  val search:String
+  val search:Search
 
   // subclasses should convert to lowercase or uppercase as indicated by the domain
   def transformValue( value:Any ) = value
 
   def prepareSearch( run:Run, searchObj:DBObject, value:Any ) =
-    search match {
-    case null     =>
-    case "equals" => searchObj( name ) = transformValue( value )
-    case "exists" => searchObj( name ) = Mobj( $gt -> "" )
-    case "subst"  => searchObj( name ) = // TODO:  if the underlying domain is not uppercase or lowercase this will not work, we need to do a case-insensitive pattern here if that is the case
-                                         Mobj( $regex -> transformValue( value ) )
-    case "gte"    => searchObj( name ) = Mobj( $gte -> value )
-    case "custom" => null // nothing to do, this is handled in Query subclasses' prepareSearch()
-    }
+    if ( search != null )
+      search.search( run, this, searchObj, value )
 
   def searchUi( report:Report ):NodeSeq                   = throw new UnsupportedOperationException( "name=" + name )
   def searchExtract( web:WebContext, report:Report ):Unit = throw new UnsupportedOperationException( "name=" + name )
@@ -248,7 +272,7 @@ trait DefaultField extends Field {
   val search = null
 }
 
-case class PathField( sec:String, path:Path, l:String = null, cellCls:String = null, displayExists:Boolean = false, data:Boolean = true, search:String = null, opts:Seq[(String,String)] = Nil ) extends Field {
+case class PathField( sec:String, path:Path, l:String = null, cellCls:String = null, displayExists:Boolean = false, data:Boolean = true, search:Search = null, opts:Seq[(String,String)] = Nil ) extends Field {
   def name = path.name
 
   override def section = sec
@@ -270,9 +294,9 @@ case class PathField( sec:String, path:Path, l:String = null, cellCls:String = n
   override def searchExtract( web:WebContext, report:Report ) = path.leaf.domain.searchExtract( report, this, web )
 }
 
-case class TextParamSearchField( name:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends Field {
+case class CustomTextSearchField( name:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends Field {
 
-  val search = "custom"
+  val search = Search.Custom
   override val data = false
 
   def cell( run:Run, rec:Record ):NodeSeq = throw new UnsupportedOperationException
