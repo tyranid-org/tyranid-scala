@@ -54,7 +54,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "resetCode"      is DbChar(8)           ;
   "loginToken"     is DbChar(10)          ;
 
-  "sms"            is DbLink(SMS)         ;
+  "sms"            is SMS                 ;
   
   "org"            is DbLink(B.Org)       ;
 
