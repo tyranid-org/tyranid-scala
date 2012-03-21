@@ -123,18 +123,24 @@ class StringImp( s:String ) {
 
   def toUrl = new java.net.URL( Uri.completeUri( s ) )
 
-  def toSmsMask:String = {
+  def toPhoneMask:String = {
     if ( s.length() == 11 )
-      "(" + s.slice(1,3) + ") " + s.slice( 4, 6 ) + "-" + s.slice( 7, 9 ) 
+      return "(" + s.slice( 1,4 ) + ") " + s.slice( 4, 7 ) + "-" + s.slice( 7, 11 ) 
     
     null
   }
 
-  def toSmsPhone:String = {
-    if ( s != null && s.length() == 14 ) // (999) 999-9999
-      "1" + s.replace( "(", "" ).replace( " ", "" ).replace( "-", "" ).replace( ")", "" )
+  def onlyNumbers:String = {
+    if ( s == null )
+      return null
      
-    return null
+    val sb = new StringBuilder
+    
+    for ( i <- 0 until s.length )
+      if ( s( i ).isDigit )
+        sb ++= s( i ).toString
+    
+    return sb.toString
   }
   
   def toHtmlPreserveWhitespace:NodeSeq =
