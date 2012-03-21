@@ -208,7 +208,8 @@ trait Field {
 
   val parameter:Boolean = false
 
-  val searchOperation:String = { /*
+  /*
+  val searchOperation:String = {
     "equals",      // boolean, string
     "exists",      // Mobj( $gt -> "" )
 
@@ -217,7 +218,8 @@ trait Field {
     "upperSubst",  // Mobj( $regex -> v.toUpperCase )
     "gte"          // Mobj( $gte -> v )      
     "custom",      // parameter = true
-  */ "" }
+  }
+  */
 
   def prepareSearch( run:Run, search:DBObject, value:Any ) = search( name ) = value
 

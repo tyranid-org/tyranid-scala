@@ -24,7 +24,7 @@ import javax.servlet.http.HttpSession
 import scala.xml.{ Text, Unparsed }
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbDateTime, DbInt, DbParagraph, Record, DbLong }
+import org.tyranid.db.{ DbChar, DbDateTime, DbInt, DbLong, DbText, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
 import org.tyranid.email.AWSEmail
@@ -61,10 +61,10 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
   "id"                  is DbMongoId      is 'key;
   "e"                   is DbInt          as "Event";
   "on"                  is DbDateTime     ;
-  "m"                   is DbParagraph    as "Message";
+  "m"                   is DbText         as "Message";
   "du"                  is DbLong         as "Duration in MS";
   "ct"                  is DbInt          as "Count";
-  "ex"                  is DbParagraph    as "Stack Trace";
+  "ex"                  is DbText         as "Stack Trace";
   "sid"                 is DbChar(64)     as "Session";
   "uid"                 is DbMongoId      as "User";
   "ua"                  is DbChar(256)    as "User Agent";

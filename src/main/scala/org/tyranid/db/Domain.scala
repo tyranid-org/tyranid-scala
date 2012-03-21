@@ -148,6 +148,19 @@ trait DbTextLike extends Domain {
 
 object DbText extends DbTextLike {
 	val sqlName = "TEXT"
+	
+  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq = {
+    val ta = Field.textArea( s, f, s.rec.s( f.va.name ), opts:_* )
+    
+    if ( f.focus )
+      throw new RuntimeException( "TODO:  handle focus on load" )
+    else 
+      ta
+	}
+	
+  override def inputcClasses = "large"
+
+  override def cell( pf:PathField, r:Record ):NodeSeq = Unparsed( pf.path.s( r ).replace( "\n", "<br/>" ) )
 }
 
 trait LimitedText extends DbTextLike {
@@ -177,24 +190,6 @@ case class DbLargeChar( len:Int ) extends LimitedText {
   override def inputcClasses = "large"
 }
 
-case object DbParagraph extends LimitedText {
-  val len = 8192
-	val sqlName = "CHAR(" + len + ")"
-	
-  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq = {
-    val ta = Field.textArea( s, f, s.rec.s( f.va.name ), opts:_* )
-    
-    if ( f.focus )
-      throw new RuntimeException( "TODO:  handle focus on load" )
-    else 
-      ta
-	}
-	
-  override def inputcClasses = "large"
-
-  override def cell( pf:PathField, r:Record ):NodeSeq = Unparsed( pf.path.s( r ).replace( "\n", "<br/>" ) )
-}
-
 case class DbVarChar( len:Int ) extends LimitedText {
 	val sqlName = "VARCHAR(" + len + ")"
 }
@@ -203,6 +198,13 @@ case class DbVarChar( len:Int ) extends LimitedText {
  * A string that must be lower case.
  */
 case class DbLowerChar( len:Int ) extends LimitedText {
+	val sqlName = "CHAR(" + len + ")"
+}
+
+/**
+ * A string that must be lower case.
+ */
+case class DbUpperChar( len:Int ) extends LimitedText {
 	val sqlName = "CHAR(" + len + ")"
 }
 
