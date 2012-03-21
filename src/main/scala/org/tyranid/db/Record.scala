@@ -103,7 +103,7 @@ trait View {
 
   def ui( name:String ) = synchronized { uis( name ) }
 
-  def path( path:String ):Path = Path.parse( this, path )
+  def path( path:String, sep:Char = 0 ):Path = Path.parse( this, path, sep )
 
   def paths( paths:Seq[String] ) = paths.map( path => Path.parse( this, path ) )
 }

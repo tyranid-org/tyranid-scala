@@ -24,9 +24,10 @@ import scala.xml.{ NodeSeq, Text, Unparsed }
 import org.tyranid.Imp._
 import org.tyranid.logic.{ Valid, Invalid }
 import org.tyranid.math.Base64
-import org.tyranid.report.PathField
+import org.tyranid.report.{ PathField, Report }
 import org.tyranid.time.{ Time }
-import org.tyranid.ui.{ Field, Glyph }
+import org.tyranid.ui.{ Checkbox, Field, Glyph, Input }
+import org.tyranid.web.WebContext
 
 
 /*
@@ -75,13 +76,39 @@ trait Domain extends Valid {
   def extract( s:Scope, f:Field ) {
     s.rec( f.va.name ) = T.web.req.s( f.id )
   }
-    
+
+  // TODO:  once org.tyranid.report.PathField is unified with org.tyranid.ui.Field unify this.searchUi with this.ui
+  def searchUi( report:Report, pf:PathField ):NodeSeq =
+    if ( pf.search == "exists" )
+      Checkbox( pf.name, report.searchValues.b( pf.name ) ) ++ pf.labelUi
+    else
+      Input( pf.name, report.searchValues.s( pf.name ), pf.opts:_* )
+
+  def searchExtract( report:Report, pf:PathField, web:WebContext ) =
+    if ( pf.search == "exists" ) {
+      val v = web.req.b( pf.name )
+
+      if ( v ) report.searchValues( pf.name ) = true
+      else     report.searchValues.remove( pf.name )
+    } else {
+      val v = web.req.s( pf.name )
+
+      if ( v.notBlank ) report.searchValues( pf.name ) = v
+      else              report.searchValues.remove( pf.name )
+    }
+
   /**
    * These are the class(es) that should be added to the input container.
    */
   def inputcClasses = ""
 
   def cell( pf:PathField, r:Record ):NodeSeq = Text( pf.path s r )
+
+  /*
+   * This method modifies the data to ensure that it corresponds to restrictions set up by the domain.
+   * Examples are translating to upper/lowercase by DbTextlike.
+   */
+  def transformValue( value:Any ) = value
 }
 
 
@@ -98,6 +125,24 @@ abstract class DbIntish extends Domain {
     s.rec( f.va.name ) = T.web.req.i( f.id )
   }
     
+  override def searchUi( report:Report, pf:PathField ) =
+    if ( pf.search == "exists" )
+      Checkbox( pf.name, report.searchValues.b( pf.name ) ) ++ pf.labelUi
+    else
+      Input( pf.name, report.searchValues.s( pf.name ), pf.opts:_* )
+
+  override def searchExtract( report:Report, pf:PathField, web:WebContext ) =
+    if ( pf.search == "exists" ) {
+      val v = web.req.b( pf.name )
+
+      if ( v ) report.searchValues( pf.name ) = true
+      else     report.searchValues.remove( pf.name )
+    } else {
+      val i = web.req.i( pf.name )
+
+      if ( i == 0 ) report.searchValues.remove( pf.name )
+      else          report.searchValues( pf.name ) = i
+    }
 }
 
 object DbInt extends DbIntish {
@@ -139,11 +184,22 @@ object DbDouble extends Domain {
 
 trait DbTextLike extends Domain {
 
+  val uppercase = false
+  val lowercase = false
+
   override def isSet( v:Any ) =
     v match {
     case s:String => s.notBlank
     case _ => false
     }
+
+  override def transformValue( value:Any ) =
+    if ( uppercase )
+      value.as[String].toUpperCase
+    else if ( lowercase )
+      value.as[String].toLowerCase
+    else
+      value
 }
 
 object DbText extends DbTextLike {
@@ -198,6 +254,8 @@ case class DbVarChar( len:Int ) extends LimitedText {
  * A string that must be lower case.
  */
 case class DbLowerChar( len:Int ) extends LimitedText {
+  override val lowercase = true
+
 	val sqlName = "CHAR(" + len + ")"
 }
 
@@ -205,6 +263,8 @@ case class DbLowerChar( len:Int ) extends LimitedText {
  * A string that must be lower case.
  */
 case class DbUpperChar( len:Int ) extends LimitedText {
+  override val uppercase = true
+
 	val sqlName = "CHAR(" + len + ")"
 }
 
@@ -278,6 +338,13 @@ object DbBoolean extends Domain {
   override def inputcClasses = " boolean"
 
   override def cell( pf:PathField, r:Record ) = pf.path.b( r ) |* Glyph.Checkmark
+
+  override def searchUi( report:Report, pf:PathField ) =
+    Checkbox( pf.name, report.searchValues.b( pf.name ) ) ++ pf.labelUi
+
+  override def searchExtract( report:Report, pf:PathField, web:WebContext ) =
+    if ( web.req.b( pf.name ) ) report.searchValues( pf.name ) = true
+    else                        report.searchValues.remove( pf.name )
 }
 
 
