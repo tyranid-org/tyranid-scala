@@ -124,13 +124,19 @@ class StringImp( s:String ) {
   def toUrl = new java.net.URL( Uri.completeUri( s ) )
 
   def toPhoneMask:String = {
-    if ( s.length() == 11 )
-      return "(" + s.slice( 1,4 ) + ") " + s.slice( 4, 7 ) + "-" + s.slice( 7, 11 ) 
+    var offset = s.length match {
+                          case 10 => 0
+                          case 11 => 1
+                          case _ => -1
+                 }
     
-    null
+    if ( offset == -1 )
+      return null
+      
+    return "(" + s.slice( offset,3+offset ) + ") " + s.slice( 3+offset, 6+offset ) + "-" + s.slice( 6+offset, 10+offset ) 
   }
 
-  def onlyNumbers:String = {
+  def toOnlyNumbers:String = {
     if ( s == null )
       return null
      

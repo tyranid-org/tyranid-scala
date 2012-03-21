@@ -22,10 +22,11 @@ import scala.xml.{ Unparsed, NodeSeq }
 import com.nexmo.messaging.sdk.{ NexmoSmsClient, SmsSubmissionResult }
 import com.nexmo.messaging.sdk.messages.TextMessage
 
-import org.tyranid.db.{ DbBoolean, DbChar, DbPhone, DbInt, Scope, Record }
+import org.tyranid.db.{ DbBoolean, DbUpperChar, DbPhone, DbInt, Scope, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
 import org.tyranid.Imp._
+import org.tyranid.math.Base62
 import org.tyranid.profile.User
 import org.tyranid.session.Notification
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
@@ -33,12 +34,13 @@ import org.tyranid.ui.{ Grid, Row, Field, Opts }
 
 
 object SMS extends MongoEntity( tid = "a0Gt" ) {
-  "phone"       is DbPhone   as "Mobile Number" is 'required;
-  "ok"          is DbBoolean as "SMS Verified";
-  "on"          is DbBoolean as "SMS Notifications";
-  "timeStart"   is DbInt     as "Starting Time";
-  "timeEnd"     is DbInt     as "Ending Time";
-  "aCode"       is DbChar(5) as "Activation Code";
+  "phone"        is DbPhone        as "Mobile Number" is 'required;
+  "ok"           is DbBoolean      as "SMS Verified";
+  "on"           is DbBoolean      as "SMS Notifications";
+  "timeStart"    is DbInt          as "Starting Time";
+  "timeEnd"      is DbInt          as "Ending Time";
+  "vCode"        is DbUpperChar(6) as "Verfication Code";
+  "enteredCode" is DbUpperChar(6) is 'temporary as "Verfication Code";
   
   var enabled = false
 }
@@ -122,19 +124,12 @@ object Smslet extends Weblet {
       
     case "/edit" =>
       redirectIfNotLoggedIn( web )
-      val user:User = { 
-        val tid = web.s( "id" ) or T.session.user.tid
-    
-        T.session.editing2( B.User.getClass(), {
-          Record.byTid( tid, only = B.User ).map( _.snapshot.as[User] ).getOrElse {
-            T.session.warn( "User not found." )
-            web.redirect( "/" )
-          }
-        } )
-      }
       
-      T.editing( user )
-        
+      val (user,sms) = smsStart
+      
+      if ( !sms.b( 'ok ) )
+        web.forward( "/sms/verify?id=" + web.s( "id" ) or "" )
+    
       val ui = user.view.ui(
          "editSms",
          Grid(
@@ -142,13 +137,15 @@ object Smslet extends Weblet {
            Row( Field( 'sms_ok, Opts( "labels" -> "Verify Now|", "href" -> ( web.path + "?toggleSmsOk=1" ) ), uiStyle = Field.UI_STYLE_TOGGLE ) ),
            Row( Field( 'sms_on, Opts( "labels" -> "Enable|Disable", "href" -> ( web.path + "?toggleSmsOn=1" ) ), uiStyle = Field.UI_STYLE_TOGGLE ) ) ) )
         
-      val invalids = Scope( user, saving = true ).submit( user, ui )
-      
-      if ( web.b( 'saving ) && invalids.isEmpty ) {
-        sess.notice( "SMS information has been updated." )
-        user.save
-        web.res.html(NodeSeq.Empty)
-        return
+      if ( web.b( 'saving ) ) {
+        val invalids = Scope( user, saving = true ).submit( user, ui )
+        
+        if ( invalids.isEmpty ) {
+          sess.notice( "SMS information has been updated." )
+          user.save
+          web.res.html(NodeSeq.Empty)
+          return
+        }
       } else if ( web.b( "toggleSmsOk" ) ) {
         val smsPhone = user.s( 'mobilePhone ).toPhoneMask
         
@@ -166,15 +163,94 @@ object Smslet extends Weblet {
      
       web.res.html(
       { Notification.box } ++
+      <header>With Volerro, you can send and receive SMS messages to your mobile phone</header>
       <form method="post" action={ web.path } id="f">
        <table>
         { Scope( user, saving = true ).draw( ui ) }
        </table>
-       <div class="btns">
-        <input type="submit" id="dlgSubmit" class="greenBtn" value="Save" name="saving"/>
-        <a href={ "/user/edit?id=" + user.tid } id="cancel" class="greyBtn">Cancel</a>
-       </div>
-      </form> )
+      </form>
+      <footer class="btns">
+       <input type="submit" id="dlgSubmit" class="greenBtn" value="Save" name="saving"/>
+       <a href={ "/user/edit?id=" + user.tid } id="cancel" class="greyBtn">Cancel</a>
+      </footer> )
+      
+    case "/verify" =>
+      redirectIfNotLoggedIn( web )
+      
+      var form:NodeSeq = null
+      var header:NodeSeq = null
+          
+      val (user,sms) = smsStart
+      val verifyUi = user.view.ui( "verifySms", Grid( Row( 'sms_phone ) ) )
+      val enterVerifyUi = user.view.ui( "enterVerifySms", Grid( Row( 'sms_enteredCode ) ) )
+      var ui:org.tyranid.ui.UiObj = null
+      
+      if ( !web.b( 'saving ) ) {
+        ui = verifyUi
+        
+        header = <header>With Volerro, you can send and receive SMS messages to your mobile phone.</header>
+        form = 
+        <form method="post" action={ web.path } id="f">
+         <table style="width: 100%">
+          { Scope( user, saving = true ).draw( ui ) }
+         </table>
+         <input type="hidden" value={ if ( sms.b( 'ok ) ) sms.s( 'phone ).toOnlyNumbers else null } name="verifiedNumber"/>
+         <input type="hidden" value="1" name="verify"/>
+         <footer class="btns">
+          <input type="submit" id="dlgSubmit" class="greenBtn" value="Send Verification"/>
+          <a href={ "/user/edit?id=" + user.tid } id="cancel" class="greyBtn">Cancel</a>
+         </footer>
+        </form>
+      } else {
+        if ( web.b( 'verify ) ) {
+          ui = verifyUi
+          
+          val invalids = Scope( user, saving = true ).submit( user, ui )
+        
+          if ( invalids.isEmpty ) {
+            val smsNumber = sms.s( 'phone ).toOnlyNumbers
+            
+            if ( smsNumber == null || smsNumber.length != 10  ) {
+              sess.warn( "Please enter in the format (999) 999-9999" )
+            } else {
+              val verifiedNumber = web.s( 'verifiedNumber )
+              
+              if ( verifiedNumber.notBlank && verifiedNumber == smsNumber ) {
+                sess.notice( "That number has already been verified!" )
+              } else {
+                // need to verify
+                sess.notice( "We just sent an SMS message to your phone " + smsNumber.toPhoneMask )
+                sms( "vCode" ) = Base62.make( 6 ).toUpperCase()
+                user.save
+                web.res.html(NodeSeq.Empty)
+                return
+              }
+            }
+          }
+        }
+      }
+      
+      web.res.html(
+      { Notification.box } ++
+      { header } ++
+      { form } )
+    }
+  
+    def smsStart = {
+      val user:User = { 
+        val tid = web.s( "id" ) or T.session.user.tid
+    
+        T.session.editing2( B.User.getClass(), {
+          Record.byTid( tid, only = B.User ).map( _.snapshot.as[User] ).getOrElse {
+            T.session.warn( "User not found." )
+            web.redirect( "/" )
+          }
+        } )
+      }
+      
+      T.editing( user )
+      
+      ( user, user.o_!( 'sms ) )
     }
   }
 }
