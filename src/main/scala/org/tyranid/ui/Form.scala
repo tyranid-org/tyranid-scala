@@ -58,10 +58,41 @@ object Form {
       { href != null |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="greyBtn" id={ editBtnId }>Edit</a> }
       { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, if ( dialogTitle == null ) label else dialogTitle, opts ) }
       <div class="text">{ if ( link ) <a href={ value.toString } target="_blank">{ value }</a> else { value } }</div>
-      <div class="text">{ value }</div>
      </div>
     </div>
 
+  def htext2( label1:String, label2:String, value1:NodeSeq, value2:NodeSeq, href:String = null, editBtnId:String = null, redirectHref:String = null, controlClass:String = "control", dialogTitle:String = null, opts:Seq[(String,String)] = null ) =
+    <div class={ controlClass }>
+     <div class="left">{ label1 }</div>
+     <div class="right">
+      { href != null |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="greyBtn" id={ editBtnId }>Edit</a> }
+      { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, if ( dialogTitle == null ) label1 else dialogTitle, opts ) }
+      <div class="text">{ value1 }</div>
+     </div>
+     <div class="left" style="clear:both;">{ label2 }</div>
+     <div class="right">
+      <div class="text">{ value2 }</div>
+     </div>
+    </div>
+
+  def htext3( label1:String, label2:String, label3:String, value1:NodeSeq, value2:String, value3:String, href:String = null, editBtnId:String = null, redirectHref:String = null, controlClass:String = "control", dialogTitle:String = null, opts:Seq[(String,String)] = null ) =
+    <div class={ controlClass }>
+     <div class="left">{ label1 }</div>
+     <div class="right">
+      { href != null |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="greyBtn" id={ editBtnId }>Edit</a> }
+      { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, if ( dialogTitle == null ) label1 else dialogTitle, opts ) }
+      <div class="text">{ value1 }</div>
+     </div>
+     <div class="left" style="clear:both;">{ label2 }</div>
+     <div class="right">
+      <div class="text">{ value2 }</div>
+     </div>
+     <div class="left" style="clear:both;">{ label3 }</div>
+     <div class="right">
+      <div class="text">{ value3 }</div>
+     </div>
+    </div>
+      
   def text( label:String, value:String, href:String = null, editBtnId:String = null, redirectHref:String = null, controlClass:String = "control", dialogTitle:String = null, opts:Seq[(String,String)] = null, link:Boolean = false ) =
     <div class={ controlClass }>
      <div class="left">{ label }</div>
