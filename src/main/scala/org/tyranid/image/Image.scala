@@ -28,7 +28,7 @@ import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.{ Domain, Record, Scope }
 import org.tyranid.io.DbFile
-import org.tyranid.ui.{ Field, PathField }
+import org.tyranid.ui.{ PathField }
 
 
 class DbImageish( bucket:S3Bucket ) extends DbFile( bucket )

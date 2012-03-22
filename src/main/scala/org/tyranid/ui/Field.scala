@@ -69,42 +69,42 @@ object Search {
  * * *   F i e l d s
  */
 
-object Field {
+object PathField {
   val UI_STYLE_DEFAULT = 0
   val UI_STYLE_TOGGLE = 1
 
-  implicit def string2Field( name:String ) = Field( name )
-  implicit def symbol2Field( name:Symbol ) = Field( name.name )
+  implicit def string2Field( name:String ) = PathField( name )
+  implicit def symbol2Field( name:Symbol ) = PathField( name.name )
 
-  def toggleLink( s:Scope, f:Field, value:Boolean, opts:(String,String)* ):NodeSeq = {
+  def toggleLink( s:Scope, f:PathField, value:Boolean, opts:(String,String)* ):NodeSeq = {
     val ret = optsMapper( s, f, opts:_* )
     ToggleLink( ret._1, value, ret._2:_*  )
   }
 
-  def checkbox( s:Scope, f:Field, value:Boolean, opts:(String,String)* ):NodeSeq = {
+  def checkbox( s:Scope, f:PathField, value:Boolean, opts:(String,String)* ):NodeSeq = {
     val ret = optsMapper( s, f, opts:_* )
     Checkbox( ret._1, value, ret._2:_*  )
   }
 
-  def text( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
+  def text( s:Scope, f:PathField, opts:(String,String)* ):NodeSeq =
     input( s, f, s.rec.s( f.va.name ), opts:_* )
 
-  def input( s:Scope, f:Field, value:String, opts:(String,String)* ):NodeSeq = {
+  def input( s:Scope, f:PathField, value:String, opts:(String,String)* ):NodeSeq = {
     val ret = optsMapper( s, f, opts:_* )
     Input( ret._1, value, ret._2:_*  )
   }
   
-  def select( s:Scope, f:Field, value:String, values:Seq[ (String,String) ], opts:(String,String)* ) = {
+  def select( s:Scope, f:PathField, value:String, values:Seq[ (String,String) ], opts:(String,String)* ) = {
     val ret = optsMapper( s, f, opts:_* )
     Select( ret._1, value, values, ret._2:_* )
   }
 
-  def textArea( s:Scope, f:Field, value:String, opts:(String,String)* ):NodeSeq = {
+  def textArea( s:Scope, f:PathField, value:String, opts:(String,String)* ):NodeSeq = {
     val ret = optsMapper( s, f, opts:_* )
     TextArea( ret._1, value, ret._2:_*  )
   }
   
-  private def optsMapper( s:Scope, f:Field, opts:(String,String)* ):( String, Seq[(String,String)] ) = { 
+  private def optsMapper( s:Scope, f:PathField, opts:(String,String)* ):( String, Seq[(String,String)] ) = { 
     var id = f.id
 
     val opts2 = opts.flatMap {
@@ -130,50 +130,6 @@ object Field {
 
     return ( id, opts2 )
   }
-}
-
-case class Field( name:String, opts:Seq[(String,String)] = Nil, span:Int = 1,
-                  inputOnly:Boolean = false, focus:Boolean = false,
-                  filter:Option[ ( Record ) => Boolean ] = None, uiStyle:Int=0 ) extends UiObj {
-  
-  var id:String = null
-
-  var path:Path = null
-  def va = path.leaf
-
-  def bind( view:View ) = {
-    path = view.path( name )
-    this // TODO:  return an immutable version
-  }
-
-  def extract( pScope:Scope ) = {
-    val scope = pScope.at( path )
-    va.att.domain.extract( scope, this )
-  }
-
-  def fields = Seq( this )
-
-  private def invalidLines( invalids:Seq[Invalid] ) =
-    for ( invalid <- invalids )
-      yield <span>{ invalid.message }</span>
-
-  override def draw( pScope:Scope ) =
-    if ( inputOnly ) {
-      va.att.domain.ui( pScope.at( path ), this, ( opts ++ Seq( "id" -> va.name ) ):_* )
-    } else {
-      val scope = pScope.at( path )
-      val invalids = va.invalids( scope )
-      val invalid = !invalids.isEmpty
-      val rec = scope.rec
-      rec.invalids( va.index ) = !invalids.isEmpty
-
-      va.att.domain.show( scope ) |*
-      <div id={ va.name + "_c" } class={ "fieldc" + ( invalid |* " invalid" ) }>
-       <div class="labelc">{ va.label( rec, opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
-       <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( scope, this, ( opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
-       <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
-      </div>
-    }
 }
 
 trait RField {
@@ -235,8 +191,58 @@ trait DefaultField extends RField {
   val search = null
 }
 
-case class PathField( sec:String, path:Path, l:String = null, cellCls:String = null, displayExists:Boolean = false, data:Boolean = true, search:Search = null, opts:Seq[(String,String)] = Nil ) extends RField {
-  def name = path.name
+// 1.  old Field's use '_' for path sep, new ones use '.' ... reconcile.
+case class PathField( name:String,
+                      l:String = null,
+                      opts:Seq[(String,String)] = Nil,
+                      sec:String = "Standard",
+                      cellCls:String = null,
+                      displayExists:Boolean = false,
+                      data:Boolean = true,
+                      search:Search = null,
+                      span:Int = 1,
+                      inputOnly:Boolean = false,
+                      focus:Boolean = false,
+                      filter:Option[ ( Record ) => Boolean ] = None,
+                      uiStyle:Int=0 ) extends RField with UiObj {
+  var id:String = null
+
+  var path:Path = null
+  def va = path.leaf
+
+  def bind( view:View ) = {
+    path = view.path( name, sep = '.' )
+    this // TODO:  return an immutable version
+  }
+
+  def extract( pScope:Scope ) = {
+    val scope = pScope.at( path )
+    va.att.domain.extract( scope, this )
+  }
+
+  def fields = Seq( this )
+
+  private def invalidLines( invalids:Seq[Invalid] ) =
+    for ( invalid <- invalids )
+      yield <span>{ invalid.message }</span>
+
+  override def draw( pScope:Scope ) =
+    if ( inputOnly ) {
+      va.att.domain.ui( pScope.at( path ), this, ( opts ++ Seq( "id" -> va.name ) ):_* )
+    } else {
+      val scope = pScope.at( path )
+      val invalids = va.invalids( scope )
+      val invalid = !invalids.isEmpty
+      val rec = scope.rec
+      rec.invalids( va.index ) = !invalids.isEmpty
+
+      va.att.domain.show( scope ) |*
+      <div id={ va.name + "_c" } class={ "fieldc" + ( invalid |* " invalid" ) }>
+       <div class="labelc">{ va.label( rec, opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
+       <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( scope, this, ( opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
+       <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
+      </div>
+    }
 
   override def section = sec
   override def cellClass = cellCls

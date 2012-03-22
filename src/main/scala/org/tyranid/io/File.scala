@@ -27,7 +27,7 @@ import scala.xml.NodeSeq
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.{ Domain, Record, Scope }
-import org.tyranid.ui.Field
+import org.tyranid.ui.PathField
 
 import org.tyranid.web.{ FileUploadSupport, FileMultiParams }
 import org.tyranid.web.FileUploadSupport.BodyParams
@@ -40,7 +40,7 @@ object DbFile {
 class DbFile( bucket:S3Bucket ) extends CommonFile {
   val sqlName = "TEXT"  // TODO
 
-  override def extract( s:Scope, f:Field ) {
+  override def extract( s:Scope, f:PathField ) {
     val bodyParams:BodyParams = T.web.req.getAttribute( FileUploadSupport.BodyParamsKey ).asInstanceOf[BodyParams]
 
     val fileItem = 
@@ -85,7 +85,7 @@ class DbFile( bucket:S3Bucket ) extends CommonFile {
 object DbLocalFile extends CommonFile {
   val sqlName = "TEXT"
 
-  override def extract( s:Scope, f:Field ) {
+  override def extract( s:Scope, f:PathField ) {
     val bodyParams:BodyParams = T.web.req.getAttribute( FileUploadSupport.BodyParamsKey ).asInstanceOf[BodyParams]
 
     val fileItem = 
@@ -120,7 +120,7 @@ object File {
 }
 
 trait CommonFile extends Domain {
-  override def ui( s:Scope, f:Field, opts:(String,String)* ): NodeSeq =
+  override def ui( s:Scope, f:PathField, opts:(String,String)* ): NodeSeq =
     <div class='thumbnail'>
       { 
 //        if ( ( s.rec s f.va ).isBlank ) { // TODO:  Replace this with a blank/default image for ALL images

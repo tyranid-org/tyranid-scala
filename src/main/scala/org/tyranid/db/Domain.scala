@@ -26,7 +26,7 @@ import org.tyranid.logic.{ Valid, Invalid }
 import org.tyranid.math.Base64
 import org.tyranid.report.Report
 import org.tyranid.time.{ Time }
-import org.tyranid.ui.{ Checkbox, Field, Glyph, Input, PathField }
+import org.tyranid.ui.{ Checkbox, Glyph, Input, PathField }
 import org.tyranid.web.WebContext
 
 
@@ -57,8 +57,8 @@ trait Domain extends Valid {
 	
 	def show( s:Scope ) = true
 
-  def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq = {
-    val input = Field.text( s, f, opts:_* )
+  def ui( s:Scope, f:PathField, opts:(String,String)* ):NodeSeq = {
+    val input = PathField.text( s, f, opts:_* )
 
       /*
         if ( s.rec( f.va.name ) != v ) {
@@ -73,11 +73,10 @@ trait Domain extends Valid {
       input
   }
     
-  def extract( s:Scope, f:Field ) {
+  def extract( s:Scope, f:PathField ) {
     s.rec( f.va.name ) = T.web.req.s( f.id )
   }
 
-  // TODO:  once org.tyranid.report.PathField is unified with org.tyranid.ui.Field unify this.searchUi with this.ui
   def searchUi( report:Report, pf:PathField ):NodeSeq =
     if ( pf.search == "exists" )
       Checkbox( pf.name, report.searchValues.b( pf.name ) ) ++ pf.labelUi
@@ -121,7 +120,7 @@ abstract class DbIntish extends Domain {
 
   override def tid( r:Record, va:ViewAttribute ) = Base64.toString( r i va )
 
-  override def extract( s:Scope, f:Field ) {
+  override def extract( s:Scope, f:PathField ) {
     s.rec( f.va.name ) = T.web.req.i( f.id )
   }
     
@@ -205,8 +204,8 @@ trait DbTextLike extends Domain {
 object DbText extends DbTextLike {
 	val sqlName = "TEXT"
 	
-  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq = {
-    val ta = Field.textArea( s, f, s.rec.s( f.va.name ), opts:_* )
+  override def ui( s:Scope, f:PathField, opts:(String,String)* ):NodeSeq = {
+    val ta = PathField.textArea( s, f, s.rec.s( f.va.name ), opts:_* )
     
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -234,8 +233,8 @@ case class DbChar( len:Int ) extends LimitedText {
 case class DbLargeChar( len:Int ) extends LimitedText {
 	val sqlName = "CHAR(" + len + ")"
 	
-  override def ui( s:Scope, f:Field, opts:(String,String)* ):NodeSeq = {
-    val ta = Field.textArea( s, f, s.rec.s( f.va.name ), opts:_* )
+  override def ui( s:Scope, f:PathField, opts:(String,String)* ):NodeSeq = {
+    val ta = PathField.textArea( s, f, s.rec.s( f.va.name ), opts:_* )
     
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -270,7 +269,7 @@ case class DbUpperChar( len:Int ) extends LimitedText {
 
 object DbPassword extends DbVarChar( 64 ) {
 
-  override def ui( s:Scope, f:Field, opts:(String,String)* ) =
+  override def ui( s:Scope, f:PathField, opts:(String,String)* ) =
     super.ui( s, f, ( opts ++ Seq( "type" -> "password" ) ):_* )
 
   override def validations =
@@ -325,13 +324,13 @@ object DbPhone extends DbChar( 14 ) {
 object DbBoolean extends Domain {
 	val sqlName = "CHAR(1)"
 	  
-  override def ui( s:Scope, f:Field, opts:(String,String)* ) =
-    if ( f.uiStyle == Field.UI_STYLE_TOGGLE )
-      Field.toggleLink( s, f, s.rec.b( f.va.name ), opts:_* )
+  override def ui( s:Scope, f:PathField, opts:(String,String)* ) =
+    if ( f.uiStyle == PathField.UI_STYLE_TOGGLE )
+      PathField.toggleLink( s, f, s.rec.b( f.va.name ), opts:_* )
     else
-      Field.checkbox( s, f, s.rec.b( f.va.name ), opts:_* )
+      PathField.checkbox( s, f, s.rec.b( f.va.name ), opts:_* )
     
-  override def extract( s:Scope, f:Field ) {
+  override def extract( s:Scope, f:PathField ) {
     s.rec( f.va.name ) = T.web.req.b( f.id )
   }
 
@@ -379,15 +378,15 @@ trait DbDateLike extends Domain {
     } ::
     super.validations
 
-  override def ui( s:Scope, f:Field, opts:(String,String)* ) = {
-    val input = Field.input( s, f, s.rec.t( f.va.name ).toDateStr, opts:_* )
+  override def ui( s:Scope, f:PathField, opts:(String,String)* ) = {
+    val input = PathField.input( s, f, s.rec.t( f.va.name ).toDateStr, opts:_* )
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
     else 
       input
   }
 
-  override def extract( s:Scope, f:Field ) {
+  override def extract( s:Scope, f:PathField ) {
     s.rec( f.va.name ) = T.web.req.s( f.id ).toLaxDate
   }
 
@@ -404,15 +403,15 @@ object DbDateTime extends DbDateLike {
 
   override def dateOnly = false
 
-  override def ui( s:Scope, f:Field, opts:(String,String)* ) = {
-    val input = Field.input( s, f, s.rec.t( f.va.name ).toDateTimeStr, opts:_* )
+  override def ui( s:Scope, f:PathField, opts:(String,String)* ) = {
+    val input = PathField.input( s, f, s.rec.t( f.va.name ).toDateTimeStr, opts:_* )
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
     else 
       input
   }
 
-  override def extract( s:Scope, f:Field ) {
+  override def extract( s:Scope, f:PathField ) {
     s.rec( f.va.name ) = T.web.req.s( f.id ).toLaxDateTime
   }
 
@@ -434,7 +433,7 @@ case class DbArray( of:Domain ) extends Domain {
 
       1. 
 
-  override def ui( s:Scope, f:Field, opts:(String,String)* ) =
+  override def ui( s:Scope, f:PathField, opts:(String,String)* ) =
 
 
   draw a field for each array element, and add an "Add" button
@@ -450,7 +449,7 @@ case class DbLink( toEntity:Entity ) extends Domain {
 		                case IdType.ID_COMPLEX => throw new ModelException( toEntity.name + " has a complex ID and cannot be linked to." )
 										}
 
-  override def ui( s:Scope, f:Field, opts:(String,String)* ) = {
+  override def ui( s:Scope, f:PathField, opts:(String,String)* ) = {
     
     /*
      * a.  model-based linking
@@ -460,7 +459,7 @@ case class DbLink( toEntity:Entity ) extends Domain {
      *     for example:  if toEntity == region, and region has a country -> Country,
      *                   and there is a country -> Country in f.form, restrict the search to that
      * 
-     * b.  Field.filter: ( rec:Record ) => Boolean
+     * b.  PathField.filter: ( rec:Record ) => Boolean
      * 
      * 
      * 
@@ -476,13 +475,13 @@ case class DbLink( toEntity:Entity ) extends Domain {
       
     val values = idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq
     
-    Field.select(
+    PathField.select(
       s, f, s.rec s f.va,
       ( "" -> "-Please Select-" ) +: values,
       opts:_* )
   }
 
-  override def extract( s:Scope, f:Field ) {
+  override def extract( s:Scope, f:PathField ) {
     val v = T.web.req.s( f.id )
 
     if ( v.isBlank )

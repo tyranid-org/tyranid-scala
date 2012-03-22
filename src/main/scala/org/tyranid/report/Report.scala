@@ -51,9 +51,11 @@ trait Query {
   def labelNode:NodeSeq = null
 
   val allFields:Seq[RField]
-  
-  lazy val dataFields:Seq[RField]   = allFields.filter( _.data )
-  lazy val searchFields:Seq[RField] = allFields.filter( _.search != null )
+
+  val boundFields:Seq[RField]
+
+  lazy val dataFields:Seq[RField]   = boundFields.filter( _.data )
+  lazy val searchFields:Seq[RField] = boundFields.filter( _.search != null )
 
   lazy val allFieldsMap = {  
     val map = mutable.Map[String,RField]()
@@ -135,6 +137,18 @@ trait MongoQuery extends Query {
 
   lazy val view = entity.makeView
 
+  lazy val boundFields = {
+    for ( f <- allFields )
+      f match {
+      case pf:PathField =>
+        pf.bind( view )
+
+      case _ =>
+      }
+
+    allFields
+  }
+  
   override def prepareSearch( run:Run ) = {
     val report = run.report
 
@@ -172,7 +186,7 @@ trait MongoQuery extends Query {
             data:Boolean = true,
             search:Search = null,
             opts:Seq[(String,String)] = Nil ) =
-    PathField( sec, view.path( path, sep = '.' ), l = label, cellCls = cellClass, displayExists = displayExists, data = data, search = search, opts = opts )
+    PathField( path, l = label, sec = sec, cellCls = cellClass, displayExists = displayExists, data = data, search = search, opts = opts )
 }
 
 

@@ -211,11 +211,11 @@ trait UiObj {
 
   def extract( scope:Scope ):Unit
 
-  def fields:Iterable[Field]
+  def fields:Iterable[PathField]
 }
 
 
-case class Row( fields:Field* ) extends UiObj {
+case class Row( fields:PathField* ) extends UiObj {
 
   def bind( view:View ) = {
     for ( field <- fields )
