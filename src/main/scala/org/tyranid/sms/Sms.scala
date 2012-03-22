@@ -30,7 +30,7 @@ import org.tyranid.math.Base62
 import org.tyranid.profile.User
 import org.tyranid.session.Notification
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
-import org.tyranid.ui.{ Grid, Row, PathField }
+import org.tyranid.ui.{ Grid, Row, PathField, Field }
 
 
 object SMS extends MongoEntity( tid = "a0Gt" ) {
@@ -131,16 +131,16 @@ object Smslet extends Weblet {
       redirectIfNotLoggedIn( web )
       
       val (user,sms) = smsStart
-      
+    
       if ( !sms.b( 'ok ) )
         web.forward( "/sms/verify?id=" + web.s( "id" ) or "" )
     
       val ui = user.view.ui(
          "editSms",
          Grid(
-           Row( PathField( 'sms_phone, opts = Seq( "readonly" -> "1" ) ) ),
-           Row( PathField( 'sms_ok, opts = Seq( "labels" -> "Validate Now|Invalidate and enter new number", "href" -> ( web.path + "?toggleSmsOk=1" ) ), uiStyle = PathField.UI_STYLE_TOGGLE ) ),
-           Row( PathField( 'sms_on, opts = Seq( "labels" -> "Enable|Disable", "href" -> ( web.path + "?toggleSmsOn=1" ) ), uiStyle = PathField.UI_STYLE_TOGGLE ) ) ) )
+           Row( PathField( "sms.phone", opts = Seq( "readonly" -> "1" ) ) ),
+           Row( PathField( "sms.ok", opts = Seq( "labels" -> "Validate Now|Invalidate and enter new number", "href" -> ( web.path + "?toggleSmsOk=1" ) ), uiStyle = PathField.UI_STYLE_TOGGLE ) ),
+           Row( PathField( "sms.on", opts = Seq( "labels" -> "Enable|Disable", "href" -> ( web.path + "?toggleSmsOn=1" ) ), uiStyle = PathField.UI_STYLE_TOGGLE ) ) ) )
         
       if ( web.b( 'saving ) && !web.b( 'verify ) ) {
         val invalids = Scope( user, saving = true ).submit( user, ui )
@@ -189,8 +189,8 @@ object Smslet extends Weblet {
       if ( sms.b( 'ok ) )
         web.forward( "/sms/edit?id=" + web.s( "id" ) or "" )
         
-      val verifyUi = user.view.ui( "verifySms", Grid( Row( 'sms_phone ) ) )
-      val enterVerifyUi = user.view.ui( "enterVerifySms", Grid( Row( 'sms_enteredCode ) ) )
+      val verifyUi = user.view.ui( "verifySms", Grid( Row( "sms.phone" ) ) )
+      val enterVerifyUi = user.view.ui( "enterVerifySms", Grid( Row( "sms.enteredCode" ) ) )
       var ui:org.tyranid.ui.UiObj = null
       
       if ( !saving && sms.s( 'vCode ).isBlank ) {
