@@ -32,6 +32,10 @@ import org.tyranid.ui.{ Button, Checkbox, Field, Glyph, Input, PathField, Search
 import org.tyranid.web.{ Weblet, WebContext }
 
 
+/*
+ * * *  Q u e r y
+ */
+
 case class Grouping( entity:MongoEntity, keyName:String, value: () => AnyRef ) {
 
   def list = entity.db.find( Mobj( keyName -> value() ) ).toSeq
@@ -40,7 +44,6 @@ case class Grouping( entity:MongoEntity, keyName:String, value: () => AnyRef ) {
 object Query {
 
   val byName = mutable.Map[String,Query]()
-
 }
 
 trait Query {
@@ -177,16 +180,6 @@ trait MongoQuery extends Query {
 
     rows.take( run.report.pageSize )
   }
-
-  def path( path:String,
-            label:String = null,
-            sec:String = "Standard",
-            cellClass:String = null,
-            displayExists:Boolean = false,
-            data:Boolean = true,
-            search:Search = null,
-            opts:Seq[(String,String)] = Nil ) =
-    PathField( path, l = label, sec = sec, cellCls = cellClass, displayExists = displayExists, data = data, search = search, opts = opts )
 }
 
 
@@ -670,3 +663,4 @@ object Reportlet extends Weblet {
     }
   }
 }
+

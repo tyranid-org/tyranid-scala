@@ -122,6 +122,7 @@ trait Field {
   def searchExtract( web:WebContext, report:Report ):Unit = throw new UnsupportedOperationException( "name=" + name )
 }
 
+
 trait CustomField extends Field {
 
   val data = true
@@ -148,6 +149,8 @@ case class PathField( name:String,
                       filter:Option[ ( Record ) => Boolean ] = None,
                       uiStyle:UiStyle = UiStyle.Default ) extends Field with UiObj {
   var id:String = null
+
+  override lazy val label = if ( l.notBlank ) l else path.leaf.label
 
   var path:Path = null
   def va = path.leaf
@@ -216,7 +219,6 @@ case class PathField( name:String,
   override def section = sec
   override def cellClass = cellCls
 
-  override lazy val label = if ( l.notBlank ) l else path.leaf.label
   def cell( run:Run, r:Record ) = path.leaf.domain.cell( this, r )
 
   override def effCell( run:Run, rec:Record ) = {
@@ -231,6 +233,7 @@ case class PathField( name:String,
   override def searchUi( report:Report ) = path.leaf.domain.searchUi( report, this )
   override def searchExtract( web:WebContext, report:Report ) = path.leaf.domain.searchExtract( report, this, web )
 }
+
 
 case class CustomTextSearchField( name:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends Field {
 

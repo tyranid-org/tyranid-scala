@@ -451,7 +451,7 @@ object Industry extends RamEntity( tid = "a0O5" ) {
 ( 200000062, "man",            "Railroad Manufacture",                           null ),
 ( 200000063, "agr",            "Farming",                                        null ),
 ( 200000064, "agr",            "Ranching",                                       null ),
- ( 200000065, "agr",            "Dairy",                                         null ),
+( 200000065, "agr",            "Dairy",                                         null ),
 ( 200000066, "agr",            "Fishery",                                        null ),
 ( 200000068, "edu",            "Higher Education",                               null ),
 ( 200000067, "edu",            "Primary/Secondary Education",                    null ),

@@ -30,7 +30,7 @@ import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
 import org.tyranid.email.AWSEmail
 import org.tyranid.http.UserAgent
 import org.tyranid.report.{ Run, MongoQuery }
-import org.tyranid.ui.CustomField
+import org.tyranid.ui.{ CustomField, PathField }
 
 
 object Log extends MongoEntity( tid = "a0Bu" ) {
@@ -210,8 +210,8 @@ object LogQuery extends MongoQuery {
       override lazy val label = "Event"
       def cell( run:Run, r:Record ) = Unparsed( Log.Events( r.i( 'e ) ) )
     },
-    path( "on" ),
-    path( "sid" ),
+    PathField( "on" ),
+    PathField( "sid" ),
     new CustomField {
       def name = "uid"
       override lazy val label = "User"
@@ -222,7 +222,7 @@ object LogQuery extends MongoQuery {
         }
       }
     },
-    path( "m" ),
+    PathField( "m" ),
     new CustomField {
       def name = "ua"
       override lazy val label = "User Agent"
@@ -237,8 +237,8 @@ object LogQuery extends MongoQuery {
           } )
       }
     },
-    path( "ip" ),
-    path( "ex" ),
+    PathField( "ip" ),
+    PathField( "ex" ),
     new CustomField {
       def name = "ct"
       override lazy val label = "Count"

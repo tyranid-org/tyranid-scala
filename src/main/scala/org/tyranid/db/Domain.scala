@@ -93,19 +93,20 @@ trait Domain extends Valid {
    */
 
   protected def commonSearchUi( report:Report, f:PathField, normal: => NodeSeq ) =
-    if ( f.search == Search.Exists )
-      Checkbox( f.name, report.searchValues.b( f.name ) ) ++ f.labelUi
-    else
-      normal
+    f.search match {
+    case Search.Exists => Checkbox( f.name, report.searchValues.b( f.name ) ) ++ f.labelUi
+    case _             => normal
+    }
 
   protected def commonSearchExtract( report:Report, f:PathField, web:WebContext ) =
-    if ( f.search == Search.Exists ) {
+    f.search match {
+    case Search.Exists =>
       val v = web.req.b( f.name )
 
       if ( v ) report.searchValues( f.name ) = true
       else     report.searchValues.remove( f.name )
       true
-    } else {
+    case _ =>
       false
     }
 
@@ -471,17 +472,11 @@ case class DbLink( toEntity:Entity ) extends Domain {
      * 
      * b.  PathField.filter: ( rec:Record ) => Boolean
      * 
-     * 
-     * 
-     * 
      */
 
-    val idLabels = f.filter match {
-    case Some( filter ) =>
-      toEntity.records.filter( filter ).map( _.idLabel )
-    case None =>
-      toEntity.idLabels
-    }
+    val idLabels = f.filter.flatten(
+      filter => toEntity.records.filter( filter ).map( _.idLabel ),
+      toEntity.idLabels )
       
     val values = idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq
     
