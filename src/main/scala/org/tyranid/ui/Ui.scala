@@ -63,7 +63,7 @@ object Input {
       case ( "class", v ) => sb ++= " class=\"" ++= v += '"'
       case ( "style", v ) => sb ++= " style=\"" ++= v += '"'
       case ( "type",  v ) => typ = v
-      case ( "readonly", v ) => sb ++= " readonly=\"readonly\""
+      case ( "readonly", v ) => if ( v.notBlank && v != "0" ) sb ++= " readonly=\"readonly\""
       case ( "placeholder", v ) => sb ++= " placeholder=\"" ++= v += '"'
       case ( n,       v ) => throw new RuntimeException( "Unknown field option " + n + " = " + v )
       }
