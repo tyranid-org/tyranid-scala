@@ -180,11 +180,8 @@ case class MongoView( override val entity:MongoEntity ) extends View {
 
     if ( rslt == None ) {
       val a = add( name )
-
-
       byName( name ) = a
       a
-      
     } else {
       rslt.get
     }

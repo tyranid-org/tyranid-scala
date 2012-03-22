@@ -3,7 +3,7 @@ package org.tyranid.profile
 
 import java.util.Date
 
-import scala.xml.Unparsed
+import scala.xml.{ NodeSeq, Unparsed }
 
 import org.tyranid.Imp._
 import org.tyranid.db.Scope
@@ -111,6 +111,9 @@ $(document).ready(function() {
         web.redirect(redirect.isBlank ? "/" | redirect)
       }
 
+    case "/clear" =>
+      sess.clearAllEditing
+      web.res.html( NodeSeq.Empty )
     case "/out" =>
       sess.logout
       web.redirect( "/?lo=1" )

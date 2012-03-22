@@ -17,7 +17,7 @@
 
 package org.tyranid.sms
 
-import scala.xml.{ Unparsed, NodeSeq }
+import scala.xml.{ Unparsed, NodeSeq, Text }
 
 import com.nexmo.messaging.sdk.{ NexmoSmsClient, SmsSubmissionResult }
 import com.nexmo.messaging.sdk.messages.TextMessage
@@ -40,7 +40,7 @@ object SMS extends MongoEntity( tid = "a0Gt" ) {
   "timeStart"    is DbInt          as "Starting Time";
   "timeEnd"      is DbInt          as "Ending Time";
   "vCode"        is DbUpperChar(6) as "Verfication Code";
-  "enteredCode" is DbUpperChar(6) is 'temporary as "Verfication Code";
+  "enteredCode"  is DbUpperChar(6)  is 'temporary as "Verfication Code" is 'required;
   
   var enabled = false
 }
@@ -50,6 +50,11 @@ case class NexmoApp( apiKey:String, secret:String, defaultFrom:String ) {
    var client = new NexmoSmsClient( apiKey, secret )
    
    def send( to:String, text:String, from:String = defaultFrom ) = {
+     //println( "client: " + client )
+     //println( "sms enabled: " + SMS.enabled )
+     //println( "to: " + to )
+     //println( "text: " + text )
+     
      if ( client != null && SMS.enabled ) {
        val message = new TextMessage( from, to, text )
        
@@ -133,11 +138,11 @@ object Smslet extends Weblet {
       val ui = user.view.ui(
          "editSms",
          Grid(
-           Row( 'sms_phone ),
-           Row( Field( 'sms_ok, Opts( "labels" -> "Verify Now|", "href" -> ( web.path + "?toggleSmsOk=1" ) ), uiStyle = Field.UI_STYLE_TOGGLE ) ),
+           Row( Field( 'sms_phone, Opts( "readonly" -> "1" ) ) ),
+           Row( Field( 'sms_ok, Opts( "labels" -> "Validate Now|Invalidate and enter new number", "href" -> ( web.path + "?toggleSmsOk=1" ) ), uiStyle = Field.UI_STYLE_TOGGLE ) ),
            Row( Field( 'sms_on, Opts( "labels" -> "Enable|Disable", "href" -> ( web.path + "?toggleSmsOn=1" ) ), uiStyle = Field.UI_STYLE_TOGGLE ) ) ) )
         
-      if ( web.b( 'saving ) ) {
+      if ( web.b( 'saving ) && !web.b( 'verify ) ) {
         val invalids = Scope( user, saving = true ).submit( user, ui )
         
         if ( invalids.isEmpty ) {
@@ -147,25 +152,16 @@ object Smslet extends Weblet {
           return
         }
       } else if ( web.b( "toggleSmsOk" ) ) {
-        val smsPhone = user.s( 'mobilePhone ).toPhoneMask
-        
-        if ( smsPhone != null ) {
-          sess.notice( "SMS verification message sent." )
-          B.sms.send( "1" + smsPhone, "SMS Volerro verification message" )
-        } else {
-          sess.warn( "Mobile Number should be set first." )
-        }
-        
-        sess.error( "foo " )
+        web.forward( "/sms/verify?ok=1&id=" + web.s( "id" ) or "" )
       } else if ( web.b( "toggleSmsOn" ) ) {
-        user( 'smsOn ) = !user.b( 'smsOn )
+        sms( 'on ) = !sms.b( 'on )
       }
      
       web.res.html(
       { Notification.box } ++
-      <header>With Volerro, you can send and receive SMS messages to your mobile phone</header>
+      <header>With { Text( B.applicationName ) }, you can send and receive SMS messages to your mobile phone</header>
       <form method="post" action={ web.path } id="f">
-       <table>
+       <table style="width:100%">
         { Scope( user, saving = true ).draw( ui ) }
        </table>
       </form>
@@ -181,28 +177,24 @@ object Smslet extends Weblet {
       var header:NodeSeq = null
           
       val (user,sms) = smsStart
+      var saving = web.b( 'saving )
+      
+      if ( web.b( 'ok ) ) {
+        sms( 'ok ) = false
+        saving = false
+      }
+        
+      if ( sms.b( 'ok ) )
+        web.forward( "/sms/edit?id=" + web.s( "id" ) or "" )
+        
       val verifyUi = user.view.ui( "verifySms", Grid( Row( 'sms_phone ) ) )
       val enterVerifyUi = user.view.ui( "enterVerifySms", Grid( Row( 'sms_enteredCode ) ) )
       var ui:org.tyranid.ui.UiObj = null
       
-      if ( !web.b( 'saving ) ) {
-        ui = verifyUi
-        
-        header = <header>With Volerro, you can send and receive SMS messages to your mobile phone.</header>
-        form = 
-        <form method="post" action={ web.path } id="f">
-         <table style="width: 100%">
-          { Scope( user, saving = true ).draw( ui ) }
-         </table>
-         <input type="hidden" value={ if ( sms.b( 'ok ) ) sms.s( 'phone ).toOnlyNumbers else null } name="verifiedNumber"/>
-         <input type="hidden" value="1" name="verify"/>
-         <footer class="btns">
-          <input type="submit" id="dlgSubmit" class="greenBtn" value="Send Verification"/>
-          <a href={ "/user/edit?id=" + user.tid } id="cancel" class="greyBtn">Cancel</a>
-         </footer>
-        </form>
+      if ( !saving && sms.s( 'vCode ).isBlank ) {
+        ui = verifyUi        
       } else {
-        if ( web.b( 'verify ) ) {
+        if ( web.b( 'sendVerify ) ) {
           ui = verifyUi
           
           val invalids = Scope( user, saving = true ).submit( user, ui )
@@ -218,16 +210,70 @@ object Smslet extends Weblet {
               if ( verifiedNumber.notBlank && verifiedNumber == smsNumber ) {
                 sess.notice( "That number has already been verified!" )
               } else {
-                // need to verify
-                sess.notice( "We just sent an SMS message to your phone " + smsNumber.toPhoneMask )
-                sms( "vCode" ) = Base62.make( 6 ).toUpperCase()
+                ui = enterVerifyUi
+                
+                val vCode = Base62.make( 6 ).toUpperCase()
+                sms( "vCode" ) = vCode
                 user.save
-                web.res.html(NodeSeq.Empty)
-                return
+                
+                B.sms.send( "1" + smsNumber, B.applicationName + ". Other charges may apply. Please enter this verification code at " + B.website + ": " + vCode )
+                header = <header>{ "We just sent an SMS message to your phone " + smsNumber.toPhoneMask + ". Please enter the verification code below." }</header>
               }
             }
           }
+        } else {
+          ui = enterVerifyUi
+          
+          if ( web.b( 'verify ) ) {
+            val invalids = Scope( user, saving = true ).submit( user, ui )
+            val smsNumber = sms.s( 'phone ).toOnlyNumbers
+            header = <header>{ "We sent an SMS message to your phone " + smsNumber.toPhoneMask + ". Please enter the verification code below." }</header>
+          
+            if ( invalids.isEmpty ) {
+               if ( sms.s( 'enteredCode ) == sms.s( 'vCode ) ) {
+                 sms( "ok" ) = true
+                 sms( "vCode" ) = null
+                 user.save
+                 sess.notice( "Your SMS phone is now verified." )
+                 web.forward( "/sms/edit?id=" + web.s( "id" ) or "" )
+               }
+               
+               sess.error( "That verification code is not correct." )
+            }
+          } else {
+            val smsNumber = sms.s( 'phone ).toOnlyNumbers
+            header = <header>{ "We sent an SMS message to your phone " + smsNumber.toPhoneMask + ". Please enter the verification code below." }</header>
+          }
         }
+      }
+      
+      if ( ui == verifyUi ) {
+        header = <header>With { Text( B.applicationName ) }, you can send and receive SMS messages to your mobile phone.</header>
+          
+        form = 
+        <form method="post" action={ web.path } id="f">
+         <table style="width: 100%">
+          { Scope( user, saving = true ).draw( ui ) }
+         </table>
+         <input type="hidden" value={ if ( sms.b( 'ok ) ) sms.s( 'phone ).toOnlyNumbers else null } name="verifiedNumber"/>
+         <input type="hidden" value="1" name="sendVerify"/>
+         <footer class="btns">
+          <input type="submit" id="dlgSubmit" class="greenBtn" value="Send Verification"/>
+          <a href={ "/user/edit?id=" + user.tid } id="cancel" class="greyBtn">Cancel</a>
+         </footer>
+        </form>
+      } else {
+        form = 
+          <form method="post" action={ web.path } id="f">
+            <table style="width: 100%">
+               { Scope( user, saving = true ).draw( ui ) }
+            </table>
+            <footer class="btns">
+             <input type="hidden" value="1" name="verify"/>
+            <input type="submit" id="dlgSubmit" class="greenBtn" value="Verify"/>
+            <a href={ "/user/edit?id=" + user.tid } id="cancel" class="greyBtn">Cancel</a>
+           </footer>
+         </form>
       }
       
       web.res.html(

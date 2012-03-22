@@ -119,17 +119,27 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
     }
   }
 
-  def load = {
-
-    for ( entryXml <- "http://alerts.weather.gov/cap/us.php?x=0".GET().toXml \ "entry" ) {
-
-      var entry = db.findOne( Mobj( "_id" -> idFromEntry( entryXml ) ) )
-
-      if ( entry == null )
-        entry = Mobj()
-
-      parse( entry, entryXml )
-      db.save( entry )
+  def load {
+    try {
+      for ( entryXml <- "http://alerts.weather.gov/cap/us.php?x=0".GET().toXml \ "entry" ) {
+  
+        var entry = db.findOne( Mobj( "_id" -> idFromEntry( entryXml ) ) )
+  
+        if ( entry == null )
+          entry = Mobj()
+  
+        parse( entry, entryXml )
+        db.save( entry )
+      }
+    } catch {
+    case e:org.apache.http.conn.HttpHostConnectException =>
+      println( "Cannot load weather: " + e.getMessage )
+    case e:java.net.ConnectException =>
+      println( "Cannot load weather: " + e.getMessage )
+    case e:java.net.UnknownHostException =>
+      println( "Cannot load weather: " + e.getMessage )
+    case unknown =>
+      throw unknown
     }
   }
 

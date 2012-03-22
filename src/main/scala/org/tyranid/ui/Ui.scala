@@ -145,15 +145,26 @@ object ToggleLink {
       
     var cssClass = "toggleLink"
     var toggleLabel = value ? "No" | "Yes"
-    
-    for ( opt <- opts )
-      opt match {
-      case ( "class", v ) => cssClass = v
-      case ( "style", v ) => linkLabel ++= " style=\"" ++= v += '"'
-      case ( "href", v ) => linkLabel ++= " href=\"" ++= v += '"'
-      case ( "labels", v ) => toggleLabel = v.split( "\\|" )( value ? 1 | 0 )
-      case ( n,       v ) => throw new RuntimeException( "Unknown field option " + n + " = " + v )
-      }
+
+    if ( opts != null )
+      for ( opt <- opts )
+        opt match {
+        case ( "class", v ) => cssClass = v
+        case ( "style", v ) => linkLabel ++= " style=\"" ++= v += '"'
+        case ( "href", v ) => linkLabel ++= " href=\"" ++= v += '"'
+        case ( "labels", v ) => toggleLabel = {
+          val parts = v.split( "\\|" )
+          
+          if ( value )
+            if( parts.length == 2 )
+              parts( 1 )
+            else
+              ""
+          else
+            parts( 0 )
+        }
+        case ( n,       v ) => throw new RuntimeException( "Unknown field option " + n + " = " + v )
+        }
 
     Unparsed( ( sb ++= ( ( if ( toggleLabel notBlank ) ( linkLabel ++= " class=\"" ++= cssClass += '"' ++= ">" ++= toggleLabel ++= "</a>)" ).toString else "" ).toString ) ).toString ) 
   }
