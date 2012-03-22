@@ -50,8 +50,11 @@ trait Query {
 
   val name:String
 
-  def label:AnyRef = name.camelCaseToSpaceUpper
-  def labelNode:NodeSeq = null
+  def label:AnyRef            = "Search Results" //name.camelCaseToSpaceUpper
+  def labelNode:NodeSeq       = null
+
+  def searchLabel:AnyRef      = "Search"
+  def searchLabelNode:NodeSeq = labelNode
 
   val allFields:Seq[Field]
 
@@ -415,10 +418,10 @@ case class Report( query:Query ) {
   }
 
   def innerDrawSearch =
-    ( if ( query.labelNode != null ) {
-      query.labelNode
+    ( if ( query.searchLabelNode != null ) {
+      query.searchLabelNode
     } else {
-      <div class="title">{ query.label }</div>
+      <div class="title">{ query.searchLabel }</div>
     } ) ++
     <div class="search">
      { query.searchForm( this ) }
@@ -525,9 +528,7 @@ object Reportlet extends Weblet {
       report.searchExtract
       report.sort = Mobj( web.req.s( 'sort ) -> -1 )
       report.offset = 0
-      web.redirect( "/freight" )
-
-      web.res.html( report.innerDrawSearch )
+      web.res.html( report.innerDraw )
 
     case "/prev" =>
       report.offset -= report.pageSize
