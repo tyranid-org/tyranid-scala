@@ -150,7 +150,7 @@ class StringImp( s:String ) {
   }
   
   def toHtmlPreserveWhitespace:NodeSeq =
-    s.replace( "\n \n", "\n\n" ).split( "\n\n" ).map( para => <p>{ Unparsed( para.replace( "\n", "<br/>" ) ) }</p> ).toSeq
+    s.replace( "\n \n", "\n\n" ).split( "\n\n" ).map( para => <p>{ Unparsed( para.replace( "\r\n", "<br/>" ).replace( "\n", "<br/>" ).replace( "\r", "<br/>" ) ) }</p> ).toSeq
 
 	def isBlank  = ( s == null || s.length == 0 )
 	def notBlank = ( s != null && s.length >  0 )

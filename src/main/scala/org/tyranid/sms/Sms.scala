@@ -35,8 +35,8 @@ import org.tyranid.ui.{ Grid, Row, PathField }
 
 object SMS extends MongoEntity( tid = "a0Gt" ) {
   "phone"        is DbPhone        as "Mobile Number" is 'required;
-  "ok"           is DbBoolean      as "SMS Verified";
-  "on"           is DbBoolean      as "SMS Notifications";
+  "ok"           is DbBoolean      as "Verified";
+  "on"           is DbBoolean      as "Notifications";
   "timeStart"    is DbInt          as "Starting Time";
   "timeEnd"      is DbInt          as "Ending Time";
   "vCode"        is DbUpperChar(6) as "Verfication Code";
@@ -157,19 +157,20 @@ object Smslet extends Weblet {
         sms( 'on ) = !sms.b( 'on )
       }
      
-      web.res.html(
-      { Notification.box } ++
-      <header>With { Text( B.applicationName ) }, you can send and receive SMS messages to your mobile phone</header>
-      <form method="post" action={ web.path } id="f">
-       <table style="width:100%">
-        { Scope( user, saving = true ).draw( ui ) }
-       </table>
-      </form>
-      <footer class="btns">
-       <input type="submit" id="dlgSubmit" class="greenBtn" value="Save" name="saving"/>
-       <a href={ "/user/edit?id=" + user.tid } id="cancel" class="greyBtn">Cancel</a>
-      </footer> )
-      
+      web.res.json( Map( 
+        "html" -> ( 
+           { Notification.box } ++
+           <header>With { Text( B.applicationName ) }, you can send and receive SMS messages to your mobile phone</header>
+           <form method="post" action={ web.path } id="f">
+            <table style="width:100%">
+            { Scope( user, saving = true ).draw( ui ) }
+            </table>
+           </form>
+           <footer class="btns">
+            <input type="submit" id="dlgSubmit" class="greenBtn" value="Save" name="saving"/>
+            <a href={ "/user/edit?id=" + user.tid } id="cancel" class="greyBtn">Cancel</a>
+           </footer> ) ) )
+
     case "/verify" =>
       redirectIfNotLoggedIn( web )
       
@@ -182,6 +183,7 @@ object Smslet extends Weblet {
       if ( web.b( 'ok ) ) {
         sms( 'ok ) = false
         saving = false
+        user.save
       }
         
       if ( sms.b( 'ok ) )
@@ -276,10 +278,12 @@ object Smslet extends Weblet {
          </form>
       }
       
-      web.res.html(
-      { Notification.box } ++
-      { header } ++
-      { form } )
+      web.res.json( Map( 
+        "html" -> (
+          { Notification.box } ++
+          { header } ++
+          { form } ),
+        "onCloseRedirect" -> true ) )
     }
   
     def smsStart = {

@@ -18,6 +18,7 @@
 package org.tyranid.json
 
 import scala.collection.JavaConversions._
+import scala.xml.NodeSeq
 
 import org.codehaus.jackson.JsonNode
 import org.codehaus.jackson.node.{ ArrayNode, JsonNodeFactory, MissingNode, ObjectNode }
@@ -114,6 +115,8 @@ case class JsonString( root:Any ) {
         write( a( i ) )
       }
       sb += ']'
+    // This will probably have to be parsed better to replace all inner quotes
+    case xml:NodeSeq         => sb += '"' ++= xml.toString.replaceAll( "\"", "\\\\\"" ).replaceAll( "\n", "{--TY_NL--}" ).replaceAll( "\r", "{--TY_LF--}" ) += '"'
     case l:Seq[_]            =>
       var first = true
       sb += '['
@@ -143,7 +146,7 @@ case class JsonString( root:Any ) {
     case l:java.lang.Long    => sb ++= l.toString
     case f:java.lang.Float   => sb ++= f.toString
     case oid:ObjectId        => sb += '"' ++= oid.toString += '"'
-	case u => println( "Don't know how to turn " + u + " into JSON" ); sb ++= "\"\"" 
+    case u => println( "Don't know how to turn " + u + " (" + u.getClass() + ") into JSON" ); sb ++= "\"\"" 
     }
 }
 
