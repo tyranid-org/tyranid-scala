@@ -24,9 +24,9 @@ import scala.xml.{ NodeSeq, Text, Unparsed }
 import org.tyranid.Imp._
 import org.tyranid.logic.{ Valid, Invalid }
 import org.tyranid.math.Base64
-import org.tyranid.report.{ PathField, Report }
+import org.tyranid.report.Report
 import org.tyranid.time.{ Time }
-import org.tyranid.ui.{ Checkbox, Field, Glyph, Input }
+import org.tyranid.ui.{ Checkbox, Field, Glyph, Input, PathField }
 import org.tyranid.web.WebContext
 
 

@@ -28,40 +28,9 @@ import org.tyranid.db.{ Entity, Path, Record, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.session.Session
-import org.tyranid.ui.{ Button, Checkbox, Glyph, Input, Select }
+import org.tyranid.ui.{ Button, Checkbox, RField, Glyph, Input, PathField, Search, Select }
 import org.tyranid.web.{ Weblet, WebContext }
 
-
-sealed trait Search {
-  def search( run:Run, f:Field, searchObj:DBObject, value:Any ):Unit
-}
-
-object Search {
-
-  case object Equals extends Search {
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = f.transformValue( value )
-  }
-
-  case object Exists extends Search {
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = Mobj( $gt -> "" )
-  }
-
-  case object Subst  extends Search {
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = {
-      // TODO:  if the underlying domain is not uppercase or lowercase this will not work, we need to do a case-insensitive pattern here if that is the case
-      searchObj( f.name ) = Mobj( $regex -> f.transformValue( value ) )
-    }
-  }
-
-  case object Gte    extends Search {
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = Mobj( $gte -> value )
-  }
-
-  case object Custom extends Search {
-    // nothing to do, this is handled in Query subclasses' prepareSearch()
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = {}
-  }
-}
 
 case class Grouping( entity:MongoEntity, keyName:String, value: () => AnyRef ) {
 
@@ -81,13 +50,13 @@ trait Query {
   def label:AnyRef = name.camelCaseToSpaceUpper
   def labelNode:NodeSeq = null
 
-  val allFields:Seq[Field]
+  val allFields:Seq[RField]
   
-  lazy val dataFields:Seq[Field]   = allFields.filter( _.data )
-  lazy val searchFields:Seq[Field] = allFields.filter( _.search != null )
+  lazy val dataFields:Seq[RField]   = allFields.filter( _.data )
+  lazy val searchFields:Seq[RField] = allFields.filter( _.search != null )
 
   lazy val allFieldsMap = {  
-    val map = mutable.Map[String,Field]()
+    val map = mutable.Map[String,RField]()
     for ( f <- allFields ) {
       if ( f.name.isBlank )
         throw new RuntimeException( "Field missing name in report: " + f.toString )
@@ -100,7 +69,7 @@ trait Query {
     map
   }
 
-  val defaultFields:Seq[Field]
+  val defaultFields:Seq[RField]
 
   def prepareSearch( run:Run ) = {
 
@@ -209,112 +178,6 @@ trait MongoQuery extends Query {
 
 
 /*
- * * *   F i e l d s
- */
-
-// TODO:  unify this with org.tyranid.ui.Field
-trait Field {
-  def name:String
-
-  lazy val label = name.camelCaseToSpaceUpper
-
-  def labelUi = <label for={ name }>{ label }</label>
-
-  def section = "Standard"
-
-  def header( run:Run ) = <th id={ name } class={ if ( run.report.selectedColumns( name ) ) "colh hi" else "colh" } style={ headerStyle }><div><span>{ headerCell }</span></div></th>
-  def headerStyle = ""
-  def headerCell:NodeSeq = Text( label )
-
-  def cellClass:String = null
-  def cell( run:Run, rec:Record ):NodeSeq
-
-  def effCell( run:Run, rec:Record ) = cell( run, rec )
-
-
-  /*
-   * * *   Search
-   */
-
-  def textSearchKeys = Seq( name )
-
-  def textSearch( run:Run ):Seq[DBObject] = {
-    val searchValue = run.report.textSearchValue
-
-    // TODO:  handle lookup codes
-
-    // TODO:  multivalue / calculated fields
-
-    if ( searchValue.notBlank )
-      textSearchKeys.map( name => Mobj( name -> searchValue.toPatternI ) )
-    else
-      Nil
-  }
-
-
-  val data:Boolean
-  val search:Search
-
-  // subclasses should convert to lowercase or uppercase as indicated by the domain
-  def transformValue( value:Any ) = value
-
-  def prepareSearch( run:Run, searchObj:DBObject, value:Any ) =
-    if ( search != null )
-      search.search( run, this, searchObj, value )
-
-  def searchUi( report:Report ):NodeSeq                   = throw new UnsupportedOperationException( "name=" + name )
-  def searchExtract( web:WebContext, report:Report ):Unit = throw new UnsupportedOperationException( "name=" + name )
-}
-
-trait DefaultField extends Field {
-
-  val data = true
-  val search = null
-}
-
-case class PathField( sec:String, path:Path, l:String = null, cellCls:String = null, displayExists:Boolean = false, data:Boolean = true, search:Search = null, opts:Seq[(String,String)] = Nil ) extends Field {
-  def name = path.name
-
-  override def section = sec
-  override def cellClass = cellCls
-
-  override lazy val label = if ( l.notBlank ) l else path.leaf.label
-  def cell( run:Run, r:Record ) = path.leaf.domain.cell( this, r )
-
-  override def effCell( run:Run, rec:Record ) = {
-    if ( displayExists )
-      path.s( rec ).notBlank |* Glyph.Checkmark
-    else
-      cell( run, rec )
-  }
-
-  override def transformValue( value:Any ) = path.leaf.domain.transformValue( value )
-
-  override def searchUi( report:Report ) = path.leaf.domain.searchUi( report, this )
-  override def searchExtract( web:WebContext, report:Report ) = path.leaf.domain.searchExtract( report, this, web )
-}
-
-case class CustomTextSearchField( name:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends Field {
-
-  val search = Search.Custom
-  override val data = false
-
-  def cell( run:Run, rec:Record ):NodeSeq = throw new UnsupportedOperationException
-
-  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
-
-  override def searchUi( report:Report ) = Input( name, report.searchValues.s( name ), opts:_* )
-
-  override def searchExtract( web:WebContext, report:Report ) = {
-    val v = web.req.s( name )
-
-    if ( v.notBlank ) report.searchValues( name ) = v
-    else              report.searchValues.remove( name )
-  }
-}
-
-
-/*
  * * *  R e p o r t
  */
 
@@ -336,25 +199,25 @@ case class Report( query:Query ) {
   @volatile var onSection:String = ""
   @volatile var onField:String = ""
 
-  val hidden  = mutable.ArrayBuffer[Field]()
-  val columns = mutable.ArrayBuffer[Field]()
+  val hidden  = mutable.ArrayBuffer[RField]()
+  val columns = mutable.ArrayBuffer[RField]()
 
   val selectedColumns = mutable.Set[String]()
   val selectedIds = mutable.Set[AnyRef]()
 
-  def remove( remove:Field ) = {
+  def remove( remove:RField ) = {
     columns -= remove
     hidden -= remove
     hidden += remove
   }
 
-  def add( add:Field ) = {
+  def add( add:RField ) = {
     hidden -= add
     columns -= add
     columns += add
   }
 
-  def insertBefore( insert:Field, before:Field ) = {
+  def insertBefore( insert:RField, before:RField ) = {
     hidden -= insert
     columns -= insert
     columns.insert( columns.indexOf( before ), insert )

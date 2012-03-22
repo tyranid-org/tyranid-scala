@@ -29,7 +29,8 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
 import org.tyranid.email.AWSEmail
 import org.tyranid.http.UserAgent
-import org.tyranid.report.{ DefaultField, Field, Run, MongoQuery }
+import org.tyranid.report.{ Run, MongoQuery }
+import org.tyranid.ui.DefaultField
 
 
 object Log extends MongoEntity( tid = "a0Bu" ) {
