@@ -132,7 +132,9 @@ trait Query {
     Session().reportFor( this.name ).draw
   }
   
-  def extraActions: NodeSeq = Text("")
+  def extraActions:NodeSeq = Text("")
+
+  def searchScreen:NodeSeq = null
 }
 
 trait MongoQuery extends Query {
