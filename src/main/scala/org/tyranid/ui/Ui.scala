@@ -203,6 +203,13 @@ object Select {
  */
 
 
+sealed trait UiStyle
+
+object UiStyle {
+  case object Default extends UiStyle
+  case object Toggle  extends UiStyle
+}
+
 trait UiObj {
 
   def bind( view:View ):UiObj

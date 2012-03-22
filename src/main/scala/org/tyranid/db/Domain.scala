@@ -26,7 +26,7 @@ import org.tyranid.logic.{ Valid, Invalid }
 import org.tyranid.math.Base64
 import org.tyranid.report.Report
 import org.tyranid.time.{ Time }
-import org.tyranid.ui.{ Checkbox, Glyph, Input, PathField }
+import org.tyranid.ui.{ Checkbox, Glyph, Input, PathField, Search, Select, TextArea, ToggleLink, UiStyle }
 import org.tyranid.web.WebContext
 
 
@@ -57,15 +57,20 @@ trait Domain extends Valid {
 	
 	def show( s:Scope ) = true
 
-  def ui( s:Scope, f:PathField, opts:(String,String)* ):NodeSeq = {
-    val input = PathField.text( s, f, opts:_* )
+  /*
+   * This method modifies the data to ensure that it corresponds to restrictions set up by the domain.
+   * Examples are translating to upper/lowercase by DbTextlike.
+   */
+  def transformValue( value:Any ) = value
 
-      /*
-        if ( s.rec( f.va.name ) != v ) {
-          s.rec( f.va.name ) = v; f.updateDisplayCmd( s ) 
-        }
-      }, opts.map( ElemAttr.pairToBasic ):_* )
-      */
+
+  /*
+   * * *   F o r m s
+   */
+
+  def ui( s:Scope, f:PathField ):NodeSeq = {
+    val ret = f.optsMapper( s )
+    val input = Input( ret._1, s.rec s f.va.name, ret._2:_*  )
 
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -77,37 +82,50 @@ trait Domain extends Valid {
     s.rec( f.va.name ) = T.web.req.s( f.id )
   }
 
-  def searchUi( report:Report, pf:PathField ):NodeSeq =
-    if ( pf.search == "exists" )
-      Checkbox( pf.name, report.searchValues.b( pf.name ) ) ++ pf.labelUi
-    else
-      Input( pf.name, report.searchValues.s( pf.name ), pf.opts:_* )
-
-  def searchExtract( report:Report, pf:PathField, web:WebContext ) =
-    if ( pf.search == "exists" ) {
-      val v = web.req.b( pf.name )
-
-      if ( v ) report.searchValues( pf.name ) = true
-      else     report.searchValues.remove( pf.name )
-    } else {
-      val v = web.req.s( pf.name )
-
-      if ( v.notBlank ) report.searchValues( pf.name ) = v
-      else              report.searchValues.remove( pf.name )
-    }
-
   /**
    * These are the class(es) that should be added to the input container.
    */
   def inputcClasses = ""
 
-  def cell( pf:PathField, r:Record ):NodeSeq = Text( pf.path s r )
 
   /*
-   * This method modifies the data to ensure that it corresponds to restrictions set up by the domain.
-   * Examples are translating to upper/lowercase by DbTextlike.
+   * * *   S e a r c h
    */
-  def transformValue( value:Any ) = value
+
+  protected def commonSearchUi( report:Report, f:PathField, normal: => NodeSeq ) =
+    if ( f.search == Search.Exists )
+      Checkbox( f.name, report.searchValues.b( f.name ) ) ++ f.labelUi
+    else
+      normal
+
+  protected def commonSearchExtract( report:Report, f:PathField, web:WebContext ) =
+    if ( f.search == Search.Exists ) {
+      val v = web.req.b( f.name )
+
+      if ( v ) report.searchValues( f.name ) = true
+      else     report.searchValues.remove( f.name )
+      true
+    } else {
+      false
+    }
+
+  def searchUi( report:Report, f:PathField ):NodeSeq =
+    commonSearchUi( report, f, Input( f.name, report.searchValues.s( f.name ), f.opts:_* ) )
+
+  def searchExtract( report:Report, f:PathField, web:WebContext ) =
+    if ( !commonSearchExtract( report, f, web ) ) {
+      val v = web.req.s( f.name )
+
+      if ( v.notBlank ) report.searchValues( f.name ) = v
+      else              report.searchValues.remove( f.name )
+    }
+
+
+  /*
+   * * *   G r i d
+   */
+
+  def cell( f:PathField, r:Record ):NodeSeq = Text( f.path s r )
 }
 
 
@@ -124,23 +142,15 @@ abstract class DbIntish extends Domain {
     s.rec( f.va.name ) = T.web.req.i( f.id )
   }
     
-  override def searchUi( report:Report, pf:PathField ) =
-    if ( pf.search == "exists" )
-      Checkbox( pf.name, report.searchValues.b( pf.name ) ) ++ pf.labelUi
-    else
-      Input( pf.name, report.searchValues.s( pf.name ), pf.opts:_* )
+  override def searchUi( report:Report, f:PathField ) =
+    commonSearchUi( report, f, Input( f.name, report.searchValues.s( f.name ), f.opts:_* ) )
 
-  override def searchExtract( report:Report, pf:PathField, web:WebContext ) =
-    if ( pf.search == "exists" ) {
-      val v = web.req.b( pf.name )
+  override def searchExtract( report:Report, f:PathField, web:WebContext ) =
+    if ( !commonSearchExtract( report, f, web ) ) {
+      val i = web.req.i( f.name )
 
-      if ( v ) report.searchValues( pf.name ) = true
-      else     report.searchValues.remove( pf.name )
-    } else {
-      val i = web.req.i( pf.name )
-
-      if ( i == 0 ) report.searchValues.remove( pf.name )
-      else          report.searchValues( pf.name ) = i
+      if ( i == 0 ) report.searchValues.remove( f.name )
+      else          report.searchValues( f.name ) = i
     }
 }
 
@@ -204,8 +214,9 @@ trait DbTextLike extends Domain {
 object DbText extends DbTextLike {
 	val sqlName = "TEXT"
 	
-  override def ui( s:Scope, f:PathField, opts:(String,String)* ):NodeSeq = {
-    val ta = PathField.textArea( s, f, s.rec.s( f.va.name ), opts:_* )
+  override def ui( s:Scope, f:PathField ):NodeSeq = {
+    val ret = f.optsMapper( s )
+    val ta = TextArea( ret._1, s.rec.s( f.va.name ), ret._2:_*  )
     
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -215,7 +226,7 @@ object DbText extends DbTextLike {
 	
   override def inputcClasses = "large"
 
-  override def cell( pf:PathField, r:Record ):NodeSeq = Unparsed( pf.path.s( r ).replace( "\n", "<br/>" ) )
+  override def cell( f:PathField, r:Record ):NodeSeq = Unparsed( f.path.s( r ).replace( "\n", "<br/>" ) )
 }
 
 trait LimitedText extends DbTextLike {
@@ -228,21 +239,6 @@ trait LimitedText extends DbTextLike {
 
 case class DbChar( len:Int ) extends LimitedText {
 	val sqlName = "CHAR(" + len + ")"
-}
-
-case class DbLargeChar( len:Int ) extends LimitedText {
-	val sqlName = "CHAR(" + len + ")"
-	
-  override def ui( s:Scope, f:PathField, opts:(String,String)* ):NodeSeq = {
-    val ta = PathField.textArea( s, f, s.rec.s( f.va.name ), opts:_* )
-    
-    if ( f.focus )
-      throw new RuntimeException( "TODO:  handle focus on load" )
-    else 
-      ta
-	}
-	
-  override def inputcClasses = "large"
 }
 
 case class DbVarChar( len:Int ) extends LimitedText {
@@ -269,8 +265,15 @@ case class DbUpperChar( len:Int ) extends LimitedText {
 
 object DbPassword extends DbVarChar( 64 ) {
 
-  override def ui( s:Scope, f:PathField, opts:(String,String)* ) =
-    super.ui( s, f, ( opts ++ Seq( "type" -> "password" ) ):_* )
+  override def ui( s:Scope, f:PathField ) = {
+    val ret = f.optsMapper( s )
+    val input = Input( ret._1, s.rec.s( f.va.name ), ( ret._2 ++ Seq( "type" -> "password" ) ):_*  )
+
+    if ( f.focus )
+      throw new RuntimeException( "TODO:  handle focus on load" )
+    else 
+      input
+  }
 
   override def validations =
     ( ( scope:Scope ) => {
@@ -286,8 +289,8 @@ object DbPassword extends DbVarChar( 64 ) {
 
 object DbUrl extends DbVarChar( 256 ) {
 
-  override def cell( pf:PathField, r:Record ):NodeSeq = {
-    val base = pf.path.s( r )
+  override def cell( f:PathField, r:Record ):NodeSeq = {
+    val base = f.path.s( r )
 
     try {
       <a href={ base.toUrl.toString }>{ base }</a>
@@ -324,11 +327,14 @@ object DbPhone extends DbChar( 14 ) {
 object DbBoolean extends Domain {
 	val sqlName = "CHAR(1)"
 	  
-  override def ui( s:Scope, f:PathField, opts:(String,String)* ) =
-    if ( f.uiStyle == PathField.UI_STYLE_TOGGLE )
-      PathField.toggleLink( s, f, s.rec.b( f.va.name ), opts:_* )
-    else
-      PathField.checkbox( s, f, s.rec.b( f.va.name ), opts:_* )
+  override def ui( s:Scope, f:PathField ) = {
+    val ret = f.optsMapper( s )
+
+    f.uiStyle match {
+    case UiStyle.Toggle => ToggleLink( ret._1, s.rec.b( f.va.name ), ret._2:_* )
+    case _              => Checkbox( ret._1, s.rec b f.va.name, ret._2:_* )
+    }
+  }
     
   override def extract( s:Scope, f:PathField ) {
     s.rec( f.va.name ) = T.web.req.b( f.id )
@@ -336,14 +342,14 @@ object DbBoolean extends Domain {
 
   override def inputcClasses = " boolean"
 
-  override def cell( pf:PathField, r:Record ) = pf.path.b( r ) |* Glyph.Checkmark
+  override def cell( f:PathField, r:Record ) = f.path.b( r ) |* Glyph.Checkmark
 
-  override def searchUi( report:Report, pf:PathField ) =
-    Checkbox( pf.name, report.searchValues.b( pf.name ) ) ++ pf.labelUi
+  override def searchUi( report:Report, f:PathField ) =
+    Checkbox( f.name, report.searchValues.b( f.name ) ) ++ f.labelUi
 
-  override def searchExtract( report:Report, pf:PathField, web:WebContext ) =
-    if ( web.req.b( pf.name ) ) report.searchValues( pf.name ) = true
-    else                        report.searchValues.remove( pf.name )
+  override def searchExtract( report:Report, f:PathField, web:WebContext ) =
+    if ( web.req.b( f.name ) ) report.searchValues( f.name ) = true
+    else                       report.searchValues.remove( f.name )
 }
 
 
@@ -378,8 +384,10 @@ trait DbDateLike extends Domain {
     } ::
     super.validations
 
-  override def ui( s:Scope, f:PathField, opts:(String,String)* ) = {
-    val input = PathField.input( s, f, s.rec.t( f.va.name ).toDateStr, opts:_* )
+  override def ui( s:Scope, f:PathField ) = {
+    val ret = f.optsMapper( s )
+    val input = Input( ret._1, s.rec.t( f.va.name ).toDateStr, ret._2:_*  )
+
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
     else 
@@ -390,8 +398,8 @@ trait DbDateLike extends Domain {
     s.rec( f.va.name ) = T.web.req.s( f.id ).toLaxDate
   }
 
-  override def cell( pf:PathField, r:Record ):NodeSeq = {
-    val date = pf.path.t( r )
+  override def cell( f:PathField, r:Record ):NodeSeq = {
+    val date = f.path.t( r )
     Text( if ( date != null ) date.toDateStr else "" )
   }
 }
@@ -403,8 +411,10 @@ object DbDateTime extends DbDateLike {
 
   override def dateOnly = false
 
-  override def ui( s:Scope, f:PathField, opts:(String,String)* ) = {
-    val input = PathField.input( s, f, s.rec.t( f.va.name ).toDateTimeStr, opts:_* )
+  override def ui( s:Scope, f:PathField ) = {
+    val ret = f.optsMapper( s )
+    val input = Input( ret._1, s.rec.t( f.va.name ).toDateTimeStr, ret._2:_*  )
+
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
     else 
@@ -415,8 +425,8 @@ object DbDateTime extends DbDateLike {
     s.rec( f.va.name ) = T.web.req.s( f.id ).toLaxDateTime
   }
 
-  override def cell( pf:PathField, r:Record ):NodeSeq = {
-    val date = pf.path.t( r )
+  override def cell( f:PathField, r:Record ):NodeSeq = {
+    val date = f.path.t( r )
     Unparsed( "<nobr>" + ( if ( date != null ) date.toDateTimeStr else "" ) + "</nobr>" )
   }
 }
@@ -449,7 +459,7 @@ case class DbLink( toEntity:Entity ) extends Domain {
 		                case IdType.ID_COMPLEX => throw new ModelException( toEntity.name + " has a complex ID and cannot be linked to." )
 										}
 
-  override def ui( s:Scope, f:PathField, opts:(String,String)* ) = {
+  override def ui( s:Scope, f:PathField ) = {
     
     /*
      * a.  model-based linking
@@ -475,10 +485,10 @@ case class DbLink( toEntity:Entity ) extends Domain {
       
     val values = idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq
     
-    PathField.select(
-      s, f, s.rec s f.va,
-      ( "" -> "-Please Select-" ) +: values,
-      opts:_* )
+    val ret = f.optsMapper( s )
+    Select( ret._1, s.rec s f.va,
+            ( "" -> "-Please Select-" ) +: values,
+            ret._2:_* )
   }
 
   override def extract( s:Scope, f:PathField ) {
