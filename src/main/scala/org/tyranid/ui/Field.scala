@@ -32,35 +32,34 @@ import org.tyranid.report.{ Report, Run }
 import org.tyranid.web.WebContext
 
 
-
 sealed trait Search {
-  def search( run:Run, f:RField, searchObj:DBObject, value:Any ):Unit
+  def search( run:Run, f:Field, searchObj:DBObject, value:Any ):Unit
 }
 
 object Search {
 
   case object Equals extends Search {
-    def search( run:Run, f:RField, searchObj:DBObject, value:Any ) = searchObj( f.name ) = f.transformValue( value )
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = f.transformValue( value )
   }
 
   case object Exists extends Search {
-    def search( run:Run, f:RField, searchObj:DBObject, value:Any ) = searchObj( f.name ) = Mobj( $gt -> "" )
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = Mobj( $gt -> "" )
   }
 
   case object Subst  extends Search {
-    def search( run:Run, f:RField, searchObj:DBObject, value:Any ) = {
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = {
       // TODO:  if the underlying domain is not uppercase or lowercase this will not work, we need to do a case-insensitive pattern here if that is the case
       searchObj( f.name ) = Mobj( $regex -> f.transformValue( value ) )
     }
   }
 
   case object Gte    extends Search {
-    def search( run:Run, f:RField, searchObj:DBObject, value:Any ) = searchObj( f.name ) = Mobj( $gte -> value )
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = Mobj( $gte -> value )
   }
 
   case object Custom extends Search {
     // nothing to do, this is handled in Query subclasses' prepareSearch()
-    def search( run:Run, f:RField, searchObj:DBObject, value:Any ) = {}
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = {}
   }
 }
 
@@ -132,7 +131,7 @@ object PathField {
   }
 }
 
-trait RField {
+trait Field {
   def name:String
 
   lazy val label = name.camelCaseToSpaceUpper
@@ -185,7 +184,7 @@ trait RField {
   def searchExtract( web:WebContext, report:Report ):Unit = throw new UnsupportedOperationException( "name=" + name )
 }
 
-trait DefaultField extends RField {
+trait CustomField extends Field {
 
   val data = true
   val search = null
@@ -204,7 +203,7 @@ case class PathField( name:String,
                       inputOnly:Boolean = false,
                       focus:Boolean = false,
                       filter:Option[ ( Record ) => Boolean ] = None,
-                      uiStyle:Int=0 ) extends RField with UiObj {
+                      uiStyle:Int=0 ) extends Field with UiObj {
   var id:String = null
 
   var path:Path = null
@@ -263,7 +262,7 @@ case class PathField( name:String,
   override def searchExtract( web:WebContext, report:Report ) = path.leaf.domain.searchExtract( report, this, web )
 }
 
-case class CustomTextSearchField( name:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends RField {
+case class CustomTextSearchField( name:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends Field {
 
   val search = Search.Custom
   override val data = false
@@ -281,5 +280,4 @@ case class CustomTextSearchField( name:String, l:String = null, opts:Seq[(String
     else              report.searchValues.remove( name )
   }
 }
-
 

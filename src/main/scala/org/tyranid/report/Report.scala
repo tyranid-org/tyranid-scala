@@ -28,7 +28,7 @@ import org.tyranid.db.{ Entity, Path, Record, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.session.Session
-import org.tyranid.ui.{ Button, Checkbox, RField, Glyph, Input, PathField, Search, Select }
+import org.tyranid.ui.{ Button, Checkbox, Field, Glyph, Input, PathField, Search, Select }
 import org.tyranid.web.{ Weblet, WebContext }
 
 
@@ -50,15 +50,15 @@ trait Query {
   def label:AnyRef = name.camelCaseToSpaceUpper
   def labelNode:NodeSeq = null
 
-  val allFields:Seq[RField]
+  val allFields:Seq[Field]
 
-  val boundFields:Seq[RField]
+  val boundFields:Seq[Field]
 
-  lazy val dataFields:Seq[RField]   = boundFields.filter( _.data )
-  lazy val searchFields:Seq[RField] = boundFields.filter( _.search != null )
+  lazy val dataFields:Seq[Field]   = boundFields.filter( _.data )
+  lazy val searchFields:Seq[Field] = boundFields.filter( _.search != null )
 
   lazy val allFieldsMap = {  
-    val map = mutable.Map[String,RField]()
+    val map = mutable.Map[String,Field]()
     for ( f <- allFields ) {
       if ( f.name.isBlank )
         throw new RuntimeException( "Field missing name in report: " + f.toString )
@@ -71,7 +71,7 @@ trait Query {
     map
   }
 
-  val defaultFields:Seq[RField]
+  val defaultFields:Seq[Field]
 
   def prepareSearch( run:Run ) = {
 
@@ -213,25 +213,25 @@ case class Report( query:Query ) {
   @volatile var onSection:String = ""
   @volatile var onField:String = ""
 
-  val hidden  = mutable.ArrayBuffer[RField]()
-  val columns = mutable.ArrayBuffer[RField]()
+  val hidden  = mutable.ArrayBuffer[Field]()
+  val columns = mutable.ArrayBuffer[Field]()
 
   val selectedColumns = mutable.Set[String]()
   val selectedIds = mutable.Set[AnyRef]()
 
-  def remove( remove:RField ) = {
+  def remove( remove:Field ) = {
     columns -= remove
     hidden -= remove
     hidden += remove
   }
 
-  def add( add:RField ) = {
+  def add( add:Field ) = {
     hidden -= add
     columns -= add
     columns += add
   }
 
-  def insertBefore( insert:RField, before:RField ) = {
+  def insertBefore( insert:Field, before:Field ) = {
     hidden -= insert
     columns -= insert
     columns.insert( columns.indexOf( before ), insert )
@@ -295,7 +295,7 @@ case class Report( query:Query ) {
     if ( fields.size == 0 )
       Unparsed( "<select style='width:150px;' disabled><option>none left</option></select>" )
     else
-      Select( "rFields", field, fields.map( f => f.name -> f.label ), "style" -> "width:150px; max-width:150px;" )
+      Select( "Field", field, fields.map( f => f.name -> f.label ), "style" -> "width:150px; max-width:150px;" )
 
   def addBox:NodeSeq =
     if ( field.notBlank )
