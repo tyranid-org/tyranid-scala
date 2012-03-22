@@ -17,6 +17,7 @@
 
 package org.tyranid.report
 
+import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.xml.{ NodeSeq, Text, Unparsed }
 
@@ -136,7 +137,24 @@ trait Query {
   
   def extraActions:NodeSeq = Text("")
 
-  val searchForm:( Report ) => NodeSeq = null
+  val orderBy:Seq[(String,String)] = Nil
+
+  val searchForm =
+   ( r:Report ) =>
+   <form method="post" id="rSearchForm" style="padding-top:8px;">
+    { searchFields map { f =>
+        <div>{ f.labelUi }</div>
+        <div>{ f.searchUi( r ) }</div>
+      }
+    }
+    { orderBy.nonEmpty |*
+    <div>Order By</div>
+    <div>{ Select( "sort", r.sort != null |* r.sort.keySet.head, orderBy ) }</div>
+    }
+    <div class="btns">
+     <input type="submit" value="Search" class="greenBtn" name="saving"/>
+    </div>
+   </form>
 }
 
 trait MongoQuery extends Query {
@@ -171,6 +189,8 @@ trait MongoQuery extends Query {
 
   def run( run:Run ) = {
     val report = run.report
+spam( "Search:\n\n" + prepareSearch( run ) + "\n\n" )
+
     var part = entity.db.find( prepareSearch( run ), Mobj() ).limit( run.report.pageSize + 1 )
 
     if ( report.offset != 0 )
@@ -184,8 +204,6 @@ trait MongoQuery extends Query {
 
     rows.take( run.report.pageSize )
   }
-
-  val orderBy:Seq[(String,String)] = Nil
 }
 
 

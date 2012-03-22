@@ -126,7 +126,7 @@ trait Field {
 trait CustomField extends Field {
 
   val data = true
-  val search = null
+  val search:Search = null
 }
 
 

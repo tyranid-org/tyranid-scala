@@ -30,7 +30,7 @@ import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
 import org.tyranid.email.AWSEmail
 import org.tyranid.http.UserAgent
 import org.tyranid.report.{ Run, MongoQuery }
-import org.tyranid.ui.{ CustomField, PathField }
+import org.tyranid.ui.{ CustomField, PathField, Search }
 
 
 object Log extends MongoEntity( tid = "a0Bu" ) {
@@ -211,7 +211,7 @@ object LogQuery extends MongoQuery {
       def cell( run:Run, r:Record ) = Unparsed( Log.Events( r.i( 'e ) ) )
     },
     PathField( "on" ),
-    PathField( "sid" ),
+    PathField( "sid", search = Search.Equals ),
     new CustomField {
       def name = "uid"
       override lazy val label = "User"
@@ -222,7 +222,7 @@ object LogQuery extends MongoQuery {
         }
       }
     },
-    PathField( "m" ),
+    PathField( "m", search = Search.Subst ),
     new CustomField {
       def name = "ua"
       override lazy val label = "User Agent"
@@ -237,18 +237,10 @@ object LogQuery extends MongoQuery {
           } )
       }
     },
-    PathField( "ip" ),
-    PathField( "ex" ),
-    new CustomField {
-      def name = "ct"
-      override lazy val label = "Count"
-      def cell( run:Run, r:Record ) = Unparsed( r.s( 'ct ) )
-    },
-    new CustomField {
-      def name = "du"
-      override lazy val label = "Duration (ms)"
-      def cell( run:Run, r:Record ) = Unparsed( r.s( 'du ) )
-    }
+    PathField( "ip", search = Search.Subst ),
+    PathField( "ex", search = Search.Subst ),
+    PathField( "ct", search = Search.Gte ),
+    PathField( "du", search = Search.Gte )
   )
 
   val defaultFields = dataFields.take( 4 )
