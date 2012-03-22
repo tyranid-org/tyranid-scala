@@ -70,16 +70,19 @@ trait BsonObject extends Deep {
   def s( key:String )   = apply( key ).coerceString
   def t( key:String )   = apply( key ).coerceDate
 
-  def o_?( key:String ):BsonObject =
+  def o_?( key:String ):BsonObject = {
     apply( key ) match {
     case null            => Mongo.EmptyObject
+    case bo:BsonObject   => bo
     case o:DBObject      => o
     }
+  }
   def o_!( key:String ):BsonObject =
     apply( key ) match {
     case null            => val o = new BasicDBObject
                             update( key, o )
                             o
+    case bo:BsonObject   => bo
     case o:DBObject      => o
     }
   def o( key:String )   = apply( key ).asInstanceOf[BsonObject]
