@@ -68,69 +68,6 @@ object Search {
  * * *   F i e l d s
  */
 
-object PathField {
-  val UI_STYLE_DEFAULT = 0
-  val UI_STYLE_TOGGLE = 1
-
-  implicit def string2Field( name:String ) = PathField( name )
-  implicit def symbol2Field( name:Symbol ) = PathField( name.name )
-
-  def toggleLink( s:Scope, f:PathField, value:Boolean, opts:(String,String)* ):NodeSeq = {
-    val ret = optsMapper( s, f, opts:_* )
-    ToggleLink( ret._1, value, ret._2:_*  )
-  }
-
-  def checkbox( s:Scope, f:PathField, value:Boolean, opts:(String,String)* ):NodeSeq = {
-    val ret = optsMapper( s, f, opts:_* )
-    Checkbox( ret._1, value, ret._2:_*  )
-  }
-
-  def text( s:Scope, f:PathField, opts:(String,String)* ):NodeSeq =
-    input( s, f, s.rec.s( f.va.name ), opts:_* )
-
-  def input( s:Scope, f:PathField, value:String, opts:(String,String)* ):NodeSeq = {
-    val ret = optsMapper( s, f, opts:_* )
-    Input( ret._1, value, ret._2:_*  )
-  }
-  
-  def select( s:Scope, f:PathField, value:String, values:Seq[ (String,String) ], opts:(String,String)* ) = {
-    val ret = optsMapper( s, f, opts:_* )
-    Select( ret._1, value, values, ret._2:_* )
-  }
-
-  def textArea( s:Scope, f:PathField, value:String, opts:(String,String)* ):NodeSeq = {
-    val ret = optsMapper( s, f, opts:_* )
-    TextArea( ret._1, value, ret._2:_*  )
-  }
-  
-  private def optsMapper( s:Scope, f:PathField, opts:(String,String)* ):( String, Seq[(String,String)] ) = { 
-    var id = f.id
-
-    val opts2 = opts.flatMap {
-      _ match {
-      case ( "id" | "name", v )   =>
-        if ( id != null && v != id )
-          throw new RuntimeException( "Form element being named " + v + " and " + id )
-
-        id = v
-        None
-
-      case p =>
-        Some( p )
-      }
-    }
-
-    if ( id == null ) {
-      id = /* TODO: form id + '_' + */ f.va.name
-      f.id = id
-    } else if ( id != f.id ) {
-      f.id = id
-    }
-
-    return ( id, opts2 )
-  }
-}
-
 trait Field {
   def name:String
 
@@ -190,7 +127,15 @@ trait CustomField extends Field {
   val search = null
 }
 
-// 1.  old Field's use '_' for path sep, new ones use '.' ... reconcile.
+
+object PathField {
+  val UI_STYLE_DEFAULT = 0
+  val UI_STYLE_TOGGLE = 1
+
+  implicit def string2Field( name:String ) = PathField( name )
+  implicit def symbol2Field( name:Symbol ) = PathField( name.name )
+}
+
 case class PathField( name:String,
                       l:String = null,
                       opts:Seq[(String,String)] = Nil,
@@ -221,13 +166,40 @@ case class PathField( name:String,
 
   def fields = Seq( this )
 
+  def optsMapper( s:Scope ):( String, Seq[(String,String)] ) = { 
+    var id = this.id
+
+    val opts2 = opts.flatMap {
+      _ match {
+      case ( "id" | "name", v )   =>
+        if ( id != null && v != id )
+          throw new RuntimeException( "Form element being named " + v + " and " + id )
+
+        id = v
+        None
+
+      case p =>
+        Some( p )
+      }
+    }
+
+    if ( id == null ) {
+      id = /* TODO: form id + '_' + */ va.name
+      this.id = id
+    } else if ( id != this.id ) {
+      this.id = id
+    }
+
+    return ( id, opts2 )
+  }
+
   private def invalidLines( invalids:Seq[Invalid] ) =
     for ( invalid <- invalids )
       yield <span>{ invalid.message }</span>
 
   override def draw( pScope:Scope ) =
     if ( inputOnly ) {
-      va.att.domain.ui( pScope.at( path ), this, ( opts ++ Seq( "id" -> va.name ) ):_* )
+      va.att.domain.ui( pScope.at( path ), this )
     } else {
       val scope = pScope.at( path )
       val invalids = va.invalids( scope )
@@ -238,7 +210,7 @@ case class PathField( name:String,
       va.att.domain.show( scope ) |*
       <div id={ va.name + "_c" } class={ "fieldc" + ( invalid |* " invalid" ) }>
        <div class="labelc">{ va.label( rec, opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
-       <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( scope, this, ( opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
+       <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( scope, this ) }</div>
        <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
       </div>
     }

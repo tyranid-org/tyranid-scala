@@ -28,7 +28,7 @@ import org.tyranid.Imp._
 import org.tyranid.db.{ DbLink, Domain, Entity, Record, Scope, View, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.math.Base64
-import org.tyranid.ui.PathField
+import org.tyranid.ui.{ Input, PathField }
 
 
 case object DbMongoId extends Domain {
@@ -43,8 +43,10 @@ case object DbMongoId extends Domain {
       Base64.toString( oid.toByteArray )
   }
 
-  override def ui( s:Scope, f:PathField, opts:(String,String)* ):NodeSeq =
-    PathField.input( s, f, s.rec.s( f.va ), "class" -> "textInput" ) 
+  override def ui( s:Scope, f:PathField ):NodeSeq = {
+    val ret = f.optsMapper( s )
+    Input( ret._1, s.rec.s( f.va.name ), ( ret._2 ++ Seq( "class" -> "textInput" ) ):_*  )
+  }
 
   //override def inputcClasses = " select"
 }

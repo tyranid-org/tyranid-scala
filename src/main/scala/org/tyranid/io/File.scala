@@ -120,7 +120,7 @@ object File {
 }
 
 trait CommonFile extends Domain {
-  override def ui( s:Scope, f:PathField, opts:(String,String)* ): NodeSeq =
+  override def ui( s:Scope, f:PathField ): NodeSeq =
     <div class='thumbnail'>
       { 
 //        if ( ( s.rec s f.va ).isBlank ) { // TODO:  Replace this with a blank/default image for ALL images
@@ -129,7 +129,7 @@ trait CommonFile extends Domain {
         
         var id = f.id
 
-        for ( opt <- opts )
+        for ( opt <- f.opts )
           opt match {
           case ( "id" | "name", v )   =>
             if ( id != null && v != id )
