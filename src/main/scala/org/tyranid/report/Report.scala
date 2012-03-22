@@ -111,7 +111,6 @@ trait Query {
   
   def by( name:String ) = dataFields.find( _.name == name ).get
 
-  val searchScreen:String = null
   val tableGridStyle:String = null
 
   def selectable = grouping != null
@@ -134,7 +133,7 @@ trait Query {
   
   def extraActions:NodeSeq = Text("")
 
-  def searchScreen:NodeSeq = null
+  val searchForm:( Report ) => NodeSeq = null
 }
 
 trait MongoQuery extends Query {
@@ -182,6 +181,8 @@ trait MongoQuery extends Query {
 
     rows.take( run.report.pageSize )
   }
+
+  val orderBy:Seq[(String,String)] = Nil
 }
 
 
@@ -340,7 +341,7 @@ case class Report( query:Query ) {
          <td style="padding:0;">
           <table>
            <tr>
-            { ( query.searchScreen.notBlank |* <td><a href={ query.searchScreen } class="greyBtn">Search</a></td> ) ++
+            { ( query.searchForm != null    |* <td><button id="rSearch" class="greyBtn">Search</button></td> ) ++
               ( offset > 0                  |* <td><button id="rPrev" class="greyBtn">Prev</button></td> ) ++
               ( hasNext                     |* <td><button id="rNext" class="greyBtn">Next</button></td> ) ++
               ( query.grouping != null      |* <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
@@ -412,6 +413,16 @@ case class Report( query:Query ) {
      </table>
     </div>
   }
+
+  def innerDrawSearch =
+    ( if ( query.labelNode != null ) {
+      query.labelNode
+    } else {
+      <div class="title">{ query.label }</div>
+    } ) ++
+    <div class="search">
+     { query.searchForm( this ) }
+    </div>
 
   def draw =
     <head>
@@ -504,6 +515,19 @@ object Reportlet extends Weblet {
     case "/textSearch" =>
       report.textSearchValue = web.req.s( 'ts )
       web.res.html( report.innerDraw )
+
+    case "/editSearch" =>
+      web.res.html( report.innerDrawSearch )
+
+    case "/search" =>
+      query.init
+
+      report.searchExtract
+      report.sort = Mobj( web.req.s( 'sort ) -> -1 )
+      report.offset = 0
+      web.redirect( "/freight" )
+
+      web.res.html( report.innerDrawSearch )
 
     case "/prev" =>
       report.offset -= report.pageSize
