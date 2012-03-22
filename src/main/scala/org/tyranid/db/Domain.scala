@@ -26,7 +26,7 @@ import org.tyranid.logic.{ Valid, Invalid }
 import org.tyranid.math.Base64
 import org.tyranid.report.Report
 import org.tyranid.time.{ Time }
-import org.tyranid.ui.{ Checkbox, Glyph, Input, PathField, Search, Select, TextArea, ToggleLink }
+import org.tyranid.ui.{ Checkbox, Glyph, Input, PathField, Search, Select, TextArea, ToggleLink, UiStyle }
 import org.tyranid.web.WebContext
 
 
@@ -330,10 +330,10 @@ object DbBoolean extends Domain {
   override def ui( s:Scope, f:PathField ) = {
     val ret = f.optsMapper( s )
 
-    if ( f.uiStyle == PathField.UI_STYLE_TOGGLE )
-      ToggleLink( ret._1, s.rec.b( f.va.name ), ret._2:_* )
-    else
-      Checkbox( ret._1, s.rec b f.va.name, ret._2:_* )
+    f.uiStyle match {
+    case UiStyle.Toggle => ToggleLink( ret._1, s.rec.b( f.va.name ), ret._2:_* )
+    case _              => Checkbox( ret._1, s.rec b f.va.name, ret._2:_* )
+    }
   }
     
   override def extract( s:Scope, f:PathField ) {

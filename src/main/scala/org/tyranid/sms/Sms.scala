@@ -30,7 +30,7 @@ import org.tyranid.math.Base62
 import org.tyranid.profile.User
 import org.tyranid.session.Notification
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
-import org.tyranid.ui.{ Grid, Row, PathField }
+import org.tyranid.ui.{ Grid, Row, PathField, UiStyle }
 
 
 object SMS extends MongoEntity( tid = "a0Gt" ) {
@@ -139,8 +139,8 @@ object Smslet extends Weblet {
          "editSms",
          Grid(
            Row( PathField( 'sms_phone, opts = Seq( "readonly" -> "1" ) ) ),
-           Row( PathField( 'sms_ok, opts = Seq( "labels" -> "Validate Now|Invalidate and enter new number", "href" -> ( web.path + "?toggleSmsOk=1" ) ), uiStyle = PathField.UI_STYLE_TOGGLE ) ),
-           Row( PathField( 'sms_on, opts = Seq( "labels" -> "Enable|Disable", "href" -> ( web.path + "?toggleSmsOn=1" ) ), uiStyle = PathField.UI_STYLE_TOGGLE ) ) ) )
+           Row( PathField( 'sms_ok, opts = Seq( "labels" -> "Validate Now|Invalidate and enter new number", "href" -> ( web.path + "?toggleSmsOk=1" ) ), uiStyle = UiStyle.Toggle ) ),
+           Row( PathField( 'sms_on, opts = Seq( "labels" -> "Enable|Disable", "href" -> ( web.path + "?toggleSmsOn=1" ) ), uiStyle = UiStyle.Toggle ) ) ) )
         
       if ( web.b( 'saving ) && !web.b( 'verify ) ) {
         val invalids = Scope( user, saving = true ).submit( user, ui )

@@ -64,6 +64,7 @@ object Search {
 }
 
 
+
 /*
  * * *   F i e l d s
  */
@@ -129,9 +130,6 @@ trait CustomField extends Field {
 
 
 object PathField {
-  val UI_STYLE_DEFAULT = 0
-  val UI_STYLE_TOGGLE = 1
-
   implicit def string2Field( name:String ) = PathField( name )
   implicit def symbol2Field( name:Symbol ) = PathField( name.name )
 }
@@ -148,7 +146,7 @@ case class PathField( name:String,
                       inputOnly:Boolean = false,
                       focus:Boolean = false,
                       filter:Option[ ( Record ) => Boolean ] = None,
-                      uiStyle:Int=0 ) extends Field with UiObj {
+                      uiStyle:UiStyle = UiStyle.Default ) extends Field with UiObj {
   var id:String = null
 
   var path:Path = null
