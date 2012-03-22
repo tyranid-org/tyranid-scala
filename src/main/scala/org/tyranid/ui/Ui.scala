@@ -24,11 +24,6 @@ import org.tyranid.Imp._
 import org.tyranid.db.{ Record, Path, Scope, View, ViewAttribute }
 import org.tyranid.logic.Invalid
 
-object Opts {
-  val Empty = Opts()
-}
-
-case class Opts( opts:(String,String)* )
 
 object Link {
 
@@ -212,151 +207,15 @@ trait UiObj {
 
   def bind( view:View ):UiObj
 
-  def draw    ( scope:Scope ):NodeSeq = NodeSeq.Empty
+  def draw( scope:Scope ):NodeSeq = NodeSeq.Empty
 
   def extract( scope:Scope ):Unit
 
-  def fields:Iterable[Field]
+  def fields:Iterable[PathField]
 }
 
 
-object Field {
-  val UI_STYLE_DEFAULT = 0
-  val UI_STYLE_TOGGLE = 1
-
-  implicit def string2Field( name:String ) = Field( name )
-  implicit def symbol2Field( name:Symbol ) = Field( name.name )
-
-  def toggleLink( s:Scope, f:Field, value:Boolean, opts:(String,String)* ):NodeSeq = {
-    val ret = optsMapper( s, f, opts:_* )
-    ToggleLink( ret._1, value, ret._2:_*  )
-  }
-
-  def checkbox( s:Scope, f:Field, value:Boolean, opts:(String,String)* ):NodeSeq = {
-    val ret = optsMapper( s, f, opts:_* )
-    Checkbox( ret._1, value, ret._2:_*  )
-  }
-
-  def text( s:Scope, f:Field, opts:(String,String)* ):NodeSeq =
-    input( s, f, s.rec.s( f.va.name ), opts:_* )
-
-  def input( s:Scope, f:Field, value:String, opts:(String,String)* ):NodeSeq = {
-    val ret = optsMapper( s, f, opts:_* )
-    Input( ret._1, value, ret._2:_*  )
-  }
-  
-  def select( s:Scope, f:Field, value:String, values:Seq[ (String,String) ], opts:(String,String)* ) = {
-    val ret = optsMapper( s, f, opts:_* )
-    Select( ret._1, value, values, ret._2:_* )
-  }
-
-  def textArea( s:Scope, f:Field, value:String, opts:(String,String)* ):NodeSeq = {
-    val ret = optsMapper( s, f, opts:_* )
-    TextArea( ret._1, value, ret._2:_*  )
-  }
-  
-  private def optsMapper( s:Scope, f:Field, opts:(String,String)* ):( String, Seq[(String,String)] ) = { 
-    var id = f.id
-
-    val opts2 = opts.flatMap {
-      _ match {
-      case ( "id" | "name", v )   =>
-        if ( id != null && v != id )
-          throw new RuntimeException( "Form element being named " + v + " and " + id )
-
-        id = v
-        None
-
-      case p =>
-        Some( p )
-      }
-    }
-
-    if ( id == null ) {
-      id = /* TODO: form id + '_' + */ f.va.name
-      f.id = id
-    } else if ( id != f.id ) {
-      f.id = id
-    }
-
-    return ( id, opts2 )
-  }
-}
-
-case class Field( name:String, opts:Opts = Opts.Empty, span:Int = 1,
-                  inputOnly:Boolean = false, focus:Boolean = false,
-                  filter:Option[ ( Record ) => Boolean ] = None, uiStyle:Int=0 ) extends UiObj {
-  
-  var id:String = null
-
-  var path:Path = null
-  def va = path.leaf
-
-  def bind( view:View ) = {
-    path = view.path( name )
-    this // TODO:  return an immutable version
-  }
-
-  def extract( pScope:Scope ) = {
-    val scope = pScope.at( path )
-    va.att.domain.extract( scope, this )
-  }
-
-  def fields = Seq( this )
-
-  private def invalidLines( invalids:Seq[Invalid] ) =
-    for ( invalid <- invalids )
-      yield <span>{ invalid.message }</span>
-
-  override def draw( pScope:Scope ) =
-    if ( inputOnly ) {
-      va.att.domain.ui( pScope.at( path ), this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* )
-    } else {
-      val scope = pScope.at( path )
-      val invalids = va.invalids( scope )
-      val invalid = !invalids.isEmpty
-      val rec = scope.rec
-      rec.invalids( va.index ) = !invalids.isEmpty
-
-      va.att.domain.show( scope ) |*
-      <div id={ va.name + "_c" } class={ "fieldc" + ( invalid |* " invalid" ) }>
-       <div class="labelc">{ va.label( rec, opts.opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
-       <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( scope, this, ( opts.opts ++ Seq( "id" -> va.name ) ):_* ) }</div>
-       <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
-      </div>
-    }
-
-    /*
-  def updateDisplayCmd( scope:Scope ):JsCmd = {
-    
-    val onSetCmd = onSet.flatten( _( this ), Noop )
-    if ( onSetCmd != Noop )
-      return onSetCmd
-    
-    val rec = scope.rec
-    val invalids = va.invalids( scope.copy( initialDraw = false, path = Some( va ) ) )
-      
-    if ( invalids.isEmpty ) {
-      if ( rec.invalids( va.index ) ) {
-        rec.invalids -= va.index
-
-
-        SetHtml( va.name + "_e", NodeSeq.Empty ) &
-        JsRaw( "$('#" + va.name + "_c').removeClass('invalid');" )
-      } else {
-        Noop
-      }
-    } else {
-      rec.invalids += va.index
-
-      SetHtml( va.name + "_e", invalidLines( invalids ) ) &
-      JsRaw( "$('#" + va.name + "_c').addClass('invalid');" )
-    }
-  }
-  */
-}
-
-case class Row( fields:Field* ) extends UiObj {
+case class Row( fields:PathField* ) extends UiObj {
 
   def bind( view:View ) = {
     for ( field <- fields )

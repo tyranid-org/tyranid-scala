@@ -28,7 +28,7 @@ import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.{ Domain, Record, Scope }
 import org.tyranid.logic.Invalid
-import org.tyranid.ui.Field
+import org.tyranid.ui.PathField
 
 
 case class DbReCaptcha( theme:String ) extends Domain {
@@ -36,7 +36,7 @@ case class DbReCaptcha( theme:String ) extends Domain {
     
   override def show( s:Scope ) = !T.session.passedCaptcha
 
-  override def ui( s:Scope, f:Field, opts:(String,String)* ) =
+  override def ui( s:Scope, f:PathField, opts:(String,String)* ) =
     <head>
      <script type="text/javascript" src="https://www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>
 

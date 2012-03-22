@@ -29,7 +29,8 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
 import org.tyranid.email.AWSEmail
 import org.tyranid.http.UserAgent
-import org.tyranid.report.{ DefaultField, Field, Run, MongoQuery }
+import org.tyranid.report.{ Run, MongoQuery }
+import org.tyranid.ui.CustomField
 
 
 object Log extends MongoEntity( tid = "a0Bu" ) {
@@ -204,14 +205,14 @@ object LogQuery extends MongoQuery {
   }
 
   val allFields = Seq(
-    new DefaultField {
+    new CustomField {
       def name = "e"
       override lazy val label = "Event"
       def cell( run:Run, r:Record ) = Unparsed( Log.Events( r.i( 'e ) ) )
     },
     path( "on" ),
     path( "sid" ),
-    new DefaultField {
+    new CustomField {
       def name = "uid"
       override lazy val label = "User"
       def cell( run:Run, r:Record ) = {
@@ -222,7 +223,7 @@ object LogQuery extends MongoQuery {
       }
     },
     path( "m" ),
-    new DefaultField {
+    new CustomField {
       def name = "ua"
       override lazy val label = "User Agent"
       def cell( run:Run, r:Record ) = {
@@ -238,12 +239,12 @@ object LogQuery extends MongoQuery {
     },
     path( "ip" ),
     path( "ex" ),
-    new DefaultField {
+    new CustomField {
       def name = "ct"
       override lazy val label = "Count"
       def cell( run:Run, r:Record ) = Unparsed( r.s( 'ct ) )
     },
-    new DefaultField {
+    new CustomField {
       def name = "du"
       override lazy val label = "Duration (ms)"
       def cell( run:Run, r:Record ) = Unparsed( r.s( 'du ) )

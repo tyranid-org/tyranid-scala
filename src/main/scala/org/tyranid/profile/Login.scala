@@ -12,7 +12,7 @@ import org.tyranid.email.AWSEmail
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
 import org.tyranid.social.Social
-import org.tyranid.ui.{ Button, Grid, Row, Field, Focus }
+import org.tyranid.ui.{ Button, Grid, Row, Focus }
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
 
 
