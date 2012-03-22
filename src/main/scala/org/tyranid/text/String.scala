@@ -69,6 +69,7 @@ class StringImp( s:String ) {
 	def encOAuthUrl = OAuth.encOAuthUrl( s )
 	def decOAuthUrl = OAuth.decOAuthUrl( s )
 
+  def toPattern = Pattern.compile( s )
   def toPatternI = Pattern.compile( s, Pattern.CASE_INSENSITIVE )
 
   def encJson = {
