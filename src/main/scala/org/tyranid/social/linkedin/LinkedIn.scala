@@ -222,11 +222,19 @@ function onLinkedInLoad() {
 
     var companies = mutable.ArrayBuffer[ObjectMap]()
     var found = false
+val strictMatch = true
 
     if ( domain.notBlank ) {
       companies ++= GET( "/companies:" + companyFields + "?email-domain=" + domain.encUrl, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
       if ( companies.size > 0 )
         found = true
+    }
+
+    if ( bestMatch && strictMatch ) {
+      if ( companies.size != 1 )
+        return Nil
+
+      return companies
     }
 
     if ( positions && ( multi || companies.size == 0 ) ) {

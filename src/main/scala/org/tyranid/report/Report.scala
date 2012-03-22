@@ -32,6 +32,37 @@ import org.tyranid.ui.{ Button, Checkbox, Glyph, Input, Select }
 import org.tyranid.web.{ Weblet, WebContext }
 
 
+sealed trait Search {
+  def search( run:Run, f:Field, searchObj:DBObject, value:Any ):Unit
+}
+
+object Search {
+
+  case object Equals extends Search {
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = f.transformValue( value )
+  }
+
+  case object Exists extends Search {
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = Mobj( $gt -> "" )
+  }
+
+  case object Subst  extends Search {
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = {
+      // TODO:  if the underlying domain is not uppercase or lowercase this will not work, we need to do a case-insensitive pattern here if that is the case
+      searchObj( f.name ) = Mobj( $regex -> f.transformValue( value ) )
+    }
+  }
+
+  case object Gte    extends Search {
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = Mobj( $gte -> value )
+  }
+
+  case object Custom extends Search {
+    // nothing to do, this is handled in Query subclasses' prepareSearch()
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = {}
+  }
+}
+
 case class Grouping( entity:MongoEntity, keyName:String, value: () => AnyRef ) {
 
   def list = entity.db.find( Mobj( keyName -> value() ) ).toSeq
@@ -49,15 +80,23 @@ trait Query {
 
   def label:AnyRef = name.camelCaseToSpaceUpper
   def labelNode:NodeSeq = null
-  
+
   val allFields:Seq[Field]
+  
+  lazy val dataFields:Seq[Field]   = allFields.filter( _.data )
+  lazy val searchFields:Seq[Field] = allFields.filter( _.search != null )
 
-  val searchFields:Seq[Field] = Nil
+  lazy val allFieldsMap = {  
+    val map = mutable.Map[String,Field]()
+    for ( f <- allFields ) {
+      if ( f.name.isBlank )
+        throw new RuntimeException( "Field missing name in report: " + f.toString )
 
-  lazy val searchFieldsMap = {  
-    val map  = mutable.Map[String,Field]()
-    for ( sf <- searchFields )
-      map( sf.name ) = sf
+      if ( map.contains( f.name ) )
+        throw new RuntimeException( "Duplicate field in report: " + f.name )
+
+      map( f.name ) = f
+    }
     map
   }
 
@@ -75,7 +114,7 @@ trait Query {
     val textSearches =
       rep.selectedColumns.
         toSeq.
-        flatMap( name => allFields.find( _.name == name ) ).
+        flatMap( name => dataFields.find( _.name == name ) ).
         flatMap( _.textSearch( run ) )
 
     textSearches.size match {
@@ -92,11 +131,11 @@ trait Query {
   def newReport = {
     var r = Report( this )
     r.columns ++= defaultFields
-    r.hidden ++= allFields.filter( p => !r.columns.contains( p ) ).sortBy( _.label )
+    r.hidden ++= dataFields.filter( p => !r.columns.contains( p ) ).sortBy( _.label )
     r
   }
   
-  def by( name:String ) = allFields.find( _.name == name ).get
+  def by( name:String ) = dataFields.find( _.name == name ).get
 
   val searchScreen:String = null
   val tableGridStyle:String = null
@@ -157,11 +196,14 @@ trait MongoQuery extends Query {
   }
 
   def path( path:String,
-            sec:String = "Standard",
             label:String = null,
+            sec:String = "Standard",
             cellClass:String = null,
-            displayExists:Boolean = false ) =
-    PathField( sec, view.path( path ), l = label, cellCls = cellClass, displayExists = displayExists )
+            displayExists:Boolean = false,
+            data:Boolean = true,
+            search:Search = null,
+            opts:Seq[(String,String)] = Nil ) =
+    PathField( sec, view.path( path, sep = '.' ), l = label, cellCls = cellClass, displayExists = displayExists, data = data, search = search, opts = opts )
 }
 
 
@@ -189,12 +231,15 @@ trait Field {
 
   def effCell( run:Run, rec:Record ) = cell( run, rec )
 
+
+  /*
+   * * *   Search
+   */
+
   def textSearchKeys = Seq( name )
 
   def textSearch( run:Run ):Seq[DBObject] = {
     val searchValue = run.report.textSearchValue
-
-    // TODO:  if we know the underlying data is all-caps or all-lowercase, we don't need a case-insensitive pattern
 
     // TODO:  handle lookup codes
 
@@ -206,35 +251,34 @@ trait Field {
       Nil
   }
 
-  val parameter:Boolean = false
 
-  /*
-  val searchOperation:String = {
-    "equals",      // boolean, string
-    "exists",      // Mobj( $gt -> "" )
+  val data:Boolean
+  val search:Search
 
-    // TODO:  add DbUpperChar types and use that to factor out the upper from below ("upper" goes away, "upperSubst" goes to "subst")
-    "upper",       // value = v.toUpperCase
-    "upperSubst",  // Mobj( $regex -> v.toUpperCase )
-    "gte"          // Mobj( $gte -> v )      
-    "custom",      // parameter = true
-  }
-  */
+  // subclasses should convert to lowercase or uppercase as indicated by the domain
+  def transformValue( value:Any ) = value
 
-  def prepareSearch( run:Run, search:DBObject, value:Any ) = search( name ) = value
+  def prepareSearch( run:Run, searchObj:DBObject, value:Any ) =
+    if ( search != null )
+      search.search( run, this, searchObj, value )
 
-  // TODO:  rename to searchUi/searchExtract
-  def ui( report:Report ):NodeSeq                   = throw new UnsupportedOperationException
-  def extract( web:WebContext, report:Report ):Unit = throw new UnsupportedOperationException
+  def searchUi( report:Report ):NodeSeq                   = throw new UnsupportedOperationException( "name=" + name )
+  def searchExtract( web:WebContext, report:Report ):Unit = throw new UnsupportedOperationException( "name=" + name )
 }
 
-case class PathField( sec:String, path:Path, l:String = null, cellCls:String = null, displayExists:Boolean ) extends Field {
-  def name = path.name_
+trait DefaultField extends Field {
+
+  val data = true
+  val search = null
+}
+
+case class PathField( sec:String, path:Path, l:String = null, cellCls:String = null, displayExists:Boolean = false, data:Boolean = true, search:Search = null, opts:Seq[(String,String)] = Nil ) extends Field {
+  def name = path.name
 
   override def section = sec
   override def cellClass = cellCls
 
-  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
+  override lazy val label = if ( l.notBlank ) l else path.leaf.label
   def cell( run:Run, r:Record ) = path.leaf.domain.cell( this, r )
 
   override def effCell( run:Run, rec:Record ) = {
@@ -243,124 +287,29 @@ case class PathField( sec:String, path:Path, l:String = null, cellCls:String = n
     else
       cell( run, rec )
   }
+
+  override def transformValue( value:Any ) = path.leaf.domain.transformValue( value )
+
+  override def searchUi( report:Report ) = path.leaf.domain.searchUi( report, this )
+  override def searchExtract( web:WebContext, report:Report ) = path.leaf.domain.searchExtract( report, this, web )
 }
 
-case class BoolSearchField( name:String, l:String = null ) extends Field {
+case class CustomTextSearchField( name:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends Field {
+
+  val search = Search.Custom
+  override val data = false
 
   def cell( run:Run, rec:Record ):NodeSeq = throw new UnsupportedOperationException
 
   override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
 
-  override def ui( report:Report ) = Checkbox( name, report.searchValues.b( name ) ) ++ labelUi
+  override def searchUi( report:Report ) = Input( name, report.searchValues.s( name ), opts:_* )
 
-  override def extract( web:WebContext, report:Report ) =
-    if ( web.req.b( name ) ) report.searchValues( name ) = true
-    else                     report.searchValues.remove( name )
-}
-
-case class BoolExistsSearchField( name:String, l:String = null ) extends Field {
-
-  def cell( run:Run, rec:Record ):NodeSeq = throw new UnsupportedOperationException
-
-  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
-
-  override def ui( report:Report ) = Checkbox( name, report.searchValues.s( name ).notBlank ) ++ labelUi
-
-  override def extract( web:WebContext, report:Report ) =
-    if ( web.req.b( name ) ) report.searchValues( name ) = Mobj( $gt -> "" )
-    else                     report.searchValues.remove( name )
-}
-
-case class TextSearchField( name:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends Field {
-
-  def cell( run:Run, rec:Record ):NodeSeq = throw new UnsupportedOperationException
-
-  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
-
-  override def ui( report:Report ) = Input( name, report.searchValues.s( name ), opts:_* )
-
-  override def extract( web:WebContext, report:Report ) = {
+  override def searchExtract( web:WebContext, report:Report ) = {
     val v = web.req.s( name )
 
     if ( v.notBlank ) report.searchValues( name ) = v
     else              report.searchValues.remove( name )
-  }
-}
-
-case class TextParamSearchField( name:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends Field {
-
-  def cell( run:Run, rec:Record ):NodeSeq = throw new UnsupportedOperationException
-
-  override val parameter = true
-        
-  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
-
-  override def ui( report:Report ) = Input( name, report.searchValues.s( name ), opts:_* )
-
-  override def extract( web:WebContext, report:Report ) = {
-    val v = web.req.s( name )
-
-    if ( v.notBlank ) report.searchValues( name ) = v
-    else              report.searchValues.remove( name )
-  }
-}
-        
-case class TextUpperSearchField( name:String, l:String, opts:Seq[(String,String)] = Nil ) extends Field {
-
-  def cell( run:Run, rec:Record ):NodeSeq = throw new UnsupportedOperationException
-
-  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
-
-  override def ui( report:Report ) = Input( name, report.searchValues.s( name ), opts:_* )
-
-  override def extract( web:WebContext, report:Report ) = {
-    val v = web.req.s( name )
-
-    if ( v.notBlank ) report.searchValues( name ) = v.toUpperCase
-    else              report.searchValues.remove( name )
-  }
-}
-
-case class TextUpperSubstSearchField( name:String, l:String, opts:Seq[(String,String)] = Nil ) extends Field {
-
-  def cell( run:Run, rec:Record ):NodeSeq = throw new UnsupportedOperationException
-
-  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
-
-  override def ui( report:Report ) =
-    Input( name,
-           { val regex = report.searchValues.o( name )
-             regex != null |* regex.s( $regex )
-           },
-           opts:_* )
-
-  override def extract( web:WebContext, report:Report ) = {
-    val v = web.req.s( name )
-
-    if ( v.notBlank ) report.searchValues( name ) = Mobj( $regex -> v.toUpperCase )
-    else              report.searchValues.remove( name )
-  }
-}
-
-case class IntGteSearchField( name:String, l:String = null ) extends Field {
-
-  def cell( run:Run, rec:Record ):NodeSeq = throw new UnsupportedOperationException
-
-  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
-
-  override def ui( report:Report ) =
-    Input( name,
-           { val o = report.searchValues.o( name )
-
-             if ( o == null ) ""
-             else             o.i( $gte ).toString },
-           "style" -> "width:80px;" )
-
-  override def extract( web:WebContext, report:Report ) = {
-    val i = web.req.i( name )
-
-    if ( i == 0 ) report.searchValues.remove( name )
-    else          report.searchValues( name ) = Mobj( $gte -> i )
   }
 }
 
@@ -411,12 +360,12 @@ case class Report( query:Query ) {
     columns.insert( columns.indexOf( before ), insert )
   }
 
-  def label( name:String ) = query.searchFieldsMap( name ).labelUi
-  def ui( name:String )    = query.searchFieldsMap( name ).ui( this )
+  def label( name:String ) = query.allFieldsMap( name ).labelUi
+  def ui( name:String )    = query.allFieldsMap( name ).searchUi( this )
 
-  def extract = {
+  def searchExtract = {
     val web = T.web
-    query.searchFields.foreach { _.extract( web, this ) }
+    query.searchFields.foreach { _.searchExtract( web, this ) }
   }
 
 
@@ -428,7 +377,7 @@ case class Report( query:Query ) {
     if ( selectedColumns.isEmpty ) Text( "search all fields" )
     else                           Unparsed( "search <span class='hitext'>highlighted</span> fields" )
 
-  val sections = "Standard" +: query.allFields.map( _.section ).filter( _ != "Standard" ).sorted.distinct
+  val sections = "Standard" +: query.dataFields.map( _.section ).filter( _ != "Standard" ).sorted.distinct
 
   var textSearchValue:String = ""
 
@@ -444,7 +393,7 @@ case class Report( query:Query ) {
     onSection
   }
 
-  def calcFields = query.allFields.filter( f => f.section == section && !columns.contains( f ) ).sortBy( _.label )
+  def calcFields = query.dataFields.filter( f => f.section == section && !columns.contains( f ) ).sortBy( _.label )
 
   def recalcFields {
     fields = calcFields
@@ -519,7 +468,7 @@ case class Report( query:Query ) {
          <td style="padding:0;">
           <table>
            <tr>
-            { ( query.searchScreen.notBlank |* <td><a href={ query.searchScreen } class="greyBtn">Change Search</a></td> ) ++
+            { ( query.searchScreen.notBlank |* <td><a href={ query.searchScreen } class="greyBtn">Search</a></td> ) ++
               ( offset > 0                  |* <td><button id="rPrev" class="greyBtn">Prev</button></td> ) ++
               ( hasNext                     |* <td><button id="rNext" class="greyBtn">Next</button></td> ) ++
               ( query.grouping != null      |* <td><button id="rGroup" class="greyBtn">Group</button></td> ) }

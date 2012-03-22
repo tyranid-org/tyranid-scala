@@ -264,38 +264,46 @@ object Path {
     }
   }
 
-  def parse( root:View, path:String ):Path = {
+  def parse( root:View, path:String, sep:Char = 0 ):Path = {
 
-    val names =
-      path.split(
-        if ( path.indexOf( '.' ) != -1 ) "\\."
-        else                             "_" )
+    val csep =
+      if ( sep != 0 )                        sep
+      else if ( path.indexOf( '.' ) != -1 ) '.'
+      else                                  '_'
+
+    val names = path.split( csep )
 
     val nlen = names.length
+    val p = {
+      if ( nlen == 1 ) {
+        root( names( 0 ) )
+      } else {
+        val pbuf = new Array[PathNode]( nlen )
 
-    if ( nlen == 1 ) {
-      root( names( 0 ) )
-    } else {
-      val pbuf = new Array[PathNode]( nlen )
+        var view = root
 
-      var view = root
+        for ( ni <- 0 until nlen ) {
+          names( ni ) match {
+          case s if s.isInt =>
+            pbuf( ni ) = ArrayIndex( s.toInt )
 
-      for ( ni <- 0 until nlen ) {
-        names( ni ) match {
-        case s if s.isInt =>
-          pbuf( ni ) = ArrayIndex( s.toInt )
+          case s =>
+            val va = view( s )
+            pbuf( ni ) = va
 
-        case s =>
-          val va = view( s )
-          pbuf( ni ) = va
-
-          if ( ni+1 < nlen )
-            view = va.toView
+            if ( ni+1 < nlen )
+              view = va.toView
+          }
         }
-      }
 
-      MultiPath( pbuf:_* )
+        MultiPath( pbuf:_* )
+      }
     }
+
+    if ( p.name.isBlank )
+      throw new RuntimeException( "Could not parse path:  [" + path + "]" )
+
+    p
   }
 
   def flatten( rec:Record ):Seq[PathValue] = {
