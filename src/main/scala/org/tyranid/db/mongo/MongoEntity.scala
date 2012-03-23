@@ -208,6 +208,13 @@ case class MongoRecord( override val view:MongoView,
 
   private var temporaries:mutable.Map[String,AnyRef] = null
 
+  override def clear {
+spam( "MongoRecord.clear" )
+    for ( key <- obj.keySet )
+      obj.removeField( key )
+    temporaries = null
+  }
+
   override def deep:MongoRecord = {
     val copy = new MongoRecord( view, obj.deep, parent )
 

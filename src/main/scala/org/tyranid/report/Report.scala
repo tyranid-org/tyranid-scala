@@ -271,6 +271,8 @@ case class Report( query:Query ) {
 
   def searchExtract = {
     val web = T.web
+spam( "searchExtract.clear" )
+    searchRec.clear
     query.searchFields.foreach { _.searchExtract( web, this ) }
   }
 

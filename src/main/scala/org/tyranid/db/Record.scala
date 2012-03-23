@@ -165,6 +165,8 @@ trait Record extends Valid with BsonObject {
   def entityTid = view.entity.tid
   def recordTid = view.keyVa.flatten( kva => kva.att.domain.tid( this, kva ), "-invalid" )
 
+  def clear:Unit = throw new UnsupportedOperationException
+
   /**
    * Record/Object/Document/Tuple
    */
