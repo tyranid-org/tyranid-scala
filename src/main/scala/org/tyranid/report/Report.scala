@@ -142,18 +142,20 @@ trait Query {
   val searchForm =
    ( r:Report ) =>
    <form method="post" id="rSearchForm" style="padding-top:8px;">
-    <div class="fieldc" style="padding:4px;">
-     <h3>Search by</h3>
-     { searchFields map { f =>
-         <div>{ f.labelUi }</div>
-         <div>{ f.searchUi( r ) }</div>
-       }
-     }
+     { searchFields.nonEmpty |*
+     <div class="fieldc" style="padding:4px;">
+      <h3>Search by</h3>
+      { searchFields map { f =>
+          <div>{ f.labelUi }</div>
+          <div>{ f.searchUi( r ) }</div>
+        }
+      }
+     </div> }
      { orderBy.nonEmpty |*
-     <div>Order By</div>
-     <div>{ Select( "sort", r.sort != null |* r.sort.keySet.head, orderBy ) }</div>
-     }
-    </div>
+     <div class="fieldc" style="padding:4px;">
+      <h3>Order By</h3>
+      <div>{ Select( "sort", r.sort != null |* r.sort.keySet.head, orderBy ) }</div>
+     </div> }
     <div class="btns">
      <input type="submit" value="Search" class="greenBtn" name="saving"/>
     </div>
