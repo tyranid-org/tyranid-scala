@@ -41,7 +41,7 @@ object SMS extends MongoEntity( tid = "a0Gt" ) {
   "vCode"        is DbUpperChar(6) as "Verfication Code";
   "enteredCode"  is DbUpperChar(6)  is 'temporary as "Verfication Code" is 'required;
   
-  var enabled = false
+  var enabled = B.PRODUCTION
 }
 
 case class NexmoApp( apiKey:String, secret:String, defaultFrom:String ) {
@@ -101,24 +101,20 @@ object Smslet extends Weblet {
     rpath match {
     case "/" =>
       if ( web.s( "type" ) == "text" ) {
-        val from = web.s( "msisdn" )
-        
-        println( "SMS message from: " + from )
-        
+        val from = web.s( "msisdn" ).toPhoneMask
         val msgId = web.s( "messageId" )
-        
         val text = web.s( "text" )
         
-        text.toLowerCase match {
+        text.trim.toLowerCase match {
           case "off" =>
-            val users = B.User.db.find( Mobj( "sms.mobilePhone" -> from ), Mobj( "sms.on" -> 1 ) )
+            val users = B.User.db.find( Mobj( "sms.phone" -> from, "sms.ok" -> true, "sms.on" -> true ) )
             
-            for ( u <- users ) if ( u.b( 'smsOn ) )
+            for ( u <- users )
               B.User.db.update( Mobj( "_id" -> u.id ), Mobj( $set -> Mobj( "sms.on" -> false ) ) )
           case "on" =>
-            val users = B.User.db.find( Mobj( "sms.mobilePhone" -> from ), Mobj( "sms.on" -> 1 ) )
+            val users = B.User.db.find( Mobj( "sms.phone" -> from, "sms.ok" -> true, "sms.on" -> false ) )
             
-            for ( u <- users ) if ( !u.b( 'smsOn ) )
+            for ( u <- users ) 
               B.User.db.update( Mobj( "_id" -> u.id ), Mobj( $set -> Mobj( "sms.on" -> true ) ) )
           case _ =>
         }
@@ -322,8 +318,12 @@ object Smslet extends Weblet {
       
       var (user,sms) = smsStart
       
-      sess.notice( "Verfication code has been cleared." )
+      sess.notice( "SMS Information cleared." )
       sms( 'vCode ) = null
+      sms( 'phone ) = null
+      sms( 'on ) = false
+      sms( 'ok ) = false
+      
       user.save
        
       web.forward( "/sms/verify?id=" + web.s( "id" ) or "" )
