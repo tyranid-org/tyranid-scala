@@ -209,7 +209,6 @@ case class MongoRecord( override val view:MongoView,
   private var temporaries:mutable.Map[String,AnyRef] = null
 
   override def clear {
-spam( "MongoRecord.clear" )
     for ( key <- obj.keySet )
       obj.removeField( key )
     temporaries = null

@@ -34,6 +34,18 @@ import org.tyranid.web.{ Weblet, WebContext }
 
 
 /*
+ * * *  S o r t
+ */
+
+
+case class Sort( name:String, label:String, direction:Int ) {
+
+  lazy val selectObj = ( name, label )
+  lazy val sortObj   = Mobj( name -> direction )
+}
+
+
+/*
  * * *  Q u e r y
  */
 
@@ -140,7 +152,7 @@ trait Query {
   
   def extraActions:NodeSeq = Text( "" )
 
-  val orderBy:Seq[(String,String)] = Nil
+  val orderBy:Seq[Sort] = Nil
 
   val searchForm =
    ( r:Report ) =>
@@ -157,7 +169,7 @@ trait Query {
      { orderBy.nonEmpty |*
      <div class="fieldc" style="margin-top:8px; padding:4px;">
       <h3>Order By</h3>
-      <div>{ Select( "sort", r.sort != null |* r.sort.keySet.head, orderBy ) }</div>
+      <div>{ Select( "sort", r.sort != null |* r.sort.keySet.head, orderBy.map( _.selectObj ) ) }</div>
      </div> }
     <div class="btns">
      <input type="submit" value="Search" class="greenBtn" name="saving"/>
@@ -201,6 +213,10 @@ trait MongoQuery extends Query {
     val report = run.report
 
     val search = prepareSearch( run )
+spam( "search=" + search )
+spam( "sort=" + report.sort )
+spam( "skip=" + report.offset )
+spam( "pageSize=" + report.pageSize )
 
     var cursor = entity.db.find( search )//, Mobj() )
     if ( report.offset != 0 )
@@ -266,20 +282,19 @@ case class Report( query:Query ) {
     columns.insert( columns.indexOf( before ), insert )
   }
 
+
+  /*
+   * * *  Searching
+   */
+
   def label( name:String ) = query.allFieldsMap( name ).labelUi
   def ui( name:String )    = query.allFieldsMap( name ).searchUi( this )
 
   def searchExtract = {
     val web = T.web
-spam( "searchExtract.clear" )
     searchRec.clear
     query.searchFields.foreach { _.searchExtract( web, this ) }
   }
-
-
-  /*
-   * * *  Searching
-   */
 
   def searchTitle =
     if ( selectedColumns.isEmpty ) Text( "search all fields" )
@@ -558,8 +573,10 @@ object Reportlet extends Weblet {
       query.init
 
       report.searchExtract
-      if ( query.orderBy.nonEmpty )
-        report.sort = Mobj( web.req.s( 'sort ) -> 1 )
+      if ( query.orderBy.nonEmpty ) {
+        val name = web.req.s( 'sort )
+        report.sort = query.orderBy.find( _.name == name ).get.sortObj
+      }
       report.offset = 0
       web.res.html( report.innerDraw )
 
