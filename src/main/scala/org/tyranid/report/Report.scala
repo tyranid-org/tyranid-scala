@@ -144,7 +144,7 @@ trait Query {
    <form method="post" id="rSearchForm" style="padding-top:8px;">
      { searchFields.nonEmpty |*
      <div class="fieldc" style="padding:4px;">
-      <h3>Search by</h3>
+      <h3>Search By</h3>
       { searchFields map { f =>
           <div>{ f.labelUi }</div>
           <div>{ f.searchUi( r ) }</div>
