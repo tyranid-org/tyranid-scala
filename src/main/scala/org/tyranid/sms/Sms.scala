@@ -107,12 +107,12 @@ object Smslet extends Weblet {
         
         text.trim.toLowerCase match {
           case "off" =>
-            val users = B.User.db.find( Mobj( "sms.phone" -> from, "sms.on" -> true ) )
+            val users = B.User.db.find( Mobj( "sms.phone" -> from, "sms.ok" -> true, "sms.on" -> true ) )
             
             for ( u <- users )
               B.User.db.update( Mobj( "_id" -> u.id ), Mobj( $set -> Mobj( "sms.on" -> false ) ) )
           case "on" =>
-            val users = B.User.db.find( Mobj( "sms.phone" -> from, "sms.on" -> false ) )
+            val users = B.User.db.find( Mobj( "sms.phone" -> from, "sms.ok" -> true, "sms.on" -> false ) )
             
             for ( u <- users ) 
               B.User.db.update( Mobj( "_id" -> u.id ), Mobj( $set -> Mobj( "sms.on" -> true ) ) )
@@ -318,8 +318,12 @@ object Smslet extends Weblet {
       
       var (user,sms) = smsStart
       
-      sess.notice( "Verfication code has been cleared." )
+      sess.notice( "SMS Information cleared." )
       sms( 'vCode ) = null
+      sms( 'phone ) = null
+      sms( 'on ) = false
+      sms( 'ok ) = false
+      
       user.save
        
       web.forward( "/sms/verify?id=" + web.s( "id" ) or "" )
