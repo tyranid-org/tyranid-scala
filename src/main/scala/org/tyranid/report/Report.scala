@@ -100,7 +100,7 @@ trait Query {
     case 1 => search.copy( textSearches( 0 ) )
     case n => search( $or ) = Mlist( textSearches:_* )
     }
-  
+
     search
   }
 
@@ -189,16 +189,18 @@ trait MongoQuery extends Query {
 
   def run( run:Run ) = {
     val report = run.report
-spam( "Search:\n\n" + prepareSearch( run ) + "\n\n" )
 
-    var part = entity.db.find( prepareSearch( run ), Mobj() ).limit( run.report.pageSize + 1 )
+    val search = prepareSearch( run )
 
+    var cursor = entity.db.find( search )//, Mobj() )
     if ( report.offset != 0 )
-      part = part.skip( report.offset )
+      cursor = cursor.skip( report.offset )
+    cursor = cursor.limit( run.report.pageSize + 1 )
+
     if ( report.sort != null )
-      part = part.sort( report.sort )
+      cursor = cursor.sort( report.sort )
     
-    var rows = part.toIterable.map( o => entity.apply( o ) )
+    val rows = cursor.toIterable.map( entity.apply )
 
     report.hasNext = rows.size > run.report.pageSize
 
@@ -544,7 +546,8 @@ object Reportlet extends Weblet {
       query.init
 
       report.searchExtract
-      report.sort = Mobj( web.req.s( 'sort ) -> -1 )
+      if ( query.orderBy.nonEmpty )
+        report.sort = Mobj( web.req.s( 'sort ) -> 1 )
       report.offset = 0
       web.res.html( report.innerDraw )
 
