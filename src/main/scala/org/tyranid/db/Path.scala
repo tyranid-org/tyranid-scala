@@ -317,7 +317,7 @@ object Path {
       }
 
     def record( path:List[PathNode], rec:Record ) {
-      for ( va <- rec.view.vas ) {
+      for ( va <- rec.view.vas if va.search == null ) {
         va.att.domain match {
         case en:Entity   => record( va :: path, rec.rec( va ) )
         case arr:DbArray => array( va :: path, rec.a( va ) )
