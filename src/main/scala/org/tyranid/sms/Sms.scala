@@ -126,20 +126,40 @@ object Smslet extends Weblet {
         log( Log.SMS_In, "m" -> ( "from=" + from + ", msgId=" + msgId + ", text=" + text ) )
       }
       
+    case "/toggleOk" =>
+      redirectIfNotLoggedIn( web )
+      val (user,sms) = smsStart
+      
+      if ( sms.b( 'ok ) ) {
+        sms( 'ok ) = false
+        sms( 'on ) = false
+        user.save
+      }
+        
+      web.forward( "/sms/verify?id=" + web.s( "id" ) or "" )
+    case "/toggleOn" =>
+      redirectIfNotLoggedIn( web )
+      val (user,sms) = smsStart
+      
+      sms( 'on ) = !sms.b( 'on )
+      user.save
+        
+      web.forward( "/sms/edit?id=" + web.s( "id" ) or "" )
     case "/edit" =>
       redirectIfNotLoggedIn( web )
-      
       val (user,sms) = smsStart
     
       if ( !sms.b( 'ok ) && !web.b( 'savingHere ) )
         web.forward( "/sms/verify?id=" + web.s( "id" ) or "" )
     
+      var tid = user.tid
+      
       val ui = user.view.ui(
          "editSms",
          Grid(
            Row( PathField( "sms.phone", opts = Seq( "readonly" -> "1" ) ) ),
-           Row( PathField( "sms.ok", opts = Seq( "labels" -> "Validate Now|Invalidate and enter new number", "href" -> ( web.path + "?toggleSmsOk=1" ) ), uiStyle = UiStyle.Toggle ) ),
-           Row( PathField( "sms.on", opts = Seq( "labels" -> "Enable|Disable", "href" -> ( web.path + "?toggleSmsOn=1" ) ), uiStyle = UiStyle.Toggle ) ) ) )
+           Row( PathField( "sms.ok", opts = Seq( "labels" -> "Validate Now|Invalidate and enter new number", "href" -> ( "/sms/toggleOk?id=" + tid ) ), uiStyle = UiStyle.Toggle ) ),
+           Row( PathField( "sms.on", opts = Seq( "labels" -> "Enable|Disable", "href" -> ( "/sms/toggleOn?id=" + tid ) ), uiStyle = UiStyle.Toggle ) ) ) )
         
       if ( web.b( 'saving ) && !web.b( 'verify ) ) {
         val invalids = Scope( user, saving = true ).submit( user, ui )
@@ -151,8 +171,6 @@ object Smslet extends Weblet {
           return
         }
       } else if ( web.b( "toggleSmsOk" ) ) {
-        //T.session.clearAllEditing
-        web.forward( "/sms/verify?ok=1&id=" + web.s( "id" ) or "" )
       } else if ( web.b( "toggleSmsOn" ) ) {
         sms( 'on ) = !sms.b( 'on )
       }
@@ -168,10 +186,10 @@ object Smslet extends Weblet {
            </form>
            <footer class="btns">
             <input type="hidden" value="1" name="savingHere"/>
-            <input type="submit" id="dlgSubmit" class="greenBtn" value="Save" name="saving"/>
-            <a href={ "/user/edit?id=" + user.tid } id="cancel" class="greyBtn">Cancel</a>
+            <a href={ "/user/edit?id=" + tid } id="cancel" class="greyBtn">Done</a>
            </footer> ), 
-         "endpoint" -> "/sms/edit" ) )
+         "endpoint" -> ( "/sms/edit?id=" + tid ),
+         "onCloseRedirect" -> true ) )
 
     case "/verify" =>
       redirectIfNotLoggedIn( web )
@@ -182,12 +200,6 @@ object Smslet extends Weblet {
       var (user,sms) = smsStart
       var saving = web.b( 'saving )
       
-      if ( web.b( 'ok ) ) {
-        sms( 'ok ) = false
-        saving = false
-        user.save
-      }
-        
       if ( sms.b( 'ok ) )
         web.forward( "/sms/edit?id=" + web.s( "id" ) or "" )
         
@@ -222,7 +234,7 @@ object Smslet extends Weblet {
                 user.save
                 
                 B.sms.send( "1" + smsNumber, B.applicationName + ". Other charges may apply. Please enter this verification code at " + B.website + ": " + vCode )
-                header = sendHeader( smsNumber, user.tid )
+                header = sendHeader( smsNumber.toPhoneMask, user.tid )
               }
             }
           }
@@ -233,7 +245,7 @@ object Smslet extends Weblet {
             val invalids = Scope( user, saving = true ).submit( user, ui )
           
             if ( invalids.isEmpty ) {
-               if ( sms.s( 'enteredCode ) == sms.s( 'vCode ) ) {
+               if ( sms.s( 'enteredCode ).toUpperCase() == sms.s( 'vCode ) ) {
                  sms( "ok" ) = true
                  sms( "vCode" ) = null
                  user.save
@@ -241,6 +253,8 @@ object Smslet extends Weblet {
                  web.forward( "/sms/edit?id=" + web.s( "id" ) or "" )
                }
                
+               println( sms.s( 'enteredCode ).toUpperCase() )
+               println( sms.s( 'vCode ) )
                sess.error( "That verification code is not correct." )
             }
           }
