@@ -74,7 +74,7 @@ trait Domain extends Valid {
     f.search match {
     case Search.Exists =>
       /* val opts = */ f.optsMapper( s ) // optsMapper updates the id, needs to run first ... maybe place it in what calls ui ?
-      Checkbox( f.id, s.rec.b( f.name ) ) ++ f.labelUi
+      Checkbox( f.id, s.rec.b( f.va.name ) ) ++ f.labelUi
 
     case _  =>
       normal
@@ -85,8 +85,8 @@ trait Domain extends Valid {
     case Search.Exists =>
       val v = T.web.req.b( f.id )
 
-      if ( v ) s.rec( f.name ) = true
-      else     s.rec.remove( f.name )
+      if ( v ) s.rec( f.va.name ) = true
+      else     s.rec.remove( f.va.name )
       true
     case _ =>
       false
@@ -107,8 +107,8 @@ trait Domain extends Valid {
     if ( !commonExtract( s, f ) ) {
       val v = T.web.req.s( f.id )
 
-      if ( v.notBlank ) s.rec( f.name ) = v
-      else              s.rec.remove( f.name )
+      if ( v.notBlank ) s.rec( f.va.name ) = v
+      else              s.rec.remove( f.va.name )
     }
 
   /**
@@ -144,8 +144,8 @@ abstract class DbIntish extends Domain {
     if ( !commonExtract( s, f ) ) {
       val str = T.web.req.s( f.id )
 
-      if ( str.isBlank ) s.rec.remove( f.name )
-      else               s.rec( f.name ) = str.coerceInt
+      if ( str.isBlank ) s.rec.remove( f.va.name )
+      else               s.rec( f.va.name ) = str.coerceInt
     }
 }
 
@@ -334,8 +334,8 @@ object DbBoolean extends Domain {
   }
     
   override def extract( s:Scope, f:PathField ) =
-    if ( T.web.req.b( f.id ) ) s.rec( f.name ) = true
-    else                       s.rec.remove( f.name )
+    if ( T.web.req.b( f.id ) ) s.rec( f.va.name ) = true
+    else                       s.rec.remove( f.va.name )
 
   override def inputcClasses = " boolean"
 
