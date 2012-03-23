@@ -39,11 +39,15 @@ import org.tyranid.ui.{ Search, UiObj }
 case class ViewAttribute( val view:View,
                           val att:Attribute,
                           val index:Int,
-                          val search:Search = null ) extends Valid with Path with PathNode {
+                          val search:Search = null,
+                          val fullName:String = null ) extends Valid with Path with PathNode {
 
   def temporary = search != null || att.temporary
 
-  override def name  = att.name
+  override lazy val name =
+    if ( fullName.isBlank ) att.name
+    else                    fullName
+
   override def label = att.label
 
   def label( r:Record, opts:(String,String)* ):NodeSeq = <label for={ name }>{ label }</label>
@@ -166,6 +170,10 @@ trait Record extends Valid with BsonObject {
   def recordTid = view.keyVa.flatten( kva => kva.att.domain.tid( this, kva ), "-invalid" )
 
   def clear:Unit = throw new UnsupportedOperationException
+
+  def remove( key:String )       { remove( view( key ) ) }
+  def remove( va:ViewAttribute ) { throw new UnsupportedOperationException }
+
 
   /**
    * Record/Object/Document/Tuple
@@ -315,13 +323,6 @@ trait Record extends Valid with BsonObject {
   final def save = entity.save( this )
 }
 
-/*
-
-    +.  change the map in search to be a record instead
-
-    +.  pass in a Scope instead of a Report to Domain
-
- */
 
 case class Scope( rec:Record,
                   initialDraw:Boolean = false,

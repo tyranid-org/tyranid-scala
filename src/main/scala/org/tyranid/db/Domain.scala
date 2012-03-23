@@ -24,7 +24,6 @@ import scala.xml.{ NodeSeq, Text, Unparsed }
 import org.tyranid.Imp._
 import org.tyranid.logic.{ Valid, Invalid }
 import org.tyranid.math.Base64
-import org.tyranid.report.Report
 import org.tyranid.time.{ Time }
 import org.tyranid.ui.{ Checkbox, Glyph, Input, PathField, Search, Select, TextArea, ToggleLink, UiStyle }
 import org.tyranid.web.WebContext
@@ -71,19 +70,46 @@ trait Domain extends Valid {
    * * *   F o r m s
    */
 
-  def ui( s:Scope, f:PathField ):NodeSeq = {
-    val ret = f.optsMapper( s )
-    val input = Input( ret._1, s.rec s f.va.name, ret._2:_*  )
+  protected def commonUi( s:Scope, f:PathField, normal: => NodeSeq ) =
+    f.search match {
+    case Search.Exists =>
+      /* val opts = */ f.optsMapper( s ) // optsMapper updates the id, needs to run first ... maybe place it in what calls ui ?
+      Checkbox( f.id, s.rec.b( f.va.name ) ) ++ f.labelUi
 
-    if ( f.focus )
-      throw new RuntimeException( "TODO:  handle focus on load" )
-    else 
-      input
-  }
+    case _  =>
+      normal
+    }
+
+  protected def commonExtract( s:Scope, f:PathField ) =
+    f.search match {
+    case Search.Exists =>
+      val v = T.web.req.b( f.id )
+
+      if ( v ) s.rec( f.va.name ) = true
+      else     s.rec.remove( f.va.name )
+      true
+    case _ =>
+      false
+    }
+
+  def ui( s:Scope, f:PathField ):NodeSeq =
+    commonUi( s, f, {
+      val opts = f.optsMapper( s ) // optsMapper updates the id, needs to run first ... maybe place it in what calls ui ?
+      val input = Input( f.id, s.rec s f.va.name, opts:_*  )
+
+      if ( f.focus )
+        throw new RuntimeException( "TODO:  handle focus on load" )
+      else 
+        input
+    } )
     
-  def extract( s:Scope, f:PathField ) {
-    s.rec( f.va.name ) = T.web.req.s( f.id )
-  }
+  def extract( s:Scope, f:PathField ) =
+    if ( !commonExtract( s, f ) ) {
+      val v = T.web.req.s( f.id )
+
+      if ( v.notBlank ) s.rec( f.va.name ) = v
+      else              s.rec.remove( f.va.name )
+    }
 
   /**
    * These are the class(es) that should be added to the input container.
@@ -95,34 +121,6 @@ trait Domain extends Valid {
    * * *   S e a r c h
    */
 
-  protected def commonSearchUi( report:Report, f:PathField, normal: => NodeSeq ) =
-    f.search match {
-    case Search.Exists => Checkbox( f.name, report.searchRec.b( f.name ) ) ++ f.labelUi
-    case _             => normal
-    }
-
-  protected def commonSearchExtract( report:Report, f:PathField, web:WebContext ) =
-    f.search match {
-    case Search.Exists =>
-      val v = web.req.b( f.name )
-
-      if ( v ) report.searchRec( f.name ) = true
-      else     report.searchRec.remove( f.name )
-      true
-    case _ =>
-      false
-    }
-
-  def searchUi( report:Report, f:PathField ):NodeSeq =
-    commonSearchUi( report, f, Input( f.name, report.searchRec.s( f.name ), f.opts:_* ) )
-
-  def searchExtract( report:Report, f:PathField, web:WebContext ) =
-    if ( !commonSearchExtract( report, f, web ) ) {
-      val v = web.req.s( f.name )
-
-      if ( v.notBlank ) report.searchRec( f.name ) = v
-      else              report.searchRec.remove( f.name )
-    }
 
 
   /*
@@ -142,19 +140,12 @@ abstract class DbIntish extends Domain {
 
   override def tid( r:Record, va:ViewAttribute ) = Base64.toString( r i va )
 
-  override def extract( s:Scope, f:PathField ) {
-    s.rec( f.va.name ) = T.web.req.i( f.id )
-  }
-    
-  override def searchUi( report:Report, f:PathField ) =
-    commonSearchUi( report, f, Input( f.name, report.searchRec.s( f.name ), f.opts:_* ) )
+  override def extract( s:Scope, f:PathField ) =
+    if ( !commonExtract( s, f ) ) {
+      val str = T.web.req.s( f.id )
 
-  override def searchExtract( report:Report, f:PathField, web:WebContext ) =
-    if ( !commonSearchExtract( report, f, web ) ) {
-      val i = web.req.i( f.name )
-
-      if ( i == 0 ) report.searchRec.remove( f.name )
-      else          report.searchRec( f.name ) = i
+      if ( str.isBlank ) s.rec.remove( f.va.name )
+      else               s.rec( f.va.name ) = str.coerceInt
     }
 }
 
@@ -221,8 +212,8 @@ object DbText extends DbTextLike {
 	val sqlName = "TEXT"
 	
   override def ui( s:Scope, f:PathField ):NodeSeq = {
-    val ret = f.optsMapper( s )
-    val ta = TextArea( ret._1, s.rec.s( f.va.name ), ret._2:_*  )
+    val opts = f.optsMapper( s ) // optsMapper updates the id, needs to run first ... maybe place it in what calls ui ?
+    val ta = TextArea( f.id, s.rec.s( f.va.name ), opts:_*  )
     
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -272,8 +263,8 @@ case class DbUpperChar( len:Int ) extends LimitedText {
 object DbPassword extends DbVarChar( 64 ) {
 
   override def ui( s:Scope, f:PathField ) = {
-    val ret = f.optsMapper( s )
-    val input = Input( ret._1, s.rec.s( f.va.name ), ( ret._2 ++ Seq( "type" -> "password" ) ):_*  )
+    val opts = f.optsMapper( s ) // optsMapper updates the id, needs to run first ... maybe place it in what calls ui ?
+    val input = Input( f.id, s.rec.s( f.va.name ), ( opts ++ Seq( "type" -> "password" ) ):_*  )
 
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -334,28 +325,21 @@ object DbBoolean extends Domain {
 	val sqlName = "CHAR(1)"
 	  
   override def ui( s:Scope, f:PathField ) = {
-    val ret = f.optsMapper( s )
+    val opts = f.optsMapper( s )
 
     f.uiStyle match {
-    case UiStyle.Toggle => ToggleLink( ret._1, s.rec.b( f.va.name ), ret._2:_* )
-    case _              => Checkbox( ret._1, s.rec b f.va.name, ret._2:_* )
+    case UiStyle.Toggle => ToggleLink( f.id, s.rec.b( f.va.name ), opts:_* )
+    case _              => Checkbox( f.id, s.rec b f.va.name, opts:_* ) ++ f.labelUi
     }
   }
     
-  override def extract( s:Scope, f:PathField ) {
-    s.rec( f.va.name ) = T.web.req.b( f.id )
-  }
+  override def extract( s:Scope, f:PathField ) =
+    if ( T.web.req.b( f.id ) ) s.rec( f.va.name ) = true
+    else                       s.rec.remove( f.va.name )
 
   override def inputcClasses = " boolean"
 
   override def cell( f:PathField, r:Record ) = f.path.b( r ) |* Glyph.Checkmark
-
-  override def searchUi( report:Report, f:PathField ) =
-    Checkbox( f.name, report.searchRec.b( f.name ) ) ++ f.labelUi
-
-  override def searchExtract( report:Report, f:PathField, web:WebContext ) =
-    if ( web.req.b( f.name ) ) report.searchRec( f.name ) = true
-    else                       report.searchRec.remove( f.name )
 }
 
 
@@ -391,8 +375,8 @@ trait DbDateLike extends Domain {
     super.validations
 
   override def ui( s:Scope, f:PathField ) = {
-    val ret = f.optsMapper( s )
-    val input = Input( ret._1, s.rec.t( f.va.name ).toDateStr, ret._2:_*  )
+    val opts = f.optsMapper( s ) // optsMapper updates the id, needs to run first ... maybe place it in what calls ui ?
+    val input = Input( f.id, s.rec.t( f.va.name ).toDateStr, opts:_*  )
 
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -418,8 +402,8 @@ object DbDateTime extends DbDateLike {
   override def dateOnly = false
 
   override def ui( s:Scope, f:PathField ) = {
-    val ret = f.optsMapper( s )
-    val input = Input( ret._1, s.rec.t( f.va.name ).toDateTimeStr, ret._2:_*  )
+    val opts = f.optsMapper( s ) // optsMapper updates the id, needs to run first ... maybe place it in what calls ui ?
+    val input = Input( f.id, s.rec.t( f.va.name ).toDateTimeStr, opts:_*  )
 
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -485,10 +469,10 @@ case class DbLink( toEntity:Entity ) extends Domain {
       
     val values = idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq
     
-    val ret = f.optsMapper( s )
-    Select( ret._1, s.rec s f.va,
+    val opts = f.optsMapper( s ) // optsMapper updates the id, needs to run first ... maybe place it in what calls ui ?
+    Select( f.id, s.rec s f.va,
             ( "" -> "-Please Select-" ) +: values,
-            ret._2:_* )
+            opts:_* )
   }
 
   override def extract( s:Scope, f:PathField ) {

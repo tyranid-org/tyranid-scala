@@ -48,6 +48,8 @@ trait BsonObject extends Deep {
   def id = apply( "_id" )
   def oid = id.as[ObjectId]
 
+  def remove( key:String )
+
   def a_?( key:String ) =
     apply( key ) match {
     case null          => Mongo.EmptyArray

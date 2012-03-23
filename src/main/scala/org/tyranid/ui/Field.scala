@@ -59,14 +59,14 @@ object Search {
   case object Exists extends Search {
     val name = "exist"
 
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = Mobj( $gt -> "" )
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = Mobj( $gt -> "" )
   }
 
   case object Subst  extends Search {
     val name = "subst"
 
     def search( run:Run, f:Field, searchObj:DBObject, value:Any ) =
-      searchObj( f.name ) =
+      searchObj( f.baseName ) =
         if ( f.needsCaseInsensitiveSearch )
           value.toString.toPatternI
         else
@@ -76,7 +76,7 @@ object Search {
   case object Gte    extends Search {
     val name = "gte"
 
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = Mobj( $gte -> value )
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = Mobj( $gte -> value )
   }
 
   case object Custom extends Search {
@@ -127,6 +127,9 @@ trait Field {
 
   def effCell( run:Run, rec:Record ) = cell( run, rec )
 
+  def ui( s:Scope ):NodeSeq   = throw new UnsupportedOperationException( "name=" + name )
+  def extract( s:Scope ):Unit = throw new UnsupportedOperationException( "name=" + name )
+
 
   /*
    * * *   Data Hinting
@@ -164,9 +167,6 @@ trait Field {
   def prepareSearch( run:Run, searchObj:DBObject, value:Any ) =
     if ( search != null )
       search.search( run, this, searchObj, value )
-
-  def searchUi( report:Report ):NodeSeq                   = throw new UnsupportedOperationException( "name=" + name )
-  def searchExtract( web:WebContext, report:Report ):Unit = throw new UnsupportedOperationException( "name=" + name )
 }
 
 
@@ -213,14 +213,15 @@ case class PathField( baseName:String,
     this // TODO:  return an immutable version
   }
 
-  def extract( pScope:Scope ) = {
+  override def ui( s:Scope )      = path.leaf.domain.ui( s, this )
+  override def extract( pScope:Scope ) = {
     val scope = pScope.at( path )
     va.att.domain.extract( scope, this )
   }
 
   def fields = Seq( this )
 
-  def optsMapper( s:Scope ):( String, Seq[(String,String)] ) = { 
+  def optsMapper( s:Scope ) = { 
     var id = this.id
 
     val opts2 = opts.flatMap {
@@ -244,7 +245,7 @@ case class PathField( baseName:String,
       this.id = id
     }
 
-    return ( id, opts2 )
+    opts2
   }
 
   private def invalidLines( invalids:Seq[Invalid] ) =
@@ -283,9 +284,6 @@ case class PathField( baseName:String,
 
   override def transformValue( value:Any ) = path.leaf.domain.transformValue( value )
   override def needsCaseInsensitiveSearch  = path.leaf.domain.needsCaseInsensitiveSearch
-
-  override def searchUi( report:Report ) = path.leaf.domain.searchUi( report, this )
-  override def searchExtract( web:WebContext, report:Report ) = path.leaf.domain.searchExtract( report, this, web )
 }
 
 
@@ -300,13 +298,13 @@ case class CustomTextSearchField( baseName:String, l:String = null, opts:Seq[(St
 
   override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
 
-  override def searchUi( report:Report ) = Input( name, report.searchRec.s( name ), opts:_* )
+  override def ui( s:Scope ) = Input( name, s.rec.s( name ), opts:_* )
 
-  override def searchExtract( web:WebContext, report:Report ) = {
-    val v = web.req.s( name )
+  override def extract( s:Scope ) = {
+    val v = T.web.req.s( name )
 
-    if ( v.notBlank ) report.searchRec( name ) = v
-    else              report.searchRec.remove( name )
+    if ( v.notBlank ) s.rec( name ) = v
+    else              s.rec.remove( name )
   }
 }
 

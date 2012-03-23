@@ -25,7 +25,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ Entity, Path, Record, ViewAttribute }
+import org.tyranid.db.{ Entity, Path, Record, Scope, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.session.Session
@@ -155,14 +155,16 @@ trait Query {
   val orderBy:Seq[Sort] = Nil
 
   val searchForm =
-   ( r:Report ) =>
+   ( r:Report ) => {
+     val s = Scope( r.searchRec )
+
    <form method="post" id="rSearchForm" style="padding-top:8px;">
      { searchFields.nonEmpty |*
      <div class="fieldc" style="margin-top:8px; padding:4px;">
       <h3>Search By</h3>
       { searchFields map { f =>
           <div>{ f.labelUi }</div>
-          <div>{ f.searchUi( r ) }</div>
+          <div>{ f.ui( s ) }</div>
         }
       }
      </div> }
@@ -175,6 +177,7 @@ trait Query {
      <input type="submit" value="Search" class="greenBtn" name="saving"/>
     </div>
    </form>
+ }
 
   def hasSearch = searchFields.nonEmpty || orderBy.nonEmpty
 }
@@ -288,12 +291,13 @@ case class Report( query:Query ) {
    */
 
   def label( name:String ) = query.allFieldsMap( name ).labelUi
-  def ui( name:String )    = query.allFieldsMap( name ).searchUi( this )
+  def ui( name:String )    = query.allFieldsMap( name ).ui( Scope( searchRec ) )
 
   def searchExtract = {
-    val web = T.web
+    val s = Scope( searchRec )
     searchRec.clear
-    query.searchFields.foreach { _.searchExtract( web, this ) }
+    query.searchFields.foreach { _.extract( s ) }
+spam( "searchRec=" + searchRec )
   }
 
   def searchTitle =
