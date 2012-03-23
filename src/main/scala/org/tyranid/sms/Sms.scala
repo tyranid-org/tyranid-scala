@@ -131,7 +131,7 @@ object Smslet extends Weblet {
       
       val (user,sms) = smsStart
     
-      if ( !sms.b( 'ok ) )
+      if ( !sms.b( 'ok ) && !web.b( 'savingHere ) )
         web.forward( "/sms/verify?id=" + web.s( "id" ) or "" )
     
       val ui = user.view.ui(
@@ -151,6 +151,7 @@ object Smslet extends Weblet {
           return
         }
       } else if ( web.b( "toggleSmsOk" ) ) {
+        //T.session.clearAllEditing
         web.forward( "/sms/verify?ok=1&id=" + web.s( "id" ) or "" )
       } else if ( web.b( "toggleSmsOn" ) ) {
         sms( 'on ) = !sms.b( 'on )
@@ -166,9 +167,11 @@ object Smslet extends Weblet {
             </table>
            </form>
            <footer class="btns">
+            <input type="hidden" value="1" name="savingHere"/>
             <input type="submit" id="dlgSubmit" class="greenBtn" value="Save" name="saving"/>
             <a href={ "/user/edit?id=" + user.tid } id="cancel" class="greyBtn">Cancel</a>
-           </footer> ) ) )
+           </footer> ), 
+         "endpoint" -> "/sms/edit" ) )
 
     case "/verify" =>
       redirectIfNotLoggedIn( web )
@@ -176,7 +179,7 @@ object Smslet extends Weblet {
       var form:NodeSeq = null
       var header:NodeSeq = null
           
-      val (user,sms) = smsStart
+      var (user,sms) = smsStart
       var saving = web.b( 'saving )
       
       if ( web.b( 'ok ) ) {
@@ -212,13 +215,14 @@ object Smslet extends Weblet {
                 sess.notice( "That number has already been verified!" )
               } else {
                 ui = enterVerifyUi
+                user.clearSubmit
                 
                 val vCode = Base62.make( 6 ).toUpperCase()
                 sms( "vCode" ) = vCode
                 user.save
                 
                 B.sms.send( "1" + smsNumber, B.applicationName + ". Other charges may apply. Please enter this verification code at " + B.website + ": " + vCode )
-                header = <header>{ "We just sent an SMS message to your phone " + smsNumber.toPhoneMask + ". Please enter the verification code below." }</header>
+                header = sendHeader( smsNumber, user.tid )
               }
             }
           }
@@ -227,8 +231,6 @@ object Smslet extends Weblet {
           
           if ( web.b( 'verify ) ) {
             val invalids = Scope( user, saving = true ).submit( user, ui )
-            val smsNumber = sms.s( 'phone ).toOnlyNumbers
-            header = <header>{ "We sent an SMS message to your phone " + smsNumber.toPhoneMask + ". Please enter the verification code below." }</header>
           
             if ( invalids.isEmpty ) {
                if ( sms.s( 'enteredCode ) == sms.s( 'vCode ) ) {
@@ -241,10 +243,9 @@ object Smslet extends Weblet {
                
                sess.error( "That verification code is not correct." )
             }
-          } else {
-            val smsNumber = sms.s( 'phone ).toOnlyNumbers
-            header = <header>{ "We sent an SMS message to your phone " + smsNumber.toPhoneMask + ". Please enter the verification code below." }</header>
           }
+
+          header = sendHeader( sms.s( 'phone ), user.tid )
         }
       }
       
@@ -267,7 +268,7 @@ object Smslet extends Weblet {
         form = 
           <form method="post" action={ web.path } id="f">
             <table style="width: 100%">
-               { Scope( user, saving = true ).draw( ui ) }
+             { Scope( user, saving = true ).draw( ui ) }
             </table>
             <footer class="btns">
              <input type="hidden" value="1" name="verify"/>
@@ -282,9 +283,45 @@ object Smslet extends Weblet {
           { Notification.box } ++
           { header } ++
           { form } ),
-        "onCloseRedirect" -> true ) )
+        "onCloseRedirect" -> true,
+        "endpoint" -> "/sms/verify") )
+        
+    case "/sendAgain" =>
+      redirectIfNotLoggedIn( web )
+      
+      var (user,sms) = smsStart
+      
+      var vCode = sms.s( 'vCode )
+      
+      if ( vCode isBlank ) {
+         vCode = Base62.make( 6 ).toUpperCase()
+         sms( "vCode" ) = vCode
+         user.save
+      }
+      
+      B.sms.send( "1" + sms.s( 'phone ).toOnlyNumbers, B.applicationName + ". Other charges may apply. Please enter this verification code at " + B.website + ": " + vCode )
+      sess.notice( "Verfication code has been sent again." )
+      web.forward( "/sms/verify?id=" + web.s( "id" ) or "" )
+  
+    case "/clearSend" =>
+      redirectIfNotLoggedIn( web )
+      
+      var (user,sms) = smsStart
+      
+      sess.notice( "Verfication code has been cleared." )
+      sms( 'vCode ) = null
+      user.save
+       
+      web.forward( "/sms/verify?id=" + web.s( "id" ) or "" )
     }
   
+    def sendHeader( smsNumber:String, tid:String ) = 
+      <header>
+       { B.applicationName + " sent an SMS message to your phone " + smsNumber + ". Please enter the verification code below. " }
+       <a id="sendAgain" href={ "/sms/sendAgain?id=" + tid }>Send Again</a> or <a id="clearSend" href={ "/sms/clearSend?id=" + tid }>Clear</a>
+       <script>{ Unparsed( """window.lastDialog.updateHref( 'sendAgain' ); window.lastDialog.updateHref( 'clearSend' )""" ) }</script>
+      </header>
+    
     def smsStart = {
       val user:User = { 
         val tid = web.s( "id" ) or T.session.user.tid

@@ -207,7 +207,7 @@ case class PathField( name:String,
       val invalid = !invalids.isEmpty
       val rec = scope.rec
       rec.invalids( va.index ) = !invalids.isEmpty
-
+      
       va.att.domain.show( scope ) |*
       <div id={ va.name + "_c" } class={ "fieldc" + ( invalid |* " invalid" ) }>
        <div class="labelc">{ va.label( rec, opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
