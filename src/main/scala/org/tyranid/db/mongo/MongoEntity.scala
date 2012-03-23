@@ -25,10 +25,10 @@ import org.bson.types.ObjectId
 import com.mongodb.{ BasicDBObject, DB, DBCollection, DBObject }
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbLink, Domain, Entity, Record, Scope, View, ViewAttribute }
+import org.tyranid.db.{ DbLink, Attribute, Domain, Entity, Record, Scope, View, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.math.Base64
-import org.tyranid.ui.{ Input, PathField }
+import org.tyranid.ui.{ Input, PathField, Search }
 
 
 case object DbMongoId extends Domain {
@@ -168,28 +168,31 @@ case class MongoView( override val entity:MongoEntity ) extends View {
   // This preloads all of the view attributes for the entity associated with this view.
   entity.attribs.foreach { a => add( a.name ) }
 
-  private def add( name:String ) = {
-    val va = new ViewAttribute( this, entity.attrib( name ), nextIndex )
+  private def add( fullName:String ) = {
+    val ( name, search ) = Search.extract( fullName )
+
+    val att =
+      if ( search == Search.Custom )
+        new Attribute( entity, name )
+      else
+        entity.attrib( name )
+
+    val va = new ViewAttribute( this, att, nextIndex, search )
     nextIndex += 1
-    byName( name ) = va
+    byName( fullName ) = va
     byIndex( va.index ) = va
     rebuildVas = true
     va
   }
 
   def apply( name:String ) = synchronized {
-    var rslt = byName.get( name )
-
-    if ( rslt == None ) {
+    byName.get( name ).getOrElse {
       val a = add( name )
       byName( name ) = a
       a
-    } else {
-      rslt.get
     }
-
-    //byName.getOrElse( name, add( name ) )
   }
+
   def apply( idx:Int )     = synchronized { byIndex( idx ) }
 }
 

@@ -50,6 +50,7 @@ object Query {
 trait Query {
 
   val name:String
+  val entity:Entity
 
   def label:AnyRef            = "Search Results" //name.camelCaseToSpaceUpper
   def labelNode:NodeSeq       = null
@@ -74,6 +75,8 @@ trait Query {
         throw new RuntimeException( "Duplicate field in report: " + f.name )
 
       map( f.name ) = f
+      if ( f.name != f.baseName )
+        map( f.baseName ) = f
     }
     map
   }
@@ -86,7 +89,8 @@ trait Query {
     val search = Mobj()
 
     for ( sf <- searchFields;
-          value <- rep.searchValues.get( sf.name ) )
+          value = rep.searchRec( sf.name )
+          if value != null )
       sf.prepareSearch( run, search, value )
 
     val textSearches =
@@ -226,7 +230,7 @@ case class Report( query:Query ) {
 
   @volatile var name:String = _
 
-  val searchValues  = mutable.Map[String,Any]()
+  val searchRec = query.entity.as[MongoEntity].make
 
   @volatile var sort:DBObject = null
   @volatile var offset:Int = 0

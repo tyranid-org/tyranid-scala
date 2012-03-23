@@ -97,7 +97,7 @@ trait Domain extends Valid {
 
   protected def commonSearchUi( report:Report, f:PathField, normal: => NodeSeq ) =
     f.search match {
-    case Search.Exists => Checkbox( f.name, report.searchValues.b( f.name ) ) ++ f.labelUi
+    case Search.Exists => Checkbox( f.name, report.searchRec.b( f.name ) ) ++ f.labelUi
     case _             => normal
     }
 
@@ -106,22 +106,22 @@ trait Domain extends Valid {
     case Search.Exists =>
       val v = web.req.b( f.name )
 
-      if ( v ) report.searchValues( f.name ) = true
-      else     report.searchValues.remove( f.name )
+      if ( v ) report.searchRec( f.name ) = true
+      else     report.searchRec.remove( f.name )
       true
     case _ =>
       false
     }
 
   def searchUi( report:Report, f:PathField ):NodeSeq =
-    commonSearchUi( report, f, Input( f.name, report.searchValues.s( f.name ), f.opts:_* ) )
+    commonSearchUi( report, f, Input( f.name, report.searchRec.s( f.name ), f.opts:_* ) )
 
   def searchExtract( report:Report, f:PathField, web:WebContext ) =
     if ( !commonSearchExtract( report, f, web ) ) {
       val v = web.req.s( f.name )
 
-      if ( v.notBlank ) report.searchValues( f.name ) = v
-      else              report.searchValues.remove( f.name )
+      if ( v.notBlank ) report.searchRec( f.name ) = v
+      else              report.searchRec.remove( f.name )
     }
 
 
@@ -147,14 +147,14 @@ abstract class DbIntish extends Domain {
   }
     
   override def searchUi( report:Report, f:PathField ) =
-    commonSearchUi( report, f, Input( f.name, report.searchValues.s( f.name ), f.opts:_* ) )
+    commonSearchUi( report, f, Input( f.name, report.searchRec.s( f.name ), f.opts:_* ) )
 
   override def searchExtract( report:Report, f:PathField, web:WebContext ) =
     if ( !commonSearchExtract( report, f, web ) ) {
       val i = web.req.i( f.name )
 
-      if ( i == 0 ) report.searchValues.remove( f.name )
-      else          report.searchValues( f.name ) = i
+      if ( i == 0 ) report.searchRec.remove( f.name )
+      else          report.searchRec( f.name ) = i
     }
 }
 
@@ -351,11 +351,11 @@ object DbBoolean extends Domain {
   override def cell( f:PathField, r:Record ) = f.path.b( r ) |* Glyph.Checkmark
 
   override def searchUi( report:Report, f:PathField ) =
-    Checkbox( f.name, report.searchValues.b( f.name ) ) ++ f.labelUi
+    Checkbox( f.name, report.searchRec.b( f.name ) ) ++ f.labelUi
 
   override def searchExtract( report:Report, f:PathField, web:WebContext ) =
-    if ( web.req.b( f.name ) ) report.searchValues( f.name ) = true
-    else                       report.searchValues.remove( f.name )
+    if ( web.req.b( f.name ) ) report.searchRec( f.name ) = true
+    else                       report.searchRec.remove( f.name )
 }
 
 

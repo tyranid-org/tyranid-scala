@@ -29,7 +29,7 @@ import scala.xml.NodeSeq
 import org.tyranid.Imp._
 import org.tyranid.bson.BsonObject
 import org.tyranid.logic.{ Invalid, Valid }
-import org.tyranid.ui.{ UiObj }
+import org.tyranid.ui.{ Search, UiObj }
 
 
 /*
@@ -38,9 +38,10 @@ import org.tyranid.ui.{ UiObj }
 
 case class ViewAttribute( val view:View,
                           val att:Attribute,
-                          val index:Int ) extends Valid with Path with PathNode {
+                          val index:Int,
+                          val search:Search = null ) extends Valid with Path with PathNode {
 
-  def temporary = att.temporary
+  def temporary = search != null || att.temporary
 
   override def name  = att.name
   override def label = att.label
@@ -122,7 +123,6 @@ object View {
 
 object Record {
 
-
   def byTid( tid:String, only:Entity = null ):Option[Record] = {
 
     val ( entityTid, recordTid ) = tid.splitAt( 4 )
@@ -138,7 +138,6 @@ object Record {
       None
     }
   }
-
 }
 
 trait Record extends Valid with BsonObject {
@@ -313,6 +312,14 @@ trait Record extends Valid with BsonObject {
 
   final def save = entity.save( this )
 }
+
+/*
+
+    +.  change the map in search to be a record instead
+
+    +.  pass in a Scope instead of a Report to Domain
+
+ */
 
 case class Scope( rec:Record,
                   initialDraw:Boolean = false,

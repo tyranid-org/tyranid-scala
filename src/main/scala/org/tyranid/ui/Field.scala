@@ -33,20 +33,38 @@ import org.tyranid.web.WebContext
 
 
 sealed trait Search {
+  val name:String
   def search( run:Run, f:Field, searchObj:DBObject, value:Any ):Unit
+
+  def makeSearchName( baseName:String ) = baseName + "$" + name
 }
 
 object Search {
 
+  val values = Seq(
+    Equals,
+    Exists,
+    Subst,
+    Gte,
+    Custom
+  )
+
   case object Equals extends Search {
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = f.transformValue( value )
+    val name = "eq"
+
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) =
+      searchObj( f.baseName ) = f.transformValue( value )
   }
 
   case object Exists extends Search {
+    val name = "exist"
+
     def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = Mobj( $gt -> "" )
   }
 
   case object Subst  extends Search {
+    val name = "subst"
+
     def search( run:Run, f:Field, searchObj:DBObject, value:Any ) =
       searchObj( f.name ) =
         if ( f.needsCaseInsensitiveSearch )
@@ -56,12 +74,31 @@ object Search {
   }
 
   case object Gte    extends Search {
+    val name = "gte"
+
     def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = Mobj( $gte -> value )
   }
 
   case object Custom extends Search {
+    val name = "cst"
+
     // nothing to do, this is handled in Query subclasses' prepareSearch()
     def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = {}
+  }
+
+  def by( name:String ) = values.find( _.name == name )
+
+  def extract( name:String ):(String,Search) = {
+    val idx = name.indexOf( "$" )
+
+    if ( idx != -1 ) {
+      val searchName = name.substring( idx + 1 )
+      val search = by( searchName ) getOrElse { throw new RuntimeException( "Unknown search type: '" + searchName + "' in '" + name + "'" ) }
+      
+      ( name.substring( 0, idx ), search )
+    } else {
+      ( name, null )
+    }
   }
 }
 
@@ -72,6 +109,7 @@ object Search {
  */
 
 trait Field {
+  def baseName:String
   def name:String
 
   lazy val label = name.camelCaseToSpaceUpper
@@ -134,6 +172,8 @@ trait Field {
 
 trait CustomField extends Field {
 
+  val baseName = name
+
   val data = true
   val search:Search = null
 }
@@ -144,7 +184,7 @@ object PathField {
   implicit def symbol2Field( name:Symbol ) = PathField( name.name )
 }
 
-case class PathField( name:String,
+case class PathField( baseName:String,
                       l:String = null,
                       opts:Seq[(String,String)] = Nil,
                       sec:String = "Standard",
@@ -158,6 +198,10 @@ case class PathField( name:String,
                       filter:Option[ ( Record ) => Boolean ] = None,
                       uiStyle:UiStyle = UiStyle.Default ) extends Field with UiObj {
   var id:String = null
+
+  val name =
+    if ( search != null ) search.makeSearchName( baseName )
+    else                  baseName
 
   override lazy val label = if ( l.notBlank ) l else path.leaf.label
 
@@ -245,7 +289,9 @@ case class PathField( name:String,
 }
 
 
-case class CustomTextSearchField( name:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends Field {
+case class CustomTextSearchField( baseName:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends Field {
+
+  val name = baseName + "$cst"
 
   val search = Search.Custom
   override val data = false
@@ -254,13 +300,13 @@ case class CustomTextSearchField( name:String, l:String = null, opts:Seq[(String
 
   override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
 
-  override def searchUi( report:Report ) = Input( name, report.searchValues.s( name ), opts:_* )
+  override def searchUi( report:Report ) = Input( name, report.searchRec.s( name ), opts:_* )
 
   override def searchExtract( web:WebContext, report:Report ) = {
     val v = web.req.s( name )
 
-    if ( v.notBlank ) report.searchValues( name ) = v
-    else              report.searchValues.remove( name )
+    if ( v.notBlank ) report.searchRec( name ) = v
+    else              report.searchRec.remove( name )
   }
 }
 
