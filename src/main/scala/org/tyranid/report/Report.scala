@@ -142,19 +142,26 @@ trait Query {
   val searchForm =
    ( r:Report ) =>
    <form method="post" id="rSearchForm" style="padding-top:8px;">
-    { searchFields map { f =>
-        <div>{ f.labelUi }</div>
-        <div>{ f.searchUi( r ) }</div>
+     { searchFields.nonEmpty |*
+     <div class="fieldc" style="padding:4px;">
+      <h3>Search by</h3>
+      { searchFields map { f =>
+          <div>{ f.labelUi }</div>
+          <div>{ f.searchUi( r ) }</div>
+        }
       }
-    }
-    { orderBy.nonEmpty |*
-    <div>Order By</div>
-    <div>{ Select( "sort", r.sort != null |* r.sort.keySet.head, orderBy ) }</div>
-    }
+     </div> }
+     { orderBy.nonEmpty |*
+     <div class="fieldc" style="padding:4px;">
+      <h3>Order By</h3>
+      <div>{ Select( "sort", r.sort != null |* r.sort.keySet.head, orderBy ) }</div>
+     </div> }
     <div class="btns">
      <input type="submit" value="Search" class="greenBtn" name="saving"/>
     </div>
    </form>
+
+  def hasSearch = searchFields.nonEmpty || orderBy.nonEmpty
 }
 
 trait MongoQuery extends Query {
@@ -314,7 +321,7 @@ case class Report( query:Query ) {
     if ( fields.size == 0 )
       Unparsed( "<select style='width:150px;' disabled><option>none left</option></select>" )
     else
-      Select( "Field", field, fields.map( f => f.name -> f.label ), "style" -> "width:150px; max-width:150px;" )
+      Select( "rFields", field, fields.map( f => f.name -> f.label ), "style" -> "width:150px; max-width:150px;" )
 
   def addBox:NodeSeq =
     if ( field.notBlank )
@@ -364,10 +371,10 @@ case class Report( query:Query ) {
          <td style="padding:0;">
           <table>
            <tr>
-            { ( query.searchForm != null    |* <td><button id="rSearch" class="greyBtn">Search</button></td> ) ++
-              ( offset > 0                  |* <td><button id="rPrev" class="greyBtn">Prev</button></td> ) ++
-              ( hasNext                     |* <td><button id="rNext" class="greyBtn">Next</button></td> ) ++
-              ( query.grouping != null      |* <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
+            { ( query.hasSearch        |* <td><button id="rSearch" class="greyBtn">Search</button></td> ) ++
+              ( offset > 0             |* <td><button id="rPrev" class="greyBtn">Prev</button></td> ) ++
+              ( hasNext                |* <td><button id="rNext" class="greyBtn">Next</button></td> ) ++
+              ( query.grouping != null |* <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
             { query.extraActions } 
            </tr>
           </table>
