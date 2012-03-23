@@ -490,7 +490,7 @@ case class DbLink( toEntity:Entity ) extends Domain {
 		case n:Number => toEntity.labelFor( n )
 		}
 
-  override def cell( s:Scope, f:PathField ) = Text( see( s.rec s f.va.name ) )
+  override def cell( s:Scope, f:PathField ) = Text( see( s.rec( f.va.name ) ) )
 }
 
 

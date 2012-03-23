@@ -160,16 +160,18 @@ trait Query {
 
    <form method="post" id="rSearchForm" style="padding-top:8px;">
      { searchFields.nonEmpty |*
-     <div class="fieldc" style="margin-top:8px; padding:4px;">
+     <div class="fieldsc" style="margin-top:8px; padding:4px;">
       <h3>Search By</h3>
       { searchFields map { f =>
-          <div>{ f.labelUi }</div>
-          <div>{ f.ui( s ) }</div>
+          <div class="fieldc">
+           <div class="labelc">{ f.labelUi }</div>
+           <div class="inputc">{ f.ui( s ) }</div>
+          </div>
         }
       }
      </div> }
      { orderBy.nonEmpty |*
-     <div class="fieldc" style="margin-top:8px; padding:4px;">
+     <div class="fieldsc" style="margin-top:8px; padding:4px;">
       <h3>Order By</h3>
       <div>{ Select( "sort", r.sort != null |* r.sort.keySet.head, orderBy.map( _.selectObj ) ) }</div>
      </div> }
@@ -251,7 +253,14 @@ case class Report( query:Query ) {
 
   val searchRec = query.entity.as[MongoEntity].make
 
-  @volatile var sort:DBObject = null
+  @volatile var sort:DBObject = {
+
+    if ( query.orderBy.nonEmpty )
+      query.orderBy.head.sortObj
+    else
+      null
+  }
+
   @volatile var offset:Int = 0
   @volatile var hasNext:Boolean = false
   @volatile var pageSize = 20

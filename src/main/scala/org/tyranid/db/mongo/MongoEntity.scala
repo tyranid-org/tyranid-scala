@@ -210,7 +210,7 @@ case class MongoRecord( override val view:MongoView,
   override def toString = super.toString + " temporaries:" + temporaries
 
   override def clear {
-    for ( key <- obj.keySet )
+    for ( key <- obj.keySet.toSeq )
       obj.removeField( key )
     temporaries = null
   }
