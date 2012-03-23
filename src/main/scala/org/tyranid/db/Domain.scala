@@ -63,6 +63,9 @@ trait Domain extends Valid {
    */
   def transformValue( value:Any ) = value
 
+  // TODO:  this could probably be named more generically
+  def needsCaseInsensitiveSearch = false
+
 
   /*
    * * *   F o r m s
@@ -210,6 +213,8 @@ trait DbTextLike extends Domain {
       value.as[String].toLowerCase
     else
       value
+
+  override def needsCaseInsensitiveSearch = !uppercase && !lowercase
 }
 
 object DbText extends DbTextLike {

@@ -47,10 +47,12 @@ object Search {
   }
 
   case object Subst  extends Search {
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = {
-      // TODO:  if the underlying domain is not uppercase or lowercase this will not work, we need to do a case-insensitive pattern here if that is the case
-      searchObj( f.name ) = Mobj( $regex -> f.transformValue( value ) )
-    }
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) =
+      searchObj( f.name ) =
+        if ( f.needsCaseInsensitiveSearch )
+          value.toString.toPatternI
+        else
+          Mobj( $regex -> f.transformValue( value ) )
   }
 
   case object Gte    extends Search {
@@ -89,6 +91,16 @@ trait Field {
 
 
   /*
+   * * *   Data Hinting
+   */
+
+  // subclasses should convert to lowercase or uppercase as indicated by the domain
+  def transformValue( value:Any ) = value
+
+  def needsCaseInsensitiveSearch = false
+
+
+  /*
    * * *   Search
    */
 
@@ -110,9 +122,6 @@ trait Field {
 
   val data:Boolean
   val search:Search
-
-  // subclasses should convert to lowercase or uppercase as indicated by the domain
-  def transformValue( value:Any ) = value
 
   def prepareSearch( run:Run, searchObj:DBObject, value:Any ) =
     if ( search != null )
@@ -229,6 +238,7 @@ case class PathField( name:String,
   }
 
   override def transformValue( value:Any ) = path.leaf.domain.transformValue( value )
+  override def needsCaseInsensitiveSearch  = path.leaf.domain.needsCaseInsensitiveSearch
 
   override def searchUi( report:Report ) = path.leaf.domain.searchUi( report, this )
   override def searchExtract( web:WebContext, report:Report ) = path.leaf.domain.searchExtract( report, this, web )

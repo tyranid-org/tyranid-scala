@@ -126,16 +126,15 @@ trait Query {
 
   val grouping:Grouping = null
 
-  lazy val init = {
+  lazy val init =
     Query.byName( name ) = this
-  }
 
   def draw = {
     Query.synchronized { init }
     Session().reportFor( this.name ).draw
   }
   
-  def extraActions:NodeSeq = Text("")
+  def extraActions:NodeSeq = Text( "" )
 
   val orderBy:Seq[(String,String)] = Nil
 
@@ -143,7 +142,7 @@ trait Query {
    ( r:Report ) =>
    <form method="post" id="rSearchForm" style="padding-top:8px;">
      { searchFields.nonEmpty |*
-     <div class="fieldc" style="padding:4px;">
+     <div class="fieldc" style="margin-top:8px; padding:4px;">
       <h3>Search By</h3>
       { searchFields map { f =>
           <div>{ f.labelUi }</div>
@@ -152,7 +151,7 @@ trait Query {
       }
      </div> }
      { orderBy.nonEmpty |*
-     <div class="fieldc" style="padding:4px;">
+     <div class="fieldc" style="margin-top:8px; padding:4px;">
       <h3>Order By</h3>
       <div>{ Select( "sort", r.sort != null |* r.sort.keySet.head, orderBy ) }</div>
      </div> }
