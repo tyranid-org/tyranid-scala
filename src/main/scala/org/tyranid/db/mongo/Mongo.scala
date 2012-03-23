@@ -138,6 +138,10 @@ case class DBCollectionImp( coll:DBCollection ) {
   def updateId( id:ObjectId, update:DBObject ) =
     coll.update( Mobj( "_id" -> id ), update )
 
+  def remove( id: ObjectId ) {
+    coll.remove( Mobj( "_id" -> id ) )
+  }
+  
   /**
    * This attempts to find the object in the collection.  If it does not exist, a clone of the
    * query object is returned.

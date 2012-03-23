@@ -107,7 +107,6 @@ case class MongoEntity( tid:String ) extends Entity {
 
   def remove( obj:DBObject ) = db.remove( obj )
 
-
   override def idLabels:Iterable[(AnyRef,String)] = {
     val labelName = labelAtt.get.name // TODO:  this should be labelAtt.dbName, but dbName by default is underscore-upper, and there is no MongoAttribute
 
