@@ -256,6 +256,8 @@ trait Record extends Valid with BsonObject {
     require( parent == null )
     submitFlagged = true
   }
+  
+  def clearSubmit { submitFlagged = false }
 
   def hasSubmitted:Boolean = submitFlagged || ( parent != null && parent.hasSubmitted )
 
