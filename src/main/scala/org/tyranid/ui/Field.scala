@@ -59,14 +59,14 @@ object Search {
   case object Exists extends Search {
     val name = "exist"
 
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = Mobj( $gt -> "" )
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = Mobj( $gt -> "" )
   }
 
   case object Subst  extends Search {
     val name = "subst"
 
     def search( run:Run, f:Field, searchObj:DBObject, value:Any ) =
-      searchObj( f.name ) =
+      searchObj( f.baseName ) =
         if ( f.needsCaseInsensitiveSearch )
           value.toString.toPatternI
         else
@@ -76,7 +76,7 @@ object Search {
   case object Gte    extends Search {
     val name = "gte"
 
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.name ) = Mobj( $gte -> value )
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = Mobj( $gte -> value )
   }
 
   case object Custom extends Search {
