@@ -35,14 +35,14 @@ object AccessLog {
       val user = session.user
 
       if ( user.loggedIn ) {
-        Log.log( Log.Access, "ua" -> web.req.getHeader( "User-Agent" ) )
+        Log.log( Event.Access, "ua" -> web.req.getHeader( "User-Agent" ) )
         session.loggedUser = true
         session.loggedEntry = true
       }
     }
 
     if ( !session.loggedEntry && thread.http != null ) {
-      Log.log( Log.Access, "ua" -> web.req.getHeader( "User-Agent" ) )
+      Log.log( Event.Access, "ua" -> web.req.getHeader( "User-Agent" ) )
       session.loggedEntry = true
     }
   }

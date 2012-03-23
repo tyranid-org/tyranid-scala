@@ -23,13 +23,13 @@ class ThrowableImp( t:Throwable ) {
 
   def log = {
     t.printStackTrace
-    Log.log( Log.StackTrace, "ex" -> t )
+    Log.log( Event.StackTrace, "ex" -> t )
   }
 
   def logWith( opts:(String,Any)* ) = {
     println( opts )
     t.printStackTrace
-    Log.log( Log.StackTrace, ( opts :+ ( "ex" -> t ) ):_* )
+    Log.log( Event.StackTrace, ( opts :+ ( "ex" -> t ) ):_* )
   }
 }
 

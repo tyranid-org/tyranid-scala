@@ -118,16 +118,10 @@ trait Domain extends Valid {
 
 
   /*
-   * * *   S e a r c h
-   */
-
-
-
-  /*
    * * *   G r i d
    */
 
-  def cell( f:PathField, r:Record ):NodeSeq = Text( f.path s r )
+  def cell( s:Scope, f:PathField ):NodeSeq = Text( s.rec s f.va.name )
 }
 
 
@@ -223,7 +217,7 @@ object DbText extends DbTextLike {
 	
   override def inputcClasses = "large"
 
-  override def cell( f:PathField, r:Record ):NodeSeq = Unparsed( f.path.s( r ).replace( "\n", "<br/>" ) )
+  override def cell( s:Scope, f:PathField ) = Unparsed( s.rec.s( f.va.name ).replace( "\n", "<br/>" ) )
 }
 
 trait LimitedText extends DbTextLike {
@@ -286,8 +280,8 @@ object DbPassword extends DbVarChar( 64 ) {
 
 object DbUrl extends DbVarChar( 256 ) {
 
-  override def cell( f:PathField, r:Record ):NodeSeq = {
-    val base = f.path.s( r )
+  override def cell( s:Scope, f:PathField ) = {
+    val base = s.rec s f.va.name
 
     try {
       <a href={ base.toUrl.toString }>{ base }</a>
@@ -339,7 +333,7 @@ object DbBoolean extends Domain {
 
   override def inputcClasses = " boolean"
 
-  override def cell( f:PathField, r:Record ) = f.path.b( r ) |* Glyph.Checkmark
+  override def cell( s:Scope, f:PathField ) = s.rec.b( f.va.name ) |* Glyph.Checkmark
 }
 
 
@@ -388,8 +382,8 @@ trait DbDateLike extends Domain {
     s.rec( f.va.name ) = T.web.req.s( f.id ).toLaxDate
   }
 
-  override def cell( f:PathField, r:Record ):NodeSeq = {
-    val date = f.path.t( r )
+  override def cell( s:Scope, f:PathField ):NodeSeq = {
+    val date = s.rec t f.va.name
     Text( if ( date != null ) date.toDateStr else "" )
   }
 }
@@ -415,8 +409,8 @@ object DbDateTime extends DbDateLike {
     s.rec( f.va.name ) = T.web.req.s( f.id ).toLaxDateTime
   }
 
-  override def cell( f:PathField, r:Record ):NodeSeq = {
-    val date = f.path.t( r )
+  override def cell( s:Scope, f:PathField ):NodeSeq = {
+    val date = s.rec t f.va.name
     Unparsed( "<nobr>" + ( if ( date != null ) date.toDateTimeStr else "" ) + "</nobr>" )
   }
 }
@@ -495,6 +489,8 @@ case class DbLink( toEntity:Entity ) extends Domain {
 		case null => ""
 		case n:Number => toEntity.labelFor( n )
 		}
+
+  override def cell( s:Scope, f:PathField ) = Text( see( s.rec s f.va.name ) )
 }
 
 

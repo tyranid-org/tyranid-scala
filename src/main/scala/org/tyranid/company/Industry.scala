@@ -217,7 +217,7 @@ object Industry extends RamEntity( tid = "a0O5" ) {
         return id
     }
 
-    log( Log.LinkedIn, "m" -> ( "Missing Industry Code for \"" + linkedInIndustryName + "\"" ) )
+    log( Event.LinkedIn, "m" -> ( "Missing Industry Code for \"" + linkedInIndustryName + "\"" ) )
     -1
   }
 

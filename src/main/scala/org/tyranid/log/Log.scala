@@ -24,43 +24,52 @@ import javax.servlet.http.HttpSession
 import scala.xml.{ Text, Unparsed }
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbDateTime, DbInt, DbLong, DbText, Record }
+import org.tyranid.db.{ DbChar, DbDateTime, DbInt, DbLink, DbLong, DbText, Record, Scope, EnumEntity }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
+import org.tyranid.db.ram.RamEntity
+import org.tyranid.db.tuple.Tuple
 import org.tyranid.email.AWSEmail
 import org.tyranid.http.UserAgent
 import org.tyranid.report.{ Run, MongoQuery }
 import org.tyranid.ui.{ CustomField, PathField, Search }
 
 
-object Log extends MongoEntity( tid = "a0Bu" ) {
+object Event extends RamEntity( tid = "a0It" ) with EnumEntity[Event] {
+  "id"     is DbInt      is 'key;
+  "name"   is DbChar(64) is 'label;
 
-  // Event Types
-  val Access     = 1
-  val StackTrace = 2
-  val LinkedIn   = 3
-  val Error404   = 4
-  val Scraper    = 5
-  val Import     = 6
-  val Facebook   = 7
-  val SMS_Out    = 8
-  val SMS_In     = 9
+  override lazy val makeView = viewFor( "id", "name" )
 
-  val Events = Array( 
-    "n/a",
-    "Access",
-    "StackTrace",
-    "LinkedIn",
-    "404",
-    "Scraper",
-    "Import",
-    "Facebook",
-    "SMS-Out",
-    "SMS-In" )
+  def apply( id:Int, name:String ) = {
+    val t = new Event
+    t( 'id )   = id
+    t( 'name ) = name
+    t
+  }
 
+  val Access     = apply(  1, "Access" )
+  val StackTrace = apply(  2, "StackTrace" )
+  val LinkedIn   = apply(  3, "LinkedIn" )
+  val Error404   = apply(  4, "404" )
+  val Scraper    = apply(  5, "Scraper" )
+  val Import     = apply(  6, "Import" )
+  val Facebook   = apply(  7, "Facebook" )
+  val SmsOut     = apply(  8, "SMS-Out" )
+  val SmsIn      = apply( 10, "SMS-In" )
+
+  static( Access, StackTrace, LinkedIn, Error404, Scraper, Import, Facebook, SmsOut, SmsIn )
+}
+
+class Event extends Tuple( Event.makeView ) {
+  def name = s( 'name )
+}
+
+
+object Log extends MongoEntity( tid = "a0Ht" ) {
 
   "id"                  is DbMongoId      is 'key;
-  "e"                   is DbInt          as "Event";
+  "e"                   is DbLink(Event)  as "Event";
   "on"                  is DbDateTime     ;
   "m"                   is DbText         as "Message";
   "du"                  is DbLong         as "Duration in MS";
@@ -71,9 +80,9 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
   "ua"                  is DbChar(256)    as "User Agent";
   "ip"                  is DbChar(32)     as "IP"; // req.getRemoteAddr
 
-  def log( event:Int, opts:(String,Any)* ) = {
+  def log( event:Event, opts:(String,Any)* ) = {
     val l = Mobj(
-      "e" -> event,
+      "e" -> event.id.as[Int],
       "on" -> new Date
     )
 
@@ -128,7 +137,7 @@ object Log extends MongoEntity( tid = "a0Bu" ) {
 
     db.save( l )
 
-    if ( event == StackTrace && B.PRODUCTION ) {
+    if ( event == Event.StackTrace && B.PRODUCTION ) {
       println( "*** stack trace entering" )
       val sb = new StringBuilder
 
@@ -205,18 +214,16 @@ object LogQuery extends MongoQuery {
   }
 
   val allFields = Seq(
-    new CustomField {
-      def name = "e"
-      override lazy val label = "Event"
-      def cell( run:Run, r:Record ) = Unparsed( Log.Events( r.i( 'e ) ) )
-    },
+    PathField( "e",                search = Search.Equals ),
     PathField( "on" ),
-    PathField( "sid", search = Search.Equals ),
+    PathField( "on", "From Date",  search = Search.Gte,   data = false ),
+    PathField( "on", "To Date",    search = Search.Lte,   data = false ),
+    PathField( "sid",              search = Search.Equals ),
     new CustomField {
       def name = "uid"
       override lazy val label = "User"
-      def cell( run:Run, r:Record ) = {
-        r.oid( 'uid ) match {
+      def cell( s:Scope ) = {
+        s.rec.oid( 'uid ) match {
         case null => Unparsed( "" )
         case uid  => Unparsed( B.userMeta.nameFor( uid ) )
         }
@@ -226,12 +233,12 @@ object LogQuery extends MongoQuery {
     new CustomField {
       def name = "ua"
       override lazy val label = "User Agent"
-      def cell( run:Run, r:Record ) = {
+      def cell( s:Scope ) = {
         Text(
-          r( 'ua ) match {
-          case s:String             => r( 'ua ) = UserAgent.idFor( s )
-                                       r.save
-                                       s
+          s.rec( 'ua ) match {
+          case str:String           => s.rec( 'ua ) = UserAgent.idFor( str )
+                                       s.rec.save
+                                       str
           case id:java.lang.Integer => UserAgent.uaFor( id )
           case _                    => ""
           } )

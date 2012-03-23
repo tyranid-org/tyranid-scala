@@ -112,7 +112,8 @@ object Imp {
     }
   }
 
-  val Log = org.tyranid.log.Log
-  def log( event:Int, opts:(String,Any)* ) = org.tyranid.log.Log.log( event, opts:_* )
+  val Event = org.tyranid.log.Event
+  val Log   = org.tyranid.log.Log
+  def log( event:org.tyranid.log.Event, opts:(String,Any)* ) = org.tyranid.log.Log.log( event, opts:_* )
 }
 

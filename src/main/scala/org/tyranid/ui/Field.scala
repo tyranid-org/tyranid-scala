@@ -46,14 +46,14 @@ object Search {
     Exists,
     Subst,
     Gte,
+    Lte,
     Custom
   )
 
   case object Equals extends Search {
     val name = "eq"
 
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) =
-      searchObj( f.baseName ) = f.transformValue( value )
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = f.transformValue( value )
   }
 
   case object Exists extends Search {
@@ -77,6 +77,12 @@ object Search {
     val name = "gte"
 
     def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = Mobj( $gte -> value )
+  }
+
+  case object Lte    extends Search {
+    val name = "lte"
+
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = Mobj( $lte -> value )
   }
 
   case object Custom extends Search {
@@ -123,9 +129,9 @@ trait Field {
   def headerCell:NodeSeq = Text( label )
 
   def cellClass:String = null
-  def cell( run:Run, rec:Record ):NodeSeq
+  def cell( s:Scope ):NodeSeq
 
-  def effCell( run:Run, rec:Record ) = cell( run, rec )
+  def effCell( s:Scope ) = cell( s )
 
   def ui( s:Scope ):NodeSeq   = throw new UnsupportedOperationException( "name=" + name )
   def extract( s:Scope ):Unit = throw new UnsupportedOperationException( "name=" + name )
@@ -200,8 +206,15 @@ case class PathField( baseName:String,
   var id:String = null
 
   val name =
-    if ( search != null ) search.makeSearchName( baseName )
-    else                  baseName
+    /* [TAURUS-SIX]
+
+       For convenience we allow a single Field to do double-duty as a search field and a display field in a report.
+       In this case, the search fields' name does not have the extra $search stuff appended to it.  Obviously, this
+       only works if there is only one data = true, if there are more than one search fields, all but one of them must
+       have data = false.
+     */
+    if ( search != null && data == false ) search.makeSearchName( baseName )
+    else                                   baseName
 
   override lazy val label = if ( l.notBlank ) l else path.leaf.label
 
@@ -273,13 +286,17 @@ case class PathField( baseName:String,
   override def section = sec
   override def cellClass = cellCls
 
-  def cell( run:Run, r:Record ) = path.leaf.domain.cell( this, r )
+  def cell( pScope:Scope ) = {
+    val scope = pScope.at( path )
+    path.leaf.domain.cell( scope, this )
+  }
 
-  override def effCell( run:Run, rec:Record ) = {
-    if ( displayExists )
-      path.s( rec ).notBlank |* Glyph.Checkmark
-    else
-      cell( run, rec )
+  override def effCell( pScope:Scope ) = {
+    if ( displayExists ) {
+      pScope.at( path ).rec.s( va.name ).notBlank |* Glyph.Checkmark
+    } else {
+      cell( pScope )
+    }
   }
 
   override def transformValue( value:Any ) = path.leaf.domain.transformValue( value )
@@ -294,7 +311,7 @@ case class CustomTextSearchField( baseName:String, l:String = null, opts:Seq[(St
   val search = Search.Custom
   override val data = false
 
-  def cell( run:Run, rec:Record ):NodeSeq = throw new UnsupportedOperationException
+  def cell( s:Scope ):NodeSeq = throw new UnsupportedOperationException
 
   override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
 

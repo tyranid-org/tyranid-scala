@@ -132,7 +132,7 @@ function onLinkedInLoad() {
 
     val cookie =
       T.web.req.cookie( cookieName ).getOrElse {
-        log( Log.LinkedIn, "m" -> ( "Linkedin exchange missing " + cookieName + " cookie.  Cannot exchange linked in bearer token for a server token." ) )
+        log( Event.LinkedIn, "m" -> ( "Linkedin exchange missing " + cookieName + " cookie.  Cannot exchange linked in bearer token for a server token." ) )
         return false
       }
 

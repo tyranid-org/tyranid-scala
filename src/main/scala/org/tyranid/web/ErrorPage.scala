@@ -14,7 +14,7 @@ object Errorlet extends Weblet {
       val originalUrl = web.req.getAttribute( "javax.servlet.forward.request_uri" )
 
       if ( originalUrl != null )
-        log( Log.Error404, "m" -> originalUrl )
+        log( Event.Error404, "m" -> originalUrl )
 
       web.template( <tyr:404/> )
 

@@ -172,7 +172,7 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     val cookieValue = t.web.req.cookieValue( cookieName )
 
     if ( cookieValue == null ) {
-        log( Log.Facebook, "m" -> ( "Facebook exchange missing " + cookieName + " cookie.  Cannot exchange linked in bearer token for a server token." ) )
+        log( Event.Facebook, "m" -> ( "Facebook exchange missing " + cookieName + " cookie.  Cannot exchange linked in bearer token for a server token." ) )
         return false
     }
 

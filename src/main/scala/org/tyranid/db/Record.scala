@@ -29,6 +29,7 @@ import scala.xml.NodeSeq
 import org.tyranid.Imp._
 import org.tyranid.bson.BsonObject
 import org.tyranid.logic.{ Invalid, Valid }
+import org.tyranid.report.Run
 import org.tyranid.ui.{ Search, UiObj }
 
 
@@ -328,7 +329,8 @@ case class Scope( rec:Record,
                   initialDraw:Boolean = false,
                   saving:Boolean = true,
                   captcha:Boolean = false,
-                  path:Option[Path] = None ) {
+                  path:Option[Path] = None,
+                  run:Run = null ) {
 
   def s = va.map( rec.s )
 

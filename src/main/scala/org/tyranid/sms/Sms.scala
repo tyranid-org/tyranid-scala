@@ -119,7 +119,7 @@ object Smslet extends Weblet {
           case _ =>
         }
         
-        log( Log.SMS_In, "m" -> ( "from=" + from + ", msgId=" + msgId + ", text=" + text ) )
+        log( Event.SmsIn, "m" -> ( "from=" + from + ", msgId=" + msgId + ", text=" + text ) )
       }
       
     case "/toggleOk" =>

@@ -47,8 +47,8 @@ object DbThumbnail {
 
 case class DbThumbnail( bucket:S3Bucket ) extends DbImageish( bucket ) {
 
-  override def cell( pf:PathField, r:Record ) =
-    <img src={ pf.path s r } style="width:50px; height:50px;"/>
+  override def cell( s:Scope, f:PathField ) =
+    <img src={ s.rec s f.va.name } style="width:50px; height:50px;"/>
 }
 
 object Image {

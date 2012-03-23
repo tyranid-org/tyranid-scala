@@ -84,7 +84,7 @@ trait Query {
         throw new RuntimeException( "Field missing name in report: " + f.toString )
 
       if ( map.contains( f.name ) )
-        throw new RuntimeException( "Duplicate field in report: " + f.name )
+        throw new RuntimeException( "Duplicate field in report: " + f.name + " ... if the same field is in two searches, make sure data = true only one of them." )
 
       map( f.name ) = f
       if ( f.name != f.baseName )
@@ -292,13 +292,6 @@ case class Report( query:Query ) {
 
   def label( name:String ) = query.allFieldsMap( name ).labelUi
   def ui( name:String )    = query.allFieldsMap( name ).ui( Scope( searchRec ) )
-
-  def searchExtract = {
-    val s = Scope( searchRec )
-    searchRec.clear
-    query.searchFields.foreach { _.extract( s ) }
-spam( "searchRec=" + searchRec )
-  }
 
   def searchTitle =
     if ( selectedColumns.isEmpty ) Text( "search all fields" )
@@ -529,7 +522,9 @@ case class Run( report:Report ) {
      { report.columns.map( _.header( this ) ) }
     </tr>
 
-  def row( rec:Record ) =
+  def row( rec:Record ) = {
+    val s = Scope( rec, run = this )
+
     <tr id={ rec.id.toString } class={ rowClass }>
      { query.selectable |* 
         <td>{ Unparsed( "<input class='rcb' type=\"checkbox\"" + ( report.selectedIds.contains( rec.id ) |* " checked" ) + "/>" ) }</td> }
@@ -538,12 +533,13 @@ case class Run( report:Report ) {
         val cls = f.cellClass
 
         if ( cls != null )
-          <td class={ cls }>{ f.effCell( this, rec ) }</td>
+          <td class={ cls }>{ f.effCell( s ) }</td>
         else
-          <td>{ f.effCell( this, rec ) }</td>
+          <td>{ f.effCell( s ) }</td>
       }
      }
     </tr>
+  }
 
   lazy val groups = query.grouping.list
 
@@ -576,7 +572,10 @@ object Reportlet extends Weblet {
     case "/search" =>
       query.init
 
-      report.searchExtract
+      val s = Scope( report.searchRec )
+      report.searchRec.clear
+      query.searchFields.foreach { _.extract( s ) }
+
       if ( query.orderBy.nonEmpty ) {
         val name = web.req.s( 'sort )
         report.sort = query.orderBy.find( _.name == name ).get.sortObj
