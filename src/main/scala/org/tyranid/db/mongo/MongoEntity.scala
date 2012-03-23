@@ -44,8 +44,8 @@ case object DbMongoId extends Domain {
   }
 
   override def ui( s:Scope, f:PathField ):NodeSeq = {
-    val ret = f.optsMapper( s )
-    Input( ret._1, s.rec.s( f.va.name ), ( ret._2 ++ Seq( "class" -> "textInput" ) ):_*  )
+    val opts = f.optsMapper( s ) // optsMapper updates f.id, needs to run first, maybe move it into callee of ui()
+    Input( f.id, s.rec.s( f.va.name ), ( opts ++ Seq( "class" -> "textInput" ) ):_*  )
   }
 
   //override def inputcClasses = " select"
@@ -173,11 +173,11 @@ case class MongoView( override val entity:MongoEntity ) extends View {
 
     val att =
       if ( search == Search.Custom )
-        new Attribute( entity, name )
+        new Attribute( entity, fullName )
       else
         entity.attrib( name )
 
-    val va = new ViewAttribute( this, att, nextIndex, search )
+    val va = new ViewAttribute( this, att, nextIndex, search = search, fullName = fullName )
     nextIndex += 1
     byName( fullName ) = va
     byIndex( va.index ) = va
@@ -207,6 +207,8 @@ case class MongoRecord( override val view:MongoView,
   override def id = apply( "id" )
 
   private var temporaries:mutable.Map[String,AnyRef] = null
+
+  override def toString = super.toString + " temporaries:" + temporaries
 
   override def clear {
     for ( key <- obj.keySet )
