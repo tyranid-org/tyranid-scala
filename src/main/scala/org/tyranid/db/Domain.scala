@@ -254,7 +254,7 @@ case class DbUpperChar( len:Int ) extends LimitedText {
 object DbPassword extends DbVarChar( 64 ) {
 
   override def ui( s:Scope, f:PathField ) = {
-    val input = Input( f.id, s.rec.s( f.va.name ), ( f.effOpts :+ ( "type" -> "password" ) ):_*  )
+    val input = Input( f.id, s.rec.s( f.va.name ), ( f.effOpts :+ ( "type" -> "password" ) ):_* )
 
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -415,16 +415,44 @@ case class DbArray( of:Domain ) extends Domain {
 	val sqlName = "invalid"
 
   /*
-
-      1. 
-
   override def ui( s:Scope, f:PathField, f.effOpts:(String,String)* ) =
 
-
   draw a field for each array element, and add an "Add" button
-
-
    */
+
+  
+  override def cell( s:Scope, f:PathField ) = {
+    val arr = s.rec a_? f.va.name
+
+    import scala.collection.JavaConversions._
+    Unparsed( arr.map( v => of.see( v ) ).sorted.mkString( ",<br/>" ) )
+  }
+
+
+      /*
+
+  lazy val sells:String = obj.a_?( 'sellingCategories ).flatMap( id => Industry.byId( id.coerceInt ) ).map( _ s 'name ).distinct.sorted.mkString( ",<br/>" )
+
+         issues
+
+         - too many categories to show in a dropdown
+
+         - we can't do a search below because a) Search.Custom is an object -and- b) Search is a sealed trait
+
+           + it's ugly to nest it in here anyway, we'd probably rather it be an overridden method on CustomField
+
+         ? should this be a PathField instead ?  "sells" is a DbArray property on Org.  we could add a:  def ui on DbArray that can deal with searching ?
+
+           ? would we need a Search.In ?
+
+
+        def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = {
+
+          
+          searchObj( f.baseName ) = Mobj( $gt -> "" )
+        }
+      }
+      */
 }
 
 case class DbLink( toEntity:Entity ) extends Domain {
