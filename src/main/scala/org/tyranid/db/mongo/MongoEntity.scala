@@ -43,10 +43,8 @@ case object DbMongoId extends Domain {
       Base64.toString( oid.toByteArray )
   }
 
-  override def ui( s:Scope, f:PathField ):NodeSeq = {
-    val opts = f.optsMapper( s ) // optsMapper updates f.id, needs to run first, maybe move it into callee of ui()
-    Input( f.id, s.rec.s( f.va.name ), ( opts ++ Seq( "class" -> "textInput" ) ):_*  )
-  }
+  override def ui( s:Scope, f:PathField ) =
+    Input( f.id, s.rec.s( f.va.name ), ( f.effOpts ++ Seq( "class" -> "textInput" ) ):_*  )
 
   //override def inputcClasses = " select"
 }

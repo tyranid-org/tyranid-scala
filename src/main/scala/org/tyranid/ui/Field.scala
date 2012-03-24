@@ -203,7 +203,30 @@ case class PathField( baseName:String,
                       focus:Boolean = false,
                       filter:Option[ ( Record ) => Boolean ] = None,
                       uiStyle:UiStyle = UiStyle.Default ) extends Field with UiObj {
-  var id:String = null
+
+  lazy val ( id, effOpts ) = {
+    var _id:String = null
+
+    val _opts = opts.flatMap {
+      _ match {
+      case ( "id" | "name", v )   =>
+        if ( _id != null && v != _id )
+          throw new RuntimeException( "Form element being named " + v + " and " + _id )
+
+        _id = v
+        None
+
+      case p =>
+        Some( p )
+      }
+    }
+
+    if ( _id == null )
+      _id = /* TODO: form id + '_' + */ va.name
+
+    ( _id, _opts )
+  }
+
 
   val name =
     /* [TAURUS-SIX]
@@ -233,33 +256,6 @@ case class PathField( baseName:String,
   }
 
   def fields = Seq( this )
-
-  def optsMapper( s:Scope ) = { 
-    var id = this.id
-
-    val opts2 = opts.flatMap {
-      _ match {
-      case ( "id" | "name", v )   =>
-        if ( id != null && v != id )
-          throw new RuntimeException( "Form element being named " + v + " and " + id )
-
-        id = v
-        None
-
-      case p =>
-        Some( p )
-      }
-    }
-
-    if ( id == null ) {
-      id = /* TODO: form id + '_' + */ va.name
-      this.id = id
-    } else if ( id != this.id ) {
-      this.id = id
-    }
-
-    opts2
-  }
 
   private def invalidLines( invalids:Seq[Invalid] ) =
     for ( invalid <- invalids )

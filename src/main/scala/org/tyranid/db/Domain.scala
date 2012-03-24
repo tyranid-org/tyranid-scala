@@ -73,7 +73,6 @@ trait Domain extends Valid {
   protected def commonUi( s:Scope, f:PathField, normal: => NodeSeq ) =
     f.search match {
     case Search.Exists =>
-      /* val opts = */ f.optsMapper( s ) // optsMapper updates the id, needs to run first ... maybe place it in what calls ui ?
       Checkbox( f.id, s.rec.b( f.va.name ) ) ++ f.labelUi
 
     case _  =>
@@ -94,8 +93,7 @@ trait Domain extends Valid {
 
   def ui( s:Scope, f:PathField ):NodeSeq =
     commonUi( s, f, {
-      val opts = f.optsMapper( s ) // optsMapper updates the id, needs to run first ... maybe place it in what calls ui ?
-      val input = Input( f.id, s.rec s f.va.name, opts:_*  )
+      val input = Input( f.id, s.rec s f.va.name, f.effOpts:_*  )
 
       if ( f.focus )
         throw new RuntimeException( "TODO:  handle focus on load" )
@@ -206,8 +204,7 @@ object DbText extends DbTextLike {
 	val sqlName = "TEXT"
 	
   override def ui( s:Scope, f:PathField ):NodeSeq = {
-    val opts = f.optsMapper( s ) // optsMapper updates the id, needs to run first ... maybe place it in what calls ui ?
-    val ta = TextArea( f.id, s.rec.s( f.va.name ), opts:_*  )
+    val ta = TextArea( f.id, s.rec.s( f.va.name ), f.effOpts:_*  )
     
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -257,8 +254,7 @@ case class DbUpperChar( len:Int ) extends LimitedText {
 object DbPassword extends DbVarChar( 64 ) {
 
   override def ui( s:Scope, f:PathField ) = {
-    val opts = f.optsMapper( s ) // optsMapper updates the id, needs to run first ... maybe place it in what calls ui ?
-    val input = Input( f.id, s.rec.s( f.va.name ), ( opts ++ Seq( "type" -> "password" ) ):_*  )
+    val input = Input( f.id, s.rec.s( f.va.name ), ( f.effOpts :+ ( "type" -> "password" ) ):_*  )
 
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -318,14 +314,11 @@ object DbPhone extends DbChar( 14 ) {
 object DbBoolean extends Domain {
 	val sqlName = "CHAR(1)"
 	  
-  override def ui( s:Scope, f:PathField ) = {
-    val opts = f.optsMapper( s )
-
+  override def ui( s:Scope, f:PathField ) =
     f.uiStyle match {
-    case UiStyle.Toggle => ToggleLink( f.id, s.rec.b( f.va.name ), opts:_* )
-    case _              => Checkbox( f.id, s.rec b f.va.name, opts:_* ) ++ f.labelUi
+    case UiStyle.Toggle => ToggleLink( f.id, s.rec.b( f.va.name ), f.effOpts:_* )
+    case _              => Checkbox( f.id, s.rec b f.va.name, f.effOpts:_* ) ++ f.labelUi
     }
-  }
     
   override def extract( s:Scope, f:PathField ) =
     if ( T.web.req.b( f.id ) ) s.rec( f.va.name ) = true
@@ -369,8 +362,7 @@ trait DbDateLike extends Domain {
     super.validations
 
   override def ui( s:Scope, f:PathField ) = {
-    val opts = f.optsMapper( s ) // optsMapper updates the id, needs to run first ... maybe place it in what calls ui ?
-    val input = Input( f.id, s.rec.t( f.va.name ).toDateStr, opts:_*  )
+    val input = Input( f.id, s.rec.t( f.va.name ).toDateStr, f.effOpts:_*  )
 
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -396,8 +388,7 @@ object DbDateTime extends DbDateLike {
   override def dateOnly = false
 
   override def ui( s:Scope, f:PathField ) = {
-    val opts = f.optsMapper( s ) // optsMapper updates the id, needs to run first ... maybe place it in what calls ui ?
-    val input = Input( f.id, s.rec.t( f.va.name ).toDateTimeStr, opts:_*  )
+    val input = Input( f.id, s.rec.t( f.va.name ).toDateTimeStr, f.effOpts:_*  )
 
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -427,7 +418,7 @@ case class DbArray( of:Domain ) extends Domain {
 
       1. 
 
-  override def ui( s:Scope, f:PathField, opts:(String,String)* ) =
+  override def ui( s:Scope, f:PathField, f.effOpts:(String,String)* ) =
 
 
   draw a field for each array element, and add an "Add" button
@@ -463,10 +454,9 @@ case class DbLink( toEntity:Entity ) extends Domain {
       
     val values = idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq
     
-    val opts = f.optsMapper( s ) // optsMapper updates the id, needs to run first ... maybe place it in what calls ui ?
     Select( f.id, s.rec s f.va,
             ( "" -> "-Please Select-" ) +: values,
-            opts:_* )
+            f.effOpts:_* )
   }
 
   override def extract( s:Scope, f:PathField ) {

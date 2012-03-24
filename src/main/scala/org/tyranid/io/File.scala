@@ -127,28 +127,7 @@ trait CommonFile extends Domain {
 //        } else {
 //        }
         
-        var id = f.id
-
-        for ( opt <- f.opts )
-          opt match {
-          case ( "id" | "name", v )   =>
-            if ( id != null && v != id )
-              throw new RuntimeException( "Form element being named " + v + " and " + id )
-
-            id = v
-
-          case ( "type", v ) => 
-          case ( x, v )       => throw new RuntimeException( "Unknown field option " + x + " = " + v )
-        }
-
-        if ( id == null ) {
-          id = /* TODO: form id + '_' + */ f.va.name
-          f.id = id
-        } else if ( id != f.id ) {
-          f.id = id
-        }
-        
-        <div><input name={ id } type="file"/></div>
+        <div><input name={ f.id } type="file"/></div>
       }
     </div>
 }
