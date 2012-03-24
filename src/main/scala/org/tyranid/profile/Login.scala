@@ -220,19 +220,19 @@ $(document).ready(function() {
         AWSEmail(subject = B.applicationName + " account access", text = """
 Hello """ + dbUser.s( 'firstName ) + """,
 
-You can access your """ + B.applicationName + """ account with the link below:
+Forgot your password? No problem. You can access your """ + B.applicationName + """ account with the link below:
 
 """ + B.website + """/user/forgot?a=""" + resetCode + """
 
-Once you have access to your account, please update it with a new password.
+Once you have accessed your account, please update it with a new password.
 
-Thank you,
+Thank you!
 
 The """ + B.applicationName + """ Team
-""")
+""" + B.website )
           .addTo( user s 'email )
-          .from( "no-reply@" + B.domain )
-          .replyTo( "no-reply@" + B.domain )
+          .from( "volerro@" + B.domain )
+          .replyTo( "volerro@" + B.domain )
           .send
 
         web.redirect("/")
