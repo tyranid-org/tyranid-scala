@@ -114,7 +114,14 @@ object DbLocalFile extends CommonFile {
 
 object File {
   def pathFor( entityTid:String, recordTid:String, fieldName:String, url:String ) = {
-    val extension = url.suffix( '.' ).replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
+    val suffix = url.suffix( '.' )
+    
+    val extension  = if ( suffix isBlank ) {
+                       url.suffix( '/' ).replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
+                     } else {
+                       suffix.replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
+                     }
+    
     ( entityTid + "/" + recordTid + "/" + fieldName + "." + extension )
   }
 }
