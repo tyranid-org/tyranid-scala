@@ -202,7 +202,8 @@ case class PathField( baseName:String,
                       inputOnly:Boolean = false,
                       focus:Boolean = false,
                       filter:Option[ ( Record ) => Boolean ] = None,
-                      uiStyle:UiStyle = UiStyle.Default ) extends Field with UiObj {
+                      uiStyle:UiStyle = UiStyle.Default,
+                      labelc:Boolean = true ) extends Field with UiObj {
 
   lazy val ( id, effOpts ) = {
     var _id:String = null
@@ -273,7 +274,9 @@ case class PathField( baseName:String,
       
       va.att.domain.show( scope ) |*
       <div id={ va.name + "_c" } class={ "fieldc" + ( invalid |* " invalid" ) }>
-       <div class="labelc">{ va.label( rec, opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
+       { if ( labelc ) 
+         <div class="labelc">{ va.label( rec, opts:_* ) }{ va.att.required |* <span class="required">*</span> }</div>
+       }
        <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( scope, this ) }</div>
        <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
       </div>
