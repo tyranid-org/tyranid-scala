@@ -114,6 +114,7 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
       body.withHtml( new Content().withData( html ) )
 
     msg.setBody( body )
+    //request.setReturnPath( B.bounceEmail )
     request.setMessage( msg )
     
     this

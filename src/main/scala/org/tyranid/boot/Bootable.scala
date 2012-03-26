@@ -95,6 +95,7 @@ trait Bootable {
     else if ( STAGE ) "https://stage." + domain
     else              "https://app." + domain
 
+  val bounceEmail = "support@" + domain 
   val systemEmail:String
   val alertEmail:String
 
