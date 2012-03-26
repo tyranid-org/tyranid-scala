@@ -130,6 +130,8 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     
     val outputJson = if ( json == null ) "{}" else json.toJsonStr
     
+//    res.setContentLength( if ( jsonpCallback != null ) ( jsonpCallback.length + 2 + outputJson.length ) else outputJson.length )
+    
     out( 
       if ( jsonpCallback != null ) {
         jsonpCallback + "(" + outputJson + ")"

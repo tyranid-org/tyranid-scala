@@ -114,13 +114,9 @@ object DbLocalFile extends CommonFile {
 
 object File {
   def pathFor( entityTid:String, recordTid:String, fieldName:String, url:String ) = {
-    val suffix = url.suffix( '.' )
-    
-    val extension  = if ( suffix isBlank ) {
-                       url.suffix( '/' ).replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
-                     } else {
-                       suffix.replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
-                     }
+    val max = scala.math.max( url.lastIndexOf( '/' ), url.lastIndexOf( '.' ) ) 
+    val suffix = if ( max != -1 ) url.substring( max+1 ) else "" 
+    val extension = suffix.replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
     
     ( entityTid + "/" + recordTid + "/" + fieldName + "." + extension )
   }
