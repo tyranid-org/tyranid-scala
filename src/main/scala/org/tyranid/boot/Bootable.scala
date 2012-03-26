@@ -159,14 +159,11 @@ trait Bootable {
   // SMS
   val sms:NexmoApp = null
 
-  // Facebook
-  val facebook:FbApp = null
-
-  // LinkedIn
-  val linkedIn:LiApp = null
-
-  // Google
-  val google:GoApp = null
+  // Social
+  val facebook:FbApp     = null
+  val linkedIn:LiApp     = null
+  val google:GoApp       = null
+  val trackur:TrackurApp = null
 
   // ReCaptcha
   val reCaptchaPublicKey      = ""
