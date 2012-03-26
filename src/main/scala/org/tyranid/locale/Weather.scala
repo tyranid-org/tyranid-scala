@@ -120,8 +120,10 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
   }
 
   def load {
+    var str:String = null
     try {
-      for ( entryXml <- "http://alerts.weather.gov/cap/us.php?x=0".GET().toXml \ "entry" ) {
+      str = "http://alerts.weather.gov/cap/us.php?x=0".GET()
+      for ( entryXml <- str.toXml \ "entry" ) {
   
         var entry = db.findOne( Mobj( "_id" -> idFromEntry( entryXml ) ) )
   
@@ -132,6 +134,11 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
         db.save( entry )
       }
     } catch {
+    case e:org.xml.sax.SAXParseException =>
+      spam( "line=" + e.getLineNumber )
+      spam( "column=" + e.getColumnNumber )
+      spam( "failed to parse XML:\n\n" + str + "\n\n" )
+      throw e
     case e:org.apache.http.conn.HttpHostConnectException =>
       println( "Cannot load weather: " + e.getMessage )
     case e:java.net.ConnectException =>
