@@ -129,7 +129,7 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
       val avgLat = lats.sum / lats.size
       o( 'longLat ) = Mlist( avgLong, avgLat )
 
-      o( 'radius ) = ( longs.max - longs.min ) + ( lats.max - lats.min )
+      o( 'radius ) = ( longs.size > 0 |* ( longs.max - longs.min ) ) + ( lats.size > 0 |* ( lats.max - lats.min ) )
     }
   }
 
@@ -181,12 +181,27 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
     db.find( Mobj( "zips" -> Mobj( $in -> Mlist( zips:_* ) ) ) ).map( cap => Cap( cap ).weight ).foldLeft( 0 )( _ max _ )
   }
 
-  def array = {
+  def toJson = {
+    val sb = new StringBuilder
 
-    for ( cap <- Cap.db.find( Mobj(), Mobj( "longLat" -> 1, "radius" -> 1 ) ) ) {
+    sb += '['
 
+    var first = true
 
+    for ( capo <- Cap.db.find( Mobj() );
+          longLat = capo.a_?( 'longLat ) if longLat.size > 0 ) {
+      val cap = Cap( capo )
+
+      if ( first )
+        first = false
+      else
+        sb += ','
+
+      sb ++= "{t:" ++= longLat( 1 ).toString ++= ",n:" ++= longLat( 0 ).toString ++= ",r:" ++= cap.s( 'radius ) ++= ",w:" ++= cap.weight.toString += '}'
     }
+
+    sb += ']'
+    sb.toString
   }
 }
 

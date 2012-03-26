@@ -28,6 +28,11 @@ import org.tyranid.db.mongo.Imp._
 class WeatherSuite extends FunSuite {
   org.tyranid.boot.Boot.boot
 
+  test( "load" ) {
+    if ( true )
+      Cap.load
+  }
+
   test( "parsing" ) {
 
     val entryXml =
@@ -77,12 +82,8 @@ class WeatherSuite extends FunSuite {
 
   }
 
-  test( "load" ) {
-
-    if ( true ) {
-      Cap.load
-    }
-
+  test( "array" ) {
+    spam( Cap.toJson )
   }
 }
 

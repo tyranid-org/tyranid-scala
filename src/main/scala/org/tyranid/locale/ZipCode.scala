@@ -52,7 +52,7 @@ object ZipCode extends MongoEntity( tid = "a0Ft" ) {
     val stateFips  = fips6.substring( 0, split ).toInt
     val countyFips = fips6.substring( split ).toInt
 
-    db.find( Mobj( "StateFIPS" -> 2, "CountyFIPS" -> 20 ), Mobj( "ZipCode" -> 1, "Latitude" -> 1, "Longitude" -> 1 ) ).toSeq
+    db.find( Mobj( "StateFIPS" -> stateFips, "CountyFIPS" -> countyFips ), Mobj( "ZipCode" -> 1, "Latitude" -> 1, "Longitude" -> 1 ) ).toSeq
   }
 
   db.ensureIndex( Mobj( "StateFIPS" -> 1, "CountyFIPS" -> 1 ) )
