@@ -201,6 +201,13 @@ class Cap( override val obj:DBObject = Mobj() ) extends MongoRecord( Cap.makeVie
     }
 
   def weight = ( sevWeight + urgWeight + cerWeight ) / 3
+
+  /*
+
+     translate zipcodes -> lat longs, average lat longs to get a coordinate, generate a circle
+
+
+   */
 }
 
 
