@@ -281,7 +281,7 @@ object Smslet extends Weblet {
          <footer class="btns">
           <input type="submit" id="dlgSubmit" class="greenBtn" value="Send Verification"/>
           { if ( sms.s( 'phone ).toOnlyNumbers.notBlank ) 
-            <a href={ "/user/clearNumber=1&id=" + user.tid } class="greenBtn">Clear Number</a>
+            <a href={ "/sms/clearNumber?id=" + user.tid } class="greenBtn">Clear Number</a>
           }
           <a href={ "/user/edit?id=" + user.tid } id="cancel" class="greyBtn">Cancel</a>
          </footer>
