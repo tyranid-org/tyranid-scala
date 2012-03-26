@@ -101,7 +101,7 @@ case class JsonString( root:Any ) {
 
   override def toString = {
     write( root )
-    sb.toString + "     "
+    sb.toString  + "     "
   }
 
   private def write( obj:Any ):Unit =
