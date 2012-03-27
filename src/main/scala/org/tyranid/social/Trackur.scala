@@ -20,7 +20,7 @@ package org.tyranid.social
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbArray, DbChar, DbInt }
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.db.mongo.MongoEntity
+import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
 
 
 case class TrackurApp( apiKey:String ) {
@@ -39,7 +39,8 @@ object Trackur extends MongoEntity( tid = "a0Jt" ) {
 
    */
 
-  "query"       is DbChar(128)    is 'key;
+  "id"          is DbMongoId      ;
+  "query"       is DbChar(128)    ;
 
   "activity"    is DbArray(DbInt) as "Rolling Activity Counts";
 
