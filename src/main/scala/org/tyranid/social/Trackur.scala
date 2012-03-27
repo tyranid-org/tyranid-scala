@@ -15,26 +15,33 @@
  *
  */
 
-package org.tyranid.social.google
-
-import scala.xml.Unparsed
-
-import com.mongodb.DBObject
+package org.tyranid.social
 
 import org.tyranid.Imp._
+import org.tyranid.db.{ DbArray, DbChar, DbInt }
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.http.Http
-import org.tyranid.locale.{ Country, Language }
-import org.tyranid.math.Base64
-import org.tyranid.profile.{ Gender, User }
-import org.tyranid.session.Session
-import org.tyranid.social.SoApp
-import org.tyranid.time.Time
-import org.tyranid.ui.Form
-import org.tyranid.web.{ Weblet, WebContext }
+import org.tyranid.db.mongo.MongoEntity
 
 
 case class TrackurApp( apiKey:String ) {
+
+}
+
+object Trackur extends MongoEntity( tid = "a0Jt" ) {
+
+  /*
+
+      source:  http://www.trackur.com/api-documentation
+
+      /<query>/<page size>/<skip>/<comma-separated included words+phrases>/<comma-separated excluded words+phrases>/<comma-separated domain excludes>/<media type>/<start date>/<end date>
+
+      <media type> is one of News, Blogs, Reddit, GooglePlus, Delicious, Twitter, Facebook, Media, and Forums
+
+   */
+
+  "query"       is DbChar(128)    is 'key;
+
+  "activity"    is DbArray(DbInt) as "Rolling Activity Counts";
 
 }
 
