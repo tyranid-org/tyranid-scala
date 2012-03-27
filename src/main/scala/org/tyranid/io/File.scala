@@ -34,7 +34,7 @@ import org.tyranid.web.FileUploadSupport.BodyParams
 
 object DbFile {
 
-  def apply( bucketPrefix:String ):DbFile = new DbFile( B.s3Buckets( bucketPrefix ) )
+  def apply( bucketPrefix:String ):DbFile = new DbFile( B.getS3Bucket( bucketPrefix ) )
 }
 
 class DbFile( bucket:S3Bucket ) extends CommonFile {

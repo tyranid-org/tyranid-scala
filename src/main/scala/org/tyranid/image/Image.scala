@@ -34,7 +34,7 @@ import org.tyranid.ui.{ PathField }
 class DbImageish( bucket:S3Bucket ) extends DbFile( bucket )
 
 object DbImage {
-  def apply( bucketPrefix:String ) = new DbImage( B.s3Buckets( bucketPrefix ) )
+  def apply( bucketPrefix:String ) = new DbImage( B.getS3Bucket( bucketPrefix ) )
 }
 
 case class DbImage( bucket:S3Bucket ) extends DbImageish( bucket ) {
@@ -42,7 +42,7 @@ case class DbImage( bucket:S3Bucket ) extends DbImageish( bucket ) {
 
 
 object DbThumbnail {
-  def apply( bucketPrefix:String ) = new DbThumbnail( B.s3Buckets( bucketPrefix ) )
+  def apply( bucketPrefix:String ) = new DbThumbnail( B.getS3Bucket( bucketPrefix ) )
 }
 
 case class DbThumbnail( bucket:S3Bucket ) extends DbImageish( bucket ) {
