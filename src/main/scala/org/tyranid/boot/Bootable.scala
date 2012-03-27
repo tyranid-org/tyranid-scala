@@ -34,6 +34,7 @@ import org.tyranid.secure.{ AccessType, Multipass }
 import org.tyranid.session.{ Session, ThreadData }
 import org.tyranid.sms.NexmoApp
 import org.tyranid.social.facebook.FbApp
+import org.tyranid.social.google.GoApp
 import org.tyranid.social.linkedin.LiApp
 import org.tyranid.web.{ Weblet, CometService }
 
@@ -159,11 +160,11 @@ trait Bootable {
   // SMS
   val sms:NexmoApp = null
 
-  // Facebook
-  val facebook:FbApp = null
-
-  // LinkedIn
-  val linkedIn:LiApp = null
+  // Social
+  val facebook:FbApp     = null
+  val linkedIn:LiApp     = null
+  val google:GoApp       = null
+  val trackur:TrackurApp = null
 
   // ReCaptcha
   val reCaptchaPublicKey      = ""

@@ -22,7 +22,7 @@ import scala.xml.Node
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbArray, DbInt, DbChar, DbDateTime, DbLink, Record }
+import org.tyranid.db.{ DbArray, DbChar, DbDateTime, DbDouble, DbInt, DbLink, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.time.Time
@@ -65,6 +65,9 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
   "areaDesc"    is DbChar(512)   ;
 
   "zips"        is DbArray(DbChar(16));
+
+  "longLat"     is DbArray(DbDouble);
+  "radius"      is DbDouble;
 
   override def apply( obj:DBObject ):Cap =
     if ( obj != null ) new Cap( obj ) else null    
@@ -115,7 +118,18 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
         }
       }
 
-      o( 'zips ) = Mlist( fips6.split( " " ).flatMap( fips6 => ZipCode.forFips6( fips6 ) ).distinct:_* )
+      val zipdata = fips6.split( " " ).flatMap( ZipCode.forFips6 )
+
+      o( 'zips ) = zipdata.map( _.i( 'ZipCode ) ).distinct
+
+      val longs = zipdata.map( _.d( 'Longitude ) )
+      val avgLong = longs.sum / longs.size
+
+      val lats = zipdata.map( _.d( 'Latitude ) )
+      val avgLat = lats.sum / lats.size
+      o( 'longLat ) = Mlist( avgLong, avgLat )
+
+      o( 'radius ) = ( longs.size > 0 |* ( longs.max - longs.min ) ) + ( lats.size > 0 |* ( lats.max - lats.min ) )
     }
   }
 
@@ -165,6 +179,29 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
     // TODO:  add in date querying  (maybe if it is close to expiring or recently-expired it goes down in weight ?)
 
     db.find( Mobj( "zips" -> Mobj( $in -> Mlist( zips:_* ) ) ) ).map( cap => Cap( cap ).weight ).foldLeft( 0 )( _ max _ )
+  }
+
+  def toJson = {
+    val sb = new StringBuilder
+
+    sb += '['
+
+    var first = true
+
+    for ( capo <- Cap.db.find( Mobj() );
+          longLat = capo.a_?( 'longLat ) if longLat.size > 0 ) {
+      val cap = Cap( capo )
+
+      if ( first )
+        first = false
+      else
+        sb += ','
+
+      sb ++= "{t:" ++= longLat( 1 ).toString ++= ",n:" ++= longLat( 0 ).toString ++= ",r:" ++= cap.s( 'radius ) ++= ",w:" ++= cap.weight.toString += '}'
+    }
+
+    sb += ']'
+    sb.toString
   }
 }
 
