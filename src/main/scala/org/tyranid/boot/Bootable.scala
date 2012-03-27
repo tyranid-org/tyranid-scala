@@ -33,6 +33,7 @@ import org.tyranid.profile.{ OrgMeta, User, UserMeta }
 import org.tyranid.secure.{ AccessType, Multipass }
 import org.tyranid.session.{ Session, ThreadData }
 import org.tyranid.sms.NexmoApp
+import org.tyranid.social.TrackurApp
 import org.tyranid.social.facebook.FbApp
 import org.tyranid.social.google.GoApp
 import org.tyranid.social.linkedin.LiApp
