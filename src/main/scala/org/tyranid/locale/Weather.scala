@@ -164,16 +164,6 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
     }
   }
 
-  def start = background {
-    while ( true ) {
-      trylog {
-        load
-      }
-
-      Thread.sleep( 2 * Time.OneMinuteMs )
-    }
-  }
-
   def weightFor( zips:Seq[String] ) = {
 
     // TODO:  add in date querying  (maybe if it is close to expiring or recently-expired it goes down in weight ?)

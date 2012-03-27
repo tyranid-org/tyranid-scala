@@ -120,6 +120,8 @@ class DateImp( d:Date ) {
     c
   }
 
+  def toServerCalendar = toCalendar( B.serverTimeZone )
+
   def toUserCalendar = toCalendar( Session().user.timeZone )
   def toUtcCalendar  = toCalendar( Time.Utc )
 
@@ -184,6 +186,17 @@ object Time {
     val c = Calendar.getInstance( Utc )
     c.set( 0, 0, 0, 0, 0, 0 )
     c
+  }
+
+  def next( hour:Int, minute:Int ) = {
+	  val now = Calendar.getInstance
+	  val cal = Calendar.getInstance
+
+	  cal.set( Calendar.HOUR_OF_DAY, hour )
+	  cal.set( Calendar.MINUTE, minute )
+
+	  if ( now.after( cal ) ) cal.add( Calendar.DATE, 1 )
+    now.getTime
   }
 
   def createUserNowCalendar:Calendar = Calendar.getInstance( Session().user.timeZone )

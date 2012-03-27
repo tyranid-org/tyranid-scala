@@ -13,6 +13,7 @@ import org.tyranid.test.db.{ Session, User }
 class Boot extends org.tyranid.boot.Bootable {
   val applicationName = "Tyranid Test Suite"
   val domain          = "localhost"
+  val profileDbName   = "test"
   val systemEmail     = "info@tyranid.org"
   val alertEmail      = "info@tyranid.org"
 
@@ -24,6 +25,10 @@ class Boot extends org.tyranid.boot.Bootable {
     "sample" -> ( ( xml:NodeSeq ) => <p>Sample</p> ) ::
     Nil
 
+  // AWS
+  override val awsCredentials = new com.amazonaws.auth.BasicAWSCredentials( "TODO", "TODO" )
+  override val bucketSuffix   = ".volerro.com"
+
   val emailTemplates = null
 
   val comets = Nil
@@ -32,17 +37,10 @@ class Boot extends org.tyranid.boot.Bootable {
 
   val build = 1
 
-  def access( thread:ThreadData, accessType:AccessType, ref:AnyRef ) {
-  }
+  def access( thread:ThreadData, accessType:AccessType, ref:AnyRef ) {}
 
   def boot = {
-
-    // Mongo
-    profileDbName = "test"
-
-    awsCredentials = new com.amazonaws.auth.BasicAWSCredentials( "TODO", "TODO" )
-    bucketSuffix = ".tyranid.org"
-    apply( S3Bucket( prefix = "public" ) )
+    bucket( S3Bucket( prefix = "public", cfDistributionId = "TODO", cfDomain = "TODO" ) )
 
     User = org.tyranid.test.db.User
 

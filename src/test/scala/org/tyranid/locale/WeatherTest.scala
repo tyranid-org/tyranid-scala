@@ -29,7 +29,7 @@ class WeatherSuite extends FunSuite {
   org.tyranid.boot.Boot.boot
 
   test( "load" ) {
-    if ( true )
+    if ( false )
       Cap.load
   }
 
@@ -83,7 +83,7 @@ class WeatherSuite extends FunSuite {
   }
 
   test( "array" ) {
-    spam( Cap.toJson )
+    Cap.toJson
   }
 }
 

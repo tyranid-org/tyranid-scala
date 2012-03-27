@@ -147,8 +147,10 @@ trait Bootable {
   // Environment
   var envSuffix = "" // "-x" or "-dev"
 
+  val serverTimeZone = java.util.TimeZone.getTimeZone( "CDT" )
+
   // DB
-  @volatile var profileDbName:String = null
+  val profileDbName:String
 
   @volatile var mongoHost:String = null
 
@@ -162,17 +164,17 @@ trait Bootable {
   val sms:NexmoApp = null
 
   // Social
-  val facebook:FbApp     = null
-  val linkedIn:LiApp     = null
-  val google:GoApp       = null
-  val trackur:TrackurApp = null
+  val facebook:FbApp      = null
+  val linkedIn:LiApp      = null
+  val google:GoApp        = null
+  val trackur:TrackurApp  = null
 
   // ReCaptcha
-  val reCaptchaPublicKey      = ""
-  val reCaptchaPrivateKey     = ""
+  val reCaptchaPublicKey  = ""
+  val reCaptchaPrivateKey = ""
 
   // Assistly
-  val assistly:Multipass = null
+  val assistly:Multipass  = null
 
   // Braintree
   @volatile var braintreeGateway:BraintreeGateway = null
@@ -181,14 +183,12 @@ trait Bootable {
   // AWS
   import org.tyranid.cloud.aws.S3Bucket
 
-  @volatile var awsCredentials:com.amazonaws.auth.AWSCredentials = null
-
-  @volatile var bucketSuffix:String = ""
+  val awsCredentials:com.amazonaws.auth.AWSCredentials = null
+  val bucketSuffix:String = ""
 
   private val s3Buckets = scala.collection.mutable.Map[String,S3Bucket]()
 
   def getS3Bucket( prefix:String ): S3Bucket = s3Buckets( prefix + envSuffix ) 
   
-  def apply( bucket:S3Bucket ) = s3Buckets( bucket.prefix ) = bucket
+  def bucket( bucket:S3Bucket ) = s3Buckets( bucket.prefix ) = bucket
 }
-
