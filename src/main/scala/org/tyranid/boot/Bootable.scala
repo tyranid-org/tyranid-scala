@@ -145,7 +145,7 @@ trait Bootable {
   lazy val buildPrefix = "/v" + build
 
   // Environment
-  val envSuffix = "" // "-x" or "-dx"
+  var envSuffix = "" // "-x" or "-dev"
 
   val serverTimeZone = java.util.TimeZone.getTimeZone( "CDT" )
 
@@ -186,8 +186,9 @@ trait Bootable {
   val awsCredentials:com.amazonaws.auth.AWSCredentials = null
   val bucketSuffix:String = ""
 
-  val s3Buckets = scala.collection.mutable.Map[String,S3Bucket]()
+  private val s3Buckets = scala.collection.mutable.Map[String,S3Bucket]()
 
+  def getS3Bucket( prefix:String ): S3Bucket = s3Buckets( prefix + envSuffix ) 
+  
   def bucket( bucket:S3Bucket ) = s3Buckets( bucket.prefix ) = bucket
 }
-
