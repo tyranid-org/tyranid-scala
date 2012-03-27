@@ -153,12 +153,13 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
   }
 
   def out( s:String ) = {
-    val slen = s.length
+    val bytes = s.getBytes
+    val blen = bytes.length
 
-    res.setContentLength( slen )
+    res.setContentLength( blen )
             
     val out = res.getOutputStream
-    out.write( s.getBytes, 0, slen )
+    out.write( bytes, 0, blen )
     out.close
 
     res.getOutputStream.close

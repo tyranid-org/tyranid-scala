@@ -23,7 +23,7 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
 
 
-case class TrackurApp( apiKey:String ) {
+case class TrackurApp( apiKey:String, monitoredQueries: () => Seq[String] ) {
 
 }
 
