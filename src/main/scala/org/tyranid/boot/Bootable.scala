@@ -147,6 +147,8 @@ trait Bootable {
   // Environment
   val envSuffix = "" // "-x" or "-dx"
 
+  val serverTimeZone = java.util.TimeZone.getTimeZone( "CDT" )
+
   // DB
   @volatile var profileDbName:String = null
 
@@ -162,17 +164,17 @@ trait Bootable {
   val sms:NexmoApp = null
 
   // Social
-  val facebook:FbApp     = null
-  val linkedIn:LiApp     = null
-  val google:GoApp       = null
-  val trackur:TrackurApp = null
+  val facebook:FbApp      = null
+  val linkedIn:LiApp      = null
+  val google:GoApp        = null
+  val trackur:TrackurApp  = null
 
   // ReCaptcha
-  val reCaptchaPublicKey      = ""
-  val reCaptchaPrivateKey     = ""
+  val reCaptchaPublicKey  = ""
+  val reCaptchaPrivateKey = ""
 
   // Assistly
-  val assistly:Multipass = null
+  val assistly:Multipass  = null
 
   // Braintree
   @volatile var braintreeGateway:BraintreeGateway = null

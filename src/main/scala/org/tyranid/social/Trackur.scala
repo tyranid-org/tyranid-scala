@@ -43,5 +43,12 @@ object Trackur extends MongoEntity( tid = "a0Jt" ) {
 
   "activity"    is DbArray(DbInt) as "Rolling Activity Counts";
 
+
+
+
+  def monitor = {
+
+
+  }
 }
 
