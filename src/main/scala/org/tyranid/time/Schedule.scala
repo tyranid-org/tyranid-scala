@@ -102,7 +102,7 @@ object Scheduler {
       relative.rpath.substring( 10 ) match {
       case "/run" =>
         task foreach { task =>
-          task.run
+          background { task.run }
           t.session.notice( "Running: " + task.subject )
         }
         t.web.redirect( relative.wpath + "/scheduler" )

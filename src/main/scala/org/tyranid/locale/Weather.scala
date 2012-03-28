@@ -149,10 +149,7 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
       }
     } catch {
     case e:org.xml.sax.SAXParseException =>
-      spam( "line=" + e.getLineNumber )
-      spam( "column=" + e.getColumnNumber )
-      spam( "failed to parse XML:\n\n" + str + "\n\n" )
-      throw e
+      log( Event.Noaa, "m" -> str, "ex" -> e )
     case e:org.apache.http.conn.HttpHostConnectException =>
       println( "Cannot load weather: " + e.getMessage )
     case e:java.net.ConnectException =>

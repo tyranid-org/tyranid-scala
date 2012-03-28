@@ -23,6 +23,7 @@ import scala.xml.{ Node, NodeSeq, Unparsed }
 import org.tyranid.Imp._
 import org.tyranid.db.{ Record, Path, Scope, View, ViewAttribute }
 import org.tyranid.logic.Invalid
+import org.tyranid.web.Weblet
 
 
 object Link {
@@ -194,6 +195,39 @@ object Select {
     sb ++= "</select>"
 
     Unparsed( sb.toString )
+  }
+}
+
+object Tab {
+
+  def bar( tabs:Seq[Tab], relative:Weblet = null ) =
+    <div class="tabbar">
+     <ul>
+      { tabs map ( _.draw( relative ) ) }
+     </ul>
+    </div>;
+}
+
+case class Tab( rpath:String, label:NodeSeq, cls:String = null ) {
+
+  def draw( relative:Weblet ) = {
+    val fpath = ( relative != null |* relative.wpath ) + rpath
+
+    <li>{
+      var cls = this.cls
+
+      if ( rpath == relative.rpath ) {
+        if ( cls == null )
+          cls = "selected"
+        else
+          cls += " selected"
+      }
+
+      if ( cls != null )
+        <a class={ cls } href={ fpath }>{ label }</a>
+      else
+        <a href={ fpath }>{ label }</a>
+    }</li>
   }
 }
 
