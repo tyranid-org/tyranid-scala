@@ -22,20 +22,113 @@ import java.util.Date
 import scala.collection.mutable
 
 import org.tyranid.Imp._
+import org.tyranid.web.Weblet
 
 
-case class Task( subject:String, var nextMs:Long, periodMs:Long, task: () => Unit )
+case class Task( subject:String, var nextMs:Long, periodMs:Long, var active:Boolean, task: () => Unit ) {
+  var runs = 0
+  var lastRun:Date = null
+
+  def run = {
+    println( "Scheduler:  running " + subject + " at " + new Date().toString )
+
+    val start = System.currentTimeMillis
+
+    if ( periodMs > Time.OneHourMs )
+      log( Event.Scheduler, "m" -> ( "running: " + subject ) )
+
+    trylog {
+      task()
+    }
+
+    runs += 1
+    lastRun = new Date
+
+    if ( periodMs > Time.OneHourMs )
+      log( Event.Scheduler, "m" -> ( "completed: " + subject ), "du" -> ( System.currentTimeMillis - start ) )
+
+    while ( nextMs < System.currentTimeMillis )
+      nextMs += periodMs
+  }
+}
 
 object Scheduler {
 
   private val tasks = mutable.ArrayBuffer[Task]()
 
-  def schedule( subject:String, start:Date, periodMs:Long )( task: () => Unit ) {
+  def schedule( subject:String, start:Date, periodMs:Long, active:Boolean = true )( task: () => Unit ) {
 
     tasks.synchronized {
       val idx = tasks.indexWhere( _.subject == subject )
       if ( idx != -1 ) tasks.remove( idx )
-      tasks += Task( subject, start.getTime, periodMs, task )
+      tasks += Task( subject, start.getTime, periodMs, active, task )
+    }
+  }
+
+  def ui( relative:Weblet ) = tasks.synchronized {
+
+    <table class="dtable tablesort">
+     <thead>
+      <tr><th></th><th>Status</th><th></th><th>Task</th><th>Runs</th><th>Last Run</th></tr>
+     </thead>
+     <tbody>
+      { for ( task <- tasks ) yield
+      <tr>
+       <td><a class="greenBtn" href={ relative.wpath + "/scheduler/run?task=" + task.subject }>Run</a></td>
+       <td>{ if ( task.active ) "On" else "Off" }</td>
+       <td>{
+         if ( task.active )
+           <a class="redBtn" href={ relative.wpath + "/scheduler/off?task=" + task.subject } style="width:100px;">Turn Off</a>
+         else
+           <a class="greenBtn" href={ relative.wpath + "/scheduler/on?task=" + task.subject } style="width:100px;">Turn On</a>
+       }</td>
+       <td>{ task.subject }</td>
+       <td>{ task.runs }</td>
+       <td>{ task.lastRun != null |* task.lastRun.toDateTimeStr }</td>
+      </tr>
+     }</tbody>
+    </table>
+  }
+
+  def handle( relative:Weblet ) = {
+    val t = T
+
+    def task = {
+      val subject = t.web.req.s( 'task )
+      tasks.find( _.subject == subject ) 
+    }
+
+    if ( relative.rpath.startsWith( "/scheduler/" ) ) {
+      relative.rpath.substring( 10 ) match {
+      case "/run" =>
+        task foreach { task =>
+          task.run
+          t.session.notice( "Running: " + task.subject )
+        }
+        t.web.redirect( relative.wpath + "/scheduler" )
+
+      case "/off" =>
+        task foreach { task =>
+          task.active = false
+          t.session.notice( "Deactivated: " + task.subject )
+        }
+
+        t.web.redirect( relative.wpath + "/scheduler" )
+
+      case "/on" =>
+        task foreach { task =>
+          task.active = true
+          t.session.notice( "Activated: " + task.subject )
+        }
+        t.web.redirect( relative.wpath + "/scheduler" )
+
+      case _ =>
+        relative._404
+      }
+
+      true
+    } else {
+      false
     }
   }
 
@@ -54,24 +147,8 @@ object Scheduler {
       for ( i <- 0 until size ) {
         val task = tasks( i )
 
-        if ( nowMs >= task.nextMs ) {
-          println( "Scheduler:  running " + task.subject + " at " + new Date().toString )
-
-          val start = System.currentTimeMillis
-
-          if ( task.periodMs > Time.OneHourMs )
-            log( Event.Scheduler, "m" -> ( "running: " + task.subject ) )
-
-          trylog {
-            task.task()
-          }
-
-          if ( task.periodMs > Time.OneHourMs )
-            log( Event.Scheduler, "m" -> ( "completed: " + task.subject ), "du" -> ( System.currentTimeMillis - start ) )
-
-          while ( task.nextMs < System.currentTimeMillis )
-            task.nextMs += task.periodMs
-        }
+        if ( task.active && nowMs >= task.nextMs )
+          task.run
       }
 
       Thread.sleep( Time.OneMinuteMs )
