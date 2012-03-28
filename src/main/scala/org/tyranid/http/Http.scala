@@ -120,10 +120,23 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     res.setStatus( 200 )
   }
 
-  def json( json:Any, status:Int = 200, jsonpCallback:String = null, headers:Map[String,String] = null ) = {
-    res.setContentType( if ( jsonpCallback != null ) "text/javascript" else "application/json" )
+  def json( json:Any, status:Int = 200, jsonpCallback:String = null, headers:Map[String,String] = null, req:HttpServletRequest = null, noCache:Boolean = false ) = {
+    var jsonContentType = "application/json"
+      
+    if ( req != null ) {
+      val acceptHeader = req.getHeader( "Accept" )
+      
+      // This is necessary because IE and Opera do not yet suuport XHR file upload, so an internal 
+      // iframe is used with json in the response 
+      if ( acceptHeader.notBlank && acceptHeader.indexOf( "json" ) == -1 )
+        jsonContentType = "text/plain"
+    }
+    
+    res.setContentType( if ( jsonpCallback != null ) "text/javascript" else jsonContentType )
     res.setStatus( status )
 
+    if ( noCache ) setNoCacheHeaders( res )
+    
     if ( headers != null )
       for ( h <- headers ) 
         res.setHeader( h._1, h._2 )
@@ -141,10 +154,11 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     )
   }
 
-  def html( xml:NodeSeq, status:Int = 200, headers:Map[String,String] = null ) = {
+  def html( xml:NodeSeq, status:Int = 200, headers:Map[String,String] = null, req:HttpServletRequest = null, noCache:Boolean = false ) = {
     res.setContentType( "text/html" )
     res.setStatus( status )
-    
+
+    if ( noCache ) setNoCacheHeaders( res )
     if ( headers != null )
       for ( h <- headers ) 
         res.setHeader( h._1, h._2 )
@@ -152,6 +166,12 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     out( xml.toString() )
   }
 
+  def setNoCacheHeaders( res:HttpServletResponse ) {
+    res.setHeader( "Cache-Control", "no-cache" )
+    res.setHeader( "Pragma", "no-cache" )
+    res.setHeader( "Expires", "-1" )
+  }
+  
   def out( s:String ) = {
     val bytes = s.getBytes
     val blen = bytes.length
