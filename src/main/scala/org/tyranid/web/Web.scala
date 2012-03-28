@@ -160,6 +160,8 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
     req.getServletPath.startsWith( path )
   }
 
+  def ip = req.getRemoteAddr
+
   def path = req.getServletPath
 
   def forward( url:String )  = throw WebForwardException( url )
