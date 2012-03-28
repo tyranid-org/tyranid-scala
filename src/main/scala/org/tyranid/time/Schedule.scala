@@ -57,6 +57,8 @@ object Scheduler {
         if ( nowMs >= task.nextMs ) {
           println( "Scheduler:  running " + task.subject + " at " + new Date().toString )
 
+          val start = System.currentTimeMillis
+
           if ( task.periodMs > Time.OneHourMs )
             log( Event.Scheduler, "m" -> ( "running: " + task.subject ) )
 
@@ -65,7 +67,7 @@ object Scheduler {
           }
 
           if ( task.periodMs > Time.OneHourMs )
-            log( Event.Scheduler, "m" -> ( "completed: " + task.subject ) )
+            log( Event.Scheduler, "m" -> ( "completed: " + task.subject ), "du" -> ( System.currentTimeMillis - start ) )
 
           while ( task.nextMs < System.currentTimeMillis )
             task.nextMs += task.periodMs

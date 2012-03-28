@@ -264,14 +264,14 @@ private final class JsonDecoder( text:String ) {
 	}
 }
 
-case class JsonDecoderException(input:String, offset:Int, expectation:String) extends Exception {
+case class JsonDecoderException( input:String, offset:Int, expectation:String ) extends Exception {
 
-	override def getMessage = "at offset: " + offset + " expected: " + expectation
+	override def getMessage = "at offset:" + offset + " expected:" + expectation + " got:" + lookingAt
 
-	def lookingAt:String	= {
+	def lookingAt:String = {
 		val width	= 80
 		val end		= (offset+width) min input.length
-		input substring (offset, end) replaceAll ("[\r\n]", "§")
+		input substring ( offset, end ) replaceAll ( "[\r\n]", "§" )
 	}
 }
 

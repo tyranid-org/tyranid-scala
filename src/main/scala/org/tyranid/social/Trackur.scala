@@ -37,27 +37,6 @@ object Trackur extends MongoEntity( tid = "a0Jt" ) {
 
       <media type> is one of News, Blogs, Reddit, GooglePlus, Delicious, Twitter, Facebook, Media, and Forums
 
-   */
-
-  "id"          is DbMongoId      ;
-  "query"       is DbChar(128)    ;
-
-  "activity"    is DbArray(DbInt) as "Rolling Activity Counts";
-
-
-
-
-  def monitor = {
-
-    for ( query <- B.trackur.monitoredQueries().take( 3 ) ) {
-
-      val obj = db.findOrMake( Mobj( "query" -> query ) )
-
-      val rslts = ( "http://api.trackur.com/index.php/api/json/" + B.trackur.apiKey + query ).GET().parseJsonArray
-
-      val numRslts = rslts( 0 ).asJsonObject.o_?( 'response ).i( 'totalresults )
-
-      /*
 [ { "response": {
       "link":"http://api.trackur.com/index.php/api/json/9a2c7879bf63799e3d2f71cc3b38a95e48f7/Dimensiology/1/1/////0/0",
       "error":"No results found."
@@ -79,11 +58,33 @@ object Trackur extends MongoEntity( tid = "a0Jt" ) {
     }
   }
 ]
-      */
 
-      obj.a_!( 'activity ).rollRight( numRslts, 10 )
+   */
 
-      db.save( obj )
+  "id"          is DbMongoId      ;
+  "query"       is DbChar(128)    ;
+
+  "activity"    is DbArray(DbInt) as "Rolling Activity Counts";
+
+
+  def encQuery( query:String ) = query.replace( "/", " " ).replace( "  ", " " ).encUrl
+
+  def monitor = {
+
+    for ( query <- B.trackur.monitoredQueries() ) {
+      try {
+        val rslts = ( "http://api.trackur.com/index.php/api/json/" + B.trackur.apiKey + query ).GET().parseJsonArray
+        val numRslts = rslts( 0 ).asJsonObject.o_?( 'response ).i( 'totalresults )
+
+        val obj = db.findOrMake( Mobj( "query" -> query ) )
+
+        obj.a_!( 'activity ).rollRight( numRslts, 10 )
+
+        db.save( obj )
+      } catch {
+      case e =>
+        log( Event.Trackur, "m" -> ( "Problem processing query \"" + query + "\"" ), "ex" -> e )
+      }
     }
   }
 }
