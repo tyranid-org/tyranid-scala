@@ -56,20 +56,26 @@ class DbFile( bucket:S3Bucket ) extends CommonFile {
 
     if ( fileItem != null && fileItem.getName().notBlank ) {
       val r = s.rec
-      r.recordTid match {
-      case null | "null" | "-invalid" => r.save
-      case _ =>
+      
+      if ( true ) {
+        r.recordTid match {
+        case null | "null" | "-invalid" => r.save
+        case _ =>
+        }
+        
+        val path = File.pathFor( r.entityTid, r.recordTid, f.va.att.name, fileItem.getName() )
+        var in = fileItem.getInputStream()
+        
+        S3.write( bucket, path, fileItem.getSize(), fileItem.getContentType(), in )
+        in.close
+        
+        S3.access( bucket, path, public = true )
+        
+        r( f.va ) = bucket.url( path )
+      } else {
+        spam( "Current value: " + r.s( f.va ) )
+        spam( "New file: " + fileItem.getName )
       }
-      
-      val path = File.pathFor( r.entityTid, r.recordTid, f.va.att.name, fileItem.getName() )
-      var in = fileItem.getInputStream()
-      
-      S3.write( bucket, path, fileItem.getSize(), fileItem.getContentType(), in )
-      in.close
-      
-      S3.access( bucket, path, public = true )
-      
-      r( f.va ) = bucket.url( path )
     }
   }
   
@@ -130,7 +136,7 @@ trait CommonFile extends Domain {
 //        } else {
 //        }
         
-        <div><input name={ f.id } type="file"/></div>
+        <div><input id={ f.id } name={ f.id } type="file"/></div>
       }
     </div>
 }

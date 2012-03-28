@@ -49,7 +49,6 @@ class UserMeta extends MongoEntity( "a01v" ) {
 
   "recaptcha"      is DbReCaptcha( "white" ) is 'temporary as "Verify you are human";
 
-  "stayLoggedIn"   is DbBoolean           as "Keep me logged in for two weeks";
   "activationCode" is DbChar(8)           ;
   "resetCode"      is DbChar(8)           ;
   "loginToken"     is DbChar(10)          ;
