@@ -173,6 +173,13 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   def b( param:String ):Boolean = req.b( param )
   def oid( param:String ) = req.oid( param  )
   def a( param:String ):Seq[String] = req.a( param )
+  
+  def json( json:Any, status:Int = 200, jsonpCallback:String = null, headers:Map[String,String] = null, noCache:Boolean = false ) = 
+    res.json( json, status, jsonpCallback, headers, req, noCache )
+    
+  def html( xml:NodeSeq, status:Int = 200, headers:Map[String,String] = null, noCache:Boolean = false ) = 
+    res.html( xml, status, headers, req, noCache )
+    
 }
 
 trait Weblet {
