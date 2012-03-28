@@ -138,6 +138,9 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
       }
     }
 
+    if ( !l.has( 'ip ) )
+      l( 'ip ) = thread.web.req.getRemoteAddr
+
     db.save( l )
 
     if ( event == Event.StackTrace && B.PRODUCTION ) {
