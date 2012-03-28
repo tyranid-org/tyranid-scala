@@ -57,8 +57,9 @@ object Event extends RamEntity( tid = "a0It" ) with EnumEntity[Event] {
   val Facebook   = apply(  7, "Facebook" )
   val SmsOut     = apply(  8, "SMS-Out" )
   val SmsIn      = apply( 10, "SMS-In" )
+  val Scheduler  = apply( 11, "Scheduler" )
 
-  static( Access, StackTrace, LinkedIn, Error404, Scraper, Import, Facebook, SmsOut, SmsIn )
+  static( Access, StackTrace, LinkedIn, Error404, Scraper, Import, Facebook, SmsOut, SmsIn, Scheduler )
 }
 
 class Event extends Tuple( Event.makeView ) {

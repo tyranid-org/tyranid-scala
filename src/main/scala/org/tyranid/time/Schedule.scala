@@ -57,9 +57,15 @@ object Scheduler {
         if ( nowMs >= task.nextMs ) {
           println( "Scheduler:  running " + task.subject + " at " + new Date().toString )
 
+          if ( task.periodMs > Time.OneHourMs )
+            log( Event.Scheduler, "m" -> ( "running: " + task.subject ) )
+
           trylog {
             task.task()
           }
+
+          if ( task.periodMs > Time.OneHourMs )
+            log( Event.Scheduler, "m" -> ( "completed: " + task.subject ) )
 
           while ( task.nextMs < System.currentTimeMillis )
             task.nextMs += task.periodMs
