@@ -196,7 +196,7 @@ object Time {
 	  cal.set( Calendar.MINUTE, minute )
 
 	  if ( now.after( cal ) ) cal.add( Calendar.DATE, 1 )
-    now.getTime
+    cal.getTime
   }
 
   def createUserNowCalendar:Calendar = Calendar.getInstance( Session().user.timeZone )

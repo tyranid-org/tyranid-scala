@@ -53,12 +53,9 @@ object Trackur extends MongoEntity( tid = "a0Jt" ) {
 
       val obj = db.findOrMake( Mobj( "query" -> query ) )
 
-val url = ( "http://api.trackur.com/index.php/api/json/" + B.trackur.apiKey + query )
-spam( "url=" + url )
-      val rslts = ( "http://api.trackur.com/index.php/api/json/" + B.trackur.apiKey + query ).GET().toJson
+      val rslts = ( "http://api.trackur.com/index.php/api/json/" + B.trackur.apiKey + query ).GET().parseJsonArray
 
-      spam( "query=" + query )
-      spam( "rslts=" + rslts )
+      val numRslts = rslts( 0 ).asJsonObject.o_?( 'response ).i( 'totalresults )
 
       /*
 [ { "response": {
@@ -83,6 +80,8 @@ spam( "url=" + url )
   }
 ]
       */
+
+      obj.a_!( 'activity ).rollRight( numRslts, 10 )
 
       db.save( obj )
     }

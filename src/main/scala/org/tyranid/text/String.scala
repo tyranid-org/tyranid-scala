@@ -234,7 +234,7 @@ class StringImp( s:String ) {
 
   def parseJson = org.tyranid.json.JsonDecoder( s )
   def parseJsonObject = parseJson.as[ObjectMap]
-  //def parseJsonArray  = parseJson.as[ // TODO ]
+  def parseJsonArray  = parseJson.as[Array[Any]]
 
   def matches( r:Regex ) = r.pattern.matcher( s ).matches
 

@@ -19,6 +19,8 @@ package org.tyranid.bson
 
 import java.util.Date
 
+import scala.collection.mutable
+
 import org.bson.types.ObjectId
 import com.mongodb.{ BasicDBObject, BasicDBList, DBObject }
 
@@ -154,13 +156,26 @@ trait BsonObject extends Deep {
     }
 }
 
-trait BsonList extends BsonObject with Seq[Any] {
+trait BsonList extends BsonObject with mutable.Seq[Any] {
 
   def apply( idx:Int ):AnyRef
   def update( idx:Int, v:Any ):Unit
 
   def deep:BsonList
 
+  def rollRight( value:Any, size:Int ) {
+    val esize = this.size
+
+    for ( i <- ( size min esize ) until 0 by -1 )
+      update( i, apply( i-1 ) )
+
+    update( 0, value )
+    truncate( size )
+  }
+
+  def truncate( newSize:Int ) =
+    for ( i <- newSize until this.size )
+      remove( i.toString )
 
   def a( idx:Int )         = apply( idx ).asInstanceOf[BasicDBList]
   def b( idx:Int )         = apply( idx ).asInstanceOf[Boolean]
