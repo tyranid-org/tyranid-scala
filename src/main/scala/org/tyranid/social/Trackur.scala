@@ -17,15 +17,19 @@
 
 package org.tyranid.social
 
+import com.mongodb.DBObject
+
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbArray, DbChar, DbInt }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
 
 
-case class TrackurApp( apiKey:String, monitoredQueries: () => Seq[String] ) {
+case class TrackurApp( apiKey:String, monitoredQueries: () => Seq[TrackurQuery] ) {
 
 }
+
+case class TrackurQuery( query:String, handler: ( DBObject ) => Unit )
 
 object Trackur extends MongoEntity( tid = "a0Jt" ) {
 
@@ -71,19 +75,21 @@ object Trackur extends MongoEntity( tid = "a0Jt" ) {
 
   def monitor = {
 
-    for ( query <- B.trackur.monitoredQueries() ) {
+    for ( tq <- B.trackur.monitoredQueries() ) {
       try {
-        val rslts = ( "http://api.trackur.com/index.php/api/json/" + B.trackur.apiKey + query ).GET().parseJsonArray
+        val rslts = ( "http://api.trackur.com/index.php/api/json/" + B.trackur.apiKey + tq.query ).GET().parseJsonArray
         val numRslts = rslts( 0 ).asJsonObject.o_?( 'response ).i( 'totalresults )
 
-        val obj = db.findOrMake( Mobj( "query" -> query ) )
+        val obj = db.findOrMake( Mobj( "query" -> tq.query ) )
 
         obj.a_!( 'activity ).rollRight( numRslts, 10 )
 
         db.save( obj )
+        tq.handler( obj )
+
       } catch {
       case e =>
-        log( Event.Trackur, "m" -> ( "Problem processing query \"" + query + "\"" ), "ex" -> e )
+        log( Event.Trackur, "m" -> ( "Problem processing query \"" + tq.query + "\"" ), "ex" -> e )
       }
     }
   }
