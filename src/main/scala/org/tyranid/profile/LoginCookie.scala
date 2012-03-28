@@ -55,5 +55,17 @@ object LoginCookie {
   }
 
   def remove = T.web.res.deleteCookie( B.loginCookieName )
+
+  def autoLogin = {
+    val sess = T.session
+    val user = sess.user
+
+    if ( !user.loggedIn && !user.isLoggingOut ) {
+      val user = LoginCookie.getUser.of[User].getOrElse( null )
+
+      if ( user != null )
+        sess.login( user )
+    }
+  }
 }
 

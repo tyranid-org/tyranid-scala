@@ -65,25 +65,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "fbt"            is DbChar(90)          ; // Facebook OAuth 2.0 token
   "fbte"           is DbLong              ; // Facebook token expiration
 
-  def isLoggedIn = { 
-    val session = Session()
-
-    if ( session.user.loggedIn )
-      true
-    else if ( B.loginCookieName == null || session.user.isLoggingOut )
-      false
-    else {
-      LoginCookie.getUser match {
-      case Some( user ) =>
-        user.loggedIn = true
-        session.user = user
-        true
-
-      case None =>
-        false
-      }
-    }
-  }
+  def isLoggedIn = Session().user.loggedIn
   
   def isAdmin    = Session().user.admin
 

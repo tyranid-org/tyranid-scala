@@ -11,7 +11,7 @@ import scala.xml.{ Elem, Node, NodeSeq, Text, TopScope }
 import org.cometd.bayeux.server.BayeuxServer
 
 import org.tyranid.Imp._
-import org.tyranid.profile.User
+import org.tyranid.profile.{ LoginCookie, User }
 import org.tyranid.session.{ AccessLog, ThreadData }
 
 
@@ -102,8 +102,10 @@ spam( "filter entered, path=" + web.path )
       val ( path, weblet ) = pair
 
       try {
-        if ( thread.http == null )
+        if ( thread.http == null ) {
           thread.http = web.req.getSession( true )
+          LoginCookie.autoLogin
+        }
 
         if ( !multipartHandled ) {
           web = FileUploadSupport.checkContext( web )
