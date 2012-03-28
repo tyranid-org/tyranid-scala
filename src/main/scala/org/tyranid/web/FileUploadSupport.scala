@@ -34,9 +34,30 @@ object FileUploadSupport {
       web
   }
   
-  private def extractMultipartParams( req: HttpServletRequest ): BodyParams =
+  private def extractMultipartParams( req: HttpServletRequest ): BodyParams = {
     // First look for it cached on the request, because we can't parse it twice.  See GH-16.
-    req.getAttribute( BodyParamsKey ).asInstanceOf[Option[BodyParams]] match {
+    val attr = req.getAttribute( BodyParamsKey )
+   
+    attr match {
+      case bodyParams:BodyParams =>
+        bodyParams
+      case Some(bodyParams) =>
+        bodyParams.asInstanceOf[BodyParams]
+      case null | None =>
+        val upload = newServletFileUpload
+        val items = upload.parseRequest(req).asInstanceOf[JList[FileItem]]
+        val bodyParams = items.foldRight(BodyParams(FileMultiParams(), Map.empty)) { (item, params) =>
+          if (item.isFormField)
+            BodyParams(params.fileParams, params.formParams + ((item.getFieldName, fileItemToString(req, item) :: params.formParams.getOrElse(item.getFieldName, List[String]()))))
+          else
+            BodyParams(params.fileParams + ((item.getFieldName, item +: params.fileParams.getOrElse(item.getFieldName, List[FileItem]()))), params.formParams)
+          }
+        req.setAttribute(BodyParamsKey, bodyParams )
+        bodyParams
+    }
+
+    /*
+    attr.asInstanceOf[Option[BodyParams]] match {
       case Some(bodyParams) =>
         bodyParams
       case null | None =>
@@ -51,6 +72,8 @@ object FileUploadSupport {
         req.setAttribute(BodyParamsKey, bodyParams )
         bodyParams
     }
+    */
+  }
 
   /**
    * Converts a file item to a string.

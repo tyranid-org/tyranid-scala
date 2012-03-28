@@ -34,6 +34,11 @@ object Focus {
     <script>{ Unparsed( """$( $('""" + id + """').focus() );""" ) }</script>
 }
 
+object Blur {
+
+  def apply( id:String ) =
+    <script>{ Unparsed( """$( $('""" + id + """').blur() );""" ) }</script>
+}
 
 /*
      options:

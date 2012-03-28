@@ -60,8 +60,8 @@ $(document).ready(function() {
         </tr>
         <tr>
          <td colspan="2" style="padding-top:8px;">
-          <input type="checkbox" name="save" value="Y"/>
-          <label for="save" style="line-height:18px;">Stay Logged In</label>
+          <input type="checkbox" name="save" id="saveLogin" value="Y"/>
+          <label for="save" style="line-height:18px;" onClick="cb=$( '#saveLogin' );cb.prop('checked',!cb[0].checked);">Stay Logged In</label>
           <input type="hidden" name="l" value={ web.req.s("l") }/>
           <input type="submit" value="Login" class="greenBtn" style="padding:2px 16px; display:inline-block; float:right;"/>
          </td>
