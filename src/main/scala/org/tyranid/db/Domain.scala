@@ -105,7 +105,7 @@ trait Domain extends Valid {
     if ( !commonExtract( s, f ) ) {
       val v = T.web.req.s( f.id )
 
-      if ( v.notBlank ) s.rec( f.va.name ) = v
+      if ( v.notBlank ) s.rec( f.va.name ) = v.trim
       else              s.rec.remove( f.va.name )
     }
 
