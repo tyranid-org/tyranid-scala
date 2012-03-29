@@ -138,14 +138,8 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
       }
     }
 
-    if ( !l.has( 'ip ) ) {
-      try {
-        l( 'ip ) = thread.ip
-      } catch {
-      case e =>
-        e.printStackTrace
-      }
-    }
+    if ( !l.has( 'ip ) )
+      l( 'ip ) = thread.ip
 
     db.save( l )
 
