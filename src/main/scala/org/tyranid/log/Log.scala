@@ -60,6 +60,7 @@ object Event extends RamEntity( tid = "a0It" ) with EnumEntity[Event] {
   val Scheduler  = apply( 11, "Scheduler" )
   val Trackur    = apply( 12, "Trackur" )
   val Noaa       = apply( 13, "NOAA" )
+  val Eof        = apply( 14, "EOF" )
 
   static( Access, StackTrace, LinkedIn, Error404, Scraper, Import, Facebook, SmsOut, SmsIn, Scheduler, Noaa )
 }
@@ -85,7 +86,6 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
 
   def log( event:Event, opts:(String,Any)* ) = {
     val l = Mobj(
-      "e" -> event.id.as[Int],
       "on" -> new Date
     )
 
@@ -141,9 +141,16 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
     if ( !l.has( 'ip ) )
       l( 'ip ) = thread.ip
 
+    val effEvent =
+      event match {
+      case e if e == Event.StackTrace && throwable.getClass.getSimpleName == "EofException" => Event.Eof
+      case e                                                                                => e
+      }
+
+    l( 'e ) = effEvent.id.as[Int]
     db.save( l )
 
-    if ( event == Event.StackTrace && B.PRODUCTION ) {
+    if ( effEvent == Event.StackTrace && B.PRODUCTION ) {
       println( "*** stack trace entering" )
       val sb = new StringBuilder
 
@@ -175,33 +182,19 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
 
       background {
         try {
-          val stackTraceText = sb.toString()
-      
-          if ( !shouldIgnore( stackTraceText ) ) {
-            println( "*** sending email" )
+          println( "*** sending email" )
             
-            AWSEmail( subject = "Volerro Stack Trace",
-                   text = stackTraceText ).
-              addTo( B.alertEmail ).
-              from( "no-reply@" + B.domain ).
-              send
-          }
+          AWSEmail( subject = "Volerro Stack Trace",
+                    text = sb.toString ).
+            addTo( B.alertEmail ).
+            from( "no-reply@" + B.domain ).
+            send
         } catch {
         case e =>
           e.printStackTrace
         }
       }
     }
-  }
-  
-  val ignoredExceptions = List( "EofException" )
-  
-  private def shouldIgnore( stackTraceText:String ):Boolean = {
-    for ( ignore <- ignoredExceptions )
-      if ( stackTraceText.contains( ignore ) )
-        return true
-    
-    return false
   }
 }
 
