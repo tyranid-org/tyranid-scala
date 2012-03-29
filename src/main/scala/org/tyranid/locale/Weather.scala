@@ -138,7 +138,7 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
   def load {
     var str:String = null
     try {
-      def setId = scala.util.Random.nextInt
+      val setId = scala.util.Random.nextInt
 
       str = "http://alerts.weather.gov/cap/us.php?x=0".GET()
       for ( entryXml <- str.toXml \ "entry" ) {
@@ -168,14 +168,8 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
     }
   }
 
-  def weightFor( zips:Seq[String] ) = {
-
-    // TODO:  add in date querying  (maybe if it is close to expiring or recently-expired it goes down in weight ?)
-
-    val rslt = db.find( Mobj( "zips" -> Mobj( $in -> Mlist( zips:_* ) ) ) ).toSeq
-    
-    rslt.map( cap => Cap( cap ).weight ).foldLeft( 0 )( _ max _ )
-  }
+  def weightFor( zips:Seq[String] ) =
+    db.find( Mobj( "zips" -> Mobj( $in -> Mlist( zips:_* ) ) ) ).map( cap => Cap( cap ).weight ).foldLeft( 0 )( _ max _ )
 
   def toJson = {
     val sb = new StringBuilder
