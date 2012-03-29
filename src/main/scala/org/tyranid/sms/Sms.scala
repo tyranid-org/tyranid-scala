@@ -350,14 +350,26 @@ object Smslet extends Weblet {
     
     def smsStart = {
       val user:User = { 
-        val tid = web.s( "id" ) or T.session.user.tid
-    
-        T.session.editing2( B.User.getClass(), {
-          Record.byTid( tid, only = B.User ).map( _.snapshot.as[User] ).getOrElse {
-            T.session.warn( "User not found." )
-            web.redirect( "/" )
-          }
-        } )
+        val user = T.session.user
+        val tid = web.s( "id" ) or user.tid
+        val orgId = user.org.id
+
+        // Only take a snapshot if the app owner is not editing this
+        if ( orgId == B.appOrgId ) {
+          T.session.editing2( B.User.getClass(), {
+            Record.byTid( tid, only = B.User ).getOrElse {
+              T.session.warn( "User not found." )
+              web.redirect( "/" )
+            }
+          } )
+        } else {
+          T.session.editing2( B.User.getClass(), {
+            Record.byTid( tid, only = B.User ).map( _.snapshot.as[User] ).getOrElse {
+              T.session.warn( "User not found." )
+              web.redirect( "/" )
+            }
+          } )
+        }
       }
       
       T.editing( user )
