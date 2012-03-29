@@ -62,8 +62,13 @@ class Indexer extends Actor {
   def receive = {
   case IndexMsg( index, typ, id, json ) =>
 
-    if ( json != "{}" )
-      spam( "indexing:  " + ( "http://localhost:9200/" + index + "/" + typ + "/" + id ).POST( content = json ) )
+    try {
+      if ( json != "{}" )
+        spam( "indexing:  " + ( "http://localhost:9200/" + index + "/" + typ + "/" + id ).POST( content = json ) )
+    } catch {
+    case e:org.apache.http.conn.HttpHostConnectException =>
+      spam( "Cannot index in elastic search-- it does not appear to be running: " + e.getMessage )
+    }
   }
 
 }
