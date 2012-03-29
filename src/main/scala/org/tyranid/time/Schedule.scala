@@ -29,7 +29,7 @@ case class Task( subject:String, var nextMs:Long, periodMs:Long, var active:Bool
   var runs = 0
   var lastRun:Date = null
 
-  def run = {
+  def run( manual:Boolean ) = {
     println( "Scheduler:  running " + subject + " at " + new Date().toString )
 
     val start = System.currentTimeMillis
@@ -47,8 +47,9 @@ case class Task( subject:String, var nextMs:Long, periodMs:Long, var active:Bool
     if ( periodMs > Time.OneHourMs )
       log( Event.Scheduler, "m" -> ( "completed: " + subject ), "du" -> ( System.currentTimeMillis - start ) )
 
-    while ( nextMs < System.currentTimeMillis )
-      nextMs += periodMs
+    if ( !manual )
+      while ( nextMs < System.currentTimeMillis )
+        nextMs += periodMs
   }
 }
 
@@ -102,7 +103,7 @@ object Scheduler {
       relative.rpath.substring( 10 ) match {
       case "/run" =>
         task foreach { task =>
-          background { task.run }
+          background { task.run( manual = true ) }
           t.session.notice( "Running: " + task.subject )
         }
         t.web.redirect( relative.wpath + "/scheduler" )
@@ -148,7 +149,7 @@ object Scheduler {
         val task = tasks( i )
 
         if ( task.active && nowMs >= task.nextMs )
-          task.run
+          task.run( manual = false )
       }
 
       Thread.sleep( Time.OneMinuteMs )
