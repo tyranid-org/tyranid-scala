@@ -44,6 +44,8 @@ object Weather {
 object Cap extends MongoEntity( tid = "a0Et" ) {
   "id"          is DbChar(128)   is 'key;
 
+  "set"         is DbInt         ; // a random number generator so we can keep track of which fields were updated
+
   "updated"     is DbDateTime    ;
   "pub"         is DbDateTime    as "Published";
   "title"       is DbChar(256)   ;
@@ -120,7 +122,7 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
 
       val zipdata = fips6.split( " " ).flatMap( ZipCode.forFips6 )
 
-      o( 'zips ) = zipdata.map( _.i( 'ZipCode ) ).distinct
+      o( 'zips ) = Mlist( zipdata.map( _.i( 'ZipCode ) ).distinct:_* )
 
       val longs = zipdata.map( _.d( 'Longitude ) )
       val avgLong = longs.sum / longs.size
@@ -136,6 +138,8 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
   def load {
     var str:String = null
     try {
+      def setId = scala.util.Random.nextInt
+
       str = "http://alerts.weather.gov/cap/us.php?x=0".GET()
       for ( entryXml <- str.toXml \ "entry" ) {
   
@@ -145,8 +149,11 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
           entry = Mobj()
   
         parse( entry, entryXml )
+        entry( 'set ) = setId
         db.save( entry )
       }
+
+      db.remove( Mobj( "set" -> Mobj( $ne -> setId ) ) )
     } catch {
     case e:org.xml.sax.SAXParseException =>
       log( Event.Noaa, "m" -> str, "ex" -> e )
@@ -165,7 +172,9 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
 
     // TODO:  add in date querying  (maybe if it is close to expiring or recently-expired it goes down in weight ?)
 
-    db.find( Mobj( "zips" -> Mobj( $in -> Mlist( zips:_* ) ) ) ).map( cap => Cap( cap ).weight ).foldLeft( 0 )( _ max _ )
+    val rslt = db.find( Mobj( "zips" -> Mobj( $in -> Mlist( zips:_* ) ) ) ).toSeq
+    
+    rslt.map( cap => Cap( cap ).weight ).foldLeft( 0 )( _ max _ )
   }
 
   def toJson = {
