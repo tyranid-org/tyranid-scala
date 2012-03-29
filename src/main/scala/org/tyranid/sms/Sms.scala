@@ -39,7 +39,7 @@ object SMS extends MongoEntity( tid = "a0Gt" ) {
   "timeStart"    is DbInt          as "Starting Time";
   "timeEnd"      is DbInt          as "Ending Time";
   "vCode"        is DbUpperChar(6) as "Verfication Code";
-  "enteredCode"  is DbUpperChar(6)  is 'temporary as "Verfication Code" is 'required;
+  "enteredCode"  is DbUpperChar(6)  is 'temporary as "Verification Code" is 'required;
   
   var enabled = B.PRODUCTION
 }
