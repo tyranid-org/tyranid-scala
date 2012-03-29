@@ -81,7 +81,7 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
   "sid"                 is DbChar(64)     as "Session";
   "uid"                 is DbMongoId      as "User";
   "ua"                  is DbChar(256)    as "User Agent";
-  "ip"                  is DbChar(32)     as "IP"; // req.getRemoteAddr
+  "ip"                  is DbChar(32)     as "IP";
 
   def log( event:Event, opts:(String,Any)* ) = {
     val l = Mobj(
@@ -140,7 +140,7 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
 
     if ( !l.has( 'ip ) ) {
       try {
-        l( 'ip ) = thread.web.req.getRemoteAddr
+        l( 'ip ) = thread.ip
       } catch {
       case e =>
         e.printStackTrace

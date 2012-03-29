@@ -35,5 +35,9 @@ class AnyRefImp[T <: AnyRef]( ref:T ) {
   def safeString:String =
     if ( ref != null ) ref.toString
     else               ""
+
+  def ?*[ A >: Null <: AnyRef ]( block: (T) => A ):A =
+    if ( ref != null ) block( ref )
+    else               null
 }
 

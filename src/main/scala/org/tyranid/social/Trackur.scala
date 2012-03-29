@@ -93,5 +93,7 @@ object Trackur extends MongoEntity( tid = "a0Jt" ) {
       }
     }
   }
+
+  def activityFor( query:String ) = ( "http://api.trackur.com/index.php/api/json/" + B.trackur.apiKey + query ).GET().parseJsonArray
 }
 

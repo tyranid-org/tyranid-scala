@@ -126,6 +126,8 @@ class ThreadData {
 
   def viewing( ref:AnyRef ) = B.access( this, org.tyranid.secure.Viewing, ref )
   def editing( ref:AnyRef ) = B.access( this, org.tyranid.secure.Editing, ref )
+
+  def ip = if ( web != null ) web.ip else null
 }
 
 
