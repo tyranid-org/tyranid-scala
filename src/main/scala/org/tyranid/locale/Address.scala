@@ -60,6 +60,15 @@ class Address( override val obj:DBObject = Mobj() ) extends MongoRecord( Address
     sb.toString
   }
 
+  def cityStatePostal = {
+    val sb = new StringBuilder
+    sb ++= ( s( 'city ).notBlank |* ( ( sb.size > 0 |* " " ) + s( 'city ) ) )
+    sb ++= ( s( 'state ).notBlank |* ( ( s( 'city ) |* ", " ) + Region.codeForId( i( 'state ) ) ) )
+    sb += ' ' ++= s( 'postalCode )
+    sb ++= ( i( 'country ) > 0 |* " " + Country.nameForId( i( 'country ) ) )
+    sb.toString
+  }
+
   def latLong:LatLong = {
     val longLat = a( 'longLat )
 

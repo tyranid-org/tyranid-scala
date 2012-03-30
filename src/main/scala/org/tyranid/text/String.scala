@@ -155,6 +155,7 @@ class StringImp( s:String ) {
 
 	def isBlank  = ( s == null || s.length == 0 )
 	def notBlank = ( s != null && s.length >  0 )
+	def nonBlank = ( s != null && s.length >  0 )
 
   def allBlank:Boolean = {
     if ( s != null )

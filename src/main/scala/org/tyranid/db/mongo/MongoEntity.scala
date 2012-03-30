@@ -99,6 +99,19 @@ case class MongoEntity( tid:String ) extends Entity {
     obj != null |* Some( apply( obj ) )
   }
 
+  def byTid( tid:String ) =
+    if ( !tid.startsWith( this.tid ) ) {
+      None
+    } else {
+      try {
+        byRecordTid( tid.substring( 4 ) )
+      } catch {
+      case e =>
+        e.logWith( "m" -> ( "tid[" + tid + "]" )  )
+        None
+      }
+    }
+
   def make = apply( Mobj() )
 
   def make( obj:DBObject, parent:MongoRecord = null ) = MongoRecord( makeView, obj, parent )

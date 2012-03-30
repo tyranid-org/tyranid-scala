@@ -191,7 +191,7 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
     }
   }
 
-  def weightFor( zips:Seq[String] ) =
+  def weightFor( zips:Seq[Int] ) =
     db.find( Mobj( "zips" -> Mobj( $in -> Mlist( zips:_* ) ) ) ).map( cap => Cap( cap ).weight ).foldLeft( 0 )( _ max _ )
 
   def toJson = {
@@ -269,8 +269,8 @@ object Weatherlet extends Weblet {
           NodeSeq.Empty
         else
           <div>
-           <h2>{ capo.s( 'title ) }</h2>
-           <p>{ capo.s( 'summary ) }</p>
+           <div><b>{ capo.s( 'title ) }</b></div>
+           <div>{ capo.s( 'summary ) }</div>
           </div> )
           /*
   "updated"     is DbDateTime    ;
