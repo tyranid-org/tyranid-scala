@@ -10,6 +10,8 @@ import scala.xml.NodeSeq
 import javax.servlet.{ Filter, FilterChain, FilterConfig, ServletRequest, ServletResponse }
 import javax.servlet.http.{ Cookie, HttpServlet, HttpServletRequest, HttpServletResponse }
 
+import org.bson.types.ObjectId
+
 import org.apache.http.{ Header, NameValuePair, HttpResponse }
 import org.apache.http.client.methods.{ HttpRequestBase, HttpDelete, HttpGet, HttpPost }
 import org.apache.http.entity.StringEntity
@@ -43,8 +45,11 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
     s != null && s.toLaxBoolean
   }
 
-  def oid( param:String ) = new org.bson.types.ObjectId( s( param ) )
-  
+  def oid( param:String ):ObjectId = { 
+    val oid = s( param )
+    ( oid == null ) ? null | new ObjectId( oid )
+  }
+
   def a( param:String ):Seq[String] =
     // jQuery appends a [] to all arrays, check to see if that exists
     req.getParameterValues( param + "[]" ) match {
