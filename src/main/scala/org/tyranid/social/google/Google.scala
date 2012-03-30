@@ -24,14 +24,9 @@ import com.mongodb.DBObject
 import org.tyranid.Imp._
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.http.Http
-import org.tyranid.locale.{ Country, Language }
+import org.tyranid.locale.{ Country, LatLong }
 import org.tyranid.math.Base64
-import org.tyranid.profile.{ Gender, User }
 import org.tyranid.session.Session
-import org.tyranid.social.SoApp
-import org.tyranid.time.Time
-import org.tyranid.ui.Form
-import org.tyranid.web.{ Weblet, WebContext }
 
 
 case class GoApp( simpleKey:String ) { // extends SoApp {
@@ -66,5 +61,23 @@ case class GoApp( simpleKey:String ) { // extends SoApp {
     B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $unset -> Mobj( "fbid" -> 1, "fbt" -> 1, "fbte" -> 1 ) ) )
   }
 */
+
+
+  def geocode( address:String ):LatLong = {
+
+    val str = "https://maps.googleapis.com/maps/api/geocode/json".GET( Map( "address" -> address, "sensor" -> "false" ) )
+    val obj = str.parseJsonObject
+
+    if ( obj.s( 'status ) == "OK" ) {
+      val rslts = obj.a_?( 'results )
+      if ( rslts.size > 0 ) {
+        val loc = rslts( 0 ).as[ObjectMap].o_?( 'geometry ).o_?( 'location )
+        return LatLong( lat = loc.d( 'lat ), long = loc.d( 'lng ) )
+      }
+    }
+
+    log( Event.Google, "m" -> ( "geocode problem:\n\nAddress:" + address + "\n\nResponse:\n\n" + str ) )
+    null
+  }
 }
 

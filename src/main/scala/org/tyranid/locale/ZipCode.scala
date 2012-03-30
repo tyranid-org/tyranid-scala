@@ -25,9 +25,6 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 
 
-case class LatLong( lat:Double, long:Double )
-
-
 object ZipCode extends MongoEntity( tid = "a0Ft" ) {
 
   override lazy val dbName = "zipdata"

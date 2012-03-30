@@ -69,6 +69,8 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
 
     // for example, "aid" is internal because it is not exposed to the end-user
     case "internal"  => internal = true
+    case "inherit"   => if ( domain == null )
+                          throw new IllegalArgumentException( "Cannot find inherited attribute '" + name + "' in the entity '" + entity.name + "'." )
     }
 
     this
@@ -160,11 +162,16 @@ trait Entity extends Domain with DbItem {
 		case _                  => IdType.ID_COMPLEX
 		}
 
-	implicit def str2att( name: String ) = {
-		val a = new Attribute( this, name )
-		attribs += a
-		a
-	}
+	implicit def str2att( name: String ):Attribute =
+    attribs.find( _.name == name ) match {
+    case Some( a ) =>
+      a
+  
+    case None =>
+      val a = new Attribute( this, name )
+      attribs += a
+      a
+    }
 
   def drop:Unit
 

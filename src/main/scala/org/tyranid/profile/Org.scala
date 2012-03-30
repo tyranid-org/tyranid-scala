@@ -17,31 +17,27 @@
 
 package org.tyranid.profile
 
-
-import java.util.TimeZone
-
 import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbBoolean, DbChar, DbEmail, DbLink, DbLowerChar, DbPassword, DbUrl, Record }
+import org.tyranid.db.{ DbChar, DbLowerChar, DbUrl }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
-import org.tyranid.image.DbImage
-import org.tyranid.secure.DbReCaptcha
-import org.tyranid.session.{ Session, ThreadData }
-import org.tyranid.web.WebContext
+import org.tyranid.image.DbThumbnail
 
 
 class OrgMeta extends MongoEntity( "a02v" ) {
+  "id"                 is DbMongoId               is 'key;
+  "name"               is DbChar(120)             ;
+  "domain"             is DbLowerChar(128)        ;
+  "thumbnail"          is DbThumbnail( "public" ) as "Logo";
+  "website"            is DbUrl                   ;
 
   override def apply( obj:DBObject ):Org = throw new UnsupportedOperationException()
-
-
 }
 
 trait Org extends MongoRecord {
-
   def name:String
 }
 
