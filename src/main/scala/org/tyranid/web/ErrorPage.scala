@@ -13,6 +13,8 @@ object Errorlet extends Weblet {
 
       val originalUrl = web.req.getAttribute( "javax.servlet.forward.request_uri" )
 
+      println( originalUrl )
+      
       if ( originalUrl != null )
         log( Event.Error404, "m" -> originalUrl )
 
