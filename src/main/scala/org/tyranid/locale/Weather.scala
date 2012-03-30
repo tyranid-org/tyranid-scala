@@ -261,10 +261,8 @@ object Weatherlet extends Weblet {
 
     rpath match {
     case "/capinfo" =>
-spam( "i:" + web.req.i( 'setid ) )
 
       val capo = Cap.db.findOne( Mobj( "setid" -> web.req.i( 'setid ) ) )
-spam( "capo:" + capo )
 
       web.res.html(
         if ( capo == null )
