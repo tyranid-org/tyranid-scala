@@ -278,8 +278,7 @@ object Facebooklet extends Weblet {
       s.notice( "Your " + B.applicationName + " profile image has been set to your Facebook profile image." )
       T.web.redirect( "/user/edit" )
 
-    case _ =>
-      _404
+    case _ => _404
     }
   }
 }

@@ -477,8 +477,7 @@ object LinkedInlet extends Weblet {
 
       T.web.redirect( "/user/edit" )
 
-    case _ =>
-      web.res.ok
+    case _ => _404
     }
   }
 }

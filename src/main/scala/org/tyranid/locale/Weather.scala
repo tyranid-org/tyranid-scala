@@ -17,15 +17,17 @@
 
 package org.tyranid.locale
 
-import scala.xml.Node
+import scala.xml.{ Node, NodeSeq }
 
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbArray, DbChar, DbDateTime, DbDouble, DbInt, DbLink, Record }
+import org.tyranid.db.meta.AutoIncrement
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.time.Time
+import org.tyranid.web.{ Weblet, WebContext }
 
 
 object Weather {
@@ -45,6 +47,7 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
   "id"          is DbChar(128)   is 'key;
 
   "set"         is DbInt         ; // a random number generator so we can keep track of which fields were updated
+  "setid"       is DbInt         ; // a shorter id than id
 
   "updated"     is DbDateTime    ;
   "pub"         is DbDateTime    as "Published";
@@ -133,6 +136,22 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
 
       o( 'radius ) = ( longs.size > 0 |* ( longs.max - longs.min ) ) + ( lats.size > 0 |* ( lats.max - lats.min ) )
     }
+
+    /*
+
+ <entry>
+  <cap:geocode>
+   <valueName>UGC</valueName>
+   <value>AKZ125</value>
+  </cap:geocode>
+  <cap:parameter>
+   <valueName>VTEC</valueName>
+   <value>/X.NEW.PAFC.WW.Y.0027.120314T1219Z-120314T2100Z/</value>
+  </cap:parameter>
+ </entry>
+
+
+     */
   }
 
   def load {
@@ -145,8 +164,12 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
   
         var entry = db.findOne( Mobj( "_id" -> idFromEntry( entryXml ) ) )
   
-        if ( entry == null )
+        if ( entry == null ) {
           entry = Mobj()
+        }
+
+        if ( entry.i( 'setid ) == 0 )
+          entry( 'setid ) = AutoIncrement( "cap" )
   
         parse( entry, entryXml )
         entry( 'set ) = setId
@@ -187,7 +210,7 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
       else
         sb += ','
 
-      sb ++= "{t:" ++= longLat( 1 ).toString ++= ",n:" ++= longLat( 0 ).toString ++= ",r:" ++= cap.s( 'radius ) ++= ",w:" ++= cap.weight.toString += '}'
+      sb ++= "{i:" ++= cap.i( 'setid ).toString ++= ",t:" ++= longLat( 1 ).toString ++= ",n:" ++= longLat( 0 ).toString ++= ",r:" ++= cap.s( 'radius ) ++= ",w:" ++= cap.weight.toString += '}'
     }
 
     sb += ']'
@@ -228,25 +251,53 @@ class Cap( override val obj:DBObject = Mobj() ) extends MongoRecord( Cap.makeVie
     }
 
   def weight = ( sevWeight + urgWeight + cerWeight ) / 3
-
-  /*
-
-     translate zipcodes -> lat longs, average lat longs to get a coordinate, generate a circle
-
-
-   */
 }
 
+object Weatherlet extends Weblet {
 
-/*
- <entry>
-  <cap:geocode>
-   <valueName>UGC</valueName>
-   <value>AKZ125</value>
-  </cap:geocode>
-  <cap:parameter>
-   <valueName>VTEC</valueName>
-   <value>/X.NEW.PAFC.WW.Y.0027.120314T1219Z-120314T2100Z/</value>
-  </cap:parameter>
- </entry>
- */
+  def handle( web:WebContext ) {
+    val s = T.session
+    val u = s.user
+
+    rpath match {
+    case "/capinfo" =>
+spam( "i:" + web.req.i( 'setid ) )
+
+      val capo = Cap.db.findOne( Mobj( "setid" -> web.req.i( 'setid ) ) )
+spam( "capo:" + capo )
+
+      web.res.html(
+        if ( capo == null )
+          NodeSeq.Empty
+        else
+          <div>
+           <h2>{ capo.s( 'title ) }</h2>
+           <p>{ capo.s( 'summary ) }</p>
+          </div> )
+          /*
+  "updated"     is DbDateTime    ;
+  "pub"         is DbDateTime    as "Published";
+  "title"       is DbChar(256)   ;
+  "summary"     is DbChar(512)   ;
+  "event"       is DbChar(64)    ; // one of http://alerts.weather.gov/cap/product_list.txt
+  "eff"         is DbDateTime    as "Effective";
+  "exp"         is DbDateTime    as "Expiration";
+
+  "status"      is DbChar(64)    as "Status";
+  "msgType"     is DbChar(64)    as "Message Type";
+  "cat"         is DbChar(64)    as "Category";
+
+  "urg"         is DbChar(64)    as "Urgency";
+  "sev"         is DbChar(64)    as "Severity";
+  "cer"         is DbChar(64)    as "Certainty";
+
+  "cer"         is DbChar(64)    as "Certainty";
+
+  "areaDesc"    is DbChar(512)   ;
+      */
+
+    case _ => _404
+    }
+  }
+}
+
