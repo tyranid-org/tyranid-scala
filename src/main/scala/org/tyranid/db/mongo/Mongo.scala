@@ -197,6 +197,13 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
     case null           => null
     }
 
+  override def o_?( key:String ):DBObjectWrap =
+    super.o_?( key ) match {
+    case o:DBObjectWrap => o
+    case o:DBObject     => DBObjectImp( o )
+    case null           => null
+    }
+
   /*
    * * *   DBObject delegation
    */
