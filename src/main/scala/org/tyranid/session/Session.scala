@@ -223,9 +223,9 @@ trait Session {
 
   @volatile private var notes:List[Notification] = Nil
 
-  def notice( msg:AnyRef ) = notes ::= Notification( "notice",  msg.toString )
-  def warn( msg:AnyRef )   = notes ::= Notification( "warning", msg.toString )
-  def error( msg:AnyRef )  = notes ::= Notification( "error",   msg.toString )
+  def notice( msg:AnyRef, extra:NodeSeq = null ) = notes ::= Notification( "notice",  msg.toString, extra )
+  def warn( msg:AnyRef, extra:NodeSeq = null )   = notes ::= Notification( "warning", msg.toString, extra )
+  def error( msg:AnyRef, extra:NodeSeq = null )  = notes ::= Notification( "error",   msg.toString, extra )
 
   def popNotes = {
     val n = notes
@@ -240,11 +240,17 @@ object Notification {
     val sess = Session()
 
     <div class="notify">
-     { sess.popNotes.map { note => <div class={ note.level }>{ Unparsed( note.msg ) }</div> } }
+     { sess.popNotes.map { note => 
+       <div class={ note.level }>
+        { Unparsed( note.msg ) }
+        { if ( note.extra != null ) note.extra }
+       </div> 
+       } 
+     }
     </div>
   }
 }
 
-case class Notification( level:String, msg:String )
+case class Notification( level:String, msg:String, extra:NodeSeq = null )
 
 

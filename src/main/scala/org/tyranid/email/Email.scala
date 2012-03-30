@@ -85,7 +85,7 @@ object Email {
 
 trait EmailTemplate {
 
-  def welcome( user:User, activationCode:String )
+  def welcome( user:User, activationCode:String = null )
 
 }
 

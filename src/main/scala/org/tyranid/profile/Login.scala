@@ -96,7 +96,7 @@ $(document).ready(function() {
 
       if (user == null || user.s("activationCode").notBlank) {
         if (user != null)
-          notActivatedYet
+          notActivatedYet( user )
         else if ( email.isBlank )
           sess.warn( "Please log in." )
 
@@ -191,6 +191,26 @@ $(document).ready(function() {
          </div>
         </tyr:shell> )
 
+    case "/resendActivation" =>
+      import org.bson.types.ObjectId
+      
+      val userId = web.s( "id" ) or ""
+      
+      if ( userId == null ) {
+        T.session.notice( "Your user was not found." )
+      } else {
+        val u = B.User.byId( new ObjectId( userId ) ).getOrElse( null ) 
+        val user = if ( u == null ) null else B.User( u )
+        
+        if ( user != null ) {
+          T.session.notice( "Your activation code has been sent to your email and should be there shortly." )
+          background { B.emailTemplates.welcome( user ) }
+        } else {
+          T.session.notice( "Your user was not found." )
+        }
+      }
+      
+      T.web.redirect( "/?na=1" ) // na = need activation
     case "/forgot" =>
       val forgotCode = web.req.s("a")
 
@@ -354,7 +374,7 @@ The """ + B.applicationName + """ Team
     if ( user == null ) {
       T.web.redirect( wpath + "/register" + network )
     } else if ( user.s( 'activationCode ).notBlank ) {
-      notActivatedYet
+      notActivatedYet( user )
     } else {
       copySocialLogins( sess.user, user )
       sess.login( user )
@@ -488,8 +508,10 @@ The """ + B.applicationName + """ Team
       </tyr:shell> )
   }
 
-  def notActivatedYet = {
-    T.session.warn( "This account has not been activated yet!  Please check your email for the activation link." )
+  def notActivatedYet( user:User ) = {
+    T.session.warn( 
+        "This account has not been activated yet!  Please check your email for the activation link.",
+        <a href={ "/log/resendActivation?id=" + user.id }>Send Again</a> )
     T.web.redirect( "/?na=1" ) // na = need activation
   }
 }
