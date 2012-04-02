@@ -184,7 +184,7 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     val sigDecodedStr = new String( sigBytes )
     val payloadDecodedStr = new String( payloadBytes )
 
-    val json = payloadDecodedStr.toJson
+    val json = payloadDecodedStr.parseJsonObject
 
     val uid = json.s( 'user_id )
     val sig = sigDecodedStr

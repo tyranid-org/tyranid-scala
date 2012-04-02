@@ -25,6 +25,8 @@ import org.tyranid.math.Base64
 
 object Tid {
 
+  def split( tid:String ) = tid.splitAt( 4 )
+
   def toIds( tids:Seq[String], entity:Entity ) =
     tids.filter( _.startsWith( entity.tid ) ).map( tid => new ObjectId( Base64.toBytes( tid.substring( 4 ) ) ) )
 }
