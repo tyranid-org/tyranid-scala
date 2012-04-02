@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2011 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -254,8 +254,9 @@ case class DbUpperChar( len:Int ) extends LimitedText {
 object DbPassword extends DbVarChar( 64 ) {
 
   override def ui( s:Scope, f:PathField ) = {
-    val input = Input( f.id, s.rec.s( f.va.name ), ( f.effOpts :+ ( "type" -> "password" ) ):_* )
-
+    // Only specify the type of password if it is not specified   
+    val input = Input( f.id, s.rec.s( f.va.name ), ( if ( !f.opts.exists( _._1 == "type" ) ) ( f.effOpts :+ ( "type" -> "password" ) ) else f.effOpts ):_* )
+    
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
     else 

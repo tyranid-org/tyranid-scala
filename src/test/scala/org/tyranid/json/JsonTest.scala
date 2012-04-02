@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2011 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ class JsonSuite extends FunSuite {
     val json = """
 {  "foo": "bar",
   "five": 5
-}""".parseJson
+}""".parseJsonObject
   }
 
   test( "stringify" ) {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2011 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ object Scheduler {
 
     <table class="dtable tablesort">
      <thead>
-      <tr><th></th><th>Status</th><th></th><th>Task</th><th>Runs</th><th>Last Run</th></tr>
+      <tr><th></th><th>Status</th><th></th><th>Task</th><th>Runs</th><th>Last Run</th><th>Next Run</th></tr>
      </thead>
      <tbody>
       { for ( task <- tasks ) yield
@@ -79,13 +79,19 @@ object Scheduler {
        <td>{ if ( task.active ) "On" else "Off" }</td>
        <td>{
          if ( task.active )
-           <a class="redBtn" href={ relative.wpath + "/scheduler/off?task=" + task.subject } style="width:100px;">Turn Off</a>
+           <a class="redBtn" href={ relative.wpath + "/scheduler/off?task=" + task.subject } style="width:92px;">Turn Off</a>
          else
-           <a class="greenBtn" href={ relative.wpath + "/scheduler/on?task=" + task.subject } style="width:100px;">Turn On</a>
+           <a class="greenBtn" href={ relative.wpath + "/scheduler/on?task=" + task.subject } style="width:92px;">Turn On</a>
        }</td>
        <td>{ task.subject }</td>
        <td>{ task.runs }</td>
        <td>{ task.lastRun != null |* task.lastRun.toDateTimeStr }</td>
+       <td>{
+         if ( task.active )
+           new Date( task.nextMs ).toDateTimeStr
+         else
+           "---"
+       }</td>
       </tr>
      }</tbody>
     </table>
