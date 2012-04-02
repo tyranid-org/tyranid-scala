@@ -162,6 +162,8 @@ trait Entity extends Domain with DbItem {
 		case _                  => IdType.ID_COMPLEX
 		}
 
+  def recordTidToId( recordTid:String ):Any = throw new UnsupportedOperationException
+
 	implicit def str2att( name: String ):Attribute =
     attribs.find( _.name == name ) match {
     case Some( a ) =>
@@ -189,10 +191,8 @@ trait Entity extends Domain with DbItem {
   def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException // ... yet
 
   def save( r:Record ) {
-//println("**1")
     if ( isSearchable )
       Es.index( r )
-//println("**2")
   }
 
 
@@ -341,6 +341,4 @@ case class StaticBuilder( en:Entity ) {
     }
   }
 }
-
-
 

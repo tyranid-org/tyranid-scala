@@ -25,7 +25,7 @@ import org.bson.types.ObjectId
 import com.mongodb.{ BasicDBObject, DB, DBCollection, DBObject }
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbLink, Attribute, Domain, Entity, Record, Scope, View, ViewAttribute }
+import org.tyranid.db.{ DbLink, Attribute, Domain, Entity, Record, Scope, Tid, View, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.math.Base64
 import org.tyranid.ui.{ Input, PathField, Search }
@@ -80,19 +80,19 @@ case class MongoEntity( tid:String ) extends Entity {
   def toTid( oid:ObjectId )       = tid + toRecordTid( oid )
   def toRecordTid( oid:ObjectId ) = Base64.toString( oid.toByteArray )
   
-  def tidToOid( tid:String ) = {
+  def tidToId( tid:String ) = {
 
-    val ( entityTid, recordTid ) = tid.splitAt( 4 )
+    val ( entityTid, recordTid ) = Tid.split( tid )
 
     assert( Entity.byTid( entityTid ).get == this )
 
-    idFromRecordTid( recordTid )
+    recordTidToId( recordTid )
   }
 
-  def idFromRecordTid( recordTid:String ) = new ObjectId( Base64.toBytes( recordTid ) )
+  override def recordTidToId( recordTid:String ) = new ObjectId( Base64.toBytes( recordTid ) )
   
   override def byRecordTid( recordTid:String ):Option[MongoRecord] =
-    byId( idFromRecordTid( recordTid ) )
+    byId( recordTidToId( recordTid ) )
 
   def byId( id:AnyRef ) = {
     val obj = db.findOne( id )

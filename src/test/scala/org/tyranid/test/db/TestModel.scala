@@ -51,7 +51,7 @@ object Session extends org.tyranid.session.SessionMeta {
 
 
 
-object Widget extends MongoEntity( tid = "test0" ) {
+object Widget extends MongoEntity( tid = "ts0t" ) {
   "id"         is DbMongoId             is 'key;
   "name"       is DbChar(32)            is 'label;
   "dims"       is Dimensions            ;
@@ -62,28 +62,28 @@ object Widget extends MongoEntity( tid = "test0" ) {
   "cert"       is DbLink(Certification) ;
 }
 
-object Dimensions extends MongoEntity( tid = "test1" ) {
+object Dimensions extends MongoEntity( tid = "ts1t" ) {
   "height"       is DbInt               ;
   "weight"       is DbInt               ;
 }
 
-object Category extends MongoEntity( tid = "test2" ) {
+object Category extends MongoEntity( tid = "ts2t" ) {
   "id"           is DbMongoId           is 'key;
   "name"         is DbChar(128)         is 'label;
 }
 
-object Pricing extends MongoEntity( tid = "test3" ) {
+object Pricing extends MongoEntity( tid = "ts3t" ) {
   "type"         is DbLink(PriceType)   ;
   "price"        is DbDouble            ;
 }
 
-object PriceType extends MongoEntity( tid = "test4" ) {
+object PriceType extends MongoEntity( tid = "ts4t" ) {
   "id"           is DbMongoId           is 'key;
   "name"         is DbChar(128)         ;
   "quantity"     is DbInt               ;
 }
 
-object Certification extends RamEntity( tid = "test6" ) {
+object Certification extends RamEntity( tid = "ts6t" ) {
   "id"     is DbInt      is 'key;
   "name"   is DbChar(64) is 'label;
 

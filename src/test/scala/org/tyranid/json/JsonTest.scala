@@ -31,7 +31,7 @@ class JsonSuite extends FunSuite {
     val json = """
 {  "foo": "bar",
   "five": 5
-}""".toJson
+}""".parseJson
   }
 
   test( "stringify" ) {
