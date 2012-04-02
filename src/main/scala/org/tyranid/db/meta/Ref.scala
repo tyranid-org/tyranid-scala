@@ -22,7 +22,7 @@ import java.util.Date
 import com.mongodb.{ BasicDBList, DBObject }
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ Entity, Record, Path, PathValue, PathDiff, MultiPath, ViewAttribute }
+import org.tyranid.db.{ Entity, Record, Path, PathValue, PathDiff, MultiPath, Tid, ViewAttribute }
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoView, MongoRecord }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.profile.User
@@ -33,11 +33,13 @@ object Ref {
 
   def to( tid:String ) {
 
-    //for ( en <- Entities.all ) {
+    val ( entityTid, recordTid ) = Tid.split( tid )
+
+    for ( en <- Entity.all ) {
 
 
 
-    //}
+    }
 
     /*
 
