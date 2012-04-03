@@ -190,7 +190,7 @@ object Form {
          }
 
          Unparsed("""
-$( document ).ready( function() {
+$( function() {
   $( '#""" + elId + """' ).on( 'click', function( e ) {
     var vd = new VDialog( """" + postEndpoint + """", """" + redirectEndpoint + """", """" + title + """" ); """ +
     optsStr.toString +

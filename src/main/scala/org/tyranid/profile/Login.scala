@@ -44,7 +44,7 @@ object Loginlet extends Weblet {
     <form method="post" action={ wpath + "/in" } id="f">
      <head>
       <script>{ Unparsed( """
-$(document).ready(function() {
+$( function() {
   $('#forgot').click(function(e) {
     window.location.assign( '""" + wpath + """/forgot?un=' + encodeURIComponent( $("#un").val() ) );
   });

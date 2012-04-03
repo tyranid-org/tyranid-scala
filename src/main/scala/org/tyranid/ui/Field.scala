@@ -203,7 +203,8 @@ case class PathField( baseName:String,
                       focus:Boolean = false,
                       filter:Option[ ( Record ) => Boolean ] = None,
                       uiStyle:UiStyle = UiStyle.Default,
-                      labelc:Boolean = true ) extends Field with UiObj {
+                      labelc:Boolean = true,
+                      create:Boolean = false ) extends Field with UiObj {
 
   lazy val ( id, effOpts ) = {
     var _id:String = null

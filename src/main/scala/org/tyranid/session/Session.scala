@@ -24,6 +24,8 @@ import javax.servlet.http.{ HttpSession, HttpSessionEvent, HttpSessionListener }
 import scala.collection.mutable
 import scala.xml.{ Node, NodeSeq, Unparsed }
 
+import org.bson.types.ObjectId
+
 import org.tyranid.Imp._
 import org.tyranid.math.Base62
 import org.tyranid.profile.User
@@ -163,6 +165,7 @@ trait Session {
   private var userVar = B.newUser()
 
   def user:User           = userVar
+  def orgId               = ( user.org == null ) ? null | user.org.id.as[ObjectId]
   def user_=( user:User ) = userVar = user
 
   var loggedEntry = false
