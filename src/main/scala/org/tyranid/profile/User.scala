@@ -93,5 +93,7 @@ trait User extends MongoRecord {
     TimeZone.getDefault
 
   def org:Org = null
+
+  def isGod = false
 }
 

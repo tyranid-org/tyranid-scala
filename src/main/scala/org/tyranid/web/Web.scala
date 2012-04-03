@@ -113,51 +113,55 @@ spam( "filter entered, path=" + web.path )
       }
     }
 
-    for ( pair <- boot.weblets;
-          if web.matches( pair._1 ) && pair._2.matches( web ) ) {
-      val ( path, weblet ) = pair
+    def handle( webloc:Webloc ):Boolean = {
+
+      for ( cwebloc <- webloc.children;
+            if web.matches( cwebloc.weblet.wpath ) && cwebloc.weblet.matches( web ) )
+        if ( handle( cwebloc ) )
+          return true
 
       try {
-        if ( thread.http == null ) {
-          thread.http = web.req.getSession( true )
-          LoginCookie.autoLogin
+        webloc.weblet.handle( web )
+      } catch {
+      case ie:WebIgnoreException =>
+        return false
+      case re:WebRedirectException =>
+        web.res.sendRedirect( re.redirect )
+      case fe:WebForwardException =>
+        web.ctx.getRequestDispatcher( fe.forward ).forward( web.req, web.res )
+      case fe:Web404Exception =>
+        web.ctx.getRequestDispatcher( "/404" ).forward( web.req, web.res )
+      case re:org.tyranid.secure.SecureException =>
+        if ( !B.User.isLoggedIn ) {
+          web.res.sendRedirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
+        } else {
+          thread.session.warn( "Access denied." )
+          web.res.sendRedirect( "/" )
         }
-
-        if ( !multipartHandled ) {
-          web = FileUploadSupport.checkContext( web )
-          thread.web = web
-          multipartHandled = true
-        }
-
-        try {
-          weblet.handle( web )
-          return // return if it was handled
-
-        } catch {
-        case ie:WebIgnoreException =>
-          ; // continue on and try the next servlet and/or continue to the chaining
-        case re:WebRedirectException =>
-          web.res.sendRedirect( re.redirect )
-          return
-        case fe:WebForwardException =>
-          web.ctx.getRequestDispatcher( fe.forward ).forward( web.req, web.res )
-          return
-        case re:org.tyranid.secure.SecureException =>
-          if ( !B.User.isLoggedIn ) {
-            web.res.sendRedirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
-          } else {
-            thread.session.warn( "Access denied." )
-            web.res.sendRedirect( "/" )
-          }
-
-          return
-        case e:Exception =>
-          e.log
-
-          web.template( <tyr:errorPage/> )
-          return
-        }
+      case e:Exception =>
+        e.log
+        web.template( <tyr:errorPage/> )
       }
+
+      return true
+    }
+
+    for ( webloc <- boot.weblocs;
+          if web.matches( webloc.weblet.wpath ) && webloc.weblet.matches( web ) ) {
+
+      if ( thread.http == null ) {
+        thread.http = web.req.getSession( true )
+        LoginCookie.autoLogin
+      }
+
+      if ( !multipartHandled ) {
+        web = FileUploadSupport.checkContext( web )
+        thread.web = web
+        multipartHandled = true
+      }
+
+      if ( handle( webloc ) )
+        return
     }
 
     chain.doFilter( request, response )
@@ -203,6 +207,12 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
     
 }
 
+case class Webloc( path:String, weblet:Weblet, children:Webloc* ) {
+
+  weblet.init( path )
+  children.foreach { _.weblet.initParent( weblet ) }
+}
+
 trait Weblet {
   val rootPath = "/"
     
@@ -225,7 +235,15 @@ trait Weblet {
     this.webletPath = webletPath
   }
 
+  def initParent( weblet:Weblet ) {
+    this.parentWeblet = weblet
+    this.webletPath = parent.wpath + this.webletPath
+  }
+
   private var webletPath:String = _
+  private var parentWeblet:Weblet = _
+
+  def parent = parentWeblet
 
   /*
    * Weblet path
@@ -248,6 +266,14 @@ trait Weblet {
       null
     }
   }
+
+  def shell( content:NodeSeq ):Unit =
+    if ( parent != null )
+      parent.shell( content )
+    else
+      T.web.template(
+        content
+      )
 
   def _404 = throw new Web404Exception
 }

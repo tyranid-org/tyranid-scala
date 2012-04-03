@@ -22,16 +22,17 @@ import java.util.Date
 import com.mongodb.{ BasicDBList, DBObject }
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbArray, DbLink, DbTextLike, DbTid, Entity, Record, MultiPath, Path, PathNode, Tid, ViewAttribute }
+import org.tyranid.db.{ Domain, DbArray, DbLink, DbTextLike, DbTid, Entity, Record, MultiPath, Path, PathNode, Tid, ViewAttribute }
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoView, MongoRecord }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.profile.User
 import org.tyranid.session.Session
+import org.tyranid.web.{ Weblet, WebContext }
 
 
 object Ref {
 
-  def to( tid:String, in:Entity = null ) {
+  def to( tid:String, in:Entity = null ) = {
     val ( entityTid, recordTid ) = Tid.split( tid )
 
     val refEn = Entity.byTid( entityTid ).get
@@ -39,9 +40,9 @@ object Ref {
 
     var query:DBObject = null
 
-    def enter( path:List[PathNode], v:Any ) {
+    def enter( path:List[PathNode], dom:Domain ) {
 
-      v match {
+      dom match {
       case link:DbLink =>
         if ( link.toEntity == refEn ) {
           val p = MultiPath( path:_* )
@@ -102,7 +103,68 @@ object Ref {
 
   }
 
+  /*
+   * * *  UI
+
+        type in a tid, generates a table ... ?
 
 
+        ?.  how do you get the tid ?
+
+            you will usually have an object id and an entity name
+
+        ?.  how do you display the data ?
+
+
+   * * *  Delete references
+
+        +.  delete from the entity where the tid is based
+
+            remove from entities where it is foreign ...
+            
+            (a)  array ... remove from array
+            (b)  value ... remove property
+
+        ?.  what about cascading deletes ?
+
+            this should only come into play when we add in ownership
+
+
+   * * *  Ownership
+
+
+   * * *  Versioning
+
+       +.  simple links in version (currently just User)
+
+       +.  complex links in differences
+
+   */
 }
+
+object Reflet extends Weblet {
+
+  def handle( web:WebContext ) = {
+    val t = T
+
+    if ( !t.user.isGod )
+      _404
+
+    rpath match {
+    case "/" =>
+      shell(
+        <form method="post" action={ wpath + "/refs/check" }>
+         <label for="tid">TID:</label><input type="text" id="tid" name="tid"/>
+         <input type="submit" class="greenBtn" value="References"/>
+        </form>
+      )
+    case "/check" =>
+      t.web.redirect( wpath + "/scheduler" )
+
+    case _ =>
+      _404
+    }
+  }
+}
+
 

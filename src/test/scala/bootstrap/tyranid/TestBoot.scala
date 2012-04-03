@@ -17,7 +17,7 @@ class Boot extends org.tyranid.boot.Bootable {
   val systemEmail     = "info@tyranid.org"
   val alertEmail      = "info@tyranid.org"
 
-  val weblets = Nil
+  val weblocs = Nil
 
   val templates =
     "shell"  -> ( ( xml:NodeSeq ) => <html><head></head><body><tyr:header/><tyr:content/></body></html> ) ::

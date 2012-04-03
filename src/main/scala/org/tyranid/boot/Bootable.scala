@@ -37,7 +37,7 @@ import org.tyranid.social.TrackurApp
 import org.tyranid.social.facebook.FbApp
 import org.tyranid.social.google.GoApp
 import org.tyranid.social.linkedin.LiApp
-import org.tyranid.web.{ Weblet, CometService }
+import org.tyranid.web.{ Weblet, Webloc, CometService }
 
 
 object Boot {
@@ -59,9 +59,6 @@ object Boot {
         instance = boot.asInstanceOf[Bootable]
 
         instance.boot
-
-        for ( ( path, weblet ) <- instance.weblets )
-          weblet.init( path )
 
         println( "*** " + instance.applicationName + " booted ... mode: " + instance.mode.toUpperCase + ", build: " + instance.build + " ***" )
 
@@ -101,7 +98,7 @@ trait Bootable {
   val systemEmail:String
   val alertEmail:String
 
-  val weblets:List[(String,Weblet)]
+  val weblocs:Seq[Webloc]
 
   val templates:List[(String, ( NodeSeq ) => NodeSeq )]
   val emailTemplates:EmailTemplate
