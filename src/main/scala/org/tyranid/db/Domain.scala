@@ -39,7 +39,7 @@ trait Domain extends Valid {
 
 	val sqlName:String
 
-  def tid( r:Record, va:ViewAttribute ) = "invalid"
+  def tid( r:Record, va:ViewAttribute ) = "invalid-" + getClass.getSimpleName
 
   /**
    * Is this field automatic populated by the underlying DBMS.

@@ -18,7 +18,7 @@
 package org.tyranid.db.meta
 
 import scala.collection.mutable
-import scala.xml.Unparsed
+import scala.xml.{ Text, Unparsed }
 
 import org.bson.types.ObjectId
 import com.mongodb.DBObject
@@ -116,28 +116,14 @@ spam( "me #1, query=" + query )
     if ( in != null ) {
       entity( in )
     } else {
-      for ( en <- Entity.all ) {
-spam( "trying " + en.name )
+      for ( en <- Entity.all )
         entity( en )
-      }
     }
 
     matches  
   }
 
   /*
-   * * *  UI
-
-        type in a tid, generates a table ... ?
-
-
-        ?.  how do you get the tid ?
-
-            you will usually have an object id and an entity name
-
-        ?.  how do you display the data ?
-
-
    * * *  Delete references
 
         +.  delete from the entity where the tid is based
@@ -146,6 +132,10 @@ spam( "trying " + en.name )
             
             (a)  array ... remove from array
             (b)  value ... remove property
+
+        ?.  dangling references after a delete ?
+
+            what if we remove it from the array and now the array is empty, and the record is basically dangling ?
 
         ?.  what about cascading deletes ?
 
@@ -165,6 +155,12 @@ spam( "trying " + en.name )
 }
 
 object Tidlet extends Weblet {
+
+  def tidLink( tid:String ) =
+    if ( tid.endsWith( "not-available" ) )
+      Text( tid )
+    else
+      <a href={ wpath + "?tid=" + tid }>{ tid }</a>
 
   def handle( web:WebContext ) = {
     val t = T
@@ -219,7 +215,7 @@ object Tidlet extends Weblet {
 
            matches.map { m =>
              <tr>
-              <td>{ m.view.entity.name }</td><td><b>{ m.label }</b></td><td><i><a href={ wpath + "?tid=" + m.tid }>{ m.tid }</a></i></td>
+              <td>{ m.view.entity.name }</td><td><b>{ m.label }</b></td><td><i>{ tidLink( m.tid ) }</i></td>
              </tr>
            }
           }</table>
