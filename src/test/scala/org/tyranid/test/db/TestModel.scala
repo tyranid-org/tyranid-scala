@@ -52,14 +52,15 @@ object Session extends org.tyranid.session.SessionMeta {
 
 
 object Widget extends MongoEntity( tid = "ts0t" ) {
-  "id"         is DbMongoId             is 'key;
-  "name"       is DbChar(32)            is 'label;
-  "dims"       is Dimensions            ;
-  "tags"       is DbArray(DbChar(32))   ;
-  "level"      is DbInt                 ;
-  "categories" is DbLink(Category)      ;
-  "prices"     is DbArray(Pricing)      ;
-  "cert"       is DbLink(Certification) ;
+  "id"         is DbMongoId                 is 'key;
+  "name"       is DbChar(32)                is 'label;
+  "dims"       is Dimensions                ;
+  "tags"       is DbArray(DbChar(32))       ;
+  "level"      is DbInt                     ;
+  "categories" is DbLink(Category)          ;
+  "prices"     is DbArray(Pricing)          ;
+  "cert"       is DbLink(Certification)     ;
+  "tids"       is DbTid(Category,PriceType) ;
 }
 
 object Dimensions extends MongoEntity( tid = "ts1t" ) {

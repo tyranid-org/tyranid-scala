@@ -22,7 +22,7 @@ import java.util.Date
 import com.mongodb.{ BasicDBList, DBObject }
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbArray, DbLink, DbTextLike, Entity, Record, MultiPath, Path, PathNode, Tid, ViewAttribute }
+import org.tyranid.db.{ DbArray, DbLink, DbTextLike, DbTid, Entity, Record, MultiPath, Path, PathNode, Tid, ViewAttribute }
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoView, MongoRecord }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.profile.User
@@ -35,24 +35,25 @@ object Ref {
     val ( entityTid, recordTid ) = Tid.split( tid )
 
     val refEn = Entity.byTid( entityTid ).get
-spam( "recordTid=" + recordTid )
-spam( "size=" +  org.tyranid.math.Base64.toBytes( recordTid ).size )
     val refId = refEn.recordTidToId( recordTid )
 
     var query:DBObject = null
 
     def enter( path:List[PathNode], v:Any ) {
 
- spam( "enter.v=" + v.toString )
       v match {
       case link:DbLink =>
         if ( link.toEntity == refEn ) {
           val p = MultiPath( path:_* )
 
-          if ( path.head.as[ViewAttribute].domain == DbArray )
-            query( p.name ) = refId
-          else
-            query( p.name ) = Mobj( $in -> refId )
+          query( p.name ) = refId
+        }
+
+      case link:DbTid =>
+        if ( link.of.contains( refEn ) ) {
+          val p = MultiPath( path:_* )
+
+          query( p.name ) = tid
         }
 
       case array:DbArray =>
@@ -63,33 +64,41 @@ spam( "size=" +  org.tyranid.math.Base64.toBytes( recordTid ).size )
         for ( va <- v.vas )
           enter( va :: path, va.domain )
 
-      case s:DbTextLike => // if it is a tid ?
       case _ =>
       }
     }
 
-    if ( in != null ) {
+    def entity( en:Entity ) {
       query = Mobj()
-      enter( Nil, in )
-    } else {
-      for ( en <- Entity.all ) {
-        query = Mobj()
-        enter( Nil, en )
+      enter( Nil, en )
+
+      if ( en.is[Versioning] ) {
+        // handle this:   log( 'user ) = Session().user.id
+        //if ( diffs.as.nonEmpty )
+          //log( 'removals ) = PathValue.toDbObject( diffs.as )
+        
+        //if ( diffs.bs.nonEmpty )
+          //log( 'adds ) = PathValue.toDbObject( diffs.bs )
+        
+        //if ( diffs.diffs.nonEmpty )
+          //log( 'updates ) = PathDiff.toDbObject( diffs.diffs )
       }
     }
 
-    spam( "query=" + query )
+    if ( in != null ) {
+      entity( in )
+    } else {
+      for ( en <- Entity.all )
+        entity( en )
+    }
 
-    /*
+    val fullQuery =
+      if ( query.keySet.size > 1 )
+        Mobj( $or -> query )
+      else
+        query
 
-        need to find raw ids ... DbLinks
-
-        also need to find tid references, like in Volees ...
-
-
-
-     */
-
+    spam( "query=" + fullQuery )
 
   }
 

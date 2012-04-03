@@ -27,12 +27,13 @@ import org.tyranid.test.db._
 class RefSuite extends FunSuite {
   org.tyranid.boot.Boot.boot
 
-  test( "foo" ) {
+  test( "refs" ) {
 
     val catEn = org.tyranid.test.db.Category
-    spam( "tid=" + catEn.tid )
 
     Ref.to( "ts2txxxxxxxxxxxxxxxxx", in = org.tyranid.test.db.Widget )
+
+    Ref.to( "ts4txxxxxxxxxxxxxxxxx", in = org.tyranid.test.db.Widget )
   }
 }
 

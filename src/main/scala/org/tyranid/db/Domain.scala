@@ -456,6 +456,12 @@ case class DbArray( of:Domain ) extends Domain {
       */
 }
 
+case class DbTid( of:Entity* ) extends LimitedText {
+  val len = 32
+
+	val sqlName = "CHAR(" + len + ")"
+}
+
 case class DbLink( toEntity:Entity ) extends Domain {
 	lazy val sqlName = toEntity.idType match {
 		                case IdType.ID_32      => "INT"

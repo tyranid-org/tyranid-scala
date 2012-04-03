@@ -63,7 +63,3 @@ trait Versioning extends Entity {
   }
 }
 
-object Version {
-
-}
-
