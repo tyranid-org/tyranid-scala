@@ -162,7 +162,7 @@ trait Record extends Valid with BsonObject {
   def apply( va:ViewAttribute ):AnyRef
   def update( va:ViewAttribute, v:Any )
  
-  def label = s( view.labelVa.get )
+  def label = view.labelVa.flatten( va => s( va ), "n/a" )
   def idLabel:(AnyRef,String) = ( apply( view.keyVa.get ), label )
 
   def tid = entityTid + recordTid

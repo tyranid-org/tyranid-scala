@@ -19,6 +19,9 @@ package org.tyranid.db.meta
 
 import java.util.Date
 
+import scala.collection.mutable
+import scala.xml.Unparsed
+
 import com.mongodb.{ BasicDBList, DBObject }
 
 import org.tyranid.Imp._
@@ -32,13 +35,14 @@ import org.tyranid.web.{ Weblet, WebContext }
 
 object Ref {
 
-  def to( tid:String, in:Entity = null ) = {
+  def to( tid:String, in:Entity = null ):Seq[Record] = {
     val ( entityTid, recordTid ) = Tid.split( tid )
 
     val refEn = Entity.byTid( entityTid ).get
     val refId = refEn.recordTidToId( recordTid )
 
-    var query:DBObject = null
+    val matchers = mutable.ArrayBuffer[DBObject]()
+    val matches = mutable.ArrayBuffer[Record]()
 
     def enter( path:List[PathNode], dom:Domain ) {
 
@@ -47,14 +51,14 @@ object Ref {
         if ( link.toEntity == refEn ) {
           val p = MultiPath( path:_* )
 
-          query( p.name ) = refId
+          matchers += Mobj( p.name -> refId )
         }
 
       case link:DbTid =>
         if ( link.of.contains( refEn ) ) {
           val p = MultiPath( path:_* )
 
-          query( p.name ) = tid
+          matchers += Mobj( p.name -> tid )
         }
 
       case array:DbArray =>
@@ -70,11 +74,31 @@ object Ref {
     }
 
     def entity( en:Entity ) {
-      query = Mobj()
+      matchers.clear
       enter( Nil, en )
 
+      val query =
+        matchers.size match {
+        case 0 => null
+        case 1 => matchers( 0 )
+        case n => Mlist( matchers:_* )
+        }
+
+      if ( query != null ) {
+        en match {
+        case me:MongoEntity =>
+spam( "me #1, query=" + query )
+          for ( m <- me.db.find( query ) )
+            matches += me( m )
+
+        case _ =>
+          // not supported yet
+        }
+      }
+
       if ( en.is[Versioning] ) {
-        // handle this:   log( 'user ) = Session().user.id
+        // TODO:
+        // log( 'user ) = Session().user.id
         //if ( diffs.as.nonEmpty )
           //log( 'removals ) = PathValue.toDbObject( diffs.as )
         
@@ -93,14 +117,7 @@ object Ref {
         entity( en )
     }
 
-    val fullQuery =
-      if ( query.keySet.size > 1 )
-        Mobj( $or -> query )
-      else
-        query
-
-    spam( "query=" + fullQuery )
-
+    matches  
   }
 
   /*
@@ -152,14 +169,58 @@ object Reflet extends Weblet {
 
     rpath match {
     case "/" =>
+      val tid = web.req.s( 'tid )
+
       shell(
-        <form method="post" action={ wpath + "/refs/check" }>
-         <label for="tid">TID:</label><input type="text" id="tid" name="tid"/>
-         <input type="submit" class="greenBtn" value="References"/>
-        </form>
+        <div class="plainbox">
+         <div class="title">TID</div>
+         <div class="content">
+          <form method="post" action={ wpath }>
+           <div style="padding:4px;">
+            <label for="tid" style="float:left; width:70px;">TID</label>
+            <input type="text" id="tid" name="tid" value={ tid }/>
+            <input type="submit" class="greenBtn" value="Analyze"/>
+           </div>
+          </form>
+         </div>
+        </div> ++
+        { tid.notBlank |* {
+        <div class="plainbox">
+         <div class="title">Information</div>
+         <div class="content">{
+          Record.byTid( tid ) match {
+          case Some( rec ) =>
+            <table style="border-collapse:separate; border-spacing:4px;">
+             <tr><td><b>Entity</b></td><td>{ rec.view.entity.name }</td></tr>
+             <tr><td><b>Label</b></td><td>{ rec.label }</td></tr>
+             { rec match {
+               case mr:MongoRecord =>
+                 <tr><td><b>JSON</b></td><td>{ mr.obj.toString }</td></tr>
+               case _ =>
+             } }
+            </table>
+
+           case None =>
+             Unparsed( """<span style="color:red;">Invalid TID.</span>""" )
+           }
+         }</div>
+        </div>
+        <div class="plainbox">
+         <div class="title">References</div>
+         <div class="content">
+          <table class="dtable">
+           <tr><th>Entity</th><th>Label</th><th>TID</th></tr>{
+           val matches = Ref.to( tid )
+
+           matches.map { m =>
+             <tr>
+              <td>{ m.view.entity.name }</td><td><b>{ m.label }</b></td><td><i><a href={ wpath + "?tid=" + m.tid }>{ m.tid }</a></i></td>
+             </tr>
+           }
+          }</table>
+         </div>
+        </div> } }
       )
-    case "/check" =>
-      t.web.redirect( wpath + "/scheduler" )
 
     case _ =>
       _404

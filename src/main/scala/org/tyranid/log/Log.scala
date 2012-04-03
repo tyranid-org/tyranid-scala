@@ -33,6 +33,7 @@ import org.tyranid.email.AWSEmail
 import org.tyranid.http.UserAgent
 import org.tyranid.report.{ Run, MongoQuery }
 import org.tyranid.ui.{ CustomField, PathField, Search }
+import org.tyranid.web.{ Weblet, WebContext }
 
 
 object Event extends RamEntity( tid = "a0It" ) with EnumEntity[Event] {
@@ -251,5 +252,22 @@ object LogQuery extends MongoQuery {
   )
 
   val defaultFields = dataFields.take( 4 )
+}
+
+object Loglet extends Weblet {
+
+  def handle( web:WebContext ) = {
+
+    if ( !T.user.isGod )
+      _404
+
+    rpath match {
+    case "/" =>
+      shell( LogQuery.draw )
+
+    case _ =>
+      _404
+    }
+  }
 }
 
