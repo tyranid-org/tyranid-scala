@@ -24,16 +24,16 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.test.db._
 
 
-class RefSuite extends FunSuite {
+class TidSuite extends FunSuite {
   org.tyranid.boot.Boot.boot
 
   test( "refs" ) {
 
     val catEn = org.tyranid.test.db.Category
 
-    Ref.to( "ts2txxxxxxxxxxxxxxxxx", in = org.tyranid.test.db.Widget )
+    Tid.refs( "ts2txxxxxxxxxxxxxxxxx", in = org.tyranid.test.db.Widget )
 
-    Ref.to( "ts4txxxxxxxxxxxxxxxxx", in = org.tyranid.test.db.Widget )
+    Tid.refs( "ts4txxxxxxxxxxxxxxxxx", in = org.tyranid.test.db.Widget )
   }
 }
 

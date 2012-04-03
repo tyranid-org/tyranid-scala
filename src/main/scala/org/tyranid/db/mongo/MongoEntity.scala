@@ -25,7 +25,8 @@ import org.bson.types.ObjectId
 import com.mongodb.{ BasicDBObject, DB, DBCollection, DBObject }
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbLink, Attribute, Domain, Entity, Record, Scope, Tid, View, ViewAttribute }
+import org.tyranid.db.{ DbLink, Attribute, Domain, Entity, Record, Scope, View, ViewAttribute }
+import org.tyranid.db.meta.Tid
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.math.Base64
 import org.tyranid.ui.{ Input, PathField, Search }

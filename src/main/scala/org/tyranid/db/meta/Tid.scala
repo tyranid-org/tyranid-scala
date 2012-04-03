@@ -17,25 +17,28 @@
 
 package org.tyranid.db.meta
 
-import java.util.Date
-
 import scala.collection.mutable
 import scala.xml.Unparsed
 
-import com.mongodb.{ BasicDBList, DBObject }
+import org.bson.types.ObjectId
+import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ Domain, DbArray, DbLink, DbTextLike, DbTid, Entity, Record, MultiPath, Path, PathNode, Tid, ViewAttribute }
-import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoView, MongoRecord }
+import org.tyranid.db.{ Domain, DbArray, DbLink, DbTid, Entity, MultiPath, PathNode, Record }
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.profile.User
-import org.tyranid.session.Session
+import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
+import org.tyranid.math.Base64
 import org.tyranid.web.{ Weblet, WebContext }
 
 
-object Ref {
+object Tid {
 
-  def to( tid:String, in:Entity = null ):Seq[Record] = {
+  def split( tid:String ) = tid.splitAt( 4 )
+
+  def toIds( tids:Seq[String], entity:Entity ) =
+    tids.filter( _.startsWith( entity.tid ) ).map( tid => new ObjectId( Base64.toBytes( tid.substring( 4 ) ) ) )
+
+  def refs( tid:String, in:Entity = null ):Seq[Record] = {
     val ( entityTid, recordTid ) = Tid.split( tid )
 
     val refEn = Entity.byTid( entityTid ).get
@@ -159,7 +162,7 @@ spam( "me #1, query=" + query )
    */
 }
 
-object Reflet extends Weblet {
+object Tidlet extends Weblet {
 
   def handle( web:WebContext ) = {
     val t = T
@@ -210,7 +213,7 @@ object Reflet extends Weblet {
          <div class="content">
           <table class="dtable">
            <tr><th>Entity</th><th>Label</th><th>TID</th></tr>{
-           val matches = Ref.to( tid )
+           val matches = Tid.refs( tid )
 
            matches.map { m =>
              <tr>
