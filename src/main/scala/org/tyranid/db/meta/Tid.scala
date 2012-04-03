@@ -84,7 +84,7 @@ object Tid {
         matchers.size match {
         case 0 => null
         case 1 => matchers( 0 )
-        case n => Mlist( matchers:_* )
+        case n => Mobj( $or -> Mlist( matchers:_* ) )
         }
 
       if ( query != null ) {
@@ -116,8 +116,10 @@ spam( "me #1, query=" + query )
     if ( in != null ) {
       entity( in )
     } else {
-      for ( en <- Entity.all )
+      for ( en <- Entity.all ) {
+spam( "trying " + en.name )
         entity( en )
+      }
     }
 
     matches  
