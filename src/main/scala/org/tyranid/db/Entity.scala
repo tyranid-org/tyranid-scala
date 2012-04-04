@@ -61,9 +61,9 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   def as( label:String ) = { this.label = label; this }
   def is( str:String ) = {
     str match {
-    case "key"       => isKey = true
+    case "id"        => isId = true
                         if ( entity.isInstanceOf[org.tyranid.db.mongo.MongoEntity] && name != "id" )
-                          throw new IllegalArgumentException( "Cannot mark '" + name + "' as a key on the MongoDB entity '" + entity.name + "' -- MongoDB keys must be called 'id'." )
+                          throw new IllegalArgumentException( "Cannot mark '" + name + "' as an ID on the MongoDB entity '" + entity.name + "' -- MongoDB IDs must be called 'id'." )
     case "label"     => isLabel = true
     case "required"  => required = true; localValidations ::= ( _.required )
     case "temporary" => temporary = true
@@ -86,7 +86,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
 
 
 
-	var isKey = false
+	var isId    = false
 	var isLabel = false
 
   private var localValidations:List[ ( Scope ) => Option[Invalid] ] = Nil
@@ -116,6 +116,8 @@ object Entity {
 }
 
 trait Entity extends Domain with DbItem {
+  override val isSimple = false
+
   val storageName:String
 
   val searchIndex = "main"
@@ -124,6 +126,13 @@ trait Entity extends Domain with DbItem {
 	val sqlName = "invalid"
 
   def makeView:View
+
+
+	/*
+	 * * *  Labels
+	 */
+
+  lazy val labelAtt = attribs.find( _.isLabel )
 
   lazy val label = name.camelCaseToSpaceUpper
 
@@ -144,10 +153,6 @@ trait Entity extends Domain with DbItem {
 
 	def attByDbName( dbName:String ) = attribs.find( _.dbName == dbName ).get
 
-  Entity.register( this )
-
-  lazy val labelAtt = attribs.find( _.isLabel )
-
 	implicit def str2att( name: String ):Attribute =
     attribs.find( _.name == name ) match {
     case Some( a ) =>
@@ -166,14 +171,13 @@ trait Entity extends Domain with DbItem {
 	def recreate { drop; create }
 
 
-
 	/*
 	 * * *  IDs and TIDs
 	 */
 
-  lazy val idAtt   = {
-    val v = attribs.find( _.isKey )
-    if ( v == None ) throw new RuntimeException( "Missing key attribute for " + name )
+  lazy val idAtt = {
+    val v = attribs.find( _.isId )
+    if ( v == None ) throw new RuntimeException( "Missing ID attribute for " + name )
     v.get
   }
 
@@ -183,7 +187,7 @@ trait Entity extends Domain with DbItem {
   val tid:String
 
 	override lazy val idType =
-		attribs.filter( _.isKey ) match {
+		attribs.filter( _.isId ) match {
 		case as if as.size == 1 => as( 0 ).domain.idType
 		case _                  => IdType.ID_COMPLEX
 		}
@@ -309,6 +313,8 @@ trait Entity extends Domain with DbItem {
 
 		  sb.toString
     }
+
+  Entity.register( this )
 }
 
 // TODO:  should this extend RamEntity ?

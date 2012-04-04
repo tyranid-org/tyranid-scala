@@ -24,11 +24,11 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ Domain, DbArray, DbLink, DbTid, Entity, MultiPath, PathNode, Record }
+import org.tyranid.db.{ Domain, DbArray, DbLink, DbTid, Entity, MultiPath, PathNode, Record, Scope }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.math.Base64
-import org.tyranid.ui.{ Tab, TabBar }
+import org.tyranid.ui.{ PathField, Tab, TabBar }
 import org.tyranid.web.{ Weblet, WebContext }
 
 
@@ -183,7 +183,7 @@ object Tidlet extends Weblet {
       _404
 
     rpath match {
-    case "/" | "/field" | "/json" | "/ref" =>
+    case "/" | "/field" | "/json" | "/ref" | "/attrib" | "/record" =>
       shell( ui( web.req.s( 'tid ) ) )
 
     case _ =>
@@ -214,7 +214,7 @@ object Tidlet extends Weblet {
       <form method="post" action={ wpath } style="margin-top:8px;">
        <div style="padding:4px;">
         <label for="tid" style="float:left; width:40px; font-size:16px; line-height:28px; color:#888;">TID</label>
-        <input type="text" id="tid" name="tid" value={ tid } style="font-size:20px;"/>
+        <input type="text" id="tid" name="tid" value={ tid } style="font-size:20px; width:300px;"/>
         <input type="submit" class="greenBtn" value="Analyze" style="font-size:16px;"/>
        </div>
       </form>
@@ -376,8 +376,35 @@ object Tidlet extends Weblet {
     </table>
   }
 
-  def records( en:Entity ) =
-    <table class="dtable"/>
+  def records( en:Entity ) = {
+    val view = en.makeView
+    val fields = en.attribs.filter( a => a.domain.isSimple && !a.isId ).take( 6 ).map( a => PathField( a.name ).bind( view ) )
+
+    <head>
+     <script>{ Unparsed( """
+$(function() {
+  $('.dtable').on( 'click', '.drow', function(ev) {
+    window.location.href='""" + wpath + """?tid=' + $(this).attr('id');
+  });
+});
+""" ) }</script>
+    </head>
+    <table class="dtable">
+     <tr>
+      { fields.map( f => <th>{ f.label }</th> ) }
+     </tr>
+     { en.records.take( 50 ) map { rec =>
+         val s = Scope( rec )
+
+         <tr class="drow" id={ rec.tid }>{
+           fields map { f =>
+             <td>{ f.cell( s ) }</td>
+           }
+         }</tr>
+       }
+     }
+    </table>
+  }
 }
 
 

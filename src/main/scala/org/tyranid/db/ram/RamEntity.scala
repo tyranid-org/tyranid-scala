@@ -80,7 +80,7 @@ case class RamEntity( tid:String ) extends Entity {
 
 abstract class RamEnumEntity( nameLen:Int, tid:String ) extends RamEntity( tid ) {
 
-	"id"   is DbIntSerial       is 'key   ;
+	"id"   is DbIntSerial       is 'id   ;
 	"name" is DbChar( nameLen ) is 'label ;
 }
 

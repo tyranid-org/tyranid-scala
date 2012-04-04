@@ -136,6 +136,8 @@ case class MongoEntity( tid:String ) extends Entity {
     update( rec )
     rec
   }
+
+  override def records:Iterable[Record] = db.find.map( apply ).toIterable
 }
 
 case class MongoView( override val entity:MongoEntity ) extends View {

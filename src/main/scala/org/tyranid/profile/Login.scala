@@ -179,6 +179,7 @@ $( function() {
 
       web.template(
         <tyr:shell>
+         <div style="margin-top:16px; font-size:24px;">Creating an account with Volerro is Free!</div>
          <div class="plainBox">
           <div class="title">Use Social Login to Automatically Register</div>
           <div class="contents">
@@ -193,7 +194,6 @@ $( function() {
          <div class="plainBox">
           <div class="title">Manually Register</div>
           <div class="contents">
-           Or alternatively fill out the following form to create a new account:
            <form method="post" action={ web.path } id="f">
             <table>
               { Scope(user, saving = true, captcha = true).draw(ui) }

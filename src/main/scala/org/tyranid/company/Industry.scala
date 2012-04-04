@@ -31,7 +31,7 @@ import org.tyranid.db.ram.RamEntity
 
 
 object IndustryType extends RamEntity( tid = "a0Ou" ) {
-  "id"              is DbInt              is 'key;
+  "id"              is DbInt              is 'id;
   "name"            is DbChar(30)         is 'label;
   "source"          is DbUrl              ;
 
@@ -42,7 +42,7 @@ object IndustryType extends RamEntity( tid = "a0Ou" ) {
 }
 
 object GicsSector extends RamEntity( tid = "a0O1" ) {
-  "id"              is DbInt              is 'key;
+  "id"              is DbInt              is 'id;
   "name"            is DbChar(30)         is 'label;
 
   static(
@@ -60,7 +60,7 @@ object GicsSector extends RamEntity( tid = "a0O1" ) {
 }
 
 object GicsIndustryGroup extends RamEntity( tid = "a0O2" ) {
-  "id"              is DbInt               is 'key;
+  "id"              is DbInt               is 'id;
   "name"            is DbChar(30)          is 'label;
 
   static(
@@ -92,7 +92,7 @@ object GicsIndustryGroup extends RamEntity( tid = "a0O2" ) {
 }
 
 object GicsIndustry extends RamEntity( tid = "a0O3" ) {
-  "id"              is DbInt              is 'key;
+  "id"              is DbInt              is 'id;
   "name"            is DbChar(40)         is 'label;
 
   static(
@@ -172,7 +172,7 @@ object GicsIndustry extends RamEntity( tid = "a0O3" ) {
 object LinkedInCategory extends RamEntity( tid = "a0O4" ) {
   override lazy val dbName = "businessCategories"
 
-  "id"     is DbChar(8)   is 'key;
+  "id"     is DbChar(8)   is 'id;
   "name"   is DbChar(50)  is 'label;
 
   static(
@@ -199,7 +199,7 @@ object LinkedInCategory extends RamEntity( tid = "a0O4" ) {
 object Industry extends RamEntity( tid = "a0O5" ) {
 	override lazy val dbName = "businessCategories"
 
-  "id"             is DbInt              is 'key;
+  "id"             is DbInt              is 'id;
   "category"       is DbChar(64)         ;
   "name"           is DbChar(64)         is 'label;
   "description"    is DbChar(1024)       ;

@@ -36,6 +36,8 @@ import org.tyranid.web.WebContext
 
 trait Domain extends Valid {
 
+  val isSimple = true
+
   lazy val name = getClass.getSimpleName.replaceAll( "^Db", "" ).replace( "$", "" ).uncapitalize
 
 	lazy val idType = IdType.ID_COMPLEX
@@ -419,6 +421,8 @@ object DbDateTime extends DbDateLike {
  */
 
 case class DbArray( of:Domain ) extends Domain {
+  override val isSimple = false
+
 	val sqlName = "invalid"
 
   /*
@@ -484,10 +488,10 @@ case class DbTid( of:Entity* ) extends LimitedText {
 
 case class DbLink( toEntity:Entity ) extends Domain {
 	lazy val sqlName = toEntity.idType match {
-		                case IdType.ID_32      => "INT"
-		                case IdType.ID_64      => "BIGINT"
-		                case IdType.ID_COMPLEX => throw new ModelException( toEntity.name + " has a complex ID and cannot be linked to." )
-										}
+		                 case IdType.ID_32      => "INT"
+		                 case IdType.ID_64      => "BIGINT"
+		                 case IdType.ID_COMPLEX => throw new ModelException( toEntity.name + " has a complex ID and cannot be linked to." )
+										 }
 
   override def idToRecordTid( v:Any )                = toEntity.idAtt.domain.idToRecordTid( v )
   override def recordTidToId( recordTid:String ):Any = toEntity.idAtt.domain.recordTidToId( recordTid )

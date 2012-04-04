@@ -30,7 +30,7 @@ object Language extends RamEntity( tid = "a0Hw" ) {
 
   // changelist:  http://www.loc.gov/standards/iso639-2/php/code_changes.php
 
-  "id"     is DbInt      is 'key;
+  "id"     is DbInt      is 'id;
   "bib3"   is DbChar(3)  ;
   "ter3"   is DbChar(3)  ;
   "al2"    is DbChar(2)  as "ISO 639-1";
