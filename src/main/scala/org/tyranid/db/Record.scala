@@ -92,7 +92,7 @@ trait View {
 
   def vas:Iterable[ViewAttribute]
 
-  lazy val keyVa   = entity.keyAtt.map( a => apply( a.name ) )
+  lazy val keyVa   = apply( entity.idAtt.name )
   lazy val labelVa = entity.labelAtt.map( a => apply( a.name ) )
 
   def apply( name:String ):ViewAttribute
@@ -148,6 +148,8 @@ object Record {
 trait Record extends Valid with BsonObject {
   val view:View
 
+  def flatten = Path.flatten( this )
+
   val parent:Record
 
   def entity = view.entity
@@ -162,13 +164,13 @@ trait Record extends Valid with BsonObject {
   def apply( va:ViewAttribute ):AnyRef
   def update( va:ViewAttribute, v:Any )
  
-  def label = view.labelVa.flatten( va => s( va ), "n/a" )
-  def idLabel:(AnyRef,String) = ( apply( view.keyVa.get ), label )
+  def label                   = view.labelVa.flatten( va => s( va ), "n/a" )
+  def idLabel:(AnyRef,String) = ( apply( view.keyVa ), label )
 
   def tid = entityTid + recordTid
 
   def entityTid = view.entity.tid
-  def recordTid = view.keyVa.flatten( kva => kva.att.domain.tid( this, kva ), "-not-available" )
+  def recordTid = view.keyVa.att.domain.idToRecordTid( this( view.keyVa ) )
 
   def clear:Unit = throw new UnsupportedOperationException
 

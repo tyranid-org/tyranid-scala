@@ -22,6 +22,7 @@ import java.util.Date
 import scala.xml.{ NodeSeq, Text, Unparsed }
 
 import org.tyranid.Imp._
+import org.tyranid.db.meta.Tid
 import org.tyranid.logic.{ Valid, Invalid }
 import org.tyranid.math.Base64
 import org.tyranid.time.{ Time }
@@ -35,11 +36,14 @@ import org.tyranid.web.WebContext
 
 trait Domain extends Valid {
 
+  lazy val name = getClass.getSimpleName.replaceAll( "^Db", "" ).replace( "$", "" ).uncapitalize
+
 	lazy val idType = IdType.ID_COMPLEX
 
 	val sqlName:String
 
-  def tid( r:Record, va:ViewAttribute ) = "invalid-" + getClass.getSimpleName
+  def idToRecordTid( v:Any )                = "invalid-" + getClass.getSimpleName
+  def recordTidToId( recordTid:String ):Any = throw new UnsupportedOperationException
 
   /**
    * Is this field automatic populated by the underlying DBMS.
@@ -130,7 +134,8 @@ trait Domain extends Valid {
 abstract class DbIntish extends Domain {
 	override lazy val idType = IdType.ID_32
 
-  override def tid( r:Record, va:ViewAttribute ) = Base64.toString( r i va )
+  override def idToRecordTid( v:Any )                = if ( v != null ) Base64.toString( v.coerceInt ) else null
+  override def recordTidToId( recordTid:String ):Any = Base64.toInt( recordTid )
 
   override def extract( s:Scope, f:PathField ) =
     if ( !commonExtract( s, f ) ) {
@@ -156,7 +161,8 @@ object DbIntSerial extends DbIntish {
 abstract class DbLongish extends Domain {
 	override lazy val idType = IdType.ID_64
 
-  override def tid( r:Record, va:ViewAttribute ) = Base64.toString( r l va )
+  override def idToRecordTid( v:Any )                = if ( v != null ) Base64.toString( v.coerceLong ) else null
+  override def recordTidToId( recordTid:String ):Any = Base64.toLong( recordTid )
 }
 
 object DbLong extends DbLongish {
@@ -460,6 +466,20 @@ case class DbTid( of:Entity* ) extends LimitedText {
   val len = 32
 
 	val sqlName = "CHAR(" + len + ")"
+
+	override def see( v:Any ) = {
+
+    if ( v == null ) {
+      ""
+    } else {
+      val ( entity, id ) = Tid.parse( v.toString )
+
+      id match {
+      case null => ""
+      case n    => entity.labelFor( n )
+      }
+    }
+  }
 }
 
 case class DbLink( toEntity:Entity ) extends Domain {
@@ -468,6 +488,9 @@ case class DbLink( toEntity:Entity ) extends Domain {
 		                case IdType.ID_64      => "BIGINT"
 		                case IdType.ID_COMPLEX => throw new ModelException( toEntity.name + " has a complex ID and cannot be linked to." )
 										}
+
+  override def idToRecordTid( v:Any )                = toEntity.idAtt.domain.idToRecordTid( v )
+  override def recordTidToId( recordTid:String ):Any = toEntity.idAtt.domain.recordTidToId( recordTid )
 
   override def ui( s:Scope, f:PathField ) = {
     
@@ -512,7 +535,7 @@ case class DbLink( toEntity:Entity ) extends Domain {
 	override def see( v:Any ) =
 		v match {
 		case null => ""
-		case n:Number => toEntity.labelFor( n )
+		case n    => toEntity.labelFor( n )
 		}
 
   override def cell( s:Scope, f:PathField ) = Text( see( s.rec( f.va.name ) ) )

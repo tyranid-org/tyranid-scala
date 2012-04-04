@@ -26,6 +26,13 @@ import org.tyranid.Imp._
 
 class AnyImp[T <: Any]( v:T ) {
 
+  /**
+   * null-safe toString().  Need a better name.
+   */
+  def safeString:String =
+    if ( v != null ) v.toString
+    else             ""
+
   def is[U] = v.isInstanceOf[U]
   def as[U] = v.asInstanceOf[U]
 

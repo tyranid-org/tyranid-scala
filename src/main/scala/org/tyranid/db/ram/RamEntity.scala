@@ -21,10 +21,11 @@ import scala.collection.mutable.{ ArrayBuffer, HashMap }
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbIntSerial, DbChar, Entity, View, ViewAttribute }
-import org.tyranid.db.tuple.TupleView
+import org.tyranid.db.tuple.{ Tuple, TupleView }
 
 
 case class RamEntity( tid:String ) extends Entity {
+  val storageName = "RAM"
 
 	override lazy val dbName = name.plural
 
@@ -71,6 +72,9 @@ case class RamEntity( tid:String ) extends Entity {
   override def idLabels:Seq[(AnyRef,String)] = staticRecords.map( _.idLabel )
 
   def byId( id:Long ) = staticIdIndex.get( id )
+
+  override def byRecordTid( recordTid:String ):Option[Tuple] =
+    byId( recordTidToId( recordTid ).coerceLong )
 }
 
 

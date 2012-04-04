@@ -22,6 +22,7 @@ import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
 import org.tyranid.db.es.{ NoSearch, Searchable }
+import org.tyranid.db.meta.Tid
 import org.tyranid.db.tuple.{ TupleView, Tuple }
 import org.tyranid.logic.{ Invalid, Valid }
 import org.tyranid.db.es.Es
@@ -115,15 +116,10 @@ object Entity {
 }
 
 trait Entity extends Domain with DbItem {
+  val storageName:String
 
   val searchIndex = "main"
   lazy val isSearchable = attribs.exists( _.search.text )
-
-
-  /**
-   * Tyranid ID.  This is a 3-byte identifier stored as a 4-character base64 string.  All Entity TIDs should be unique.
-   */
-  val tid:String
 
 	val sqlName = "invalid"
 
@@ -148,21 +144,9 @@ trait Entity extends Domain with DbItem {
 
 	def attByDbName( dbName:String ) = attribs.find( _.dbName == dbName ).get
 
-	val name = getClass.getSimpleName.replace( "$", "" ).uncapitalize
-
   Entity.register( this )
 
-  lazy val keyAtt   = attribs.find( _.isKey )
   lazy val labelAtt = attribs.find( _.isLabel )
-
-
-	override lazy val idType =
-		attribs.filter( _.isKey ) match {
-		case as if as.size == 1 => as( 0 ).domain.idType
-		case _                  => IdType.ID_COMPLEX
-		}
-
-  def recordTidToId( recordTid:String ):Any = throw new UnsupportedOperationException
 
 	implicit def str2att( name: String ):Attribute =
     attribs.find( _.name == name ) match {
@@ -182,13 +166,49 @@ trait Entity extends Domain with DbItem {
 	def recreate { drop; create }
 
 
+
+	/*
+	 * * *  IDs and TIDs
+	 */
+
+  lazy val idAtt   = {
+    val v = attribs.find( _.isKey )
+    if ( v == None ) throw new RuntimeException( "Missing key attribute for " + name )
+    v.get
+  }
+
+  /**
+   * Tyranid ID.  This is a 3-byte identifier stored as a 4-character base64 string.  All Entity TIDs should be unique.
+   */
+  val tid:String
+
+	override lazy val idType =
+		attribs.filter( _.isKey ) match {
+		case as if as.size == 1 => as( 0 ).domain.idType
+		case _                  => IdType.ID_COMPLEX
+		}
+
+  def idToTid( id:Any ) = tid + idToRecordTid( id )
+  def tidToId( tid:String ) = {
+
+    val ( entityTid, recordTid ) = Tid.split( tid )
+
+    assert( Entity.byTid( entityTid ).get == this )
+
+    recordTidToId( recordTid )
+  }
+
+  override def idToRecordTid( id:Any )               = idAtt.domain.idToRecordTid( id )
+  override def recordTidToId( recordTid:String ):Any = idAtt.domain.recordTidToId( recordTid )
+
+  
   /*
    * * *  Records
    */
 
   def records:Iterable[Record] = Nil
   
-  def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException // ... yet
+  def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException
 
   def save( r:Record ) {
     if ( isSearchable )

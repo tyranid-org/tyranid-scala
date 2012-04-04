@@ -35,14 +35,14 @@ import org.tyranid.ui.{ Input, PathField, Search }
 case object DbMongoId extends Domain {
   val sqlName = "invalid"
 
-  override def tid( r:Record, va:ViewAttribute ) = {
-    val oid = r.oid( va )
+  override def idToRecordTid( v:Any ) =
+    v match {
+    case oid:ObjectId => Base64.toString( oid.toByteArray )
+    case _ => null
+    }
 
-    if ( oid == null )
-      null
-    else
-      Base64.toString( oid.toByteArray )
-  }
+  override def recordTidToId( recordTid:String ) =
+    new ObjectId( Base64.toBytes( recordTid ) )
 
   override def ui( s:Scope, f:PathField ) =
     Input( f.id, s.rec.s( f.va.name ), ( f.effOpts ++ Seq( "class" -> "textInput" ) ):_*  )
@@ -51,6 +51,7 @@ case object DbMongoId extends Domain {
 }
 
 case class MongoEntity( tid:String ) extends Entity {
+  val storageName = "MongoDB"
 
 	override lazy val dbName = name.plural
 
@@ -75,27 +76,11 @@ case class MongoEntity( tid:String ) extends Entity {
   def create {}
   def drop   { db.drop }
 
-  def apply( obj:DBObject ) =
-    if ( obj != null ) MongoRecord( makeView, obj ) else null
+  def apply( obj:DBObject ) = if ( obj != null ) MongoRecord( makeView, obj ) else null
 
-  def toTid( oid:ObjectId )       = tid + toRecordTid( oid )
-  def toRecordTid( oid:ObjectId ) = Base64.toString( oid.toByteArray )
-  
-  def tidToId( tid:String ) = {
+  override def byRecordTid( recordTid:String ):Option[MongoRecord] = byId( recordTidToId( recordTid ) )
 
-    val ( entityTid, recordTid ) = Tid.split( tid )
-
-    assert( Entity.byTid( entityTid ).get == this )
-
-    recordTidToId( recordTid )
-  }
-
-  override def recordTidToId( recordTid:String ) = new ObjectId( Base64.toBytes( recordTid ) )
-  
-  override def byRecordTid( recordTid:String ):Option[MongoRecord] =
-    byId( recordTidToId( recordTid ) )
-
-  def byId( id:AnyRef ) = {
+  def byId( id:Any ) = {
     val obj = db.findOne( id )
     obj != null |* Some( apply( obj ) )
   }

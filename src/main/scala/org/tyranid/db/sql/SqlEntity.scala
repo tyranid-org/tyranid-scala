@@ -25,6 +25,7 @@ import org.tyranid.db.tuple.{ TupleView, Tuple }
 
 
 case class SqlEntity( tid:String ) extends Entity {
+  val storageName = "SQL"
 
 	override lazy val dbName = name.camelCaseToUnderLower.plural
 
