@@ -154,6 +154,80 @@ trait BsonObject extends Deep {
     case null    => None
     case t:Date  => Some( t )
     }
+
+  def toPretty( markup:Boolean = false ) = {
+    val sb = new StringBuilder
+    var depth = 0
+
+    def m( s:String, cls:String ) =
+      if ( markup )
+        "<span class=\"bson" + cls + "\">" + s + "</span>"
+      else
+        s
+
+    def enter( v:Any ) {
+
+      v match {
+      case a:org.bson.types.BasicBSONList =>
+        depth += 1
+        var first = true
+        sb ++= m( "[", "Bracket" ) += '\n'
+        for ( i <- 0 until a.size ) {
+          if ( first )
+            first = false
+          else
+            sb ++= ",\n"
+
+          sb ++= ( "  " * depth )
+          enter( a.get( i ) )
+        }
+
+        depth -= 1
+        sb += '\n' ++= ( "  " * depth ) ++= m( "]", "Bracket" )
+
+      case o:DBObject =>
+        depth += 1
+        var first = true
+        sb ++= m( "{", "Brace" ) += '\n'
+        for ( k <- o.keys.sorted ) {
+          if ( first )
+            first = false
+          else
+            sb ++= ",\n"
+          
+          sb ++= ( "  " * depth ) ++= m( k, "Key" ) ++= ": "
+          enter( o( k ) )
+        }
+
+        depth -= 1
+        sb += '\n' ++= ( "  " * depth ) ++= m( "}", "Brace" )
+
+      case null =>
+        sb ++= "null"
+
+      case t:Date =>
+        sb ++= m( "ISODate(\"", "Type" ) ++= t.toIso8601 ++= m( "\")", "Type" )
+
+      case s:String =>
+        sb += '"' ++= s.encJson += '"'
+
+      case i:Integer =>
+        sb ++= "NumberInt(" ++= i.toString += ')'
+
+      case l:java.lang.Long =>
+        sb ++= "NumberLong(" ++= l.toString += ')'
+
+      case oid:org.bson.types.ObjectId =>
+        sb ++= "ObjectId(" ++= oid.toString += ')'
+
+      case v =>
+        sb ++= v.toString
+      }
+    }
+
+    enter( this )
+    sb.toString
+  }
 }
 
 trait BsonList extends BsonObject with mutable.Seq[Any] {

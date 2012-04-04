@@ -325,9 +325,7 @@ object Tidlet extends Weblet {
   def json( rec:Record ) = {
     rec match {
     case mr:MongoRecord =>
-      <div style="padding:2px 0;">
-       { mr.obj.toString }
-      </div>
+      <pre style="padding:2px 0;">{ Unparsed( mr.obj.toPretty( markup = true ) ) }</pre>
 
     case _ =>
       <div style="padding:2px 0;">Not a MongoDB object.</div>
