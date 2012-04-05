@@ -201,7 +201,9 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
 
     var first = true
 
-    for ( capo <- Cap.db.find( Mobj() );
+    val capos = Cap.db.find.toSeq.sortBy( -_.d( 'radius ) )
+
+    for ( capo <- capos;
           longLat = capo.a_?( 'longLat ) if longLat.size > 0 ) {
       val cap = Cap( capo )
 
