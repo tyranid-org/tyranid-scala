@@ -183,8 +183,8 @@ object Tid {
       case en:Entity =>
         for ( va <- en.makeView.vas )
           if ( enter( va :: path ) ) {
-            val r = if ( p != Nil ) p.rec( rec ) else rec
-            r.remove( va )
+            val r = if ( p != Nil ) p.get( rec ).as[DBObject] else rec.as[DBObject]
+            r.remove( va.name )
 
             if ( va.att.owner )
               dangling = true
