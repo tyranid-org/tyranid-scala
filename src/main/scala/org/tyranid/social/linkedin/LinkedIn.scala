@@ -486,7 +486,7 @@ object LinkedInlet extends Weblet {
       if ( profile.contains( 'pictureUrl ) ) {
         val url = profile.s( 'pictureUrl )
         val bucket = B.getS3Bucket( "public" )
-        u( 'thumbnail ) = S3.storeUrl( bucket, url, File.pathFor( B.User.tid, B.User.toRecordTid( u.oid( "_id" ) ), "thumbnail", url ) )
+        u( 'thumbnail ) = S3.storeUrl( bucket, url, File.pathFor( B.User.tid, B.User.toRecordTid( u.oid( "id" ) ), "thumbnail", url ) )
         s.notice( "Your " + B.applicationName + " profile image has been set to your LinkedIn profile image." )
         B.User.db.update( Mobj( "_id" -> u.id ), Mobj( $set -> Mobj( "thumbnail" -> u.s( 'thumbnail ) ) ) )
       }
