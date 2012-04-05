@@ -39,9 +39,13 @@ object Link {
 
 object Button {
 
-  def link( name:String, href:String, color:String ) =
-    <a class={ color + "Btn" } href={ href }><span>{ name }</span></a>
-
+  def link( name:String, href:String, color:String, redirectEndpoint:String = null, dialogTitle:String = null ) =
+    if ( redirectEndpoint == null ) {
+      <a class={ color + "Btn" } href={ href }><span>{ name }</span></a>
+    } else {
+      <a class={ color + "Btn" } href={ href } onClick={ "new TDialog( '" + href + "','" + redirectEndpoint + "', '" + dialogTitle + "' ).open(); return false;" }><span>{ name }</span></a>
+    } 
+    
   def bar( buttons:Node* ) =
     <table class="btnbar">
      <tr>
