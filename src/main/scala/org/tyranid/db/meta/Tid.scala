@@ -330,10 +330,7 @@ object Tidlet extends Weblet {
       }
     }
 
-    <div class="plainbox">
-     <div class="title">Fields</div>
-     <div class="content">{ ui( rec ) }</div>
-    </div>
+    ui( rec ).flatten
   }
 
   def json( rec:Record ) = {
