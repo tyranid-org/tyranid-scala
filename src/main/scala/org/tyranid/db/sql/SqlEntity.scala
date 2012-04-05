@@ -25,6 +25,7 @@ import org.tyranid.db.tuple.{ TupleView, Tuple }
 
 
 case class SqlEntity( tid:String ) extends Entity {
+  val storageName = "SQL"
 
 	override lazy val dbName = name.camelCaseToUnderLower.plural
 
@@ -36,7 +37,7 @@ case class SqlEntity( tid:String ) extends Entity {
 		for ( a <- attribs )
 			sb ++= "  " ++= a.dbName ++= " " ++= a.domain.sqlName ++= ",\n"
 
-		sb ++= "  PRIMARY KEY(" ++= attribs.filter( _.isKey ).map( _.dbName ).mkString( ", " ) ++= ")\n"
+		sb ++= "  PRIMARY KEY(" ++= attribs.filter( _.isId ).map( _.dbName ).mkString( ", " ) ++= ")\n"
 
 		sb ++= ")"
 		sb.toString
@@ -97,7 +98,7 @@ UPDATE """ ++= en.dbName ++= """
 
 			var first = true
 	 		evas foreach { va =>
-				if ( !va.att.isKey ) {
+				if ( !va.att.isId ) {
 					if ( first ) first = false
 					else         sb ++= ", "
 					sb ++= va.att.dbName ++= " = "
@@ -134,7 +135,7 @@ UPDATE """ ++= en.dbName ++= """
 
 abstract class SqlEnumEntity( nameLen:Int, tid:String ) extends SqlEntity( tid ) {
 
-	"id"   is DbIntSerial       is 'key   ;
+	"id"   is DbIntSerial       is 'id   ;
 	"name" is DbChar( nameLen ) is 'label ;
 }
 

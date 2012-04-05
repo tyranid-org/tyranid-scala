@@ -152,6 +152,8 @@ class DateImp( d:Date ) {
     if ( d == null ) null
     else             Time.DateTimeFormat.format( d )
 
+  def toIso8601 = toUtcCalendar.format( iso8601 = true )
+
   def toRfc1123 =
     if ( d == null ) null
     else             Time.Rfc1123Format.format( d )

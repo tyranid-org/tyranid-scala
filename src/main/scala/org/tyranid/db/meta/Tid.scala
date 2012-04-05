@@ -18,27 +18,44 @@
 package org.tyranid.db.meta
 
 import scala.collection.mutable
-import scala.xml.{ Text, Unparsed }
+import scala.xml.{ NodeSeq, Text, Unparsed }
 
 import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ Domain, DbArray, DbLink, DbTid, Entity, MultiPath, PathNode, Record }
+import org.tyranid.db.{ Domain, DbArray, DbLink, DbTid, Entity, MultiPath, PathNode, PathValue, Record, Scope }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.math.Base64
+import org.tyranid.ui.{ PathField, Tab, TabBar }
 import org.tyranid.web.{ Weblet, WebContext }
 
+
+case class DeleteResults( cascadeFailures:Seq[Record], updates:Seq[Record], deletes:Seq[Record] )
 
 object Tid {
 
   def split( tid:String ) = tid.splitAt( 4 )
 
+  def parse( tid:String ):(Entity,Any) =
+    if ( tid.isBlank ) {
+      ( null, null )
+    } else {
+      val ( entityTid, recordTid ) = split( tid )
+
+      val en = Entity.byTid( entityTid ).get
+
+      if ( recordTid.isBlank )
+        ( en, null )
+      else
+        ( en, en.recordTidToId( recordTid ) )
+    }
+
   def toIds( tids:Seq[String], entity:Entity ) =
     tids.filter( _.startsWith( entity.tid ) ).map( tid => new ObjectId( Base64.toBytes( tid.substring( 4 ) ) ) )
 
-  def refs( tid:String, in:Entity = null ):Seq[Record] = {
+  def references( tid:String, in:Entity = null ):Seq[Record] = {
     val ( entityTid, recordTid ) = Tid.split( tid )
 
     val refEn = Entity.byTid( entityTid ).get
@@ -90,7 +107,6 @@ object Tid {
       if ( query != null ) {
         en match {
         case me:MongoEntity =>
-spam( "me #1, query=" + query )
           for ( m <- me.db.find( query ) )
             matches += me( m )
 
@@ -123,44 +139,52 @@ spam( "me #1, query=" + query )
     matches  
   }
 
-  /*
-   * * *  Delete references
+  def delete( tid:String ) = {
 
-        +.  delete from the entity where the tid is based
+    val refs = references( tid )
 
-            remove from entities where it is foreign ...
-            
-            (a)  array ... remove from array
-            (b)  value ... remove property
+    val cascadeFailures = mutable.ArrayBuffer[Record]()
+    val updates         = mutable.ArrayBuffer[Record]()
+    val deletes         = mutable.ArrayBuffer[Record]()
 
-        ?.  dangling references after a delete ?
+    for ( ref <- refs ) {
 
-            what if we remove it from the array and now the array is empty, and the record is basically dangling ?
+      // TODO:  remove the references from the fields
 
-        ?.  what about cascading deletes ?
+      if ( false /* TODO:  any owned fields become null or empty */ ) {
 
-            this should only come into play when we add in ownership
+        val refRefs = references( ref.tid ).filter( rr => !refs.exists( _.tid == rr.tid ) )
 
+        if ( refRefs.nonEmpty )
+          cascadeFailures ++= refRefs
+        else
+          deletes += ref
+      } else {
+        updates += ref
+      }
+    }
 
-   * * *  Ownership
+    if ( cascadeFailures.isEmpty ) {
+      for ( ref <- updates ) {
+        // TODO:  save ref here
+      }
 
+      for ( ref <- deletes ) {
+        // TODO:  delete ref here
+      }
+    }
 
-   * * *  Versioning
-
-       +.  simple links in version (currently just User)
-
-       +.  complex links in differences
-
-   */
+    DeleteResults( cascadeFailures = cascadeFailures, updates = updates, deletes = deletes )
+  }
 }
 
 object Tidlet extends Weblet {
 
-  def tidLink( tid:String ) =
+  def tidLink( tid:String, label:String = null ) =
     if ( tid.endsWith( "not-available" ) )
       Text( tid )
     else
-      <a href={ wpath + "?tid=" + tid }>{ tid }</a>
+      <a href={ wpath + "/field?tid=" + tid }>{ if ( label.notBlank ) label else tid }</a>
 
   def handle( web:WebContext ) = {
     val t = T
@@ -168,64 +192,227 @@ object Tidlet extends Weblet {
     if ( !t.user.isGod )
       _404
 
+    var tid = web.req.s( 'tid )
+    if ( tid.isBlank )
+      tid = t.session.lastTid
+    else
+      t.session.lastTid = tid
+
     rpath match {
-    case "/" =>
-      val tid = web.req.s( 'tid )
-
-      shell(
-        <div class="plainbox">
-         <div class="title">TID</div>
-         <div class="content">
-          <form method="post" action={ wpath }>
-           <div style="padding:4px;">
-            <label for="tid" style="float:left; width:70px;">TID</label>
-            <input type="text" id="tid" name="tid" value={ tid }/>
-            <input type="submit" class="greenBtn" value="Analyze"/>
-           </div>
-          </form>
-         </div>
-        </div> ++
-        { tid.notBlank |* {
-        <div class="plainbox">
-         <div class="title">Information</div>
-         <div class="content">{
-          Record.byTid( tid ) match {
-          case Some( rec ) =>
-            <table style="border-collapse:separate; border-spacing:4px;">
-             <tr><td><b>Entity</b></td><td>{ rec.view.entity.name }</td></tr>
-             <tr><td><b>Label</b></td><td>{ rec.label }</td></tr>
-             { rec match {
-               case mr:MongoRecord =>
-                 <tr><td><b>JSON</b></td><td>{ mr.obj.toString }</td></tr>
-               case _ =>
-             } }
-            </table>
-
-           case None =>
-             Unparsed( """<span style="color:red;">Invalid TID.</span>""" )
-           }
-         }</div>
-        </div>
-        <div class="plainbox">
-         <div class="title">References</div>
-         <div class="content">
-          <table class="dtable">
-           <tr><th>Entity</th><th>Label</th><th>TID</th></tr>{
-           val matches = Tid.refs( tid )
-
-           matches.map { m =>
-             <tr>
-              <td>{ m.view.entity.name }</td><td><b>{ m.label }</b></td><td><i>{ tidLink( m.tid ) }</i></td>
-             </tr>
-           }
-          }</table>
-         </div>
-        </div> } }
-      )
+    case "/" | "/field" | "/json" | "/ref" | "/attrib" | "/record" =>
+      shell( ui( tid ) )
 
     case _ =>
       _404
     }
+  }
+
+  val entityTabBar =
+    TabBar( this,
+      Tab( "/attrib", Text( "Attributes" ), default = true ),
+      Tab( "/record", Text( "Records" ) )
+    )
+
+  val recordTabBar =
+    TabBar( this,
+      Tab( "/field", Text( "Fields" ), default = true ),
+      Tab( "/json",  Text( "JSON" ) ),
+      Tab( "/ref",   Text( "Refs" ) )
+    )
+
+  def ui( tid:String ) = {
+
+    val ( entity, id ) = Tid.parse( tid )
+    val rec = id != null |* Record.byTid( tid )
+
+    <div class="plainbox">
+     <div class="content">
+      <form method="post" action={ wpath } style="margin-top:8px;">
+       <div style="padding:4px;">
+        <label for="tid" style="float:left; width:40px; font-size:16px; line-height:28px; color:#888;">TID</label>
+        <input type="text" id="tid" name="tid" value={ tid } style="font-size:20px; width:300px;"/>
+        <input type="submit" class="greenBtn" value="Analyze" style="font-size:16px;"/>
+       </div>
+      </form>
+     </div>
+    </div> ++
+    { if ( rec.isDefined ) {
+        val r = rec.get
+
+        <div class="fieldHeader">
+         <label>Type</label><span>Record</span>
+         <label style="margin-left:16px;">Label</label><span>{ r.label.summarize() }</span>
+         <label style="margin-left:16px;">Entity</label><span><a href={ wpath + "/field?tid=" + entity.tid }>{ entity.name }</a></span>
+         <label style="margin-left:16px;">Storage</label><span>{ r.view.entity.storageName }</span>
+        </div> ++
+        { recordTabBar.draw( qs = "?tid=" + tid ) } ++
+        { recordTabBar.choice match {
+          case "/field" => fields( r )
+          case "/json"  => json( r )
+          case "/ref"   => refs( tid )
+          }
+        }
+      } else if ( entity != null ) {
+        <div class="fieldHeader">
+         <label>Type</label><span>Entity</span>
+         <label style="margin-left:16px;">Label</label><span>{ entity.label }</span>
+         <label style="margin-left:16px;">Entity</label><span>{ entity.name }</span>
+         <label style="margin-left:16px;">Storage</label><span>{ entity.storageName }</span>
+        </div> ++
+        { entityTabBar.draw( qs = "?tid=" + tid ) } ++
+        { entityTabBar.choice match {
+          case "/attrib" => attribs( entity )
+          case "/record" => records( entity )
+          }
+        }
+      } else {
+         tid.notBlank |* Unparsed( """<span style="color:red;">Invalid TID.</span>""" )
+      }
+    }
+  }
+
+  def fields( rec:Record ) = {
+
+    def ui( rec:Record ) = {
+      val pathValues = rec.flatten.sorted( PathValue.orderByLabel )
+      val scope = new Scope( rec )
+
+      var odd = true
+
+      def divStyle = "padding:2px 0;" + ( odd |* " background:#f8f8f8;" )
+
+      for ( pv <- pathValues ) yield {
+        val path = pv.path
+        val va = path.leaf
+        val id = va.name
+
+        odd = !odd
+
+        val v = path.get( rec )
+
+        val domain =
+          va.domain match {
+          case array:DbArray => array.of
+          case dom           => dom
+          }
+
+        domain match {
+        case link:DbLink =>
+          if ( link.toEntity == null )
+            throw new RuntimeException( va.view.entity.name + "." + va.name + " is null!" )
+
+          val recTid = link.idToRecordTid( v )
+
+          recTid != null |* {
+            val tid = link.toEntity.tid + recTid
+
+            <div style={ divStyle }>
+             <label for={ id } style="float:left;">{ path.label }</label>
+             <span id={ id } style="display:block; margin-left:400px;">{ tidLink( tid, link.see( v ) ) }</span>
+            </div>
+          }
+
+        case tlink:DbTid =>
+          v != null |* {
+            <div style={ divStyle }>
+             <label for={ id } style="float:left;">{ path.label }</label>
+             <span id={ id } style="display:block; margin-left:400px;">{ tidLink( v.toString, tlink.see( v ) ) }</span>
+            </div>
+          }
+
+        case d =>
+          v.safeString.notBlank |*
+          <div style={ divStyle }>
+           <label for={ id } style="float:left;">{ path.label }</label>
+           <span id={ id } style="display:block; margin-left:400px;">{ PathField( pv.path ).cell( scope ) }</span>
+          </div>
+        }
+      }
+    }
+
+    ui( rec ).flatten
+  }
+
+  def json( rec:Record ) = {
+    rec match {
+    case mr:MongoRecord =>
+      <pre style="padding:2px 0;">{ Unparsed( mr.obj.toPretty( markup = true ) ) }</pre>
+
+    case _ =>
+      <div style="padding:2px 0;">Not a MongoDB object.</div>
+    }
+  }
+
+  def refs( tid:String ) =
+    <table class="dtable">
+     <tr><th>Entity</th><th>Label</th><th>TID</th></tr>{
+       val matches = Tid.references( tid )
+
+       matches.map { m =>
+         <tr>
+          <td>{ m.view.entity.name }</td><td><b>{ m.label }</b></td><td><i>{ tidLink( m.tid ) }</i></td>
+         </tr>
+       }
+    }</table>
+
+  def attribs( en:Entity ) = {
+
+    def describe( d:Domain ):String = {
+      d match {
+      case    en:Entity  => tidLink( en.tid, en.label ).toString
+      case array:DbArray => "array(" + describe( array.of ) + ")"
+      case  link:DbLink  => "link(" + describe( link.toEntity ) + ")"
+      case  tids:DbTid   => "tid(" + tids.of.map( describe ).mkString( "," ) + ")"
+      case     d         => d.name
+      }
+    }
+
+    <table class="dtable">
+     <tr>
+      <th>Name</th>
+      <th>Label</th>
+      <th>Domain</th>
+      <th style="width:300px;">Help</th>
+     </tr>
+     { for ( a <- en.attribs.clone.sortBy( _.name ) ) yield
+       <tr>
+        <td>{ a.name }</td>
+        <td>{ a.label }</td>
+        <td>{ Unparsed( describe( a.domain ) ) }</td>
+        <td>{ a.help }</td>
+       </tr>
+     }
+    </table>
+  }
+
+  def records( en:Entity ) = {
+    val view = en.makeView
+    val fields = en.attribs.filter( a => a.domain.isSimple && !a.isId ).take( 6 ).map( a => PathField( a.name ).bind( view ) )
+
+    <head>
+     <script>{ Unparsed( """
+$(function() {
+  $('.dtable').on( 'click', '.drow', function(ev) {
+    window.location.href='""" + wpath + """?tid=' + $(this).attr('id');
+  });
+});
+""" ) }</script>
+    </head>
+    <table class="dtable">
+     <tr>
+      { fields.map( f => <th>{ f.label }</th> ) }
+     </tr>
+     { en.records.take( 50 ) map { rec =>
+         val s = Scope( rec )
+
+         <tr class="drow" id={ rec.tid }>{
+           fields map { f =>
+             <td>{ f.cell( s ) }</td>
+           }
+         }</tr>
+       }
+     }
+    </table>
   }
 }
 

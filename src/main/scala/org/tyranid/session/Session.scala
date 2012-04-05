@@ -235,6 +235,25 @@ trait Session {
     notes = Nil
     n
   }
+
+
+  /*
+   * * *   Web Paths / Tabs Memory
+   */
+
+  private val pathChoices = mutable.Map[String,String]()
+
+  def pathChoiceAt( wpath:String, default:String ) = pathChoices.synchronized {
+    pathChoices.getOrElseUpdate( wpath, default )
+  }
+
+  def setPathChoiceAt( wpath:String, rpath:String ) = pathChoices.synchronized {
+    pathChoices( wpath ) = rpath
+  }
+
+
+  // TODO:  move this onto a HashMap, most users won't need this
+  @volatile var lastTid:String = null
 }
 
 object Notification {

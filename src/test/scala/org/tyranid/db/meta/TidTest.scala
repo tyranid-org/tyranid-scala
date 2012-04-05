@@ -31,9 +31,9 @@ class TidSuite extends FunSuite {
 
     val catEn = org.tyranid.test.db.Category
 
-    Tid.refs( "ts2txxxxxxxxxxxxxxxxx", in = org.tyranid.test.db.Widget )
+    Tid.references( "ts2txxxxxxxxxxxxxxxxx", in = org.tyranid.test.db.Widget )
 
-    Tid.refs( "ts4txxxxxxxxxxxxxxxxx", in = org.tyranid.test.db.Widget )
+    Tid.references( "ts4txxxxxxxxxxxxxxxxx", in = org.tyranid.test.db.Widget )
   }
 }
 

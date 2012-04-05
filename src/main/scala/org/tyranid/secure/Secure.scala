@@ -33,7 +33,7 @@ case object Editing extends AccessType
 
 
 object Secure extends MongoEntity( tid = "a0Bt" ) {
-  "id"                  is DbInt is 'key;
+  "id"                  is DbInt is 'id;
   "recaptchaPublicKey"  is DbChar(40);
   "recaptchaPrivateKey" is DbChar(40);
   

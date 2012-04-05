@@ -22,6 +22,7 @@ import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
 import org.tyranid.db.es.{ NoSearch, Searchable }
+import org.tyranid.db.meta.Tid
 import org.tyranid.db.tuple.{ TupleView, Tuple }
 import org.tyranid.logic.{ Invalid, Valid }
 import org.tyranid.db.es.Es
@@ -40,6 +41,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   var help:NodeSeq = NodeSeq.Empty
   var required:Boolean = false
   var internal:Boolean = false
+  var owner:Boolean = false
   var search:Searchable = NoSearch
 
   
@@ -60,12 +62,16 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   def as( label:String ) = { this.label = label; this }
   def is( str:String ) = {
     str match {
-    case "key"       => isKey = true
+    case "id"        => isId = true
                         if ( entity.isInstanceOf[org.tyranid.db.mongo.MongoEntity] && name != "id" )
-                          throw new IllegalArgumentException( "Cannot mark '" + name + "' as a key on the MongoDB entity '" + entity.name + "' -- MongoDB keys must be called 'id'." )
+                          throw new IllegalArgumentException( "Cannot mark '" + name + "' as an ID on the MongoDB entity '" + entity.name + "' -- MongoDB IDs must be called 'id'." )
     case "label"     => isLabel = true
     case "required"  => required = true; localValidations ::= ( _.required )
     case "temporary" => temporary = true
+
+    case "owner"     => owner = true
+                        if ( !domain.hasLinks )
+                          throw new IllegalArgumentException( "Cannot mark '" + name + "' as an owner on the entity '" + entity.name + "' -- it must either be a link/tid or an array of links/tids." )
 
     // for example, "aid" is internal because it is not exposed to the end-user
     case "internal"  => internal = true
@@ -83,9 +89,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
 
   def annotated[ T <: AttributeAnnotation :Manifest ] = annotations.findOf[T]
 
-
-
-	var isKey = false
+	var isId    = false
 	var isLabel = false
 
   private var localValidations:List[ ( Scope ) => Option[Invalid] ] = Nil
@@ -115,19 +119,23 @@ object Entity {
 }
 
 trait Entity extends Domain with DbItem {
+  override val isSimple = false
+
+  val storageName:String
 
   val searchIndex = "main"
   lazy val isSearchable = attribs.exists( _.search.text )
 
-
-  /**
-   * Tyranid ID.  This is a 3-byte identifier stored as a 4-character base64 string.  All Entity TIDs should be unique.
-   */
-  val tid:String
-
 	val sqlName = "invalid"
 
   def makeView:View
+
+
+	/*
+	 * * *  Labels
+	 */
+
+  lazy val labelAtt = attribs.find( _.isLabel )
 
   lazy val label = name.camelCaseToSpaceUpper
 
@@ -148,22 +156,6 @@ trait Entity extends Domain with DbItem {
 
 	def attByDbName( dbName:String ) = attribs.find( _.dbName == dbName ).get
 
-	val name = getClass.getSimpleName.replace( "$", "" ).uncapitalize
-
-  Entity.register( this )
-
-  lazy val keyAtt   = attribs.find( _.isKey )
-  lazy val labelAtt = attribs.find( _.isLabel )
-
-
-	override lazy val idType =
-		attribs.filter( _.isKey ) match {
-		case as if as.size == 1 => as( 0 ).domain.idType
-		case _                  => IdType.ID_COMPLEX
-		}
-
-  def recordTidToId( recordTid:String ):Any = throw new UnsupportedOperationException
-
 	implicit def str2att( name: String ):Attribute =
     attribs.find( _.name == name ) match {
     case Some( a ) =>
@@ -182,13 +174,48 @@ trait Entity extends Domain with DbItem {
 	def recreate { drop; create }
 
 
+	/*
+	 * * *  IDs and TIDs
+	 */
+
+  lazy val idAtt = {
+    val v = attribs.find( _.isId )
+    if ( v == None ) throw new RuntimeException( "Missing ID attribute for " + name )
+    v.get
+  }
+
+  /**
+   * Tyranid ID.  This is a 3-byte identifier stored as a 4-character base64 string.  All Entity TIDs should be unique.
+   */
+  val tid:String
+
+	override lazy val idType =
+		attribs.filter( _.isId ) match {
+		case as if as.size == 1 => as( 0 ).domain.idType
+		case _                  => IdType.ID_COMPLEX
+		}
+
+  def idToTid( id:Any ) = tid + idToRecordTid( id )
+  def tidToId( tid:String ) = {
+
+    val ( entityTid, recordTid ) = Tid.split( tid )
+
+    assert( Entity.byTid( entityTid ).get == this )
+
+    recordTidToId( recordTid )
+  }
+
+  override def idToRecordTid( id:Any )               = idAtt.domain.idToRecordTid( id )
+  override def recordTidToId( recordTid:String ):Any = idAtt.domain.recordTidToId( recordTid )
+
+  
   /*
    * * *  Records
    */
 
   def records:Iterable[Record] = Nil
   
-  def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException // ... yet
+  def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException
 
   def save( r:Record ) {
     if ( isSearchable )
@@ -289,6 +316,8 @@ trait Entity extends Domain with DbItem {
 
 		  sb.toString
     }
+
+  Entity.register( this )
 }
 
 // TODO:  should this extend RamEntity ?

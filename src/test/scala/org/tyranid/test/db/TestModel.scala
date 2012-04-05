@@ -52,7 +52,7 @@ object Session extends org.tyranid.session.SessionMeta {
 
 
 object Widget extends MongoEntity( tid = "ts0t" ) {
-  "id"         is DbMongoId                 is 'key;
+  "id"         is DbMongoId                 is 'id;
   "name"       is DbChar(32)                is 'label;
   "dims"       is Dimensions                ;
   "tags"       is DbArray(DbChar(32))       ;
@@ -69,7 +69,7 @@ object Dimensions extends MongoEntity( tid = "ts1t" ) {
 }
 
 object Category extends MongoEntity( tid = "ts2t" ) {
-  "id"           is DbMongoId           is 'key;
+  "id"           is DbMongoId           is 'id;
   "name"         is DbChar(128)         is 'label;
 }
 
@@ -79,13 +79,13 @@ object Pricing extends MongoEntity( tid = "ts3t" ) {
 }
 
 object PriceType extends MongoEntity( tid = "ts4t" ) {
-  "id"           is DbMongoId           is 'key;
+  "id"           is DbMongoId           is 'id;
   "name"         is DbChar(128)         ;
   "quantity"     is DbInt               ;
 }
 
 object Certification extends RamEntity( tid = "ts6t" ) {
-  "id"     is DbInt      is 'key;
+  "id"     is DbInt      is 'id;
   "name"   is DbChar(64) is 'label;
 
   val CertifiedId = 1

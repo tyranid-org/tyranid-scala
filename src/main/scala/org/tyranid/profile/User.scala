@@ -36,7 +36,7 @@ import org.tyranid.web.WebContext
 
 
 class UserMeta extends MongoEntity( "a01v" ) {
-  "id"             is DbMongoId           is 'key;
+  "id"             is DbMongoId           is 'id;
   "email"          is DbEmail             is 'label is 'required;
   "password"       is DbPassword          is 'required;
   "password2"      is DbPassword          is 'required is 'temporary as "Repeat Password";
@@ -54,8 +54,6 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "loginToken"     is DbChar(10)          ;
 
   "sms"            is SMS                 ;
-  
-  "org"            is DbLink(B.Org)       ;
 
   "liid"           is DbChar(90)          ; // LinkedIn member id if linked
   "lit"            is DbChar(90)          ; // LinkedIn OAuth 1.0a token

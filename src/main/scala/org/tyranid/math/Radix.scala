@@ -309,5 +309,8 @@ object Base64 {
 
   def toBytes( str:String ) =
     org.apache.commons.codec.binary.Base64.decodeBase64( str )
+
+  def toInt( str:String )  = ByteBuffer.wrap( toBytes( str ) ).getInt
+  def toLong( str:String ) = ByteBuffer.wrap( toBytes( str ) ).getLong
 }
 

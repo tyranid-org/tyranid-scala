@@ -198,25 +198,44 @@ object Select {
   }
 }
 
-object Tab {
+case class TabBar( weblet:Weblet, tabs:Tab* ) {
 
-  def bar( tabs:Seq[Tab], relative:Weblet = null ) =
+  lazy val defaultTab = tabs.find( _.default ).getOrElse( throw new RuntimeException( "Missing default tab." ) )
+
+  def draw( qs:String = "" ) = {
+    val rpath = weblet.rpath
+
+    tabs.find( _.rpath == rpath ) match {
+    case Some( tab ) =>
+      T.session.setPathChoiceAt( weblet.wpath, tab.rpath )
+    
+    case None =>
+      val tabPath = T.session.pathChoiceAt( weblet.wpath, defaultTab.rpath )
+    }
+
     <div class="tabbar">
      <ul>
-      { tabs map ( _.draw( relative ) ) }
+      { tabs map ( _.draw( this, qs ) ) }
      </ul>
     </div>;
+  }
+
+  def choice = {
+    val p = T.session.pathChoiceAt( weblet.wpath, defaultTab.rpath )
+    tabs.find( _.rpath == p ).flatten( _.rpath, defaultTab.rpath )
+  }
 }
 
-case class Tab( rpath:String, label:NodeSeq, cls:String = null ) {
+case class Tab( rpath:String, label:NodeSeq, cls:String = null, default:Boolean = false ) {
 
-  def draw( relative:Weblet ) = {
-    val fpath = ( relative != null |* relative.wpath ) + rpath
+  def draw( bar:TabBar, qs:String ) = {
+    val fpath = bar.weblet.wpath + rpath
+    val choice = bar.choice
 
     <li>{
       var cls = this.cls
 
-      if ( rpath == relative.rpath ) {
+      if ( rpath == choice ) {
         if ( cls == null )
           cls = "selected"
         else
@@ -224,9 +243,9 @@ case class Tab( rpath:String, label:NodeSeq, cls:String = null ) {
       }
 
       if ( cls != null )
-        <a class={ cls } href={ fpath }>{ label }</a>
+        <a class={ cls } href={ fpath + qs }>{ label }</a>
       else
-        <a href={ fpath }>{ label }</a>
+        <a href={ fpath + qs }>{ label }</a>
     }</li>
   }
 }

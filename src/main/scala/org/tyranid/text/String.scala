@@ -274,6 +274,12 @@ class StringImp( s:String ) {
 		case s                      => s + "'s"
 	  }
 
+  def summarize( maxLength:Int = 60 ) =
+    if ( s != null && s.length > maxLength )
+      s.substring( 0, maxLength - 3 ) + "..."
+    else
+      s
+
 	/**
  	 * Scala's StringOps defines a toBoolean(), but it is very minimal ... it only accepts "true" and "false"
  	 */

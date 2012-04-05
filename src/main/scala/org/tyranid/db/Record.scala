@@ -28,6 +28,8 @@ import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
 import org.tyranid.bson.BsonObject
+import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.logic.{ Invalid, Valid }
 import org.tyranid.report.Run
 import org.tyranid.ui.{ Search, UiObj }
@@ -92,7 +94,7 @@ trait View {
 
   def vas:Iterable[ViewAttribute]
 
-  lazy val keyVa   = entity.keyAtt.map( a => apply( a.name ) )
+  lazy val keyVa   = apply( entity.idAtt.name )
   lazy val labelVa = entity.labelAtt.map( a => apply( a.name ) )
 
   def apply( name:String ):ViewAttribute
@@ -148,6 +150,8 @@ object Record {
 trait Record extends Valid with BsonObject {
   val view:View
 
+  def flatten = Path.flatten( this )
+
   val parent:Record
 
   def entity = view.entity
@@ -162,13 +166,13 @@ trait Record extends Valid with BsonObject {
   def apply( va:ViewAttribute ):AnyRef
   def update( va:ViewAttribute, v:Any )
  
-  def label = view.labelVa.flatten( va => s( va ), "n/a" )
-  def idLabel:(AnyRef,String) = ( apply( view.keyVa.get ), label )
+  def label                   = view.labelVa.flatten( va => s( va ), "n/a" )
+  def idLabel:(AnyRef,String) = ( apply( view.keyVa ), label )
 
   def tid = entityTid + recordTid
 
   def entityTid = view.entity.tid
-  def recordTid = view.keyVa.flatten( kva => kva.att.domain.tid( this, kva ), "-not-available" )
+  def recordTid = view.keyVa.att.domain.idToRecordTid( this( view.keyVa ) )
 
   def clear:Unit = throw new UnsupportedOperationException
 
@@ -345,8 +349,19 @@ case class Scope( rec:Record,
     var pi = 0
     while ( pi < plen ) {
       val va = path.pathAt( pi ).as[ViewAttribute]
-      r = r.rec( va )
-      pi += 1
+
+      if ( path.pathAt( pi+1 ).isInstanceOf[ArrayIndex] ) {
+        val ai = path.pathAt( pi+1 ).as[ArrayIndex]
+        val array = r.a( va )
+        val v = array( ai.idx )
+
+        r = va.domain.as[DbArray].of.as[MongoEntity].recify( v, r.as[MongoRecord], rec => array( ai.idx ) = rec )
+
+        pi += 2
+      } else {
+        r = r.rec( va )
+        pi += 1
+      }
     }
 
     val va = path.pathAt( pi ).as[ViewAttribute]

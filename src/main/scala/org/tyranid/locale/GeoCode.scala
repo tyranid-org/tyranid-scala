@@ -26,7 +26,7 @@ import org.tyranid.db.mongo.MongoEntity
 case class LatLong( lat:Double, long:Double )
 
 object GeoCode extends MongoEntity( tid = "a0Lt" ) {
-  "id"    is DbChar(256)        is 'key as "Canonical Address";
+  "id"    is DbChar(256)        is 'id as "Canonical Address";
   "c"     is DbArray(DbDouble)  as "Coordinates";
 
 

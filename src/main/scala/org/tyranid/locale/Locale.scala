@@ -23,7 +23,7 @@ import org.tyranid.db.ram.RamEntity
 
 
 object Region extends RamEntity( tid = "a01t" ) {
-  "id"      is DbInt           is 'key;
+  "id"      is DbInt           is 'id;
   "name"    is DbChar(64)      is 'label;
   "fips"    is DbChar(4)       ;
   "country" is DbLink(Country) ;
@@ -4316,7 +4316,7 @@ object Region extends RamEntity( tid = "a01t" ) {
 }
 
 object Country extends RamEntity( tid = "a02t" ) {
-  "id"     is DbInt      is 'key;
+  "id"     is DbInt      is 'id;
   "name"   is DbChar(64) is 'label;
   "code"   is DbChar(4)  ; 
 
