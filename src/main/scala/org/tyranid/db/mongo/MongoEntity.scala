@@ -50,7 +50,7 @@ case object DbMongoId extends Domain {
   //override def inputcClasses = " select"
 }
 
-case class MongoEntity( tid:String ) extends Entity {
+case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
   val storageName = "MongoDB"
 
 	override lazy val dbName = name.plural

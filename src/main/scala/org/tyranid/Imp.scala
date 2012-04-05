@@ -115,5 +115,7 @@ object Imp {
   val Event = org.tyranid.log.Event
   val Log   = org.tyranid.log.Log
   def log( event:org.tyranid.log.Event, opts:(String,Any)* ) = org.tyranid.log.Log.log( event, opts:_* )
+
+  def problem( desc:String ) = throw new org.tyranid.db.ModelException( desc )
 }
 

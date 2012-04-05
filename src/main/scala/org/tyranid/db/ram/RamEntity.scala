@@ -26,6 +26,7 @@ import org.tyranid.db.tuple.{ Tuple, TupleView }
 
 case class RamEntity( tid:String ) extends Entity {
   val storageName = "RAM"
+  val embedded = false
 
 	override lazy val dbName = name.plural
 

@@ -503,11 +503,11 @@ case class DbLink( toEntity:Entity ) extends Domain {
 	lazy val sqlName = toEntity.idType match {
 		                 case IdType.ID_32      => "INT"
 		                 case IdType.ID_64      => "BIGINT"
-		                 case IdType.ID_COMPLEX => throw new ModelException( toEntity.name + " has a complex ID and cannot be linked to." )
+		                 case IdType.ID_COMPLEX => toEntity.problem( "has a complex ID and cannot be linked to" )
 										 }
 
-  override def idToRecordTid( v:Any )                = toEntity.idAtt.domain.idToRecordTid( v )
-  override def recordTidToId( recordTid:String ):Any = toEntity.idAtt.domain.recordTidToId( recordTid )
+  override def idToRecordTid( v:Any )                = toEntity.idAtt.flatten( _.domain.idToRecordTid( v ),         toEntity.problem( "embedded entities don't have IDs" ) )
+  override def recordTidToId( recordTid:String ):Any = toEntity.idAtt.flatten( _.domain.recordTidToId( recordTid ), toEntity.problem( "embedded entities don't have IDs" ) )
 
   override def ui( s:Scope, f:PathField ) = {
     

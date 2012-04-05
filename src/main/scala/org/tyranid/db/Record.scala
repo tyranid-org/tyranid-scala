@@ -94,7 +94,7 @@ trait View {
 
   def vas:Iterable[ViewAttribute]
 
-  lazy val keyVa   = apply( entity.idAtt.name )
+  lazy val idVa    = entity.idAtt.map( a => apply( a.name ) )
   lazy val labelVa = entity.labelAtt.map( a => apply( a.name ) )
 
   def apply( name:String ):ViewAttribute
@@ -167,12 +167,12 @@ trait Record extends Valid with BsonObject {
   def update( va:ViewAttribute, v:Any )
  
   def label                   = view.labelVa.flatten( va => s( va ), "n/a" )
-  def idLabel:(AnyRef,String) = ( apply( view.keyVa ), label )
+  def idLabel:(AnyRef,String) = ( apply( view.idVa.get ), label )
 
   def tid = entityTid + recordTid
 
   def entityTid = view.entity.tid
-  def recordTid = view.keyVa.att.domain.idToRecordTid( this( view.keyVa ) )
+  def recordTid = view.idVa.flatten( va => va.att.domain.idToRecordTid( this( va ) ), view.entity.problem( "embedded entities don't have IDs" ) )
 
   def clear:Unit = throw new UnsupportedOperationException
 

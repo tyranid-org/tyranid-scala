@@ -122,6 +122,7 @@ trait Entity extends Domain with DbItem {
   override val isSimple = false
 
   val storageName:String
+  val embedded:Boolean
 
   val searchIndex = "main"
   lazy val isSearchable = attribs.exists( _.search.text )
@@ -178,11 +179,19 @@ trait Entity extends Domain with DbItem {
 	 * * *  IDs and TIDs
 	 */
 
-  lazy val idAtt = {
-    val v = attribs.find( _.isId )
-    if ( v == None ) throw new RuntimeException( "Missing ID attribute for " + name )
-    v.get
-  }
+  lazy val idAtt:Option[Attribute] =
+    attribs.find( _.isId ) match {
+    case None =>
+spam( "no id on " + name )
+      if ( !embedded )
+        problem( "missing ID attribute" )
+
+      None
+
+    case some =>
+spam( "id on " + name + " = " + some )
+      some
+    }
 
   /**
    * Tyranid ID.  This is a 3-byte identifier stored as a 4-character base64 string.  All Entity TIDs should be unique.
@@ -205,8 +214,8 @@ trait Entity extends Domain with DbItem {
     recordTidToId( recordTid )
   }
 
-  override def idToRecordTid( id:Any )               = idAtt.domain.idToRecordTid( id )
-  override def recordTidToId( recordTid:String ):Any = idAtt.domain.recordTidToId( recordTid )
+  override def idToRecordTid( id:Any )               = idAtt.flatten( _.domain.idToRecordTid( id ),        this.problem( "embedded entities don't have IDs" ) )
+  override def recordTidToId( recordTid:String ):Any = idAtt.flatten( _.domain.recordTidToId( recordTid ), this.problem( "embedded entities don't have IDs" ) )
 
   
   /*
@@ -321,6 +330,8 @@ trait Entity extends Domain with DbItem {
 
 		  sb.toString
     }
+
+  def problem( desc:String ) = throw new org.tyranid.db.ModelException( "On Entity '" + name + "':  " + desc )
 
   Entity.register( this )
 }

@@ -412,7 +412,7 @@ case class Report( query:Query ) {
       <td>
        <table class="tile" style="width:140px; height:54px;">
         <tr>
-         <td class="label">group</td>
+         <td class="label">view group</td>
         </tr>
         <tr>
          <td>{ 
