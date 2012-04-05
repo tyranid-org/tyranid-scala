@@ -20,7 +20,7 @@ package org.tyranid.db.ram
 import scala.collection.mutable.{ ArrayBuffer, HashMap }
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbIntSerial, DbChar, Entity, View, ViewAttribute }
+import org.tyranid.db.{ DbIntSerial, DbChar, Entity, View, ViewAttribute, Record }
 import org.tyranid.db.tuple.{ Tuple, TupleView }
 
 
@@ -75,6 +75,9 @@ case class RamEntity( tid:String ) extends Entity {
 
   override def byRecordTid( recordTid:String ):Option[Tuple] =
     byId( recordTidToId( recordTid ).coerceLong )
+
+  override def save( rec:Record )   = throw new UnsupportedOperationException
+  override def delete( rec:Record ) = throw new UnsupportedOperationException
 }
 
 

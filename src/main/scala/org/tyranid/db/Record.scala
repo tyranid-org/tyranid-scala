@@ -325,7 +325,8 @@ trait Record extends Valid with BsonObject {
    * * *   Persistence
    */
 
-  final def save = entity.save( this )
+  final def save   = entity.save( this )
+  final def delete = entity.delete( this )
 }
 
 

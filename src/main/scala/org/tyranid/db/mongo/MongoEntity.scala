@@ -72,6 +72,11 @@ case class MongoEntity( tid:String ) extends Entity {
     super.save( rec ) // call after, so that tid is available
   }
 
+  override def delete( rec:Record ) = {
+    super.delete( rec )
+    db.remove( rec.as[MongoRecord] )
+  }
+
 
   def create {}
   def drop   { db.drop }

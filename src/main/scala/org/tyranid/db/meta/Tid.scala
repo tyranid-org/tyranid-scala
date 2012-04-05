@@ -246,14 +246,9 @@ object Tid {
 
     val results = DeleteResults( ramReferences = ramReferences, cascadeFailures = cascadeFailures, updates = updates, deletes = deletes )
 
-    if ( results.success ) {
-      for ( ref <- updates ) {
-        // TODO:  save ref here
-      }
-
-      for ( ref <- deletes ) {
-        // TODO:  delete ref here
-      }
+    if ( results.success && performDeletion ) {
+      updates foreach { _.save }
+      deletes foreach { _.delete }
     }
 
     results
@@ -492,7 +487,7 @@ $(function() {
   }
 
   def delete( tid:String ) = {
-    val deleting = false
+    val deleting = T.web.req.b( 'deleting )
     val results = Tid.delete( tid, deleting )
 
     <div class="plainBox">
