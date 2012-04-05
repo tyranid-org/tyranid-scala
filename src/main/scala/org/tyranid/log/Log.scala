@@ -82,9 +82,12 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
   "ct"                  is DbInt          as "Count";
   "ex"                  is DbText         as "Stack Trace";
   "sid"                 is DbChar(64)     as "Session";
-  "uid"                 is DbMongoId      as "User";
   "ua"                  is DbChar(256)    as "User Agent";
   "ip"                  is DbChar(32)     as "IP";
+
+  lazy val init = {
+    "uid"                 is DbLink(B.User) as "User";
+  }
 
   def log( event:Event, opts:(String,Any)* ) = {
     val l = Mobj(

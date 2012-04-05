@@ -116,7 +116,6 @@ case class MongoEntity( tid:String ) extends Entity {
       staticLabelFor( id.asInstanceOf[Long] )
     } else {
       val labelName = labelAtt.get.name // TODO:  this should be labelAtt.dbName, but dbName by default is underscore-upper, and there is no MongoAttribute
-
       val obj = db.findOne( Mobj( "_id" -> id ), Mobj( labelName -> 1 ) )
 
       if ( obj != null ) obj.s( labelName )
@@ -127,7 +126,7 @@ case class MongoEntity( tid:String ) extends Entity {
   def recify( obj:Any, parent:MongoRecord, update: ( MongoRecord ) => Unit ):MongoRecord = {
 
     if ( obj.isInstanceOf[Record] )
-      return obj.asInstanceOf[MongoRecord]
+      return obj.as[MongoRecord]
 
     val rec = make(
       if ( obj == null ) Mobj()

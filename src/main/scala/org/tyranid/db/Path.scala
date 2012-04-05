@@ -89,6 +89,8 @@ trait Path extends Pathable {
   def pathSize:Int
   def pathAt( idx:Int ):PathNode
 
+  def tail = pathAt( pathSize - 1 )
+
   def leaf:ViewAttribute = {
     var ps = pathSize - 1
     while ( true ) {
@@ -125,6 +127,11 @@ trait Path extends Pathable {
   }
 
   // TODO:  merge the functionality below with what is in Bson and Record ?
+  def a_?( rec:Record ) =
+    get( rec ) match {
+    case null          => Mongo.EmptyArray
+    case a:BasicDBList => a
+    }
   def b( rec:Record ):Boolean =
     get( rec ) match {
     case b:java.lang.Boolean => b
@@ -156,6 +163,10 @@ object PathValue {
 
   implicit val order = new Ordering[PathValue] {
     def compare( a:PathValue, b:PathValue ) = Path.order.compare( a.path, b.path )
+  }
+
+  val orderByLabel = new Ordering[PathValue] {
+    def compare( a:PathValue, b:PathValue ) = Path.orderByLabel.compare( a.path, b.path )
   }
 
   def fromDbObject( root:View, obj:DBObject ):Iterable[PathValue] = {
@@ -254,6 +265,29 @@ object Path {
           1
         } else {
           a.pathAt( i ).name.compareTo( b.pathAt( i ).name ) match {
+          case n if n != 0 => n
+          case _           => compare0( i+1 )
+          }
+        }
+      }
+
+      compare0( 0 )
+    }
+  }
+
+  val orderByLabel = new Ordering[Path] {
+    def compare( a:Path, b:Path ):Int = {
+      @tailrec
+      def compare0( i:Int ):Int = {
+        if ( i >= a.pathSize ) {
+          if ( i >= b.pathSize )
+            0
+          else
+            -1
+        } else if ( i >= b.pathSize ) {
+          1
+        } else {
+          a.pathAt( i ).label.compareTo( b.pathAt( i ).label ) match {
           case n if n != 0 => n
           case _           => compare0( i+1 )
           }

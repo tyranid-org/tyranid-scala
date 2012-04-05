@@ -41,6 +41,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   var help:NodeSeq = NodeSeq.Empty
   var required:Boolean = false
   var internal:Boolean = false
+  var owner:Boolean = false
   var search:Searchable = NoSearch
 
   
@@ -68,6 +69,10 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
     case "required"  => required = true; localValidations ::= ( _.required )
     case "temporary" => temporary = true
 
+    case "owner"     => owner = true
+                        if ( !domain.hasLinks )
+                          throw new IllegalArgumentException( "Cannot mark '" + name + "' as an owner on the entity '" + entity.name + "' -- it must either be a link/tid or an array of links/tids." )
+
     // for example, "aid" is internal because it is not exposed to the end-user
     case "internal"  => internal = true
     case "inherit"   => if ( domain == null )
@@ -83,8 +88,6 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   def is( anno:AttributeAnnotation ) = annotations ::= anno
 
   def annotated[ T <: AttributeAnnotation :Manifest ] = annotations.findOf[T]
-
-
 
 	var isId    = false
 	var isLabel = false

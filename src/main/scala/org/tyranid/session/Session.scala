@@ -250,6 +250,10 @@ trait Session {
   def setPathChoiceAt( wpath:String, rpath:String ) = pathChoices.synchronized {
     pathChoices( wpath ) = rpath
   }
+
+
+  // TODO:  move this onto a HashMap, most users won't need this
+  @volatile var lastTid:String = null
 }
 
 object Notification {

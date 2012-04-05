@@ -203,22 +203,25 @@ trait BsonObject extends Deep {
         sb += '\n' ++= ( "  " * depth ) ++= m( "}", "Brace" )
 
       case null =>
-        sb ++= "null"
+        sb ++= m( "null", "Literal" )
+
+      case b:Boolean =>
+        sb ++= m( if ( b ) "true" else "false", "Literal" )
 
       case t:Date =>
-        sb ++= m( "ISODate(\"", "Type" ) ++= t.toIso8601 ++= m( "\")", "Type" )
+        sb ++= m( "ISODate(\"", "Type" ) ++= m( t.toIso8601, "String" ) ++= m( "\")", "Type" )
 
       case s:String =>
-        sb += '"' ++= s.encJson += '"'
+        sb ++= m( "\"" + s.encJson + '"', "String" )
 
       case i:Integer =>
-        sb ++= "NumberInt(" ++= i.toString += ')'
+        sb ++= m( "NumberInt(", "Type" ) ++= i.toString ++= m( ")", "Type" )
 
       case l:java.lang.Long =>
-        sb ++= "NumberLong(" ++= l.toString += ')'
+        sb ++= m( "NumberLong(", "Type" ) ++= l.toString ++= m( ")", "Type" )
 
       case oid:org.bson.types.ObjectId =>
-        sb ++= "ObjectId(" ++= oid.toString += ')'
+        sb ++= m( "ObjectId(", "Type" ) ++= oid.toString ++= m( ")", "Type" )
 
       case v =>
         sb ++= v.toString

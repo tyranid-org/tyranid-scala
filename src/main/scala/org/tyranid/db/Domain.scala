@@ -38,6 +38,9 @@ trait Domain extends Valid {
 
   val isSimple = true
 
+  val isLink   = false // DbLink, DbTid
+  def hasLinks:Boolean = isLink || ( this.isInstanceOf[DbArray] && this.as[DbArray].of.hasLinks )
+
   lazy val name = getClass.getSimpleName.replaceAll( "^Db", "" ).replace( "$", "" ).uncapitalize
 
 	lazy val idType = IdType.ID_COMPLEX
@@ -125,7 +128,7 @@ trait Domain extends Valid {
    * * *   G r i d
    */
 
-  def cell( s:Scope, f:PathField ):NodeSeq = Text( s.rec s f.va.name )
+  def cell( s:Scope, f:PathField ):NodeSeq = Text( f.path.s( s.rec ) )
 }
 
 
@@ -222,7 +225,7 @@ object DbText extends DbTextLike {
 	
   override def inputcClasses = "large"
 
-  override def cell( s:Scope, f:PathField ) = Unparsed( s.rec.s( f.va.name ).replace( "\n", "<br/>" ) )
+  override def cell( s:Scope, f:PathField ) = Unparsed( f.path.s( s.rec ).replace( "\n", "<br/>" ) )
 }
 
 trait LimitedText extends DbTextLike {
@@ -286,7 +289,7 @@ object DbPassword extends DbVarChar( 64 ) {
 object DbUrl extends DbVarChar( 256 ) {
 
   override def cell( s:Scope, f:PathField ) = {
-    val base = s.rec s f.va.name
+    val base = f.path.s( s.rec )
 
     try {
       <a href={ base.toUrl.toString }>{ base }</a>
@@ -335,7 +338,7 @@ object DbBoolean extends Domain {
 
   override def inputcClasses = " boolean"
 
-  override def cell( s:Scope, f:PathField ) = s.rec.b( f.va.name ) |* Glyph.Checkmark
+  override def cell( s:Scope, f:PathField ) = f.path.b( s.rec ) |* Glyph.Checkmark
 }
 
 
@@ -384,7 +387,7 @@ trait DbDateLike extends Domain {
   }
 
   override def cell( s:Scope, f:PathField ):NodeSeq = {
-    val date = s.rec t f.va.name
+    val date = f.path.t( s.rec )
     Text( if ( date != null ) date.toDateStr else "" )
   }
 }
@@ -410,7 +413,7 @@ object DbDateTime extends DbDateLike {
   }
 
   override def cell( s:Scope, f:PathField ):NodeSeq = {
-    val date = s.rec t f.va.name
+    val date = f.path.t( s.rec )
     Unparsed( "<nobr>" + ( if ( date != null ) date.toDateTimeStr else "" ) + "</nobr>" )
   }
 }
@@ -433,10 +436,14 @@ case class DbArray( of:Domain ) extends Domain {
 
   
   override def cell( s:Scope, f:PathField ) = {
-    val arr = s.rec a_? f.va.name
+    if ( f.path.tail.isInstanceOf[ArrayIndex] ) {
+      of.cell( s, f )
+    } else {
+      val arr = f.path.a_?( s.rec )
 
-    import scala.collection.JavaConversions._
-    Unparsed( arr.map( v => of.see( v ) ).sorted.mkString( ",<br/>" ) )
+      import scala.collection.JavaConversions._
+      Unparsed( arr.map( v => of.see( v ) ).sorted.mkString( ",<br/>" ) )
+    }
   }
 
 
@@ -471,6 +478,8 @@ case class DbTid( of:Entity* ) extends LimitedText {
 
 	val sqlName = "CHAR(" + len + ")"
 
+  override val isLink = true
+
 	override def see( v:Any ) = {
 
     if ( v == null ) {
@@ -487,6 +496,10 @@ case class DbTid( of:Entity* ) extends LimitedText {
 }
 
 case class DbLink( toEntity:Entity ) extends Domain {
+  require( toEntity != null )
+
+  override val isLink = true
+
 	lazy val sqlName = toEntity.idType match {
 		                 case IdType.ID_32      => "INT"
 		                 case IdType.ID_64      => "BIGINT"
@@ -542,7 +555,7 @@ case class DbLink( toEntity:Entity ) extends Domain {
 		case n    => toEntity.labelFor( n )
 		}
 
-  override def cell( s:Scope, f:PathField ) = Text( see( s.rec( f.va.name ) ) )
+  override def cell( s:Scope, f:PathField ) = Text( see( f.path.s( s.rec ) ) )
 }
 
 

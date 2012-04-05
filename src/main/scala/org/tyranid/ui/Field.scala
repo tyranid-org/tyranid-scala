@@ -188,6 +188,8 @@ trait CustomField extends Field {
 object PathField {
   implicit def string2Field( name:String ) = PathField( name )
   implicit def symbol2Field( name:Symbol ) = PathField( name.name )
+
+  def apply( path:Path ):PathField = PathField( path.name ).bind( path )
 }
 
 case class PathField( baseName:String,
@@ -246,6 +248,11 @@ case class PathField( baseName:String,
   var path:Path = null
   def va = path.leaf
 
+  def bind( path:Path ) = {
+    this.path = path
+    this
+  }
+
   def bind( view:View ) = {
     path = view.path( name, sep = '.' )
     this // TODO:  return an immutable version
@@ -286,10 +293,7 @@ case class PathField( baseName:String,
   override def section = sec
   override def cellClass = cellCls
 
-  def cell( pScope:Scope ) = {
-    val scope = pScope.at( path )
-    path.leaf.domain.cell( scope, this )
-  }
+  def cell( scope:Scope ) = path.leaf.domain.cell( scope, this )
 
   override def effCell( pScope:Scope ) = {
     if ( displayExists ) {

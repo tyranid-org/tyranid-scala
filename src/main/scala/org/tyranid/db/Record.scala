@@ -28,6 +28,8 @@ import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
 import org.tyranid.bson.BsonObject
+import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.logic.{ Invalid, Valid }
 import org.tyranid.report.Run
 import org.tyranid.ui.{ Search, UiObj }
@@ -347,8 +349,19 @@ case class Scope( rec:Record,
     var pi = 0
     while ( pi < plen ) {
       val va = path.pathAt( pi ).as[ViewAttribute]
-      r = r.rec( va )
-      pi += 1
+
+      if ( path.pathAt( pi+1 ).isInstanceOf[ArrayIndex] ) {
+        val ai = path.pathAt( pi+1 ).as[ArrayIndex]
+        val array = r.a( va )
+        val v = array( ai.idx )
+
+        r = va.domain.as[DbArray].of.as[MongoEntity].recify( v, r.as[MongoRecord], rec => array( ai.idx ) = rec )
+
+        pi += 2
+      } else {
+        r = r.rec( va )
+        pi += 1
+      }
     }
 
     val va = path.pathAt( pi ).as[ViewAttribute]

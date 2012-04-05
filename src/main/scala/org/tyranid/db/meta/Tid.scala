@@ -24,13 +24,15 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ Domain, DbArray, DbLink, DbTid, Entity, MultiPath, PathNode, Record, Scope }
+import org.tyranid.db.{ Domain, DbArray, DbLink, DbTid, Entity, MultiPath, PathNode, PathValue, Record, Scope }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.math.Base64
 import org.tyranid.ui.{ PathField, Tab, TabBar }
 import org.tyranid.web.{ Weblet, WebContext }
 
+
+case class DeleteResults( cascadeFailures:Seq[Record], updates:Seq[Record], deletes:Seq[Record] )
 
 object Tid {
 
@@ -53,7 +55,7 @@ object Tid {
   def toIds( tids:Seq[String], entity:Entity ) =
     tids.filter( _.startsWith( entity.tid ) ).map( tid => new ObjectId( Base64.toBytes( tid.substring( 4 ) ) ) )
 
-  def refs( tid:String, in:Entity = null ):Seq[Record] = {
+  def references( tid:String, in:Entity = null ):Seq[Record] = {
     val ( entityTid, recordTid ) = Tid.split( tid )
 
     val refEn = Entity.byTid( entityTid ).get
@@ -137,35 +139,43 @@ object Tid {
     matches  
   }
 
-  /*
-   * * *  Delete references
+  def delete( tid:String ) = {
 
-        +.  delete from the entity where the tid is based
+    val refs = references( tid )
 
-            remove from entities where it is foreign ...
-            
-            (a)  array ... remove from array
-            (b)  value ... remove property
+    val cascadeFailures = mutable.ArrayBuffer[Record]()
+    val updates         = mutable.ArrayBuffer[Record]()
+    val deletes         = mutable.ArrayBuffer[Record]()
 
-        ?.  dangling references after a delete ?
+    for ( ref <- refs ) {
 
-            what if we remove it from the array and now the array is empty, and the record is basically dangling ?
+      // TODO:  remove the references from the fields
 
-        ?.  what about cascading deletes ?
+      if ( false /* TODO:  any owned fields become null or empty */ ) {
 
-            this should only come into play when we add in ownership
+        val refRefs = references( ref.tid ).filter( rr => !refs.exists( _.tid == rr.tid ) )
 
+        if ( refRefs.nonEmpty )
+          cascadeFailures ++= refRefs
+        else
+          deletes += ref
+      } else {
+        updates += ref
+      }
+    }
 
-   * * *  Ownership
+    if ( cascadeFailures.isEmpty ) {
+      for ( ref <- updates ) {
+        // TODO:  save ref here
+      }
 
+      for ( ref <- deletes ) {
+        // TODO:  delete ref here
+      }
+    }
 
-   * * *  Versioning
-
-       +.  simple links in version (currently just User)
-
-       +.  complex links in differences
-
-   */
+    DeleteResults( cascadeFailures = cascadeFailures, updates = updates, deletes = deletes )
+  }
 }
 
 object Tidlet extends Weblet {
@@ -174,7 +184,7 @@ object Tidlet extends Weblet {
     if ( tid.endsWith( "not-available" ) )
       Text( tid )
     else
-      <a href={ wpath + "/field?tid=" + tid }>{ if ( label.notBlank ) label else  tid }</a>
+      <a href={ wpath + "/field?tid=" + tid }>{ if ( label.notBlank ) label else tid }</a>
 
   def handle( web:WebContext ) = {
     val t = T
@@ -182,9 +192,15 @@ object Tidlet extends Weblet {
     if ( !t.user.isGod )
       _404
 
+    var tid = web.req.s( 'tid )
+    if ( tid.isBlank )
+      tid = t.session.lastTid
+    else
+      t.session.lastTid = tid
+
     rpath match {
     case "/" | "/field" | "/json" | "/ref" | "/attrib" | "/record" =>
-      shell( ui( web.req.s( 'tid ) ) )
+      shell( ui( tid ) )
 
     case _ =>
       _404
@@ -258,7 +274,8 @@ object Tidlet extends Weblet {
   def fields( rec:Record ) = {
 
     def ui( rec:Record ) = {
-      val pathValues = rec.flatten.sorted
+      val pathValues = rec.flatten.sorted( PathValue.orderByLabel )
+      val scope = new Scope( rec )
 
       var odd = true
 
@@ -291,26 +308,23 @@ object Tidlet extends Weblet {
 
             <div style={ divStyle }>
              <label for={ id } style="float:left;">{ path.label }</label>
-             <span id={ id } style="display:block; margin-left:400px;">{ link.see( v ) } - { tidLink( tid ) }</span>
+             <span id={ id } style="display:block; margin-left:400px;">{ tidLink( tid, link.see( v ) ) }</span>
             </div>
           }
 
         case tlink:DbTid =>
-
           v != null |* {
             <div style={ divStyle }>
              <label for={ id } style="float:left;">{ path.label }</label>
-             <span id={ id } style="display:block; margin-left:400px;">{ tlink.see( v ) } - { tidLink( v.toString ) }</span>
+             <span id={ id } style="display:block; margin-left:400px;">{ tidLink( v.toString, tlink.see( v ) ) }</span>
             </div>
           }
 
         case d =>
-          val vStr = v.safeString
-
-          vStr.notBlank |*
+          v.safeString.notBlank |*
           <div style={ divStyle }>
            <label for={ id } style="float:left;">{ path.label }</label>
-           <span id={ id } style="display:block; margin-left:400px;">{ vStr }</span>
+           <span id={ id } style="display:block; margin-left:400px;">{ PathField( pv.path ).cell( scope ) }</span>
           </div>
         }
       }
@@ -335,7 +349,7 @@ object Tidlet extends Weblet {
   def refs( tid:String ) =
     <table class="dtable">
      <tr><th>Entity</th><th>Label</th><th>TID</th></tr>{
-       val matches = Tid.refs( tid )
+       val matches = Tid.references( tid )
 
        matches.map { m =>
          <tr>
@@ -361,9 +375,9 @@ object Tidlet extends Weblet {
       <th>Name</th>
       <th>Label</th>
       <th>Domain</th>
-      <th>Help</th>
+      <th style="width:300px;">Help</th>
      </tr>
-     { for ( a <- en.attribs ) yield
+     { for ( a <- en.attribs.clone.sortBy( _.name ) ) yield
        <tr>
         <td>{ a.name }</td>
         <td>{ a.label }</td>
