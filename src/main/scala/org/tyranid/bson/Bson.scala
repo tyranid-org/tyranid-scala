@@ -166,7 +166,6 @@ trait BsonObject extends Deep {
         s
 
     def enter( v:Any ) {
-
       v match {
       case a:org.bson.types.BasicBSONList =>
         depth += 1

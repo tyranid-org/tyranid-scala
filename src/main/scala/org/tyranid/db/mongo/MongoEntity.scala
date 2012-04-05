@@ -266,6 +266,8 @@ case class MongoRecord( override val view:MongoView,
       }
     }
 
+  override def remove( va:ViewAttribute ) = obj.removeField( va.name )
+
   override def o( va:ViewAttribute ):DBObjectWrap =
     apply( va ) match {
     case o:DBObjectWrap => o

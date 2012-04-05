@@ -24,15 +24,19 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ Domain, DbArray, DbLink, DbTid, Entity, MultiPath, PathNode, PathValue, Record, Scope }
+import org.tyranid.db.{ Domain, DbArray, DbLink, DbTid, Entity, ArrayIndex, MultiPath, PathNode, PathValue, Record, Scope }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
+import org.tyranid.db.ram.RamEntity
 import org.tyranid.math.Base64
 import org.tyranid.ui.{ PathField, Tab, TabBar }
 import org.tyranid.web.{ Weblet, WebContext }
 
 
-case class DeleteResults( cascadeFailures:Seq[Record], updates:Seq[Record], deletes:Seq[Record] )
+case class DeleteResults( ramReferences:Seq[Record], cascadeFailures:Seq[Record], updates:Seq[Record], deletes:Seq[Record] ) {
+
+  def success = ramReferences.isEmpty && cascadeFailures.isEmpty
+}
 
 object Tid {
 
@@ -56,10 +60,7 @@ object Tid {
     tids.filter( _.startsWith( entity.tid ) ).map( tid => new ObjectId( Base64.toBytes( tid.substring( 4 ) ) ) )
 
   def references( tid:String, in:Entity = null ):Seq[Record] = {
-    val ( entityTid, recordTid ) = Tid.split( tid )
-
-    val refEn = Entity.byTid( entityTid ).get
-    val refId = refEn.recordTidToId( recordTid )
+    val ( refEn, refId ) = Tid.parse( tid )
 
     val matchers = mutable.ArrayBuffer[DBObject]()
     val matches = mutable.ArrayBuffer[Record]()
@@ -69,14 +70,14 @@ object Tid {
       dom match {
       case link:DbLink =>
         if ( link.toEntity == refEn ) {
-          val p = MultiPath( path:_* )
+          val p = MultiPath( path.reverse:_* )
 
           matchers += Mobj( p.name -> refId )
         }
 
       case link:DbTid =>
         if ( link.of.contains( refEn ) ) {
-          val p = MultiPath( path:_* )
+          val p = MultiPath( path.reverse:_* )
 
           matchers += Mobj( p.name -> tid )
         }
@@ -139,21 +140,94 @@ object Tid {
     matches  
   }
 
-  def delete( tid:String ) = {
+  /**
+   * Returns true if the record is now dangling (i.e. an owned property was removed).
+   */
+  def extractTid( rec:Record, refTid:String ):Boolean = {
+    val ( refEn, refId ) = Tid.parse( refTid )
+    var dangling = false
+
+    val recEn = rec.view.entity
+
+    def enter( path:List[PathNode] ):Boolean = {
+      val p = MultiPath( path.reverse:_* )
+
+      val domain =
+        if ( path != Nil ) p.leafDomain
+        else               recEn
+
+      domain match {
+      case link:DbLink =>
+        if ( link.toEntity == refEn && p.get( rec ) == refId )
+          return true
+
+      case link:DbTid =>
+        if ( link.of.contains( refEn ) && p.get( rec ) == refTid )
+          return true
+
+      case array:DbArray =>
+        val a = p.a_?( rec )
+
+        if ( a.size > 0 ) {
+          var i = 0
+          while ( i < a.size )
+            if ( enter( ArrayIndex( i ) :: path ) )
+              a.remove( i )
+            else
+              i += 1
+
+          if ( a.size == 0 && p.leaf.att.owner )
+            dangling = true
+        }
+
+      case en:Entity =>
+        for ( va <- en.makeView.vas )
+          if ( enter( va :: path ) ) {
+            val r = if ( p != Nil ) p.rec( rec ) else rec
+            r.remove( va )
+
+            if ( va.att.owner )
+              dangling = true
+          }
+
+      case _ =>
+      }
+
+      false
+    }
+
+    enter( Nil )
+
+    if ( recEn.is[Versioning] ) {
+      // TODO:
+      // log( 'user ) = Session().user.id
+      //if ( diffs.as.nonEmpty )
+        //log( 'removals ) = PathValue.toDbObject( diffs.as )
+        
+      //if ( diffs.bs.nonEmpty )
+        //log( 'adds ) = PathValue.toDbObject( diffs.bs )
+        
+      //if ( diffs.diffs.nonEmpty )
+        //log( 'updates ) = PathDiff.toDbObject( diffs.diffs )
+    }
+
+    dangling
+  }
+
+  def delete( tid:String, performDeletion:Boolean ) = {
 
     val refs = references( tid )
 
+    val ramReferences   = mutable.ArrayBuffer[Record]()
     val cascadeFailures = mutable.ArrayBuffer[Record]()
     val updates         = mutable.ArrayBuffer[Record]()
     val deletes         = mutable.ArrayBuffer[Record]()
 
     for ( ref <- refs ) {
-
-      // TODO:  remove the references from the fields
-
-      if ( false /* TODO:  any owned fields become null or empty */ ) {
-
-        val refRefs = references( ref.tid ).filter( rr => !refs.exists( _.tid == rr.tid ) )
+      if ( ref.view.entity.isInstanceOf[RamEntity] ) {
+        ramReferences += ref
+      } else if ( extractTid( ref, tid ) ) {
+        val refRefs = references( ref.tid ).filter( rr => !refs.exists( _.tid == rr.tid ) && rr.tid != tid )
 
         if ( refRefs.nonEmpty )
           cascadeFailures ++= refRefs
@@ -164,7 +238,15 @@ object Tid {
       }
     }
 
-    if ( cascadeFailures.isEmpty ) {
+    val rec = Record.byTid( tid ).get
+    if ( rec.view.entity.isInstanceOf[RamEntity] )
+      ramReferences += rec
+    else
+      deletes += rec
+
+    val results = DeleteResults( ramReferences = ramReferences, cascadeFailures = cascadeFailures, updates = updates, deletes = deletes )
+
+    if ( results.success ) {
       for ( ref <- updates ) {
         // TODO:  save ref here
       }
@@ -174,7 +256,7 @@ object Tid {
       }
     }
 
-    DeleteResults( cascadeFailures = cascadeFailures, updates = updates, deletes = deletes )
+    results
   }
 }
 
@@ -199,6 +281,9 @@ object Tidlet extends Weblet {
       t.session.lastTid = tid
 
     rpath match {
+    case "/delete" =>
+      shell( delete( tid ) )
+
     case "/" | "/field" | "/json" | "/ref" | "/attrib" | "/record" =>
       shell( ui( tid ) )
 
@@ -243,7 +328,8 @@ object Tidlet extends Weblet {
          <label>Type</label><span>Record</span>
          <label style="margin-left:16px;">Label</label><span>{ r.label.summarize() }</span>
          <label style="margin-left:16px;">Entity</label><span><a href={ wpath + "/field?tid=" + entity.tid }>{ entity.name }</a></span>
-         <label style="margin-left:16px;">Storage</label><span>{ r.view.entity.storageName }</span>
+         <label style="margin-left:16px;">Storage</label><span>{ entity.storageName }</span>
+         { entity.isInstanceOf[MongoEntity] |* <a href={ wpath + "/delete?tid=" + tid } class="redBtn" style="float:right; margin:2px;">Delete</a> }
         </div> ++
         { recordTabBar.draw( qs = "?tid=" + tid ) } ++
         { recordTabBar.choice match {
@@ -343,17 +429,7 @@ object Tidlet extends Weblet {
     }
   }
 
-  def refs( tid:String ) =
-    <table class="dtable">
-     <tr><th>Entity</th><th>Label</th><th>TID</th></tr>{
-       val matches = Tid.references( tid )
-
-       matches.map { m =>
-         <tr>
-          <td>{ m.view.entity.name }</td><td><b>{ m.label }</b></td><td><i>{ tidLink( m.tid ) }</i></td>
-         </tr>
-       }
-    }</table>
+  def refs( tid:String ) = displayTable( Tid.references( tid ) )
 
   def attribs( en:Entity ) = {
 
@@ -414,6 +490,41 @@ $(function() {
      }
     </table>
   }
+
+  def delete( tid:String ) = {
+    val deleting = false
+    val results = Tid.delete( tid, deleting )
+
+    <div class="plainBox">
+     <div class="title">Deletion {
+       if ( results.success ) ( if ( deleting ) "Success" else "is Possible" )
+       else                   ( if ( deleting ) "Failed"  else "is NOT Possible" )
+     }.</div>
+     <div class="content">
+      { results.ramReferences.nonEmpty |*
+      <h3>RAM References:  { results.ramReferences.size } (cannot be present to delete)</h3> ++ displayTable( results.ramReferences ) }
+      { results.cascadeFailures.nonEmpty |*
+      <h3>Cascading References:  { results.cascadeFailures.size } (cannot be present to delete)</h3> ++ displayTable( results.cascadeFailures ) }
+      { results.deletes.nonEmpty |*
+      <h3>Deletions:  { results.deletes.size }</h3> ++ displayTable( results.deletes ) }
+      { results.updates.nonEmpty |*
+      <h3>Updates:  { results.updates.size }</h3> ++ displayTable( results.updates ) }
+     </div>
+    </div> ++
+    { results.success && !deleting |* <a href={ wpath + "/delete?tid=" + tid + "&deleting=true" } class="redBtn">Actually Delete</a> } ++
+    <a href={ wpath + "?tid=" + tid } class="greyBtn">Cancel</a>
+  }
+
+  private def displayTable( recs:Seq[Record] ) =
+    <table class="dtable">
+     <tr><th style="width:200px;">Entity</th><th>Label</th><th style="width:200px;">TID</th></tr>{
+       recs.map { r =>
+         <tr>
+          <td>{ r.view.entity.name }</td><td><b>{ r.label }</b></td><td><i>{ tidLink( r.tid ) }</i></td>
+         </tr>
+       }
+    }</table>
+
 }
 
 

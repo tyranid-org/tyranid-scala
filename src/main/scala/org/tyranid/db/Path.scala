@@ -91,6 +91,12 @@ trait Path extends Pathable {
 
   def tail = pathAt( pathSize - 1 )
 
+  def leafDomain =
+    pathAt( pathSize - 1 ) match {
+    case ai:ArrayIndex    => pathAt( pathSize - 2 ).as[ViewAttribute].domain.as[DbArray].of
+    case va:ViewAttribute => va.domain
+    }
+
   def leaf:ViewAttribute = {
     var ps = pathSize - 1
     while ( true ) {
@@ -118,7 +124,7 @@ trait Path extends Pathable {
         case va:ViewAttribute => cur match {
                                  case o:BsonObject    => o( va.name )
                                  case o:BasicDBObject => o( va.name )
-                                 case _ => null
+                                 case _               => null
                                  }
         case ai:ArrayIndex    => cur.asInstanceOf[BasicDBList].get( ai.idx )
         }
@@ -149,6 +155,7 @@ trait Path extends Pathable {
     case s:String => s.toLaxDate // TODO:  replace with more generic parsing method
     case null     => null
     }
+  def rec( rec:Record ) = get( rec ).as[Record]
 }
 
 case class MultiPath( nodes:PathNode* ) extends Path {
