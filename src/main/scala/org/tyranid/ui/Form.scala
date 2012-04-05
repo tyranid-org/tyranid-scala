@@ -183,7 +183,7 @@ object Form {
            opts.foreach {
              _ match {
              case ( n, v ) =>
-               optsStr.append( "vd.option( \"" + n + "\", \"" + v + "\" );" )
+               optsStr.append( "td.option( \"" + n + "\", \"" + v + "\" );" )
              case _ =>
              }
            }    
@@ -192,9 +192,9 @@ object Form {
          Unparsed("""
 $( function() {
   $( '#""" + elId + """' ).on( 'click', function( e ) {
-    var vd = new VDialog( """" + postEndpoint + """", """" + redirectEndpoint + """", """" + title + """" ); """ +
+    var td = new TDialog( """" + postEndpoint + """", """" + redirectEndpoint + """", """" + title + """" ); """ +
     optsStr.toString +
-""" vd.open();
+""" td.open();
     return false;
   });
 });
