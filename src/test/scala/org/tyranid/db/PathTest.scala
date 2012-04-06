@@ -167,5 +167,16 @@ class PathSuite extends FunSuite {
     assert( pvs.size === 1 )
     assert( pvs( 0 ).displayValue === "Certified" )
   }
+
+  test( "aidName_" ) {
+
+    val rec = Widget.make
+    rec( 'prices ) = Mlist( Mobj( "aid" -> 3, "price" -> 1.0 ), Mobj( "price" -> 2.0 ) )
+
+    assert( Path.parse( rec.view, "prices.0.price" ).aidName_( rec ) === "prices_3_price" )
+
+    // falls back to array index if aid isn't present
+    assert( Path.parse( rec.view, "prices.1.price" ).aidName_( rec ) === "prices_1_price" )
+  }
 }
 

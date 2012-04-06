@@ -55,37 +55,34 @@ class DbFile( bucket:S3Bucket ) extends CommonFile {
         null
 
     if ( fileItem != null && fileItem.getName().notBlank ) {
-      val r = s.rec
-      
-      if ( true ) {
-        r.recordTid match {
-        case null | "null" | "-invalid" => r.save
-        case _ =>
-        }
-        
-        val path = File.pathFor( r.entityTid, r.recordTid, f.va.att.name, fileItem.getName() )
-        var in = fileItem.getInputStream()
-        
-        S3.write( bucket, path, fileItem.getSize(), fileItem.getContentType(), in )
-        in.close
-        
-        S3.access( bucket, path, public = true )
-        
-        r( f.va ) = bucket.url( path )
-      } else {
-        spam( "Current value: " + r.s( f.va ) )
-        spam( "New file: " + fileItem.getName )
+
+      val rootRec     = s.root.rec
+      val embeddedRec = s.rec
+
+      rootRec.recordTid match {
+      case null | "null" | "-invalid" => rootRec.save
+      case _ =>
       }
+
+      val pathName = f.path.aidName_( rootRec )
+
+      val path = File.pathFor( rootRec.entityTid, rootRec.recordTid, pathName, fileItem.getName )
+      var in = fileItem.getInputStream
+        
+      S3.write( bucket, path, fileItem.getSize, fileItem.getContentType, in )
+      in.close
+        
+      S3.access( bucket, path, public = true )
+        
+      embeddedRec( f.va ) = bucket.url( path )
     }
   }
   
-  def url( path:String ) = {
-    if ( path.startsWith( "http" ) ) {
+  def url( path:String ) =
+    if ( path.startsWith( "http" ) )
       path
-    } else {
+    else
       bucket.url( path )
-    }
-  }
 }
 
 object DbLocalFile extends CommonFile {
@@ -119,12 +116,12 @@ object DbLocalFile extends CommonFile {
 }
 
 object File {
-  def pathFor( entityTid:String, recordTid:String, fieldName:String, url:String ) = {
+  def pathFor( entityTid:String, recordTid:String, pathName:String, url:String ) = {
     val max = scala.math.max( url.lastIndexOf( '/' ), url.lastIndexOf( '.' ) ) 
     val suffix = if ( max != -1 ) url.substring( max+1 ) else "" 
     val extension = suffix.replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
-    
-    ( entityTid + "/" + recordTid + "/" + fieldName + "." + extension )
+
+    ( entityTid + "/" + recordTid + "/" + pathName + "." + extension )
   }
 }
 

@@ -323,17 +323,17 @@ case class DBListImp( obj:BasicDBList ) extends DBListWrap with Seq[Any] {
 
 
   /*
-   * * *  Helper methods for when the list is a list of DBObjects
+   * * *  ArrayIDs (aid) ... the list must be a list of DBObjects for this to work.
    */
    
-  def nextId = if ( obj.size == 0 ) 1 else obj.map( _.asInstanceOf[DBObject] i 'aid ).max + 1
+  def nextAid = if ( obj.size == 0 ) 1 else obj.map( _.as[DBObject] i 'aid ).max + 1
   
-  def addAndId( aobj:DBObject ) = {
-    aobj( "aid" ) = nextId
+  def addAndAid( aobj:DBObject ) = {
+    aobj( "aid" ) = nextAid
     obj.put( obj.size, aobj )
   }
   
-  def find( id:Int ):Option[DBObject] = obj.map( _.asInstanceOf[DBObject] ).find( _.i( 'aid ) == id )
+  def byAid( id:Int ):Option[DBObject] = obj.map( _.as[DBObject] ).find( _.i( 'aid ) == id )
 }
 
 case class BasicDBValue( ref:AnyRef ) extends DBValue {

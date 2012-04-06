@@ -335,13 +335,18 @@ case class Scope( rec:Record,
                   saving:Boolean = true,
                   captcha:Boolean = false,
                   path:Option[Path] = None,
-                  run:Run = null ) {
+                  run:Run = null,
+                  parent:Scope = null ) {
 
   def s = va.map( rec.s )
 
   def value = va.map( rec.apply )
 
   def at( name:String ):Scope = at( rec.view.path( name ) )
+
+  def root:Scope =
+    if ( parent == null ) this
+    else                  parent.root
 
   def at( path:Path ) = {
     val plen = path.pathSize - 1
@@ -368,9 +373,9 @@ case class Scope( rec:Record,
     val va = path.pathAt( pi ).as[ViewAttribute]
 
     if ( va.att.domain.isInstanceOf[Entity] )
-      copy( rec = r.rec( va ), path = None )
+      copy( rec = r.rec( va ), path = None, parent = this )
     else
-      copy( rec = r, path = Some( path ) )
+      copy( rec = r, path = Some( path ), parent = this )
   }
 
   def va = path.map( _.leaf )

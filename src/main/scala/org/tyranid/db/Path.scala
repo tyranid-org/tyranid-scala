@@ -68,6 +68,38 @@ trait Path extends Pathable {
   def name  = ( 0 until pathSize ).map( i => pathAt( i ).name ).mkString( "." )
   def name_ = ( 0 until pathSize ).map( i => pathAt( i ).name ).mkString( "_" )
 
+  // This method uses Array IDs (aid) instead of ArrayIndex.idx's so that the name is the same if the record is reordered inside the array
+  def aidName_( rec:Record ) = {
+    val sb = new StringBuilder
+
+    var obj:Any = rec
+
+    for ( pi <- 0 until pathSize ) {
+      if ( pi > 0 )
+        sb += '_'
+
+      pathAt( pi ) match {
+      case va:ViewAttribute =>
+        obj = obj.as[BsonObject]( va.name )
+        sb ++= va.name
+
+      case ai:ArrayIndex =>
+        obj = obj.as[BasicDBList]( ai.idx )
+
+        if ( obj.isInstanceOf[DBObject] ) {
+          val aid = obj.as[DBObject].s( 'aid )
+
+          if ( aid.notBlank )
+            sb ++= aid
+          else
+            sb ++= ai.idx.toString
+        }
+      }
+    }
+
+    sb.toString
+  }
+
   def label = {
     val sb = new StringBuilder
 

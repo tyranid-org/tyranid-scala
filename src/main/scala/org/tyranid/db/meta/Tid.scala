@@ -40,6 +40,8 @@ case class DeleteResults( ramReferences:Seq[Record], cascadeFailures:Seq[Record]
 
 object Tid {
 
+  def isRecordTid( tid:String ) = tid.length > 4
+
   def split( tid:String ) = tid.splitAt( 4 )
 
   def parse( tid:String ):(Entity,Any) =
@@ -338,24 +340,28 @@ object Tidlet extends Weblet {
           case "/field"   => fields( r )
           case "/json"    => json( r )
           case "/ref"     => refs( tid )
-          case "/version" => Versioning.ui( this, tid )
+          case "/version" => <div style="overflow:scroll;">{ Versioning.ui( this, tid ) }</div>
           }
         }
       } else if ( entity != null ) {
         <div class="fieldHeader">
-         <label>Type</label><span>Entity</span>
+         <label>Type</label><span>{ if ( Tid.isRecordTid( tid ) ) "Record" else "Entity" }</span>
          <label style="margin-left:16px;">Label</label><span>{ entity.label }</span>
          <label style="margin-left:16px;">Entity</label><span>{ entity.name }</span>
          <label style="margin-left:16px;">Storage</label><span>{ entity.storageName }</span>
         </div> ++
-        { entityTabBar.draw( qs = "?tid=" + tid ) } ++
-        { entityTabBar.choice match {
-          case "/attrib" => attribs( entity )
-          case "/record" => records( entity )
-          }
+        { if ( Tid.isRecordTid( tid ) )
+            <div style="color:red;">Invalid TID.</div>
+          else
+            entityTabBar.draw( qs = "?tid=" + tid ) ++
+            { entityTabBar.choice match {
+              case "/attrib" => attribs( entity )
+              case "/record" => records( entity )
+              }
+            }
         }
       } else {
-         tid.notBlank |* Unparsed( """<span style="color:red;">Invalid TID.</span>""" )
+        tid.notBlank |* Unparsed( """<span style="color:red;">Invalid TID.</span>""" )
       }
     }
   }
