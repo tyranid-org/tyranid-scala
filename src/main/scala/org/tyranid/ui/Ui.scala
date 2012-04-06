@@ -206,10 +206,14 @@ case class TabBar( weblet:Weblet, tabs:Tab* ) {
 
   lazy val defaultTab = tabs.find( _.default ).getOrElse( throw new RuntimeException( "Missing default tab." ) )
 
-  def draw( qs:String = "" ) = {
+  def has( rpath:String ) = tabs.exists( _.rpath == rpath )
+
+  def draw( qs:String = "", except:Seq[String] = Nil ) = {
     val rpath = weblet.rpath
 
-    tabs.find( _.rpath == rpath ) match {
+    val activeTabs = tabs filter { tab => !except.exists( _ == tab.rpath ) }
+
+    activeTabs.find( _.rpath == rpath ) match {
     case Some( tab ) =>
       T.session.setPathChoiceAt( weblet.wpath, tab.rpath )
     
@@ -219,7 +223,7 @@ case class TabBar( weblet:Weblet, tabs:Tab* ) {
 
     <div class="tabbar">
      <ul>
-      { tabs map ( _.draw( this, qs ) ) }
+      { activeTabs map ( _.draw( this, qs ) ) }
      </ul>
     </div>;
   }

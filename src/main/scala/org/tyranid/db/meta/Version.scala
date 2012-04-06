@@ -19,6 +19,8 @@ package org.tyranid.db.meta
 
 import java.util.Date
 
+import scala.collection.mutable
+
 import com.mongodb.BasicDBList
 
 import org.tyranid.Imp._
@@ -27,6 +29,7 @@ import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoView, MongoRecord }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.profile.User
 import org.tyranid.session.Session
+import org.tyranid.web.Weblet
 
 
 trait Versioning extends Entity {
@@ -55,11 +58,66 @@ trait Versioning extends Entity {
         if ( diffs.diffs.nonEmpty )
           log( 'updates ) = PathDiff.toDbObject( diffs.diffs )
 
-        val db = Mongo.connect.db( B.profileDbName )( r.entity.dbName + "_log" )
-
-        db.save( log )
+        Versioning.db( r.entity ).save( log )
       }
     }
+  }
+
+  abstract override def delete( r:Record ) {
+    super.delete( r )
+    Versioning.db( r.entity ).remove( Mobj( "recId" -> r.id ) )
+  }
+}
+
+object Versioning {
+
+  case class Change( path:String, a:Any, b:Any )
+
+  def db( entity:Entity ) = Mongo.connect.db( B.profileDbName )( entity.dbName + "_log" )
+
+  def ui( weblet:Weblet, tid:String ) = {
+    val ( en, id ) = Tid.parse( tid )
+
+    val objs = Versioning.db( en ).find( Mobj( "recId" -> id ) ).sort( Mobj( "on" -> -1 ) )
+
+    <table class="dtable nested">
+     <thead><tr><th style="width:150px;">On</th><th>User</th><th>Attribute</th><th>Old</th><th style="width:200px;">New</th></tr></thead>{
+       objs.map { ver =>
+         val user = ver( 'user )
+
+         val map = mutable.HashMap[String,Change]()
+
+         val removals = ver.o( 'removals )
+         if ( removals != null )
+           for ( name <- removals.keys )
+             map( name ) = Change( name, removals( name ), null )
+
+         val updates = ver.o( 'updates )
+         if ( updates != null )
+           for ( name <- updates.keys ) {
+             val u = updates.o( name )
+             map( name ) = Change( name, u( 'a ), u( 'b ) )
+           }
+
+         val adds = ver.o( 'adds )
+         if ( adds != null )
+           for ( name <- adds.keys )
+             map( name ) = Change( name, null, adds( name ) )
+
+         val values = map.values.toSeq.sortBy( _.path )
+
+         var first = true
+         values.map { change =>
+           <tr>
+            { first |* <td rowspan={ values.size.toString }>{ ver.t( 'on ).toDateTimeStr }</td> }
+            { first |* <td rowspan={ values.size.toString }><a href={ weblet.wpath + "?tid=" + B.User.idToTid( user ) }>{ B.User.labelFor( user ) }</a></td> }
+            <td>{ first = false; change.path }</td>
+            <td>{ change.a }</td>
+            <td>{ change.b }</td>
+           </tr>
+         }
+       }
+    }</table>
   }
 }
 

@@ -168,38 +168,53 @@ trait BsonObject extends Deep {
     def enter( v:Any ) {
       v match {
       case a:org.bson.types.BasicBSONList =>
-        depth += 1
-        var first = true
-        sb ++= m( "[", "Bracket" ) += '\n'
-        for ( i <- 0 until a.size ) {
-          if ( first )
-            first = false
-          else
-            sb ++= ",\n"
+        sb ++= m( "[", "Bracket" )
 
-          sb ++= ( "  " * depth )
-          enter( a.get( i ) )
+        if ( a.size > 0 ) {
+          depth += 1
+          var first = true
+
+          sb += '\n'
+          for ( i <- 0 until a.size ) {
+            if ( first )
+              first = false
+            else
+              sb ++= ",\n"
+
+            sb ++= ( "  " * depth )
+            enter( a.get( i ) )
+          }
+
+          depth -= 1
+          sb += '\n' ++= ( "  " * depth )
         }
-
-        depth -= 1
-        sb += '\n' ++= ( "  " * depth ) ++= m( "]", "Bracket" )
+        
+        sb ++= m( "]", "Bracket" )
 
       case o:DBObject =>
-        depth += 1
-        var first = true
-        sb ++= m( "{", "Brace" ) += '\n'
-        for ( k <- o.keys.sorted ) {
-          if ( first )
-            first = false
-          else
-            sb ++= ",\n"
-          
-          sb ++= ( "  " * depth ) ++= m( k, "Key" ) ++= ": "
-          enter( o( k ) )
-        }
+        sb ++= m( "{", "Brace" )
+        val keys = o.keys.sorted
 
-        depth -= 1
-        sb += '\n' ++= ( "  " * depth ) ++= m( "}", "Brace" )
+        if ( keys.size > 0 ) {
+          depth += 1
+          var first = true
+          sb += '\n'
+
+          for ( k <- o.keys.sorted ) {
+            if ( first )
+              first = false
+            else
+              sb ++= ",\n"
+          
+            sb ++= ( "  " * depth ) ++= m( k, "Key" ) ++= ": "
+            enter( o( k ) )
+          }
+
+          depth -= 1
+          sb += '\n' ++= ( "  " * depth )
+        }
+        
+        sb ++= m( "}", "Brace" )
 
       case null =>
         sb ++= m( "null", "Literal" )

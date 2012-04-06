@@ -279,11 +279,11 @@ object Tidlet extends Weblet {
     case "/delete" =>
       shell( delete( tid ) )
 
-    case "/" | "/field" | "/json" | "/ref" | "/attrib" | "/record" =>
-      shell( ui( tid ) )
-
     case _ =>
-      _404
+      if ( "/" == rpath || entityTabBar.has( rpath ) || recordTabBar.has( rpath ) )
+        shell( ui( tid ) )
+      else
+        _404
     }
   }
 
@@ -295,9 +295,10 @@ object Tidlet extends Weblet {
 
   val recordTabBar =
     TabBar( this,
-      Tab( "/field", Text( "Fields" ), default = true ),
-      Tab( "/json",  Text( "JSON" ) ),
-      Tab( "/ref",   Text( "Refs" ) )
+      Tab( "/field",   Text( "Fields" ), default = true ),
+      Tab( "/json",    Text( "JSON" ) ),
+      Tab( "/ref",     Text( "Refs" ) ),
+      Tab( "/version", Text( "Versions" ) )
     )
 
   def ui( tid:String ) = {
@@ -324,13 +325,20 @@ object Tidlet extends Weblet {
          <label style="margin-left:16px;">Label</label><span>{ r.label.summarize() }</span>
          <label style="margin-left:16px;">Entity</label><span><a href={ wpath + "/field?tid=" + entity.tid }>{ entity.name }</a></span>
          <label style="margin-left:16px;">Storage</label><span>{ entity.storageName }</span>
-         { entity.isInstanceOf[MongoEntity] |* <a href={ wpath + "/delete?tid=" + tid } class="redBtn" style="float:right; margin:2px;">Delete</a> }
+         { entity.isInstanceOf[MongoEntity] |* <a href={ wpath + "/delete?tid=" + tid } class="redBtn" style="float:right; margin:2px 4px;">Delete</a> }
         </div> ++
-        { recordTabBar.draw( qs = "?tid=" + tid ) } ++
+        { recordTabBar.draw(
+            qs = "?tid=" + tid,
+            except = Seq(
+              !entity.isInstanceOf[MongoEntity] |* Some( "/json" ),
+              !entity.isInstanceOf[Versioning]  |* Some( "/version" )
+            ).flatten
+          ) } ++
         { recordTabBar.choice match {
-          case "/field" => fields( r )
-          case "/json"  => json( r )
-          case "/ref"   => refs( tid )
+          case "/field"   => fields( r )
+          case "/json"    => json( r )
+          case "/ref"     => refs( tid )
+          case "/version" => Versioning.ui( this, tid )
           }
         }
       } else if ( entity != null ) {
@@ -519,7 +527,6 @@ $(function() {
          </tr>
        }
     }</table>
-
 }
 
 

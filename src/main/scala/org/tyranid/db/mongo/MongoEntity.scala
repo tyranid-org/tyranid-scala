@@ -55,7 +55,12 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
 
 	override lazy val dbName = name.plural
 
-  lazy val db = Mongo.connect.db( B.profileDbName )( dbName )
+  lazy val db = {
+    if ( embedded )
+      problem( "embedded mongodb entities do not have db objects" )
+
+    Mongo.connect.db( B.profileDbName )( dbName )
+  }
 
   lazy val makeView = MongoView( this )
 
@@ -74,7 +79,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
 
   override def delete( rec:Record ) = {
     super.delete( rec )
-    db.remove( rec.as[MongoRecord] )
+    db.remove( Mobj( "_id" -> rec.id ) )
   }
 
 
