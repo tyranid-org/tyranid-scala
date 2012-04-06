@@ -64,7 +64,7 @@ class DbFile( bucket:S3Bucket ) extends CommonFile {
       case _ =>
       }
 
-      val pathName = f.path.aidName_( rootRec )
+      val pathName = s.fullPath.aidName_( rootRec )
 
       val path = File.pathFor( rootRec.entityTid, rootRec.recordTid, pathName, fileItem.getName )
       var in = fileItem.getInputStream

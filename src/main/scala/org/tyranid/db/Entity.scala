@@ -182,14 +182,12 @@ trait Entity extends Domain with DbItem {
   lazy val idAtt:Option[Attribute] =
     attribs.find( _.isId ) match {
     case None =>
-spam( "no id on " + name )
       if ( !embedded )
         problem( "missing ID attribute" )
 
       None
 
     case some =>
-spam( "id on " + name + " = " + some )
       some
     }
 

@@ -333,7 +333,15 @@ case class DBListImp( obj:BasicDBList ) extends DBListWrap with Seq[Any] {
     obj.put( obj.size, aobj )
   }
   
-  def byAid( id:Int ):Option[DBObject] = obj.map( _.as[DBObject] ).find( _.i( 'aid ) == id )
+  def byAid( aid:Int ):Option[DBObject] = obj.map( _.as[DBObject] ).find( _.i( 'aid ) == aid )
+
+  def aidToIdx( aid:Int ):Int = {
+    for ( idx <- 0 until obj.size;
+          if obj( idx ).as[DBObject].i( 'aid ) == aid )
+      return idx
+
+    -1
+  }
 }
 
 case class BasicDBValue( ref:AnyRef ) extends DBValue {

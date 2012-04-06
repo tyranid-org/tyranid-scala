@@ -178,5 +178,35 @@ class PathSuite extends FunSuite {
     // falls back to array index if aid isn't present
     assert( Path.parse( rec.view, "prices.1.price" ).aidName_( rec ) === "prices_1_price" )
   }
+
+  test( "scopePaths" ) {
+
+    val rec = Widget.make
+    rec( 'prices ) = Mlist( Mobj( "aid" -> 3, "price" -> 1.0 ), Mobj( "price" -> 2.0 ) )
+
+    val scope1 = Scope( rec )
+    assert( scope1.pathName_      === "" )
+    assert( scope1.fullPath.name_ === "" )
+
+    val scope2 = scope1.at( "prices.1" )
+    assert( scope2.pathName_             === "" )
+    assert( scope2.pathFromParent.name_  === "prices_1" )
+    assert( scope2.fullPath.name_        === "prices_1" )
+
+    val scope3 = scope2.at( "price" )
+    assert( scope3.pathName_      === "price" )
+    assert( scope3.fullPath.name_ === "prices_1_price" )
+
+    val scope4 = scope1.at( "name" )
+    assert( scope4.fullPath.name_ === "name" )
+
+    val scope5 = scope1.at( "dims" )
+    assert( scope5.pathName_      === "" )
+    assert( scope5.fullPath.name_ === "dims" )
+
+    val scope6 = scope5.at( "height" )
+    assert( scope6.pathName_      === "height" )
+    assert( scope6.fullPath.name_ === "dims_height" )
+  }
 }
 

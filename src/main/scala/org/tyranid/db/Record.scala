@@ -68,6 +68,12 @@ case class ViewAttribute( val view:View,
   def pathSize = 1
   def pathAt( idx:Int ) = this
 
+  def slice( fromIdx:Int, toIdx:Int ):Path = {
+    require( fromIdx <= 1 && toIdx <= 1 )
+    if ( toIdx == fromIdx ) EmptyPath
+    else                    this
+  }
+
 
   /*
    * * *   Validation
@@ -153,6 +159,10 @@ trait Record extends Valid with BsonObject {
   def flatten = Path.flatten( this )
 
   val parent:Record
+
+  def root:Record =
+    if ( parent == null ) this
+    else                  parent.root
 
   def entity = view.entity
 
@@ -267,7 +277,7 @@ trait Record extends Valid with BsonObject {
   var isAdding:Boolean = false
 
   def submit {
-    require( parent == null )
+    //require( parent == null )
     submitFlagged = true
   }
   
@@ -329,30 +339,31 @@ trait Record extends Valid with BsonObject {
   final def delete = entity.delete( this )
 }
 
-
 case class Scope( rec:Record,
                   initialDraw:Boolean = false,
                   saving:Boolean = true,
                   captcha:Boolean = false,
-                  path:Option[Path] = None,
+                  path:Path = EmptyPath,
+                  pathFromParent:Path = EmptyPath,
                   run:Run = null,
                   parent:Scope = null ) {
 
-  def s = va.map( rec.s )
-
+  def va    = Option( path.leaf )
+  def s     = va.map( rec.s )
   def value = va.map( rec.apply )
-
-  def at( name:String ):Scope = at( rec.view.path( name ) )
 
   def root:Scope =
     if ( parent == null ) this
     else                  parent.root
 
-  def at( path:Path ) = {
-    val plen = path.pathSize - 1
+  def at( name:String ):Scope = at( rec.view.path( name ) )
+
+  def at( path:Path ):Scope = {
+    val plen = path.pathSize
 
     var r = rec
     var pi = 0
+    var lastRecPi = 0
     while ( pi < plen ) {
       val va = path.pathAt( pi ).as[ViewAttribute]
 
@@ -364,25 +375,26 @@ case class Scope( rec:Record,
         r = va.domain.as[DbArray].of.as[MongoEntity].recify( v, r.as[MongoRecord], rec => array( ai.idx ) = rec )
 
         pi += 2
+        lastRecPi = pi
       } else {
-        r = r.rec( va )
         pi += 1
+
+        if ( va.att.domain.isInstanceOf[Entity] ) {
+          r = r.rec( va )
+          lastRecPi = pi
+        } else {
+          if ( pi < plen )
+            problem( "intermediate view attributes in a path must point to entities" )
+        }
       }
     }
 
-    val va = path.pathAt( pi ).as[ViewAttribute]
-
-    if ( va.att.domain.isInstanceOf[Entity] )
-      copy( rec = r.rec( va ), path = None, parent = this )
-    else
-      copy( rec = r, path = Some( path ), parent = this )
+    copy( rec = r, path = path.slice( lastRecPi, plen ), pathFromParent = path.slice( 0, lastRecPi ), parent = this )
   }
-
-  def va = path.map( _.leaf )
 
   def required = rec.hasSubmitted |* s.filter( _.isBlank ).map( s => Invalid( this, "Please fill in." ) )
 
-  def draw    ( ui:UiObj ) = ui.draw( this )
+  def draw( ui:UiObj ) = ui.draw( this )
 
   def submit( rec:Record, ui:UiObj ) = {
     rec.submit
@@ -393,6 +405,25 @@ case class Scope( rec:Record,
           pathScope = this.at( path );
           invalid <- path.leaf.invalids( pathScope ) )
       yield invalid
+  }
+
+  def pathName_ = path.name_
+
+  def fullPath = {
+    val b = mutable.ArrayBuffer[PathNode]()
+
+    def addParent( p:Scope ) {
+      if ( p != null ) {
+        addParent( p.parent )
+        p.pathFromParent.appendNodesTo( b )
+      }
+    }
+
+    addParent( parent )
+    pathFromParent.appendNodesTo( b )
+    path.appendNodesTo( b )
+
+    Path.fromNodes( b )
   }
 }
 

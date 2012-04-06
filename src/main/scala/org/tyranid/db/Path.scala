@@ -121,6 +121,15 @@ trait Path extends Pathable {
   def pathSize:Int
   def pathAt( idx:Int ):PathNode
 
+  def slice( fromIdx:Int, toIdx:Int ):Path
+
+  def appendNodesTo( b:mutable.ArrayBuffer[PathNode] ) =
+    this match {
+    case va:ViewAttribute => b += va
+    case m:MultiPath      => b ++= m.nodes
+    case e:EmptyPath      =>
+    }
+
   def tail = pathAt( pathSize - 1 )
 
   def leafDomain =
@@ -131,7 +140,7 @@ trait Path extends Pathable {
 
   def leaf:ViewAttribute = {
     var ps = pathSize - 1
-    while ( true ) {
+    while ( ps >= 0 ) {
       pathAt( ps ) match {
       case va:ViewAttribute => return va
       case _                => ps -= 1
@@ -190,10 +199,30 @@ trait Path extends Pathable {
   def rec( rec:Record ) = get( rec ).as[Record]
 }
 
+sealed trait EmptyPath extends Path
+case object EmptyPath extends EmptyPath {
+  def pathSize          = 0
+  def pathAt( idx:Int ) = throw new ArrayIndexOutOfBoundsException( idx )
+
+  def slice( fromIdx:Int, toIdx:Int ):Path = {
+    require( fromIdx == 0 && toIdx == 0 )
+    this
+  }
+
+  override lazy val pathName = ""
+}
+
 case class MultiPath( nodes:PathNode* ) extends Path {
 
   def pathSize = nodes.length
   def pathAt( idx:Int ) = nodes( idx )
+
+  def slice( fromIdx:Int, toIdx:Int ):Path =
+    toIdx - fromIdx match {
+    case 0 => EmptyPath
+    case 1 => pathAt( fromIdx ).as[ViewAttribute]
+    case _ => MultiPath( nodes.slice( fromIdx, toIdx ):_* )
+    }
 
   override lazy val pathName = nodes.map( _.name ).mkString( "_" )
 }
@@ -336,6 +365,13 @@ object Path {
       compare0( 0 )
     }
   }
+
+  def fromNodes( nodes:Seq[PathNode] ):Path =
+    nodes.length match {
+    case 0 => EmptyPath
+    case 1 => nodes( 0 ).as[ViewAttribute]
+    case n => MultiPath( nodes:_* )
+    }
 
   def parse( root:View, path:String, sep:Char = 0 ):Path = {
 
