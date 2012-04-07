@@ -379,6 +379,16 @@ case class Scope( rec:Record,
 
         pi += 2
         lastRecPi = pi
+      } else if ( path.pathAt( pi+1 ).isInstanceOf[ArrayId] ) {
+        val aid = path.pathAt( pi+1 ).as[ArrayId]
+        val array = r.a( va )
+        val idx = array.aidToIdx( aid.id )
+        val v = array( idx )
+
+        r = va.domain.as[DbArray].of.as[MongoEntity].recify( v, r.as[MongoRecord], rec => array( idx ) = rec )
+
+        pi += 2
+        lastRecPi = pi
       } else {
         pi += 1
 

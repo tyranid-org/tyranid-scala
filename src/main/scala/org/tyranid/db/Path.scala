@@ -56,9 +56,20 @@ trait PathNode {
 }
 
 case class ArrayIndex( idx:Int ) extends PathNode {
-
   def name  = idx.toString
   def label = "#" + ( idx + 1 )
+}
+
+object ArrayId {
+  def isAid( s:String ) = {
+    val slen = s.length
+    s.charAt( slen -1 ) == 'a' && ( 0 until slen - 1 ).forall( i => s.charAt( i ).isDigit )
+  }
+}
+
+case class ArrayId( id:Int ) extends PathNode {
+  def name  = id.toString + "a"
+  def label = "AID " + id
 }
 
 trait Path extends Pathable {
@@ -90,10 +101,15 @@ trait Path extends Pathable {
           val aid = obj.as[DBObject].s( 'aid )
 
           if ( aid.notBlank )
-            sb ++= aid
+            sb ++= aid += 'a'
           else
             sb ++= ai.idx.toString
         }
+
+      case aid:ArrayId =>
+        obj = obj.as[BasicDBList].byAid( aid.id )
+
+        sb ++= aid.id.toString += 'a'
       }
     }
 
@@ -107,6 +123,9 @@ trait Path extends Pathable {
       pathAt( i ) match {
       case ai:ArrayIndex =>
         sb += ' ' ++= ai.label
+
+      case aid:ArrayId =>
+        sb += ' ' ++= aid.label
 
       case p =>
         if ( i > 0 )
@@ -135,6 +154,7 @@ trait Path extends Pathable {
   def leafDomain =
     pathAt( pathSize - 1 ) match {
     case ai:ArrayIndex    => pathAt( pathSize - 2 ).as[ViewAttribute].domain.as[DbArray].of
+    case aid:ArrayId      => pathAt( pathSize - 2 ).as[ViewAttribute].domain.as[DbArray].of
     case va:ViewAttribute => va.domain
     }
 
@@ -168,6 +188,7 @@ trait Path extends Pathable {
                                  case _               => null
                                  }
         case ai:ArrayIndex    => cur.asInstanceOf[BasicDBList].get( ai.idx )
+        case aid:ArrayId      => cur.asInstanceOf[BasicDBList].byAid( aid.id )
         }
 
     cur
@@ -395,6 +416,9 @@ object Path {
           names( ni ) match {
           case s if s.isInt =>
             pbuf( ni ) = ArrayIndex( s.toInt )
+
+          case s if ArrayId.isAid( s ) =>
+            pbuf( ni ) = ArrayId( s.substring( 0, s.length -1 ).toInt )
 
           case s =>
             val va = view( s )

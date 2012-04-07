@@ -116,7 +116,8 @@ class PathSuite extends FunSuite {
       "dims_height",
       "prices_0_price",
       "prices_0_type_name",
-      "prices_0_type_quantity"
+      "prices_0_type_quantity",
+      "prices_3a_type_quantity"
     )
 
     for ( path <- paths )
@@ -146,13 +147,17 @@ class PathSuite extends FunSuite {
     val obj = Widget.make
     val v = obj.view
 
-    obj( 'name ) = "test"
-    obj( 'dims ) = Mobj( "height" -> 20, "weight" -> 31 )
-    obj( 'tags ) = Mlist( "acme", "fun" )
+    obj( 'name )   = "test"
+    obj( 'dims )   = Mobj( "height" -> 20, "weight" -> 31 )
+    obj( 'tags )   = Mlist( "acme", "fun" )
+    obj( 'prices ) = Mlist( Mobj( "aid" -> 3, "price" -> 1.0 ), Mobj( "price" -> 2.0 ) )
 
-    assert( Path.parse( v, "name"        ).get( obj ) == "test" )
-    assert( Path.parse( v, "dims.height" ).get( obj ) == 20 )
-    assert( Path.parse( v, "tags.0"      ).get( obj ) == "acme" )
+    assert( Path.parse( v, "name"            ).get( obj ) == "test" )
+    assert( Path.parse( v, "dims.height"     ).get( obj ) == 20 )
+    assert( Path.parse( v, "tags.0"          ).get( obj ) == "acme" )
+    assert( Path.parse( v, "prices.1.price"  ).get( obj ) == 2.0 )
+    assert( Path.parse( v, "prices.0.price"  ).get( obj ) == 1.0 )
+    assert( Path.parse( v, "prices.3a.price" ).get( obj ) == 1.0 )
   }
 
   test( "display" ) {
@@ -173,7 +178,7 @@ class PathSuite extends FunSuite {
     val rec = Widget.make
     rec( 'prices ) = Mlist( Mobj( "aid" -> 3, "price" -> 1.0 ), Mobj( "price" -> 2.0 ) )
 
-    assert( Path.parse( rec.view, "prices.0.price" ).aidName_( rec ) === "prices_3_price" )
+    assert( Path.parse( rec.view, "prices.0.price" ).aidName_( rec ) === "prices_3a_price" )
 
     // falls back to array index if aid isn't present
     assert( Path.parse( rec.view, "prices.1.price" ).aidName_( rec ) === "prices_1_price" )
@@ -207,6 +212,10 @@ class PathSuite extends FunSuite {
     val scope6 = scope5.at( "height" )
     assert( scope6.pathName_      === "height" )
     assert( scope6.fullPath.name_ === "dims_height" )
+
+    val scope7 = scope1.at( "prices.3a" )
+    assert( scope7.pathName_      === "" )
+    assert( scope7.fullPath.name_ === "prices_3a" )
   }
 }
 
