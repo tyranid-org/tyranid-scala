@@ -116,9 +116,9 @@ object Schedulelet extends Weblet {
            <td>{ if ( task.active ) "On" else "Off" }</td>
            <td>{
              if ( task.active )
-               <a class="redBtn" href={ wpath + "/off?task=" + task.subject } style="width:92px;">Turn Off</a>
+               <a class="greenBtn" href={ wpath + "/off?task=" + task.subject } style="width:50px;">On</a>
              else
-               <a class="greenBtn" href={ wpath + "/on?task=" + task.subject } style="width:92px;">Turn On</a>
+               <a class="redBtn" href={ wpath + "/on?task=" + task.subject } style="width:50px;">Off</a>
            }</td>
            <td>{ task.subject }</td>
            <td>{ task.runs }</td>

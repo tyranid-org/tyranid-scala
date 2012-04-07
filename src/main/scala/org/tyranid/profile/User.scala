@@ -63,6 +63,8 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "fbt"            is DbChar(90)          ; // Facebook OAuth 2.0 token
   "fbte"           is DbLong              ; // Facebook token expiration
 
+  "spy"            is DbBoolean           ;
+
   def isLoggedIn = Session().user.loggedIn
   
   def isAdmin    = Session().user.admin

@@ -28,6 +28,7 @@ import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
 import org.tyranid.bson.BsonObject
+import org.tyranid.db.meta.Tid
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.logic.{ Invalid, Valid }
@@ -180,6 +181,8 @@ trait Record extends Valid with BsonObject {
   def idLabel:(AnyRef,String) = ( apply( view.idVa.get ), label )
 
   def tid = entityTid + recordTid
+
+  def spy = Tid.spy( tid )
 
   def entityTid = view.entity.tid
   def recordTid = view.idVa.flatten( va => va.att.domain.idToRecordTid( this( va ) ), view.entity.problem( "embedded entities don't have IDs" ) )

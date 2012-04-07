@@ -218,6 +218,11 @@ object LogQuery extends MongoQuery {
   }
 
   val allFields = Seq(
+    new CustomField {
+      def name = "tid"
+      override lazy val label = "TID"
+      def cell( s:Scope ) = <a href={ "/admin/tid?tid=" + s.rec.tid } class="spyBtn" style="margin:0 1px;">T</a>
+    },
     PathField( "e",                search = Search.Equals ),
     PathField( "on" ),
     PathField( "on", "From Date",  search = Search.Gte,   data = false ),
@@ -229,7 +234,7 @@ object LogQuery extends MongoQuery {
       def cell( s:Scope ) = {
         s.rec.oid( 'uid ) match {
         case null => Unparsed( "" )
-        case uid  => Unparsed( B.userMeta.nameFor( uid ) )
+        case uid  => <a href={ "/admin/tid?tid=" + B.User.idToTid( uid ) }>{ B.userMeta.nameFor( uid ) }</a>
         }
       }
     },
@@ -254,7 +259,7 @@ object LogQuery extends MongoQuery {
     PathField( "du", search = Search.Gte )
   )
 
-  val defaultFields = dataFields.take( 4 )
+  val defaultFields = dataFields.take( 5 )
 }
 
 object Loglet extends Weblet {
