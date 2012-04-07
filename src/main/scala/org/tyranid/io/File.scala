@@ -22,7 +22,7 @@ import java.net.URL
 
 import scala.collection.mutable
 import scala.collection.JavaConversions._
-import scala.xml.NodeSeq
+import scala.xml.{ NodeSeq, Unparsed }
 
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
@@ -126,15 +126,17 @@ object File {
 }
 
 trait CommonFile extends Domain {
-  override def ui( s:Scope, f:PathField ): NodeSeq =
+  override def ui( s:Scope, f:PathField ): NodeSeq = {
     <div class='thumbnail'>
       { 
-//        if ( ( s.rec s f.va ).isBlank ) { // TODO:  Replace this with a blank/default image for ALL images
-//        } else {
-//        }
+        val url = s.rec.s( f.va.name )
+        
+        if ( url notBlank )
+          <a href="#" onclick={ Unparsed( "downloadFile( '" + url + "', event, 'vFileWindow'); return false;")}>Contractor's License File</a>
         
         <div><input id={ f.id } name={ f.id } type="file"/></div>
       }
     </div>
+  }
 }
 
