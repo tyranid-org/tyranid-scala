@@ -495,6 +495,7 @@ case class Report( query:Query ) {
   var records:Seq[Record] = _
   var selectedRecords:Seq[Record] = _
 
+
   /*
    * * *  Groups
    */
