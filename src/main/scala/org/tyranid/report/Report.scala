@@ -64,6 +64,11 @@ case class Grouping( entity:MongoEntity, keyName:String, value: () => AnyRef ) {
      </tr>
     </table>
 
+  def prepareSearch( search:DBObject, run:Run ) =
+    run.groupFilter foreach { gf =>
+      search( "_id" ) = Mobj( $in -> gf.a_?( 'ids ) )
+    }
+
   def draw =
     <div id="rGroupDlg" style="padding:8px; display:none;">
      <table id="rGroupDlg_c">
@@ -85,6 +90,97 @@ case class Grouping( entity:MongoEntity, keyName:String, value: () => AnyRef ) {
       <button id="rGroupOkay" class="greenBtn">Okay</button>
      </div>
     </div>
+
+  def handle( weblet:Weblet, report:Report ):Boolean = {
+    val web = T.web
+    val query = report.query
+
+    weblet.rpath match {
+    case "/groups" =>
+      report.groupFilter = web.req.s( 'gn )
+      web.res.html( report.innerDraw )
+
+    case "/group" =>
+      report.selectedRecords = report.records.filter( r => report.selectedIds( r.id ) )
+
+      if ( report.selectedRecords.size == 0 ) {
+        web.res.html( NodeSeq.Empty )
+      } else {
+        report.groups = query.grouping.list.toSeq
+
+        report.addGroupName = ""
+        report.newGroupName = ""
+        report.removeGroupName = ""
+
+        val intersection = report.groups.filter( g => report.selectedRecords.forall( r => g.a_?( 'ids ).contains( r.id ) ) )
+        val union        = report.groups.filter( g => report.selectedRecords.exists( r => g.a_?( 'ids ).contains( r.id ) ) )
+
+        web.res.html(
+          <tr>
+           <td style="width:160px;"><label for="rGroupAdd">Add to Existing Group</label></td>
+           <td>
+            { Select( "rGroupAdd", "", ( "" -> "" ) +: report.groups.filter( g => !intersection.contains( g ) ).map( g => ( g.s( 'name ), g.s( 'name ) ) ), "style" -> "width:160px; max-width:160px;" ) }
+           </td>
+          </tr> ++
+          <tr>
+           <td><label for="rGroupNew">Add to New Group</label></td>
+           <td>
+            { Input( "rGroupNew", "", "style" -> "width:120px;" ) }
+           </td>
+          </tr>
+          <tr> ++
+           <td><label for="rGroupRemove">Remove Group</label></td>
+           <td>
+            { Select( "rGroupRemove", "", ( "" -> "" ) +: union.filter( !_.b( 'builtin ) ).map( g => ( g.s( 'name ), g.s( 'name ) ) ), "style" -> "width:160px; max-width:160px;" ) }
+           </td>
+          </tr> )
+      }
+
+    case "/group/add" =>
+      report.addGroupName = web.req.s( 'v )
+      web.res.ok
+
+    case "/group/new" =>
+      report.newGroupName = web.req.s( 'v )
+      web.res.ok
+
+    case "/group/remove" =>
+      report.removeGroupName = web.req.s( 'v )
+      web.res.ok
+
+    case "/group/okay" =>
+      val grouping = query.grouping
+
+      if ( report.addGroupName.notBlank ) {
+        report.groups.find( _.s( 'name ) == report.addGroupName ) foreach { g =>
+          g( 'ids ) = Mlist( ( g.a_?( 'ids ) ++ report.selectedIds ).distinct:_* )
+          grouping.entity.db.save( g )
+        }
+      }
+
+      if ( report.newGroupName.notBlank ) {
+        grouping.entity.db.save(
+          Mobj(
+            "name" -> report.newGroupName,
+             grouping.keyName -> grouping.value(),
+             "ids" -> Mlist( report.selectedIds.toSeq:_* ) ) )
+      }
+
+      if ( report.removeGroupName.notBlank ) {
+        report.groups.find( _.s( 'name ) == report.removeGroupName ) foreach { g =>
+          g( 'ids ) = Mlist( g.a_?( 'ids ).filter( id => !report.selectedIds.exists( _ == id ) ):_* )
+          grouping.entity.db.save( g )
+        }
+      }
+
+      web.res.html( report.innerDraw )
+
+    case _ =>
+      return false
+    }
+
+    true
+  }
 }
 
 
@@ -171,7 +267,7 @@ trait Query {
 
   val tableGridStyle:String = null
 
-  def selectable = false //grouping != null
+  def selectable = grouping != null
 
   //val actions = Seq(
     //"Group",          // multi-select
@@ -245,9 +341,7 @@ trait MongoQuery extends Query {
     val search = super.prepareSearch( run )
 
     if ( grouping != null )
-      run.groupFilter foreach { gf =>
-        search( "_id" ) = Mobj( $in -> gf.a_?( 'ids ) )
-      }
+      grouping.prepareSearch( search, run )
 
     search
   }
@@ -680,84 +774,10 @@ object Reportlet extends Weblet {
       report.onField = web.req.s( 'v )
       web.res.ok
 
-    case "/groups" =>
-      report.groupFilter = web.req.s( 'gn )
-      web.res.html( report.innerDraw )
+    case _ if query.grouping != null && query.grouping.handle( this, report ) =>
 
-    case "/group" =>
-      report.selectedRecords = report.records.filter( r => report.selectedIds( r.id ) )
-
-      if ( report.selectedRecords.size == 0 ) {
-        web.res.html( NodeSeq.Empty )
-      } else {
-        report.groups = query.grouping.list.toSeq
-
-        report.addGroupName = ""
-        report.newGroupName = ""
-        report.removeGroupName = ""
-
-        val intersection = report.groups.filter( g => report.selectedRecords.forall( r => g.a_?( 'ids ).contains( r.id ) ) )
-        val union        = report.groups.filter( g => report.selectedRecords.exists( r => g.a_?( 'ids ).contains( r.id ) ) )
-
-        web.res.html(
-          <tr>
-           <td style="width:160px;"><label for="rGroupAdd">Add to Existing Group</label></td>
-           <td>
-            { Select( "rGroupAdd", "", ( "" -> "" ) +: report.groups.filter( g => !intersection.contains( g ) ).map( g => ( g.s( 'name ), g.s( 'name ) ) ), "style" -> "width:160px; max-width:160px;" ) }
-           </td>
-          </tr> ++
-          <tr>
-           <td><label for="rGroupNew">Add to New Group</label></td>
-           <td>
-            { Input( "rGroupNew", "", "style" -> "width:120px;" ) }
-           </td>
-          </tr>
-          <tr> ++
-           <td><label for="rGroupRemove">Remove Group</label></td>
-           <td>
-            { Select( "rGroupRemove", "", ( "" -> "" ) +: union.filter( !_.b( 'builtin ) ).map( g => ( g.s( 'name ), g.s( 'name ) ) ), "style" -> "width:160px; max-width:160px;" ) }
-           </td>
-          </tr> )
-      }
-
-    case "/group/add" =>
-      report.addGroupName = web.req.s( 'v )
-      web.res.ok
-
-    case "/group/new" =>
-      report.newGroupName = web.req.s( 'v )
-      web.res.ok
-
-    case "/group/remove" =>
-      report.removeGroupName = web.req.s( 'v )
-      web.res.ok
-
-    case "/group/okay" =>
-      val grouping = query.grouping
-
-      if ( report.addGroupName.notBlank ) {
-        report.groups.find( _.s( 'name ) == report.addGroupName ) foreach { g =>
-          g( 'ids ) = Mlist( ( g.a_?( 'ids ) ++ report.selectedIds ).distinct:_* )
-          grouping.entity.db.save( g )
-        }
-      }
-
-      if ( report.newGroupName.notBlank ) {
-        grouping.entity.db.save(
-          Mobj(
-            "name" -> report.newGroupName,
-             grouping.keyName -> grouping.value(),
-             "ids" -> Mlist( report.selectedIds.toSeq:_* ) ) )
-      }
-
-      if ( report.removeGroupName.notBlank ) {
-        report.groups.find( _.s( 'name ) == report.removeGroupName ) foreach { g =>
-          g( 'ids ) = Mlist( g.a_?( 'ids ).filter( id => !report.selectedIds.exists( _ == id ) ):_* )
-          grouping.entity.db.save( g )
-        }
-      }
-
-      web.res.html( report.innerDraw )
+    case _ =>
+      _404
     }
   }
 }
