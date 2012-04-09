@@ -34,9 +34,8 @@ import org.tyranid.web.{ Weblet, WebContext }
 
 
 /*
- * * *  S o r t
+ * * *   S o r t
  */
-
 
 case class Sort( name:String, label:String, direction:Int ) {
 
@@ -46,13 +45,52 @@ case class Sort( name:String, label:String, direction:Int ) {
 
 
 /*
- * * *  Q u e r y
+ * * *   G r o u p
  */
 
 case class Grouping( entity:MongoEntity, keyName:String, value: () => AnyRef ) {
 
   def list = entity.db.find( Mobj( keyName -> value() ) ).toSeq
+
+  def drawFilter( run:Run ) =
+    <table class="tile" style="width:140px; height:54px;">
+     <tr>
+      <td class="label">view group</td>
+     </tr>
+     <tr>
+      <td>{ 
+        Select( "rGroups", run.report.groupFilter, ( "" -> "All" ) +: run.groups.map( g => g.s( 'name ) -> g.s( 'name ) ), "style" -> "width:120px; max-width:120px;" )
+      }</td>
+     </tr>
+    </table>
+
+  def draw =
+    <div id="rGroupDlg" style="padding:8px; display:none;">
+     <table id="rGroupDlg_c">
+      <tr>
+       <td style="width:160px;"><label for="rGroupAdd">Add to Existing Group</label></td>
+       <td/>
+      </tr>
+      <tr>
+       <td><label for="rGroupNew">Add to New Group</label></td>
+       <td/>
+      </tr>
+      <tr>
+       <td><label for="rGroupRemove">Remove Group</label></td>
+       <td/>
+      </tr>
+     </table>
+     <div class="btns">
+      <button onclick="$('#rGroupDlg').dialog('close'); return false;" class="greyBtn">Cancel</button>
+      <button id="rGroupOkay" class="greenBtn">Okay</button>
+     </div>
+    </div>
 }
+
+
+/*
+ * * *   Q u e r y
+ */
 
 object Query {
 
@@ -133,14 +171,14 @@ trait Query {
 
   val tableGridStyle:String = null
 
-  def selectable = grouping != null
+  def selectable = false //grouping != null
 
   //val actions = Seq(
     //"Group",          // multi-select
     //"Connection"      // multi-select
   //)
 
-  val grouping:Grouping = null
+  val grouping:Option[Grouping] = None
 
   lazy val init =
     Query.byName( name ) = this
@@ -206,10 +244,11 @@ trait MongoQuery extends Query {
 
     val search = super.prepareSearch( run )
 
-    if ( grouping != null )
+    grouping foreach { g =>
       run.groupFilter foreach { gf =>
         search( "_id" ) = Mobj( $in -> gf.a_?( 'ids ) )
       }
+    }
 
     search
   }
@@ -357,6 +396,14 @@ case class Report( query:Query ) {
 
 
   /*
+   * * *  Selection
+   */
+
+  var records:Seq[Record] = _
+  var selectedRecords:Seq[Record] = _
+
+
+  /*
    * * *  Groups
    */
 
@@ -364,8 +411,6 @@ case class Report( query:Query ) {
   var newGroupName = ""
   var removeGroupName = ""
 
-  var records:Seq[Record] = _
-  var selectedRecords:Seq[Record] = _
   var groups:Seq[DBObject] = _
 
 
@@ -400,7 +445,7 @@ case class Report( query:Query ) {
             { ( query.hasSearch        |* <td><button id="rSearch" class="greyBtn">Search</button></td> ) ++
               ( offset > 0             |* <td><button id="rPrev" class="greyBtn">Prev</button></td> ) ++
               ( hasNext                |* <td><button id="rNext" class="greyBtn">Next</button></td> ) ++
-              ( query.grouping != null |* <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
+              query.grouping.map( g =>    <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
             { query.extraActions } 
            </tr>
           </table>
@@ -408,20 +453,7 @@ case class Report( query:Query ) {
         </tr>
        </table>
       </td>
-      { query.grouping != null |*
-      <td>
-       <table class="tile" style="width:140px; height:54px;">
-        <tr>
-         <td class="label">view group</td>
-        </tr>
-        <tr>
-         <td>{ 
-           Select( "rGroups", groupFilter, ( "" -> "All" ) +: run.groups.map( g => g.s( 'name ) -> g.s( 'name ) ), "style" -> "width:120px; max-width:120px;" )
-         }</td>
-        </tr>
-       </table>
-      </td>
-      }
+      { query.grouping.map( g => <td>{ g.drawFilter( run ) }</td> ) } 
       <td style="width:410px; padding:0;">
       </td>
       <td>
@@ -485,28 +517,7 @@ case class Report( query:Query ) {
      <script src={ B.buildPrefix + "/js/report.js" } type="text/javascript"/>
      <script>{ Unparsed( "window.reportObj = { qn:'" + query.name + "', id:'" + id + "' };" ) }</script>
     </head> ++
-    { query.grouping != null |*
-      <div id="rGroupDlg" style="padding:8px; display:none;">
-       <table id="rGroupDlg_c">
-        <tr>
-         <td style="width:160px;"><label for="rGroupAdd">Add to Existing Group</label></td>
-         <td/>
-        </tr>
-        <tr>
-         <td><label for="rGroupNew">Add to New Group</label></td>
-         <td/>
-        </tr>
-        <tr>
-         <td><label for="rGroupRemove">Remove Group</label></td>
-         <td/>
-        </tr>
-       </table>
-       <div class="btns">
-        <button onclick="$('#rGroupDlg').dialog('close'); return false;" class="greyBtn">Cancel</button>
-        <button id="rGroupOkay" class="greenBtn">Okay</button>
-       </div>
-      </div>
-    } ++
+    { query.grouping.map( _.draw ) } ++
     <div class="report greyBox" id={ id }>
     { recalcFields
       innerDraw }
@@ -550,7 +561,7 @@ case class Run( report:Report ) {
     </tr>
   }
 
-  lazy val groups = query.grouping.list
+  lazy val groups = query.grouping.get.list
 
   def groupsFor( id:AnyRef ) = groups.filter( _.a_?( 'ids ).contains( id ) ).map( _.s( 'name ) ).mkString( ", " )
 
@@ -681,7 +692,7 @@ object Reportlet extends Weblet {
       if ( report.selectedRecords.size == 0 ) {
         web.res.html( NodeSeq.Empty )
       } else {
-        report.groups = query.grouping.list.toSeq
+        report.groups = query.grouping.get.list.toSeq
 
         report.addGroupName = ""
         report.newGroupName = ""
@@ -724,7 +735,7 @@ object Reportlet extends Weblet {
       web.res.ok
 
     case "/group/okay" =>
-      val grouping = query.grouping
+      val grouping = query.grouping.get
 
       if ( report.addGroupName.notBlank ) {
         report.groups.find( _.s( 'name ) == report.addGroupName ) foreach { g =>
