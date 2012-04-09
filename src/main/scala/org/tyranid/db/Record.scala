@@ -182,7 +182,7 @@ trait Record extends Valid with BsonObject {
 
   def tid = entityTid + recordTid
 
-  def spy = Tid.spy( tid )
+  def eye = Tid.eye( tid )
 
   def entityTid = view.entity.tid
   def recordTid = view.idVa.flatten( va => va.att.domain.idToRecordTid( this( va ) ), view.entity.problem( "embedded entities don't have IDs" ) )

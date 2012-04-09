@@ -118,6 +118,6 @@ object Imp {
 
   def problem( desc:String ) = throw new org.tyranid.db.ModelException( desc )
 
-  def spy( tid:String ) = org.tyranid.db.meta.Tid.spy( tid )
+  def eye( tid:String ) = org.tyranid.db.meta.Tid.eye( tid )
 }
 

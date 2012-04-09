@@ -221,7 +221,7 @@ object LogQuery extends MongoQuery {
     new CustomField {
       def name = "tid"
       override lazy val label = "TID"
-      def cell( s:Scope ) = <a href={ "/admin/tid?tid=" + s.rec.tid } class="spyBtn" style="margin:0 1px;">T</a>
+      def cell( s:Scope ) = <a href={ "/admin/tid?tid=" + s.rec.tid } class="eyeBtn" style="margin:0 1px;">T</a>
     },
     PathField( "e",                search = Search.Equals ),
     PathField( "on" ),

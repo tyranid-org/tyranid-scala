@@ -39,7 +39,7 @@ case class DeleteResults( ramReferences:Seq[Record], cascadeFailures:Seq[Record]
 }
 
 object Tid {
-  def spy( tid:String ) = T.isSpy |* <a href={ "/admin/tid?tid=" + tid } class="spyBtn">T</a>
+  def eye( tid:String ) = T.isEye |* <a href={ "/admin/tid?tid=" + tid } class="eyeBtn">T</a>
 
   def isRecordTid( tid:String ) = tid.length > 4
 

@@ -126,7 +126,7 @@ class ThreadData {
    * * *  Security
    */
 
-  def isSpy = user != null && user.isGod && user.b( 'spy )
+  def isEye = user != null && user.isGod && user.b( 'eye )
   def isGod = user != null && user.isGod
   def viewing( ref:AnyRef ) = B.access( this, org.tyranid.secure.Viewing, ref )
   def editing( ref:AnyRef ) = B.access( this, org.tyranid.secure.Editing, ref )
