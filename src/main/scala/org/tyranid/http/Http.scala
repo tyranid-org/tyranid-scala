@@ -136,7 +136,6 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
 }
 
 case class HttpServletResponseOps( res:HttpServletResponse ) {
-
   def ok = {
     res.setStatus( 200 )
   }
@@ -212,6 +211,28 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     cookie.setPath( path )
     res.addCookie( cookie )
   }
+  
+  /*
+  def setHeader( name:String, value:String ) {
+    spam( "setting: " + name + ", to: " + value )
+    res.setHeader( name, value )
+  }
+
+  def setStatus( sc:Int ) {
+    spam( "set status: " + sc )
+    res.setStatus( sc )
+  }
+  
+  def sendError( sc:Int ) {
+    spam( "send error: " + sc )
+    res.sendError( sc )
+  }
+  
+  def sendError( sc:Int, msg:String ) {
+    spam( "set error: " + sc + " " + msg  )
+    res.sendError( sc, msg )
+  }
+  */
 }
 
 

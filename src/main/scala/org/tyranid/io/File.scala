@@ -133,9 +133,9 @@ trait CommonFile extends Domain {
         
         if ( url notBlank )
           <a href="#" onclick={ Unparsed( "downloadFile( '" + url + "', event, 'vFileWindow'); return false;")}>Download File</a>
-        
-        <div><input id={ f.id } name={ f.id } type="file"/></div>
       }
+        
+      <div><input id={ f.id } name={ f.id } type="file"/></div>
     </div>
   }
 }

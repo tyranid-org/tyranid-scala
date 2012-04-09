@@ -49,6 +49,12 @@ case class DbThumbnail( bucket:S3Bucket ) extends DbImageish( bucket ) {
 
   override def cell( s:Scope, f:PathField ) =
     <img src={ f.path.s( s.rec ) } style="width:50px; height:50px;"/>
+  
+  override def ui( s:Scope, f:PathField ): NodeSeq = {
+    <div class='thumbnail'>
+      <div><input id={ f.id } name={ f.id } type="file"/></div>
+    </div>
+  }
 }
 
 object Image {
