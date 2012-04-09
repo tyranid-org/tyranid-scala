@@ -22,6 +22,7 @@ import scala.xml.{ Unparsed, NodeSeq, Text }
 import com.nexmo.messaging.sdk.{ NexmoSmsClient, SmsSubmissionResult }
 import com.nexmo.messaging.sdk.messages.TextMessage
 
+import org.tyranid.bson.BsonObject
 import org.tyranid.db.{ DbBoolean, DbUpperChar, DbPhone, DbInt, Scope, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
@@ -31,6 +32,7 @@ import org.tyranid.profile.User
 import org.tyranid.session.Notification
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
 import org.tyranid.ui.{ Grid, Row, PathField, UiStyle }
+
 
 object SMS extends MongoEntity( tid = "a0Gt" ) {
   "phone"        is DbPhone        as "Mobile Number" is 'required;
@@ -42,6 +44,16 @@ object SMS extends MongoEntity( tid = "a0Gt" ) {
   "enteredCode"  is DbUpperChar(6)  is 'temporary as "Verification Code" is 'required;
   
   var enabled = B.PRODUCTION
+
+  def send( sms:BsonObject, msg: => String ) = {
+          
+    if ( enabled && sms.b( 'ok ) && sms.b( 'on ) ) {
+      val smsPhone = sms.s( 'phone ).toOnlyNumbers
+            
+      if ( smsPhone notBlank )
+        B.sms.send( "1" + smsPhone, msg )
+    }
+  }
 }
 
 case class NexmoApp( apiKey:String, secret:String, defaultFrom:String ) {
