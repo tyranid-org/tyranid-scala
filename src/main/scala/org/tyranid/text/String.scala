@@ -460,7 +460,16 @@ class StringImp( s:String ) {
     }
   }
 
-
+  def removeSpecialCharacters = {
+   val sb = new StringBuilder()
+   
+   s.foreach( c =>
+      if ( ( c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '.' || c == '_' )
+         sb.append( c ) )
+  
+   sb.toString()
+  }
+  
   /*
    * * *   HTTP / URLs
    */
