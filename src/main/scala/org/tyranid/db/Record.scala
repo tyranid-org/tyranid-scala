@@ -370,7 +370,7 @@ case class Scope( rec:Record,
     while ( pi < plen ) {
       val va = path.pathAt( pi ).as[ViewAttribute]
 
-      if ( path.pathAt( pi+1 ).isInstanceOf[ArrayIndex] ) {
+      if (  pi + 1 < plen && path.pathAt( pi+1 ).isInstanceOf[ArrayIndex] ) {
         val ai = path.pathAt( pi+1 ).as[ArrayIndex]
         val array = r.a( va )
         val v = array( ai.idx )
@@ -379,7 +379,7 @@ case class Scope( rec:Record,
 
         pi += 2
         lastRecPi = pi
-      } else if ( path.pathAt( pi+1 ).isInstanceOf[ArrayId] ) {
+      } else if ( pi + 1 < plen && path.pathAt( pi+1 ).isInstanceOf[ArrayId] ) {
         val aid = path.pathAt( pi+1 ).as[ArrayId]
         val array = r.a( va )
         val idx = array.aidToIdx( aid.id )
