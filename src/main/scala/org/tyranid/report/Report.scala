@@ -178,7 +178,7 @@ trait Query {
     //"Connection"      // multi-select
   //)
 
-  val grouping:Option[Grouping] = None
+  val grouping:Grouping = null
 
   lazy val init =
     Query.byName( name ) = this
@@ -244,11 +244,10 @@ trait MongoQuery extends Query {
 
     val search = super.prepareSearch( run )
 
-    grouping foreach { g =>
+    if ( grouping != null )
       run.groupFilter foreach { gf =>
         search( "_id" ) = Mobj( $in -> gf.a_?( 'ids ) )
       }
-    }
 
     search
   }
@@ -402,7 +401,6 @@ case class Report( query:Query ) {
   var records:Seq[Record] = _
   var selectedRecords:Seq[Record] = _
 
-
   /*
    * * *  Groups
    */
@@ -445,7 +443,7 @@ case class Report( query:Query ) {
             { ( query.hasSearch        |* <td><button id="rSearch" class="greyBtn">Search</button></td> ) ++
               ( offset > 0             |* <td><button id="rPrev" class="greyBtn">Prev</button></td> ) ++
               ( hasNext                |* <td><button id="rNext" class="greyBtn">Next</button></td> ) ++
-              query.grouping.map( g =>    <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
+              ( query.grouping != null |* <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
             { query.extraActions } 
            </tr>
           </table>
@@ -453,7 +451,7 @@ case class Report( query:Query ) {
         </tr>
        </table>
       </td>
-      { query.grouping.map( g => <td>{ g.drawFilter( run ) }</td> ) } 
+      { query.grouping != null |* <td>{ query.grouping.drawFilter( run ) }</td> }
       <td style="width:410px; padding:0;">
       </td>
       <td>
@@ -517,7 +515,7 @@ case class Report( query:Query ) {
      <script src={ B.buildPrefix + "/js/report.js" } type="text/javascript"/>
      <script>{ Unparsed( "window.reportObj = { qn:'" + query.name + "', id:'" + id + "' };" ) }</script>
     </head> ++
-    { query.grouping.map( _.draw ) } ++
+    { query.grouping != null |* query.grouping.draw } ++
     <div class="report greyBox" id={ id }>
     { recalcFields
       innerDraw }
@@ -561,7 +559,7 @@ case class Run( report:Report ) {
     </tr>
   }
 
-  lazy val groups = query.grouping.get.list
+  lazy val groups = query.grouping.list
 
   def groupsFor( id:AnyRef ) = groups.filter( _.a_?( 'ids ).contains( id ) ).map( _.s( 'name ) ).mkString( ", " )
 
@@ -692,7 +690,7 @@ object Reportlet extends Weblet {
       if ( report.selectedRecords.size == 0 ) {
         web.res.html( NodeSeq.Empty )
       } else {
-        report.groups = query.grouping.get.list.toSeq
+        report.groups = query.grouping.list.toSeq
 
         report.addGroupName = ""
         report.newGroupName = ""
@@ -735,7 +733,7 @@ object Reportlet extends Weblet {
       web.res.ok
 
     case "/group/okay" =>
-      val grouping = query.grouping.get
+      val grouping = query.grouping
 
       if ( report.addGroupName.notBlank ) {
         report.groups.find( _.s( 'name ) == report.addGroupName ) foreach { g =>
