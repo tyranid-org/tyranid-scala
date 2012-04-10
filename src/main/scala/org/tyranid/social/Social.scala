@@ -45,6 +45,8 @@ object Social {
     val logoutNetwork = T.web.req.s( 'lo )
     logoutNetwork.notBlank |* appFor( logoutNetwork ).logoutScript
   }
+
+  def removeCookies = networks foreach { _.removeCookies }
 }
 
 trait SoApp {
@@ -60,6 +62,7 @@ trait SoApp {
   def removeAttributes( user:DBObject ):Unit
   def loginButton( weblet:Weblet ):NodeSeq
   def logoutScript:NodeSeq
+  def removeCookies:Unit
   def linkButton:NodeSeq
   def linkPreview( user:User ):NodeSeq
   def isActive:Boolean

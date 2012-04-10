@@ -108,6 +108,13 @@ function onLinkedInLoad() {
      <script type="IN/Login" data-onAuth="onLinkedInAuth"/>
    }
 
+  def removeCookies = {
+    val web = T.web
+    for ( c <- web.req.cookies;
+          if c.getName.startsWith( "linkedin_oauth" ) )
+      web.res.deleteCookie( c.getName )
+  }
+
   def logoutScript = {
     <head>
      <script type="text/javascript" src="//platform.linkedin.com/in.js">

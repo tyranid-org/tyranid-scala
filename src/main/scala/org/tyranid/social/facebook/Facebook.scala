@@ -135,6 +135,8 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     </top>
   }
 
+  def removeCookies {}
+
   def linkButton = {
     <top>
      <div id="fb-root"></div>
