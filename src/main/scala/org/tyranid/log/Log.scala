@@ -138,9 +138,12 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
         else
           l( 'm ) = existingMsg + "\n" + v
 
+      case ( "ua", null ) =>
+      case ( "ua", ua:String ) =>
+        l( 'ua ) = UserAgent.idFor( ua )
+
       case ( n:String, v:Any ) =>
         l( n ) = v
-      case ( "ua", null ) =>
       }
     }
 
