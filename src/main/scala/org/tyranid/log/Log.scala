@@ -140,6 +140,7 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
 
       case ( n:String, v:Any ) =>
         l( n ) = v
+      case ( "ua", null ) =>
       }
     }
 
