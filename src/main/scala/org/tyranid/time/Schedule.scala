@@ -107,13 +107,12 @@ object Schedulelet extends Weblet {
       shell(
         <table class="dtable tablesort">
          <thead>
-          <tr><th></th><th>Status</th><th></th><th>Task</th><th>Runs</th><th>Last Run</th><th>Next Run</th></tr>
+          <tr><th></th><th>Status</th><th>Task</th><th>Runs</th><th>Last Run</th><th>Next Run</th></tr>
          </thead>
          <tbody>
           { for ( task <- Scheduler.tasks ) yield
           <tr>
            <td><a class="greenBtn" href={ wpath + "/run?task=" + task.subject }>Run</a></td>
-           <td>{ if ( task.active ) "On" else "Off" }</td>
            <td>{
              if ( task.active )
                <a class="greenBtn" href={ wpath + "/off?task=" + task.subject } style="width:50px;">On</a>
