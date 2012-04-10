@@ -108,6 +108,22 @@ function onLinkedInLoad() {
      <script type="IN/Login" data-onAuth="onLinkedInAuth"/>
    }
 
+  def logoutScript = {
+    <head>
+     <script type="text/javascript" src="//platform.linkedin.com/in.js">
+        api_key:{ apiKey }
+        authorize: true
+        credentials_cookie: true
+        onLoad: onLinkedInLoad
+     </script>
+     <script type="text/javascript">{ Unparsed("""
+function onLinkedInLoad() {
+  IN.User.logout();
+}
+""") }</script>
+     </head>
+  }
+
   def linkButton = {
     <head>
      <script src="//platform.linkedin.com/in.js">

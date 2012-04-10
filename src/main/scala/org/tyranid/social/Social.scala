@@ -40,6 +40,11 @@ object Social {
 
   def appFor( networkCode:String ) =
     networks.find( _.networkCode == networkCode ).get
+
+  def pendingScripts = {
+    val logoutNetwork = T.web.req.s( 'lo )
+    logoutNetwork.notBlank |* appFor( logoutNetwork ).logoutScript
+  }
 }
 
 trait SoApp {
@@ -54,6 +59,7 @@ trait SoApp {
   def saveAttributes( user:User ):Unit
   def removeAttributes( user:DBObject ):Unit
   def loginButton( weblet:Weblet ):NodeSeq
+  def logoutScript:NodeSeq
   def linkButton:NodeSeq
   def linkPreview( user:User ):NodeSeq
   def isActive:Boolean
