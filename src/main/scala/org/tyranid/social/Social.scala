@@ -62,6 +62,13 @@ object Social {
       B.Org.db.update( Mobj( "_id" -> org.id ), Mobj( $set -> Mobj( "thumbnail" -> org.s( 'thumbnail ) ) ) )
     }
   }
+
+  def pendingScripts = {
+    val logoutNetwork = T.web.req.s( 'lo )
+    logoutNetwork.notBlank |* appFor( logoutNetwork ).logoutScript
+  }
+
+  def removeCookies = networks foreach { _.removeCookies }
 }
 
 trait SoApp {
@@ -76,6 +83,8 @@ trait SoApp {
   def saveAttributes( user:User ):Unit
   def removeAttributes( user:DBObject ):Unit
   def loginButton( weblet:Weblet ):NodeSeq
+  def logoutScript:NodeSeq
+  def removeCookies:Unit
   def linkButton:NodeSeq
   def linkPreview( user:User ):NodeSeq
   def isActive:Boolean

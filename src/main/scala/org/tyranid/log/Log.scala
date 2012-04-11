@@ -31,7 +31,7 @@ import org.tyranid.db.ram.RamEntity
 import org.tyranid.db.tuple.Tuple
 import org.tyranid.email.AWSEmail
 import org.tyranid.http.UserAgent
-import org.tyranid.report.{ Run, MongoQuery }
+import org.tyranid.report.{ Run, Query }
 import org.tyranid.ui.{ CustomField, PathField, Search }
 import org.tyranid.web.{ Weblet, WebContext }
 
@@ -207,7 +207,7 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
   }
 }
 
-object LogQuery extends MongoQuery {
+object LogQuery extends Query {
 
   //def connections( run:Run ) =
     //run.cache.getOrElseUpdate( "connections", Connection.db.find( Mobj( "from" -> Session().user.org.id ) ).toSeq ).asInstanceOf[Seq[DBObject]]

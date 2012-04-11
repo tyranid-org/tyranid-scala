@@ -39,6 +39,9 @@ object Link {
 
 object Button {
 
+  def btn( id:String, label:String, color:String = "grey", disabled:Boolean = false ) =
+    Unparsed( "<button id=\"" + id + "\" class=\"" + color + "Btn\" " + ( disabled |* " disabled=\"disabled\"" ) + ">" + label + "</button>" )
+
   def link( name:String, href:String, color:String, redirectEndpoint:String = null, dialogTitle:String = null, opts:Seq[(String,String)] = null ) =
     if ( redirectEndpoint == null ) {
       <a class={ color + "Btn" } href={ href }><span>{ name }</span></a>

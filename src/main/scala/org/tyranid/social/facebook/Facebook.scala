@@ -65,7 +65,7 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $unset -> Mobj( "fbid" -> 1, "fbt" -> 1, "fbte" -> 1 ) ) )
   }
 
-  private val loadFacebookApi = """
+  private lazy val loadFacebookApi = """
   // Load the SDK Asynchronously
   (function(d){
      var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
@@ -74,6 +74,16 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
      js.src = "//connect.facebook.net/en_US/all.js";
      ref.parentNode.insertBefore(js, ref);
    }(document));
+"""
+
+  private lazy val facebookInit = """
+    FB.init({
+      appId      : '""" + apiKey + """',
+      channelUrl : '//""" + B.domain + """/facebook/channel',
+      status     : true, // check login status
+      cookie     : true, // enable cookies to allow the server to access the session
+      xfbml      : true  // parse XFBML
+    });
 """
 
   def loginButton( weblet:Weblet ) = {
@@ -85,13 +95,7 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
 """ + ( loggingOut |* "window.fbLogOut = true;" ) + """
 
   window.fbAsyncInit = function() {
-    FB.init({
-      appId      : '""" + apiKey + """',
-      channelUrl : '//""" + B.domain + """/facebook/channel',
-      status     : true, // check login status
-      cookie     : true, // enable cookies to allow the server to access the session
-      xfbml      : true  // parse XFBML
-    });
+    """ + facebookInit + """
 
     FB.Event.subscribe('auth.login', function () {
       window.location = '""" + weblet.wpath + """/infb';
@@ -114,18 +118,31 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     <fb:login-button>Sign In with Facebook</fb:login-button>
   }
 
+  def logoutScript = {
+    <top>
+     <div id="fb-root"></div>
+     <script>{ Unparsed( """
+  window.fbAsyncInit = function() {
+    """ + facebookInit + """
+
+    FB.getLoginStatus( function( resp ) {
+      if ( resp.status == 'connected' )
+        FB.logout();
+    });
+  };
+
+""" + loadFacebookApi ) }</script>
+    </top>
+  }
+
+  def removeCookies {}
+
   def linkButton = {
     <top>
      <div id="fb-root"></div>
      <script>{ Unparsed( """
   window.fbAsyncInit = function() {
-    FB.init({
-      appId      : '""" + apiKey + """',
-      channelUrl : '//""" + B.domain + """/facebook/channel',
-      status     : true, // check login status
-      cookie     : true, // enable cookies to allow the server to access the session
-      xfbml      : true  // parse XFBML
-    });
+    """ + facebookInit + """
 
     function exchange() {
       $.post('/facebook/exchange', function(data) {

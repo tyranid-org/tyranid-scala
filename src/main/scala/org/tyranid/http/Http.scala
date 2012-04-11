@@ -84,24 +84,24 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
   
   def dump = {
 
-    spam( "** requestURI=" + T.web.req.getRequestURL )
+    println( "** requestURI=" + T.web.req.getRequestURL )
 
-    spam( "** attributes" )
+    println( "** attributes" )
     for ( n <- req.getAttributeNames )
-      spam( "  " + n + " = " + req.getAttribute( n.as[String] ) )
+      println( "  " + n + " = " + req.getAttribute( n.as[String] ) )
 
-    spam( "** parameters" )
+    println( "** parameters" )
     for ( n <- req.getParameterNames )
-      spam( "  " + n + " = " + req.getParameter( n.as[String] ) )
+      println( "  " + n + " = " + req.getParameter( n.as[String] ) )
 
-    spam( "** headers" )
+    println( "** headers" )
     for ( n <- req.getHeaderNames )
       for ( v <- req.getHeaders( n.as[String] ) )
-        spam( "  " + n + " = " + v )
+        println( "  " + n + " = " + v )
 
-    spam( "** cookies" )
+    println( "** cookies" )
     for ( c <- cookies )
-      spam( "  " + c.getName + " = " + c.getValue.literal +
+      println( "  " + c.getName + " = " + c.getValue.literal +
             ( c.getDomain != null |* "\n    Domain = " + c.getDomain ) +
             ( c.getPath != null |* "\n    Path = " + c.getPath ) +
             ( c.getMaxAge != -1 |* "\n    MaxAge = " + c.getMaxAge ) +
@@ -211,28 +211,6 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     cookie.setPath( path )
     res.addCookie( cookie )
   }
-  
-  /*
-  def setHeader( name:String, value:String ) {
-    spam( "setting: " + name + ", to: " + value )
-    res.setHeader( name, value )
-  }
-
-  def setStatus( sc:Int ) {
-    spam( "set status: " + sc )
-    res.setStatus( sc )
-  }
-  
-  def sendError( sc:Int ) {
-    spam( "send error: " + sc )
-    res.sendError( sc )
-  }
-  
-  def sendError( sc:Int, msg:String ) {
-    spam( "set error: " + sc + " " + msg  )
-    res.sendError( sc, msg )
-  }
-  */
 }
 
 

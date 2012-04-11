@@ -25,11 +25,14 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ Entity, Path, Record, Scope, ViewAttribute }
+import org.tyranid.collection.ConcurrentExpireAutoMap
+import org.tyranid.db.{ DbTextLike, Entity, Path, Record, Scope, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
+import org.tyranid.db.ram.RamEntity
 import org.tyranid.session.Session
-import org.tyranid.ui.{ Button, Checkbox, Field, Glyph, Input, PathField, Search, Select }
+import org.tyranid.time.Time
+import org.tyranid.ui.{ Button, Checkbox, CustomField, Field, Glyph, Input, PathField, Search, Select }
 import org.tyranid.web.{ Weblet, WebContext }
 
 
@@ -48,9 +51,9 @@ case class Sort( name:String, label:String, direction:Int ) {
  * * *   G r o u p
  */
 
-case class Grouping( entity:MongoEntity, keyName:String, value: () => AnyRef ) {
+case class Grouping( entity:MongoEntity, nameKey:String, listKey:String, value: () => AnyRef ) {
 
-  def list = entity.db.find( Mobj( keyName -> value() ) ).toSeq
+  def list = entity.db.find( Mobj( nameKey -> value() ) ).toSeq
 
   def drawFilter( run:Run ) =
     <table class="tile" style="width:140px; height:54px;">
@@ -59,37 +62,41 @@ case class Grouping( entity:MongoEntity, keyName:String, value: () => AnyRef ) {
      </tr>
      <tr>
       <td>{ 
-        Select( "rGroups", run.report.groupFilter, ( "" -> "All" ) +: run.groups.map( g => g.s( 'name ) -> g.s( 'name ) ), "style" -> "width:120px; max-width:120px;" )
+        Select( "rGroups", run.report.groupFilter, ( "" -> "All" ) +: run.report.groups.map( g => g.s( 'name ) -> g.s( 'name ) ), "style" -> "width:120px; max-width:120px;" )
       }</td>
      </tr>
     </table>
 
   def prepareSearch( search:DBObject, run:Run ) =
-    run.groupFilter foreach { gf =>
+    run.report.groupFilterObj foreach { gf =>
       search( "_id" ) = Mobj( $in -> gf.a_?( 'ids ) )
     }
 
-  def draw =
-    <div id="rGroupDlg" style="padding:8px; display:none;">
-     <table id="rGroupDlg_c">
-      <tr>
-       <td style="width:160px;"><label for="rGroupAdd">Add to Existing Group</label></td>
-       <td/>
-      </tr>
-      <tr>
-       <td><label for="rGroupNew">Add to New Group</label></td>
-       <td/>
-      </tr>
-      <tr>
-       <td><label for="rGroupRemove">Remove Group</label></td>
-       <td/>
-      </tr>
-     </table>
+  def draw( report:Report ) =
+    <div id="rGroupDlg" style="padding:0; display:none;">
+    { dialogContents( report ) }
+    </div>
+
+  def drawGroup( grouping:Grouping, group:DBObject ) = {
+
+
+
+  }
+
+  def dialogContents( report:Report ) = {
+    <div class="left" style="float:left;">
+     <select multiple="multiple" style="width:180px; max-width:180px; height:500px;">
+      <option value="">All</option>
+      { report.groups.map( g => <option value={ g.s( 'name ) }>{ g.s( 'name ) }</option> ) }
+     </select>
+    </div>
+    <div>
      <div class="btns">
       <button onclick="$('#rGroupDlg').dialog('close'); return false;" class="greyBtn">Cancel</button>
       <button id="rGroupOkay" class="greenBtn">Okay</button>
      </div>
     </div>
+  }
 
   def handle( weblet:Weblet, report:Report ):Boolean = {
     val web = T.web
@@ -101,79 +108,13 @@ case class Grouping( entity:MongoEntity, keyName:String, value: () => AnyRef ) {
       web.res.html( report.innerDraw )
 
     case "/group" =>
-      report.selectedRecords = report.records.filter( r => report.selectedIds( r.id ) )
+      report.resetGroups
 
-      if ( report.selectedRecords.size == 0 ) {
-        web.res.html( NodeSeq.Empty )
-      } else {
-        report.groups = query.grouping.list.toSeq
+      report.addGroupName = ""
+      report.newGroupName = ""
+      report.removeGroupName = ""
 
-        report.addGroupName = ""
-        report.newGroupName = ""
-        report.removeGroupName = ""
-
-        val intersection = report.groups.filter( g => report.selectedRecords.forall( r => g.a_?( 'ids ).contains( r.id ) ) )
-        val union        = report.groups.filter( g => report.selectedRecords.exists( r => g.a_?( 'ids ).contains( r.id ) ) )
-
-        web.res.html(
-          <tr>
-           <td style="width:160px;"><label for="rGroupAdd">Add to Existing Group</label></td>
-           <td>
-            { Select( "rGroupAdd", "", ( "" -> "" ) +: report.groups.filter( g => !intersection.contains( g ) ).map( g => ( g.s( 'name ), g.s( 'name ) ) ), "style" -> "width:160px; max-width:160px;" ) }
-           </td>
-          </tr> ++
-          <tr>
-           <td><label for="rGroupNew">Add to New Group</label></td>
-           <td>
-            { Input( "rGroupNew", "", "style" -> "width:120px;" ) }
-           </td>
-          </tr>
-          <tr> ++
-           <td><label for="rGroupRemove">Remove Group</label></td>
-           <td>
-            { Select( "rGroupRemove", "", ( "" -> "" ) +: union.filter( !_.b( 'builtin ) ).map( g => ( g.s( 'name ), g.s( 'name ) ) ), "style" -> "width:160px; max-width:160px;" ) }
-           </td>
-          </tr> )
-      }
-
-    case "/group/add" =>
-      report.addGroupName = web.req.s( 'v )
-      web.res.ok
-
-    case "/group/new" =>
-      report.newGroupName = web.req.s( 'v )
-      web.res.ok
-
-    case "/group/remove" =>
-      report.removeGroupName = web.req.s( 'v )
-      web.res.ok
-
-    case "/group/okay" =>
-      val grouping = query.grouping
-
-      if ( report.addGroupName.notBlank ) {
-        report.groups.find( _.s( 'name ) == report.addGroupName ) foreach { g =>
-          g( 'ids ) = Mlist( ( g.a_?( 'ids ) ++ report.selectedIds ).distinct:_* )
-          grouping.entity.db.save( g )
-        }
-      }
-
-      if ( report.newGroupName.notBlank ) {
-        grouping.entity.db.save(
-          Mobj(
-            "name" -> report.newGroupName,
-             grouping.keyName -> grouping.value(),
-             "ids" -> Mlist( report.selectedIds.toSeq:_* ) ) )
-      }
-
-      if ( report.removeGroupName.notBlank ) {
-        report.groups.find( _.s( 'name ) == report.removeGroupName ) foreach { g =>
-          g( 'ids ) = Mlist( g.a_?( 'ids ).filter( id => !report.selectedIds.exists( _ == id ) ):_* )
-          grouping.entity.db.save( g )
-        }
-      }
-
-      web.res.html( report.innerDraw )
+      web.res.html( dialogContents( report ) )
 
     case _ =>
       return false
@@ -198,6 +139,20 @@ trait Query {
   val name:String
   val entity:Entity
 
+  lazy val view = entity.makeView
+
+  lazy val boundFields = {
+    for ( f <- allFields )
+      f match {
+      case pf:PathField =>
+        pf.bind( view )
+
+      case _ =>
+      }
+
+    allFields
+  }
+  
   def label:AnyRef            = "Search Results" //name.camelCaseToSpaceUpper
   def labelNode:NodeSeq       = null
 
@@ -205,8 +160,6 @@ trait Query {
   def searchLabelNode:NodeSeq = labelNode
 
   val allFields:Seq[Field]
-
-  val boundFields:Seq[Field]
 
   lazy val dataFields:Seq[Field]   = boundFields.filter( _.data )
   lazy val searchFields:Seq[Field] = boundFields.filter( _.search != null )
@@ -251,10 +204,42 @@ trait Query {
     case n => search( $or ) = Mlist( textSearches:_* )
     }
 
+    if ( grouping != null )
+      grouping.prepareSearch( search, run )
+
     search
   }
 
-  def run( run:Run ):Iterable[Record]
+  def run( run:Run ):Iterable[Record] = {
+    val report = run.report
+
+    val search = prepareSearch( run )
+spam( "search=" + search )
+spam( "sort=" + report.sort )
+spam( "skip=" + report.offset )
+spam( "pageSize=" + report.pageSize )
+
+    val rows =
+      entity match {
+      case me:MongoEntity =>
+        var cursor = me.db.find( search )//, Mobj() )
+        if ( report.offset != 0 )
+          cursor = cursor.skip( report.offset )
+        cursor = cursor.limit( run.report.pageSize + 1 )
+
+        if ( report.sort != null )
+          cursor = cursor.sort( report.sort )
+    
+        cursor.toIterable.map( me.apply )
+
+      case re:RamEntity =>
+        re.records
+      }
+
+    report.hasNext = rows.size > run.report.pageSize
+
+    rows.take( run.report.pageSize )
+  }
 
   def newReport = {
     var r = Report( this )
@@ -267,7 +252,7 @@ trait Query {
 
   val tableGridStyle:String = null
 
-  def selectable = grouping != null
+  def selectable = false
 
   //val actions = Seq(
     //"Group",          // multi-select
@@ -318,57 +303,31 @@ trait Query {
   def hasSearch = searchFields.nonEmpty || orderBy.nonEmpty
 }
 
-trait MongoQuery extends Query {
-  val entity:MongoEntity
+object AutoQuery {
 
-  lazy val view = entity.makeView
+  val byEntity = new ConcurrentExpireAutoMap( 4 * Time.OneHourMs, ( en:Entity ) => AutoQuery( en ) )
+}
 
-  lazy val boundFields = {
-    for ( f <- allFields )
-      f match {
-      case pf:PathField =>
-        pf.bind( view )
+case class AutoQuery( entity:Entity ) extends Query {
 
-      case _ =>
-      }
+  val name = "auto" + entity.name.capitalize
 
-    allFields
-  }
-  
-  override def prepareSearch( run:Run ) = {
-    val report = run.report
+  val allFields =
+    ( new CustomField {
+      def name = "tid"
+      override lazy val label = "TID"
+      def cell( s:Scope ) = <a href={ "/admin/tid?tid=" + s.rec.tid } class="eyeBtn" style="margin:0 1px;">T</a>
+    } ) +:
+    entity.makeView.vas.map( va => new PathField(
+      va.name,
+      search =
+        va.domain match {
+        case t:DbTextLike => Search.Subst
+        case _            => Search.Equals
+        }
+    ).bind( view ) ).toSeq.sortBy( _.label )
 
-    val search = super.prepareSearch( run )
-
-    if ( grouping != null )
-      grouping.prepareSearch( search, run )
-
-    search
-  }
-
-  def run( run:Run ) = {
-    val report = run.report
-
-    val search = prepareSearch( run )
-spam( "search=" + search )
-spam( "sort=" + report.sort )
-spam( "skip=" + report.offset )
-spam( "pageSize=" + report.pageSize )
-
-    var cursor = entity.db.find( search )//, Mobj() )
-    if ( report.offset != 0 )
-      cursor = cursor.skip( report.offset )
-    cursor = cursor.limit( run.report.pageSize + 1 )
-
-    if ( report.sort != null )
-      cursor = cursor.sort( report.sort )
-    
-    val rows = cursor.toIterable.map( entity.apply )
-
-    report.hasNext = rows.size > run.report.pageSize
-
-    rows.take( run.report.pageSize )
-  }
+  val defaultFields = dataFields.take( 8 )
 }
 
 
@@ -396,8 +355,6 @@ case class Report( query:Query ) {
   @volatile var offset:Int = 0
   @volatile var hasNext:Boolean = false
   @volatile var pageSize = 20
-
-  @volatile var groupFilter = ""
 
   @volatile var onSection:String = ""
   @volatile var onField:String = ""
@@ -500,11 +457,24 @@ case class Report( query:Query ) {
    * * *  Groups
    */
 
+  @volatile var groupFilter = ""
+
   var addGroupName = ""
   var newGroupName = ""
   var removeGroupName = ""
 
-  var groups:Seq[DBObject] = _
+  private var latestGroups:Seq[DBObject] = null
+
+  def resetGroups { latestGroups = null }
+  def groups = {
+    if ( latestGroups == null )
+      latestGroups = query.grouping.list.toSeq
+
+    latestGroups
+  }
+
+  def groupsFor( id:AnyRef ) = groups.filter( _.a_?( 'ids ).contains( id ) ).map( _.s( 'name ) ).mkString( ", " )
+  def groupFilterObj = groups.find( _.s( 'name ) == groupFilter )
 
 
   /*
@@ -536,9 +506,9 @@ case class Report( query:Query ) {
           <table>
            <tr>
             { ( query.hasSearch        |* <td><button id="rSearch" class="greyBtn">Search</button></td> ) ++
-              ( offset > 0             |* <td><button id="rPrev" class="greyBtn">Prev</button></td> ) ++
-              ( hasNext                |* <td><button id="rNext" class="greyBtn">Next</button></td> ) ++
-              ( query.grouping != null |* <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
+                                          <td>{ Button.btn( "rPrev", "Prev", disabled = offset == 0 ) }</td> ++
+                                          <td>{ Button.btn( "rNext", "Next", disabled = !hasNext ) }</td> ++
+              ( query.grouping != null && !B.PRODUCTION |* <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
             { query.extraActions } 
            </tr>
           </table>
@@ -610,10 +580,10 @@ case class Report( query:Query ) {
      <script src={ B.buildPrefix + "/js/report.js" } type="text/javascript"/>
      <script>{ Unparsed( "window.reportObj = { qn:'" + query.name + "', id:'" + id + "' };" ) }</script>
     </head> ++
-    { query.grouping != null |* query.grouping.draw } ++
+    { query.grouping != null |* query.grouping.draw( this ) } ++
     <div class="report greyBox" id={ id }>
-    { recalcFields
-      innerDraw }
+     { recalcFields }
+     { innerDraw }
     </div>
 }
 
@@ -653,12 +623,6 @@ case class Run( report:Report ) {
      }
     </tr>
   }
-
-  lazy val groups = query.grouping.list
-
-  def groupsFor( id:AnyRef ) = groups.filter( _.a_?( 'ids ).contains( id ) ).map( _.s( 'name ) ).mkString( ", " )
-
-  def groupFilter = groups.find( _.s( 'name ) == report.groupFilter )
 }
 
 object Reportlet extends Weblet {

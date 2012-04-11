@@ -30,6 +30,7 @@ import org.tyranid.Imp._
 import org.tyranid.math.Base62
 import org.tyranid.profile.User
 import org.tyranid.report.Query
+import org.tyranid.social.Social
 import org.tyranid.web.WebContext
 
 
@@ -192,6 +193,7 @@ trait Session {
     u.isLoggingOut = true
     user = u
     org.tyranid.profile.LoginCookie.remove
+    Social.removeCookies
   }
 
 
