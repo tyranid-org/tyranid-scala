@@ -274,7 +274,7 @@ class StringImp( s:String ) {
 		case s                      => s + "'s"
 	  }
 
-  def summarize( maxLength:Int = 60 ) =
+  def summarize( maxLength:Int = 40 ) =
     if ( s != null && s.length > maxLength )
       s.substring( 0, maxLength - 3 ) + "..."
     else

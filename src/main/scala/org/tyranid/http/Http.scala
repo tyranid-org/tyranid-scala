@@ -211,24 +211,6 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     cookie.setPath( path )
     res.addCookie( cookie )
   }
-  
-  /*
-  def setHeader( name:String, value:String ) {
-    res.setHeader( name, value )
-  }
-
-  def setStatus( sc:Int ) {
-    res.setStatus( sc )
-  }
-  
-  def sendError( sc:Int ) {
-    res.sendError( sc )
-  }
-  
-  def sendError( sc:Int, msg:String ) {
-    res.sendError( sc, msg )
-  }
-  */
 }
 
 

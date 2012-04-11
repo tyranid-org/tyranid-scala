@@ -29,8 +29,10 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.math.Base64
+import org.tyranid.report.AutoQuery
 import org.tyranid.ui.{ PathField, Tab, TabBar }
 import org.tyranid.web.{ Weblet, WebContext }
+
 
 
 case class DeleteResults( ramReferences:Seq[Record], cascadeFailures:Seq[Record], updates:Seq[Record], deletes:Seq[Record] ) {
@@ -327,7 +329,7 @@ object Tidlet extends Weblet {
          <label>Type</label><span>Record</span>
          <label style="margin-left:16px;">Label</label><span>{ r.label.summarize() }</span>
          <label style="margin-left:16px;">Entity</label><span><a href={ wpath + "/field?tid=" + entity.tid }>{ entity.name }</a></span>
-         <label style="margin-left:16px;">Storage</label><span>{ entity.storageName }</span>
+         <label style="margin-left:16px;">Storage</label><span>{ entity.storageName + ( entity.embedded |* "-Embedded" ) }</span>
          { entity.isInstanceOf[MongoEntity] |* <a href={ wpath + "/delete?tid=" + tid } class="redBtn" style="float:right; margin:2px 4px;">Delete</a> }
         </div> ++
         { recordTabBar.draw(
@@ -349,15 +351,17 @@ object Tidlet extends Weblet {
          <label>Type</label><span>{ if ( Tid.isRecordTid( tid ) ) "Record" else "Entity" }</span>
          <label style="margin-left:16px;">Label</label><span>{ entity.label }</span>
          <label style="margin-left:16px;">Entity</label><span>{ entity.name }</span>
-         <label style="margin-left:16px;">Storage</label><span>{ entity.storageName }</span>
+         <label style="margin-left:16px;">Storage</label><span>{ entity.storageName + ( entity.embedded |* "-Embedded" ) }</span>
         </div> ++
         { if ( Tid.isRecordTid( tid ) )
             <div style="color:red;">Invalid TID.</div>
           else
-            entityTabBar.draw( qs = "?tid=" + tid ) ++
+            entityTabBar.draw(
+              qs = "?tid=" + tid,
+              except = if ( entity.embedded ) Seq( "/record" ) else Nil ) ++
             { entityTabBar.choice match {
               case "/attrib" => attribs( entity )
-              case "/record" => records( entity )
+              case "/record" => AutoQuery.byEntity( entity ).draw
               }
             }
         }
@@ -467,36 +471,6 @@ object Tidlet extends Weblet {
         <td>{ Unparsed( describe( a.domain ) ) }</td>
         <td>{ a.help }</td>
        </tr>
-     }
-    </table>
-  }
-
-  def records( en:Entity ) = {
-    val view = en.makeView
-    val fields = en.attribs.filter( a => a.domain.isSimple && !a.isId ).take( 6 ).map( a => PathField( a.name ).bind( view ) )
-
-    <head>
-     <script>{ Unparsed( """
-$(function() {
-  $('.dtable').on( 'click', '.drow', function(ev) {
-    window.location.href='""" + wpath + """?tid=' + $(this).attr('id');
-  });
-});
-""" ) }</script>
-    </head>
-    <table class="dtable">
-     <tr>
-      { fields.map( f => <th>{ f.label }</th> ) }
-     </tr>
-     { en.records.take( 50 ) map { rec =>
-         val s = Scope( rec )
-
-         <tr class="drow" id={ rec.tid }>{
-           fields map { f =>
-             <td>{ f.cell( s ) }</td>
-           }
-         }</tr>
-       }
      }
     </table>
   }
