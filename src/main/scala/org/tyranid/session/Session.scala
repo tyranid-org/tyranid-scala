@@ -176,6 +176,19 @@ trait Session {
 
   var passedCaptcha = false
 
+  def clear {
+    reports.clear
+    editings.clear
+
+    loggedEntry = false
+    loggedUser = false
+
+    val u = B.newUser()
+    u.loggedIn = false
+    u.isLoggingOut = true
+    user = u
+  }
+
 
   /*
    * * *   Login
@@ -188,10 +201,7 @@ trait Session {
   }
 
   def logout = {
-    val u = B.newUser()
-    u.loggedIn = false
-    u.isLoggingOut = true
-    user = u
+    clear
     org.tyranid.profile.LoginCookie.remove
     Social.removeCookies
   }

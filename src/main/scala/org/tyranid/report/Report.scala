@@ -227,21 +227,15 @@ trait Query {
 
         PROBLEM #2.  search doesn't work vs. RamEntities
 
-        +. need a new type of search container that contains:
+        +. generic search object that Record.matches can implement that isn't MongoDB specific?
+        
+           need a new type of search container that contains:
 
 
              field:Field *--1 search:Search
 
              searchRec:Record
 
-
-        +. can we transform the above into generic search objects?
-
-           Search, [Search]Field
-
-             what would a seq of text searches map into ?
-
-               SearchOr( SearchSubst )
 
      */
 
