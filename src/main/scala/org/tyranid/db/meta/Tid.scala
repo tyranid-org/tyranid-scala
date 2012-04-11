@@ -458,12 +458,14 @@ object Tidlet extends Weblet {
     }
 
     <table class="dtable">
-     <tr>
-      <th>Name</th>
-      <th>Label</th>
-      <th>Domain</th>
-      <th style="width:300px;">Help</th>
-     </tr>
+     <thead>
+      <tr>
+       <th>Name</th>
+       <th>Label</th>
+       <th>Domain</th>
+       <th style="width:300px;">Help</th>
+      </tr>
+     </thead>
      { for ( a <- en.attribs.clone.sortBy( _.name ) ) yield
        <tr>
         <td>{ a.name }</td>

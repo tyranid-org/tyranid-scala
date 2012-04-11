@@ -65,6 +65,9 @@ trait Domain extends Valid {
 	
 	def show( s:Scope ) = true
 
+  def compare( v1:Any, v2:Any ) = v1.safeString.compareTo( v2.safeString )
+    
+
   /*
    * This method modifies the data to ensure that it corresponds to restrictions set up by the domain.
    * Examples are translating to upper/lowercase by DbTextlike.
@@ -149,6 +152,9 @@ abstract class DbIntish extends Domain {
       if ( str.isBlank ) s.rec.remove( f.va.name )
       else               s.rec( f.va.name ) = str.coerceInt
     }
+
+  override def compare( v1:Any, v2:Any ) = v1.coerceInt - v2.coerceInt
+    
 }
 
 object DbInt extends DbIntish {
@@ -168,6 +174,8 @@ abstract class DbLongish extends Domain {
 
   override def idToRecordTid( v:Any )                = if ( v != null ) Base64.toString( v.coerceLong ) else null
   override def recordTidToId( recordTid:String ):Any = Base64.toLong( recordTid )
+
+  override def compare( v1:Any, v2:Any ) = ( v1.coerceLong - v2.coerceLong ).toInt
 }
 
 object DbLong extends DbLongish {

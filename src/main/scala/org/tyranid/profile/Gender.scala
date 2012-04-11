@@ -27,8 +27,6 @@ object Gender extends RamEntity( tid = "a00t" ) with EnumEntity[Gender] {
   "id"     is DbInt      is 'id;
   "name"   is DbChar(64) is 'label;
 
-  override lazy val makeView = viewFor( "id", "name" )
-
   def apply( id:Int, name:String ) = {
     val t = new Gender
     t( 'id ) = id

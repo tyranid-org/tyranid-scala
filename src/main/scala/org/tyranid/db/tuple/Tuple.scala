@@ -49,13 +49,20 @@ class Tuple( val view:TupleView ) extends Record {
   def has( index:Int )                = values( index ) != null
   def has( va:ViewAttribute ):Boolean = has( va.index )
 
-	def apply( index:Int ) = values( index )
+	def apply( index:Int )         = values( index )
 	def update( index:Int, v:Any ) = values( index ) = v.asInstanceOf[AnyRef]
+  def remove( index:Int )        = values( index ) = null
 
-  def apply( va:ViewAttribute ) = apply( va.index )
+  def apply( va:ViewAttribute )         = apply( va.index )
   def update( va:ViewAttribute, v:Any ) = values( va.index ) = v.asInstanceOf[AnyRef]
+  def remove( va:ViewAttribute )        = values( va.index ) = null
 
 	def see( index:Int ) = view.leaves( index ).att.domain.see( apply( index ) )
+
+  override def clear {
+    for ( i <- 0 until values.length )
+      values( i ) = null
+  }
 
   def deep:Tuple = throw new UnsupportedOperationException
 

@@ -31,7 +31,7 @@ import org.tyranid.db.ram.RamEntity
 import org.tyranid.db.tuple.Tuple
 import org.tyranid.email.AWSEmail
 import org.tyranid.http.UserAgent
-import org.tyranid.report.{ Run, Query }
+import org.tyranid.report.{ Query, Run, Sort }
 import org.tyranid.ui.{ CustomField, PathField, Search }
 import org.tyranid.web.{ Weblet, WebContext }
 
@@ -39,8 +39,6 @@ import org.tyranid.web.{ Weblet, WebContext }
 object Event extends RamEntity( tid = "a0It" ) with EnumEntity[Event] {
   "id"     is DbInt      is 'id;
   "name"   is DbChar(64) is 'label;
-
-  override lazy val makeView = viewFor( "id", "name" )
 
   def apply( id:Int, name:String ) = {
     val t = new Event
@@ -205,6 +203,8 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
       }
     }
   }
+
+  override lazy val defaultSort = Sort( "on", "On", "on" -> -1 )
 }
 
 object LogQuery extends Query {
@@ -217,7 +217,7 @@ object LogQuery extends Query {
 
   override def newReport = {
     var r = super.newReport
-    r.sort = Mobj( "on" -> -1 )
+    r.sort = Log.defaultSort
     r
   }
 

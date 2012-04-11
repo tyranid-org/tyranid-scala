@@ -21,11 +21,11 @@ import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
-import org.tyranid.db.es.{ NoSearch, Searchable }
+import org.tyranid.db.es.{ Es, NoSearch, Searchable }
 import org.tyranid.db.meta.Tid
 import org.tyranid.db.tuple.{ TupleView, Tuple }
 import org.tyranid.logic.{ Invalid, Valid }
-import org.tyranid.db.es.Es
+import org.tyranid.report.Sort
 
 
 trait AttributeAnnotation
@@ -131,6 +131,8 @@ trait Entity extends Domain with DbItem {
 
   def makeView:View
 
+  def make:Record
+
 
 	/*
 	 * * *  Labels
@@ -222,6 +224,8 @@ trait Entity extends Domain with DbItem {
 
   def records:Iterable[Record] = Nil
   
+  def query( search:com.mongodb.DBObject, offset:Int = 0, count:Int = 20, sort:Sort = null ):Iterable[Record]
+
   def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException
 
   def save( r:Record ) {
@@ -330,6 +334,22 @@ trait Entity extends Domain with DbItem {
     }
 
   def problem( desc:String ) = throw new org.tyranid.db.ModelException( "On Entity '" + name + "':  " + desc )
+
+  lazy val defaultSort:Sort = {
+    val labels = attribs.filter( _.isLabel )
+
+    labels.size match {
+    case 0 =>
+      Sort( "id", "ID", attribs.find( _.isId ).map( a => a.name -> -1 ).toSeq:_* )
+
+    case 1 =>
+      val a = labels( 0 )
+      Sort( a.name, a.label, a.name -> 1 )
+
+    case n =>
+      Sort( "label", "Name", labels.map( a => a.name -> 1 ):_* )
+    }
+  }
 
   Entity.register( this )
 }

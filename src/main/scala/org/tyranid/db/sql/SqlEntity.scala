@@ -22,6 +22,7 @@ import scala.collection.mutable.{ ArrayBuffer, HashMap }
 import org.tyranid.Imp.{ stringImp, symbol }
 import org.tyranid.db.{ Attribute, DbIntSerial, DbChar, Entity, ModelException, Record, Schema, ViewAttribute }
 import org.tyranid.db.tuple.{ TupleView, Tuple }
+import org.tyranid.report.Sort
 
 
 case class SqlEntity( tid:String ) extends Entity {
@@ -31,6 +32,8 @@ case class SqlEntity( tid:String ) extends Entity {
 	override lazy val dbName = name.camelCaseToUnderLower.plural
 
   def makeView = throw new UnsupportedOperationException
+
+  def make = throw new UnsupportedOperationException
 
 	private def toCreateSql = {
 		val sb = new StringBuilder
@@ -131,6 +134,9 @@ UPDATE """ ++= en.dbName ++= """
     } else {
       throw new UnsupportedOperationException
     }
+
+  def query( search:com.mongodb.DBObject, offset:Int = 0, count:Int = 20, sort:Sort = null ) =
+    throw new UnsupportedOperationException
 }
 
 

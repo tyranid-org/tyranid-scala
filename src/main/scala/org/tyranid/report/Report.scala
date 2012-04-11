@@ -40,11 +40,26 @@ import org.tyranid.web.{ Weblet, WebContext }
  * * *   S o r t
  */
 
-case class Sort( name:String, label:String, direction:Int ) {
+case class Sort( name:String, label:String, fields:(String,Int)* ) {
 
   lazy val selectObj = ( name, label )
-  lazy val sortObj   = Mobj( name -> direction )
+  lazy val sortObj   = Mobj( fields:_* )
+
+  lazy val comparator = ( r1, r2 ) => lessThan( r1, r2 )
+
+  def lessThan( r1:Record, r2:Record ):Boolean = {
+
+    for ( f <- fields ) {
+      val va = r1.view( f._1 )
+
+      if ( va.domain.compare( r1( va ), r2( va ) ) < 0 )
+        return true
+    }
+
+    false
+  }
 }
+
 
 
 /*
@@ -192,20 +207,43 @@ trait Query {
           if value != null )
       sf.prepareSearch( run, search, value )
 
-    val textSearches =
-      rep.selectedColumns.
-        toSeq.
-        flatMap( name => dataFields.find( _.name == name ) ).
-        flatMap( _.textSearch( run ) )
-
-    textSearches.size match {
-    case 0 =>
-    case 1 => search.copy( textSearches( 0 ) )
-    case n => search( $or ) = Mlist( textSearches:_* )
-    }
-
     if ( grouping != null )
       grouping.prepareSearch( search, run )
+
+    /*
+
+        PROBLEM #1.  search properties are dynamically added to Views
+        
+          this works for MongoEntities ... but not for the Tuple-based RamEntities
+
+          options:
+
+            1.  create a new TupleView based on the search properties present
+
+            2.  add some sort of secondary hash to Tuples similar to how temporaries work ...
+
+            3.  change RamEntities to be DBObject-based instead of Tuple-based
+        
+
+        PROBLEM #2.  search doesn't work vs. RamEntities
+
+        +. need a new type of search container that contains:
+
+
+             field:Field *--1 search:Search
+
+             searchRec:Record
+
+
+        +. can we transform the above into generic search objects?
+
+           Search, [Search]Field
+
+             what would a seq of text searches map into ?
+
+               SearchOr( SearchSubst )
+
+     */
 
     search
   }
@@ -219,26 +257,11 @@ spam( "sort=" + report.sort )
 spam( "skip=" + report.offset )
 spam( "pageSize=" + report.pageSize )
 
-    val rows =
-      entity match {
-      case me:MongoEntity =>
-        var cursor = me.db.find( search )//, Mobj() )
-        if ( report.offset != 0 )
-          cursor = cursor.skip( report.offset )
-        cursor = cursor.limit( run.report.pageSize + 1 )
+    val rows = entity.query( search, report.offset, report.pageSize + 1, report.sort )
 
-        if ( report.sort != null )
-          cursor = cursor.sort( report.sort )
-    
-        cursor.toIterable.map( me.apply )
+    report.hasNext = rows.size > report.pageSize
 
-      case re:RamEntity =>
-        re.records
-      }
-
-    report.hasNext = rows.size > run.report.pageSize
-
-    rows.take( run.report.pageSize )
+    rows.take( report.pageSize )
   }
 
   def newReport = {
@@ -292,7 +315,7 @@ spam( "pageSize=" + report.pageSize )
      { orderBy.nonEmpty |*
      <div class="fieldsc" style="margin-top:8px; padding:4px;">
       <h3>Order By</h3>
-      <div>{ Select( "sort", r.sort != null |* r.sort.keySet.head, orderBy.map( _.selectObj ) ) }</div>
+      <div>{ Select( "sort", r.sort != null |* r.sort.name, orderBy.map( _.selectObj ) ) }</div>
      </div> }
     <div class="btns">
      <input type="submit" value="Search" class="greenBtn" name="saving"/>
@@ -318,16 +341,22 @@ case class AutoQuery( entity:Entity ) extends Query {
       override lazy val label = "TID"
       def cell( s:Scope ) = <a href={ "/admin/tid?tid=" + s.rec.tid } class="eyeBtn" style="margin:0 1px;">T</a>
     } ) +:
-    entity.makeView.vas.map( va => new PathField(
+    ( entity.makeView.vas.filter( _.att.isLabel ).map( fieldFor ).toSeq.sortBy( _.label ) ++
+      entity.makeView.vas.filter( !_.att.isLabel ).map( fieldFor ).toSeq.sortBy( _.label ) )
+
+  def fieldFor( va:ViewAttribute ) =
+    new PathField(
       va.name,
       search =
         va.domain match {
         case t:DbTextLike => Search.Subst
         case _            => Search.Equals
         }
-    ).bind( view ) ).toSeq.sortBy( _.label )
+    ).bind( va.view )
 
   val defaultFields = dataFields.take( 8 )
+
+  override val orderBy = Seq( entity.defaultSort, Sort( "id", "Increasing ID", "id" -> 1 ) )
 }
 
 
@@ -342,12 +371,12 @@ case class Report( query:Query ) {
 
   @volatile var name:String = _
 
-  val searchRec = query.entity.as[MongoEntity].make
+  val searchRec = query.entity.make
 
-  @volatile var sort:DBObject = {
+  @volatile var sort:Sort = {
 
     if ( query.orderBy.nonEmpty )
-      query.orderBy.head.sortObj
+      query.orderBy.head
     else
       null
   }
@@ -391,13 +420,7 @@ case class Report( query:Query ) {
   def label( name:String ) = query.allFieldsMap( name ).labelUi
   def ui( name:String )    = query.allFieldsMap( name ).ui( Scope( searchRec ) )
 
-  def searchTitle =
-    if ( selectedColumns.isEmpty ) Text( "search all fields" )
-    else                           Unparsed( "search <span class='hitext'>highlighted</span> fields" )
-
   val sections = "Standard" +: query.dataFields.map( _.section ).filter( _ != "Standard" ).sorted.distinct
-
-  var textSearchValue:String = ""
 
 
   /*
@@ -520,23 +543,6 @@ case class Report( query:Query ) {
       <td style="width:410px; padding:0;">
       </td>
       <td>
-      { if ( !B.PRODUCTION )
-       <table class="tile" style="width:226px; height:54px;">
-        <tr>
-         <td id="searchTitle" class="label">{ searchTitle }</td>
-        </tr>
-        <tr>
-         <td>
-          <form method="get" id="rTextSearchForm" class="searchBox">
-	         <div>
-            <input type="text" value={ textSearchValue } id="rTextSearch" name="rTextSearch" placeholder="Search" class="field"/>
-		        <input type="image" class="btn" name="submit" src="/images/search-btn.png" alt="Go"/>
-	         </div>
-          </form>
-         </td>
-        </tr>
-       </table>
-      }
       </td>
       <td>
        <table class="tile" style="width:298px; height:54px;">
@@ -639,10 +645,6 @@ object Reportlet extends Weblet {
      * * *  Navigation
      */
 
-    case "/textSearch" =>
-      report.textSearchValue = web.req.s( 'ts )
-      web.res.html( report.innerDraw )
-
     case "/editSearch" =>
       web.res.html( report.innerDrawSearch )
 
@@ -655,7 +657,7 @@ object Reportlet extends Weblet {
 
       if ( query.orderBy.nonEmpty ) {
         val name = web.req.s( 'sort )
-        report.sort = query.orderBy.find( _.name == name ).get.sortObj
+        report.sort = query.orderBy.find( _.name == name ).get
       }
       report.offset = 0
       web.res.html( report.innerDraw )
@@ -675,8 +677,7 @@ object Reportlet extends Weblet {
       val empty = report.selectedColumns.isEmpty
       report.selectedColumns( fp.name ) = !report.selectedColumns( fp.name )
 
-      web.res.html(
-        empty != report.selectedColumns.isEmpty |* report.searchTitle )
+      web.res.ok
 
     case "/drag" =>
       val js = web.req.s( 'js )

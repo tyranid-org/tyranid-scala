@@ -29,6 +29,7 @@ import org.tyranid.db.{ DbLink, Attribute, Domain, Entity, Record, Scope, View, 
 import org.tyranid.db.meta.Tid
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.math.Base64
+import org.tyranid.report.Sort
 import org.tyranid.ui.{ Input, PathField, Search }
 
 
@@ -63,6 +64,10 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
   }
 
   lazy val makeView = MongoView( this )
+
+  def make = apply( Mobj() )
+
+  def make( obj:DBObject, parent:MongoRecord = null ) = MongoRecord( makeView, obj, parent )
 
   
   override def save( rec:Record ) = {
@@ -108,10 +113,6 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
       }
     }
 
-  def make = apply( Mobj() )
-
-  def make( obj:DBObject, parent:MongoRecord = null ) = MongoRecord( makeView, obj, parent )
-
   def remove( obj:DBObject ) = db.remove( obj )
 
   override def idLabels:Iterable[(AnyRef,String)] = {
@@ -147,6 +148,20 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
   }
 
   override def records:Iterable[Record] = db.find.map( apply ).toIterable
+
+  def query( search:DBObject, offset:Int = 0, count:Int = 20, sort:Sort = null ) = {
+    var cursor = db.find( search )//, Mobj() )
+    if ( offset != 0 )
+      cursor = cursor.skip( offset )
+
+    if ( count != 0 )
+      cursor = cursor.limit( count )
+
+    if ( sort != null )
+      cursor = cursor.sort( sort.sortObj )
+    
+    cursor.toIterable.map( apply )
+  }
 }
 
 case class MongoView( override val entity:MongoEntity ) extends View {

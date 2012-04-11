@@ -22,6 +22,7 @@ import scala.collection.mutable.{ ArrayBuffer, HashMap }
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbIntSerial, DbChar, Entity, View, ViewAttribute, Record }
 import org.tyranid.db.tuple.{ Tuple, TupleView }
+import org.tyranid.report.Sort
 
 
 case class RamEntity( tid:String ) extends Entity {
@@ -41,7 +42,7 @@ case class RamEntity( tid:String ) extends Entity {
     v
   }
 
-  lazy val makeView:View = {
+  lazy val makeView:TupleView = {
     val v = new TupleView
 
     val len = attribs.size
@@ -53,6 +54,8 @@ case class RamEntity( tid:String ) extends Entity {
     v.leaves = vas
     v
   }
+
+  def make = new Tuple( makeView )
 
 	def create {}
 	def drop   { /* TODO */ }
@@ -70,6 +73,21 @@ case class RamEntity( tid:String ) extends Entity {
     }
 
   override def records = staticRecords
+
+  def query( search:com.mongodb.DBObject, offset:Int = 0, count:Int = 20, sort:Sort = null ) = {
+    val filter = ( record:Record ) => record.matches( search )
+
+    var allRecs = records.filter( filter )
+
+    if ( sort != null )
+      allRecs = allRecs.sortWith( sort.comparator )
+
+    if ( offset != 0 || count != 0 )
+      allRecs.slice( offset, offset + count )
+    else
+      allRecs
+  }
+
   override def idLabels:Seq[(AnyRef,String)] = staticRecords.map( _.idLabel )
 
   def byId( id:Long ) = staticIdIndex.get( id )

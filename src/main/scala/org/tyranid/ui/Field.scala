@@ -151,22 +151,6 @@ trait Field {
    * * *   Search
    */
 
-  def textSearchKeys = Seq( name )
-
-  def textSearch( run:Run ):Seq[DBObject] = {
-    val searchValue = run.report.textSearchValue
-
-    // TODO:  handle lookup codes
-
-    // TODO:  multivalue / calculated fields
-
-    if ( searchValue.notBlank )
-      textSearchKeys.map( name => Mobj( name -> searchValue.toPatternI ) )
-    else
-      Nil
-  }
-
-
   val data:Boolean
   val search:Search
 
@@ -258,7 +242,8 @@ case class PathField( baseName:String,
     this // TODO:  return an immutable version
   }
 
-  override def ui( s:Scope )      = path.leaf.domain.ui( s, this )
+  override def ui( s:Scope ) = path.leaf.domain.ui( s, this )
+
   override def extract( pScope:Scope ) = {
     val scope = pScope.at( path )
     va.att.domain.extract( scope, this )

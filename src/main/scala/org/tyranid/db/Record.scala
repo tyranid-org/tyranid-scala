@@ -171,26 +171,35 @@ trait Record extends Valid with BsonObject {
   def has( va:ViewAttribute ):Boolean
 
   final def apply( key:String ):AnyRef = apply( view( key ) )
-
   final def update( key:String, v:Any ):Unit = update( view( key ), v )
 
   def apply( va:ViewAttribute ):AnyRef
   def update( va:ViewAttribute, v:Any )
  
-  def label                   = view.labelVa.flatten( va => s( va ), "n/a" )
-  def idLabel:(AnyRef,String) = ( apply( view.idVa.get ), label )
-
   def tid = entityTid + recordTid
-
-  def eye = Tid.eye( tid )
-
   def entityTid = view.entity.tid
   def recordTid = view.idVa.flatten( va => va.att.domain.idToRecordTid( this( va ) ), view.entity.problem( "embedded entities don't have IDs" ) )
+
+  override def oid = id.as[ObjectId]
+  
+
+
 
   def clear:Unit = throw new UnsupportedOperationException
 
   def remove( key:String )       { remove( view( key ) ) }
-  def remove( va:ViewAttribute ) { throw new UnsupportedOperationException }
+  def remove( va:ViewAttribute ):Unit
+
+
+  /*
+   * * *   Labels
+   */
+
+  def label                   = view.labelVa.flatten( va => s( va ), "n/a" )
+  def idLabel:(AnyRef,String) = ( apply( view.idVa.get ), label )
+
+  def label( va:ViewAttribute )  = va.att.domain.asInstanceOf[DbLink].toEntity.labelFor( apply( va ) )
+  def label( key:String ):String = label( view( key ) )
 
 
   /**
@@ -198,55 +207,20 @@ trait Record extends Valid with BsonObject {
    */
   def /( va:ViewAttribute )   = apply( va ).asInstanceOf[Record]
 
-  override def oid = id.as[ObjectId]
-  
-  /**
-   * BSON ObjectId
-   */
   def oid( va:ViewAttribute ) = apply( va ).asInstanceOf[ObjectId]
 
-  /**
-   * BSON Object
-   */
   override def o( name:String ) = o( view( name ) )
   def o( va:ViewAttribute ) = apply( va ).asInstanceOf[BsonObject]
 
   final def rec( name:String ):Record = rec( view( name ) )
   def rec( va:ViewAttribute ):Record
 
-  /**
-   * Array
-   */
   def a( va:ViewAttribute ) = apply( va ).asInstanceOf[BasicDBList]
-
-  /**
-   * Boolean
-   */
   def b( va:ViewAttribute ) = apply( va ).asInstanceOf[Boolean]
-
-  /**
-   * Double
-   */
   def d( va:ViewAttribute ) = apply( va ).asInstanceOf[Double]
-
-  /**
-   * Int
-   */
   def i( va:ViewAttribute ) = apply( va ).asInstanceOf[Int]
-
-  /**
-   * Long
-   */
   def l( va:ViewAttribute ) = apply( va ).asInstanceOf[Long]
-
-  /**
-   * Regular Expression
-   */
-  //def r( va:ViewAttribute ) = apply( va ).asInstanceOf[Long]
-
-  /**
-   * String
-   */
+  //def r( va:ViewAttribute ) = apply( va ).asInstanceOf[Long] // r = regular expression
   def s( va:ViewAttribute ):String = {
     val v = apply( va )
     
@@ -259,18 +233,7 @@ trait Record extends Valid with BsonObject {
     }
     */
   }
-
-  /**
-   * Date/Time
-   */
   def t( va:ViewAttribute ) = apply( va.name ).asInstanceOf[Date]
-
-
-  def label( va:ViewAttribute ):String = {
-    va.att.domain.asInstanceOf[DbLink].toEntity.labelFor( apply( va ) )
-  }
-
-  def label( key:String ):String = label( view( key ) )
 
 
   /*
@@ -340,6 +303,15 @@ trait Record extends Valid with BsonObject {
 
   final def save   = entity.save( this )
   final def delete = entity.delete( this )
+
+
+
+  def matches( search:com.mongodb.DBObject ) = {
+
+    true
+  }
+
+  def eye = Tid.eye( tid )
 }
 
 case class Scope( rec:Record,
