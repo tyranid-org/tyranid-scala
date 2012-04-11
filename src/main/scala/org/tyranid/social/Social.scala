@@ -23,7 +23,9 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
+import org.tyranid.cloud.aws.S3
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.io.File
 import org.tyranid.profile.{ Org, User }
 import org.tyranid.web.Weblet
 
@@ -40,6 +42,26 @@ object Social {
 
   def appFor( networkCode:String ) =
     networks.find( _.networkCode == networkCode ).get
+    
+  def ensureSecureThumbnail( user:User ) {
+    val url = user.s( 'thumbnail )
+     
+    if ( url.notBlank && url.toLowerCase().startsWith( "http:" ) ) {
+      val bucket = B.getS3Bucket( "public" )
+      user( 'thumbnail ) = S3.storeUrl( bucket, url, File.pathFor( B.User.tid, B.User.idToRecordTid( user( "_id" ) ), "thumbnail", url ) )
+      B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "thumbnail" -> user.s( 'thumbnail ) ) ) )
+    }
+  }
+  
+  def ensureSecureThumbnail( org:Org ) {
+    val url = org.s( 'thumbnail )
+        
+    if ( url.notBlank && url.toLowerCase().startsWith( "http:" ) ) {
+      val bucket = B.getS3Bucket( "public" )
+      org( 'thumbnail ) = S3.storeUrl( bucket, url, File.pathFor( B.Org.tid, B.Org.idToRecordTid( org( "_id" ) ), "thumbnail", url ) )
+      B.Org.db.update( Mobj( "_id" -> org.id ), Mobj( $set -> Mobj( "thumbnail" -> org.s( 'thumbnail ) ) ) )
+    }
+  }
 }
 
 trait SoApp {

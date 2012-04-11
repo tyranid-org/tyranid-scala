@@ -39,15 +39,13 @@ import org.tyranid.net.Uri
 import org.tyranid.oauth.{ OAuth, Token }
 import org.tyranid.profile.{ Org, User }
 import org.tyranid.session.Session
-import org.tyranid.social.SoApp
+import org.tyranid.social.{ SoApp, Social }
 import org.tyranid.ui.Form
 import org.tyranid.web.{ WebContext, Weblet }
 
 case class LiApp( apiKey:String, secret:String ) extends SoApp {
-
   val networkCode = "li"
   val networkName = "LinkedIn"
-
   val logo = "/images/linkedin_logo.png"
 
   lazy val oauth = OAuth( key = apiKey, secret = secret )
@@ -212,15 +210,16 @@ function onLinkedInLoad() {
     user( 'firstName ) = profile( 'firstName )
     user( 'lastName )  = profile( 'lastName )
     user( 'thumbnail ) =
-      if ( profile.contains( 'pictureUrl ) ) profile( 'pictureUrl )
-      else                                   "/icon_individual.png"
+      if ( profile.contains( 'pictureUrl ) ) {
+        profile( 'pictureUrl )
+      } else
+        "/icon_individual.png"
     user( 'title )     = profile( 'headline )
 
     val country = profile.o( 'location ).o( 'country ).s( 'code )
     if ( country.notBlank )
       user( 'country ) = Country.idByIso3166_2( country )
   }
-
 
   /*
    * * *   Companies
@@ -238,7 +237,7 @@ function onLinkedInLoad() {
 
     var companies = mutable.ArrayBuffer[ObjectMap]()
     var found = false
-val strictMatch = true
+    val strictMatch = true
 
     if ( domain.notBlank ) {
       companies ++= GET( "/companies:" + companyFields + "?email-domain=" + domain.encUrl, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
@@ -403,15 +402,7 @@ val strictMatch = true
       }
     }
 
-    if ( storeInS3 ) {
-      val url = org.s( 'thumbnail )
-        
-      if ( url notBlank ) {
-        val bucket = B.getS3Bucket( "public" )
-        org( 'thumbnail ) = S3.storeUrl( bucket, url, File.pathFor( B.Org.tid, B.Org.idToRecordTid( org( "_id" ) ), "thumbnail", url ) )
-        B.Org( org ).save
-      }
-    }
+    if ( storeInS3 ) Social.ensureSecureThumbnail( B.Org( org ) )
   }
 
   def createCompany( user:User, domain:String ):Org = {
@@ -484,11 +475,9 @@ object LinkedInlet extends Weblet {
       val profile = B.linkedIn.GET( "/people/id=" + uid + ":(id,picture-url)", u ).parseJsonObject
       
       if ( profile.contains( 'pictureUrl ) ) {
-        val url = profile.s( 'pictureUrl )
-        val bucket = B.getS3Bucket( "public" )
-        u( 'thumbnail ) = S3.storeUrl( bucket, url, File.pathFor( B.User.tid, B.User.idToRecordTid( u( "_id" ) ), "thumbnail", url ) )
+        u( 'thumbnail ) = profile.s( 'pictureUrl )
+        Social.ensureSecureThumbnail( u )
         s.notice( "Your " + B.applicationName + " profile image has been set to your LinkedIn profile image." )
-        B.User.db.update( Mobj( "_id" -> u.id ), Mobj( $set -> Mobj( "thumbnail" -> u.s( 'thumbnail ) ) ) )
       }
 
       T.web.redirect( "/user/edit" )

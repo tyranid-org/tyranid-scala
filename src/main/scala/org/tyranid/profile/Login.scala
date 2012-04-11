@@ -430,6 +430,8 @@ The """ + B.applicationName + """ Team
       sendActivation( user )
 
       user.save
+      
+      Social.ensureSecureThumbnail( user )
 
       web.redirect("/")
 

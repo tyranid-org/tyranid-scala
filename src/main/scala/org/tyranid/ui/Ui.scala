@@ -39,11 +39,23 @@ object Link {
 
 object Button {
 
-  def link( name:String, href:String, color:String, redirectEndpoint:String = null, dialogTitle:String = null ) =
+  def link( name:String, href:String, color:String, redirectEndpoint:String = null, dialogTitle:String = null, opts:Seq[(String,String)] = null ) =
     if ( redirectEndpoint == null ) {
       <a class={ color + "Btn" } href={ href }><span>{ name }</span></a>
     } else {
-      <a class={ color + "Btn" } href={ href } onClick={ "new TDialog( '" + href + "','" + redirectEndpoint + "', '" + dialogTitle + "' ).open(); return false;" }><span>{ name }</span></a>
+      val optsStr:StringBuffer = new StringBuffer
+
+      if ( opts != null ) {
+        opts.foreach {
+          _ match {
+          case ( n, v ) =>
+            optsStr.append( "td.option( \"" + n + "\", \"" + v + "\" );" )
+          case _ =>
+          }
+        }    
+      }
+      
+      <a class={ color + "Btn" } href={ href } onClick={ "var td = new TDialog( '" + href + "','" + redirectEndpoint + "', '" + dialogTitle + "' );" + optsStr.toString + " td.open(); return false;" }><span>{ name }</span></a>
     } 
     
   def bar( buttons:Node* ) =

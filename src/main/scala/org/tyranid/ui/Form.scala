@@ -203,6 +203,7 @@ $( function() {
       </script>
     </head>
   
+  def attrJson( obj:Any ) = org.tyranid.json.JsonString( obj ).toString
 }
 
 
