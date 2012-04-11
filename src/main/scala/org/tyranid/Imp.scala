@@ -45,6 +45,7 @@ object Imp {
 	implicit def option[A]( v:Option[A] )                           = new org.tyranid.collection.OptionImp( v )
   implicit def intImp( v:Int )                                    = new org.tyranid.math.IntImp( v )
   implicit def longImp( v:Long )                                  = new org.tyranid.math.LongImp( v )
+  implicit def doubleImp( v:Double )                              = new org.tyranid.math.DoubleImp( v )
 	implicit def stringImp( v:String )                              = new org.tyranid.text.StringImp( v )
   implicit def array[A]( a:Array[A] )                             = new org.tyranid.collection.ArrayImp( a )
   implicit def objectMapImp( v:scala.collection.Map[String,Any] ) = new org.tyranid.collection.ObjectMapImp( v )
