@@ -32,7 +32,7 @@ import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.session.Session
 import org.tyranid.time.Time
-import org.tyranid.ui.{ Button, Checkbox, CustomField, Field, Glyph, Input, PathField, Search, Select }
+import org.tyranid.ui.{ Button, Checkbox, CustomField, Field, Glyph, Input, PathField, Search, Select, Show }
 import org.tyranid.web.{ Weblet, WebContext }
 
 
@@ -279,7 +279,7 @@ trait Query {
      { searchFields.nonEmpty |*
      <div class="fieldsc" style="margin-top:8px; padding:4px;">
       <h3>Search By</h3>
-      { searchFields map { f =>
+      { searchFields.filter( _.show == Show.Editable ).map { f =>
           <div class="fieldc">
            <div class="labelc">{ f.labelUi }</div>
            <div class="inputc">{ f.ui( s ) }</div>
@@ -360,7 +360,7 @@ case class Report( query:Query ) {
     val rec = query.entity.make
     for ( sf <- query.searchFields;
           default <- sf.default )
-      rec( sf.name ) = default
+      rec( sf.name ) = default()
 
      rec 
   }
