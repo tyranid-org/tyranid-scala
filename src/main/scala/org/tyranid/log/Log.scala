@@ -221,7 +221,7 @@ object LogQuery extends Query {
     r
   }
 
-  val allFields = Seq(
+  val fields = Seq(
     new CustomField {
       def name = "tid"
       override lazy val label = "TID"

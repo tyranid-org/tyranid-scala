@@ -47,6 +47,7 @@ object Search {
     Subst,
     Gte,
     Lte,
+    Group,
     Custom
   )
 
@@ -83,6 +84,20 @@ object Search {
     val name = "lte"
 
     def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = Mobj( $lte -> value )
+  }
+
+  case object Group  extends Search {
+    val name = "grp"
+
+    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = {
+      run.report.groupFilterObj foreach { gf =>
+        val fk = run.report.query.grouping.foreignKey
+        searchObj(
+          // terrible hack
+          if ( fk == "id" ) "_id" else ""
+        ) = Mobj( $in -> gf.a_?( 'ids ) )
+      }
+    }
   }
 
   case object Custom extends Search {
@@ -239,6 +254,7 @@ case class PathField( baseName:String,
 
   def bind( view:View ) = {
     path = view.path( name, sep = '.' )
+    assert( path != null )
     this // TODO:  return an immutable version
   }
 

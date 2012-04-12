@@ -66,9 +66,11 @@ case class Sort( name:String, label:String, fields:(String,Int)* ) {
  * * *   G r o u p
  */
 
-case class Grouping( entity:MongoEntity, nameKey:String, listKey:String, value: () => AnyRef ) {
+case class Grouping( entity:MongoEntity, foreignKey:String, listKey:String, forKey:String, forValue: () => AnyRef ) {
 
-  def list = entity.db.find( Mobj( nameKey -> value() ) ).toSeq
+  lazy val searchNameKey = Search.Group.makeSearchName( foreignKey )
+
+  def list = entity.db.find( Mobj( forKey -> forValue() ) ).toSeq
 
   def drawFilter( run:Run ) =
     <table class="tile" style="width:140px; height:54px;">
@@ -77,15 +79,10 @@ case class Grouping( entity:MongoEntity, nameKey:String, listKey:String, value: 
      </tr>
      <tr>
       <td>{ 
-        Select( "rGroups", run.report.groupFilter, ( "" -> "All" ) +: run.report.groups.map( g => g.s( 'name ) -> g.s( 'name ) ), "style" -> "width:120px; max-width:120px;" )
+        Select( "rGroups", run.report.searchRec.s( searchNameKey ), ( "" -> "All" ) +: run.report.groups.map( g => g.s( 'name ) -> g.s( 'name ) ), "style" -> "width:120px; max-width:120px;" )
       }</td>
      </tr>
     </table>
-
-  def prepareSearch( search:DBObject, run:Run ) =
-    run.report.groupFilterObj foreach { gf =>
-      search( "_id" ) = Mobj( $in -> gf.a_?( 'ids ) )
-    }
 
   def draw( report:Report ) =
     <div id="rGroupDlg" style="padding:0; display:none;">
@@ -93,9 +90,6 @@ case class Grouping( entity:MongoEntity, nameKey:String, listKey:String, value: 
     </div>
 
   def drawGroup( grouping:Grouping, group:DBObject ) = {
-
-
-
   }
 
   def dialogContents( report:Report ) = {
@@ -119,15 +113,11 @@ case class Grouping( entity:MongoEntity, nameKey:String, listKey:String, value: 
 
     weblet.rpath match {
     case "/groups" =>
-      report.groupFilter = web.req.s( 'gn )
+      report.searchRec( searchNameKey ) = web.req.s( 'gn )
       web.res.html( report.innerDraw )
 
     case "/group" =>
       report.resetGroups
-
-      report.addGroupName = ""
-      report.newGroupName = ""
-      report.removeGroupName = ""
 
       web.res.html( dialogContents( report ) )
 
@@ -157,6 +147,10 @@ trait Query {
   lazy val view = entity.makeView
 
   lazy val boundFields = {
+    val allFields =
+      fields ++
+      ( grouping != null |* List( new PathField( grouping.foreignKey, l = "Group", data = false, search = Search.Group ) ) )
+
     for ( f <- allFields )
       f match {
       case pf:PathField =>
@@ -174,14 +168,14 @@ trait Query {
   def searchLabel:AnyRef      = "Search"
   def searchLabelNode:NodeSeq = labelNode
 
-  val allFields:Seq[Field]
+  val fields:Seq[Field]
 
   lazy val dataFields:Seq[Field]   = boundFields.filter( _.data )
   lazy val searchFields:Seq[Field] = boundFields.filter( _.search != null )
 
   lazy val allFieldsMap = {  
     val map = mutable.Map[String,Field]()
-    for ( f <- allFields ) {
+    for ( f <- boundFields ) {
       if ( f.name.isBlank )
         throw new RuntimeException( "Field missing name in report: " + f.toString )
 
@@ -207,34 +201,26 @@ trait Query {
           if value != null )
       sf.prepareSearch( run, search, value )
 
-    if ( grouping != null )
-      grouping.prepareSearch( search, run )
-
     /*
 
-        PROBLEM #1.  search properties are dynamically added to Views
-        
-          this works for MongoEntities ... but not for the Tuple-based RamEntities
-
-          options:
-
-            1.  create a new TupleView based on the search properties present
-
-            2.  add some sort of secondary hash to Tuples similar to how temporaries work ...
-
-            3.  change RamEntities to be DBObject-based instead of Tuple-based
-        
-
         PROBLEM #2.  search doesn't work vs. RamEntities
+
+        step 2:  change search methods to just pass around the search fields + searchRec
+
 
         +. generic search object that Record.matches can implement that isn't MongoDB specific?
         
            need a new type of search container that contains:
 
-
              field:Field *--1 search:Search
 
              searchRec:Record
+
+          ... each field will have all the data it needs to do the search and the search object it needs, so should just need
+
+            Field(with Search) + SearchRec
+
+              what about group search ?  do we need to create a dummied up SearchField for that along with an entry in the searchRec ?
 
 
      */
@@ -329,7 +315,16 @@ case class AutoQuery( entity:Entity ) extends Query {
 
   val name = "auto" + entity.name.capitalize
 
-  val allFields =
+  val fields = {
+    /*
+        TODO:  search properties are dynamically added to Views 
+               this works for MongoEntities ... but not for the Tuple-based RamEntities
+
+               if this entity is a Tuple entity, and we're adding search terms that are not ( data = true ), we will need to dynamically create
+               the TupleView for this query before adding in these fields
+
+     */
+
     ( new CustomField {
       def name = "tid"
       override lazy val label = "TID"
@@ -337,6 +332,7 @@ case class AutoQuery( entity:Entity ) extends Query {
     } ) +:
     ( entity.makeView.vas.filter( _.att.isLabel ).map( fieldFor ).toSeq.sortBy( _.label ) ++
       entity.makeView.vas.filter( !_.att.isLabel ).map( fieldFor ).toSeq.sortBy( _.label ) )
+  }
 
   def fieldFor( va:ViewAttribute ) =
     new PathField(
@@ -474,12 +470,6 @@ case class Report( query:Query ) {
    * * *  Groups
    */
 
-  @volatile var groupFilter = ""
-
-  var addGroupName = ""
-  var newGroupName = ""
-  var removeGroupName = ""
-
   private var latestGroups:Seq[DBObject] = null
 
   def resetGroups { latestGroups = null }
@@ -489,9 +479,9 @@ case class Report( query:Query ) {
 
     latestGroups
   }
-
   def groupsFor( id:AnyRef ) = groups.filter( _.a_?( 'ids ).contains( id ) ).map( _.s( 'name ) ).mkString( ", " )
-  def groupFilterObj = groups.find( _.s( 'name ) == groupFilter )
+
+  def groupFilterObj = groups.find( _.s( 'name ) == searchRec.s( query.grouping.searchNameKey ) )
 
 
   /*
