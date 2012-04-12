@@ -191,7 +191,7 @@ trait Query {
 
   val defaultFields:Seq[Field]
 
-  def prepareSearch( run:Run ) = {
+  final def prepareSearch( run:Run ) = {
 
     val rep = run.report
     val search = Mobj()
@@ -205,7 +205,8 @@ trait Query {
 
         PROBLEM #2.  search doesn't work vs. RamEntities
 
-        step 2:  change search methods to just pass around the search fields + searchRec
+
+        step 1:  change search methods to just pass around the search fields + searchRec
 
 
         +. generic search object that Record.matches can implement that isn't MongoDB specific?
@@ -231,13 +232,7 @@ trait Query {
   def run( run:Run ):Iterable[Record] = {
     val report = run.report
 
-    val search = prepareSearch( run )
-spam( "search=" + search )
-spam( "sort=" + report.sort )
-spam( "skip=" + report.offset )
-spam( "pageSize=" + report.pageSize )
-
-    val rows = entity.query( search, report.offset, report.pageSize + 1, report.sort )
+    val rows = entity.query( prepareSearch( run ), report.offset, report.pageSize + 1, report.sort )
 
     report.hasNext = rows.size > report.pageSize
 
@@ -361,7 +356,14 @@ case class Report( query:Query ) {
 
   @volatile var name:String = _
 
-  val searchRec = query.entity.make
+  val searchRec = {
+    val rec = query.entity.make
+    for ( sf <- query.searchFields;
+          default <- sf.default )
+      rec( sf.name ) = default
+
+     rec 
+  }
 
   @volatile var sort:Sort = {
 

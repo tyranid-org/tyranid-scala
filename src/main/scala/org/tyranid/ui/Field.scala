@@ -32,6 +32,30 @@ import org.tyranid.report.{ Report, Run }
 import org.tyranid.web.WebContext
 
 
+/*
+ * * *   S h o w
+ */
+
+sealed trait Show
+
+object Show {
+
+  val values = Seq(
+    Hidden,
+    Readonly,
+    Editable
+  )
+
+  case object Hidden   extends Show
+  case object Readonly extends Show
+  case object Editable extends Show
+}
+
+
+/*
+ * * *   S e a r c h
+ */
+
 sealed trait Search {
   val name:String
   def search( run:Run, f:Field, searchObj:DBObject, value:Any ):Unit
@@ -124,7 +148,6 @@ object Search {
 }
 
 
-
 /*
  * * *   F i e l d s
  */
@@ -161,6 +184,9 @@ trait Field {
 
   def needsCaseInsensitiveSearch = false
 
+  val show:Show
+  val default:Option[ () => Any ]
+
 
   /*
    * * *   Search
@@ -181,6 +207,9 @@ trait CustomField extends Field {
 
   val data = true
   val search:Search = null
+
+  val show = Show.Editable
+  val default = None
 }
 
 
@@ -205,7 +234,9 @@ case class PathField( baseName:String,
                       filter:Option[ ( Record ) => Boolean ] = None,
                       uiStyle:UiStyle = UiStyle.Default,
                       labelc:Boolean = true,
-                      create:Boolean = false ) extends Field with UiObj {
+                      create:Boolean = false,
+                      show:Show = Show.Editable,
+                      default:Option[ () => Any ] = None ) extends Field with UiObj {
 
   lazy val ( id, effOpts ) = {
     var _id:String = null
@@ -315,6 +346,9 @@ case class CustomTextSearchField( baseName:String, l:String = null, opts:Seq[(St
 
   val search = Search.Custom
   override val data = false
+
+  val show = Show.Editable
+  val default = None
 
   def cell( s:Scope ):NodeSeq = throw new UnsupportedOperationException
 
