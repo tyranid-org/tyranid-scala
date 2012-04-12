@@ -72,16 +72,16 @@ class Event extends Tuple( Event.makeView ) {
 
 object Log extends MongoEntity( tid = "a0Ht" ) {
 
-  "id"                  is DbMongoId      is 'id;
-  "e"                   is DbLink(Event)  as "Event";
-  "on"                  is DbDateTime     ;
-  "m"                   is DbText         as "Message";
-  "du"                  is DbLong         as "Duration in MS";
-  "ct"                  is DbInt          as "Count";
-  "ex"                  is DbText         as "Stack Trace";
-  "sid"                 is DbChar(64)     as "Session";
-  "ua"                  is DbChar(256)    as "User Agent";
-  "ip"                  is DbChar(32)     as "IP";
+  "id"                  is DbMongoId         is 'id;
+  "e"                   is DbLink(Event)     as "Event";
+  "on"                  is DbDateTime        ;
+  "m"                   is DbText            as "Message";
+  "du"                  is DbLong            as "Duration in MS";
+  "ct"                  is DbInt             as "Count";
+  "ex"                  is DbText            as "Stack Trace";
+  "sid"                 is DbChar(64)        as "Session";
+  "ua"                  is DbLink(UserAgent) as "User Agent";
+  "ip"                  is DbChar(32)        as "IP";
 
   lazy val init = {
     "uid"                 is DbLink(B.User) as "User";

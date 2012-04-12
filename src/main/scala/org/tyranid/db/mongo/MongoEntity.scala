@@ -29,7 +29,7 @@ import org.tyranid.db.{ DbLink, Attribute, Domain, Entity, Record, Scope, View, 
 import org.tyranid.db.meta.Tid
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.math.Base64
-import org.tyranid.report.Sort
+import org.tyranid.report.{ Run, Sort }
 import org.tyranid.ui.{ Input, PathField, Search }
 
 
@@ -116,7 +116,8 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
   def remove( obj:DBObject ) = db.remove( obj )
 
   override def idLabels:Iterable[(AnyRef,String)] = {
-    val labelName = labelAtt.get.name // TODO:  this should be labelAtt.dbName, but dbName by default is underscore-upper, and there is no MongoAttribute
+    // TODO:  this should be labelAtt.dbName, but dbName by default is underscore-upper, and there is no MongoAttribute
+    val labelName = labelAtt.map( _.name ).getOrElse { problem( "missing a label attribute" ) }
 
     db.find( Mobj(), Mobj( labelName -> 1 ) ).toSeq.
        map( obj => ( obj( '_id ), obj s labelName ) )
@@ -126,7 +127,8 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
     if ( isStatic ) {
       staticLabelFor( id.asInstanceOf[Long] )
     } else {
-      val labelName = labelAtt.get.name // TODO:  this should be labelAtt.dbName, but dbName by default is underscore-upper, and there is no MongoAttribute
+      // TODO:  this should be labelAtt.dbName, but dbName by default is underscore-upper, and there is no MongoAttribute
+      val labelName = labelAtt.map( _.name ).getOrElse { problem( "missing a label attribute" ) }
       val obj = db.findOne( Mobj( "_id" -> id ), Mobj( labelName -> 1 ) )
 
       if ( obj != null ) obj.s( labelName )
@@ -149,7 +151,14 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
 
   override def records:Iterable[Record] = db.find.map( apply ).toIterable
 
-  def query( search:DBObject, offset:Int = 0, count:Int = 20, sort:Sort = null ) = {
+  def query( run:Run, offset:Int = 0, count:Int = 20, sort:Sort = null ) = {
+    val search = Mobj()
+
+    for ( sf <- run.report.query.searchFields;
+          value = run.report.searchRec( sf.name )
+          if value != null )
+      sf.mongoSearch( run, search, value )
+
     var cursor = db.find( search )//, Mobj() )
     if ( offset != 0 )
       cursor = cursor.skip( offset )

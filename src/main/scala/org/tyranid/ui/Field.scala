@@ -58,9 +58,12 @@ object Show {
 
 sealed trait Search {
   val name:String
-  def search( run:Run, f:Field, searchObj:DBObject, value:Any ):Unit
 
   def makeSearchName( baseName:String ) = baseName + "$" + name
+
+  def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ):Unit
+
+  def matchesSearch( run:Run, f:PathField, value:Any, rec:Record ):Boolean
 }
 
 object Search {
@@ -78,42 +81,61 @@ object Search {
   case object Equals extends Search {
     val name = "eq"
 
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = f.transformValue( value )
+    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = f.transformValue( value )
+
+    def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) = f.basePath.get( rec ) == searchValue
   }
 
   case object Exists extends Search {
     val name = "exist"
 
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = Mobj( $gt -> "" )
+    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = Mobj( $gt -> "" )
+
+    def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) = f.basePath.s( rec ).notBlank
   }
 
   case object Subst  extends Search {
     val name = "subst"
 
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) =
+    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) =
       searchObj( f.baseName ) =
         if ( f.needsCaseInsensitiveSearch )
           value.toString.toPatternI
         else
           Mobj( $regex -> f.transformValue( value ) )
+
+    def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) = {
+      val v = f.basePath.s( rec )
+
+      if ( f.needsCaseInsensitiveSearch )
+        v.safeString.toUpperCase.indexOf( searchValue.safeString.toUpperCase ) != -1
+      else
+        v.safeString.indexOf( searchValue.safeString ) != -1
+    }
   }
 
   case object Gte    extends Search {
     val name = "gte"
 
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = Mobj( $gte -> value )
+    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = Mobj( $gte -> value )
+
+    def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) =
+      f.basePath.leaf.domain.compare( searchValue, f.basePath.get( rec ) ) >= 0
   }
 
   case object Lte    extends Search {
     val name = "lte"
 
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = Mobj( $lte -> value )
+    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = Mobj( $lte -> value )
+
+    def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) =
+      f.basePath.leaf.domain.compare( searchValue, f.basePath.get( rec ) ) <= 0
   }
 
   case object Group  extends Search {
     val name = "grp"
 
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = {
+    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) = {
       run.report.groupFilterObj foreach { gf =>
         val fk = run.report.query.grouping.foreignKey
         searchObj(
@@ -122,13 +144,17 @@ object Search {
         ) = Mobj( $in -> gf.a_?( 'ids ) )
       }
     }
+
+    def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) =
+      // TODO:  implement this
+      false
   }
 
   case object Custom extends Search {
     val name = "cst"
 
-    // nothing to do, this is handled in Query subclasses' prepareSearch()
-    def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = {}
+    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any )     = {}
+    def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) = false
   }
 
   def by( name:String ) = values.find( _.name == name )
@@ -195,9 +221,11 @@ trait Field {
   val data:Boolean
   val search:Search
 
-  def prepareSearch( run:Run, searchObj:DBObject, value:Any ) =
+  def mongoSearch( run:Run, searchObj:DBObject, value:Any ) =
     if ( search != null )
-      search.search( run, this, searchObj, value )
+      search.mongoSearch( run, this, searchObj, value )
+
+  def matchesSearch( run:Run, value:Any, rec:Record ):Boolean
 }
 
 
@@ -210,6 +238,8 @@ trait CustomField extends Field {
 
   val show = Show.Editable
   val default = None
+
+  def matchesSearch( run:Run, value:Any, rec:Record ) = search == null
 }
 
 
@@ -278,6 +308,8 @@ case class PathField( baseName:String,
   var path:Path = null
   def va = path.leaf
 
+  lazy val basePath = va.view.path( baseName )
+
   def bind( path:Path ) = {
     this.path = path
     this
@@ -337,6 +369,8 @@ case class PathField( baseName:String,
 
   override def transformValue( value:Any ) = path.leaf.domain.transformValue( value )
   override def needsCaseInsensitiveSearch  = path.leaf.domain.needsCaseInsensitiveSearch
+
+  def matchesSearch( run:Run, value:Any, rec:Record ) = search == null || search.matchesSearch( run, this, value, rec )
 }
 
 
@@ -362,5 +396,7 @@ case class CustomTextSearchField( baseName:String, l:String = null, opts:Seq[(St
     if ( v.notBlank ) s.rec( name ) = v
     else              s.rec.remove( name )
   }
+
+  def matchesSearch( run:Run, value:Any, rec:Record ) = true
 }
 

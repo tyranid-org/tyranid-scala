@@ -305,10 +305,14 @@ trait Record extends Valid with BsonObject {
   final def delete = entity.delete( this )
 
 
+  def matchesSearch( run:Run ):Boolean = {
+    val report = run.report
+    val searchRec = report.searchRec
 
-  def matches( search:com.mongodb.DBObject ) = {
-
-    true
+    report.query.searchFields forall { sf =>
+      val value = searchRec( sf.name )
+      value == null || sf.matchesSearch( run, value, this )
+    }
   }
 
   def eye = Tid.eye( tid )

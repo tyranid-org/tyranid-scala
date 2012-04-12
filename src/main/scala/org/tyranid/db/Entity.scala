@@ -25,7 +25,7 @@ import org.tyranid.db.es.{ Es, NoSearch, Searchable }
 import org.tyranid.db.meta.Tid
 import org.tyranid.db.tuple.{ TupleView, Tuple }
 import org.tyranid.logic.{ Invalid, Valid }
-import org.tyranid.report.Sort
+import org.tyranid.report.{ Run, Sort }
 
 
 trait AttributeAnnotation
@@ -224,7 +224,7 @@ trait Entity extends Domain with DbItem {
 
   def records:Iterable[Record] = Nil
   
-  def query( search:com.mongodb.DBObject, offset:Int = 0, count:Int = 20, sort:Sort = null ):Iterable[Record]
+  def query( run:Run, offset:Int = 0, count:Int = 20, sort:Sort = null ):Iterable[Record]
 
   def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException
 

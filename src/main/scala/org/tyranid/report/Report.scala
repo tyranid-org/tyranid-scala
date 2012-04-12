@@ -191,48 +191,10 @@ trait Query {
 
   val defaultFields:Seq[Field]
 
-  final def prepareSearch( run:Run ) = {
-
-    val rep = run.report
-    val search = Mobj()
-
-    for ( sf <- searchFields;
-          value = rep.searchRec( sf.name )
-          if value != null )
-      sf.prepareSearch( run, search, value )
-
-    /*
-
-        PROBLEM #2.  search doesn't work vs. RamEntities
-
-
-        step 1:  change search methods to just pass around the search fields + searchRec
-
-
-        +. generic search object that Record.matches can implement that isn't MongoDB specific?
-        
-           need a new type of search container that contains:
-
-             field:Field *--1 search:Search
-
-             searchRec:Record
-
-          ... each field will have all the data it needs to do the search and the search object it needs, so should just need
-
-            Field(with Search) + SearchRec
-
-              what about group search ?  do we need to create a dummied up SearchField for that along with an entry in the searchRec ?
-
-
-     */
-
-    search
-  }
-
   def run( run:Run ):Iterable[Record] = {
     val report = run.report
 
-    val rows = entity.query( prepareSearch( run ), report.offset, report.pageSize + 1, report.sort )
+    val rows = entity.query( run, report.offset, report.pageSize + 1, report.sort )
 
     report.hasNext = rows.size > report.pageSize
 
@@ -326,7 +288,7 @@ case class AutoQuery( entity:Entity ) extends Query {
       def cell( s:Scope ) = <a href={ "/admin/tid?tid=" + s.rec.tid } class="eyeBtn" style="margin:0 1px;">T</a>
     } ) +:
     ( entity.makeView.vas.filter( _.att.isLabel ).map( fieldFor ).toSeq.sortBy( _.label ) ++
-      entity.makeView.vas.filter( !_.att.isLabel ).map( fieldFor ).toSeq.sortBy( _.label ) )
+      entity.makeView.vas.filter( va => !va.att.isLabel && !va.domain.isInstanceOf[Entity] ).map( fieldFor ).toSeq.sortBy( _.label ) )
   }
 
   def fieldFor( va:ViewAttribute ) =

@@ -22,7 +22,7 @@ import scala.collection.mutable.{ ArrayBuffer, HashMap }
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbIntSerial, DbChar, Entity, View, ViewAttribute, Record }
 import org.tyranid.db.tuple.{ Tuple, TupleView }
-import org.tyranid.report.Sort
+import org.tyranid.report.{ Run, Sort }
 
 
 case class RamEntity( tid:String ) extends Entity {
@@ -74,10 +74,9 @@ case class RamEntity( tid:String ) extends Entity {
 
   override def records = staticRecords
 
-  def query( search:com.mongodb.DBObject, offset:Int = 0, count:Int = 20, sort:Sort = null ) = {
-    val filter = ( record:Record ) => record.matches( search )
+  def query( run:Run, offset:Int = 0, count:Int = 20, sort:Sort = null ) = {
 
-    var allRecs = records.filter( filter )
+    var allRecs = records.filter( _.matchesSearch( run ) )
 
     if ( sort != null )
       allRecs = allRecs.sortWith( sort.comparator )

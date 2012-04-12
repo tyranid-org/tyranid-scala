@@ -22,7 +22,7 @@ import scala.collection.mutable.{ ArrayBuffer, HashMap }
 import org.tyranid.Imp.{ stringImp, symbol }
 import org.tyranid.db.{ Attribute, DbIntSerial, DbChar, Entity, ModelException, Record, Schema, ViewAttribute }
 import org.tyranid.db.tuple.{ TupleView, Tuple }
-import org.tyranid.report.Sort
+import org.tyranid.report.{ Run, Sort }
 
 
 case class SqlEntity( tid:String ) extends Entity {
@@ -135,7 +135,7 @@ UPDATE """ ++= en.dbName ++= """
       throw new UnsupportedOperationException
     }
 
-  def query( search:com.mongodb.DBObject, offset:Int = 0, count:Int = 20, sort:Sort = null ) =
+  def query( run:Run, offset:Int = 0, count:Int = 20, sort:Sort = null ) =
     throw new UnsupportedOperationException
 }
 
