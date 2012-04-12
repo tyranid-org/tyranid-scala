@@ -223,6 +223,7 @@ trait Session {
    */
 
   private val editings = mutable.Map[ Class[_], AnyRef ]()
+  private val cache = mutable.Map[ String, AnyRef ]()
 
   def editing[ T: Manifest ]( gen: => AnyRef ):T               = editings.getOrElseUpdate( manifest[T].erasure, gen ).asInstanceOf[T]
   
@@ -233,6 +234,9 @@ trait Session {
     editings.remove( manifest[T].erasure )
   def clearAllEditing = editings.clear
 
+  def get( key:String ) = cache.getOrElse( key, null )
+  def set( key:String, value:AnyRef ) = cache.put( key, value )
+  def remove( key:String ) = cache.remove( key )
 
   /*
    * * *   Notifications

@@ -24,5 +24,7 @@ case class IntImp( i:Int ) {
   def box = Int.box( i )
 
   def dice = scala.util.Random.nextInt( i ) + 1
+  
+  def pad0( outTo:Int ) = java.lang.String.format( "%0" + outTo + "d", i.box )
 }
 
