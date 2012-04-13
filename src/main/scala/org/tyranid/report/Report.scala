@@ -94,12 +94,42 @@ case class Grouping( entity:MongoEntity, foreignKey:String, listKey:String, forK
 
   def drawGroup( group:DBObject ) = {
    <div class="title">{ group.s( 'name ) }</div>
-   <ul class="tags">
-    { for ( elo <- listEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) );
+   <table class="dtable">
+    <thead>
+     <tr>
+      <th>Name</th><th>TODO: Code</th><th/>
+     </tr>
+    </thead>
+    { /*
+          groups:
+
+          1)  figure out layout, no more incremental design
+
+          2)  requirements
+
+              adding:
+
+              a.  import a list
+              b.  type in a name
+
+              display:
+
+              a.  codes
+
+              deleting:
+
+              a.  add a remove link to the table
+
+       */
+      for ( elo <- listEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) );
             el = listEntity( elo ) ) yield
-        <li class="tag"><span>{ el.label }<a class="close">x</a></span></li>
+        <tr>
+         <td>{ el.label }</td>
+         <td></td>
+         <td><a href="#">remove</a></td>
+        </tr>
     }
-   </ul>
+   </table>
   }
 
   def dialogContents( report:Report ) = {
@@ -111,9 +141,13 @@ case class Grouping( entity:MongoEntity, foreignKey:String, listKey:String, forK
     </div>
     <div id="rGrpMain">
      <div id="rGrpEdit"/>
+     <div class="add">
+      add here
+     </div>
      <div class="btns">
-      <button onclick="$('#rGrpDlg').dialog('close'); return false;" class="greyBtn">Cancel</button>
-      <button id="rGroupOkay" class="greenBtn">Okay</button>
+      <button class="redBtn" style="float:left;">Delete</button>
+      <button id="rGroupSave" class="greenBtn" style="float:right;">Save Changes</button>
+      <button onclick="$('#rGrpDlg').dialog('close'); return false;" class="greyBtn" style="float:right;">Cancel</button>
      </div>
     </div>
   }
