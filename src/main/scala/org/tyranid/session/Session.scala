@@ -179,7 +179,8 @@ trait Session {
   def clear {
     reports.clear
     editings.clear
-
+    cache.clear
+    
     loggedEntry = false
     loggedUser = false
 
