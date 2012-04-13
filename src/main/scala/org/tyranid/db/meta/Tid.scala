@@ -138,7 +138,7 @@ object Tid {
     if ( in != null ) {
       entity( in )
     } else {
-      for ( en <- Entity.all )
+      for ( en <- Entity.all if !en.embedded )
         entity( en )
     }
 

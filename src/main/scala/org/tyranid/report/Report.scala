@@ -26,7 +26,7 @@ import com.mongodb.DBObject
 
 import org.tyranid.Imp._
 import org.tyranid.collection.ConcurrentExpireAutoMap
-import org.tyranid.db.{ DbTextLike, Entity, Path, Record, Scope, ViewAttribute }
+import org.tyranid.db.{ DbArray, DbLink, DbTextLike, Entity, Path, Record, Scope, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.db.ram.RamEntity
@@ -70,7 +70,10 @@ case class Grouping( entity:MongoEntity, foreignKey:String, listKey:String, forK
 
   lazy val searchNameKey = Search.Group.makeSearchName( foreignKey )
 
+  lazy val listEntity = entity.attrib( listKey ).domain.as[DbArray].of.as[DbLink].toEntity.as[MongoEntity]
+
   def list = entity.db.find( Mobj( forKey -> forValue() ) ).toSeq
+  def byId( id:Any ) = entity.db.findOne( Mobj( "_id" -> id, forKey -> forValue() ) )
 
   def drawFilter( run:Run ) =
     <table class="tile" style="width:140px; height:54px;">
@@ -85,23 +88,31 @@ case class Grouping( entity:MongoEntity, foreignKey:String, listKey:String, forK
     </table>
 
   def draw( report:Report ) =
-    <div id="rGroupDlg" style="padding:0; display:none;">
+    <div id="rGrpDlg" style="padding:0; display:none;">
     { dialogContents( report ) }
     </div>
 
-  def drawGroup( grouping:Grouping, group:DBObject ) = {
+  def drawGroup( group:DBObject ) = {
+   <div class="title">{ group.s( 'name ) }</div>
+   <ul class="tags">
+    { for ( elo <- listEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) );
+            el = listEntity( elo ) ) yield
+        <li class="tag"><span>{ el.label }<a class="close">x</a></span></li>
+    }
+   </ul>
   }
 
   def dialogContents( report:Report ) = {
-    <div class="left" style="float:left;">
-     <select multiple="multiple" style="width:180px; max-width:180px; height:500px;">
-      <option value="">All</option>
-      { report.groups.map( g => <option value={ g.s( 'name ) }>{ g.s( 'name ) }</option> ) }
-     </select>
+    <div id="rGrpSel">
+     <ul class="noSelect">
+      <li>All</li>
+      { report.groups.map( g => <li class="noSelect" id={ g.s( '_id ) }>{ g.s( 'name ) }</li> ) }
+     </ul>
     </div>
-    <div>
+    <div id="rGrpMain">
+     <div id="rGrpEdit"/>
      <div class="btns">
-      <button onclick="$('#rGroupDlg').dialog('close'); return false;" class="greyBtn">Cancel</button>
+      <button onclick="$('#rGrpDlg').dialog('close'); return false;" class="greyBtn">Cancel</button>
       <button id="rGroupOkay" class="greenBtn">Okay</button>
      </div>
     </div>
@@ -120,6 +131,9 @@ case class Grouping( entity:MongoEntity, foreignKey:String, listKey:String, forK
       report.resetGroups
 
       web.res.html( dialogContents( report ) )
+
+    case "/group/select" =>
+      web.res.html( drawGroup( byId( web.req.oid( 'id ) ) ) )
 
     case _ =>
       return false
