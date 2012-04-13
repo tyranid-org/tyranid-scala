@@ -237,7 +237,7 @@ trait Session {
 
   def get( key:String ) = cache.getOrElse( key, null )
   def set( key:String, value:AnyRef ) = cache.put( key, value )
-  def remove( key:String ) = cache.remove( key )
+  def clear( key:String = null ) = key.isBlank ? cache.clear | cache.remove( key )
 
   /*
    * * *   Notifications
