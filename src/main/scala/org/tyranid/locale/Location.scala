@@ -23,13 +23,13 @@ import org.tyranid.db.ram.RamEntity
 
 
 object LocationType extends RamEntity( tid = "a0Hv" ) {
-  "id"     is DbInt      is 'id;
+  "_id"    is DbInt      is 'id;
   "name"   is DbChar(64) is 'label;
 
   val HeadquartersId = 1
 
   static(
-  (           "id", "name"       ),
+  (          "_id", "name"       ),
   ( HeadquartersId, "Headquarters" ),
   (              2, "Distribution Center" ),
   (              3, "Factory"      ),

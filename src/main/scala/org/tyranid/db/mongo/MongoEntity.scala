@@ -235,7 +235,7 @@ case class MongoRecord( override val view:MongoView,
 
   override def entity = super.entity.asInstanceOf[MongoEntity]
 
-  override def id = apply( "id" )
+  override def id = apply( "_id" )
 
   private var temporaries:mutable.Map[String,AnyRef] = null
 
@@ -266,14 +266,10 @@ case class MongoRecord( override val view:MongoView,
   }
 
   def has( va:ViewAttribute ) =
-    if ( va.temporary ) {
+    if ( va.temporary )
       temporaries != null && temporaries.get( va.name ).getOrElse( null ) != null
-    } else {
-      va.name match {
-      case "id" => obj.has( "_id" )
-      case s    => obj.has( s )
-      }
-    }
+    else
+      obj.has( va.name )
 
   def apply( va:ViewAttribute ) =
     if ( va.temporary ) {
@@ -282,10 +278,7 @@ case class MongoRecord( override val view:MongoView,
       else
         temporaries.get( va.name ).getOrElse( null ) // TODO:  return a canonical empty value based on attribute type
     } else {
-      va.name match {
-      case "id" => obj.get( "_id" )
-      case s    => obj.get( s )
-      }
+      obj.get( va.name )
     }
 
   def update( va:ViewAttribute, v:Any ) =
@@ -294,10 +287,7 @@ case class MongoRecord( override val view:MongoView,
         temporaries = mutable.HashMap()
       temporaries( va.name ) = v.asInstanceOf[AnyRef]
     } else {
-      va.name match {
-      case "id" => obj.put( "_id", v )
-      case s    => obj.put( s, v )
-      }
+      obj.put( va.name, v )
     }
 
   override def remove( va:ViewAttribute ) = obj.removeField( va.name )

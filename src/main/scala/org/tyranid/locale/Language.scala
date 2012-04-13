@@ -30,7 +30,7 @@ object Language extends RamEntity( tid = "a0Hw" ) {
 
   // changelist:  http://www.loc.gov/standards/iso639-2/php/code_changes.php
 
-  "id"     is DbInt      is 'id;
+  "_id"    is DbInt      is 'id;
   "bib3"   is DbChar(3)  ;
   "ter3"   is DbChar(3)  ;
   "al2"    is DbChar(2)  as "ISO 639-1";
@@ -40,10 +40,10 @@ object Language extends RamEntity( tid = "a0Hw" ) {
   private val iso639_1Idx = mutable.HashMap[String, Int]()
 
   def idByIso630_1( code:String ) =
-    iso639_1Idx.getOrElseUpdate( code, staticRecords.find( _.s( 'al2 ) == code ).flatten( _.i( 'id ), 0 ) )
+    iso639_1Idx.getOrElseUpdate( code, staticRecords.find( _.s( 'al2 ) == code ).flatten( _.i( '_id ), 0 ) )
 
   static(
-  ( "id", "bib3", "ter3", "al2", "name", "frName" ),
+  ( "_id", "bib3", "ter3", "al2", "name", "frName" ),
 
   (   1, "aar", null,  "aa", "Afar", "afar" ),
   (   2, "abk", null,  "ab", "Abkhazian", "abkhaze" ),

@@ -37,8 +37,7 @@ class TupleView extends View {
 
 class Tuple( val view:TupleView ) extends Record {
 
-  // TODO:  need to clean up id/_id code
-  override def id = apply( "id" )
+  override def id = apply( "_id" )
 
   def keys = view.leaves.map( _.name )
 

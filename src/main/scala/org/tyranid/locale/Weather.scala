@@ -44,7 +44,7 @@ object Weather {
  * UGF  = Universal Geographic Code ... http://www.nws.noaa.gov/emwin/winugc.htm
  */
 object Cap extends MongoEntity( tid = "a0Et" ) {
-  "id"          is DbChar(128)   is 'id;
+  "_id"         is DbChar(128)   is 'id;
 
   "set"         is DbInt         ; // a random number generator so we can keep track of which fields were updated
   "setid"       is DbInt         ; // a shorter id than id

@@ -27,8 +27,8 @@ import org.tyranid.db.meta.AutoIncrement
 
 
 object UserAgent extends MongoEntity( tid = "a0Dt" ) {
-  "id"          is DbIntSerial   is 'id;
-  "ua"          is DbChar(256)   is 'label as "User Agent";
+  "_id"     is DbIntSerial   is 'id;
+  "ua"      is DbChar(256)   is 'label as "User Agent";
 
   private val idByUa = mutable.HashMap[String,Int]()
   private val uaById = mutable.HashMap[Int,String]()

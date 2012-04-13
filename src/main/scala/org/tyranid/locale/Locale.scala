@@ -23,7 +23,7 @@ import org.tyranid.db.ram.RamEntity
 
 
 object Region extends RamEntity( tid = "a01t" ) {
-  "id"      is DbInt           is 'id;
+  "_id"     is DbInt           is 'id;
   "name"    is DbChar(64)      is 'label;
   "fips"    is DbChar(4)       ;
   "country" is DbLink(Country) ;
@@ -45,7 +45,7 @@ object Region extends RamEntity( tid = "a01t" ) {
   }  
 
 	static { s =>
-  s( "id",  "name",				                                "fips",   "country", "abbr" )
+  s( "_id",  "name",				                               "fips",   "country", "abbr" )
 
   /*
       There is some scala compiler bug that shows up when you have more than ~1500ish records in a single method.
@@ -4316,7 +4316,7 @@ object Region extends RamEntity( tid = "a01t" ) {
 }
 
 object Country extends RamEntity( tid = "a02t" ) {
-  "id"     is DbInt      is 'id   ;
+  "_id"    is DbInt      is 'id   ;
   "name"   is DbChar(64) is 'label;
   "code"   is DbChar(2)           ;
   "code3"  is DbChar(3)           ;
@@ -4351,7 +4351,7 @@ object Country extends RamEntity( tid = "a02t" ) {
   }  
  
 	static { s =>
-  s(    "id", "name",				                                  "code", "code3" )
+  s(   "_id", "name",				                                  "code", "code3" )
 	s(    4077, "Andorra",                                      "AN",   "AND" )
 	s(    4078, "United Arab Emirates",                         "AE",   "ARE" )
 	s(    4079, "Afghanistan",                                  "AF",   "AFG" )

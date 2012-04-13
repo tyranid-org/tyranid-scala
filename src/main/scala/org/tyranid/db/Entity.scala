@@ -63,8 +63,8 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   def is( str:String ) = {
     str match {
     case "id"        => isId = true
-                        if ( entity.isInstanceOf[org.tyranid.db.mongo.MongoEntity] && name != "id" )
-                          throw new IllegalArgumentException( "Cannot mark '" + name + "' as an ID on the MongoDB entity '" + entity.name + "' -- MongoDB IDs must be called 'id'." )
+                        if ( entity.isInstanceOf[org.tyranid.db.mongo.MongoEntity] && name != "_id" )
+                          throw new IllegalArgumentException( "Cannot mark '" + name + "' as an ID on the MongoDB entity '" + entity.name + "' -- MongoDB IDs must be called '_id'." )
     case "label"     => isLabel = true
     case "required"  => required = true; localValidations ::= ( _.required )
     case "temporary" => temporary = true

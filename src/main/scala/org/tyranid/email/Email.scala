@@ -35,7 +35,7 @@ import org.tyranid.profile.User
 
 
 object EmailConfig extends MongoEntity( tid = "a0At" ) {
-  "id"           is DbInt is 'id;
+  "_id"          is DbInt is 'id;
   "host"         is DbChar(40);
   "port"         is DbInt;
   "authUser"     is DbChar(40);

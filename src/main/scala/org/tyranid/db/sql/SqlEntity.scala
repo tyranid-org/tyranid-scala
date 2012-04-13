@@ -142,8 +142,8 @@ UPDATE """ ++= en.dbName ++= """
 
 abstract class SqlEnumEntity( nameLen:Int, tid:String ) extends SqlEntity( tid ) {
 
-	"id"   is DbIntSerial       is 'id   ;
-	"name" is DbChar( nameLen ) is 'label ;
+	"_id"  is DbIntSerial       is 'id   ;
+	"name" is DbChar( nameLen ) is 'label;
 }
 
 

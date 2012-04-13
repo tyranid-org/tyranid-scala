@@ -37,12 +37,12 @@ import org.tyranid.web.{ Weblet, WebContext }
 
 
 object Event extends RamEntity( tid = "a0It" ) with EnumEntity[Event] {
-  "id"     is DbInt      is 'id;
+  "_id"    is DbInt      is 'id;
   "name"   is DbChar(64) is 'label;
 
   def apply( id:Int, name:String ) = {
     val t = new Event
-    t( 'id )   = id
+    t( '_id )  = id
     t( 'name ) = name
     t
   }
@@ -72,16 +72,16 @@ class Event extends Tuple( Event.makeView ) {
 
 object Log extends MongoEntity( tid = "a0Ht" ) {
 
-  "id"                  is DbMongoId         is 'id;
-  "e"                   is DbLink(Event)     as "Event";
-  "on"                  is DbDateTime        ;
-  "m"                   is DbText            as "Message";
-  "du"                  is DbLong            as "Duration in MS";
-  "ct"                  is DbInt             as "Count";
-  "ex"                  is DbText            as "Stack Trace";
-  "sid"                 is DbChar(64)        as "Session";
-  "ua"                  is DbLink(UserAgent) as "User Agent";
-  "ip"                  is DbChar(32)        as "IP";
+  "_id"      is DbMongoId         is 'id;
+  "e"        is DbLink(Event)     as "Event";
+  "on"       is DbDateTime        ;
+  "m"        is DbText            as "Message";
+  "du"       is DbLong            as "Duration in MS";
+  "ct"       is DbInt             as "Count";
+  "ex"       is DbText            as "Stack Trace";
+  "sid"      is DbChar(64)        as "Session";
+  "ua"       is DbLink(UserAgent) as "User Agent";
+  "ip"       is DbChar(32)        as "IP";
 
   lazy val init = {
     "uid"                 is DbLink(B.User) as "User";

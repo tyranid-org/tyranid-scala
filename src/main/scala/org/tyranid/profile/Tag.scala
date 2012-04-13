@@ -27,7 +27,7 @@ import org.tyranid.db.meta.AutoIncrement
 
 
 object Tag extends MongoEntity( tid = "a0Ct" ) {
-  "id"          is DbIntSerial   is 'id;
+  "_id"         is DbIntSerial   is 'id;
   "name"        is DbChar(64)    is 'label;
 
   private val tags = mutable.HashMap[String,Int]()

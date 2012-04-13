@@ -28,7 +28,7 @@ import org.tyranid.image.DbThumbnail
 
 
 class OrgMeta extends MongoEntity( "a02v" ) {
-  "id"                 is DbMongoId               is 'id;
+  "_id"                is DbMongoId               is 'id;
   "name"               is DbChar(120)             is 'label;
   "domain"             is DbLowerChar(128)        ;
   "thumbnail"          is DbThumbnail( "public" ) as "Logo";

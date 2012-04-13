@@ -31,72 +31,72 @@ import org.tyranid.db.ram.RamEntity
 
 
 object IndustryType extends RamEntity( tid = "a0Ou" ) {
-  "id"              is DbInt              is 'id;
+  "_id"             is DbInt              is 'id;
   "name"            is DbChar(30)         is 'label;
   "source"          is DbUrl              ;
 
   static(
-  ( "id", "name",                                           "source" ),
-  (    1, "GICS (Global Industry Classification Standard)", "http://www.standardandpoors.com/indices/gics/en/us" ),
-  (    2, "LinkedIn",                                       "https://developer.linkedin.com/documents/industry-codes" ) )
+  ( "_id", "name",                                           "source" ),
+  (     1, "GICS (Global Industry Classification Standard)", "http://www.standardandpoors.com/indices/gics/en/us" ),
+  (     2, "LinkedIn",                                       "https://developer.linkedin.com/documents/industry-codes" ) )
 }
 
 object GicsSector extends RamEntity( tid = "a0O1" ) {
-  "id"              is DbInt              is 'id;
+  "_id"             is DbInt              is 'id;
   "name"            is DbChar(30)         is 'label;
 
   static(
-  ( "id", "name" ),
-  (   10, "Energy" ),
-  (   15, "Materials" ),
-  (   20, "Industrials" ),
-  (   25, "Consumer Discretionary" ),
-  (   30, "Consumer Staples" ),
-  (   35, "Health Care" ),
-  (   40, "Financials" ),
-  (   45, "Information Technology" ),
-  (   50, "Telecommunication Services" ),
-  (   55, "Utilities" ) )
+  ( "_id", "name" ),
+  (    10, "Energy" ),
+  (    15, "Materials" ),
+  (    20, "Industrials" ),
+  (    25, "Consumer Discretionary" ),
+  (    30, "Consumer Staples" ),
+  (    35, "Health Care" ),
+  (    40, "Financials" ),
+  (    45, "Information Technology" ),
+  (    50, "Telecommunication Services" ),
+  (    55, "Utilities" ) )
 }
 
 object GicsIndustryGroup extends RamEntity( tid = "a0O2" ) {
-  "id"              is DbInt               is 'id;
+  "_id"             is DbInt               is 'id;
   "name"            is DbChar(30)          is 'label;
 
   static(
-  ( "id", "name" ),
-  ( 1010, "Energy" ),
-  ( 1510, "Materials" ),
-  ( 2010, "Capital Goods" ),
-  ( 2020, "Commercial & Professional Services" ),
-  ( 2030, "Transportation" ),
-  ( 2510, "Automobiles & Components" ),
-  ( 2520, "Consumer Durables & Apparel" ),
-  ( 2530, "Consumer Services" ),
-  ( 2540, "Media" ),
-  ( 2550, "Retailing" ),
-  ( 3010, "Food & Staples Retailing" ),
-  ( 3020, "Food, Beverage & Tobacco" ),
-  ( 3030, "Household & Personal Products" ),
-  ( 3510, "Health Care Equipment & Services" ),
-  ( 3520, "Pharmaceuticals, Biotechnology & Life Sciences" ),
-  ( 4010, "Banks" ),
-  ( 4020, "Diversified Financials" ),
-  ( 4030, "Insurance" ),
-  ( 4040, "Real Estate" ),
-  ( 4510, "Software & Services" ),
-  ( 4520, "Technology Hardware & Equipment" ),
-  ( 4530, "Semiconductors & Semiconductor Equipment" ),
-  ( 5010, "Telecommunication Services" ),
-  ( 5510, "Utilities" ) )
+  ( "_id", "name" ),
+  (  1010, "Energy" ),
+  (  1510, "Materials" ),
+  (  2010, "Capital Goods" ),
+  (  2020, "Commercial & Professional Services" ),
+  (  2030, "Transportation" ),
+  (  2510, "Automobiles & Components" ),
+  (  2520, "Consumer Durables & Apparel" ),
+  (  2530, "Consumer Services" ),
+  (  2540, "Media" ),
+  (  2550, "Retailing" ),
+  (  3010, "Food & Staples Retailing" ),
+  (  3020, "Food, Beverage & Tobacco" ),
+  (  3030, "Household & Personal Products" ),
+  (  3510, "Health Care Equipment & Services" ),
+  (  3520, "Pharmaceuticals, Biotechnology & Life Sciences" ),
+  (  4010, "Banks" ),
+  (  4020, "Diversified Financials" ),
+  (  4030, "Insurance" ),
+  (  4040, "Real Estate" ),
+  (  4510, "Software & Services" ),
+  (  4520, "Technology Hardware & Equipment" ),
+  (  4530, "Semiconductors & Semiconductor Equipment" ),
+  (  5010, "Telecommunication Services" ),
+  (  5510, "Utilities" ) )
 }
 
 object GicsIndustry extends RamEntity( tid = "a0O3" ) {
-  "id"              is DbInt              is 'id;
+  "_id"             is DbInt              is 'id;
   "name"            is DbChar(40)         is 'label;
 
   static(
-  ( "id",   "name" ),
+  (  "_id",   "name" ),
   ( 101010, "Energy Equipment & Services" ),
   ( 101020, "Oil, Gas & Consumable Fuels" ),
   ( 151010, "Chemicals" ),
@@ -172,25 +172,25 @@ object GicsIndustry extends RamEntity( tid = "a0O3" ) {
 object LinkedInCategory extends RamEntity( tid = "a0O4" ) {
   override lazy val dbName = "businessCategories"
 
-  "id"     is DbChar(8)   is 'id;
+  "_id"    is DbChar(8)   is 'id;
   "name"   is DbChar(50)  is 'label;
 
   static(
-  ( "id",   "name" ),
-  ( "agr",  "Agriculture" ),
-  ( "art",  "Arts" ),
+  (  "_id", "name" ),
+  (  "agr", "Agriculture" ),
+  (  "art", "Arts" ),
   ( "cons", "Construction" ),
   ( "corp", "Corporate" ),
-  ( "edu",  "Education" ),
-  ( "fin",  "Finance" ),
+  (  "edu", "Education" ),
+  (  "fin", "Finance" ),
   ( "good", "Goods" ),
-  ( "gov",  "Government" ),
+  (  "gov", "Government" ),
   ( "hlth", "Healthcare" ),
-  ( "leg",  "Legal" ),
-  ( "man",  "Manufacturing" ),
-  ( "med",  "Media" ),
-  ( "org",  "Organization" ),
-  ( "rec",  "Recreation" ),
+  (  "leg", "Legal" ),
+  (  "man", "Manufacturing" ),
+  (  "med", "Media" ),
+  (  "org", "Organization" ),
+  (  "rec", "Recreation" ),
   ( "serv", "Services" ),
   ( "tech", "Technology" ),
   ( "tran", "Transportation" ) )
@@ -199,7 +199,7 @@ object LinkedInCategory extends RamEntity( tid = "a0O4" ) {
 object Industry extends RamEntity( tid = "a0O5" ) {
 	override lazy val dbName = "businessCategories"
 
-  "id"             is DbInt              is 'id;
+  "_id"            is DbInt              is 'id;
   "category"       is DbChar(64)         ;
   "name"           is DbChar(64)         is 'label;
   "description"    is DbChar(1024)       ;
@@ -209,7 +209,7 @@ object Industry extends RamEntity( tid = "a0O5" ) {
   def lookupLinkedIn( linkedInIndustryName:String ):Int = {
 
     for ( rec <- records ) {
-      val id = rec.i( 'id )
+      val id = rec.i( '_id )
 
       if ( id >= 200000000 &&
            id <= 299999999 &&
@@ -222,7 +222,7 @@ object Industry extends RamEntity( tid = "a0O5" ) {
   }
 
   static(
-( "id",     "category",        "name",                                           "description" ),
+( "_id",     "category",       "name",                                           "description" ),
 ( 110101010, null,             "Oil & Gas Drilling",                             "Drilling contractors or owners of drilling rigs that contract their services for drilling wells" ),
 ( 110101020, null,             "Oil & Gas Equipment & Services",                 "Manufacturers of equipment, including drilling rigs and equipment, and providers of supplies and services to companies involved in the drilling, evaluation and completion of oil and gas wells." ),
 ( 110102010, null,             "Integrated Oil & Gas",                           "Integrated oil companies engaged in the exploration & production of oil and gas, as well as at least one other significant activity in either refining, marketing and transportation, or chemicals." ),
