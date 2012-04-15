@@ -77,7 +77,7 @@ object Trackur extends MongoEntity( tid = "a0Jt" ) {
 
     for ( tq <- B.trackur.monitoredQueries() ) {
       try {
-        val rslts = ( "http://api.trackur.com/index.php/api/json/" + B.trackur.apiKey + tq.query ).GET().parseJsonArray
+        val rslts = ( "http://api.trackur.com/index.php/api/json/" + B.trackur.apiKey + tq.query ).GET().s.parseJsonArray
         val numRslts = rslts( 0 ).asJsonObject.o_?( 'response ).i( 'totalresults )
 
         val obj = db.findOrMake( Mobj( "query" -> tq.query ) )
@@ -94,6 +94,6 @@ object Trackur extends MongoEntity( tid = "a0Jt" ) {
     }
   }
 
-  def activityFor( query:String ) = ( "http://api.trackur.com/index.php/api/json/" + B.trackur.apiKey + query ).GET().parseJsonArray
+  def activityFor( query:String ) = ( "http://api.trackur.com/index.php/api/json/" + B.trackur.apiKey + query ).GET().s.parseJsonArray
 }
 

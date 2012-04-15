@@ -74,7 +74,7 @@ case class DbReCaptcha( theme:String ) extends Domain {
               "remoteip"   -> ( web.req.getRemoteAddr or "localhost" ),
               "challenge"  -> web.req.s( "recaptcha_challenge_field" ),
               "response"   -> web.req.s( "recaptcha_response_field" )
-            ) ).trim.startsWith( "true" )
+            ) ).s.trim.startsWith( "true" )
 
         if ( passedCaptcha )
           sess.passedCaptcha = true

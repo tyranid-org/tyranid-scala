@@ -39,7 +39,7 @@ object Uri {
 
   def nameForDomain( domain:String ):String =
     try {
-      val s = ( "http://" + domain ).GET().toLowerCase
+      val s = ( "http://" + domain ).GET().s.toLowerCase
 
       var idx = s.indexOf( "<title>" )
 
@@ -85,5 +85,18 @@ object Uri {
 
     sb.toString
   }
+
+  def cite( url:String ):String =
+    try {
+      val s = url.GET()
+
+      ""
+    } catch {
+    case e:java.net.UnknownHostException =>
+      return null
+    case other =>
+      other.printStackTrace()
+      return null
+    }
 }
 

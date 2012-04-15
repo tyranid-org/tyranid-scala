@@ -261,16 +261,36 @@ class TimeParser {
 	/*
 	 * --- Conflicting Duplicate Information detection
 	 */
-	
+
+  private var monthDays = 0
+  private var years     = 0
 	private var dates     = 0
 	private var times     = 0
 	private var timeZones = 0
 
 	private def dateFound( tp:Int ) {
-		if ( dates > 0 )
+		if ( dates > 0 || monthDays > 0 || years > 0 )
 			fail( "duplicate date information was found at \"" + text.substring( tks( tp ).pos ) + "\"." )
 		
 		dates += 1
+	}
+
+	private def monthDayFound( tp:Int ) {
+		if ( dates > 0 || monthDays > 0 )
+			fail( "duplicate date information was found at \"" + text.substring( tks( tp ).pos ) + "\"." )
+	
+    monthDays += 1
+    if ( years > 0 )
+      dates += 1
+	}
+
+	private def yearFound( tp:Int ) {
+		if ( dates > 0 || years > 0 )
+			fail( "duplicate date information was found at \"" + text.substring( tks( tp ).pos ) + "\"." )
+		
+    years += 1
+    if ( monthDays > 0 )
+      dates += 1
 	}
 
 	private def timeFound( tp:Int ) {
@@ -306,7 +326,7 @@ class TimeParser {
 	 * --- Date Parsing
 	 */
 	
-	private def date:Boolean = {
+	private def matchDate:Boolean = {
 		val t = tks( tp )
     
     // ISO 8601 parsing ... i.e. 2008-01-02T02:30Z
@@ -336,7 +356,7 @@ class TimeParser {
         minute = 0
       }
 
-      timeMilli
+      matchTimeMilli
 
       if ( tp < tcount ) {
         if ( tks( tp ).str( "z" ) ) {
@@ -491,18 +511,45 @@ class TimeParser {
 		false
 	}
 	
+	private def matchMonthDay:Boolean = {
+		val t = tks( tp )
+    
+		if ( tp + 1 < tcount && t.t == Type.MONTH && tks( tp+1 ).dayOfMonth ) {
+      month      = tks( tp ).i-1
+      dayOfMonth = tks( tp+1 ).i
+      monthDayFound( tp )
+      tp += 2
+      return true
+		}
+
+		false
+	}
+	
+	private def matchYear:Boolean = {
+		val t = tks( tp )
+    
+		if ( tp < tcount && t.year && t.len == 4 ) {
+      year = tks( tp ).i
+      yearFound( tp )
+      tp += 1
+      return true
+		}
+
+		false
+	}
+	
 	
 	/*
 	 * --- Time Parsing
 	 */
 	
-	private def timeMilli =
+	private def matchTimeMilli =
 		if ( tp+1<tcount && tks(tp).sep( '.' ) && tks(tp+1).milli ) {
 			milli = tks( tp+1 ).i
 			tp += 2
 		}
 	
-	private def ampm {
+	private def matchAmpm {
 		var am:Boolean = false
 		var error:String = null;
 
@@ -537,7 +584,7 @@ class TimeParser {
 		}
 	}
 	
-	private def time:Boolean = {
+	private def matchTime:Boolean = {
 		val t = tks( tp )
 		
 		try {
@@ -554,8 +601,8 @@ class TimeParser {
             timeFound( tp )
             tp += 1
 					
-            timeMilli
-            ampm
+            matchTimeMilli
+            matchAmpm
             return true
           }
         }
@@ -570,7 +617,7 @@ class TimeParser {
             timeFound( tp )
             tp += 1
 					
-            ampm
+            matchAmpm
             return true
           }
         }
@@ -593,11 +640,11 @@ class TimeParser {
 						second = tks( tp+1 ).i
 						tp += 2
 	
-						timeMilli
+						matchTimeMilli
 					}
 				}
 	
-				ampm
+				matchAmpm
 				return true
 			}
 		} catch {
@@ -613,24 +660,37 @@ class TimeParser {
 	 * --- Time Zones
 	 */
 	
-	private def timeZone:Boolean = {
+	private def matchTimeZone:Boolean = {
 	  if ( dateOnly )
 	    return false
 	    
 		val t = tks( tp )
 		
-		try {
-			if ( tp<tcount && tks( tp ).timeZone ) {
+    if ( tp<tcount && tks( tp ).timeZone ) {
+      try {
 				timeZoneFound( tp )
 				tz = TimeZone.getTimeZone( tks( tp ).s )
         tp += 1
 				return true
-			}
-		} catch {
-    case ex:NullPointerException =>
-			fail( "it is a date but time zone information was found: \"" + text.substring( t.pos ) + "\"." )
-		}
-		
+      } catch {
+      case ex:NullPointerException =>
+        fail( "it is a date but time zone information was found: \"" + text.substring( t.pos ) + "\"." )
+      }
+		} else if (   tp + 1 < tcount
+               && ( tks( tp ).sep( '-' ) || tks( tp ).sep( '+' ) )
+               && ( tks( tp+1 ).t == Type.INT && tks( tp+1 ).len == 4 ) ) {
+      val minus = tks( tp ).sep( '-' )
+      var h = tks( tp+1 ).i
+      var m = h % 100; h /= 100
+
+      tp += 2
+
+      tzOffsetMin = h * 60 + m
+      if ( minus ) tzOffsetMin *= -1
+      timeZoneFound( tp )
+      return true
+    }
+
 		false
 	}
 	
@@ -667,8 +727,10 @@ class TimeParser {
 
     userTime = forceUserTime
 		
-		dates = 0
-		times = 0
+		monthDays = 0
+		years     = 0
+		dates     = 0
+		times     = 0
 		timeZones = 0
 
 		dayOfWeek = 0
@@ -682,8 +744,10 @@ class TimeParser {
     var cond = true
 		while ( tp < tcount && cond ) {
 			
-			if (   ( dates == 0 && date )
-				  || ( times == 0 && time ) ) {
+			if (   ( dates     == 0 && matchDate )
+				  || ( times     == 0 && matchTime )
+				  || ( monthDays == 0 && matchMonthDay )
+				  || ( years     == 0 && matchYear ) ) {
 				;
       } else {
 			
@@ -695,9 +759,9 @@ class TimeParser {
           tp = sep( tp )
         } else if ( t.filler ) {
           tp += 1
-        } else if (   ( timeZones == 0 && timeZone )
-                   || date
-				           || time ) {
+        } else if (   ( timeZones == 0 && matchTimeZone )
+                   || matchDate
+				           || matchTime ) {
         } else {
           fail( "\"" + text.substring( t.pos ) + "\" was confusing." )
         }

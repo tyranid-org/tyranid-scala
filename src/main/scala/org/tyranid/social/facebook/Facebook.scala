@@ -167,7 +167,7 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
 
   def linkPreview( user:User ) = {
     val uid = user.s( 'fbid )
-    val profile = "https://graph.facebook.com/me".GET( Map( "access_token" -> user.s( 'fbt ) ) ).parseJsonObject
+    val profile = "https://graph.facebook.com/me".GET( Map( "access_token" -> user.s( 'fbt ) ) ).s.parseJsonObject
 
     Form.text( "First Name", profile.s( 'first_name ) ) ++
     Form.text( "Last Name", profile.s( 'last_name ) ) ++
@@ -212,7 +212,7 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     // 2.  exchange client-side code for a short-lived server-side token
 
     val shortLivedAccessToken = 
-      "https://graph.facebook.com/oauth/access_token".POST( Map( "client_id" -> apiKey, "client_secret" -> secret, "redirect_uri" -> "", "code" -> code ) ).
+      "https://graph.facebook.com/oauth/access_token".POST( Map( "client_id" -> apiKey, "client_secret" -> secret, "redirect_uri" -> "", "code" -> code ) ).s.
       split( "&" ).map( _.splitFirst( '=' ) ).
       find( _._1 == "access_token" ).get._2
 
@@ -220,7 +220,7 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     // 3.  exchange short-lived server-side token for a long-term server-side access token
 
     val params =
-      "https://graph.facebook.com/oauth/access_token".POST( Map( "client_id" -> apiKey, "client_secret" -> secret, "grant_type" -> "fb_exchange_token", "fb_exchange_token" -> shortLivedAccessToken ) ).
+      "https://graph.facebook.com/oauth/access_token".POST( Map( "client_id" -> apiKey, "client_secret" -> secret, "grant_type" -> "fb_exchange_token", "fb_exchange_token" -> shortLivedAccessToken ) ).s.
       split( "&" ).map( _.splitFirst( '=' ) )
 
     params.find( _._1 == "access_token" ).map( _._2 ) match {
@@ -248,7 +248,7 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
    */
 
   def importUser( user:User, uid:String ) = {
-    val profile = "https://graph.facebook.com/me".GET( Map( "access_token" -> user.s( 'fbt ) ) ).parseJsonObject
+    val profile = "https://graph.facebook.com/me".GET( Map( "access_token" -> user.s( 'fbt ) ) ).s.parseJsonObject
 
     user( 'firstName ) = profile.s( 'first_name )
     user( 'lastName )  = profile.s( 'last_name )

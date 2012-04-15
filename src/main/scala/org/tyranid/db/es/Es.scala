@@ -91,7 +91,7 @@ case class IndexMsg( index:String, typ:String, id:String, json:String )
  */
 object Es {
 
-  def search( text:String ) = "http://localhost:9200/_search".GET( Map( "q" -> text ) )
+  def search( text:String ) = "http://localhost:9200/_search".GET( Map( "q" -> text ) ).s
 
 
   def jsonFor( rec:Record ) = {

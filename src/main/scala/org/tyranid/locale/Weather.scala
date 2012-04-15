@@ -159,7 +159,7 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
     try {
       val setId = scala.util.Random.nextInt
 
-      str = "http://alerts.weather.gov/cap/us.php?x=0".GET()
+      str = "http://alerts.weather.gov/cap/us.php?x=0".GET().s
       for ( entryXml <- str.toXml \ "entry" ) {
   
         var entry = db.findOne( Mobj( "_id" -> idFromEntry( entryXml ) ) )

@@ -17,6 +17,7 @@
 
 package org.tyranid.http
 
+import java.net.URL
 import java.util.Date
 
 import scala.collection.JavaConversions._
@@ -28,14 +29,16 @@ import javax.servlet.http.{ Cookie, HttpServlet, HttpServletRequest, HttpServlet
 
 import org.bson.types.ObjectId
 
-import org.apache.http.{ Header, NameValuePair, HttpResponse }
-import org.apache.http.client.methods.{ HttpRequestBase, HttpDelete, HttpGet, HttpPost }
-import org.apache.http.entity.StringEntity
+import org.apache.http.{ Header, NameValuePair, HttpHost, HttpResponse }
 import org.apache.http.client.entity.UrlEncodedFormEntity
+import org.apache.http.client.methods.{ HttpRequestBase, HttpDelete, HttpGet, HttpPost, HttpUriRequest }
+import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.message.{ BasicHeader, BasicNameValuePair }
 import org.apache.http.params.{ BasicHttpParams, HttpConnectionParams }
+import org.apache.http.protocol.{ ExecutionContext, HttpContext, BasicHttpContext }
 import org.apache.http.util.EntityUtils
+
 
 import org.tyranid.Imp._
 
@@ -214,6 +217,25 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
 }
 
 
+// named HttpResult instead of HttpResponse to not conflict with Apache, can't simply pimp HttpResponse since we need the HttpContext as well
+case class HttpResult( response:HttpResponse, context:HttpContext ) {
+
+  def s = {
+    val entity = response.getEntity
+    entity != null |* EntityUtils.toString( entity )
+  }
+
+  override def toString = s
+
+  // This is the final, actual URL, after redirects have been processed
+  def url = {
+    val currentReq  = context.getAttribute( ExecutionContext.HTTP_REQUEST ).as[HttpUriRequest]
+    val currentHost = context.getAttribute( ExecutionContext.HTTP_TARGET_HOST ).as[HttpHost]
+
+    if ( currentReq.getURI.isAbsolute ) currentReq.getURI.toURL
+    else                                new URL( currentHost.toURI + currentReq.getURI )
+  }
+}
 
 object Http {
 
@@ -263,28 +285,27 @@ object Http {
     HttpConnectionParams.setConnectionTimeout( httpParams, 30000 ) // 30s
     HttpConnectionParams.setSoTimeout( httpParams, 30000 ) // 30s
     val client = new DefaultHttpClient( httpParams )
-    val response = client.execute( request )
-    val entity = response.getEntity
-
-    val str = entity != null |* EntityUtils.toString( entity )
+    val context = new BasicHttpContext() 
+    val response = client.execute( request, context )
 
     response.getStatusLine.getStatusCode match {
     case 403 => throw new Http403Exception( response )
-    case _   => str
+    case _   => HttpResult( response, context )
     }
   }
 
   private def convertHeaders( headers:collection.Map[String,String] ) =
     headers.toSeq.map( p => new BasicHeader( p._1, p._2 ) ).toArray[Header]
 
-  def GET( url:String, query:collection.Map[String,String] = null, headers:collection.Map[String,String] = null ) = {
+  def GET( url:String, query:collection.Map[String,String] = null, headers:collection.Map[String,String] = null ):HttpResult = {
     val get = new HttpGet( makeUrl( url, query ) )
     if ( headers != null )
       get.setHeaders( convertHeaders( headers ) )
+
     execute( get )
   }
 
-  def POST( url:String, content:String, form:collection.Map[String,String], contentType:String = null, headers:collection.Map[String,String] = null ) = {
+  def POST( url:String, content:String, form:collection.Map[String,String], contentType:String = null, headers:collection.Map[String,String] = null ):HttpResult = {
     val request = new HttpPost( url )
 
     if ( headers != null )
@@ -309,7 +330,7 @@ object Http {
     execute( request )
   }
 
-  def DELETE( url:String, query:collection.Map[String,String] = null ) =
+  def DELETE( url:String, query:collection.Map[String,String] = null ):HttpResult =
     execute( new HttpDelete( makeUrl( url, query ) ) )
 
 }

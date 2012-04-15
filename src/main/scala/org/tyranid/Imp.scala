@@ -35,7 +35,7 @@ object Imp {
   def T = org.tyranid.session.ThreadData()
   def B = org.tyranid.boot.Boot.instance
 
-
+  // extensions
 	implicit def anyImp[ T <: Any ]( v:T )                          = new org.tyranid.any.AnyImp[T]( v )
 	implicit def anyRefImp[ T <: AnyRef ]( v:T )                    = new org.tyranid.any.AnyRefImp[T]( v )
 	implicit def boolean( v:Boolean )                               = new org.tyranid.logic.BooleanImp( v )

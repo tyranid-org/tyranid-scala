@@ -17,7 +17,7 @@
 
 package org.tyranid.image
 
-import java.io.IOException
+import java.io.{ FileNotFoundException, IOException }
 import java.net.URL
 
 import scala.collection.mutable
@@ -66,7 +66,7 @@ object Image {
       url,
       queryDimensions( url ) match {
       case Some( ( width, height ) ) => Image( url, Some( width ), Some( height ) )
-      case None                      => Image( url )
+      case None                      => new Image( url )
       } )
   }
 
@@ -129,8 +129,11 @@ object Image {
 
 		  println( "dimensions test failed for " + url.getPath )
 		} catch {
-			case e:IOException =>
-				e.log
+		case e:FileNotFoundException =>
+      println( "Http.getDimensions ... 404 on " + url.toString )
+
+		case e:IOException =>
+			e.printStackTrace
 
 		} finally {
 			if ( iis != null )
@@ -139,10 +142,50 @@ object Image {
 
 		None
 	}
+
+  def bestForPage( pageUrl:URL, pageHtml:String ):Image = {
+    def analyze( names:Seq[String] ) = names.distinct.map( url => apply( new URL( pageUrl, url ) ) ).filter( img => img != null && img.pixels > 0 )
+
+    val html = pageHtml.parseHtml
+    val ogImages = analyze( html.ogImages )
+    if ( ogImages.size > 0 )
+      return ogImages( 0 )
+
+    if ( true ) return null
+
+    val images = analyze( html.images )
+
+    if ( images.size > 0 )
+      images.maxBy( _.portraitRank )
+    else
+      null
+  }
 }
 
 case class Image( url:URL, width:Option[Int] = None, height:Option[Int] = None ) {
 
+  def pixels = width.getOrElse( 0 ) * height.getOrElse( 0 )
 
+  def portraitRank = {
+    val h = height.get
+    val w = width.get
+
+    val ratio = w.toDouble / h.toDouble
+    val pixels = h * w
+    val idealPixels = 720*480
+
+    var sizeMult = pixels.toDouble / idealPixels.toDouble
+
+    if ( sizeMult > 1 )
+      sizeMult = 1 / sizeMult
+
+    val ratioMult = ( 3 - Math.abs( ratio - 1.77 ) )
+
+    val overall = ratioMult * sizeMult
+
+spam( "IMG " + w + "x" + h + " rm:" + ratioMult + " sm:" + sizeMult + " ov:" + overall )
+
+    overall
+  }
 }
 

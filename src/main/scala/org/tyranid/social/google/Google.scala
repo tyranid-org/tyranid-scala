@@ -65,7 +65,7 @@ case class GoApp( simpleKey:String ) { // extends SoApp {
 
   def geocode( address:String ):LatLong = {
 
-    val str = "https://maps.googleapis.com/maps/api/geocode/json".GET( Map( "address" -> address, "sensor" -> "false" ) )
+    val str = "https://maps.googleapis.com/maps/api/geocode/json".GET( Map( "address" -> address, "sensor" -> "false" ) ).s
     val obj = str.parseJsonObject
 
     if ( obj.s( 'status ) == "OK" ) {

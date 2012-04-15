@@ -149,7 +149,7 @@ function onLinkedInLoad() {
 
   def linkPreview( user:User ) = {
     val uid = user.s( 'liid )
-    val profile = B.linkedIn.GET( "/people/id=" + uid + ":(id,first-name,last-name,picture-url)", user ).parseJsonObject
+    val profile = B.linkedIn.GET( "/people/id=" + uid + ":(id,first-name,last-name,picture-url)", user ).s.parseJsonObject
 
     { Form.text( "First Name", profile.s( 'firstName ) ) } ++
     { Form.text( "Last Name", profile.s( 'lastName ) ) } ++
@@ -197,7 +197,7 @@ function onLinkedInLoad() {
 
     oauth.sign( "POST", exchangeUrl, params )
 
-    val str = exchangeUrl.POST( content = OAuth.encParams( params ), contentType = "application/x-www-form-urlencoded" )
+    val str = exchangeUrl.POST( content = OAuth.encParams( params ), contentType = "application/x-www-form-urlencoded" ).s
 
     val session = Session()
     val user = session.user
@@ -228,7 +228,7 @@ function onLinkedInLoad() {
    */
 
   def importUser( user:User, uid:String ) = {
-    val profile = GET( "/people/id=" + uid + ":(id,first-name,last-name,picture-url,headline,location:(country:(code)))", user ).parseJsonObject
+    val profile = GET( "/people/id=" + uid + ":(id,first-name,last-name,picture-url,headline,location:(country:(code)))", user ).s.parseJsonObject
 
     user( 'firstName ) = profile( 'firstName )
     user( 'lastName )  = profile( 'lastName )
@@ -253,7 +253,7 @@ function onLinkedInLoad() {
     "founded-year,locations:(is-headquarters,description,address:(street1,street2,city,state,postal-code,country-code,region-code),contact-info))"
 
   def companiesById( user:User, ids:String* ):Seq[ObjectMap] =
-    GET( "/companies::(" + ids.mkString( "," ) + "):" + companyFields, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
+    GET( "/companies::(" + ids.mkString( "," ) + "):" + companyFields, user ).s.parseJsonObject.a_?( 'values ).of[ObjectMap]
 
   def loadCompanies( user:User, domain:String = null, positions:Boolean = false, multi:Boolean = false, bestMatch:Boolean = false ):Seq[ObjectMap] = {
     val domainPart = domain != null |* Uri.domainPart( domain ).toLowerCase
@@ -263,7 +263,7 @@ function onLinkedInLoad() {
     val strictMatch = true
 
     if ( domain.notBlank ) {
-      companies ++= GET( "/companies:" + companyFields + "?email-domain=" + domain.encUrl, user ).parseJsonObject.a_?( 'values ).of[ObjectMap]
+      companies ++= GET( "/companies:" + companyFields + "?email-domain=" + domain.encUrl, user ).s.parseJsonObject.a_?( 'values ).of[ObjectMap]
       if ( companies.size > 0 )
         found = true
     }
@@ -276,7 +276,7 @@ function onLinkedInLoad() {
     }
 
     if ( positions && ( multi || companies.size == 0 ) ) {
-      val ids = GET( "/people/~:(positions:(company:(id)))", user ).parseJsonObject.o( 'positions ).a_?( 'values ).of[ObjectMap].map( _.o_?( 'company ).s( 'id ) ).
+      val ids = GET( "/people/~:(positions:(company:(id)))", user ).s.parseJsonObject.o( 'positions ).a_?( 'values ).of[ObjectMap].map( _.o_?( 'company ).s( 'id ) ).
         filter( id => id.notBlank && !companies.exists( _.s( 'id ) == id ) )
 
       if ( ids.nonEmpty )
@@ -288,11 +288,11 @@ function onLinkedInLoad() {
     if ( domain.notBlank && ( companies.size == 0 || !domainPartPresent ) ) {
       var terms = Uri.nameForDomain( domain )
       if ( terms.notBlank )
-        companies ++= GET( "/company-search:(companies:" + companyFields + ")?keywords=" + terms.encUrl, user ).parseJsonObject.o_?( 'companies ).a_?( 'values ).of[ObjectMap]
+        companies ++= GET( "/company-search:(companies:" + companyFields + ")?keywords=" + terms.encUrl, user ).s.parseJsonObject.o_?( 'companies ).a_?( 'values ).of[ObjectMap]
 
       if ( companies.size == 0 || !domainPartPresent ) {
         terms = domainPart.toLowerCase
-        companies ++= GET( "/company-search:(companies:" + companyFields + ")?keywords=" + domain.encUrl, user ).parseJsonObject.o_?( 'companies ).a_?( 'values ).of[ObjectMap]
+        companies ++= GET( "/company-search:(companies:" + companyFields + ")?keywords=" + domain.encUrl, user ).s.parseJsonObject.o_?( 'companies ).a_?( 'values ).of[ObjectMap]
       }
 
       // An additional/alternative approach would be to split up the word into its component strings ... i.e. "mygreatdomain" becomes "my great domain"
@@ -495,7 +495,7 @@ object LinkedInlet extends Weblet {
 
     case "/useThumbnail" =>
       val uid = u.s( 'liid )
-      val profile = B.linkedIn.GET( "/people/id=" + uid + ":(id,picture-url)", u ).parseJsonObject
+      val profile = B.linkedIn.GET( "/people/id=" + uid + ":(id,picture-url)", u ).s.parseJsonObject
       
       if ( profile.contains( 'pictureUrl ) ) {
         u( 'thumbnail ) = profile.s( 'pictureUrl )
