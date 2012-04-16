@@ -23,7 +23,7 @@ import javax.crypto.spec.SecretKeySpec
 import scala.collection.mutable
 
 import org.tyranid.Imp._
-import org.tyranid.http.Http
+import org.tyranid.http.{ Http, HttpResult }
 import org.tyranid.math.Base64
 
 
@@ -182,7 +182,7 @@ case class OAuth( key:String, secret:String ) extends Grant {
                url:String,
                params:mutable.Map[String,String],
                headers:collection.Map[String,String],
-               token:Token ) = {
+               token:Token ):HttpResult = {
     var eParams =
       if ( params != null ) params
       else                  mutable.Map[String,String]()

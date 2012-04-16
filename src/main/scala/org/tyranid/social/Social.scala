@@ -34,7 +34,7 @@ object Social {
   lazy val networks =
     Seq(
       B.linkedIn != null |* Some( B.linkedIn ),
-      B.facebook != null |* Some( B.facebook )
+      B.facebook != null |* Some( B.facebook )//,
       //B.twitter  != null |* Some( B.twitter )
     ).flatten
 
