@@ -66,7 +66,46 @@ case class Sort( name:String, label:String, fields:(String,Int)* ) {
  * * *   G r o u p
  */
 
-case class Grouping( entity:MongoEntity, foreignKey:String, listKey:String, forKey:String, forValue: () => AnyRef ) {
+/*
+
+    Grouping
+      .entity = OrgGroup
+      .listKey = ids
+      .forKey = org
+      .forValue = current user's org
+
+      .foreignKey = _id
+      .addKeys = [
+        GroupingAddByKey( "Name", "legalName" ),
+        GroupingAddByKey( "MC", "icc1", "icc2", "icc3" ),
+        GroupingAddByKey( "US DOT", "usdot" ),
+        GroupingAddByKey( "D&B Number", "dbNum" )
+      ]
+
+
+      +. add to group dialog
+
+         +. by name
+         +. by list
+
+      +. display codes in table
+
+      +. implement remove links
+
+      +. implement delete button
+         
+      +. monitored vs. connection group
+
+      +. add a new group
+
+      +. rename a group
+
+ */
+
+case class GroupingAddByKey( label:String, keys:String* )
+
+case class Grouping( entity:MongoEntity, foreignKey:String, listKey:String, forKey:String, forValue: () => AnyRef,
+                     addKeys:Seq[GroupingAddByKey] = Nil ) {
 
   lazy val searchNameKey = Search.Group.makeSearchName( foreignKey )
 
@@ -93,62 +132,47 @@ case class Grouping( entity:MongoEntity, foreignKey:String, listKey:String, forK
     </div>
 
   def drawGroup( group:DBObject ) = {
-   <div class="title">{ group.s( 'name ) }</div>
-   <table class="dtable">
-    <thead>
-     <tr>
-      <th>Name</th><th>TODO: Code</th><th/>
-     </tr>
-    </thead>
-    { /*
-          groups:
 
-          1)  figure out layout, no more incremental design
-
-          2)  requirements
-
-              adding:
-
-              a.  import a list
-              b.  type in a name
-
-              display:
-
-              a.  codes
-
-              deleting:
-
-              a.  add a remove link to the table
-
-       */
-      for ( elo <- listEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) );
-            el = listEntity( elo ) ) yield
-        <tr>
-         <td>{ el.label }</td>
-         <td></td>
-         <td><a href="#">remove</a></td>
-        </tr>
-    }
-   </table>
+    <div id="rGrpEdit">
+     <div class="title">{ ( group != null ) ? group.s( 'name ) | "None selected" }</div>
+     { group != null |* <table class="dtable">
+      <thead>
+       <tr>
+        <th>Name</th><th>TODO: Code</th><th/>
+       </tr>
+      </thead>
+      { for ( elo <- listEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) );
+              el = listEntity( elo ) ) yield
+          <tr>
+           <td>{ el.label }</td>
+           <td></td>
+           <td><a href="#">remove</a></td>
+          </tr>
+      }
+     </table> }
+    </div>
+    <div class="add">
+     { group != null |*
+     <label for="addBy">Add By:</label>
+     <select id="addBy">
+      <option value="1">One</option>
+      <option value="2">Two</option>
+     </select> } 
+    </div>
+    <div class="btns">
+     { group != null |* <button class="redBtn" style="float:left;">Delete</button> }
+     <button onclick="$('#rGrpDlg').dialog('close'); return false;" class="greyBtn" style="float:right;">Done</button>
+    </div>
   }
 
   def dialogContents( report:Report ) = {
     <div id="rGrpSel">
      <ul class="noSelect">
-      <li>All</li>
       { report.groups.map( g => <li class="noSelect" id={ g.s( '_id ) }>{ g.s( 'name ) }</li> ) }
      </ul>
     </div>
     <div id="rGrpMain">
-     <div id="rGrpEdit"/>
-     <div class="add">
-      add here
-     </div>
-     <div class="btns">
-      <button class="redBtn" style="float:left;">Delete</button>
-      <button id="rGroupSave" class="greenBtn" style="float:right;">Save Changes</button>
-      <button onclick="$('#rGrpDlg').dialog('close'); return false;" class="greyBtn" style="float:right;">Cancel</button>
-     </div>
+     { drawGroup( null ) }
     </div>
   }
 
