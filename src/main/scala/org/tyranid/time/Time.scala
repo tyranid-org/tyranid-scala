@@ -114,8 +114,8 @@ class CalendarImp( c:Calendar ) {
 
 class DateImp( d:Date ) {
 
-  def toCalendar( tz:TimeZone ) = {
-    val c = Calendar.getInstance( tz )
+  def toCalendar( tz:TimeZone = null ) = {
+    val c = ( tz == null ) ? Calendar.getInstance | Calendar.getInstance( tz )
     c.setTime( d )
     c
   }
@@ -157,6 +157,15 @@ class DateImp( d:Date ) {
   def toRfc1123 =
     if ( d == null ) null
     else             Time.Rfc1123Format.format( d )
+    
+  def daysUntil( other:Date ) = {
+    val otherCal = other.toCalendar()
+    val myCal = d.toCalendar()
+      
+    val endL = otherCal.getTimeInMillis + otherCal.getTimeZone.getOffset( otherCal.getTimeInMillis ) 
+    val startL = myCal.getTimeInMillis + myCal.getTimeZone.getOffset( myCal.getTimeInMillis )
+    ( ( endL - startL ) / Time.OneDayMs ).toInt      
+  }
 }
 
 object Time {
