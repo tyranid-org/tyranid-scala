@@ -41,6 +41,8 @@ case class WebRedirectException( redirect:String ) extends ControlThrowable
  */
 case class WebIgnoreException()                     extends ControlThrowable
 
+case class WebHandledException()                    extends ControlThrowable
+
 /*
  * Throw this when you want to trigger a 404, and not pass the handling on to another weblet.
  */
@@ -115,14 +117,15 @@ spam( "filter entered, path=" + web.path )
 
     def handle( webloc:Webloc ):Boolean = {
 
-      for ( cwebloc <- webloc.children;
-            if web.matches( cwebloc.weblet.wpath ) && cwebloc.weblet.matches( web ) )
+      for ( cwebloc <- webloc.children if web.matches( cwebloc.weblet.wpath ) && cwebloc.weblet.matches( web ) )
         if ( handle( cwebloc ) )
           return true
 
       try {
         webloc.weblet.handle( web )
       } catch {
+      case he:WebHandledException =>
+        return true
       case ie:WebIgnoreException =>
         return false
       case re:WebRedirectException =>
