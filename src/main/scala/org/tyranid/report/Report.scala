@@ -75,22 +75,17 @@ case class Sort( name:String, label:String, fields:(String,Int)* ) {
       .forValue = current user's org
 
       .foreignKey = _id
-      .addKeys = [
-        GroupingAddByKey( "Name", "legalName" ),
-        GroupingAddByKey( "MC", "icc1", "icc2", "icc3" ),
-        GroupingAddByKey( "US DOT", "usdot" ),
-        GroupingAddByKey( "D&B Number", "dbNum" )
+      .addbys = [
+        GroupingAddBy( "Name", "legalName" ),
+        GroupingAddBy( "MC", "icc1", "icc2", "icc3" ),
+        GroupingAddBy( "US DOT", "usdot" ),
+        GroupingAddBy( "D&B Number", "dbNum" )
       ]
 
 
-      +. add to group dialog
-
-         +. by name
-         +. by list
+      +. lazily create Orgs when referenced in ExtendedProfile
 
       +. display codes in table
-
-      +. implement remove links
 
       +. implement delete button
          
@@ -102,17 +97,24 @@ case class Sort( name:String, label:String, fields:(String,Int)* ) {
 
  */
 
-case class GroupingAddByKey( label:String, keys:String* )
+case class GroupingAddBy( label:String, keys:String* ) {
 
-case class Grouping( entity:MongoEntity, foreignKey:String, listKey:String, forKey:String, forValue: () => AnyRef,
-                     addKeys:Seq[GroupingAddByKey] = Nil ) {
+  val id = label.toIdentifier
+}
+
+case class Grouping( ofEntity:MongoEntity,
+                     groupEntity:MongoEntity, foreignKey:String, listKey:String, forKey:String, forValue: () => AnyRef,
+                     addBys:Seq[GroupingAddBy] = Nil ) {
 
   lazy val searchNameKey = Search.Group.makeSearchName( foreignKey )
 
-  lazy val listEntity = entity.attrib( listKey ).domain.as[DbArray].of.as[DbLink].toEntity.as[MongoEntity]
+  def queryGroups = groupEntity.db.find( Mobj( forKey -> forValue() ) ).toSeq
 
-  def list = entity.db.find( Mobj( forKey -> forValue() ) ).toSeq
-  def byId( id:Any ) = entity.db.findOne( Mobj( "_id" -> id, forKey -> forValue() ) )
+  def byId( report:Report, id:Any ) = report.groups.find( _.id == id ).get
+
+  def selectedGroupId( report:Report ) = groupEntity.tidToId( selectedGroupTid( report ) )
+  def selectedGroupTid( report:Report ) = report.searchRec.s( searchNameKey )
+  def selectedGroup( report:Report ) = report.groups.find( g => groupEntity( g ).tid == selectedGroupTid( report ) ).getOrElse( null )
 
   def drawFilter( run:Run ) =
     <table class="tile" style="width:140px; height:54px;">
@@ -121,43 +123,61 @@ case class Grouping( entity:MongoEntity, foreignKey:String, listKey:String, forK
      </tr>
      <tr>
       <td>{ 
-        Select( "rGroups", run.report.searchRec.s( searchNameKey ), ( "" -> "All" ) +: run.report.groups.map( g => g.s( 'name ) -> g.s( 'name ) ), "style" -> "width:120px; max-width:120px;" )
+        Select( "rGroups", run.report.searchRec.s( searchNameKey ), ( "" -> "All" ) +: run.report.groups.map( g => groupEntity( g ).tid -> g.s( 'name ) ), "style" -> "width:120px; max-width:120px;" )
       }</td>
      </tr>
     </table>
 
   def draw( report:Report ) =
     <div id="rGrpDlg" style="padding:0; display:none;">
-    { dialogContents( report ) }
+    { drawPanel( report ) }
     </div>
 
-  def drawGroup( group:DBObject ) = {
+  def drawPanel( report:Report ) = {
+    <div id="rGrpSel">
+     <ul class="noSelect">
+      { report.groups.map( g => <li class="noSelect" id={ g.s( '_id ) }>{ g.s( 'name ) }</li> ) }
+     </ul>
+    </div>
+    <div id="rGrpMain">
+     { drawGroup( report ) }
+    </div>
+  }
+
+  def drawGroup( report:Report ) = {
+    val group = selectedGroup( report )
 
     <div id="rGrpEdit">
      <div class="title">{ ( group != null ) ? group.s( 'name ) | "None selected" }</div>
-     { group != null |* <table class="dtable">
-      <thead>
-       <tr>
-        <th>Name</th><th>TODO: Code</th><th/>
-       </tr>
-      </thead>
-      { for ( elo <- listEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) );
-              el = listEntity( elo ) ) yield
-          <tr>
-           <td>{ el.label }</td>
-           <td></td>
-           <td><a href="#">remove</a></td>
-          </tr>
-      }
-     </table> }
+     { group != null |*
+     <div class="list">
+      <table class="dtable">
+       <thead>
+        <tr>
+         <th>Name</th><th>TODO: Code</th><th/>
+        </tr>
+       </thead>
+       { for ( elo <- ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) );
+               el = ofEntity( elo ) ) yield
+           <tr id={ el.tid }>
+            <td>{ el.label }</td>
+            <td></td>
+            <td><a href="#">remove</a></td>
+           </tr>
+       }
+      </table>
+     </div> }
     </div>
     <div class="add">
      { group != null |*
-     <label for="addBy">Add By:</label>
-     <select id="addBy">
-      <option value="1">One</option>
-      <option value="2">Two</option>
-     </select> } 
+     <form method="post" id="rGrpAddForm">
+      <div class="title">Add { ofEntity.label.plural }</div>
+      <label for="rGrpAddBy">By:</label>
+      { Select( "rGrpAddBy", report.groupAddBy != null |* report.groupAddBy.id, ( "" -> "Select" ) +: addBys.map( ab => ( ab.id, ab.label ) ) ) }
+      <div id="rGrpAddBox">
+       { drawAddBy( report ) }
+      </div>
+     </form> }
     </div>
     <div class="btns">
      { group != null |* <button class="redBtn" style="float:left;">Delete</button> }
@@ -165,15 +185,21 @@ case class Grouping( entity:MongoEntity, foreignKey:String, listKey:String, forK
     </div>
   }
 
-  def dialogContents( report:Report ) = {
-    <div id="rGrpSel">
-     <ul class="noSelect">
-      { report.groups.map( g => <li class="noSelect" id={ g.s( '_id ) }>{ g.s( 'name ) }</li> ) }
-     </ul>
-    </div>
-    <div id="rGrpMain">
-     { drawGroup( null ) }
-    </div>
+  def drawAddBy( report:Report  ) = {
+    val addBy = report.groupAddBy
+
+    addBy != null |* {
+    <div class="stitle">Enter { ofEntity.label } { addBy.label.plural } To Add</div> ++
+    { addBy.label match {
+    case "Name" => // TODO:  should match on something better
+      <ul id="rGrpAddName"></ul>
+
+    case ab =>
+      <div class="note">(separate multiple entries with commas)</div>
+      <textarea id="rGrpAddByInput" name="rGrpAddByInput" style="height:292px; width:322px;"/>
+    } } ++
+    <div class="btns"><a id="rGrpAddImport" class="greenBtn">Add</a></div>
+    }
   }
 
   def handle( weblet:Weblet, report:Report ):Boolean = {
@@ -182,16 +208,85 @@ case class Grouping( entity:MongoEntity, foreignKey:String, listKey:String, forK
 
     weblet.rpath match {
     case "/groups" =>
-      report.searchRec( searchNameKey ) = web.req.s( 'gn )
+      spam( "gn=" + web.s( 'gn ) )
+      report.searchRec( searchNameKey ) = web.s( 'gn )
       web.res.html( report.innerDraw )
 
     case "/group" =>
       report.resetGroups
+      web.res.html( drawPanel( report ) )
 
-      web.res.html( dialogContents( report ) )
+    case "/group/addBy" =>
+      val id = web.s( 'v )
+      report.groupAddBy = null
+      report.query.grouping.addBys.find( _.id == id ).foreach { report.groupAddBy = _ }
+      web.res.html( drawAddBy( report ) )
+
+    case "/group/add" =>
+      val ab = report.groupAddBy
+      if ( ab != null ) {
+
+        val ids:Seq[Any] =
+          ab.label match {
+          case "Name" => // TODO:  should match on something better
+            web.a_?( 'addTids ).map( ofEntity.tidToId )
+
+          case _ =>
+            val keyAtts = ab.keys.map( ofEntity.attrib )
+
+            val altIds = web.s( 'rGrpAddByInput ).split( "," ).map( _.trim )
+
+            val keys = keyAtts map { att =>
+              // TODO:  use att.domain to convert these strings to ints or whatever else is needed based on the domain
+              val nativeAltIds = altIds
+
+              Mobj( att.name -> (
+                if ( nativeAltIds.size == 1 )
+                  nativeAltIds( 0 )
+                else
+                  Mobj( $in -> Mlist( nativeAltIds:_* ) )
+              ) )
+            }
+
+            val where =
+              if ( keys.size == 1 ) keys( 0 )
+              else                  Mobj( $or -> Mlist( keys:_* ) )
+
+            ofEntity.db.find( where, Mobj( "_id" -> 1 ) ).map( _( '_id ) ).toSeq
+          }
+
+        val group = selectedGroup( report )
+        group( listKey ) = Mlist( ( group.a_?( listKey ) ++ ids ).distinct:_* )
+        groupEntity.db.save( group )
+      }
+
+      web.res.html( drawGroup( report ) )
+
+    case "/group/remove" =>
+      groupEntity.db.update( Mobj( "_id" -> selectedGroupId( report ) ), Mobj( $pull -> Mobj( listKey -> ofEntity.tidToId( web.s( 'id ) ) ) ) )
+      web.res.html( drawGroup( report ) )
 
     case "/group/select" =>
-      web.res.html( drawGroup( byId( web.req.oid( 'id ) ) ) )
+      report.searchRec( searchNameKey ) = web.oid( 'id )
+      web.res.html( drawGroup( report ) )
+
+    case "/group/addSearch" =>
+      val terms = web.s( 'term )
+
+      val labelKey = ofEntity.labelAtt.get.name
+      val regex = terms.toLowerCase.tokenize.map { term => Mobj( labelKey -> Mobj( $regex -> term, $options -> "i" ) ) }
+      val where =
+        if ( regex.size == 1 ) regex( 0 )
+        else                   Mobj( $and -> Mlist( regex:_* ) )
+
+      val json =
+        ofEntity.db.find( where, Mobj( labelKey -> 1 ) ).
+          limit( 16 ).
+          toSeq.
+          map( o => Map( "id"        -> ofEntity( o ).tid,
+                         "label"     -> o.s( labelKey ) ) )
+
+      web.res.json( json )
 
     case _ =>
       return false
@@ -508,16 +603,16 @@ case class Report( query:Query ) {
 
   private var latestGroups:Seq[DBObject] = null
 
+  @volatile var groupAddBy:GroupingAddBy = null
+
   def resetGroups { latestGroups = null }
   def groups = {
     if ( latestGroups == null )
-      latestGroups = query.grouping.list.toSeq
+      latestGroups = query.grouping.queryGroups.toSeq
 
     latestGroups
   }
   def groupsFor( id:AnyRef ) = groups.filter( _.a_?( 'ids ).contains( id ) ).map( _.s( 'name ) ).mkString( ", " )
-
-  def groupFilterObj = groups.find( _.s( 'name ) == searchRec.s( query.grouping.searchNameKey ) )
 
 
   /*
@@ -604,6 +699,7 @@ case class Report( query:Query ) {
   def draw =
     <head>
      <script src={ B.buildPrefix + "/js/report.js" } type="text/javascript"/>
+     { query.grouping != null |* <script src={ B.buildPrefix + "/js/tag.js" } charset="utf-8"></script> }
      <script>{ Unparsed( "window.reportObj = { qn:'" + query.name + "', id:'" + id + "' };" ) }</script>
     </head> ++
     { query.grouping != null |* query.grouping.draw( this ) } ++

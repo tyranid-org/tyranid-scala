@@ -75,6 +75,10 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
     case null => req.getParameterValues( param )
     case arr  => arr
     }
+  def a_?( param:String ):Seq[String] = {
+    val arr = a( param )
+    if ( arr != null ) arr else Nil
+  }
 
   def sReq( param:String ) = {
     val s = req.getParameter( param )

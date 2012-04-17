@@ -136,12 +136,11 @@ object Search {
     val name = "grp"
 
     def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) = {
-      run.report.groupFilterObj foreach { gf =>
-        val fk = run.report.query.grouping.foreignKey
-        searchObj(
-          // terrible hack
-          if ( fk == "id" ) "_id" else ""
-        ) = Mobj( $in -> gf.a_?( 'ids ) )
+      val grouping = run.report.query.grouping
+      val group = grouping.selectedGroup( run.report )
+      if ( group != null ) {
+        val fk = grouping.foreignKey
+        searchObj( fk ) = Mobj( $in -> group.a_?( 'ids ) )
       }
     }
 

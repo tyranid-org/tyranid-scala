@@ -124,32 +124,6 @@ class StringImp( s:String ) {
 
   def toUrl = new java.net.URL( Uri.completeUri( s ) )
 
-  def toPhoneMask:String = {
-    var offset = s.length match {
-                          case 10 => 0
-                          case 11 => 1
-                          case _ => -1
-                 }
-    
-    if ( offset == -1 )
-      return null
-      
-    return "(" + s.slice( offset,3+offset ) + ") " + s.slice( 3+offset, 6+offset ) + "-" + s.slice( 6+offset, 10+offset ) 
-  }
-
-  def toOnlyNumbers:String = {
-    if ( s == null )
-      return null
-     
-    val sb = new StringBuilder
-    
-    for ( i <- 0 until s.length )
-      if ( s( i ).isDigit )
-        sb ++= s( i ).toString
-    
-    return sb.toString
-  }
-  
   def toHtmlPreserveWhitespace:NodeSeq =
     s.replace( "\n \n", "\n\n" ).split( "\n\n" ).map( para => <p>{ Unparsed( para.replace( "\r\n", "<br/>" ).replace( "\n", "<br/>" ).replace( "\r", "<br/>" ) ) }</p> ).toSeq
 
@@ -227,17 +201,16 @@ class StringImp( s:String ) {
    */
   def |*( v: ( String ) => String ):String = v( s )
 
-	def toXml = scala.xml.XML.loadString( s )
 
+	def toXml = scala.xml.XML.loadString( s )
   def toNodeSeq = if ( s != null ) Text( s ) else NodeSeq.Empty
 
-  //def toJson = org.tyranid.json.Json.parse( s )
-
-  def parseJson = org.tyranid.json.JsonDecoder( s )
+  def parseJson       = org.tyranid.json.JsonDecoder( s )
   def parseJsonObject = parseJson.as[ObjectMap]
   def parseJsonArray  = parseJson.as[Array[Any]]
 
   def parseHtml = org.tyranid.web.HtmlParser( s )
+
 
   def matches( r:Regex ) = r.pattern.matcher( s ).matches
 
@@ -282,6 +255,49 @@ class StringImp( s:String ) {
     else
       s
 
+  /**
+   * Does this string represent a valid email address?
+   */
+  def isEmail:Boolean =
+    try {
+      val addr = new javax.mail.internet.InternetAddress( s )
+      val idx = s.indexOf( '@' )
+
+      idx > 0 && idx < s.length - 5
+    } catch {
+      case e:javax.mail.internet.AddressException => false
+    }
+
+  def toPhoneMask:String = {
+    var offset = s.length match {
+                          case 10 => 0
+                          case 11 => 1
+                          case _ => -1
+                 }
+    
+    if ( offset == -1 )
+      return null
+      
+    return "(" + s.slice( offset,3+offset ) + ") " + s.slice( 3+offset, 6+offset ) + "-" + s.slice( 6+offset, 10+offset ) 
+  }
+
+  // Gets the first character, null, or an empty string
+  def toLaxChar() = {
+    if ( s == null )
+      null
+    else if ( s.length > 0 )
+      s.substring( 0, 1 )
+    else
+      s // must be empty string
+  }
+  
+  def toLaxMoney() = {
+    if ( s.isBlank )
+      0.0
+    else
+      s.trim.replace( "$", "" ).replace( ",", "" ).toLaxDouble
+  }
+
 	/**
  	 * Scala's StringOps defines a toBoolean(), but it is very minimal ... it only accepts "true" and "false"
  	 */
@@ -297,6 +313,19 @@ class StringImp( s:String ) {
 
   def isInt = s.forall( _.isDigit )
 
+  def toOnlyNumbers:String = {
+    if ( s == null )
+      return null
+     
+    val sb = new StringBuilder
+    
+    for ( i <- 0 until s.length )
+      if ( s( i ).isDigit )
+        sb += s( i )
+    
+    sb.toString
+  }
+  
   def toLaxInt =
     if ( s.isBlank )
       0
@@ -331,6 +360,34 @@ class StringImp( s:String ) {
       }
 
   def toBigInt = BigInt( s )
+
+
+  /*
+   * * *   Identifiers & Labels
+   */
+
+  def toIdentifier = {
+    val sb = new StringBuilder
+
+    for ( c <- s )
+      c match {
+      case c if Character.isJavaIdentifierStart( c ) =>
+        sb += c
+    
+      case c if Character.isJavaIdentifierPart( c ) =>
+        if ( sb.isEmpty )
+          sb += '_'
+
+        sb += c
+
+      case ' ' | '-' =>
+        sb += '_'
+    
+      case _ =>
+      }
+  
+    sb.toString
+  }
 
 	def uncapitalize = if ( s.length > 1 ) s.charAt( 0 ).toLower + s.substring( 1 ) else s
 	
@@ -383,36 +440,6 @@ class StringImp( s:String ) {
     ( """\bId\b""".r, "ID" ),
     ( """\bUuid\b""".r, "UUID" ) )
 
-  /**
-   * Does this string represent a valid email address?
-   */
-  def isEmail:Boolean =
-    try {
-      val addr = new javax.mail.internet.InternetAddress( s )
-      val idx = s.indexOf( '@' )
-
-      idx > 0 && idx < s.length - 5
-    } catch {
-      case e:javax.mail.internet.AddressException => false
-    }
-
-  // Gets the first character, null, or an empty string
-  def toLaxChar() = {
-    if ( s == null )
-      null
-    else if ( s.length > 0 )
-      s.substring( 0, 1 )
-    else
-      s // must be empty string
-  }
-  
-  def toLaxMoney() = {
-    if ( s.isBlank )
-      0.0
-    else
-      s.trim.replace( "$", "" ).replace( ",", "" ).toLaxDouble
-  }
-
 
   /*
    * * *   Date / Time
@@ -462,15 +489,6 @@ class StringImp( s:String ) {
     }
   }
 
-  def removeSpecialCharacters = {
-   val sb = new StringBuilder()
-   
-   s.foreach( c =>
-      if ( ( c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '.' || c == '_' )
-         sb.append( c ) )
-  
-   sb.toString()
-  }
   
   /*
    * * *   HTTP / URLs

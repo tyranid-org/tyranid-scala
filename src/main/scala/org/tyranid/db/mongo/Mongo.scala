@@ -55,6 +55,8 @@ object Imp {
   val $nor         = "$nor"
   val $options     = "$options"
   val $or          = "$or"
+  val $pull        = "$pull"
+  val $pullAll     = "$pullAll"
   val $regex       = "$regex"
   val $set         = "$set"
   val $size        = "$size"
