@@ -27,6 +27,7 @@ import scala.xml.{ Elem, Node, NodeSeq, Text, TopScope }
 import org.cometd.bayeux.server.BayeuxServer
 
 import org.tyranid.Imp._
+import org.tyranid.json.JsCmd
 import org.tyranid.profile.{ LoginCookie, User }
 import org.tyranid.session.{ AccessLog, ThreadData }
 
@@ -206,6 +207,8 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   def json( json:Any, status:Int = 200, jsonpCallback:String = null, headers:Map[String,String] = null, noCache:Boolean = false ) = 
     res.json( json, status, jsonpCallback, headers, req, noCache )
     
+  def js( js:JsCmd* ) = res.json( js, req = req, noCache = true )
+
   def html( xml:NodeSeq, status:Int = 200, headers:Map[String,String] = null, noCache:Boolean = false ) = 
     res.html( xml, status, headers, req, noCache )
     

@@ -26,6 +26,14 @@ import org.codehaus.jackson.node.{ ArrayNode, JsonNodeFactory, MissingNode, Obje
 import org.tyranid.Imp._
 import org.bson.types.ObjectId
 
+
+
+sealed trait JsCmd
+
+case class Js    ( js:String )                     extends JsCmd
+case class JsHtml( selector:String, html:NodeSeq ) extends JsCmd
+
+
 object Jobj {
   def apply = JsonNodeFactory.instance.objectNode
 }
@@ -142,6 +150,21 @@ case class JsonString( root:Any ) {
         write( e._2 )
       }
       sb += '}'
+    case p:Pair[_,_] =>
+      sb += '{'
+      write( p._1 )
+      sb += ':'
+      write( p._2 )
+      sb += '}'
+
+    case js:Js       => sb += '"' ++= js.js.encJson += '"'
+    case html:JsHtml =>
+      sb += '{'
+      write( html.selector )
+      sb += ':'
+      write( html.html.toString )
+      sb += '}'
+
     case b:java.lang.Boolean => sb ++= b.toString
     case d:java.lang.Double  => sb ++= d.toString
     case l:java.lang.Long    => sb ++= l.toString

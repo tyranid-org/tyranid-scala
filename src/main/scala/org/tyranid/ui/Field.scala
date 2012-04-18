@@ -140,7 +140,7 @@ object Search {
       val group = grouping.selectedGroup( run.report )
       if ( group != null ) {
         val fk = grouping.foreignKey
-        searchObj( fk ) = Mobj( $in -> group.a_?( 'ids ) )
+        searchObj( fk ) = Mobj( $in -> group.a_?( grouping.listKey ) )
       }
     }
 
