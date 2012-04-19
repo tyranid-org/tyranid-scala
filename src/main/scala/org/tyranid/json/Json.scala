@@ -31,7 +31,7 @@ import org.bson.types.ObjectId
 sealed trait JsCmd
 
 case class Js    ( js:String )                     extends JsCmd
-case class JsHtml( selector:String, html:NodeSeq ) extends JsCmd
+case class JqHtml( selector:String, html:NodeSeq ) extends JsCmd
 
 
 object Jobj {
@@ -158,7 +158,7 @@ case class JsonString( root:Any ) {
       sb += '}'
 
     case js:Js       => sb += '"' ++= js.js.encJson += '"'
-    case html:JsHtml =>
+    case html:JqHtml =>
       sb += '{'
       write( html.selector )
       sb += ':'

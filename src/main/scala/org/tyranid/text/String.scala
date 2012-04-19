@@ -96,15 +96,16 @@ class StringImp( s:String ) {
 
     for ( i <- 0 until s.length ) {
       Character.codePointAt( s, i ) match {
-      case StringImp.UnicodeLeftQuote | StringImp.UnicodeRightQuote =>
+      // TODO:  not sure about this > 255 algorithm ...
+      case cp if cp > 255 =>
         val sb = new StringBuilder( s.substring( 0, i ) )
 
         for ( j <- i until s.length ) {
           val ch = s.charAt( j )
 
           Character.codePointAt( s, j ) match {
-          case StringImp.UnicodeLeftQuote | StringImp.UnicodeRightQuote =>
-            sb ++= "&#" ++= Character.codePointAt( s, j ).toString += ';'
+          case cp if cp > 255 =>
+            sb ++= "&#" ++= cp.toString += ';'
 
           case _ =>
             sb += ch

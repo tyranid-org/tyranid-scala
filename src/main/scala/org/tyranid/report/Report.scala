@@ -30,7 +30,7 @@ import org.tyranid.db.{ DbArray, DbLink, DbTextLike, Entity, Path, Record, Scope
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.db.ram.RamEntity
-import org.tyranid.json.{ Js, JsHtml }
+import org.tyranid.json.{ Js, JqHtml }
 import org.tyranid.session.Session
 import org.tyranid.time.Time
 import org.tyranid.ui.{ Button, Checkbox, CustomField, Field, Glyph, Input, PathField, Search, Select, Show }
@@ -164,11 +164,11 @@ case class Grouping( ofEntity:MongoEntity,
        <thead>
         <tr>
          <th>Name</th>{ if ( !showAddBy ) addBys.filter( _.label != "Name" ).map( ab => <th>{ ab.label }</th> ) }{ editable |* <th/> }
-         <th style="width:8px;"/>
+         <th style="width:10px;"/>
         </tr>
        </thead>
-       { for ( elo <- ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) );
-               el = ofEntity( elo ) ) yield
+       { val members = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) ).map( o => ofEntity( o ) ).toSeq.sortBy( _.label )
+         for ( el <- members ) yield
            <tr id={ el.tid }>
             <td>{ el.label }</td>
             { if ( !showAddBy ) addBys.filter( _.label != "Name" ).map( ab => <td>{ el.s( ab.keys( 0 ) ) }</td> ) }
@@ -194,7 +194,7 @@ case class Grouping( ofEntity:MongoEntity,
     <div class="btns">
      { editable |* <button id="rGrpDelGrp" class="redBtn" style="float:left;">Delete</button> }
      <button onclick="$('#rGrpDlg').dialog('close'); return false;" class="greyBtn" style="float:right;">Done</button>
-     <button id="rGrpToggleAddBy" class="greenBtn" style="float:right;">{ if ( showAddBy ) "Show Table" else "Add Members" }</button>
+     { editable || showAddBy |* <button id="rGrpToggleAddBy" class="greenBtn" style="float:right;">{ if ( showAddBy ) "Show Table" else "Add Members" }</button> }
     </div>
   }
 
@@ -257,10 +257,10 @@ case class Grouping( ofEntity:MongoEntity,
 
     case "/group" =>
       report.resetGroups
-      web.js( JsHtml( "#rGrpDlg", drawPanel( report ) ) )
+      web.js( JqHtml( "#rGrpDlg", drawPanel( report ) ) )
 
     case "/group/addGroup" =>
-      web.js( JsHtml( "#rGrpMain", drawAddGroup( report ) ) )
+      web.js( JqHtml( "#rGrpMain", drawAddGroup( report ) ) )
 
     case "/group/addGroupSave" =>
       val group = Mobj()
@@ -271,12 +271,12 @@ case class Grouping( ofEntity:MongoEntity,
       selectGroup( report, groupEntity( group ).tid )
 
       web.js(
-        JsHtml( "#rGrpDlg", drawPanel( report ) ),
-        JsHtml( "#rGrpChooser", drawChooser( report ) )
+        JqHtml( "#rGrpDlg", drawPanel( report ) ),
+        JqHtml( "#rGrpChooser", drawChooser( report ) )
       )
 
     case "/group/rename" =>
-      web.js( JsHtml( "#rGrpMain", drawRename( report ) ) )
+      web.js( JqHtml( "#rGrpMain", drawRename( report ) ) )
 
     case "/group/renameSave" =>
       if ( !sg.b( 'builtin ) ) {
@@ -286,8 +286,8 @@ case class Grouping( ofEntity:MongoEntity,
       }
 
       web.js(
-        JsHtml( "#rGrpDlg", drawPanel( report ) ),
-        JsHtml( "#rGrpChooser", drawChooser( report ) )
+        JqHtml( "#rGrpDlg", drawPanel( report ) ),
+        JqHtml( "#rGrpChooser", drawChooser( report ) )
       )
 
     case "/group/deleteGroup" =>
@@ -297,15 +297,15 @@ case class Grouping( ofEntity:MongoEntity,
       }
 
       web.js(
-        JsHtml( "#rGrpDlg", drawPanel( report ) ),
-        JsHtml( "#rGrpChooser", drawChooser( report ) )
+        JqHtml( "#rGrpDlg", drawPanel( report ) ),
+        JqHtml( "#rGrpChooser", drawChooser( report ) )
       )
 
     case "/group/addBy" =>
       val id = web.s( 'v )
       report.groupAddBy = null
       report.query.grouping.addBys.find( _.id == id ).foreach { report.groupAddBy = _ }
-      web.js( JsHtml( "#rGrpAddBox", drawAddBy( report ) ) )
+      web.js( JqHtml( "#rGrpAddBox", drawAddBy( report ) ) )
 
     case "/group/addMember" =>
       val ab = report.groupAddBy
@@ -345,7 +345,7 @@ case class Grouping( ofEntity:MongoEntity,
         groupEntity.db.save( sg )
       }
 
-      web.js( JsHtml( "#rGrpMain", drawGroup( report ) ) )
+      web.js( JqHtml( "#rGrpMain", drawGroup( report ) ) )
 
     case "/group/remove" =>
       if ( !sg.b( 'builtin ) ) {
@@ -353,15 +353,15 @@ case class Grouping( ofEntity:MongoEntity,
         report.resetGroups
       }
 
-      web.js( JsHtml( "#rGrpMain", drawGroup( report ) ) )
+      web.js( JqHtml( "#rGrpMain", drawGroup( report ) ) )
 
     case "/group/toggleAddBy" =>
       report.groupShowAddBy = !report.groupShowAddBy
-      web.js( JsHtml( "#rGrpMain", drawGroup( report ) ) )
+      web.js( JqHtml( "#rGrpMain", drawGroup( report ) ) )
 
     case "/group/select" =>
       selectGroup( report, web.s( 'id ) )
-      web.js( JsHtml( "#rGrpMain", drawGroup( report ) ) )
+      web.js( JqHtml( "#rGrpMain", drawGroup( report ) ) )
 
     case "/group/addSearch" =>
       val terms = web.s( 'term )
@@ -940,11 +940,9 @@ object Reportlet extends Weblet {
     case "/section" =>
       report.onSection = web.req.s( 'v )
       report.recalcFields
-      web.res.json(
-        Map(
-          "gfd" -> report.fieldDropdown.toString,
-          "gab" -> report.addBox.toString
-        )
+      web.js(
+        JqHtml( "#gfd", report.fieldDropdown ),
+        JqHtml( "#gab", report.addBox )
       )
 
     case "/field" =>
