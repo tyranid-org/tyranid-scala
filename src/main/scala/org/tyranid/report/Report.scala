@@ -62,7 +62,6 @@ case class Sort( name:String, label:String, fields:(String,Int)* ) {
 }
 
 
-
 /*
  * * *   G r o u p
  */
@@ -84,14 +83,8 @@ case class Sort( name:String, label:String, fields:(String,Int)* ) {
       ]
 
 
-      +. when adding/deleting/renaming a group, need to update the select box
-
       +. lazily create Orgs when referenced in ExtendedProfile
 
-      +. display codes in table
-
-      +. don't allow built-in "virtual" groups to be deleted
-         
       +. monitored vs. connection group
 
  */
@@ -136,10 +129,12 @@ case class Grouping( ofEntity:MongoEntity,
     </div>
 
   def drawPanel( report:Report ) = {
+    val stid = selectedGroupTid( report )
+
     <div id="rGrpLeft">
      <div id="rGrpSel">
       <ul class="noSelect">
-       { report.groups.map( g => <li class="noSelect" id={ g.tid }>{ g.s( 'name ) }</li> ) }
+       { report.groups.map( g => <li class={ "noSelect" + ( g.tid == stid |* " sel" ) } id={ g.tid }>{ g.s( 'name ) }</li> ) }
       </ul>
      </div>
      <div class="btns">
@@ -153,32 +148,40 @@ case class Grouping( ofEntity:MongoEntity,
 
   def drawGroup( report:Report ) = {
     val group = selectedGroup( report )
+    val editable = group != null && !group.b( 'builtin )
+    val showAddBy = report.groupShowAddBy
 
-    <div id="rGrpEdit">
+    <div id="rGrpEdit" class={ showAddBy ? "shortTable" | "longTable" }>
      <div class="title">
-      { ( group != null ) ? ( Text( group.s( 'name ) + ' ' ) ++ <a href="#" id="rGrpRename" style="font-size:12px;">rename</a> ) | <i>None selected</i> }
+      { if ( group != null )
+          Text( group.s( 'name ) + ' ' ) ++ ( editable ? <a href="#" id="rGrpRename" style="font-size:12px;">rename</a> | <i style="font-size:12px;">(builtin)</i> )
+        else
+          <i>None selected</i> }
      </div>
      { group != null |*
      <div class="list">
       <table class="dtable">
        <thead>
         <tr>
-         <th>Name</th><th>TODO: Code</th><th/>
+         <th>Name</th>{ if ( !showAddBy ) addBys.filter( _.label != "Name" ).map( ab => <th>{ ab.label }</th> ) }{ editable |* <th/> }
+         <th style="width:8px;"/>
         </tr>
        </thead>
        { for ( elo <- ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) );
                el = ofEntity( elo ) ) yield
            <tr id={ el.tid }>
             <td>{ el.label }</td>
-            <td></td>
-            <td><a href="#">remove</a></td>
+            { if ( !showAddBy ) addBys.filter( _.label != "Name" ).map( ab => <td>{ el.s( ab.keys( 0 ) ) }</td> ) }
+            { editable |* <td><a href="#">remove</a></td> }
+            <td/>
            </tr>
        }
       </table>
      </div> }
-    </div>
+    </div> ++
+    { showAddBy |*
     <div class="add">
-     { group != null |*
+     { editable |*
      <form method="post" id="rGrpAddForm">
       <div class="title">Add { ofEntity.label.plural }</div>
       <label for="rGrpAddBy">By:</label>
@@ -187,10 +190,11 @@ case class Grouping( ofEntity:MongoEntity,
        { drawAddBy( report ) }
       </div>
      </form> }
-    </div>
+    </div> } ++
     <div class="btns">
-     { group != null |* <button id="rGrpDelGrp" class="redBtn" style="float:left;">Delete</button> }
+     { editable |* <button id="rGrpDelGrp" class="redBtn" style="float:left;">Delete</button> }
      <button onclick="$('#rGrpDlg').dialog('close'); return false;" class="greyBtn" style="float:right;">Done</button>
+     <button id="rGrpToggleAddBy" class="greenBtn" style="float:right;">{ if ( showAddBy ) "Show Table" else "Add Members" }</button>
     </div>
   }
 
@@ -244,6 +248,7 @@ case class Grouping( ofEntity:MongoEntity,
   def handle( weblet:Weblet, report:Report ):Boolean = {
     val web = T.web
     val query = report.query
+    val sg = selectedGroup( report )
 
     weblet.rpath match {
     case "/groups" =>
@@ -252,7 +257,7 @@ case class Grouping( ofEntity:MongoEntity,
 
     case "/group" =>
       report.resetGroups
-      web.res.html( drawPanel( report ) )
+      web.js( JsHtml( "#rGrpDlg", drawPanel( report ) ) )
 
     case "/group/addGroup" =>
       web.js( JsHtml( "#rGrpMain", drawAddGroup( report ) ) )
@@ -271,22 +276,26 @@ case class Grouping( ofEntity:MongoEntity,
       )
 
     case "/group/rename" =>
-      web.js(
-        JsHtml( "#rGrpMain", drawRename( report ) ) )
+      web.js( JsHtml( "#rGrpMain", drawRename( report ) ) )
 
     case "/group/renameSave" =>
-      val group = selectedGroup( report )
-      group( 'name ) = web.s( 'rGrpName ) or "Unnamed Group"
-      groupEntity.db.save( group )
-      report.resetGroups
+      if ( !sg.b( 'builtin ) ) {
+        sg( 'name ) = web.s( 'rGrpName ) or "Unnamed Group"
+        groupEntity.db.save( sg )
+        report.resetGroups
+      }
+
       web.js(
         JsHtml( "#rGrpDlg", drawPanel( report ) ),
         JsHtml( "#rGrpChooser", drawChooser( report ) )
       )
 
     case "/group/deleteGroup" =>
-      groupEntity.remove( Mobj( "_id" -> selectedGroup( report ).id ) )
-      report.resetGroups
+      if ( !sg.b( 'builtin ) ) {
+        groupEntity.remove( Mobj( "_id" -> sg.id ) )
+        report.resetGroups
+      }
+
       web.js(
         JsHtml( "#rGrpDlg", drawPanel( report ) ),
         JsHtml( "#rGrpChooser", drawChooser( report ) )
@@ -300,7 +309,8 @@ case class Grouping( ofEntity:MongoEntity,
 
     case "/group/addMember" =>
       val ab = report.groupAddBy
-      if ( ab != null ) {
+
+      if ( ab != null && sg != null && !sg.b( 'builtin ) ) {
 
         val ids:Seq[Any] =
           ab.label match {
@@ -331,16 +341,22 @@ case class Grouping( ofEntity:MongoEntity,
             ofEntity.db.find( where, Mobj( "_id" -> 1 ) ).map( _( '_id ) ).toSeq
           }
 
-        val group = selectedGroup( report )
-        group( listKey ) = Mlist( ( group.a_?( listKey ) ++ ids ).distinct:_* )
-        groupEntity.db.save( group )
+        sg( listKey ) = Mlist( ( sg.a_?( listKey ) ++ ids ).distinct:_* )
+        groupEntity.db.save( sg )
       }
 
       web.js( JsHtml( "#rGrpMain", drawGroup( report ) ) )
 
     case "/group/remove" =>
-      groupEntity.db.update( Mobj( "_id" -> selectedGroupId( report ) ), Mobj( $pull -> Mobj( listKey -> ofEntity.tidToId( web.s( 'id ) ) ) ) )
-      report.resetGroups
+      if ( !sg.b( 'builtin ) ) {
+        groupEntity.db.update( Mobj( "_id" -> sg.id ), Mobj( $pull -> Mobj( listKey -> ofEntity.tidToId( web.s( 'id ) ) ) ) )
+        report.resetGroups
+      }
+
+      web.js( JsHtml( "#rGrpMain", drawGroup( report ) ) )
+
+    case "/group/toggleAddBy" =>
+      report.groupShowAddBy = !report.groupShowAddBy
       web.js( JsHtml( "#rGrpMain", drawGroup( report ) ) )
 
     case "/group/select" =>
@@ -681,6 +697,8 @@ case class Report( query:Query ) {
   private var latestGroups:Seq[MongoRecord] = null
 
   @volatile var groupAddBy:GroupingAddBy = null
+
+  @volatile var groupShowAddBy:Boolean = false
 
   def resetGroups { latestGroups = null }
   def groups = {
