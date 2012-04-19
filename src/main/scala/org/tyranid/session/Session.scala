@@ -236,7 +236,7 @@ trait Session {
   def clearAllEditing = editings.clear
 
   def get( key:String ) = cache.getOrElse( key, null )
-  def set( key:String, value:AnyRef ) = cache.put( key, value )
+  def put( key:String, value:AnyRef ) = cache.put( key, value )
   def clear( key:String = null ) = key.isBlank ? cache.clear | cache.remove( key )
 
   /*

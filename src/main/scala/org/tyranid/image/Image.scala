@@ -179,7 +179,7 @@ case class Image( url:URL, width:Option[Int] = None, height:Option[Int] = None )
     if ( sizeMult > 1 )
       sizeMult = 1 / sizeMult
 
-    val ratioMult = ( 3 - Math.abs( ratio - 1.77 ) )
+    val ratioMult = ( 3 - scala.math.abs( ratio - 1.77 ) )
 
     val overall = ratioMult * sizeMult
 
