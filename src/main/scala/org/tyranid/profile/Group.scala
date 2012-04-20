@@ -21,9 +21,6 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.xml.{ NodeSeq, Text, Unparsed }
 
-import org.bson.types.ObjectId
-import com.mongodb.DBObject
-
 import org.tyranid.Imp._
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
@@ -81,7 +78,7 @@ case class Grouping( ofEntity:MongoEntity,
 
   def draw( report:Report ) =
     <div id="rGrpDlg" style="padding:0; display:none;">
-    { drawPanel( report ) }
+     { drawPanel( report ) }
     </div>
 
   def drawPanel( report:Report ) = {
