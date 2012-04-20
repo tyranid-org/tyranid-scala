@@ -348,7 +348,7 @@ case class PathField( baseName:String,
        { if ( labelc ) 
          <div class="labelc">{ va.label( rec, opts:_* ) }{ va.att.required |* <span class="required">*</span> }{ va.att.help != NodeSeq.Empty |* <span class="attHelp">{ va.att.help }</span><span class="helpIcon"></span> }</div>
        }
-       <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( scope, this ) }</div>
+       <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( scope, this ) }{ create |* <span class="createNew">(<a href="#" class="tip" title="Create New">new</a>)</span> }</div>
        <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
       </div>
     }

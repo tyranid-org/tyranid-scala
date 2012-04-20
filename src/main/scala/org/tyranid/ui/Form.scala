@@ -177,7 +177,7 @@ object Form {
     <head>
       <script>
         {
-         val optsStr:StringBuffer = new StringBuffer
+         val optsStr:StringBuilder = new StringBuilder
 
          if ( opts != null ) {
            opts.foreach {

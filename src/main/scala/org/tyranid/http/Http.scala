@@ -89,6 +89,9 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
     s
   }
   
+  def serializeParams( filter:Option[ ( String ) => Boolean ] = None ) =
+    req.getParameterNames.toSeq.filter( name => filter.flatten( _( name.as[String] ), true ) ).map( n => ( n + "=" + s( n.as[String] ).encUrl ) ).mkString( "&" )
+  
   def dump = {
 
     println( "** requestURI=" + T.web.req.getRequestURL )
@@ -336,7 +339,6 @@ object Http {
 
   def DELETE( url:String, query:collection.Map[String,String] = null ):HttpResult =
     execute( new HttpDelete( makeUrl( url, query ) ) )
-
 }
 
 

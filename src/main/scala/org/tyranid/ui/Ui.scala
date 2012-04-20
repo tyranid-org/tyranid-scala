@@ -46,7 +46,7 @@ object Button {
     if ( redirectEndpoint == null ) {
       <a class={ color + "Btn" } href={ href }><span>{ name }</span></a>
     } else {
-      val optsStr:StringBuffer = new StringBuffer
+      val optsStr:StringBuilder= new StringBuilder
 
       if ( opts != null ) {
         opts.foreach {
