@@ -56,12 +56,12 @@ object Blur {
 object Form {
 
   // probably swap this convention ... text() takes a NodeSeq, stext() takes a String ?
-  def htext( label:String, value:NodeSeq, href:String = null, editBtnId:String = null, redirectHref:String = null, controlClass:String = "control", dialogTitle:String = null, opts:Seq[(String,String)] = null, link:Boolean = false  ) =
+  def htext( label:String, value:NodeSeq, href:String = null, editBtnId:String = null, redirectHref:String = null, dialogTitle:String = null, controlClass:String = "control", opts:Seq[(String,String)] = null, link:Boolean = false  ) =
     <div class={ controlClass }>
      <div class="left">{ label }</div>
      <div class="right">
       { href.notBlank |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="greyBtn" id={ editBtnId }>Edit</a> }
-      { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, if ( dialogTitle == null ) label else dialogTitle, opts ) }
+      { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, ( dialogTitle == null ) ? label | dialogTitle, opts ) }
       <div class="text">{ if ( link ) <a href={ value.toString } target="_blank">{ value }</a> else { value } }</div>
      </div>
     </div>
@@ -173,7 +173,7 @@ object Form {
     </div>
   
   
-  def dialog( elId: String, postEndpoint:String, redirectEndpoint:String, title:String, opts:Seq[(String,String)] = null ) = 
+  def dialog( elId: String, postEndpoint:String, redirectEndpoint:String, title:String = "", opts:Seq[(String,String)] = null ) = 
     <head>
       <script>
         {
