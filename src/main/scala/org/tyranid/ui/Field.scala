@@ -19,6 +19,8 @@ package org.tyranid.ui
 
 import scala.xml.Text
 
+import org.bson.types.ObjectId
+
 import com.mongodb.DBObject
 
 import scala.collection.mutable
@@ -75,6 +77,7 @@ object Search {
     Gte,
     Lte,
     Group,
+    Filter,
     Custom
   )
 
@@ -142,6 +145,19 @@ object Search {
         val fk = grouping.foreignKey
         searchObj( fk ) = Mobj( $in -> group.a_?( grouping.listKey ) )
       }
+    }
+
+    def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) =
+      // TODO:  implement this
+      false
+  }
+
+  case object Filter extends Search {
+    val name = "fltr"
+
+    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) = {
+      if ( value.safeString.notBlank )
+        searchObj( run.report.query.filter.foreignKey ) = new ObjectId( value.safeString )
     }
 
     def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) =
@@ -348,7 +364,7 @@ case class PathField( baseName:String,
        { if ( labelc ) 
          <div class="labelc">{ va.label( rec, opts:_* ) }{ va.att.required |* <span class="required">*</span> }{ va.att.help != NodeSeq.Empty |* <span class="attHelp">{ va.att.help }</span><span class="helpIcon"></span> }</div>
        }
-       <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( scope, this ) }{ create |* <span class="createNew">(<a href="#" class="tip" title="Create New">new</a>)</span> }</div>
+       <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( scope, this ) }{ create |* <span class="createNew"> <a href="#" class="tip" title="Create New">new</a></span> }</div>
        <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
       </div>
     }

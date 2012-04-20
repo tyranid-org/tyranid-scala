@@ -89,6 +89,31 @@ case class Sort( name:String, label:String, fields:(String,Int)* ) {
 
  */
 
+abstract class Filter( val foreignKey:String ) {
+  val label = "filter"
+  val filterStyle = "width:344px; height:54px;"
+    
+  private lazy val searchNameKey = Search.Filter.makeSearchName( foreignKey )
+
+  def selectedFilter( report:Report ) = report.searchRec.s( searchNameKey )
+  def selectedFilter( report:Report, value:String ) = report.searchRec( searchNameKey ) = value
+    
+    
+  def filterValues:Seq[ DBObject ]
+  
+  def draw( run:Run ) =
+    <table class="tile" style={ filterStyle }>
+     <tr>
+      <td class="label">{ label }</td>
+     </tr>
+     <tr>
+      <td id="rGrpChooser">
+      { Select( "rFilter", selectedFilter( run.report ), ( "" -> "-Please Select-" ) +: filterValues.map( v => ( v.s( '_id ), v.s( 'name ) ) ) ) }
+      </td>
+     </tr>
+    </table>
+}
+
 case class GroupingAddBy( label:String, keys:String* ) {
 
   val id = label.toIdentifier
@@ -409,7 +434,8 @@ trait Query {
   lazy val boundFields = {
     val allFields =
       fields ++
-      ( grouping != null |* List( new PathField( grouping.foreignKey, l = "Group", data = false, search = Search.Group ) ) )
+      ( grouping != null |* List( new PathField( grouping.foreignKey, l = "Group", data = false, search = Search.Group ) ) ) ++ 
+      ( filter != null |* List( new PathField( filter.foreignKey, l = filter.label, data = false, search = Search.Filter ) ) ) 
 
     for ( f <- allFields )
       f match {
@@ -480,6 +506,7 @@ trait Query {
   //)
 
   val grouping:Grouping = null
+  val filter:Filter = null
 
   lazy val init =
     Query.byName( name ) = this
@@ -490,6 +517,8 @@ trait Query {
   }
   
   def extraActions:NodeSeq = Text( "" )
+  val actionsStyle = "width:338px; height:54px;"
+  val sectionStyle = "width:298px; height:54px;"
 
   val orderBy:Seq[Sort] = Nil
 
@@ -716,10 +745,12 @@ case class Report( query:Query ) {
 
   def innerDraw = {
     val run = new Run( this )
+    
     records = query.run( run ).toSeq
 
     val tmp = selectedIds.clone
     selectedIds.clear
+    
     records.filter( r => tmp( r.id ) ).foreach { selectedIds += _.id }
 
     ( if ( query.labelNode != null ) {
@@ -730,7 +761,7 @@ case class Report( query:Query ) {
     <table class="def" id="def">
      <tr>
       <td>
-       <table class="tile" style="width:338px; height:54px;">
+       <table class="tile" style={ query.actionsStyle }>
         <tr>
          <td class="label">actions</td>
         </tr>
@@ -750,12 +781,11 @@ case class Report( query:Query ) {
        </table>
       </td>
       { query.grouping != null |* <td>{ query.grouping.drawFilter( run ) }</td> }
-      <td style="width:410px; padding:0;">
-      </td>
+      { query.filter != null |* <td>{ query.filter.draw( run ) }</td> }
+      <td style="width:410px; padding:0;"></td>
+      <td></td>
       <td>
-      </td>
-      <td>
-       <table class="tile" style="width:298px; height:54px;">
+       <table class="tile" style={ query.sectionStyle }> 
         <tr>
          <td class="label">section</td>
          <td style="width:160px;">{ sectionDropdown }</td>
@@ -873,6 +903,9 @@ object Reportlet extends Weblet {
       report.offset = 0
       web.res.html( report.innerDraw )
 
+    case "/filter" => 
+      query.filter.selectedFilter( report, web.s( 'id ) )
+      web.res.html( report.innerDraw )
     case "/prev" =>
       report.offset -= report.pageSize
       if ( report.offset < 0 ) report.offset = 0
