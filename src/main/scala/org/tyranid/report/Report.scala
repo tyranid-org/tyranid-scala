@@ -87,6 +87,7 @@ abstract class Filter( val foreignKey:String ) {
     </table>
 }
 
+
 /*
  * * *   Q u e r y
  */
@@ -107,7 +108,7 @@ trait Query {
     val allFields =
       fields ++
       ( grouping != null |* List( new PathField( grouping.foreignKey, l = "Group", data = false, search = Search.Group ) ) ) ++ 
-      ( filter != null |* List( new PathField( filter.foreignKey, l = filter.label, data = false, search = Search.Filter ) ) ) 
+      ( filter != null   |* List( new PathField( filter.foreignKey, l = filter.label, data = false, search = Search.Filter ) ) ) 
 
     for ( f <- allFields )
       f match {

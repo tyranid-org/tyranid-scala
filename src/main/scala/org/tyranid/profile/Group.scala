@@ -21,6 +21,8 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.xml.{ NodeSeq, Text, Unparsed }
 
+import com.mongodb.DBObject
+
 import org.tyranid.Imp._
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
@@ -34,7 +36,17 @@ import org.tyranid.web.Weblet
 
       +. lazily create Orgs when referenced in ExtendedProfile
 
-      +. monitored vs. connection group
+         where does this happen ?
+
+           when we try to look them up...
+
+
+         since this is hackish, probably best way to implement this is to override queryGroups
+
+      +. group types:
+      
+         in-network         vs. out-of-network     ( monitored vs. connection group )
+         intra-organization vs. inter-organization
 
       +. add user groups
 
@@ -53,7 +65,8 @@ case class Grouping( ofEntity:MongoEntity,
 
   private lazy val searchNameKey = Search.Group.makeSearchName( foreignKey )
 
-  def queryGroups = groupEntity.db.find( Mobj( forKey -> forValue() ) ).map( o => groupEntity( o ) ).toSeq
+  def queryGroups                         = groupEntity.db.find( Mobj( forKey -> forValue() ) ).map( o => groupEntity( o ) ).toSeq
+  def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) ).map( o => ofEntity( o ) ).toIterable
 
   def byId( report:Report, id:Any ) = report.groups.find( _.id == id ).get
 
@@ -120,7 +133,7 @@ case class Grouping( ofEntity:MongoEntity,
          <th style="width:10px;"/>
         </tr>
        </thead>
-       { val members = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) ).map( o => ofEntity( o ) ).toSeq.sortBy( _.label )
+       { val members = queryGroupMembers( group ).toSeq.sortBy( _.label )
          for ( el <- members ) yield
            <tr id={ el.tid }>
             <td>{ el.label }</td>
