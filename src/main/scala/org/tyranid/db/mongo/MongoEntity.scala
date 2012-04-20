@@ -156,10 +156,8 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
 
     for ( sf <- run.report.query.searchFields;
           value = run.report.searchRec( sf.name )
-          if value != null ) {
-      println( sf.name )
+          if value != null )
       sf.mongoSearch( run, search, value )
-    }
 
     var cursor = db.find( search )//, Mobj() )
     if ( offset != 0 )

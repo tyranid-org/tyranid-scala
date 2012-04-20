@@ -59,7 +59,6 @@ object Schema {
 	def add( ens: Entity* ) { ens foreach { add( _ ) } }
 
 	def add( en: Entity ) {
-		println( "adding " + en.name )
 		entities += en
 		byDbName( en.dbName ) = en
 	}

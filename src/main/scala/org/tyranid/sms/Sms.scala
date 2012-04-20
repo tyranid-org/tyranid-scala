@@ -270,8 +270,6 @@ object Smslet extends Weblet {
                  web.forward( "/sms/edit?id=" + web.s( "id" ) or "" )
                }
                
-               println( sms.s( 'enteredCode ).toUpperCase() )
-               println( sms.s( 'vCode ) )
                sess.error( "That verification code is not correct." )
             }
           }
