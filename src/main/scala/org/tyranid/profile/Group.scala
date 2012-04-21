@@ -32,7 +32,9 @@ import org.tyranid.web.Weblet
 
 /*
 
-      +. lazily create Orgs when referenced in ExtendedProfile
+      +. move group data in Report to a new case class on Report
+
+      +. move the ^^^ case class to searchRec ?
 
       +. monitored vs. connection group
 

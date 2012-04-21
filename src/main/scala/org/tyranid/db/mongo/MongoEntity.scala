@@ -42,14 +42,16 @@ case object DbMongoId extends Domain {
     case _ => null
     }
 
-  override def recordTidToId( recordTid:String ) =
-    new ObjectId( Base64.toBytes( recordTid ) )
+  override def recordTidToId( recordTid:String ) = new ObjectId( Base64.toBytes( recordTid ) )
 
   override def ui( s:Scope, f:PathField ) =
     Input( f.id, s.rec.s( f.va.name ), ( f.effOpts ++ Seq( "class" -> "textInput" ) ):_*  )
 
   //override def inputcClasses = " select"
+
+  override def fromString( s:String ) = new ObjectId( s.trim )
 }
+
 
 case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
   val storageName = "MongoDB"

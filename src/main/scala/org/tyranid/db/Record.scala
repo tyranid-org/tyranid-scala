@@ -325,6 +325,7 @@ case class Scope( rec:Record,
                   path:Path = EmptyPath,
                   pathFromParent:Path = EmptyPath,
                   run:Run = null,
+                  filtering:Boolean = false,
                   parent:Scope = null ) {
 
   def va    = Option( path.leaf )

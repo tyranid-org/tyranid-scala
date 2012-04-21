@@ -33,16 +33,6 @@ trait DbItem {
 	lazy val dbName = name.camelCaseToUnderLower
 }
 
-case class IdType( name: String )
-
-object IdType {
-	val ID_32      = new IdType( "32" )
-	val ID_64      = new IdType( "64" )
-  val ID_STRING  = new IdType( "String" )
-	val ID_COMPLEX = new IdType( "Complex" )
-}
-
-
 
 /*
  * * *   S c h e m a
