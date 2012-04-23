@@ -32,7 +32,9 @@ import org.tyranid.web.Weblet
 
 /*
 
-      +. lazily create Orgs when referenced in ExtendedProfile
+      +. move group data in Report to a new case class on Report
+
+      +. move the ^^^ case class to searchRec ?
 
       +. monitored vs. connection group
 
@@ -63,6 +65,7 @@ case class Grouping( ofEntity:MongoEntity,
 
   def selectGroup( report:Report, tid:String ) = report.searchRec( searchNameKey ) = tid
 
+  // TODO:  merge this with the regular filtering
   def drawFilter( run:Run ) =
     <table class="tile" style="width:140px; height:54px;">
      <tr>

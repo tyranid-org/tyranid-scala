@@ -43,8 +43,6 @@ trait Domain extends Valid {
 
   lazy val name = getClass.getSimpleName.replaceAll( "^Db", "" ).replace( "$", "" ).uncapitalize
 
-	lazy val idType = IdType.ID_COMPLEX
-
 	val sqlName:String
 
   def idToRecordTid( v:Any )                = "invalid-" + getClass.getSimpleName
@@ -112,12 +110,14 @@ trait Domain extends Valid {
       else 
         input
     } )
+
+  def fromString( s:String ):Any = s.trim
     
   def extract( s:Scope, f:PathField ) =
     if ( !commonExtract( s, f ) ) {
       val v = T.web.req.s( f.id )
 
-      if ( v.notBlank ) s.rec( f.va.name ) = v.trim
+      if ( v.notBlank ) s.rec( f.va.name ) = fromString( v )
       else              s.rec.remove( f.va.name )
     }
 
@@ -140,21 +140,12 @@ trait Domain extends Valid {
  */
 
 abstract class DbIntish extends Domain {
-	override lazy val idType = IdType.ID_32
-
   override def idToRecordTid( v:Any )                = if ( v != null ) Base64.toString( v.coerceInt ) else null
   override def recordTidToId( recordTid:String ):Any = Base64.toInt( recordTid )
 
-  override def extract( s:Scope, f:PathField ) =
-    if ( !commonExtract( s, f ) ) {
-      val str = T.web.req.s( f.id )
-
-      if ( str.isBlank ) s.rec.remove( f.va.name )
-      else               s.rec( f.va.name ) = str.coerceInt
-    }
+  override def fromString( s:String ) = s.trim.toInt
 
   override def compare( v1:Any, v2:Any ) = v1.coerceInt - v2.coerceInt
-    
 }
 
 object DbInt extends DbIntish {
@@ -170,11 +161,10 @@ object DbIntSerial extends DbIntish {
 
 
 abstract class DbLongish extends Domain {
-	override lazy val idType = IdType.ID_64
-
   override def idToRecordTid( v:Any )                = if ( v != null ) Base64.toString( v.coerceLong ) else null
   override def recordTidToId( recordTid:String ):Any = Base64.toLong( recordTid )
 
+  override def fromString( s:String ) = s.trim.toLong
   override def compare( v1:Any, v2:Any ) = ( v1.coerceLong - v2.coerceLong ).toInt
 }
 
@@ -340,9 +330,7 @@ object DbBoolean extends Domain {
     case _              => Checkbox( f.id, s.rec b f.va.name, f.effOpts:_* ) ++ f.labelUi
     }
     
-  override def extract( s:Scope, f:PathField ) =
-    if ( T.web.req.b( f.id ) ) s.rec( f.va.name ) = true
-    else                       s.rec.remove( f.va.name )
+  override def fromString( s:String ):Any = s.trim.toLaxBoolean
 
   override def inputcClasses = " boolean"
 
@@ -390,9 +378,7 @@ trait DbDateLike extends Domain {
       input
   }
 
-  override def extract( s:Scope, f:PathField ) {
-    s.rec( f.va.name ) = T.web.req.s( f.id ).toLaxDate
-  }
+  override def fromString( s:String ):Any = s.trim.toLaxDate
 
   override def cell( s:Scope, f:PathField ):NodeSeq = {
     val date = f.path.t( s.rec )
@@ -416,9 +402,7 @@ object DbDateTime extends DbDateLike {
       input
   }
 
-  override def extract( s:Scope, f:PathField ) {
-    s.rec( f.va.name ) = T.web.req.s( f.id ).toLaxDateTime
-  }
+  override def fromString( s:String ):Any = s.trim.toLaxDateTime
 
   override def cell( s:Scope, f:PathField ):NodeSeq = {
     val date = f.path.t( s.rec )
@@ -508,11 +492,7 @@ case class DbLink( toEntity:Entity ) extends Domain {
 
   override val isLink = true
 
-	lazy val sqlName = toEntity.idType match {
-		                 case IdType.ID_32      => "INT"
-		                 case IdType.ID_64      => "BIGINT"
-		                 case IdType.ID_COMPLEX => toEntity.problem( "has a complex ID and cannot be linked to" )
-										 }
+	lazy val sqlName = toEntity.idAtt.flatten( _.domain.sqlName, toEntity.problem( "embedded entities don't have IDs" ) )
 
   override def idToRecordTid( v:Any )                = toEntity.idAtt.flatten( _.domain.idToRecordTid( v ),         toEntity.problem( "embedded entities don't have IDs" ) )
   override def recordTidToId( recordTid:String ):Any = toEntity.idAtt.flatten( _.domain.recordTidToId( recordTid ), toEntity.problem( "embedded entities don't have IDs" ) )
@@ -539,32 +519,21 @@ case class DbLink( toEntity:Entity ) extends Domain {
     
     Select( f.id, s.rec s f.va,
             ( "" -> "-Please Select-" ) +: values,
-            f.effOpts:_* )
+            f.scopeOpts( s ):_* )
   }
 
-  override def extract( s:Scope, f:PathField ) {
-    val v = T.web.req.s( f.id )
-
-    if ( v.isBlank )
-      s.rec( f.va ) = null
-    else
-      toEntity.idType match {
-      case IdType.ID_32 => s.rec( f.va ) = v.toLaxInt
-      case IdType.ID_64 => s.rec( f.va ) = v.toLaxLong
-      case _            => s.rec( f.va ) = v
-      }
-  }
+  override def fromString( s:String ) = toEntity.idAtt.flatten( _.domain.fromString( s ), toEntity.problem( "embedded entities don't have IDs" ) )
 
   override def inputcClasses = " select"
 
 	override def see( v:Any ) =
 		v match {
 		case null                                            => ""
-    case s:String if toEntity.idType != IdType.ID_STRING => s
+    case s:String if toEntity.idAtt.flatten( !_.domain.isInstanceOf[DbTextLike], toEntity.problem( "embedded entities don't have IDs." ) ) => s
 		case n                                               => toEntity.labelFor( n )
 		}
 
-  override def cell( s:Scope, f:PathField ) = Text( see( f.path.s( s.rec ) ) )
+  override def cell( s:Scope, f:PathField ) = Text( see( f.path.get( s.rec ) ) )
 }
 
 
