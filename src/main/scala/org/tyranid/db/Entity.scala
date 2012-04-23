@@ -198,12 +198,6 @@ trait Entity extends Domain with DbItem {
    */
   val tid:String
 
-	override lazy val idType =
-		attribs.filter( _.isId ) match {
-		case as if as.size == 1 => as( 0 ).domain.idType
-		case _                  => IdType.ID_COMPLEX
-		}
-
   def idToTid( id:Any ) = tid + idToRecordTid( id )
   def tidToId( tid:String ) = {
 

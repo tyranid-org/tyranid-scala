@@ -30,6 +30,7 @@ import org.tyranid.Imp._
 import org.tyranid.db.{ Record, Path, Scope, View, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.logic.Invalid
+import org.tyranid.math.Base62
 import org.tyranid.report.{ Report, Run }
 import org.tyranid.web.WebContext
 
@@ -77,7 +78,6 @@ object Search {
     Gte,
     Lte,
     Group,
-    Filter,
     Custom
   )
 
@@ -152,19 +152,6 @@ object Search {
       false
   }
 
-  case object Filter extends Search {
-    val name = "fltr"
-
-    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) = {
-      if ( value.safeString.notBlank )
-        searchObj( run.report.query.filter.foreignKey ) = new ObjectId( value.safeString )
-    }
-
-    def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) =
-      // TODO:  implement this
-      false
-  }
-
   case object Custom extends Search {
     val name = "cst"
 
@@ -228,6 +215,10 @@ trait Field {
   val show:Show
   val default:Option[ () => Any ]
 
+  val id:String
+
+  def fromString( s:String ):Any = s
+
 
   /*
    * * *   Search
@@ -235,6 +226,7 @@ trait Field {
 
   val data:Boolean
   val search:Search
+  val showFilter:Boolean
 
   def mongoSearch( run:Run, searchObj:DBObject, value:Any ) =
     if ( search != null )
@@ -246,10 +238,12 @@ trait Field {
 
 trait CustomField extends Field {
 
+  val id = Base62.make( 8 )
   val baseName = name
 
   val data = true
   val search:Search = null
+  val showFilter:Boolean = false
 
   val show = Show.Editable
   val default = None
@@ -273,6 +267,7 @@ case class PathField( baseName:String,
                       displayExists:Boolean = false,
                       data:Boolean = true,
                       search:Search = null,
+                      showFilter:Boolean = false,
                       span:Int = 1,
                       inputOnly:Boolean = false,
                       focus:Boolean = false,
@@ -306,6 +301,13 @@ case class PathField( baseName:String,
     ( _id, _opts )
   }
 
+  def scopeOpts( scope:Scope ) = {
+    if ( scope.filtering )
+      ( "class" -> "rFilter" ) +: effOpts
+    else
+      effOpts
+  }
+
 
   val name =
     /* [TAURUS-SIX]
@@ -337,6 +339,8 @@ case class PathField( baseName:String,
   }
 
   override def ui( s:Scope ) = path.leaf.domain.ui( s, this )
+
+  override def fromString( s:String ) = va.att.domain.fromString( s )
 
   override def extract( pScope:Scope ) = {
     val scope = pScope.at( path )
@@ -391,9 +395,11 @@ case class PathField( baseName:String,
 
 case class CustomTextSearchField( baseName:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends Field {
 
+  val id = Base62.make( 8 )
   val name = baseName + "$cst"
 
   val search = Search.Custom
+  val showFilter = false
   override val data = false
 
   val show = Show.Editable
