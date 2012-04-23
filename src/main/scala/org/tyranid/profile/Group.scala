@@ -40,8 +40,6 @@ import org.tyranid.web.Weblet
 
            when we try to look them up...
 
-         since this is hackish, probably best way to implement this is to override queryGroups
-
       +. what if you have more than one Grouping ?
 
          ... need to associate the Grouping with the Field, not with the Report ?
@@ -51,8 +49,6 @@ import org.tyranid.web.Weblet
          +. move GroupData from Report -> ... searchRec ?
 
          +. generate the group control with an ID, and use that ID to pass in the ID on jQuery calls
-
-
 
       +. add user groups
 
