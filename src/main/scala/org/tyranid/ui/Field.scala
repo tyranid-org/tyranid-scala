@@ -202,6 +202,9 @@ trait Field {
   def ui( s:Scope ):NodeSeq   = throw new UnsupportedOperationException( "name=" + name )
   def extract( s:Scope ):Unit = throw new UnsupportedOperationException( "name=" + name )
 
+  def topActions( run:Run ) = NodeSeq.Empty
+  def bottomActions( run:Run ) = NodeSeq.Empty
+
 
   /*
    * * *   Data Hinting

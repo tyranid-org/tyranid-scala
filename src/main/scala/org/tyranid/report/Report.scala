@@ -377,16 +377,18 @@ case class Report( query:Query ) {
    * * *  Rendering
    */
 
-  def drawFilter( sf:Field ) = {
+  def drawFilter( run:Run, sf:Field ) = {
     val s = Scope( searchRec, filtering = true )
 
     <table id={ sf.id } class="tile" style="width:344px; height:54px;">
      <tr>
       <td class="label">{ sf.label }</td>
+      { sf.topActions( run ) }
      </tr>
      <tr>
       <td id="rGrpChooser">
-      { sf.ui( s ) }
+       { sf.ui( s ) }
+       { sf.bottomActions( run ) }
       </td>
      </tr>
     </table>
@@ -430,7 +432,7 @@ case class Report( query:Query ) {
        </table>
       </td>
       { query.grouping != null |* <td>{ query.grouping.drawFilter( run ) }</td> }
-      { query.searchFields.filter( _.showFilter ).map( f => <td>{ drawFilter( f ) }</td> ) }
+      { query.searchFields.filter( _.showFilter ).map( f => <td>{ drawFilter( run, f ) }</td> ) }
       <td style="width:410px; padding:0;"></td>
       <td></td>
       <td>
