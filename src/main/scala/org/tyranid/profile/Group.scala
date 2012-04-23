@@ -65,6 +65,7 @@ case class Grouping( ofEntity:MongoEntity,
 
   def selectGroup( report:Report, tid:String ) = report.searchRec( searchNameKey ) = tid
 
+  // TODO:  merge this with the regular filtering
   def drawFilter( run:Run ) =
     <table class="tile" style="width:140px; height:54px;">
      <tr>
