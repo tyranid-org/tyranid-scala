@@ -65,12 +65,13 @@ case class Sort( name:String, label:String, fields:(String,Int)* ) {
 abstract class Filter( val foreignKey:String ) {
   val label = "filter"
   val filterStyle = "width:344px; height:54px;"
+  def topActions( run:Run ) = NodeSeq.Empty
+  def bottomActions( run:Run ) = NodeSeq.Empty
     
   private lazy val searchNameKey = Search.Filter.makeSearchName( foreignKey )
 
   def selectedFilter( report:Report ) = report.searchRec.s( searchNameKey )
   def selectedFilter( report:Report, value:String ) = report.searchRec( searchNameKey ) = value
-    
     
   def filterValues:Seq[ DBObject ]
   
@@ -78,10 +79,12 @@ abstract class Filter( val foreignKey:String ) {
     <table class="tile" style={ filterStyle }>
      <tr>
       <td class="label">{ label }</td>
+      { topActions( run ) }
      </tr>
      <tr>
       <td id="rGrpChooser">
       { Select( "rFilter", selectedFilter( run.report ), ( "" -> "-Please Select-" ) +: filterValues.map( v => ( v.s( '_id ), v.s( 'name ) ) ) ) }
+      { bottomActions( run ) }
       </td>
      </tr>
     </table>
