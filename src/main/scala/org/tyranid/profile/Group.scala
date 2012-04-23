@@ -34,8 +34,6 @@ import org.tyranid.web.Weblet
 
 /*
 
-      +. move group data in Report to a new case class on Report
-
       +. move the ^^^ case class to searchRec ?
 
          where does this happen ?
@@ -44,12 +42,24 @@ import org.tyranid.web.Weblet
 
          since this is hackish, probably best way to implement this is to override queryGroups
 
+      +. what if you have more than one Grouping ?
+
+         ... need to associate the Grouping with the Field, not with the Report ?
+
+         +. move Grouping from Query -> Field
+
+         +. move GroupData from Report -> ... searchRec ?
+
+         +. generate the group control with an ID, and use that ID to pass in the ID on jQuery calls
+
+
+
+      +. add user groups
+
       +. group types:
 
          in-network         vs. out-of-network     ( monitored vs. connection group )
          intra-organization vs. inter-organization
-
-      +. add user groups
 
       +. implement monitoring groups in freight iq
 
@@ -71,7 +81,6 @@ case class GroupData( report:Report ) {
     latestGroups
   }
   def groupsFor( id:AnyRef ) = groups.filter( _.a_?( 'ids ).contains( id ) ).map( _.s( 'name ) ).mkString( ", " )
-
 }
 
 case class GroupingAddBy( label:String, keys:String* ) {
