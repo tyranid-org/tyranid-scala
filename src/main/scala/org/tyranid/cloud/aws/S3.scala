@@ -131,6 +131,15 @@ object S3 {
     }
   }
   
+  def exists( bucket:S3Bucket, key:String ) = {
+    try {
+      s3.getObject( bucket.name, key ) != null
+    } catch {
+      case e:com.amazonaws.AmazonClientException =>
+        false
+    }
+  }
+  
   def getObject( bucket:S3Bucket, key:String ) = {
     s3.getObject( new GetObjectRequest( bucket.name, key ) )
   }  
