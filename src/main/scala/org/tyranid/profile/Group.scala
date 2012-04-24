@@ -34,19 +34,18 @@ import org.tyranid.web.Weblet
 
 /*
 
-      +. move GroupData to searchRec ?
+      +. add simple Scope accessors
 
-         a potential problem with this is that regular PathFields will use the Domain to determine how to interact with the searchRec, they don't usually look at Search
+         scope.s( f )           instead of scope.rec.s( f.va.name )
+         scope.remove( f )
 
-      +. what if you have more than one Grouping ?
 
-         ... need to associate the Grouping with the Field, not with the Report ?
+      +. move GroupData from Report -> searchRec ?
 
-         +. move Grouping from Query -> Field
+         PROBLEM:  regular PathFields will use the Domain to determine how to interact with the searchRec, they don't usually look at Search
 
-         +. move GroupData from Report -> ... searchRec ?
+         ?.  add a layer between 
 
-         +. generate the group control with an ID, and use that ID to pass in the ID on jQuery calls
 
       +. add user groups
 

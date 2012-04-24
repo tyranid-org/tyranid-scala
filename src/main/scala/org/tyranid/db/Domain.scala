@@ -92,7 +92,7 @@ trait Domain extends Valid {
   protected def commonExtract( s:Scope, f:PathField ) =
     f.search match {
     case Search.Exists =>
-      val v = T.web.req.b( f.id )
+      val v = T.web.b( f.id )
 
       if ( v ) s.rec( f.va.name ) = true
       else     s.rec.remove( f.va.name )
@@ -115,7 +115,7 @@ trait Domain extends Valid {
     
   def extract( s:Scope, f:PathField ) =
     if ( !commonExtract( s, f ) ) {
-      val v = T.web.req.s( f.id )
+      val v = T.web.s( f.id )
 
       if ( v.notBlank ) s.rec( f.va.name ) = fromString( v )
       else              s.rec.remove( f.va.name )
@@ -229,17 +229,17 @@ object DbText extends DbTextLike {
 trait LimitedText extends DbTextLike {
   val len:Int
 
+	lazy val sqlName = "CHAR(" + len + ")"
+
   override def validations =
     ( ( scope:Scope ) => scope.s.filter( s => s.notBlank && s.length > len ).map( s => Invalid( scope, "Too long (max " + len + " " + "character".plural( len ) + ")." ) ) ) ::
     super.validations
 }
 
-case class DbChar( len:Int ) extends LimitedText {
-	val sqlName = "CHAR(" + len + ")"
-}
+case class DbChar( len:Int ) extends LimitedText
 
 case class DbVarChar( len:Int ) extends LimitedText {
-	val sqlName = "VARCHAR(" + len + ")"
+	override lazy val sqlName = "VARCHAR(" + len + ")"
 }
 
 /**
@@ -247,8 +247,6 @@ case class DbVarChar( len:Int ) extends LimitedText {
  */
 case class DbLowerChar( len:Int ) extends LimitedText {
   override val lowercase = true
-
-	val sqlName = "CHAR(" + len + ")"
 }
 
 /**
@@ -256,8 +254,6 @@ case class DbLowerChar( len:Int ) extends LimitedText {
  */
 case class DbUpperChar( len:Int ) extends LimitedText {
   override val uppercase = true
-
-	val sqlName = "CHAR(" + len + ")"
 }
 
 object DbPassword extends DbVarChar( 64 ) {
@@ -467,8 +463,6 @@ case class DbArray( of:Domain ) extends Domain {
 
 case class DbTid( of:Entity* ) extends LimitedText {
   val len = 32
-
-	val sqlName = "CHAR(" + len + ")"
 
   override val isLink = true
 

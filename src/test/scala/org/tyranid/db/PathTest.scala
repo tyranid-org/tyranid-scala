@@ -135,14 +135,14 @@ class PathSuite extends FunSuite {
 
     val pvs = (
       for ( d <- data ) yield
-        PathValue( Path.parse( view, d._1 ), d._2 ) ).sorted
+        PathValue( view.path( d._1 ), d._2 ) ).sorted
 
     val pvs2 = PathValue.fromDbObject( view, PathValue.toDbObject( pvs ) ).toSeq.sorted.toArray
 
     assert( pvs === pvs2 )
   }
 
-  test( "pathGet" ) {
+  test( "pathAccessors" ) {
 
     val obj = Widget.make
     val v = obj.view
@@ -152,12 +152,30 @@ class PathSuite extends FunSuite {
     obj( 'tags )   = Mlist( "acme", "fun" )
     obj( 'prices ) = Mlist( Mobj( "aid" -> 3, "price" -> 1.0 ), Mobj( "price" -> 2.0 ) )
 
-    assert( Path.parse( v, "name"            ).get( obj ) == "test" )
-    assert( Path.parse( v, "dims.height"     ).get( obj ) == 20 )
-    assert( Path.parse( v, "tags.0"          ).get( obj ) == "acme" )
-    assert( Path.parse( v, "prices.1.price"  ).get( obj ) == 2.0 )
-    assert( Path.parse( v, "prices.0.price"  ).get( obj ) == 1.0 )
-    assert( Path.parse( v, "prices.3a.price" ).get( obj ) == 1.0 )
+    assert( v.path( "name"            ).get( obj ) == "test" )
+    assert( v.path( "dims.height"     ).get( obj ) == 20 )
+    assert( v.path( "tags.0"          ).get( obj ) == "acme" )
+    assert( v.path( "prices.1.price"  ).get( obj ) == 2.0 )
+    assert( v.path( "prices.0.price"  ).get( obj ) == 1.0 )
+    assert( v.path( "prices.3a.price" ).get( obj ) == 1.0 )
+
+    v.path( "name" ).set( obj, "test2" )
+    assert( v.path( "name" ).s( obj ) == "test2" )
+
+    v.path( "name" ).remove( obj )
+    assert( v.path( "name" ).get( obj ) == null )
+
+    v.path( "tags.0" ).set( obj, "widget" )
+    assert( v.path( "tags.0" ).get( obj ) == "widget" )
+
+    v.path( "tags.0" ).remove( obj )
+    assert( v.path( "tags.0" ).get( obj ) == null )
+
+    v.path( "prices.3a.price" ).set( obj, 1.1 )
+    assert( v.path( "prices.3a.price" ).get( obj ) == 1.1 )
+
+    v.path( "prices.3a.price" ).remove( obj )
+    assert( v.path( "prices.3a.price" ).get( obj ) == null )
   }
 
   test( "display" ) {
@@ -178,10 +196,10 @@ class PathSuite extends FunSuite {
     val rec = Widget.make
     rec( 'prices ) = Mlist( Mobj( "aid" -> 3, "price" -> 1.0 ), Mobj( "price" -> 2.0 ) )
 
-    assert( Path.parse( rec.view, "prices.0.price" ).aidName_( rec ) === "prices_3a_price" )
+    assert( rec.view.path( "prices.0.price" ).aidName_( rec ) === "prices_3a_price" )
 
     // falls back to array index if aid isn't present
-    assert( Path.parse( rec.view, "prices.1.price" ).aidName_( rec ) === "prices_1_price" )
+    assert( rec.view.path( "prices.1.price" ).aidName_( rec ) === "prices_1_price" )
   }
 
   test( "scopePaths" ) {

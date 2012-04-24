@@ -176,10 +176,10 @@ trait Path extends Pathable {
 
   def pathName = name
 
-  def get( rec:Record ):Any = {
+  def follow( rec:Record, steps:Int ):Any = {
 
     var cur:Any = rec
-    for ( pi <- 0 until pathSize )
+    for ( pi <- 0 until steps )
       cur =
         pathAt( pi ) match {
         case va:ViewAttribute => cur match {
@@ -192,6 +192,38 @@ trait Path extends Pathable {
         }
 
     cur
+  }
+
+  def get( rec:Record ):Any = follow( rec, pathSize )
+
+  def set( rec:Record, v:Any ) {
+
+    val cur = follow( rec, pathSize - 1 )
+
+    pathAt( pathSize - 1 ) match {
+    case va:ViewAttribute => cur match {
+                             case o:BsonObject    => o( va.name ) = v
+                             case o:BasicDBObject => o( va.name ) = v
+                             case _               => problem( "couldn't set value on path ... " + name + " = " + v.safeString )
+                             }
+    case ai:ArrayIndex    => cur.asInstanceOf[BasicDBList].set( ai.idx, v.asInstanceOf[AnyRef] )
+    case aid:ArrayId      => problem( "paths ending with an aid cannot be set (yet)" )
+    }
+  }
+
+  def remove( rec:Record ) {
+
+    val cur = follow( rec, pathSize - 1 )
+
+    pathAt( pathSize - 1 ) match {
+    case va:ViewAttribute => cur match {
+                             case o:BsonObject    => o.remove( va.name )
+                             case o:BasicDBObject => o.remove( va.name )
+                             case _               => problem( "couldn't remove from path ... " + name )
+                             }
+    case ai:ArrayIndex    => cur.asInstanceOf[BasicDBList].set( ai.idx, null )
+    case aid:ArrayId      => problem( "paths ending with an aid cannot be removed (yet)" )
+    }
   }
 
   // TODO:  merge the functionality below with what is in Bson and Record ?
