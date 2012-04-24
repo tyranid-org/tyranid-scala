@@ -31,6 +31,7 @@ import org.tyranid.db.{ Record, Path, Scope, View, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
+import org.tyranid.profile.Grouping
 import org.tyranid.report.{ Report, Run }
 import org.tyranid.web.WebContext
 
@@ -139,7 +140,7 @@ object Search {
     val name = "grp"
 
     def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) = {
-      val grouping = run.report.query.grouping
+      val grouping = f.grouping
       val group = grouping.selectedGroup( run.report )
       if ( group != null ) {
         val fk = grouping.foreignKey
@@ -230,6 +231,7 @@ trait Field {
   val data:Boolean
   val search:Search
   val showFilter:Boolean
+  val grouping:Grouping
 
   def mongoSearch( run:Run, searchObj:DBObject, value:Any ) =
     if ( search != null )
@@ -247,6 +249,7 @@ trait CustomField extends Field {
   val data = true
   val search:Search = null
   val showFilter:Boolean = false
+  val grouping = null
 
   val show = Show.Editable
   val default = None
@@ -271,6 +274,7 @@ case class PathField( baseName:String,
                       data:Boolean = true,
                       search:Search = null,
                       showFilter:Boolean = false,
+                      grouping:Grouping = null,
                       span:Int = 1,
                       inputOnly:Boolean = false,
                       focus:Boolean = false,
@@ -403,6 +407,7 @@ case class CustomTextSearchField( baseName:String, l:String = null, opts:Seq[(St
 
   val search = Search.Custom
   val showFilter = false
+  val grouping = null
   override val data = false
 
   val show = Show.Editable

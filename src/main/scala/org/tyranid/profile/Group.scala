@@ -28,17 +28,13 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.json.JqHtml
 import org.tyranid.report.{ Report, Run }
-import org.tyranid.ui.{ Select, Search }
+import org.tyranid.ui.{ Field, Select, Search }
 import org.tyranid.web.Weblet
 
 
 /*
 
-      +. move the ^^^ case class to searchRec ?
-
-         where does this happen ?
-
-           when we try to look them up...
+      +. move GroupData to searchRec ?
 
       +. what if you have more than one Grouping ?
 
@@ -61,7 +57,7 @@ import org.tyranid.web.Weblet
 
  */
 
-case class GroupData( report:Report ) {
+case class GroupData( report:Report, gf:Field ) {
 
   private var latestGroups:Seq[MongoRecord] = null
 
@@ -72,7 +68,7 @@ case class GroupData( report:Report ) {
   def resetGroups { latestGroups = null }
   def groups = {
     if ( latestGroups == null )
-      latestGroups = report.query.grouping.queryGroups.toSeq
+      latestGroups = gf.grouping.queryGroups.toSeq
 
     latestGroups
   }
@@ -102,7 +98,7 @@ case class Grouping( ofEntity:MongoEntity,
   def selectGroup( report:Report, tid:String ) = report.searchRec( searchNameKey ) = tid
 
   // TODO:  merge this with the regular filtering
-  def drawFilter( run:Run ) =
+  def drawFilter( run:Run, f:Field ) =
     <table class="tile" style="width:140px; height:54px;">
      <tr>
       <td class="label">view group</td>
@@ -237,19 +233,23 @@ case class Grouping( ofEntity:MongoEntity,
     </div>
   }
 
-  def handle( weblet:Weblet, report:Report ):Boolean = {
+  def handle( weblet:Weblet, report:Report, gf:Field ):Boolean = {
     val web = T.web
     val query = report.query
     val sg = selectedGroup( report )
 
     weblet.rpath match {
-    case "/groups" =>
-      selectGroup( report, web.s( 'id ) )
-      web.res.html( report.innerDraw )
-
     case "/group" =>
       report.groupData.resetGroups
       web.js( JqHtml( "#rGrpDlg", drawPanel( report ) ) )
+
+    case "/group/select" =>
+      selectGroup( report, web.s( 'id ) )
+      web.res.html( report.innerDraw )
+
+    case "/group/dlgSelect" =>
+      selectGroup( report, web.s( 'id ) )
+      web.js( JqHtml( "#rGrpMain", drawGroup( report ) ) )
 
     case "/group/addGroup" =>
       web.js( JqHtml( "#rGrpMain", drawAddGroup( report ) ) )
@@ -296,7 +296,7 @@ case class Grouping( ofEntity:MongoEntity,
     case "/group/addBy" =>
       val id = web.s( 'v )
       report.groupData.groupAddBy = null
-      report.query.grouping.addBys.find( _.id == id ).foreach { report.groupData.groupAddBy = _ }
+      gf.grouping.addBys.find( _.id == id ).foreach { report.groupData.groupAddBy = _ }
       web.js( JqHtml( "#rGrpAddBox", drawAddBy( report ) ) )
 
     case "/group/addMember" =>
@@ -349,10 +349,6 @@ case class Grouping( ofEntity:MongoEntity,
 
     case "/group/toggleAddBy" =>
       report.groupData.groupShowAddBy = !report.groupData.groupShowAddBy
-      web.js( JqHtml( "#rGrpMain", drawGroup( report ) ) )
-
-    case "/group/select" =>
-      selectGroup( report, web.s( 'id ) )
       web.js( JqHtml( "#rGrpMain", drawGroup( report ) ) )
 
     case "/group/addSearch" =>

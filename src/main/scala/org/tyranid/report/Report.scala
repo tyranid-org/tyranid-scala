@@ -81,9 +81,7 @@ trait Query {
   lazy val view = entity.makeView
 
   lazy val boundFields = {
-    val allFields =
-      fields ++
-      ( grouping != null |* List( new PathField( grouping.foreignKey, l = "Group", data = false, search = Search.Group ) ) )
+    val allFields = fields
 
     for ( f <- allFields )
       f match {
@@ -106,6 +104,7 @@ trait Query {
 
   lazy val dataFields:Seq[Field]   = boundFields.filter( _.data )
   lazy val searchFields:Seq[Field] = boundFields.filter( _.search != null )
+  lazy val groupFields:Seq[Field]  = boundFields.filter( _.grouping != null )
 
   lazy val allFieldsMap = {  
     val map = mutable.Map[String,Field]()
@@ -152,8 +151,6 @@ trait Query {
     //"Group",          // multi-select
     //"Connection"      // multi-select
   //)
-
-  val grouping:Grouping = null
 
   lazy val init =
     Query.byName( name ) = this
@@ -370,7 +367,7 @@ case class Report( query:Query ) {
    * * *  Groups
    */
 
-  lazy val groupData = GroupData( this )
+  lazy val groupData = GroupData( this, query.groupFields.head )
 
 
   /*
@@ -423,7 +420,7 @@ case class Report( query:Query ) {
             { ( query.hasSearch        |* <td><button id="rSearch" class="greyBtn">Search</button></td> ) ++
                                           <td>{ Button.btn( "rPrev", "Prev", disabled = offset == 0 ) }</td> ++
                                           <td>{ Button.btn( "rNext", "Next", disabled = !hasNext ) }</td> ++
-              ( query.grouping != null && !B.PRODUCTION |* <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
+              ( query.groupFields.nonEmpty && !B.PRODUCTION |* <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
             { query.extraActions } 
            </tr>
           </table>
@@ -431,7 +428,7 @@ case class Report( query:Query ) {
         </tr>
        </table>
       </td>
-      { query.grouping != null |* <td>{ query.grouping.drawFilter( run ) }</td> }
+      { query.groupFields.map( f => <td>{ f.grouping.drawFilter( run, f ) }</td> ) }
       { query.searchFields.filter( _.showFilter ).map( f => <td>{ drawFilter( run, f ) }</td> ) }
       <td style="width:410px; padding:0;"></td>
       <td></td>
@@ -475,10 +472,10 @@ case class Report( query:Query ) {
   def draw =
     <head>
      <script src={ B.buildPrefix + "/js/report.js" } type="text/javascript"/>
-     { query.grouping != null |* <script src={ B.buildPrefix + "/js/tag.js" } charset="utf-8"></script> }
+     { query.groupFields.nonEmpty |* <script src={ B.buildPrefix + "/js/tag.js" } charset="utf-8"></script> }
      <script>{ Unparsed( "window.reportObj = { qn:'" + query.name + "', id:'" + id + "' };" ) }</script>
     </head> ++
-    { query.grouping != null |* query.grouping.draw( this ) } ++
+    { query.groupFields.map( _.grouping.draw( this ) ) } ++
     <div class="report greyBox" id={ id }>
      { recalcFields }
      { innerDraw }
@@ -641,7 +638,10 @@ object Reportlet extends Weblet {
       report.onField = web.req.s( 'v )
       web.res.ok
 
-    case _ if query.grouping != null && query.grouping.handle( this, report ) =>
+    case s if s.startsWith( "/group" ) =>
+      var gf = query.groupFields.find( _.id == web.s( 'gfid ) ).getOrElse( query.groupFields.nonEmpty ? query.groupFields( 0 ) | null )
+      if ( gf == null || !gf.grouping.handle( this, report, gf ) )
+        _404
 
     case _ =>
       _404

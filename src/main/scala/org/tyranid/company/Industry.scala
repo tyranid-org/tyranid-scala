@@ -96,7 +96,7 @@ object GicsIndustry extends RamEntity( tid = "a0O3" ) {
   "name"            is DbChar(40)         is 'label;
 
   static(
-  (  "_id",   "name" ),
+  (  "_id", "name" ),
   ( 101010, "Energy Equipment & Services" ),
   ( 101020, "Oil, Gas & Consumable Fuels" ),
   ( 151010, "Chemicals" ),
@@ -178,20 +178,20 @@ object LinkedInCategory extends RamEntity( tid = "a0O4" ) {
 
   static(
   ( "_id", "code", "name" ),
-  (     1, "agr", "Agriculture" ),
-  (     2, "art", "Arts" ),
+  (     1, "agr",  "Agriculture" ),
+  (     2, "art",  "Arts" ),
   (     3, "cons", "Construction" ),
   (     4, "corp", "Corporate" ),
-  (     5, "edu", "Education" ),
-  (     6, "fin", "Finance" ),
+  (     5, "edu",  "Education" ),
+  (     6, "fin",  "Finance" ),
   (     7, "good", "Goods" ),
-  (     8, "gov", "Government" ),
+  (     8, "gov",  "Government" ),
   (     9, "hlth", "Healthcare" ),
-  (    10, "leg", "Legal" ),
-  (    11, "man", "Manufacturing" ),
-  (    12, "med", "Media" ),
-  (    13, "org", "Organization" ),
-  (    14, "rec", "Recreation" ),
+  (    10, "leg",  "Legal" ),
+  (    11, "man",  "Manufacturing" ),
+  (    12, "med",  "Media" ),
+  (    13, "org",  "Organization" ),
+  (    14, "rec",  "Recreation" ),
   (    15, "serv", "Services" ),
   (    16, "tech", "Technology" ),
   (    17, "tran", "Transportation" ) )
