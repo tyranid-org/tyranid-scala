@@ -369,6 +369,8 @@ case class Report( query:Query ) {
 
   lazy val groupData = GroupData( this, query.groupFields.head )
 
+  def groupDataFor( gf:Field ) = groupData // TODO:  temporary!
+
 
   /*
    * * *  Rendering
@@ -428,7 +430,7 @@ case class Report( query:Query ) {
         </tr>
        </table>
       </td>
-      { query.groupFields.map( f => <td>{ f.grouping.drawFilter( run, f ) }</td> ) }
+      { query.groupFields.map( groupDataFor ).map( gd => <td>{ gd.drawFilter }</td> ) }
       { query.searchFields.filter( _.showFilter ).map( f => <td>{ drawFilter( run, f ) }</td> ) }
       <td style="width:410px; padding:0;"></td>
       <td></td>
@@ -475,7 +477,7 @@ case class Report( query:Query ) {
      { query.groupFields.nonEmpty |* <script src={ B.buildPrefix + "/js/tag.js" } charset="utf-8"></script> }
      <script>{ Unparsed( "window.reportObj = { qn:'" + query.name + "', id:'" + id + "' };" ) }</script>
     </head> ++
-    { query.groupFields.map( _.grouping.draw( this ) ) } ++
+    { query.groupFields.map( gf => groupDataFor( gf ).draw ) } ++
     <div class="report greyBox" id={ id }>
      { recalcFields }
      { innerDraw }
@@ -639,8 +641,8 @@ object Reportlet extends Weblet {
       web.res.ok
 
     case s if s.startsWith( "/group" ) =>
-      var gf = query.groupFields.find( _.id == web.s( 'gfid ) ).getOrElse( query.groupFields.nonEmpty ? query.groupFields( 0 ) | null )
-      if ( gf == null || !gf.grouping.handle( this, report, gf ) )
+      var gf = query.groupFields.find( _.id == web.s( 'gf ) ).getOrElse( query.groupFields.nonEmpty ? query.groupFields( 0 ) | null )
+      if ( gf == null || !report.groupDataFor( gf ).handle( this ) )
         _404
 
     case _ =>

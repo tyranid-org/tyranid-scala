@@ -141,7 +141,7 @@ object Search {
 
     def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) = {
       val grouping = f.grouping
-      val group = grouping.selectedGroup( run.report )
+      val group = run.report.groupDataFor( f ).selectedGroup
       if ( group != null ) {
         val fk = grouping.foreignKey
         searchObj( fk ) = Mobj( $in -> group.a_?( grouping.listKey ) )
