@@ -172,28 +172,29 @@ object GicsIndustry extends RamEntity( tid = "a0O3" ) {
 object LinkedInCategory extends RamEntity( tid = "a0O4" ) {
   override lazy val dbName = "businessCategories"
 
-  "_id"    is DbChar(8)   is 'id;
+  "_id"    is DbInt       is 'id; // TODO:  don't really need this, code could be the id but RamEntities don't support character IDs yet
+  "code"   is DbChar(8)   ;
   "name"   is DbChar(50)  is 'label;
 
   static(
-  (  "_id", "name" ),
-  (  "agr", "Agriculture" ),
-  (  "art", "Arts" ),
-  ( "cons", "Construction" ),
-  ( "corp", "Corporate" ),
-  (  "edu", "Education" ),
-  (  "fin", "Finance" ),
-  ( "good", "Goods" ),
-  (  "gov", "Government" ),
-  ( "hlth", "Healthcare" ),
-  (  "leg", "Legal" ),
-  (  "man", "Manufacturing" ),
-  (  "med", "Media" ),
-  (  "org", "Organization" ),
-  (  "rec", "Recreation" ),
-  ( "serv", "Services" ),
-  ( "tech", "Technology" ),
-  ( "tran", "Transportation" ) )
+  ( "_id", "code", "name" ),
+  (     1, "agr", "Agriculture" ),
+  (     2, "art", "Arts" ),
+  (     3, "cons", "Construction" ),
+  (     4, "corp", "Corporate" ),
+  (     5, "edu", "Education" ),
+  (     6, "fin", "Finance" ),
+  (     7, "good", "Goods" ),
+  (     8, "gov", "Government" ),
+  (     9, "hlth", "Healthcare" ),
+  (    10, "leg", "Legal" ),
+  (    11, "man", "Manufacturing" ),
+  (    12, "med", "Media" ),
+  (    13, "org", "Organization" ),
+  (    14, "rec", "Recreation" ),
+  (    15, "serv", "Services" ),
+  (    16, "tech", "Technology" ),
+  (    17, "tran", "Transportation" ) )
 }
 
 object Industry extends RamEntity( tid = "a0O5" ) {

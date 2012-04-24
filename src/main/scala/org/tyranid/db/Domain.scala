@@ -528,9 +528,9 @@ case class DbLink( toEntity:Entity ) extends Domain {
 
 	override def see( v:Any ) =
 		v match {
-		case null                                            => ""
+		case null => ""
     case s:String if toEntity.idAtt.flatten( !_.domain.isInstanceOf[DbTextLike], toEntity.problem( "embedded entities don't have IDs." ) ) => s
-		case n                                               => toEntity.labelFor( n )
+		case n    => toEntity.labelFor( n )
 		}
 
   override def cell( s:Scope, f:PathField ) = Text( see( f.path.get( s.rec ) ) )

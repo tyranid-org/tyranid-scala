@@ -22,6 +22,7 @@ import java.net.InetAddress
 import scala.xml.NodeSeq
 
 import org.cometd.bayeux.server.BayeuxServer
+import org.clapper.classutil.ClassFinder
 
 import com.braintreegateway.BraintreeGateway
 
@@ -189,4 +190,13 @@ trait Bootable {
   def getS3Bucket( prefix:String ): S3Bucket = s3Buckets( prefix + envSuffix ) 
   
   def bucket( bucket:S3Bucket ) = s3Buckets( bucket.prefix ) = bucket
+  
+  def initEntities {
+    val finder = ClassFinder()
+    val classes = finder.getClasses
+    val mongoEntities = ClassFinder.concreteSubclasses("org.tyranid.db.Entity", classes)
+    mongoEntities.foreach {
+      c => if ( !c.name.contains( ".test." ) ) ( Class.forName( c.name ) )
+    }
+  }
 }

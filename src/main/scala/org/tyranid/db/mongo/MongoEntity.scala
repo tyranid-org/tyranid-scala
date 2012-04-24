@@ -125,12 +125,12 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
        map( obj => ( obj( '_id ), obj s labelName ) )
   }
 
-  def labelFor( id:Any ) =
+  def labelFor( id:Any ):String =
     if ( isStatic ) {
       staticLabelFor( id.asInstanceOf[Long] )
     } else {
       // TODO:  this should be labelAtt.dbName, but dbName by default is underscore-upper, and there is no MongoAttribute
-      val labelName = labelAtt.map( _.name ).getOrElse { problem( "missing a label attribute" ) }
+      val labelName = labelAtt.map( _.name ).getOrElse { return idToTid( id ) /* problem( "missing a label attribute" ) */ }
       val obj = db.findOne( Mobj( "_id" -> id ), Mobj( labelName -> 1 ) )
 
       if ( obj != null ) obj.s( labelName )
