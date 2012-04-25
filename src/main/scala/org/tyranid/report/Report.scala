@@ -102,7 +102,7 @@ trait Query {
 
   val fields:Seq[Field]
 
-  lazy val dataFields:Seq[Field]   = boundFields.filter( _.data )
+  lazy val dataFields:Seq[Field]   = boundFields.filter( f => f.data && f.show != Show.Hidden )
   lazy val searchFields:Seq[Field] = boundFields.filter( _.search != null )
   lazy val groupFields:Seq[Field]  = boundFields.filter( _.search.isInstanceOf[Search.Group] )
 
