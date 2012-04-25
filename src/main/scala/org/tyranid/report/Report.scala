@@ -257,7 +257,7 @@ case class Report( query:Query ) {
       sf.search match {
       case sg:Search.Group =>
         val gd = GroupData( this, sf )
-        sf.default foreach { d => gd.value = d() }
+        sf.default foreach { d => gd.selectedGroupTid = d()._s }
         rec( sf.name ) = gd
 
       case _ =>
@@ -267,6 +267,13 @@ case class Report( query:Query ) {
 
     rec 
   }
+
+  def clearSearchRec =
+    for ( sf <- query.searchFields )
+      sf.search match {
+      case sg:Search.Group => searchRec( sf.name ).as[GroupData].selectedGroupTid = ""
+      case _               => searchRec.remove( sf.name )
+      }
 
   @volatile var sort:Sort = {
 
@@ -544,7 +551,7 @@ object Reportlet extends Weblet {
       query.init
 
       val s = Scope( report.searchRec )
-      report.searchRec.clear
+      report.clearSearchRec
       query.searchFields.foreach { _.extract( s ) }
 
       if ( query.orderBy.nonEmpty ) {

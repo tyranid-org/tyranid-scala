@@ -440,3 +440,4 @@ case class CustomTextSearchField( baseName:String, l:String = null, opts:Seq[(St
   def matchesSearch( run:Run, value:Any, rec:Record ) = true
 }
 
+

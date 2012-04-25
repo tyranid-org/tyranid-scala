@@ -80,7 +80,7 @@ trait Domain extends Valid {
     f.search match {
     case sg:Search.Group =>
       s.get( f ) match {
-      case gd:GroupData => gd.value
+      case gd:GroupData => gd.selectedGroupTid
       case v            => v
       }
 
@@ -91,7 +91,7 @@ trait Domain extends Valid {
     f.search match {
     case sg:Search.Group =>
       s.get( f ) match {
-      case gd:GroupData => gd.value = v
+      case gd:GroupData => gd.selectedGroupTid = v._s
       case v            => s.set( f, v )
       }
 
@@ -102,7 +102,7 @@ trait Domain extends Valid {
     f.search match {
     case sg:Search.Group =>
       s.get( f ) match {
-      case gd:GroupData => gd.value = null
+      case gd:GroupData => gd.selectedGroupTid = null
       case v            => s.remove( f )
       }
 
