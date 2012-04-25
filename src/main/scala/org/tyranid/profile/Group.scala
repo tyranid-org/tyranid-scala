@@ -34,19 +34,6 @@ import org.tyranid.web.Weblet
 
 /*
 
-      +. add simple Scope accessors
-
-         scope.s( f )           instead of scope.rec.s( f.va.name )
-         scope.remove( f )
-
-
-      +. move GroupData from Report -> searchRec ?
-
-         PROBLEM:  regular PathFields will use the Domain to determine how to interact with the searchRec, they don't usually look at Search
-
-         ?.  add a layer between 
-
-
       +. add user groups
 
       +. group types:
@@ -58,16 +45,6 @@ import org.tyranid.web.Weblet
 
  */
 
-case class Grouping( ofEntity:MongoEntity,
-                     groupEntity:MongoEntity, foreignKey:String, listKey:String, forKey:String, forValue: () => AnyRef,
-                     addBys:Seq[GroupingAddBy] = Nil ) {
-
-  lazy val searchNameKey = Search.Group.makeSearchName( foreignKey )
-
-  def queryGroups                         = groupEntity.db.find( Mobj( forKey -> forValue() ) ).map( o => groupEntity( o ) ).toSeq
-  def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) ).map( o => ofEntity( o ) ).toIterable
-}
-
 case class GroupingAddBy( label:String, keys:String* ) {
 
   val id = label.toIdentifier
@@ -75,7 +52,9 @@ case class GroupingAddBy( label:String, keys:String* ) {
 
 case class GroupData( report:Report, gf:Field ) {
 
-  def grouping = gf.grouping
+  def grouping = gf.search.as[Search.Group]
+
+  var value:Any = null
 
   private var latestGroups:Seq[MongoRecord] = null
 
@@ -298,7 +277,7 @@ case class GroupData( report:Report, gf:Field ) {
     case "/group/addBy" =>
       val id = web.s( 'v )
       groupAddBy = null
-      gf.grouping.addBys.find( _.id == id ).foreach { groupAddBy = _ }
+      grouping.addBys.find( _.id == id ).foreach { groupAddBy = _ }
       web.js( JqHtml( "#rGrpAddBox", drawAddBy ) )
 
     case "/group/addMember" =>

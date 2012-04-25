@@ -129,7 +129,7 @@ trait CommonFile extends Domain {
   override def ui( s:Scope, f:PathField ): NodeSeq = {
     <div class='thumbnail'>
       { 
-        val url = s.rec.s( f.va.name )
+        val url = s.s( f )
         
         if ( url notBlank )
           <a href="#" onclick={ Unparsed( "downloadFile( '" + url + "', event, 'vFileWindow'); return false;")}>Download File</a>

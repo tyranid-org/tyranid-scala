@@ -66,13 +66,13 @@ trait BsonObject extends Deep {
     }
   def a( key:String )   = apply( key ).asInstanceOf[BasicDBList]
 
-  def b( key:String )   = apply( key ).coerceBoolean
-  def d( key:String )   = apply( key ).coerceDouble
-  def i( key:String )   = apply( key ).coerceInt
-  def l( key:String )   = apply( key ).coerceLong
+  def b( key:String )   = apply( key )._b
+  def d( key:String )   = apply( key )._d
+  def i( key:String )   = apply( key )._i
+  def l( key:String )   = apply( key )._l
   //def r( key:String ) = apply( key ).asInstanceOf[Long]
-  def s( key:String )   = apply( key ).coerceString
-  def t( key:String )   = apply( key ).coerceDate
+  def s( key:String )   = apply( key )._s
+  def t( key:String )   = apply( key )._t
 
   def o_?( key:String ):BsonObject = {
     apply( key ) match {

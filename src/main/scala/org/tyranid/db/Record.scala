@@ -33,7 +33,7 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.logic.{ Invalid, Valid }
 import org.tyranid.report.Run
-import org.tyranid.ui.{ Search, UiObj }
+import org.tyranid.ui.{ PathField, Search, UiObj }
 
 
 /*
@@ -216,10 +216,10 @@ trait Record extends Valid with BsonObject {
   def rec( va:ViewAttribute ):Record
 
   def a( va:ViewAttribute ) = apply( va ).asInstanceOf[BasicDBList]
-  def b( va:ViewAttribute ) = apply( va ).asInstanceOf[Boolean]
-  def d( va:ViewAttribute ) = apply( va ).asInstanceOf[Double]
-  def i( va:ViewAttribute ) = apply( va ).asInstanceOf[Int]
-  def l( va:ViewAttribute ) = apply( va ).asInstanceOf[Long]
+  def b( va:ViewAttribute ) = apply( va )._b
+  def d( va:ViewAttribute ) = apply( va )._d
+  def i( va:ViewAttribute ) = apply( va )._i
+  def l( va:ViewAttribute ) = apply( va )._l
   //def r( va:ViewAttribute ) = apply( va ).asInstanceOf[Long] // r = regular expression
   def s( va:ViewAttribute ):String = {
     val v = apply( va )
@@ -233,7 +233,7 @@ trait Record extends Valid with BsonObject {
     }
     */
   }
-  def t( va:ViewAttribute ) = apply( va.name ).asInstanceOf[Date]
+  def t( va:ViewAttribute ) = apply( va.name )._t
 
 
   /*
@@ -263,7 +263,7 @@ trait Record extends Valid with BsonObject {
    */
   val invalids = mutable.BitSet()
 
-  var extraVaValidations:List[ ( ViewAttribute, ( Scope ) => Option[Invalid] ) ] = Nil
+  var extraVaValidations:List[ ( ViewAttribute, Scope => Option[Invalid] ) ] = Nil
 
   def invalids( scope:Scope ):Iterable[Invalid] = invalids( scope, view.vas )
 
@@ -318,6 +318,18 @@ trait Record extends Valid with BsonObject {
   def eye = Tid.eye( tid )
 }
 
+/*
+   Levels of Scope:
+
+   root  ... the topmost scope
+   db    ... what the closest non-embedded Record is relative to ( currently db scope == root scope, but this might change in the future )
+   field ... what the PathFields are relative to
+   va    ... the most detailed Scope
+
+
+   scope.s( f ) vs. scope.s
+
+ */
 case class Scope( rec:Record,
                   initialDraw:Boolean = false,
                   saving:Boolean = true,
@@ -326,19 +338,25 @@ case class Scope( rec:Record,
                   pathFromParent:Path = EmptyPath,
                   run:Run = null,
                   filtering:Boolean = false,
+                  vaScope:Boolean = false,
                   parent:Scope = null ) {
 
   def va    = Option( path.leaf )
   def s     = va.map( rec.s )
   def value = va.map( rec.apply )
 
-  def root:Scope =
+  @tailrec
+  final def root:Scope =
     if ( parent == null ) this
     else                  parent.root
 
+  final def fieldRec:Record =
+    if ( vaScope ) parent.fieldRec
+    else           rec
+
   def at( name:String ):Scope = at( rec.view.path( name ) )
 
-  def at( path:Path ):Scope = {
+  def at( path:Path, vaScope:Boolean = false ):Scope = {
     val plen = path.pathSize
 
     var r = rec
@@ -379,7 +397,7 @@ case class Scope( rec:Record,
       }
     }
 
-    copy( rec = r, path = path.slice( lastRecPi, plen ), pathFromParent = path.slice( 0, lastRecPi ), parent = this )
+    copy( rec = r, path = path.slice( lastRecPi, plen ), pathFromParent = path.slice( 0, lastRecPi ), parent = this, vaScope = vaScope )
   }
 
   def required = rec.hasSubmitted |* s.filter( _.isBlank ).map( s => Invalid( this, "Please fill in." ) )
@@ -415,6 +433,14 @@ case class Scope( rec:Record,
 
     Path.fromNodes( b )
   }
+
+  def get( f:PathField )        = f.path.get( fieldRec )
+  def set( f:PathField, v:Any ) = f.path.set( fieldRec, v )
+  def remove( f:PathField )     = f.path.remove( fieldRec )
+  def a_?( f:PathField )        = f.path.a_?( fieldRec )
+  def b( f:PathField )          = f.path.b( fieldRec )
+  def s( f:PathField )          = f.path.s( fieldRec )
+  def t( f:PathField )          = f.path.t( fieldRec )
 }
 
 

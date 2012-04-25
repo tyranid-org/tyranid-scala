@@ -80,7 +80,7 @@ class Address( override val obj:DBObject = Mobj() ) extends MongoRecord( Address
       
       latLong
     } else {
-      LatLong( longLat( 1 ).coerceDouble, longLat( 0 ).coerceDouble )
+      LatLong( longLat( 1 )._d, longLat( 0 )._d )
     }
   }
 

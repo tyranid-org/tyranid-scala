@@ -152,11 +152,11 @@ $( function() {
       sess.user = user
 
       user.extraVaValidations =
-        (user.view('email),
-          (scope: Scope) => {
+        ( user.view('email),
+          { scope:Scope =>
             B.User.db.exists(Mobj("email" -> user.s('email))) |*
               Some(Invalid(scope.at('email), "The \"" + user.s( 'email ) + "\" email address is already taken."))
-          }) ::
+          } ) ::
           Nil
 
       val ui = user.view.ui( "register" )

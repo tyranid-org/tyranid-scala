@@ -27,7 +27,7 @@ case class Invalid( scope:Scope, message:String ) {
 
 trait Valid {
 
-  def validations:List[ ( Scope ) => Option[Invalid] ] = Nil
+  def validations:List[ Scope => Option[Invalid] ] = Nil
 
 }
 

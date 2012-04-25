@@ -42,7 +42,7 @@ object GeoCode extends MongoEntity( tid = "a0Lt" ) {
 
     if ( obj != null ) {
       val coordinates = obj.a( 'c )
-      LatLong( lat = coordinates( 1 ).coerceDouble, long = coordinates( 0 ).coerceDouble )
+      LatLong( lat = coordinates( 1 )._d, long = coordinates( 0 )._d )
 
     } else {
       val latLong = B.google.geocode( canonicalAddress )

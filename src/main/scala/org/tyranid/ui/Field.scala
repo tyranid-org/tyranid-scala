@@ -29,9 +29,10 @@ import scala.xml.{ Node, NodeSeq, Unparsed }
 import org.tyranid.Imp._
 import org.tyranid.db.{ Record, Path, Scope, View, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
-import org.tyranid.profile.Grouping
+import org.tyranid.profile.GroupingAddBy
 import org.tyranid.report.{ Report, Run }
 import org.tyranid.web.WebContext
 
@@ -78,7 +79,7 @@ object Search {
     Subst,
     Gte,
     Lte,
-    Group,
+    //Group,
     Custom
   )
 
@@ -136,21 +137,26 @@ object Search {
       f.basePath.leaf.domain.compare( searchValue, f.basePath.get( rec ) ) <= 0
   }
 
-  case object Group  extends Search {
+  case class Group( ofEntity:MongoEntity,
+                    groupEntity:MongoEntity, foreignKey:String, listKey:String, forKey:String, forValue: () => AnyRef,
+                    addBys:Seq[GroupingAddBy] = Nil ) extends Search {
+    lazy val searchNameKey = makeSearchName( foreignKey )
     val name = "grp"
 
     def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) = {
-      val grouping = f.grouping
       val group = run.report.groupDataFor( f ).selectedGroup
       if ( group != null ) {
-        val fk = grouping.foreignKey
-        searchObj( fk ) = Mobj( $in -> group.a_?( grouping.listKey ) )
+        val fk = foreignKey
+        searchObj( fk ) = Mobj( $in -> group.a_?( listKey ) )
       }
     }
 
     def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) =
       // TODO:  implement this
       false
+
+    def queryGroups                         = groupEntity.db.find( Mobj( forKey -> forValue() ) ).map( o => groupEntity( o ) ).toSeq
+    def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) ).map( o => ofEntity( o ) ).toIterable
   }
 
   case object Custom extends Search {
@@ -160,7 +166,13 @@ object Search {
     def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) = false
   }
 
-  def by( name:String ) = values.find( _.name == name )
+  def by( name:String ) = {
+    if ( name == "grp" )
+      // this is a hack ... we can't instantiate the Search.Group because it's a case class, not a case object
+      Some( null )
+    else
+      values.find( _.name == name )
+  }
 
   def extract( name:String ):(String,Search) = {
     val idx = name.indexOf( "$" )
@@ -231,7 +243,6 @@ trait Field {
   val data:Boolean
   val search:Search
   val showFilter:Boolean
-  val grouping:Grouping
 
   def mongoSearch( run:Run, searchObj:DBObject, value:Any ) =
     if ( search != null )
@@ -274,7 +285,6 @@ case class PathField( baseName:String,
                       data:Boolean = true,
                       search:Search = null,
                       showFilter:Boolean = false,
-                      grouping:Grouping = null,
                       span:Int = 1,
                       inputOnly:Boolean = false,
                       focus:Boolean = false,
@@ -364,18 +374,19 @@ case class PathField( baseName:String,
     if ( inputOnly ) {
       va.att.domain.ui( pScope.at( path ), this )
     } else {
-      val scope = pScope.at( path )
+      val scope = pScope.at( path, vaScope = true )
       val invalids = va.invalids( scope )
       val invalid = !invalids.isEmpty
       val rec = scope.rec
       rec.invalids( va.index ) = !invalids.isEmpty
+      val att = va.att
       
-      va.att.domain.show( scope ) |*
+      att.domain.show( scope ) |*
       <div id={ va.name + "_c" } class={ "fieldc" + ( invalid |* " invalid" ) }>
        { if ( labelc ) 
-         <div class="labelc">{ va.label( rec, opts:_* ) }{ va.att.required |* <span class="required">*</span> }{ va.att.help != NodeSeq.Empty |* <span class="attHelp">{ va.att.help }</span><span class="helpIcon"></span> }</div>
+         <div class="labelc">{ va.label( rec, opts:_* ) }{ att.required |* <span class="required">*</span> }{ att.help != NodeSeq.Empty |* <span class="attHelp">{ att.help }</span><span class="helpIcon"></span> }</div>
        }
-       <div class={ "inputc" + va.att.domain.inputcClasses }>{ va.att.domain.ui( scope, this ) }{ create |* <span class="createNew"> <a href="#" class="tip" title="Create New">new</a></span> }</div>
+       <div class={ "inputc" + att.domain.inputcClasses }>{ att.domain.ui( scope, this ) }{ create |* <span class="createNew"> <a href="#" class="tip" title="Create New">new</a></span> }</div>
        <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
       </div>
     }

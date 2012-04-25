@@ -53,37 +53,37 @@ class ObjectMapImp[A]( map:scala.collection.Map[String,Any] ) {
 
   def b( key:String ) =
     map.get( key ) match {
-    case Some( v ) => v.coerceBoolean
+    case Some( v ) => v._b
     case None      => false
     }
 
   def d( key:String ) =
     map.get( key ) match {
-    case Some( v ) => v.coerceDouble
+    case Some( v ) => v._d
     case None      => 0.0
     }
 
   def i( key:String ) =
     map.get( key ) match {
-    case Some( v ) => v.coerceInt
+    case Some( v ) => v._i
     case None      => 0
     }
 
   def l( key:String ) =
     map.get( key ) match {
-    case Some( v ) => v.coerceLong
+    case Some( v ) => v._l
     case None      => 0L
     }
 
   def s( key:String ) =
     map.get( key ) match {
-    case Some( v ) => v.coerceString
+    case Some( v ) => v._s
     case None      => ""
     }
 
   def t( key:String ) =
     map.get( key ) match {
-    case Some( v ) => v.coerceDate
+    case Some( v ) => v._t
     case None      => null
     }
 }

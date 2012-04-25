@@ -31,7 +31,7 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.json.{ Js, JqHtml }
-import org.tyranid.profile.{ GroupData, Grouping, GroupingAddBy }
+import org.tyranid.profile.{ GroupData, GroupingAddBy }
 import org.tyranid.session.Session
 import org.tyranid.time.Time
 import org.tyranid.ui.{ Button, Checkbox, CustomField, Field, Glyph, Input, PathField, Search, Select, Show }
@@ -104,7 +104,7 @@ trait Query {
 
   lazy val dataFields:Seq[Field]   = boundFields.filter( _.data )
   lazy val searchFields:Seq[Field] = boundFields.filter( _.search != null )
-  lazy val groupFields:Seq[Field]  = boundFields.filter( _.grouping != null )
+  lazy val groupFields:Seq[Field]  = boundFields.filter( _.search.isInstanceOf[Search.Group] )
 
   lazy val allFieldsMap = {  
     val map = mutable.Map[String,Field]()
@@ -253,11 +253,19 @@ case class Report( query:Query ) {
 
   val searchRec = {
     val rec = query.entity.make
-    for ( sf <- query.searchFields;
-          default <- sf.default )
-      rec( sf.name ) = default()
+    for ( sf <- query.searchFields ) {
+      sf.search match {
+      case sg:Search.Group =>
+        val gd = GroupData( this, sf )
+        sf.default foreach { d => gd.value = d() }
+        rec( sf.name ) = gd
 
-     rec 
+      case _ =>
+        sf.default foreach { d => rec( sf.name ) = d() }
+      }
+    }
+
+    rec 
   }
 
   @volatile var sort:Sort = {
@@ -364,15 +372,6 @@ case class Report( query:Query ) {
 
 
   /*
-   * * *  Groups
-   */
-
-  lazy val groupData = GroupData( this, query.groupFields.head )
-
-  def groupDataFor( gf:Field ) = groupData // TODO:  temporary!
-
-
-  /*
    * * *  Rendering
    */
 
@@ -392,6 +391,8 @@ case class Report( query:Query ) {
      </tr>
     </table>
   }
+
+  def groupDataFor( gf:Field ) = searchRec( gf.name ).as[GroupData]
 
   def innerDraw = {
     val run = new Run( this )
@@ -430,7 +431,7 @@ case class Report( query:Query ) {
         </tr>
        </table>
       </td>
-      { query.groupFields.map( groupDataFor ).map( gd => <td>{ gd.drawFilter }</td> ) }
+      { query.groupFields.map( gf => <td>{ groupDataFor( gf ).drawFilter }</td> ) }
       { query.searchFields.filter( _.showFilter ).map( f => <td>{ drawFilter( run, f ) }</td> ) }
       <td style="width:410px; padding:0;"></td>
       <td></td>

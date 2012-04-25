@@ -45,7 +45,7 @@ case object DbMongoId extends Domain {
   override def recordTidToId( recordTid:String ) = new ObjectId( Base64.toBytes( recordTid ) )
 
   override def ui( s:Scope, f:PathField ) =
-    Input( f.id, s.rec.s( f.va.name ), ( f.effOpts ++ Seq( "class" -> "textInput" ) ):_*  )
+    Input( f.id, s.s( f ), ( f.effOpts ++ Seq( "class" -> "textInput" ) ):_*  )
 
   //override def inputcClasses = " select"
 

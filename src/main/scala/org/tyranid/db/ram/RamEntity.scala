@@ -92,7 +92,7 @@ case class RamEntity( tid:String ) extends Entity {
   def byId( id:Long ) = staticIdIndex.get( id )
 
   override def byRecordTid( recordTid:String ):Option[Tuple] =
-    byId( recordTidToId( recordTid ).coerceLong )
+    byId( recordTidToId( recordTid )._l )
 
   override def save( rec:Record )   = throw new UnsupportedOperationException
   override def delete( rec:Record ) = throw new UnsupportedOperationException

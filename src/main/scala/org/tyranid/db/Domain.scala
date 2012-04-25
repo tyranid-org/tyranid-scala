@@ -25,7 +25,8 @@ import org.tyranid.Imp._
 import org.tyranid.db.meta.Tid
 import org.tyranid.logic.{ Valid, Invalid }
 import org.tyranid.math.Base64
-import org.tyranid.time.{ Time }
+import org.tyranid.profile.GroupData
+import org.tyranid.time.Time
 import org.tyranid.ui.{ Checkbox, Glyph, Input, PathField, Search, Select, TextArea, ToggleLink, UiStyle }
 import org.tyranid.web.WebContext
 
@@ -75,6 +76,40 @@ trait Domain extends Valid {
   // TODO:  this could probably be named more generically
   def needsCaseInsensitiveSearch = false
 
+  def get( s:Scope, f:PathField ) =
+    f.search match {
+    case sg:Search.Group =>
+      s.get( f ) match {
+      case gd:GroupData => gd.value
+      case v            => v
+      }
+
+    case _ => s.get( f )
+    }
+
+  def set( s:Scope, f:PathField, v:Any ) =
+    f.search match {
+    case sg:Search.Group =>
+      s.get( f ) match {
+      case gd:GroupData => gd.value = v
+      case v            => s.set( f, v )
+      }
+
+    case _ => s.set( f, v )
+    }
+
+  def remove( s:Scope, f:PathField ) =
+    f.search match {
+    case sg:Search.Group =>
+      s.get( f ) match {
+      case gd:GroupData => gd.value = null
+      case v            => s.remove( f )
+      }
+
+    case _ => s.remove( f )
+    }
+
+
 
   /*
    * * *   F o r m s
@@ -83,7 +118,7 @@ trait Domain extends Valid {
   protected def commonUi( s:Scope, f:PathField, normal: => NodeSeq ) =
     f.search match {
     case Search.Exists =>
-      Checkbox( f.id, s.rec.b( f.va.name ) ) ++ f.labelUi
+      Checkbox( f.id, get( s, f )._b ) ++ f.labelUi
 
     case _  =>
       normal
@@ -94,8 +129,8 @@ trait Domain extends Valid {
     case Search.Exists =>
       val v = T.web.b( f.id )
 
-      if ( v ) s.rec( f.va.name ) = true
-      else     s.rec.remove( f.va.name )
+      if ( v ) set( s, f, true )
+      else     remove( s, f )
       true
     case _ =>
       false
@@ -103,7 +138,7 @@ trait Domain extends Valid {
 
   def ui( s:Scope, f:PathField ):NodeSeq =
     commonUi( s, f, {
-      val input = Input( f.id, s.rec s f.va.name, f.effOpts:_*  )
+      val input = Input( f.id, s.s( f ), f.effOpts:_*  )
 
       if ( f.focus )
         throw new RuntimeException( "TODO:  handle focus on load" )
@@ -117,8 +152,8 @@ trait Domain extends Valid {
     if ( !commonExtract( s, f ) ) {
       val v = T.web.s( f.id )
 
-      if ( v.notBlank ) s.rec( f.va.name ) = fromString( v )
-      else              s.rec.remove( f.va.name )
+      if ( v.notBlank ) set( s, f, fromString( v ) )
+      else              remove( s, f )
     }
 
   /**
@@ -131,7 +166,7 @@ trait Domain extends Valid {
    * * *   G r i d
    */
 
-  def cell( s:Scope, f:PathField ):NodeSeq = Text( f.path.s( s.rec ) )
+  def cell( s:Scope, f:PathField ):NodeSeq = Text( get( s, f )._s )
 }
 
 
@@ -140,12 +175,12 @@ trait Domain extends Valid {
  */
 
 abstract class DbIntish extends Domain {
-  override def idToRecordTid( v:Any )                = if ( v != null ) Base64.toString( v.coerceInt ) else null
+  override def idToRecordTid( v:Any )                = if ( v != null ) Base64.toString( v._i ) else null
   override def recordTidToId( recordTid:String ):Any = Base64.toInt( recordTid )
 
   override def fromString( s:String ) = s.trim.toInt
 
-  override def compare( v1:Any, v2:Any ) = v1.coerceInt - v2.coerceInt
+  override def compare( v1:Any, v2:Any ) = v1._i - v2._i
 }
 
 object DbInt extends DbIntish {
@@ -161,11 +196,11 @@ object DbIntSerial extends DbIntish {
 
 
 abstract class DbLongish extends Domain {
-  override def idToRecordTid( v:Any )                = if ( v != null ) Base64.toString( v.coerceLong ) else null
+  override def idToRecordTid( v:Any )                = if ( v != null ) Base64.toString( v._l ) else null
   override def recordTidToId( recordTid:String ):Any = Base64.toLong( recordTid )
 
   override def fromString( s:String ) = s.trim.toLong
-  override def compare( v1:Any, v2:Any ) = ( v1.coerceLong - v2.coerceLong ).toInt
+  override def compare( v1:Any, v2:Any ) = ( v1._l - v2._l ).toInt
 }
 
 object DbLong extends DbLongish {
@@ -213,7 +248,7 @@ object DbText extends DbTextLike {
 	val sqlName = "TEXT"
 	
   override def ui( s:Scope, f:PathField ):NodeSeq = {
-    val ta = TextArea( f.id, s.rec.s( f.va.name ), f.effOpts:_*  )
+    val ta = TextArea( f.id, get( s, f )._s, f.effOpts:_*  )
     
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -223,7 +258,7 @@ object DbText extends DbTextLike {
 	
   override def inputcClasses = "large"
 
-  override def cell( s:Scope, f:PathField ) = Unparsed( f.path.s( s.rec ).replace( "\n", "<br/>" ) )
+  override def cell( s:Scope, f:PathField ) = Unparsed( get( s, f )._s.replace( "\n", "<br/>" ) )
 }
 
 trait LimitedText extends DbTextLike {
@@ -260,7 +295,7 @@ object DbPassword extends DbVarChar( 64 ) {
 
   override def ui( s:Scope, f:PathField ) = {
     // Only specify the type of password if it is not specified   
-    val input = Input( f.id, s.rec.s( f.va.name ), ( if ( !f.opts.exists( _._1 == "type" ) ) ( f.effOpts :+ ( "type" -> "password" ) ) else f.effOpts ):_* )
+    val input = Input( f.id, get( s, f )._s, ( if ( !f.opts.exists( _._1 == "type" ) ) ( f.effOpts :+ ( "type" -> "password" ) ) else f.effOpts ):_* )
     
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -283,7 +318,7 @@ object DbPassword extends DbVarChar( 64 ) {
 object DbUrl extends DbVarChar( 256 ) {
 
   override def cell( s:Scope, f:PathField ) = {
-    val base = f.path.s( s.rec )
+    val base = get( s, f )._s
 
     try {
       <a href={ base.toUrl.toString }>{ base }</a>
@@ -322,15 +357,15 @@ object DbBoolean extends Domain {
 	  
   override def ui( s:Scope, f:PathField ) =
     f.uiStyle match {
-    case UiStyle.Toggle => ToggleLink( f.id, s.rec.b( f.va.name ), f.effOpts:_* )
-    case _              => Checkbox( f.id, s.rec b f.va.name, f.effOpts:_* ) ++ f.labelUi
+    case UiStyle.Toggle => ToggleLink( f.id, get( s, f )._b, f.effOpts:_* )
+    case _              => Checkbox( f.id, get( s, f )._b, f.effOpts:_* ) ++ f.labelUi
     }
     
   override def fromString( s:String ):Any = s.trim.toLaxBoolean
 
   override def inputcClasses = " boolean"
 
-  override def cell( s:Scope, f:PathField ) = f.path.b( s.rec ) |* Glyph.Checkmark
+  override def cell( s:Scope, f:PathField ) = get( s, f )._b |* Glyph.Checkmark
 }
 
 
@@ -366,7 +401,7 @@ trait DbDateLike extends Domain {
     super.validations
 
   override def ui( s:Scope, f:PathField ) = {
-    val input = Input( f.id, s.rec.t( f.va.name ).toDateStr, f.effOpts:_*  )
+    val input = Input( f.id, get( s, f )._t.toDateStr, f.effOpts:_*  )
 
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -377,7 +412,7 @@ trait DbDateLike extends Domain {
   override def fromString( s:String ):Any = s.trim.toLaxDate
 
   override def cell( s:Scope, f:PathField ):NodeSeq = {
-    val date = f.path.t( s.rec )
+    val date = get( s, f )._t
     Text( if ( date != null ) date.toDateStr else "" )
   }
 }
@@ -390,7 +425,7 @@ object DbDateTime extends DbDateLike {
   override def dateOnly = false
 
   override def ui( s:Scope, f:PathField ) = {
-    val input = Input( f.id, s.rec.t( f.va.name ).toDateTimeStr, f.effOpts:_*  )
+    val input = Input( f.id, get( s, f )._t.toDateTimeStr, f.effOpts:_*  )
 
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -401,7 +436,7 @@ object DbDateTime extends DbDateLike {
   override def fromString( s:String ):Any = s.trim.toLaxDateTime
 
   override def cell( s:Scope, f:PathField ):NodeSeq = {
-    val date = f.path.t( s.rec )
+    val date = get( s, f )._t
     Unparsed( "<nobr>" + ( if ( date != null ) date.toDateTimeStr else "" ) + "</nobr>" )
   }
 }
@@ -427,7 +462,7 @@ case class DbArray( of:Domain ) extends Domain {
     if ( f.path.tail.isInstanceOf[ArrayIndex] ) {
       of.cell( s, f )
     } else {
-      val arr = f.path.a_?( s.rec )
+      val arr = s.a_?( f )
 
       import scala.collection.JavaConversions._
       Unparsed( arr.map( v => of.see( v ) ).sorted.mkString( ",<br/>" ) )
@@ -437,7 +472,7 @@ case class DbArray( of:Domain ) extends Domain {
 
       /*
 
-  lazy val sells:String = obj.a_?( 'sellingCategories ).flatMap( id => Industry.byId( id.coerceInt ) ).map( _ s 'name ).distinct.sorted.mkString( ",<br/>" )
+  lazy val sells:String = obj.a_?( 'sellingCategories ).flatMap( id => Industry.byId( id._i ) ).map( _ s 'name ).distinct.sorted.mkString( ",<br/>" )
 
          issues
 
@@ -511,7 +546,7 @@ case class DbLink( toEntity:Entity ) extends Domain {
       
     val values = idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq
     
-    Select( f.id, s.rec s f.va,
+    Select( f.id, get( s, f )._s,
             ( "" -> "-Please Select-" ) +: values,
             f.scopeOpts( s ):_* )
   }
@@ -527,7 +562,7 @@ case class DbLink( toEntity:Entity ) extends Domain {
 		case n    => toEntity.labelFor( n )
 		}
 
-  override def cell( s:Scope, f:PathField ) = Text( see( f.path.get( s.rec ) ) )
+  override def cell( s:Scope, f:PathField ) = Text( see( get( s, f ) ) )
 }
 
 

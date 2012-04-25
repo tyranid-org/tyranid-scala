@@ -38,14 +38,14 @@ class AnyImp[T <: Any]( v:T ) {
 
   def toJsonStr = new org.tyranid.json.JsonString( v ).toString
 
-  def coerceBoolean:Boolean =
+  def _b:Boolean =
     v match {
     case b:java.lang.Boolean => b
     case s:String            => s.toLaxBoolean
     case null                => false
     }
 
-  def coerceDouble = 
+  def _d = 
     v match {
     case i:java.lang.Integer => i.doubleValue
     case d:java.lang.Number  => d.doubleValue
@@ -53,7 +53,7 @@ class AnyImp[T <: Any]( v:T ) {
     case null                => 0
     }
 
-  def coerceInt =
+  def _i =
     v match {
     case i:java.lang.Integer => i.intValue
     case n:java.lang.Number  => n.intValue
@@ -61,21 +61,21 @@ class AnyImp[T <: Any]( v:T ) {
     case null                => 0
     }
 
-  def coerceLong =
+  def _l =
     v match {
     case n:java.lang.Number => n.longValue
     case s:String           => s.toLaxLong
     case null               => 0
     }
 
-  def coerceDate =
+  def _t =
     v match {
     case d:Date   => d
     case s:String => s.toLaxDate // TODO:  replace with more generic parsing method
     case null     => null
     }
 
-  def coerceString =
+  def _s =
     if ( v != null ) v.toString else ""
 
   def asJsonObject =
