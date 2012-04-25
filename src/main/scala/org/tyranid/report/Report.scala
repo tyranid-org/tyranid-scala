@@ -465,8 +465,15 @@ case class Report( query:Query ) {
       </td>
      </tr>
     </table> ++
+    { // TODO:  This needs to be able to pass in a JS function to make a callback to the report JS to determine which column the label field is in.  The
+      //        handler function is "alphaFilter" in main.js.  This probably needs to pass in another class to be stylized since it is on a different 
+      //        type of table (than the types with filesharing).  Also, this is a JS filter, so it does it in the web browser.  In this case, the callback
+      //        might need to be a server callback that can do the filtering since there may be more than one result page (pagination)
+      //org.tyranid.ui.TableAlphaFilter( "grid_" + query.name, 0 ).draw
+      NodeSeq.Empty
+    } ++
     <div class="grid">
-     <table style={ query.tableGridStyle }>
+     <table id={ "grid_" + query.name } style={ query.tableGridStyle }>
       <thead>
        { run.header }
       </thead>
