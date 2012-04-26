@@ -40,8 +40,6 @@ import org.tyranid.web.Weblet
 
       +. add users by Full Name
 
-      +. search screen is showing GroupData(...)
-
       +. show users by Full Name in list of group members
 
       +. group types:
@@ -199,8 +197,8 @@ case class GroupData( report:Report, gf:Field ) {
     <div id={ gf.id } class="rGrpEdit">
      <div class="title" style="margin-bottom:16px;">Add New Group</div>
      <form method="post">
-      <label for="rGrpName">Enter Group Name:</label>
-      <div class="title"><input type="text" name="rGrpName" id="rGrpName" style="font-size:20px;"/></div>
+      <label for="rGrpAddName">Enter Group Name:</label>
+      <div class="title"><input type="text" name="rGrpAddName" id="rGrpAddName" style="font-size:20px;"/></div>
       <div class="btns" style="width:370px;"><a href="#" class="greenBtn" id="rGrpAddGrpSave">Add Group</a></div>
      </form>
     </div>
@@ -214,8 +212,8 @@ case class GroupData( report:Report, gf:Field ) {
     <div id={ gf.id } class="rGrpEdit">
      <div class="title" style="margin-bottom:16px;">Rename Group</div>
      <form method="post">
-      <label for="rGrpName">Enter Group Name:</label>
-      <div class="title"><input type="text" name="rGrpName" id="rGrpName" style="font-size:20px;" value={ dialogGroup.s( 'name ) }/></div>
+      <label for="rGrpRenameName">Enter Group Name:</label>
+      <div class="title"><input type="text" name="rGrpRenameName" id="rGrpRenameName" style="font-size:20px;" value={ dialogGroup.s( 'name ) }/></div>
       <div class="btns" style="width:370px;"><a href="#" class="greenBtn" id="rGrpRenameSave">Rename Group</a></div>
      </form>
     </div>
@@ -248,7 +246,7 @@ case class GroupData( report:Report, gf:Field ) {
     case "/group/addGroupSave" =>
       val group = Mobj()
       group( grouping.forKey ) = grouping.forValue()
-      group( 'name ) = web.s( 'rGrpName ) or "Unnamed Group"
+      group( 'name ) = web.s( 'rGrpAddName ) or "Unnamed Group"
       grouping.groupEntity.db.save( group )
       resetGroups
       setDialogGroup( grouping.groupEntity( group ).tid )
@@ -263,7 +261,7 @@ case class GroupData( report:Report, gf:Field ) {
 
     case "/group/renameSave" =>
       if ( !sg.b( 'builtin ) ) {
-        sg( 'name ) = web.s( 'rGrpName ) or "Unnamed Group"
+        sg( 'name ) = web.s( 'rGrpRenameName ) or "Unnamed Group"
         grouping.groupEntity.db.save( sg )
         resetGroups
       }
