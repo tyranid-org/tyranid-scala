@@ -60,7 +60,7 @@ case class GroupData( report:Report, gf:Field ) {
 
   private var latestGroups:Seq[MongoRecord] = null
 
-  @volatile var groupAddBy:GroupingAddBy = null
+  @volatile var groupAddBy:GroupingAddBy = grouping.addBys( 0 )
 
   @volatile var groupShowAddBy:Boolean = false
 
@@ -160,7 +160,7 @@ case class GroupData( report:Report, gf:Field ) {
      <form method="post" id="rGrpAddForm">
       <div class="title">Add { grouping.ofEntity.label.plural }</div>
       <label for="rGrpAddBy">By:</label>
-      { Select( "rGrpAddBy", groupAddBy != null |* groupAddBy.id, ( "" -> "Select" ) +: grouping.addBys.map( ab => ( ab.id, ab.label ) ) ) }
+      { Select( "rGrpAddBy", groupAddBy != null |* groupAddBy.id, grouping.addBys.map( ab => ( ab.id, ab.label ) ) ) }
       <div id="rGrpAddBox">
        { drawAddBy }
       </div>
