@@ -70,20 +70,20 @@ case class GroupField( baseName:String, l:String = null,
   val showFilter = false
   val show = Show.Editable
 
-  private def groupDataFor( rec:Record ) = rec( name ).as[GroupData]
+  private def groupValueFor( rec:Record ) = rec( name ).as[GroupValue]
 
   override lazy val label = if ( l.notBlank ) l else "Group"
 
-  override def ui( s:Scope ) = groupDataFor( s.rec ).drawSelect( "" )
+  override def ui( s:Scope ) = groupValueFor( s.rec ).drawSelect( "" )
 
-  override def extract( s:Scope ) = groupDataFor( s.rec ).selectedGroupTid = T.web.s( id )
+  override def extract( s:Scope ) = groupValueFor( s.rec ).selectedGroupTid = T.web.s( id )
 
   override def cell( s:Scope ) =
-    s.run.report.groupDataFor( this ).groupsFor( s.rec.id ).toNodeSeq
+    s.run.report.groupValueFor( this ).groupsFor( s.rec.id ).toNodeSeq
 
   override def mongoSearch( run:Run, searchObj:DBObject, value:Any ) = {
     if ( value != null ) {
-      val group = run.report.groupDataFor( this ).selectedGroup
+      val group = run.report.groupValueFor( this ).selectedGroup
       if ( group != null ) {
         val fk = foreignKey
         searchObj( fk ) = Mobj( $in -> group.a_?( listKey ) )
@@ -99,7 +99,7 @@ case class GroupField( baseName:String, l:String = null,
   def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) ).map( o => ofEntity( o ) ).toIterable
 }
 
-case class GroupData( report:Report, gf:GroupField ) extends Valuable {
+case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
 
   private var latestGroups:Seq[MongoRecord] = null
 

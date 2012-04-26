@@ -31,7 +31,7 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.json.{ Js, JqHtml }
-import org.tyranid.profile.{ GroupData, GroupField, GroupingAddBy }
+import org.tyranid.profile.{ GroupValue, GroupField, GroupingAddBy }
 import org.tyranid.session.Session
 import org.tyranid.time.Time
 import org.tyranid.ui.{ Button, Checkbox, CustomField, Field, Glyph, Input, PathField, Search, Select, Show }
@@ -256,7 +256,7 @@ case class Report( query:Query ) {
     for ( sf <- query.searchFields ) {
       sf.search match {
       case Search.Group =>
-        val gd = GroupData( this, sf.as[GroupField] )
+        val gd = GroupValue( this, sf.as[GroupField] )
         sf.default foreach { d => gd.selectedGroupTid = d()._s }
         rec( sf.name ) = gd
 
@@ -271,7 +271,7 @@ case class Report( query:Query ) {
   def extractSearchRec = {
     for ( sf <- query.searchFields )
       sf.search match {
-      case Search.Group => searchRec( sf.name ).as[GroupData].selectedGroupTid = ""
+      case Search.Group => searchRec( sf.name ).as[GroupValue].selectedGroupTid = ""
       case _            => searchRec.remove( sf.name )
       }
 
@@ -407,7 +407,7 @@ case class Report( query:Query ) {
     </table>
   }
 
-  def groupDataFor( gf:Field ) = searchRec( gf.name ).as[GroupData]
+  def groupValueFor( gf:Field ) = searchRec( gf.name ).as[GroupValue]
 
   def innerDraw = {
     val run = new Run( this )
@@ -446,7 +446,7 @@ case class Report( query:Query ) {
         </tr>
        </table>
       </td>
-      { query.groupFields.map( gf => <td>{ groupDataFor( gf ).drawFilter }</td> ) }
+      { query.groupFields.map( gf => <td>{ groupValueFor( gf ).drawFilter }</td> ) }
       { query.searchFields.filter( _.showFilter ).map( f => <td>{ drawFilter( run, f ) }</td> ) }
       <td style="width:410px; padding:0;"></td>
       <td></td>
@@ -500,7 +500,7 @@ case class Report( query:Query ) {
      { query.groupFields.nonEmpty |* <script src={ B.buildPrefix + "/js/tag.js" } charset="utf-8"></script> }
      <script>{ Unparsed( "window.reportObj = { qn:'" + query.name + "', id:'" + id + "' };" ) }</script>
     </head> ++
-    { query.groupFields.map( gf => groupDataFor( gf ).draw ) } ++
+    { query.groupFields.map( gf => groupValueFor( gf ).draw ) } ++
     <div class="report greyBox" id={ id }>
      { recalcFields }
      { innerDraw }
@@ -663,7 +663,7 @@ object Reportlet extends Weblet {
 
     case s if s.startsWith( "/group" ) =>
       var gf = query.groupFields.find( _.id == web.s( 'gf ) ).getOrElse( query.groupFields.nonEmpty ? query.groupFields( 0 ) | null )
-      if ( gf == null || !report.groupDataFor( gf ).handle( this ) )
+      if ( gf == null || !report.groupValueFor( gf ).handle( this ) )
         _404
 
     case _ =>
