@@ -36,8 +36,6 @@ import org.tyranid.web.Weblet
 
 /*
 
-      +. enter on add new group cancels add
-
       +. add users by Full Name
 
       +. show users by Full Name in list of group members
