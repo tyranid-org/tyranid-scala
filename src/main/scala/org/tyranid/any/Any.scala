@@ -42,12 +42,12 @@ class AnyImp[T <: Any]( v:T ) {
     v match {
     case b:java.lang.Boolean => b
     case s:String            => s.toLaxBoolean
+    case d:java.lang.Number  => d.doubleValue != 0
     case null                => false
     }
 
   def _d = 
     v match {
-    case i:java.lang.Integer => i.doubleValue
     case d:java.lang.Number  => d.doubleValue
     case s:String            => s.toLaxDouble
     case null                => 0
@@ -55,7 +55,6 @@ class AnyImp[T <: Any]( v:T ) {
 
   def _i =
     v match {
-    case i:java.lang.Integer => i.intValue
     case n:java.lang.Number  => n.intValue
     case s:String            => s.toLaxInt
     case null                => 0
@@ -71,14 +70,12 @@ class AnyImp[T <: Any]( v:T ) {
   def _t =
     v match {
     case d:Date   => d
-    case s:String => s.toLaxDate // TODO:  replace with more generic parsing method
+    case s:String => s.parseDate()
     case null     => null
     }
 
-  def _s =
-    if ( v != null ) v.toString else ""
+  def _s = safeString
 
-  def asJsonObject =
-    if ( v != null ) v.as[LinkedHashMap[String,Any]] else null
+  def asJsonObject = if ( v != null ) v.as[LinkedHashMap[String,Any]] else null
 }
 

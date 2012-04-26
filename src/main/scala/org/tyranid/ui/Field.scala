@@ -86,7 +86,9 @@ object Search {
   case object Equals extends Search {
     val name = "eq"
 
-    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = f.transformValue( value )
+    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) =
+      if ( value != null )
+        searchObj( f.baseName ) = f.transformValue( value )
 
     def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) = f.basePath.get( rec ) == searchValue
   }
@@ -94,7 +96,9 @@ object Search {
   case object Exists extends Search {
     val name = "exist"
 
-    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = Mobj( $gt -> "" )
+    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) =
+      if ( value != null )
+        searchObj( f.baseName ) = Mobj( $gt -> "" )
 
     def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) = f.basePath.s( rec ).notBlank
   }
@@ -103,11 +107,12 @@ object Search {
     val name = "subst"
 
     def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) =
-      searchObj( f.baseName ) =
-        if ( f.needsCaseInsensitiveSearch )
-          value.toString.toPatternI
-        else
-          Mobj( $regex -> f.transformValue( value ) )
+      if ( value != null )
+        searchObj( f.baseName ) =
+          if ( f.needsCaseInsensitiveSearch )
+            value.toString.toPatternI
+          else
+            Mobj( $regex -> f.transformValue( value ) )
 
     def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) = {
       val v = f.basePath.s( rec )
@@ -122,7 +127,9 @@ object Search {
   case object Gte    extends Search {
     val name = "gte"
 
-    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = Mobj( $gte -> value )
+    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) =
+      if ( value != null )
+        searchObj( f.baseName ) = Mobj( $gte -> value )
 
     def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) =
       f.basePath.leaf.domain.compare( searchValue, f.basePath.get( rec ) ) >= 0
@@ -131,7 +138,9 @@ object Search {
   case object Lte    extends Search {
     val name = "lte"
 
-    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) = searchObj( f.baseName ) = Mobj( $lte -> value )
+    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) =
+      if ( value != null )
+        searchObj( f.baseName ) = Mobj( $lte -> value )
 
     def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) =
       f.basePath.leaf.domain.compare( searchValue, f.basePath.get( rec ) ) <= 0
@@ -143,13 +152,14 @@ object Search {
     lazy val searchNameKey = makeSearchName( foreignKey )
     val name = "grp"
 
-    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) = {
-      val group = run.report.groupDataFor( f ).selectedGroup
-      if ( group != null ) {
-        val fk = foreignKey
-        searchObj( fk ) = Mobj( $in -> group.a_?( listKey ) )
+    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) =
+      if ( value != null ) {
+        val group = run.report.groupDataFor( f ).selectedGroup
+        if ( group != null ) {
+          val fk = foreignKey
+          searchObj( fk ) = Mobj( $in -> group.a_?( listKey ) )
+        }
       }
-    }
 
     def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) =
       // TODO:  implement this
@@ -198,6 +208,8 @@ trait Field {
   def name:String
 
   lazy val label = name.camelCaseToSpaceUpper
+
+  def help:NodeSeq = NodeSeq.Empty
 
   def labelUi = <label for={ name }>{ label }</label>
 
@@ -264,6 +276,8 @@ trait CustomField extends Field {
 
   val show = Show.Editable
   val default = None
+
+  def cell( s:Scope ):NodeSeq = throw new UnsupportedOperationException
 
   def matchesSearch( run:Run, value:Any, rec:Record ) = search == null
 }
@@ -338,6 +352,7 @@ case class PathField( baseName:String,
     else                                   baseName
 
   override lazy val label = if ( l.notBlank ) l else path.leaf.label
+  override def help:NodeSeq = path.leaf.att.help
 
   var path:Path = null
   def va = path.leaf
@@ -384,7 +399,7 @@ case class PathField( baseName:String,
       att.domain.show( scope ) |*
       <div id={ va.name + "_c" } class={ "fieldc" + ( invalid |* " invalid" ) }>
        { if ( labelc ) 
-         <div class="labelc">{ va.label( rec, opts:_* ) }{ att.required |* <span class="required">*</span> }{ att.help != NodeSeq.Empty |* <span class="attHelp">{ att.help }</span><span class="helpIcon"></span> }</div>
+         <div class="labelc">{ va.label( rec, opts:_* ) }{ att.required |* <span class="required">*</span> }{ help != NodeSeq.Empty |* <span class="attHelp">{ att.help }</span><span class="helpIcon"></span> }</div>
        }
        <div class={ "inputc" + att.domain.inputcClasses }>{ att.domain.ui( scope, this ) }{ create |* <span class="createNew"> <a href="#" class="tip" title="Create New">new</a></span> }</div>
        <div id={ va.name + "_e" } class="notec">{ !invalids.isEmpty |* invalidLines( invalids ) }</div>
@@ -411,9 +426,9 @@ case class PathField( baseName:String,
 }
 
 
-case class CustomTextSearchField( baseName:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends Field {
-
+trait CustomSearchField extends Field {
   val id = Base62.make( 8 )
+  val baseName:String
   val name = baseName + "$cst"
 
   val search = Search.Custom
@@ -426,18 +441,34 @@ case class CustomTextSearchField( baseName:String, l:String = null, opts:Seq[(St
 
   def cell( s:Scope ):NodeSeq = throw new UnsupportedOperationException
 
-  override lazy val label = if ( l.notBlank ) l else name.camelCaseToSpaceUpper
+  def matchesSearch( run:Run, value:Any, rec:Record ) = true
+}
 
-  override def ui( s:Scope ) = Input( name, s.rec.s( name ), opts:_* )
+// TODO:  get rid of the following classes and have them use on-the-fly domains some how, issue will be that Domains are wired to work with PathFields, not plain Fields
+
+case class CustomTextSearchField( baseName:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends CustomSearchField {
+
+  override lazy val label = if ( l.notBlank ) l else baseName.camelCaseToSpaceUpper
+
+  override def ui( s:Scope ) = Input( id, s.rec.s( name ), opts:_* )
 
   override def extract( s:Scope ) = {
-    val v = T.web.req.s( name )
+    val v = T.web.req.s( id )
 
     if ( v.notBlank ) s.rec( name ) = v
     else              s.rec.remove( name )
   }
+}
 
-  def matchesSearch( run:Run, value:Any, rec:Record ) = true
+case class CustomBooleanSearchField( baseName:String, l:String = null, opts:Seq[(String,String)] = Nil ) extends CustomSearchField {
+
+  override lazy val label = if ( l.notBlank ) l else baseName.camelCaseToSpaceUpper
+
+  override def ui( s:Scope ) = Checkbox( id, s.rec.b( name ), opts:_* )
+
+  override def extract( s:Scope ) =
+    if ( T.web.b( id ) ) s.rec( name ) = true
+    else                 s.rec.remove( name )
 }
 
 
