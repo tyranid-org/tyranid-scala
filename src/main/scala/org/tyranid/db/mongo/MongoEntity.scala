@@ -45,9 +45,7 @@ case object DbMongoId extends Domain {
   override def recordTidToId( recordTid:String ) = new ObjectId( Base64.toBytes( recordTid ) )
 
   override def ui( s:Scope, f:PathField ) =
-    Input( f.id, s.s( f ), ( f.effOpts ++ Seq( "class" -> "textInput" ) ):_*  )
-
-  //override def inputcClasses = " select"
+    Input( f.id, get( s, f )._s, ( f.effOpts ++ Seq( "class" -> "textInput" ) ):_*  )
 
   override def fromString( s:String ) = new ObjectId( s.trim )
 }
@@ -157,8 +155,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
     val search = Mobj()
 
     for ( sf <- run.report.query.searchFields;
-          value = run.report.searchRec( sf.name )
-          if value != null )
+          value = run.report.searchRec( sf.name ) )
       sf.mongoSearch( run, search, value )
 
     var cursor = db.find( search )//, Mobj() )
@@ -267,6 +264,7 @@ case class MongoRecord( override val view:MongoView,
     temporaries( name ) = value.asInstanceOf[AnyRef]
   }
 
+  override def has( key:String ) = has( view( key ) ) // override has() in DBObjectWrap
   def has( va:ViewAttribute ) =
     if ( va.temporary )
       temporaries != null && temporaries.get( va.name ).getOrElse( null ) != null
@@ -292,7 +290,15 @@ case class MongoRecord( override val view:MongoView,
       obj.put( va.name, v )
     }
 
-  override def remove( va:ViewAttribute ) = obj.removeField( va.name )
+  override def remove( key:String ) = remove( view( key ) ) // override remove() in DBObjectWrap
+  override def remove( va:ViewAttribute ) =
+    if ( va.temporary ) {
+      if ( temporaries != null )
+        temporaries.remove( va.name )
+    } else {
+      obj.removeField( va.name )
+    }
+
 
   override def o( va:ViewAttribute ):DBObjectWrap =
     apply( va ) match {

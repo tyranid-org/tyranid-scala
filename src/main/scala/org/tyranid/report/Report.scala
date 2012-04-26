@@ -102,7 +102,7 @@ trait Query {
 
   val fields:Seq[Field]
 
-  lazy val dataFields:Seq[Field]   = boundFields.filter( _.data )
+  lazy val dataFields:Seq[Field]   = boundFields.filter( f => f.data && f.show != Show.Hidden )
   lazy val searchFields:Seq[Field] = boundFields.filter( _.search != null )
   lazy val groupFields:Seq[Field]  = boundFields.filter( _.search.isInstanceOf[Search.Group] )
 
@@ -218,7 +218,7 @@ case class AutoQuery( entity:Entity ) extends Query {
     ( new CustomField {
       def name = "tid"
       override lazy val label = "TID"
-      def cell( s:Scope ) = <a href={ "/admin/tid?tid=" + s.rec.tid } class="eyeBtn" style="margin:0 1px;">T</a>
+      override def cell( s:Scope ) = <a href={ "/admin/tid?tid=" + s.rec.tid } class="eyeBtn" style="margin:0 1px;">T</a>
     } ) +:
     ( entity.makeView.vas.filter( _.att.isLabel ).map( fieldFor ).toSeq.sortBy( _.label ) ++
       entity.makeView.vas.filter( va => !va.att.isLabel && !va.domain.isInstanceOf[Entity] ).map( fieldFor ).toSeq.sortBy( _.label ) )
@@ -257,7 +257,7 @@ case class Report( query:Query ) {
       sf.search match {
       case sg:Search.Group =>
         val gd = GroupData( this, sf )
-        sf.default foreach { d => gd.value = d() }
+        sf.default foreach { d => gd.selectedGroupTid = d()._s }
         rec( sf.name ) = gd
 
       case _ =>
@@ -266,6 +266,21 @@ case class Report( query:Query ) {
     }
 
     rec 
+  }
+
+  def extractSearchRec = {
+    for ( sf <- query.searchFields )
+      sf.search match {
+      case sg:Search.Group => searchRec( sf.name ).as[GroupData].selectedGroupTid = ""
+      case _               => searchRec.remove( sf.name )
+      }
+
+    val s = Scope( searchRec )
+    query.searchFields.foreach { _.extract( s ) }
+
+    for ( sf <- query.searchFields )
+      if ( sf.show != Show.Editable )
+        sf.default foreach { d => searchRec( sf.name ) = d() }
   }
 
   @volatile var sort:Sort = {
@@ -450,8 +465,15 @@ case class Report( query:Query ) {
       </td>
      </tr>
     </table> ++
+    { // TODO:  This needs to be able to pass in a JS function to make a callback to the report JS to determine which column the label field is in.  The
+      //        handler function is "alphaFilter" in main.js.  This probably needs to pass in another class to be stylized since it is on a different 
+      //        type of table (than the types with filesharing).  Also, this is a JS filter, so it does it in the web browser.  In this case, the callback
+      //        might need to be a server callback that can do the filtering since there may be more than one result page (pagination)
+      //org.tyranid.ui.TableAlphaFilter( "grid_" + query.name, 0 ).draw
+      NodeSeq.Empty
+    } ++
     <div class="grid">
-     <table style={ query.tableGridStyle }>
+     <table id={ "grid_" + query.name } style={ query.tableGridStyle }>
       <thead>
        { run.header }
       </thead>
@@ -543,9 +565,7 @@ object Reportlet extends Weblet {
     case "/search" =>
       query.init
 
-      val s = Scope( report.searchRec )
-      report.searchRec.clear
-      query.searchFields.foreach { _.extract( s ) }
+      report.extractSearchRec
 
       if ( query.orderBy.nonEmpty ) {
         val name = web.req.s( 'sort )

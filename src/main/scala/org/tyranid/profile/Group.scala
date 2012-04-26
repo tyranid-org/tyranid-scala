@@ -24,17 +24,25 @@ import scala.xml.{ NodeSeq, Text, Unparsed }
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
+import org.tyranid.db.{ Record, Scope }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.json.JqHtml
+import org.tyranid.math.Base62
 import org.tyranid.report.{ Report, Run }
-import org.tyranid.ui.{ Field, Select, Search }
+import org.tyranid.ui.{ Field, Select, Search, Show }
 import org.tyranid.web.Weblet
 
 
 /*
 
-      +. add user groups
+      +. enter on add new group cancels add
+
+      +. add users by Full Name
+
+      +. search screen is showing GroupData(...)
+
+      +. show users by Full Name in list of group members
 
       +. group types:
 
@@ -54,8 +62,6 @@ case class GroupData( report:Report, gf:Field ) {
 
   def grouping = gf.search.as[Search.Group]
 
-  var value:Any = null
-
   private var latestGroups:Seq[MongoRecord] = null
 
   @volatile var groupAddBy:GroupingAddBy = null
@@ -73,11 +79,15 @@ case class GroupData( report:Report, gf:Field ) {
 
   def byId( id:Any ) = groups.find( _.id == id ).get
 
+  var selectedGroupTid:String = null
   def selectedGroupId = grouping.groupEntity.tidToId( selectedGroupTid )
-  def selectedGroupTid = report.searchRec.s( grouping.searchNameKey )
   def selectedGroup = groups.find( g => g.tid == selectedGroupTid ).getOrElse( null )
+  def selectGroup( tid:String ) { selectedGroupTid = tid; dialogGroupTid = tid }
 
-  def selectGroup( tid:String ) = report.searchRec( grouping.searchNameKey ) = tid
+  var dialogGroupTid:String = null
+  def dialogGroupId = grouping.groupEntity.tidToId( dialogGroupTid )
+  def dialogGroup = groups.find( g => g.tid == dialogGroupTid ).getOrElse( null )
+  def setDialogGroup( tid:String ) = dialogGroupTid = tid
 
   def drawFilter =
     <table class="tile" style="width:140px; height:54px;">
@@ -85,12 +95,12 @@ case class GroupData( report:Report, gf:Field ) {
       <td class="label">view group</td>
      </tr>
      <tr>
-      <td id="rGrpChooser">{ drawChooser }</td>
+      <td id="rGrpChooser">{ drawSelect() }</td>
      </tr>
     </table>
 
-  def drawChooser =
-    Select( "rGroups", selectedGroupTid, ( "" -> "All" ) +: groups.map( g => g.tid -> g.s( 'name ) ), "style" -> "width:120px; max-width:120px;" )
+  def drawSelect( cls:String = "rGroups" ) =
+    Select( gf.id, selectedGroupTid, ( "" -> "All" ) +: groups.map( g => g.tid -> g.s( 'name ) ), "class" -> cls, "style" -> "width:120px; max-width:120px;" )
 
   def draw =
     <div id="rGrpDlg" style="padding:0; display:none;">
@@ -98,7 +108,7 @@ case class GroupData( report:Report, gf:Field ) {
     </div>
 
   def drawPanel = {
-    val stid = selectedGroupTid
+    val stid = dialogGroupTid
 
     <div id="rGrpLeft">
      <div id="rGrpSel">
@@ -116,7 +126,7 @@ case class GroupData( report:Report, gf:Field ) {
   }
 
   def drawGroup = {
-    val group = selectedGroup
+    val group = dialogGroup
     val editable = group != null && !group.b( 'builtin )
     val showAddBy = groupShowAddBy
 
@@ -205,7 +215,7 @@ case class GroupData( report:Report, gf:Field ) {
      <div class="title" style="margin-bottom:16px;">Rename Group</div>
      <form method="post">
       <label for="rGrpName">Enter Group Name:</label>
-      <div class="title"><input type="text" name="rGrpName" id="rGrpName" style="font-size:20px;" value={ selectedGroup.s( 'name ) }/></div>
+      <div class="title"><input type="text" name="rGrpName" id="rGrpName" style="font-size:20px;" value={ dialogGroup.s( 'name ) }/></div>
       <div class="btns" style="width:370px;"><a href="#" class="greenBtn" id="rGrpRenameSave">Rename Group</a></div>
      </form>
     </div>
@@ -217,7 +227,7 @@ case class GroupData( report:Report, gf:Field ) {
   def handle( weblet:Weblet ):Boolean = {
     val web = T.web
     val query = report.query
-    val sg = selectedGroup
+    val sg = dialogGroup
 
     weblet.rpath match {
     case "/group" =>
@@ -229,7 +239,7 @@ case class GroupData( report:Report, gf:Field ) {
       web.res.html( report.innerDraw )
 
     case "/group/dlgSelect" =>
-      selectGroup( web.s( 'id ) )
+      setDialogGroup( web.s( 'id ) )
       web.js( JqHtml( "#rGrpMain", drawGroup ) )
 
     case "/group/addGroup" =>
@@ -241,11 +251,11 @@ case class GroupData( report:Report, gf:Field ) {
       group( 'name ) = web.s( 'rGrpName ) or "Unnamed Group"
       grouping.groupEntity.db.save( group )
       resetGroups
-      selectGroup( grouping.groupEntity( group ).tid )
+      setDialogGroup( grouping.groupEntity( group ).tid )
 
       web.js(
         JqHtml( "#rGrpDlg", drawPanel ),
-        JqHtml( "#rGrpChooser", drawChooser )
+        JqHtml( "#rGrpChooser", drawSelect() )
       )
 
     case "/group/rename" =>
@@ -260,7 +270,7 @@ case class GroupData( report:Report, gf:Field ) {
 
       web.js(
         JqHtml( "#rGrpDlg", drawPanel ),
-        JqHtml( "#rGrpChooser", drawChooser )
+        JqHtml( "#rGrpChooser", drawSelect() )
       )
 
     case "/group/deleteGroup" =>
@@ -271,7 +281,7 @@ case class GroupData( report:Report, gf:Field ) {
 
       web.js(
         JqHtml( "#rGrpDlg", drawPanel ),
-        JqHtml( "#rGrpChooser", drawChooser )
+        JqHtml( "#rGrpChooser", drawSelect() )
       )
 
     case "/group/addBy" =>
@@ -357,4 +367,29 @@ case class GroupData( report:Report, gf:Field ) {
     true
   }
 }
+
+case class GroupField( baseName:String, l:String = null, opts:Seq[(String,String)] = Nil, search:Search = null ) extends Field {
+  val id = Base62.make( 8 )
+  val name = baseName + "$grp"
+
+  val data = true
+  val default = None
+
+  val showFilter = false
+  val show = Show.Editable
+
+  private def groupDataFor( rec:Record ) = rec( name ).as[GroupData]
+
+  override lazy val label = if ( l.notBlank ) l else "Group"
+
+  override def ui( s:Scope ) = groupDataFor( s.rec ).drawSelect( "" )
+
+  override def extract( s:Scope ) = groupDataFor( s.rec ).selectedGroupTid = T.web.s( id )
+
+  override def cell( s:Scope ) =
+    s.run.report.groupDataFor( this ).groupsFor( s.rec.id ).toNodeSeq
+
+  def matchesSearch( run:Run, value:Any, rec:Record ) = true
+}
+
 

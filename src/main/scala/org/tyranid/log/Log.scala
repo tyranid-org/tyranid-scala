@@ -225,7 +225,7 @@ object LogQuery extends Query {
     new CustomField {
       def name = "tid"
       override lazy val label = "TID"
-      def cell( s:Scope ) = <a href={ "/admin/tid?tid=" + s.rec.tid } class="eyeBtn" style="margin:0 1px;">T</a>
+      override def cell( s:Scope ) = <a href={ "/admin/tid?tid=" + s.rec.tid } class="eyeBtn" style="margin:0 1px;">T</a>
     },
     PathField( "e",                search = Search.Equals ),
     PathField( "on" ),
@@ -235,7 +235,7 @@ object LogQuery extends Query {
     new CustomField {
       def name = "uid"
       override lazy val label = "User"
-      def cell( s:Scope ) = {
+      override def cell( s:Scope ) = {
         s.rec.oid( 'uid ) match {
         case null => Unparsed( "" )
         case uid  => <a href={ "/admin/tid?tid=" + B.User.idToTid( uid ) }>{ B.userMeta.nameFor( uid ) }</a>
@@ -246,7 +246,7 @@ object LogQuery extends Query {
     new CustomField {
       def name = "ua"
       override lazy val label = "User Agent"
-      def cell( s:Scope ) = {
+      override def cell( s:Scope ) = {
         Text(
           s.rec( 'ua ) match {
           case str:String           => s.rec( 'ua ) = UserAgent.idFor( str )
