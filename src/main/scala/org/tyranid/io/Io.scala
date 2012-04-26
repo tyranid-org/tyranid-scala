@@ -43,7 +43,7 @@ class InputStreamImp( is:InputStream ) {
     sb.toString
   }
 
-  def transferTo( to:OutputStream ) {
+  def transferTo( to:OutputStream, closeInput:Boolean = false ) {
   	val buffer = new Array[Byte]( 8192 )
 
     @tailrec def transfer {
@@ -56,6 +56,9 @@ class InputStreamImp( is:InputStream ) {
   	}
   		
   	transfer
+  	
+  	if ( closeInput )
+  	  is.close
   }
 }
 
