@@ -30,7 +30,7 @@ import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.json.JqHtml
 import org.tyranid.math.Base62
 import org.tyranid.report.{ Report, Run }
-import org.tyranid.ui.{ Field, Select, Search, Show }
+import org.tyranid.ui.{ Field, Select, Search, Show, Valuable }
 import org.tyranid.web.Weblet
 
 
@@ -50,11 +50,56 @@ import org.tyranid.web.Weblet
  */
 
 case class GroupingAddBy( label:String, keys:String* ) {
-
   val id = label.toIdentifier
 }
 
-case class GroupData( report:Report, gf:GroupField ) {
+case class GroupField( baseName:String, l:String = null,
+                       ofEntity:MongoEntity,
+                       groupEntity:MongoEntity, foreignKey:String, listKey:String, forKey:String, forValue: () => AnyRef,
+                       addBys:Seq[GroupingAddBy] = Nil,
+                       opts:Seq[(String,String)] = Nil ) extends Field {
+
+  val id = Base62.make( 8 )
+  val name = baseName + "$grp"
+
+  val data = true
+  val default = None
+
+  val search = Search.Group
+
+  val showFilter = false
+  val show = Show.Editable
+
+  private def groupDataFor( rec:Record ) = rec( name ).as[GroupData]
+
+  override lazy val label = if ( l.notBlank ) l else "Group"
+
+  override def ui( s:Scope ) = groupDataFor( s.rec ).drawSelect( "" )
+
+  override def extract( s:Scope ) = groupDataFor( s.rec ).selectedGroupTid = T.web.s( id )
+
+  override def cell( s:Scope ) =
+    s.run.report.groupDataFor( this ).groupsFor( s.rec.id ).toNodeSeq
+
+  override def mongoSearch( run:Run, searchObj:DBObject, value:Any ) = {
+    if ( value != null ) {
+      val group = run.report.groupDataFor( this ).selectedGroup
+      if ( group != null ) {
+        val fk = foreignKey
+        searchObj( fk ) = Mobj( $in -> group.a_?( listKey ) )
+      }
+    }
+  }
+
+  def matchesSearch( run:Run, value:Any, rec:Record ):Boolean =
+    // TODO:  implement this
+    false
+
+  def queryGroups                         = groupEntity.db.find( Mobj( forKey -> forValue() ) ).map( o => groupEntity( o ) ).toSeq
+  def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) ).map( o => ofEntity( o ) ).toIterable
+}
+
+case class GroupData( report:Report, gf:GroupField ) extends Valuable {
 
   private var latestGroups:Seq[MongoRecord] = null
 
@@ -74,6 +119,11 @@ case class GroupData( report:Report, gf:GroupField ) {
   def byId( id:Any ) = groups.find( _.id == id ).get
 
   var selectedGroupTid:String = null
+
+  def get          = selectedGroupTid
+  def set( v:Any ) = selectedGroupTid = v._s
+
+
   def selectedGroupId = gf.groupEntity.tidToId( selectedGroupTid )
   def selectedGroup = groups.find( g => g.tid == selectedGroupTid ).getOrElse( null )
   def selectGroup( tid:String ) { selectedGroupTid = tid; dialogGroupTid = tid }
@@ -361,51 +411,4 @@ case class GroupData( report:Report, gf:GroupField ) {
     true
   }
 }
-
-case class GroupField( baseName:String, l:String = null,
-                       ofEntity:MongoEntity,
-                       groupEntity:MongoEntity, foreignKey:String, listKey:String, forKey:String, forValue: () => AnyRef,
-                       addBys:Seq[GroupingAddBy] = Nil,
-                       opts:Seq[(String,String)] = Nil ) extends Field {
-
-  val id = Base62.make( 8 )
-  val name = baseName + "$grp"
-
-  val data = true
-  val default = None
-
-  val search = Search.Group
-
-  val showFilter = false
-  val show = Show.Editable
-
-  private def groupDataFor( rec:Record ) = rec( name ).as[GroupData]
-
-  override lazy val label = if ( l.notBlank ) l else "Group"
-
-  override def ui( s:Scope ) = groupDataFor( s.rec ).drawSelect( "" )
-
-  override def extract( s:Scope ) = groupDataFor( s.rec ).selectedGroupTid = T.web.s( id )
-
-  override def cell( s:Scope ) =
-    s.run.report.groupDataFor( this ).groupsFor( s.rec.id ).toNodeSeq
-
-  override def mongoSearch( run:Run, searchObj:DBObject, value:Any ) = {
-    if ( value != null ) {
-      val group = run.report.groupDataFor( this ).selectedGroup
-      if ( group != null ) {
-        val fk = foreignKey
-        searchObj( fk ) = Mobj( $in -> group.a_?( listKey ) )
-      }
-    }
-  }
-
-  def matchesSearch( run:Run, value:Any, rec:Record ):Boolean =
-    // TODO:  implement this
-    false
-
-  def queryGroups                         = groupEntity.db.find( Mobj( forKey -> forValue() ) ).map( o => groupEntity( o ) ).toSeq
-  def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) ).map( o => ofEntity( o ) ).toIterable
-}
-
 

@@ -25,9 +25,8 @@ import org.tyranid.Imp._
 import org.tyranid.db.meta.Tid
 import org.tyranid.logic.{ Valid, Invalid }
 import org.tyranid.math.Base64
-import org.tyranid.profile.GroupData
 import org.tyranid.time.Time
-import org.tyranid.ui.{ Checkbox, Glyph, Input, PathField, Search, Select, TextArea, ToggleLink, UiStyle }
+import org.tyranid.ui.{ Checkbox, Glyph, Input, PathField, Search, Select, TextArea, ToggleLink, UiStyle, Valuable }
 import org.tyranid.web.WebContext
 
 
@@ -77,36 +76,21 @@ trait Domain extends Valid {
   def needsCaseInsensitiveSearch = false
 
   def get( s:Scope, f:PathField ) =
-    f.search match {
-    case Search.Group =>
-      s.get( f ) match {
-      case gd:GroupData => gd.selectedGroupTid
-      case v            => v
-      }
-
-    case _ => s.get( f )
+    s.get( f ) match {
+    case v:Valuable => v.get
+    case v          => v
     }
-
+    
   def set( s:Scope, f:PathField, v:Any ) =
-    f.search match {
-    case Search.Group =>
-      s.get( f ) match {
-      case gd:GroupData => gd.selectedGroupTid = v._s
-      case v            => s.set( f, v )
-      }
-
-    case _ => s.set( f, v )
+    s.get( f ) match {
+    case c:Valuable => c.set( v )
+    case v          => s.set( f, v )
     }
 
   def remove( s:Scope, f:PathField ) =
-    f.search match {
-    case Search.Group =>
-      s.get( f ) match {
-      case gd:GroupData => gd.selectedGroupTid = null
-      case v            => s.remove( f )
-      }
-
-    case _ => s.remove( f )
+    s.get( f ) match {
+    case c:Valuable => c.set( null )
+    case v          => s.remove( f )
     }
 
 

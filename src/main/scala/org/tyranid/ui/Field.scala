@@ -38,6 +38,18 @@ import org.tyranid.web.WebContext
 
 
 /*
+ * * *   V a l u a b l e
+ */
+
+trait Valuable {
+
+  def get:Any
+  def set( v:Any )
+}
+
+
+
+/*
  * * *   S h o w
  */
 
