@@ -31,7 +31,7 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.json.{ Js, JqHtml }
-import org.tyranid.profile.{ GroupData, GroupingAddBy }
+import org.tyranid.profile.{ GroupData, GroupField, GroupingAddBy }
 import org.tyranid.session.Session
 import org.tyranid.time.Time
 import org.tyranid.ui.{ Button, Checkbox, CustomField, Field, Glyph, Input, PathField, Search, Select, Show }
@@ -104,7 +104,7 @@ trait Query {
 
   lazy val dataFields:Seq[Field]   = boundFields.filter( f => f.data && f.show != Show.Hidden )
   lazy val searchFields:Seq[Field] = boundFields.filter( _.search != null )
-  lazy val groupFields:Seq[Field]  = boundFields.filter( _.search.isInstanceOf[Search.Group] )
+  lazy val groupFields:Seq[Field]  = boundFields.filter( _.search == Search.Group )
 
   lazy val allFieldsMap = {  
     val map = mutable.Map[String,Field]()
@@ -255,8 +255,8 @@ case class Report( query:Query ) {
     val rec = query.entity.make
     for ( sf <- query.searchFields ) {
       sf.search match {
-      case sg:Search.Group =>
-        val gd = GroupData( this, sf )
+      case Search.Group =>
+        val gd = GroupData( this, sf.as[GroupField] )
         sf.default foreach { d => gd.selectedGroupTid = d()._s }
         rec( sf.name ) = gd
 
@@ -271,8 +271,8 @@ case class Report( query:Query ) {
   def extractSearchRec = {
     for ( sf <- query.searchFields )
       sf.search match {
-      case sg:Search.Group => searchRec( sf.name ).as[GroupData].selectedGroupTid = ""
-      case _               => searchRec.remove( sf.name )
+      case Search.Group => searchRec( sf.name ).as[GroupData].selectedGroupTid = ""
+      case _            => searchRec.remove( sf.name )
       }
 
     val s = Scope( searchRec )

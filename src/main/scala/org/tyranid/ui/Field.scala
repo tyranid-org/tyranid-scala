@@ -79,7 +79,7 @@ object Search {
     Subst,
     Gte,
     Lte,
-    //Group,
+    Group,
     Custom
   )
 
@@ -146,27 +146,11 @@ object Search {
       f.basePath.leaf.domain.compare( searchValue, f.basePath.get( rec ) ) <= 0
   }
 
-  case class Group( ofEntity:MongoEntity,
-                    groupEntity:MongoEntity, foreignKey:String, listKey:String, forKey:String, forValue: () => AnyRef,
-                    addBys:Seq[GroupingAddBy] = Nil ) extends Search {
-    lazy val searchNameKey = makeSearchName( foreignKey )
+  case object Group  extends Search {
     val name = "grp"
 
-    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) =
-      if ( value != null ) {
-        val group = run.report.groupDataFor( f ).selectedGroup
-        if ( group != null ) {
-          val fk = foreignKey
-          searchObj( fk ) = Mobj( $in -> group.a_?( listKey ) )
-        }
-      }
-
-    def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) =
-      // TODO:  implement this
-      false
-
-    def queryGroups                         = groupEntity.db.find( Mobj( forKey -> forValue() ) ).map( o => groupEntity( o ) ).toSeq
-    def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) ).map( o => ofEntity( o ) ).toIterable
+    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any )     = {}
+    def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) = false
   }
 
   case object Custom extends Search {
@@ -176,13 +160,7 @@ object Search {
     def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) = false
   }
 
-  def by( name:String ) = {
-    if ( name == "grp" )
-      // this is a hack ... we can't instantiate the Search.Group because it's a case class, not a case object
-      Some( null )
-    else
-      values.find( _.name == name )
-  }
+  def by( name:String ) = values.find( _.name == name )
 
   def extract( name:String ):(String,Search) = {
     val idx = name.indexOf( "$" )

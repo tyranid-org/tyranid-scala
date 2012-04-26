@@ -54,20 +54,18 @@ case class GroupingAddBy( label:String, keys:String* ) {
   val id = label.toIdentifier
 }
 
-case class GroupData( report:Report, gf:Field ) {
-
-  def grouping = gf.search.as[Search.Group]
+case class GroupData( report:Report, gf:GroupField ) {
 
   private var latestGroups:Seq[MongoRecord] = null
 
-  @volatile var groupAddBy:GroupingAddBy = grouping.addBys( 0 )
+  @volatile var groupAddBy:GroupingAddBy = gf.addBys( 0 )
 
   @volatile var groupShowAddBy:Boolean = false
 
   def resetGroups { latestGroups = null }
   def groups = {
     if ( latestGroups == null )
-      latestGroups = grouping.queryGroups.toSeq
+      latestGroups = gf.queryGroups.toSeq
 
     latestGroups
   }
@@ -76,12 +74,12 @@ case class GroupData( report:Report, gf:Field ) {
   def byId( id:Any ) = groups.find( _.id == id ).get
 
   var selectedGroupTid:String = null
-  def selectedGroupId = grouping.groupEntity.tidToId( selectedGroupTid )
+  def selectedGroupId = gf.groupEntity.tidToId( selectedGroupTid )
   def selectedGroup = groups.find( g => g.tid == selectedGroupTid ).getOrElse( null )
   def selectGroup( tid:String ) { selectedGroupTid = tid; dialogGroupTid = tid }
 
   var dialogGroupTid:String = null
-  def dialogGroupId = grouping.groupEntity.tidToId( dialogGroupTid )
+  def dialogGroupId = gf.groupEntity.tidToId( dialogGroupTid )
   def dialogGroup = groups.find( g => g.tid == dialogGroupTid ).getOrElse( null )
   def setDialogGroup( tid:String ) = dialogGroupTid = tid
 
@@ -138,15 +136,15 @@ case class GroupData( report:Report, gf:Field ) {
       <table class="dtable">
        <thead>
         <tr>
-         <th>Name</th>{ if ( !showAddBy ) grouping.addBys.filter( _.label != "Name" ).map( ab => <th>{ ab.label }</th> ) }{ editable |* <th/> }
+         <th>Name</th>{ if ( !showAddBy ) gf.addBys.filter( _.label != "Name" ).map( ab => <th>{ ab.label }</th> ) }{ editable |* <th/> }
          <th style="width:10px;"/>
         </tr>
        </thead>
-       { val members = grouping.queryGroupMembers( group ).toSeq.sortBy( _.label )
+       { val members = gf.queryGroupMembers( group ).toSeq.sortBy( _.label )
          for ( el <- members ) yield
            <tr id={ el.tid }>
             <td>{ el.label }</td>
-            { if ( !showAddBy ) grouping.addBys.filter( _.label != "Name" ).map( ab => <td>{ el.s( ab.keys( 0 ) ) }</td> ) }
+            { if ( !showAddBy ) gf.addBys.filter( _.label != "Name" ).map( ab => <td>{ el.s( ab.keys( 0 ) ) }</td> ) }
             { editable |* <td><a href="#">remove</a></td> }
             <td/>
            </tr>
@@ -158,9 +156,9 @@ case class GroupData( report:Report, gf:Field ) {
     <div class="add">
      { editable |*
      <form method="post" id="rGrpAddForm">
-      <div class="title">Add { grouping.ofEntity.label.plural }</div>
+      <div class="title">Add { gf.ofEntity.label.plural }</div>
       <label for="rGrpAddBy">By:</label>
-      { Select( "rGrpAddBy", groupAddBy != null |* groupAddBy.id, grouping.addBys.map( ab => ( ab.id, ab.label ) ) ) }
+      { Select( "rGrpAddBy", groupAddBy != null |* groupAddBy.id, gf.addBys.map( ab => ( ab.id, ab.label ) ) ) }
       <div id="rGrpAddBox">
        { drawAddBy }
       </div>
@@ -177,7 +175,7 @@ case class GroupData( report:Report, gf:Field ) {
     val addBy = groupAddBy
 
     addBy != null |* {
-    <div class="stitle">Enter { grouping.ofEntity.label } { addBy.label.plural } To Add</div> ++
+    <div class="stitle">Enter { gf.ofEntity.label } { addBy.label.plural } To Add</div> ++
     { addBy.label match {
     case "Name" => // TODO:  should match on something better
       <ul id="rGrpAddName"></ul>
@@ -243,11 +241,11 @@ case class GroupData( report:Report, gf:Field ) {
 
     case "/group/addGroupSave" =>
       val group = Mobj()
-      group( grouping.forKey ) = grouping.forValue()
+      group( gf.forKey ) = gf.forValue()
       group( 'name ) = web.s( 'rGrpAddName ) or "Unnamed Group"
-      grouping.groupEntity.db.save( group )
+      gf.groupEntity.db.save( group )
       resetGroups
-      setDialogGroup( grouping.groupEntity( group ).tid )
+      setDialogGroup( gf.groupEntity( group ).tid )
 
       web.js(
         JqHtml( "#rGrpDlg", drawPanel ),
@@ -260,7 +258,7 @@ case class GroupData( report:Report, gf:Field ) {
     case "/group/renameSave" =>
       if ( !sg.b( 'builtin ) ) {
         sg( 'name ) = web.s( 'rGrpRenameName ) or "Unnamed Group"
-        grouping.groupEntity.db.save( sg )
+        gf.groupEntity.db.save( sg )
         resetGroups
       }
 
@@ -271,7 +269,7 @@ case class GroupData( report:Report, gf:Field ) {
 
     case "/group/deleteGroup" =>
       if ( !sg.b( 'builtin ) ) {
-        grouping.groupEntity.remove( Mobj( "_id" -> sg.id ) )
+        gf.groupEntity.remove( Mobj( "_id" -> sg.id ) )
         resetGroups
       }
 
@@ -283,7 +281,7 @@ case class GroupData( report:Report, gf:Field ) {
     case "/group/addBy" =>
       val id = web.s( 'v )
       groupAddBy = null
-      grouping.addBys.find( _.id == id ).foreach { groupAddBy = _ }
+      gf.addBys.find( _.id == id ).foreach { groupAddBy = _ }
       web.js( JqHtml( "#rGrpAddBox", drawAddBy ) )
 
     case "/group/addMember" =>
@@ -294,10 +292,10 @@ case class GroupData( report:Report, gf:Field ) {
         val ids:Seq[Any] =
           ab.label match {
           case "Name" => // TODO:  should match on something better
-            web.a_?( 'addTids ).map( grouping.ofEntity.tidToId )
+            web.a_?( 'addTids ).map( gf.ofEntity.tidToId )
 
           case _ =>
-            val keyAtts = ab.keys.map( grouping.ofEntity.attrib )
+            val keyAtts = ab.keys.map( gf.ofEntity.attrib )
 
             val altIds = web.s( 'rGrpAddByInput ).split( "," ).map( _.trim )
 
@@ -317,18 +315,18 @@ case class GroupData( report:Report, gf:Field ) {
               if ( keys.size == 1 ) keys( 0 )
               else                  Mobj( $or -> Mlist( keys:_* ) )
 
-            grouping.ofEntity.db.find( where, Mobj( "_id" -> 1 ) ).map( _( '_id ) ).toSeq
+            gf.ofEntity.db.find( where, Mobj( "_id" -> 1 ) ).map( _( '_id ) ).toSeq
           }
 
-        sg( grouping.listKey ) = Mlist( ( sg.a_?( grouping.listKey ) ++ ids ).distinct:_* )
-        grouping.groupEntity.db.save( sg )
+        sg( gf.listKey ) = Mlist( ( sg.a_?( gf.listKey ) ++ ids ).distinct:_* )
+        gf.groupEntity.db.save( sg )
       }
 
       web.js( JqHtml( "#rGrpMain", drawGroup ) )
 
     case "/group/remove" =>
       if ( !sg.b( 'builtin ) ) {
-        grouping.groupEntity.db.update( Mobj( "_id" -> sg.id ), Mobj( $pull -> Mobj( grouping.listKey -> grouping.ofEntity.tidToId( web.s( 'id ) ) ) ) )
+        gf.groupEntity.db.update( Mobj( "_id" -> sg.id ), Mobj( $pull -> Mobj( gf.listKey -> gf.ofEntity.tidToId( web.s( 'id ) ) ) ) )
         resetGroups
       }
 
@@ -341,17 +339,17 @@ case class GroupData( report:Report, gf:Field ) {
     case "/group/addSearch" =>
       val terms = web.s( 'term )
 
-      val labelKey = grouping.ofEntity.labelAtt.get.name
+      val labelKey = gf.ofEntity.labelAtt.get.name
       val regex = terms.toLowerCase.tokenize.map { term => Mobj( labelKey -> Mobj( $regex -> term, $options -> "i" ) ) }
       val where =
         if ( regex.size == 1 ) regex( 0 )
         else                   Mobj( $and -> Mlist( regex:_* ) )
 
       val json =
-        grouping.ofEntity.db.find( where, Mobj( labelKey -> 1 ) ).
+        gf.ofEntity.db.find( where, Mobj( labelKey -> 1 ) ).
           limit( 16 ).
           toSeq.
-          map( o => Map( "id"        -> grouping.ofEntity( o ).tid,
+          map( o => Map( "id"        -> gf.ofEntity( o ).tid,
                          "label"     -> o.s( labelKey ) ) )
 
       web.res.json( json )
@@ -364,12 +362,19 @@ case class GroupData( report:Report, gf:Field ) {
   }
 }
 
-case class GroupField( baseName:String, l:String = null, opts:Seq[(String,String)] = Nil, search:Search = null ) extends Field {
+case class GroupField( baseName:String, l:String = null,
+                       ofEntity:MongoEntity,
+                       groupEntity:MongoEntity, foreignKey:String, listKey:String, forKey:String, forValue: () => AnyRef,
+                       addBys:Seq[GroupingAddBy] = Nil,
+                       opts:Seq[(String,String)] = Nil ) extends Field {
+
   val id = Base62.make( 8 )
   val name = baseName + "$grp"
 
   val data = true
   val default = None
+
+  val search = Search.Group
 
   val showFilter = false
   val show = Show.Editable
@@ -385,7 +390,22 @@ case class GroupField( baseName:String, l:String = null, opts:Seq[(String,String
   override def cell( s:Scope ) =
     s.run.report.groupDataFor( this ).groupsFor( s.rec.id ).toNodeSeq
 
-  def matchesSearch( run:Run, value:Any, rec:Record ) = true
+  override def mongoSearch( run:Run, searchObj:DBObject, value:Any ) = {
+    if ( value != null ) {
+      val group = run.report.groupDataFor( this ).selectedGroup
+      if ( group != null ) {
+        val fk = foreignKey
+        searchObj( fk ) = Mobj( $in -> group.a_?( listKey ) )
+      }
+    }
+  }
+
+  def matchesSearch( run:Run, value:Any, rec:Record ):Boolean =
+    // TODO:  implement this
+    false
+
+  def queryGroups                         = groupEntity.db.find( Mobj( forKey -> forValue() ) ).map( o => groupEntity( o ) ).toSeq
+  def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) ).map( o => ofEntity( o ) ).toIterable
 }
 
 

@@ -78,7 +78,7 @@ trait Domain extends Valid {
 
   def get( s:Scope, f:PathField ) =
     f.search match {
-    case sg:Search.Group =>
+    case Search.Group =>
       s.get( f ) match {
       case gd:GroupData => gd.selectedGroupTid
       case v            => v
@@ -89,7 +89,7 @@ trait Domain extends Valid {
 
   def set( s:Scope, f:PathField, v:Any ) =
     f.search match {
-    case sg:Search.Group =>
+    case Search.Group =>
       s.get( f ) match {
       case gd:GroupData => gd.selectedGroupTid = v._s
       case v            => s.set( f, v )
@@ -100,7 +100,7 @@ trait Domain extends Valid {
 
   def remove( s:Scope, f:PathField ) =
     f.search match {
-    case sg:Search.Group =>
+    case Search.Group =>
       s.get( f ) match {
       case gd:GroupData => gd.selectedGroupTid = null
       case v            => s.remove( f )
