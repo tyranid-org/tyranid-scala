@@ -24,7 +24,6 @@ import collection.JavaConversions._
 import scala.util.DynamicVariable
 import java.util.{List => JList, HashMap => JHashMap, Map => JMap}
 import javax.servlet.http.{HttpServletRequestWrapper, HttpServletRequest, HttpServletResponse}
-import javax.servlet.ServletContext
 import collection.Iterable
 import java.lang.String
 
