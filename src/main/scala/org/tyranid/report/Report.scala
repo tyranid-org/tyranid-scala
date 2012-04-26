@@ -438,7 +438,7 @@ case class Report( query:Query ) {
             { ( query.hasSearch        |* <td><button id="rSearch" class="greyBtn">Search</button></td> ) ++
                                           <td>{ Button.btn( "rPrev", "Prev", disabled = offset == 0 ) }</td> ++
                                           <td>{ Button.btn( "rNext", "Next", disabled = !hasNext ) }</td> ++
-              ( query.groupFields.nonEmpty && !B.PRODUCTION |* <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
+              ( query.groupFields.nonEmpty |* <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
             { query.extraActions } 
            </tr>
           </table>
