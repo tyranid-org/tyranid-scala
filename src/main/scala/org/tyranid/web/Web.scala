@@ -130,7 +130,8 @@ spam( "filter entered, path=" + web.path )
       case ie:WebIgnoreException =>
         return false
       case re:WebRedirectException =>
-        web.res.sendRedirect( re.redirect )
+        if ( !web.res.isCommitted )
+          web.res.sendRedirect( re.redirect )
       case fe:WebForwardException =>
         web.ctx.getRequestDispatcher( fe.forward ).forward( web.req, web.res )
       case fe:Web404Exception =>
