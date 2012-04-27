@@ -59,25 +59,21 @@ case class LongImp( l:Long ) {
   
   def pow( p:Int ) = math.pow( l.toDouble, p.toDouble ).toLong
   
-  /*
   def toDurationString = {
-    val hrs = l / Time.OneHourMs
-    val mins = l / Time.OneHourMs
-    val secs = l / Time.OneHourMs
+    val days  = l / Time.OneDayMs
+    val hrs = ( l - ( days * Time.OneDayMs ) ) / Time.OneHourMs
+    val mins = ( l - ( days * Time.OneDayMs ) - ( hrs * Time.OneHourMs ) ) / Time.OneMinuteMs
+    val secs = ( l - ( days * Time.OneDayMs ) - ( hrs * Time.OneHourMs ) - ( mins * Time.OneMinuteMs ) )  / 1000
     
-    if ( l >= Time.OneHourMs )
-      String.format( "%d hrs %d mins %d secs", hrs.toLong, mins.toLong, secs.toLong )
-    else if ( l >= LongImp.gb ) 
-      String.format( "%1.2f GB", double2Double( ( l / LongImp.gb ).asInstanceOf[Double] ) )
-    else if ( l >= LongImp.mb ) 
-      String.format( "%1.2f MB", double2Double( ( l / LongImp.mb ).asInstanceOf[Double] ) )
-    else if ( l >= LongImp.kb )
-      String.format( "%1.2f KB", double2Double( ( l / LongImp.kb ).asInstanceOf[Double] ) )
-    else 
-      l + " B"
+    if ( l >= Time.OneDayMs )
+      "%d days %d hrs %d mins %d secs".format( days, hrs, mins, secs )
+    else if ( l >= Time.OneHourMs ) 
+      "%d hrs %d mins %d secs".format( hrs, mins, secs )
+    else  
+      "%d mins %d secs".format( mins, secs )
   }
-  */
 }
+
 
 
 
