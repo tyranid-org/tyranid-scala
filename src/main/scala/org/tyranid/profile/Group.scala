@@ -110,7 +110,7 @@ case class GroupField( baseName:String, l:String = null,
     <table class="tile" style="width:180px; height:54px;">
      <tr>
       <td class="label">view group</td>
-      <td rowspan="2"><a id={ "rGrpBtn" + id } href="#" class="rGrpBtn greyBtn" style="height:40px; padding-top:10px;"><span class="linkIcon contactsIcon"/><span class="label"></span></a></td>
+      <td rowspan="2" style="padding-right:4px;"><a id={ "rGrpBtn" + id } href="#" class="rGrpBtn greyBtn" style="height:40px; padding-top:10px;"><span class="linkIcon contactsIcon"/><span class="label"></span></a></td>
      </tr>
      <tr>
       <td id="rGrpChooser">{ groupValueFor( run.report.searchRec ).drawSelect() }</td>
@@ -188,7 +188,7 @@ case class GroupField( baseName:String, l:String = null,
       val abid = web.s( 'v )
       gv.groupAddBy = null
       addBys.find( _.id == abid ).foreach { gv.groupAddBy = _ }
-      web.js( JqHtml( "#rGrpAddBox", gv.drawAddBy ) )
+      web.js( JqHtml( "#rGrpAddBox" + id, gv.drawAddBy ) )
 
     case "/group/addMember" =>
       val ab = gv.groupAddBy
@@ -255,8 +255,8 @@ case class GroupField( baseName:String, l:String = null,
         ofEntity.db.find( where, Mobj( labelKey -> 1 ) ).
           limit( 16 ).
           toSeq.
-          map( o => Map( "id"        -> ofEntity( o ).tid,
-                         "label"     -> o.s( labelKey ) ) )
+          map( o => Map( "id"    -> ofEntity( o ).tid,
+                         "label" -> o.s( labelKey ) ) )
 
       web.res.json( json )
 
@@ -360,7 +360,7 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
       <div class="title">Add { gf.ofEntity.label.plural }</div>
       <label for="rGrpAddBy">By:</label>
       { Select( "rGrpAddBy", groupAddBy != null |* groupAddBy.id, gf.addBys.map( ab => ( ab.id, ab.label ) ) ) }
-      <div id="rGrpAddBox">
+      <div id={ "rGrpAddBox" + gf.id } class="rGrpAddBox">
        { drawAddBy }
       </div>
      </form> }
@@ -379,7 +379,7 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
     <div class="stitle">Enter { gf.ofEntity.label } { addBy.label.plural } To Add</div> ++
     { addBy.label match {
     case "Name" => // TODO:  should match on something better
-      <ul id={ "rGrpAddName" + gf.id }></ul>
+      <ul class="rGrpAddName" id={ "rGrpAddName" + gf.id }></ul>
 
     case ab =>
       <div class="note">(separate multiple entries with commas)</div>

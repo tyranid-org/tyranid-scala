@@ -628,6 +628,8 @@ object Reportlet extends Weblet {
         case Some( f ) => f.handle( this, report.searchRec )
         case None      => _404
         }
+      else
+        _404
     }
   }
 }
