@@ -33,7 +33,7 @@ import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
 import org.tyranid.report.{ Report, Run }
-import org.tyranid.web.WebContext
+import org.tyranid.web.{ Weblet, WebContext }
 
 
 /*
@@ -245,6 +245,13 @@ trait Field {
 
   def matchesSearch( run:Run, value:Any, rec:Record ):Boolean
 
+
+  /*
+   * * *   Reports ( TODO:  make more generic/Scope-based than Report/Run-based )
+   */
+
+  def drawPreamble( report:Report ):NodeSeq = NodeSeq.Empty
+
   def drawFilter( run:Run ):NodeSeq = {
     val s = Scope( run.report.searchRec, filtering = true )
 
@@ -261,6 +268,13 @@ trait Field {
      </tr>
     </table>
   }
+
+
+  /*
+   * * *   Weblet Handling
+   */
+
+  def handle( weblet:Weblet, rec:Record ) = {}
 }
 
 
@@ -374,7 +388,7 @@ case class PathField( baseName:String,
   override def fromString( s:String ) = va.att.domain.fromString( s )
 
   override def extract( pScope:Scope ) = {
-    val scope = pScope.at( path )
+    val scope = pScope.at( path, vaScope = true )
     va.att.domain.extract( scope, this )
   }
 
