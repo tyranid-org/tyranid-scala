@@ -110,7 +110,7 @@ case class GroupField( baseName:String, l:String = null,
     <table class="tile" style="width:180px; height:54px;">
      <tr>
       <td class="label">view group</td>
-      <td rowspan="2"><a id={ "rGrpBtn" + id } href="#" class="rGrpBtn greyBtn" style="height:42px; padding-top:10px;"><span class="linkIcon contactsIcon"/><span class="label"></span></a></td>
+      <td rowspan="2"><a id={ "rGrpBtn" + id } href="#" class="rGrpBtn greyBtn" style="height:40px; padding-top:10px;"><span class="linkIcon contactsIcon"/><span class="label"></span></a></td>
      </tr>
      <tr>
       <td id="rGrpChooser">{ groupValueFor( run.report.searchRec ).drawSelect() }</td>
@@ -120,7 +120,150 @@ case class GroupField( baseName:String, l:String = null,
   def queryGroups                         = groupEntity.db.find( Mobj( forKey -> forValue() ) ).map( o => groupEntity( o ) ).toSeq
   def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) ).map( o => ofEntity( o ) ).toIterable
 
-  override def handle( weblet:Weblet, rec:Record ) = groupValueFor( rec ).handle( weblet )
+  override def handle( weblet:Weblet, rec:Record ) = {
+
+    val gv = groupValueFor( rec )
+    val report = gv.report
+
+    val web = T.web
+    val query = report.query
+    val sg = gv.dialogGroup
+
+    weblet.rpath match {
+    case "/group" =>
+      gv.resetGroups
+      web.js( JqHtml( "#rGrpDlg" + id, gv.drawPanel ) )
+
+    case "/group/select" =>
+      gv.selectGroup( web.s( 'id ) )
+      web.res.html( report.innerDraw )
+
+    case "/group/dlgSelect" =>
+      gv.setDialogGroup( web.s( 'id ) )
+      web.js( JqHtml( "#rGrpMain" + id, gv.drawGroup ) )
+
+    case "/group/addGroup" =>
+      web.js( JqHtml( "#rGrpMain" + id, gv.drawAddGroup ) )
+
+    case "/group/addGroupSave" =>
+      val group = Mobj()
+      group( forKey ) = forValue()
+      group( 'name ) = web.s( "rGrpAddName" + id ) or "Unnamed Group"
+      groupEntity.db.save( group )
+      gv.resetGroups
+      gv.setDialogGroup( groupEntity( group ).tid )
+
+      web.js(
+        JqHtml( "#rGrpDlg" + id, gv.drawPanel ),
+        JqHtml( "#rGrpChooser", gv.drawSelect() )
+      )
+
+    case "/group/rename" =>
+      web.js( JqHtml( "#rGrpMain" + id, gv.drawRename ) )
+
+    case "/group/renameSave" =>
+      if ( !sg.b( 'builtin ) ) {
+        sg( 'name ) = web.s( "rGrpRenameName" + id ) or "Unnamed Group"
+        groupEntity.db.save( sg )
+        gv.resetGroups
+      }
+
+      web.js(
+        JqHtml( "#rGrpDlg" + id, gv.drawPanel ),
+        JqHtml( "#rGrpChooser", gv.drawSelect() )
+      )
+
+    case "/group/deleteGroup" =>
+      if ( !sg.b( 'builtin ) ) {
+        groupEntity.remove( Mobj( "_id" -> sg.id ) )
+        gv.resetGroups
+      }
+
+      web.js(
+        JqHtml( "#rGrpDlg" + id, gv.drawPanel ),
+        JqHtml( "#rGrpChooser", gv.drawSelect() )
+      )
+
+    case "/group/addBy" =>
+      val abid = web.s( 'v )
+      gv.groupAddBy = null
+      addBys.find( _.id == abid ).foreach { gv.groupAddBy = _ }
+      web.js( JqHtml( "#rGrpAddBox", gv.drawAddBy ) )
+
+    case "/group/addMember" =>
+      val ab = gv.groupAddBy
+
+      if ( ab != null && sg != null && !sg.b( 'builtin ) ) {
+
+        val ids:Seq[Any] =
+          ab.label match {
+          case "Name" => // TODO:  should match on something better
+            web.a_?( 'addTids ).map( ofEntity.tidToId )
+
+          case _ =>
+            val keyAtts = ab.keys.map( ofEntity.attrib )
+
+            val altIds = web.s( 'rGrpAddByInput ).split( "," ).map( _.trim )
+
+            val keys = keyAtts map { att =>
+              // TODO:  use att.domain to convert these strings to ints or whatever else is needed based on the domain
+              val nativeAltIds = altIds
+
+              Mobj( att.name -> (
+                if ( nativeAltIds.size == 1 )
+                  nativeAltIds( 0 )
+                else
+                  Mobj( $in -> Mlist( nativeAltIds:_* ) )
+              ) )
+            }
+
+            val where =
+              if ( keys.size == 1 ) keys( 0 )
+              else                  Mobj( $or -> Mlist( keys:_* ) )
+
+            ofEntity.db.find( where, Mobj( "_id" -> 1 ) ).map( _( '_id ) ).toSeq
+          }
+
+        sg( listKey ) = Mlist( ( sg.a_?( listKey ) ++ ids ).distinct:_* )
+        groupEntity.db.save( sg )
+      }
+
+      web.js( JqHtml( "#rGrpMain" + id, gv.drawGroup ) )
+
+    case "/group/remove" =>
+      if ( !sg.b( 'builtin ) ) {
+        groupEntity.db.update( Mobj( "_id" -> sg.id ), Mobj( $pull -> Mobj( listKey -> ofEntity.tidToId( web.s( 'id ) ) ) ) )
+        gv.resetGroups
+      }
+
+      web.js( JqHtml( "#rGrpMain" + id, gv.drawGroup ) )
+
+    case "/group/toggleAddBy" =>
+      gv.groupShowAddBy = !gv.groupShowAddBy
+      web.js( JqHtml( "#rGrpMain" + id, gv.drawGroup ) )
+
+    case "/group/addSearch" =>
+      val terms = web.s( 'term )
+
+      val labelKey = ofEntity.labelAtt.get.name
+      val regex = terms.toLowerCase.tokenize.map { term => Mobj( labelKey -> Mobj( $regex -> term, $options -> "i" ) ) }
+      val where =
+        if ( regex.size == 1 ) regex( 0 )
+        else                   Mobj( $and -> Mlist( regex:_* ) )
+
+      val json =
+        ofEntity.db.find( where, Mobj( labelKey -> 1 ) ).
+          limit( 16 ).
+          toSeq.
+          map( o => Map( "id"        -> ofEntity( o ).tid,
+                         "label"     -> o.s( labelKey ) ) )
+
+      web.res.json( json )
+
+    case _ =>
+      weblet._404
+    }
+  }
 }
 
 case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
@@ -271,148 +414,5 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
     <div class="btns">
      <button onclick={ "$('#rGrpDlg" + gf.id + "').dialog('close'); return false;" } class="greyBtn" style="float:right;">Cancel</button>
     </div>;
-
-  def handle( weblet:Weblet ):Boolean = {
-    val web = T.web
-    val query = report.query
-    val sg = dialogGroup
-
-    weblet.rpath match {
-    case "/group" =>
-      resetGroups
-      web.js( JqHtml( "#rGrpDlg" + gf.id, drawPanel ) )
-
-    case "/group/select" =>
-      selectGroup( web.s( 'id ) )
-      web.res.html( report.innerDraw )
-
-    case "/group/dlgSelect" =>
-      setDialogGroup( web.s( 'id ) )
-      web.js( JqHtml( "#rGrpMain" + gf.id, drawGroup ) )
-
-    case "/group/addGroup" =>
-      web.js( JqHtml( "#rGrpMain" + gf.id, drawAddGroup ) )
-
-    case "/group/addGroupSave" =>
-      val group = Mobj()
-      group( gf.forKey ) = gf.forValue()
-      group( 'name ) = web.s( "rGrpAddName" + gf.id ) or "Unnamed Group"
-      gf.groupEntity.db.save( group )
-      resetGroups
-      setDialogGroup( gf.groupEntity( group ).tid )
-
-      web.js(
-        JqHtml( "#rGrpDlg" + gf.id, drawPanel ),
-        JqHtml( "#rGrpChooser", drawSelect() )
-      )
-
-    case "/group/rename" =>
-      web.js( JqHtml( "#rGrpMain" + gf.id, drawRename ) )
-
-    case "/group/renameSave" =>
-      if ( !sg.b( 'builtin ) ) {
-        sg( 'name ) = web.s( "rGrpRenameName" + gf.id ) or "Unnamed Group"
-        gf.groupEntity.db.save( sg )
-        resetGroups
-      }
-
-      web.js(
-        JqHtml( "#rGrpDlg" + gf.id, drawPanel ),
-        JqHtml( "#rGrpChooser", drawSelect() )
-      )
-
-    case "/group/deleteGroup" =>
-      if ( !sg.b( 'builtin ) ) {
-        gf.groupEntity.remove( Mobj( "_id" -> sg.id ) )
-        resetGroups
-      }
-
-      web.js(
-        JqHtml( "#rGrpDlg" + gf.id, drawPanel ),
-        JqHtml( "#rGrpChooser", drawSelect() )
-      )
-
-    case "/group/addBy" =>
-      val id = web.s( 'v )
-      groupAddBy = null
-      gf.addBys.find( _.id == id ).foreach { groupAddBy = _ }
-      web.js( JqHtml( "#rGrpAddBox", drawAddBy ) )
-
-    case "/group/addMember" =>
-      val ab = groupAddBy
-
-      if ( ab != null && sg != null && !sg.b( 'builtin ) ) {
-
-        val ids:Seq[Any] =
-          ab.label match {
-          case "Name" => // TODO:  should match on something better
-            web.a_?( 'addTids ).map( gf.ofEntity.tidToId )
-
-          case _ =>
-            val keyAtts = ab.keys.map( gf.ofEntity.attrib )
-
-            val altIds = web.s( 'rGrpAddByInput ).split( "," ).map( _.trim )
-
-            val keys = keyAtts map { att =>
-              // TODO:  use att.domain to convert these strings to ints or whatever else is needed based on the domain
-              val nativeAltIds = altIds
-
-              Mobj( att.name -> (
-                if ( nativeAltIds.size == 1 )
-                  nativeAltIds( 0 )
-                else
-                  Mobj( $in -> Mlist( nativeAltIds:_* ) )
-              ) )
-            }
-
-            val where =
-              if ( keys.size == 1 ) keys( 0 )
-              else                  Mobj( $or -> Mlist( keys:_* ) )
-
-            gf.ofEntity.db.find( where, Mobj( "_id" -> 1 ) ).map( _( '_id ) ).toSeq
-          }
-
-        sg( gf.listKey ) = Mlist( ( sg.a_?( gf.listKey ) ++ ids ).distinct:_* )
-        gf.groupEntity.db.save( sg )
-      }
-
-      web.js( JqHtml( "#rGrpMain" + gf.id, drawGroup ) )
-
-    case "/group/remove" =>
-      if ( !sg.b( 'builtin ) ) {
-        gf.groupEntity.db.update( Mobj( "_id" -> sg.id ), Mobj( $pull -> Mobj( gf.listKey -> gf.ofEntity.tidToId( web.s( 'id ) ) ) ) )
-        resetGroups
-      }
-
-      web.js( JqHtml( "#rGrpMain" + gf.id, drawGroup ) )
-
-    case "/group/toggleAddBy" =>
-      groupShowAddBy = !groupShowAddBy
-      web.js( JqHtml( "#rGrpMain" + gf.id, drawGroup ) )
-
-    case "/group/addSearch" =>
-      val terms = web.s( 'term )
-
-      val labelKey = gf.ofEntity.labelAtt.get.name
-      val regex = terms.toLowerCase.tokenize.map { term => Mobj( labelKey -> Mobj( $regex -> term, $options -> "i" ) ) }
-      val where =
-        if ( regex.size == 1 ) regex( 0 )
-        else                   Mobj( $and -> Mlist( regex:_* ) )
-
-      val json =
-        gf.ofEntity.db.find( where, Mobj( labelKey -> 1 ) ).
-          limit( 16 ).
-          toSeq.
-          map( o => Map( "id"        -> gf.ofEntity( o ).tid,
-                         "label"     -> o.s( labelKey ) ) )
-
-      web.res.json( json )
-
-    case _ =>
-      return false
-    }
-
-    true
-  }
 }
 

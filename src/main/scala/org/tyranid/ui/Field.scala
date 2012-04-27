@@ -274,7 +274,7 @@ trait Field {
    * * *   Weblet Handling
    */
 
-  def handle( weblet:Weblet, rec:Record ) = {}
+  def handle( weblet:Weblet, rec:Record ) { weblet._404 }
 }
 
 
