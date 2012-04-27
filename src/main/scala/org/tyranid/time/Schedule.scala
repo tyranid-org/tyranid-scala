@@ -105,9 +105,9 @@ object Schedulelet extends Weblet {
     rpath match {
     case "/" =>
       shell(
-        <table class="dtable tablesort">
+        <table class="dtable tablesort {sortlist: [[1,1],[2,0]]}">
          <thead>
-          <tr><th></th><th>Status</th><th>Task</th><th>Runs</th><th>Last Run</th><th>Next Run</th></tr>
+          <tr><th class="{sorter: false}"></th><th>Status</th><th>Task</th><th>Runs</th><th>Last Run</th><th>Next Run</th></tr>
          </thead>
          <tbody>
           { for ( task <- Scheduler.tasks ) yield
