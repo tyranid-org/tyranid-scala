@@ -18,6 +18,7 @@
 package org.tyranid.math
 
 import org.tyranid.Imp._
+import org.tyranid.time.Time
 
 import scala.math
 
@@ -57,6 +58,25 @@ case class LongImp( l:Long ) {
   }
   
   def pow( p:Int ) = math.pow( l.toDouble, p.toDouble ).toLong
+  
+  /*
+  def toDurationString = {
+    val hrs = l / Time.OneHourMs
+    val mins = l / Time.OneHourMs
+    val secs = l / Time.OneHourMs
+    
+    if ( l >= Time.OneHourMs )
+      String.format( "%d hrs %d mins %d secs", hrs.toLong, mins.toLong, secs.toLong )
+    else if ( l >= LongImp.gb ) 
+      String.format( "%1.2f GB", double2Double( ( l / LongImp.gb ).asInstanceOf[Double] ) )
+    else if ( l >= LongImp.mb ) 
+      String.format( "%1.2f MB", double2Double( ( l / LongImp.mb ).asInstanceOf[Double] ) )
+    else if ( l >= LongImp.kb )
+      String.format( "%1.2f KB", double2Double( ( l / LongImp.kb ).asInstanceOf[Double] ) )
+    else 
+      l + " B"
+  }
+  */
 }
 
 

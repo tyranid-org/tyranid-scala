@@ -229,6 +229,7 @@ case class MongoView( override val entity:MongoEntity ) extends View {
 case class MongoRecord( override val view:MongoView,
                         obj:DBObject = Mobj(),
                         override val parent:MongoRecord = null ) extends Record with DBObjectWrap {
+  assert( obj != null )
 
   def db:DBCollection = view.entity.db
 

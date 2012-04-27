@@ -84,13 +84,13 @@ trait Domain extends Valid {
   def set( s:Scope, f:PathField, v:Any ) =
     s.get( f ) match {
     case c:Valuable => c.set( v )
-    case v          => s.set( f, v )
+    case _          => s.set( f, v )
     }
 
   def remove( s:Scope, f:PathField ) =
     s.get( f ) match {
     case c:Valuable => c.set( null )
-    case v          => s.remove( f )
+    case _          => s.remove( f )
     }
 
 
