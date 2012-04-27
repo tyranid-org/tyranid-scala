@@ -228,6 +228,8 @@ trait Field {
 
   def fromString( s:String ):Any = s
 
+  def init( rec:Record, report:Report ) = default foreach { d => rec( name ) = d() }
+
 
   /*
    * * *   Search
@@ -243,7 +245,7 @@ trait Field {
 
   def matchesSearch( run:Run, value:Any, rec:Record ):Boolean
 
-  def drawFilter( run:Run ) = {
+  def drawFilter( run:Run ):NodeSeq = {
     val s = Scope( run.report.searchRec, filtering = true )
 
     <table id={ id } class="tile" style="width:344px; height:54px;">
@@ -270,7 +272,6 @@ trait CustomField extends Field {
   val data = true
   val search:Search = null
   val showFilter:Boolean = false
-  val grouping = null
 
   val show = Show.Editable
   val default = None
@@ -431,7 +432,6 @@ trait CustomSearchField extends Field {
 
   val search = Search.Custom
   val showFilter = false
-  val grouping = null
   override val data = false
 
   val show = Show.Editable

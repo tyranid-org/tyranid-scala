@@ -74,6 +74,12 @@ case class GroupField( baseName:String, l:String = null,
 
   override lazy val label = if ( l.notBlank ) l else "Group"
 
+  override def init( rec:Record, report:Report ) = {
+    val gd = GroupValue( report, this )
+    gd.set( super.init( rec, report ) )
+    rec( name ) = gd
+  }
+
   override def ui( s:Scope ) = groupValueFor( s.rec ).drawSelect( "" )
 
   override def extract( s:Scope ) = groupValueFor( s.rec ).selectedGroupTid = T.web.s( id )
@@ -95,18 +101,19 @@ case class GroupField( baseName:String, l:String = null,
     // TODO:  implement this
     false
 
-  def queryGroups                         = groupEntity.db.find( Mobj( forKey -> forValue() ) ).map( o => groupEntity( o ) ).toSeq
-  def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) ).map( o => ofEntity( o ) ).toIterable
-
   override def drawFilter( run:Run ) =
-    <table class="tile" style="width:140px; height:54px;">
+    <table class="tile" style="width:180px; height:54px;">
      <tr>
       <td class="label">view group</td>
+      <td rowspan="2"><a id={ id } href="#" class="rGroup greyBtn" style="height:42px; padding-top:10px;"><span class="linkIcon contactsIcon"/><span class="label"></span></a></td>
      </tr>
      <tr>
       <td id="rGrpChooser">{ groupValueFor( run.report.searchRec ).drawSelect() }</td>
      </tr>
     </table>
+
+  def queryGroups                         = groupEntity.db.find( Mobj( forKey -> forValue() ) ).map( o => groupEntity( o ) ).toSeq
+  def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) ).map( o => ofEntity( o ) ).toIterable
 }
 
 case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
@@ -132,7 +139,6 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
 
   def get          = selectedGroupTid
   def set( v:Any ) = selectedGroupTid = v._s
-
 
   def selectedGroupId = gf.groupEntity.tidToId( selectedGroupTid )
   def selectedGroup = groups.find( g => g.tid == selectedGroupTid ).getOrElse( null )
@@ -238,8 +244,7 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
     }
   }
 
-  def drawAddGroup = {
-
+  def drawAddGroup =
     <div id={ gf.id } class="rGrpEdit">
      <div class="title" style="margin-bottom:16px;">Add New Group</div>
      <form method="post">
@@ -250,11 +255,9 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
     </div>
     <div class="btns">
      <button onclick="$('#rGrpDlg').dialog('close'); return false;" class="greyBtn" style="float:right;">Cancel</button>
-    </div>
-  }
+    </div>;
 
-  def drawRename = {
-
+  def drawRename =
     <div id={ gf.id } class="rGrpEdit">
      <div class="title" style="margin-bottom:16px;">Rename Group</div>
      <form method="post">
@@ -265,8 +268,7 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
     </div>
     <div class="btns">
      <button onclick="$('#rGrpDlg').dialog('close'); return false;" class="greyBtn" style="float:right;">Cancel</button>
-    </div>
-  }
+    </div>;
 
   def handle( weblet:Weblet ):Boolean = {
     val web = T.web

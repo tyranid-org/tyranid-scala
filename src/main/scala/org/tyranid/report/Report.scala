@@ -31,7 +31,7 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.json.{ Js, JqHtml }
-import org.tyranid.profile.{ GroupValue, GroupField }
+import org.tyranid.profile.GroupField
 import org.tyranid.session.Session
 import org.tyranid.time.Time
 import org.tyranid.ui.{ Button, Checkbox, CustomField, Field, Glyph, Input, PathField, Search, Select, Show, Valuable }
@@ -147,11 +147,6 @@ trait Query {
 
   def selectable = false
 
-  //val actions = Seq(
-    //"Group",          // multi-select
-    //"Connection"      // multi-select
-  //)
-
   lazy val init =
     Query.byName( name ) = this
 
@@ -254,16 +249,7 @@ case class Report( query:Query ) {
   val searchRec = {
     val rec = query.entity.make
     for ( sf <- query.searchFields )
-      sf match {
-      case gf:GroupField =>
-        val gd = GroupValue( this, gf )
-        sf.default foreach { d => gd.selectedGroupTid = d()._s }
-        rec( sf.name ) = gd
-
-      case _ =>
-        sf.default foreach { d => rec( sf.name ) = d() }
-      }
-
+      sf.init( rec, this )
     rec 
   }
 
@@ -415,8 +401,7 @@ case class Report( query:Query ) {
            <tr>
             { ( query.hasSearch        |* <td><button id="rSearch" class="greyBtn">Search</button></td> ) ++
                                           <td>{ Button.btn( "rPrev", "Prev", disabled = offset == 0 ) }</td> ++
-                                          <td>{ Button.btn( "rNext", "Next", disabled = !hasNext ) }</td> ++
-              ( query.groupFields.nonEmpty |* <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
+                                          <td>{ Button.btn( "rNext", "Next", disabled = !hasNext ) }</td> }
             { query.extraActions } 
            </tr>
           </table>
