@@ -38,6 +38,12 @@ import org.tyranid.web.Weblet
 
       +. add users by Full Name
 
+         +.  add computed value
+         +.  add compute method to Record
+         +.  update Record.save to calculate computed values
+         +.  add "fullName" to User as a computed function
+         +.  add a migration
+
       +. show users by Full Name in list of group members
 
       +. group types:
