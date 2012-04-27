@@ -33,7 +33,7 @@ import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
 import org.tyranid.report.{ Report, Run }
-import org.tyranid.web.WebContext
+import org.tyranid.web.{ Weblet, WebContext }
 
 
 /*
@@ -228,6 +228,8 @@ trait Field {
 
   def fromString( s:String ):Any = s
 
+  def init( rec:Record, report:Report ) = default foreach { d => rec( name ) = d() }
+
 
   /*
    * * *   Search
@@ -243,7 +245,14 @@ trait Field {
 
   def matchesSearch( run:Run, value:Any, rec:Record ):Boolean
 
-  def drawFilter( run:Run ) = {
+
+  /*
+   * * *   Reports ( TODO:  make more generic/Scope-based than Report/Run-based )
+   */
+
+  def drawPreamble( report:Report ):NodeSeq = NodeSeq.Empty
+
+  def drawFilter( run:Run ):NodeSeq = {
     val s = Scope( run.report.searchRec, filtering = true )
 
     <table id={ id } class="tile" style="width:344px; height:54px;">
@@ -259,6 +268,13 @@ trait Field {
      </tr>
     </table>
   }
+
+
+  /*
+   * * *   Weblet Handling
+   */
+
+  def handle( weblet:Weblet, rec:Record ) = {}
 }
 
 
@@ -270,7 +286,6 @@ trait CustomField extends Field {
   val data = true
   val search:Search = null
   val showFilter:Boolean = false
-  val grouping = null
 
   val show = Show.Editable
   val default = None
@@ -373,7 +388,7 @@ case class PathField( baseName:String,
   override def fromString( s:String ) = va.att.domain.fromString( s )
 
   override def extract( pScope:Scope ) = {
-    val scope = pScope.at( path )
+    val scope = pScope.at( path, vaScope = true )
     va.att.domain.extract( scope, this )
   }
 
@@ -431,7 +446,6 @@ trait CustomSearchField extends Field {
 
   val search = Search.Custom
   val showFilter = false
-  val grouping = null
   override val data = false
 
   val show = Show.Editable

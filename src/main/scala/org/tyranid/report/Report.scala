@@ -31,11 +31,11 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.json.{ Js, JqHtml }
-import org.tyranid.profile.{ GroupValue, GroupField }
 import org.tyranid.session.Session
 import org.tyranid.time.Time
 import org.tyranid.ui.{ Button, Checkbox, CustomField, Field, Glyph, Input, PathField, Search, Select, Show, Valuable }
 import org.tyranid.web.{ Weblet, WebContext }
+
 
 
 /*
@@ -61,7 +61,6 @@ case class Sort( name:String, label:String, fields:(String,Int)* ) {
     false
   }
 }
-
 
 
 /*
@@ -104,7 +103,6 @@ trait Query {
 
   lazy val dataFields   = boundFields.filter( f => f.data && f.show != Show.Hidden )
   lazy val searchFields = boundFields.filter( _.search != null )
-  lazy val groupFields  = boundFields.of[GroupField]
 
   lazy val allFieldsMap = {  
     val map = mutable.Map[String,Field]()
@@ -146,11 +144,6 @@ trait Query {
   val tableGridStyle:String = null
 
   def selectable = false
-
-  //val actions = Seq(
-    //"Group",          // multi-select
-    //"Connection"      // multi-select
-  //)
 
   lazy val init =
     Query.byName( name ) = this
@@ -254,16 +247,7 @@ case class Report( query:Query ) {
   val searchRec = {
     val rec = query.entity.make
     for ( sf <- query.searchFields )
-      sf match {
-      case gf:GroupField =>
-        val gd = GroupValue( this, gf )
-        sf.default foreach { d => gd.selectedGroupTid = d()._s }
-        rec( sf.name ) = gd
-
-      case _ =>
-        sf.default foreach { d => rec( sf.name ) = d() }
-      }
-
+      sf.init( rec, this )
     rec 
   }
 
@@ -415,8 +399,7 @@ case class Report( query:Query ) {
            <tr>
             { ( query.hasSearch        |* <td><button id="rSearch" class="greyBtn">Search</button></td> ) ++
                                           <td>{ Button.btn( "rPrev", "Prev", disabled = offset == 0 ) }</td> ++
-                                          <td>{ Button.btn( "rNext", "Next", disabled = !hasNext ) }</td> ++
-              ( query.groupFields.nonEmpty |* <td><button id="rGroup" class="greyBtn">Group</button></td> ) }
+                                          <td>{ Button.btn( "rNext", "Next", disabled = !hasNext ) }</td> }
             { query.extraActions } 
            </tr>
           </table>
@@ -474,10 +457,9 @@ case class Report( query:Query ) {
   def draw =
     <head>
      <script src={ B.buildPrefix + "/js/report.js" } type="text/javascript"/>
-     { query.groupFields.nonEmpty |* <script src={ B.buildPrefix + "/js/tag.js" } charset="utf-8"></script> }
      <script>{ Unparsed( "window.reportObj = { qn:'" + query.name + "', id:'" + id + "' };" ) }</script>
     </head> ++
-    { query.groupFields.map( _.groupValueFor( searchRec ).draw ) } ++
+    { query.fields.map( _.drawPreamble( this ) ).flatten } ++
     <div class="report greyBox" id={ id }>
      { recalcFields }
      { innerDraw }
@@ -527,7 +509,7 @@ object Reportlet extends Weblet {
   def handle( web:WebContext ) {
     redirectIfNotLoggedIn( web )
     val sess = Session()
-    val report = sess.reportFor( web.req.s( 'q ) )
+    val report = sess.reportFor( web.s( 'q ) )
     val query = report.query
 
     rpath match {
@@ -545,7 +527,7 @@ object Reportlet extends Weblet {
       report.extractSearchRec
 
       if ( query.orderBy.nonEmpty ) {
-        val name = web.req.s( 'sort )
+        val name = web.s( 'sort )
         report.sort = query.orderBy.find( _.name == name ).get
       }
       report.offset = 0
@@ -572,7 +554,7 @@ object Reportlet extends Weblet {
       web.res.html( report.innerDraw )
 
     case "/select" =>
-      val fp = query.by( web.req.s( 'f ) )
+      val fp = query.by( web.s( 'f ) )
 
       val empty = report.selectedColumns.isEmpty
       report.selectedColumns( fp.name ) = !report.selectedColumns( fp.name )
@@ -580,7 +562,7 @@ object Reportlet extends Weblet {
       web.res.ok
 
     case "/drag" =>
-      val js = web.req.s( 'js )
+      val js = web.s( 'js )
       val ( fn, tn ) = js.splitFirst( ':' )
 
       val efn =
@@ -618,7 +600,7 @@ object Reportlet extends Weblet {
 
     case "/selectRow" =>
       // TODO:  make this generic based on query's entity id field
-      val rowId = new ObjectId( web.req.s( 'id ) )
+      val rowId = new ObjectId( web.s( 'id ) )
       if ( report.selectedIds( rowId ) )
         report.selectedIds -= rowId
       else
@@ -627,7 +609,7 @@ object Reportlet extends Weblet {
       web.res.ok
 
     case "/section" =>
-      report.onSection = web.req.s( 'v )
+      report.onSection = web.s( 'v )
       report.recalcFields
       web.js(
         JqHtml( "#gfd", report.fieldDropdown ),
@@ -635,16 +617,17 @@ object Reportlet extends Weblet {
       )
 
     case "/field" =>
-      report.onField = web.req.s( 'v )
+      report.onField = web.s( 'v )
       web.res.ok
 
-    case s if s.startsWith( "/group" ) =>
-      var gf = query.groupFields.find( _.id == web.s( 'gf ) ).getOrElse( query.groupFields.nonEmpty ? query.groupFields( 0 ) | null )
-      if ( gf == null || !gf.groupValueFor( report.searchRec ).handle( this ) )
-        _404
+    case s =>
+      val fld = web.s( 'fld )
 
-    case _ =>
-      _404
+      if ( fld.notBlank )
+        query.fields.find( _.id == fld ) match {
+        case Some( f ) => f.handle( this, report.searchRec )
+        case None      => _404
+        }
     }
   }
 }
