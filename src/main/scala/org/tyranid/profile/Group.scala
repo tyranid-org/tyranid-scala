@@ -60,17 +60,17 @@ case class GroupField( baseName:String, l:String = null,
                        opts:Seq[(String,String)] = Nil ) extends Field {
 
   val id = Base62.make( 8 )
-  val name = baseName + "$grp"
+  val name = baseName + "$cst"
 
   val data = true
   val default = None
 
   val search = Search.Custom
 
-  val showFilter = false
+  val showFilter = true
   val show = Show.Editable
 
-  private def groupValueFor( rec:Record ) = rec( name ).as[GroupValue]
+  def groupValueFor( rec:Record ) = rec( name ).as[GroupValue]
 
   override lazy val label = if ( l.notBlank ) l else "Group"
 
@@ -79,11 +79,11 @@ case class GroupField( baseName:String, l:String = null,
   override def extract( s:Scope ) = groupValueFor( s.rec ).selectedGroupTid = T.web.s( id )
 
   override def cell( s:Scope ) =
-    s.run.report.groupValueFor( this ).groupsFor( s.rec.id ).toNodeSeq
+    groupValueFor( s.run.report.searchRec ).groupsFor( s.rec.id ).toNodeSeq
 
   override def mongoSearch( run:Run, searchObj:DBObject, value:Any ) = {
     if ( value != null ) {
-      val group = run.report.groupValueFor( this ).selectedGroup
+      val group = groupValueFor( run.report.searchRec ).selectedGroup
       if ( group != null ) {
         val fk = foreignKey
         searchObj( fk ) = Mobj( $in -> group.a_?( listKey ) )
@@ -97,6 +97,16 @@ case class GroupField( baseName:String, l:String = null,
 
   def queryGroups                         = groupEntity.db.find( Mobj( forKey -> forValue() ) ).map( o => groupEntity( o ) ).toSeq
   def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) ).map( o => ofEntity( o ) ).toIterable
+
+  override def drawFilter( run:Run ) =
+    <table class="tile" style="width:140px; height:54px;">
+     <tr>
+      <td class="label">view group</td>
+     </tr>
+     <tr>
+      <td id="rGrpChooser">{ groupValueFor( run.report.searchRec ).drawSelect() }</td>
+     </tr>
+    </table>
 }
 
 case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
@@ -132,16 +142,6 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
   def dialogGroupId = gf.groupEntity.tidToId( dialogGroupTid )
   def dialogGroup = groups.find( g => g.tid == dialogGroupTid ).getOrElse( null )
   def setDialogGroup( tid:String ) = dialogGroupTid = tid
-
-  def drawFilter =
-    <table class="tile" style="width:140px; height:54px;">
-     <tr>
-      <td class="label">view group</td>
-     </tr>
-     <tr>
-      <td id="rGrpChooser">{ drawSelect() }</td>
-     </tr>
-    </table>
 
   def drawSelect( cls:String = "rGroups" ) =
     Select( gf.id, selectedGroupTid, ( "" -> "All" ) +: groups.map( g => g.tid -> g.s( 'name ) ), "class" -> cls, "style" -> "width:120px; max-width:120px;" )
