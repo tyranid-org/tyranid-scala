@@ -91,7 +91,6 @@ object Search {
     Subst,
     Gte,
     Lte,
-    Group,
     Custom
   )
 
@@ -156,13 +155,6 @@ object Search {
 
     def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) =
       f.basePath.leaf.domain.compare( searchValue, f.basePath.get( rec ) ) <= 0
-  }
-
-  case object Group  extends Search {
-    val name = "grp"
-
-    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any )     = {}
-    def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) = false
   }
 
   case object Custom extends Search {

@@ -65,7 +65,7 @@ case class GroupField( baseName:String, l:String = null,
   val data = true
   val default = None
 
-  val search = Search.Group
+  val search = Search.Custom
 
   val showFilter = false
   val show = Show.Editable

@@ -104,7 +104,7 @@ trait Query {
 
   lazy val dataFields:Seq[Field]   = boundFields.filter( f => f.data && f.show != Show.Hidden )
   lazy val searchFields:Seq[Field] = boundFields.filter( _.search != null )
-  lazy val groupFields:Seq[Field]  = boundFields.filter( _.search == Search.Group )
+  lazy val groupFields:Seq[Field]  = boundFields.filter( _.isInstanceOf[GroupField] )
 
   lazy val allFieldsMap = {  
     val map = mutable.Map[String,Field]()
@@ -254,9 +254,9 @@ case class Report( query:Query ) {
   val searchRec = {
     val rec = query.entity.make
     for ( sf <- query.searchFields ) {
-      sf.search match {
-      case Search.Group =>
-        val gd = GroupValue( this, sf.as[GroupField] )
+      sf match {
+      case gf:GroupField =>
+        val gd = GroupValue( this, gf )
         sf.default foreach { d => gd.selectedGroupTid = d()._s }
         rec( sf.name ) = gd
 
@@ -270,9 +270,9 @@ case class Report( query:Query ) {
 
   def extractSearchRec = {
     for ( sf <- query.searchFields )
-      sf.search match {
-      case Search.Group => searchRec( sf.name ).as[GroupValue].selectedGroupTid = ""
-      case _            => searchRec.remove( sf.name )
+      sf match {
+      case gf:GroupField => searchRec( sf.name ).as[GroupValue].selectedGroupTid = ""
+      case _             => searchRec.remove( sf.name )
       }
 
     val s = Scope( searchRec )
