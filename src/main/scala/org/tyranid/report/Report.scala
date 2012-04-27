@@ -31,10 +31,10 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.json.{ Js, JqHtml }
-import org.tyranid.profile.{ GroupValue, GroupField, GroupingAddBy }
+import org.tyranid.profile.{ GroupValue, GroupField }
 import org.tyranid.session.Session
 import org.tyranid.time.Time
-import org.tyranid.ui.{ Button, Checkbox, CustomField, Field, Glyph, Input, PathField, Search, Select, Show }
+import org.tyranid.ui.{ Button, Checkbox, CustomField, Field, Glyph, Input, PathField, Search, Select, Show, Valuable }
 import org.tyranid.web.{ Weblet, WebContext }
 
 
@@ -102,9 +102,9 @@ trait Query {
 
   val fields:Seq[Field]
 
-  lazy val dataFields:Seq[Field]   = boundFields.filter( f => f.data && f.show != Show.Hidden )
-  lazy val searchFields:Seq[Field] = boundFields.filter( _.search != null )
-  lazy val groupFields:Seq[Field]  = boundFields.filter( _.search == Search.Group )
+  lazy val dataFields   = boundFields.filter( f => f.data && f.show != Show.Hidden )
+  lazy val searchFields = boundFields.filter( _.search != null )
+  lazy val groupFields  = boundFields.of[GroupField]
 
   lazy val allFieldsMap = {  
     val map = mutable.Map[String,Field]()
@@ -253,26 +253,25 @@ case class Report( query:Query ) {
 
   val searchRec = {
     val rec = query.entity.make
-    for ( sf <- query.searchFields ) {
-      sf.search match {
-      case Search.Group =>
-        val gd = GroupValue( this, sf.as[GroupField] )
+    for ( sf <- query.searchFields )
+      sf match {
+      case gf:GroupField =>
+        val gd = GroupValue( this, gf )
         sf.default foreach { d => gd.selectedGroupTid = d()._s }
         rec( sf.name ) = gd
 
       case _ =>
         sf.default foreach { d => rec( sf.name ) = d() }
       }
-    }
 
     rec 
   }
 
   def extractSearchRec = {
     for ( sf <- query.searchFields )
-      sf.search match {
-      case Search.Group => searchRec( sf.name ).as[GroupValue].selectedGroupTid = ""
-      case _            => searchRec.remove( sf.name )
+      searchRec( sf.name ) match {
+      case v:Valuable => v.set( null )
+      case _          => searchRec.remove( sf.name )
       }
 
     val s = Scope( searchRec )
@@ -283,13 +282,11 @@ case class Report( query:Query ) {
         sf.default foreach { d => searchRec( sf.name ) = d() }
   }
 
-  @volatile var sort:Sort = {
-
+  @volatile var sort:Sort =
     if ( query.orderBy.nonEmpty )
       query.orderBy.head
     else
       null
-  }
 
   @volatile var offset:Int = 0
   @volatile var hasNext:Boolean = false
@@ -390,25 +387,6 @@ case class Report( query:Query ) {
    * * *  Rendering
    */
 
-  def drawFilter( run:Run, sf:Field ) = {
-    val s = Scope( searchRec, filtering = true )
-
-    <table id={ sf.id } class="tile" style="width:344px; height:54px;">
-     <tr>
-      <td class="label">{ sf.label }</td>
-      { sf.topActions( run ) }
-     </tr>
-     <tr>
-      <td id="rGrpChooser">
-       { sf.ui( s ) }
-       { sf.bottomActions( run ) }
-      </td>
-     </tr>
-    </table>
-  }
-
-  def groupValueFor( gf:Field ) = searchRec( gf.name ).as[GroupValue]
-
   def innerDraw = {
     val run = new Run( this )
     
@@ -446,8 +424,7 @@ case class Report( query:Query ) {
         </tr>
        </table>
       </td>
-      { query.groupFields.map( gf => <td>{ groupValueFor( gf ).drawFilter }</td> ) }
-      { query.searchFields.filter( _.showFilter ).map( f => <td>{ drawFilter( run, f ) }</td> ) }
+      { query.searchFields.filter( _.showFilter ).map( f => <td>{ f.drawFilter( run ) }</td> ) }
       <td style="width:410px; padding:0;"></td>
       <td></td>
       <td>
@@ -500,7 +477,7 @@ case class Report( query:Query ) {
      { query.groupFields.nonEmpty |* <script src={ B.buildPrefix + "/js/tag.js" } charset="utf-8"></script> }
      <script>{ Unparsed( "window.reportObj = { qn:'" + query.name + "', id:'" + id + "' };" ) }</script>
     </head> ++
-    { query.groupFields.map( gf => groupValueFor( gf ).draw ) } ++
+    { query.groupFields.map( _.groupValueFor( searchRec ).draw ) } ++
     <div class="report greyBox" id={ id }>
      { recalcFields }
      { innerDraw }
@@ -663,7 +640,7 @@ object Reportlet extends Weblet {
 
     case s if s.startsWith( "/group" ) =>
       var gf = query.groupFields.find( _.id == web.s( 'gf ) ).getOrElse( query.groupFields.nonEmpty ? query.groupFields( 0 ) | null )
-      if ( gf == null || !report.groupValueFor( gf ).handle( this ) )
+      if ( gf == null || !gf.groupValueFor( report.searchRec ).handle( this ) )
         _404
 
     case _ =>

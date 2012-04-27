@@ -32,7 +32,6 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
-import org.tyranid.profile.GroupingAddBy
 import org.tyranid.report.{ Report, Run }
 import org.tyranid.web.WebContext
 
@@ -91,7 +90,6 @@ object Search {
     Subst,
     Gte,
     Lte,
-    Group,
     Custom
   )
 
@@ -156,13 +154,6 @@ object Search {
 
     def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) =
       f.basePath.leaf.domain.compare( searchValue, f.basePath.get( rec ) ) <= 0
-  }
-
-  case object Group  extends Search {
-    val name = "grp"
-
-    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any )     = {}
-    def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) = false
   }
 
   case object Custom extends Search {
@@ -251,6 +242,23 @@ trait Field {
       search.mongoSearch( run, this, searchObj, value )
 
   def matchesSearch( run:Run, value:Any, rec:Record ):Boolean
+
+  def drawFilter( run:Run ) = {
+    val s = Scope( run.report.searchRec, filtering = true )
+
+    <table id={ id } class="tile" style="width:344px; height:54px;">
+     <tr>
+      <td class="label">{ label }</td>
+      { topActions( run ) }
+     </tr>
+     <tr>
+      <td id="rGrpChooser">
+       { ui( s ) }
+       { bottomActions( run ) }
+      </td>
+     </tr>
+    </table>
+  }
 }
 
 
