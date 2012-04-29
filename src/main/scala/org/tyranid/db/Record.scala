@@ -202,6 +202,16 @@ trait Record extends Valid with BsonObject {
   def label( key:String ):String = label( view( key ) )
 
 
+
+  /*
+   * * *   Computations
+   */
+
+  def compute =
+    for ( c <- view.entity.computations )
+      this( c.name ) = c.computation( this )
+
+
   /**
    * Record/Object/Document/Tuple
    */

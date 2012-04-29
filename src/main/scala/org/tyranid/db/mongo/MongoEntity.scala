@@ -71,6 +71,8 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
 
   
   override def save( rec:Record ) = {
+    rec.compute
+    
     try {
       db.save( rec.as[MongoRecord] )
     } catch {

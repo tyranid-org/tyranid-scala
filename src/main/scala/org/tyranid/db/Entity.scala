@@ -43,6 +43,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   var internal:Boolean = false
   var owner:Boolean = false
   var search:Searchable = NoSearch
+  var computation: ( Record ) => Any = null
 
   
   override def toString = entity.name + "." + name
@@ -83,6 +84,9 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   }
   def is( search:Searchable ) = { this.search = search; this }
   def help( ns:NodeSeq ):Attribute = { help = ns; this }
+
+  def isComputed = computation != null
+  def computed( computation: ( Record ) => Any ) = this.computation = computation
 
   private var annotations:List[AttributeAnnotation] = Nil
   def is( anno:AttributeAnnotation ) = annotations ::= anno
@@ -212,6 +216,13 @@ trait Entity extends Domain with DbItem {
   override def recordTidToId( recordTid:String ):Any = idAtt.flatten( _.domain.recordTidToId( recordTid ), this.problem( "embedded entities don't have IDs" ) )
 
   
+  /*
+   * * *  Computations
+   */
+
+  lazy val computations = attribs.filter( _.isComputed )
+
+
   /*
    * * *  Records
    */

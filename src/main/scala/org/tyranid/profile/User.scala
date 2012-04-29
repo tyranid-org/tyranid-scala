@@ -37,7 +37,8 @@ import org.tyranid.web.WebContext
 
 class UserMeta extends MongoEntity( "a01v" ) {
   "_id"            is DbMongoId           is 'id;
-  "email"          is DbEmail             is 'label is 'required;
+  "email"          is DbEmail             is 'required;
+  "fullName"       is DbChar(64)          is 'label;
   "password"       is DbPassword          is 'required;
   "password2"      is DbPassword          is 'required is 'temporary as "Repeat Password";
   "thumbnail"      is DbThumbnail( "public" ) as "Profile Image";
