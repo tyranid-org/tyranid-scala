@@ -57,6 +57,7 @@ case class GroupField( baseName:String, l:String = null,
                        ofEntity:MongoEntity,
                        groupEntity:MongoEntity, foreignKey:String, listKey:String, forKey:String, forValue: () => AnyRef,
                        addBys:Seq[GroupingAddBy] = Nil,
+                       nameSearch: ( String ) => Any = null,
                        opts:Seq[(String,String)] = Nil ) extends Field {
 
   val id = Base62.make( 8 )
@@ -245,18 +246,22 @@ case class GroupField( baseName:String, l:String = null,
     case "/group/addSearch" =>
       val terms = web.s( 'term )
 
-      val labelKey = ofEntity.labelAtt.get.name
-      val regex = terms.toLowerCase.tokenize.map { term => Mobj( labelKey -> Mobj( $regex -> term, $options -> "i" ) ) }
-      val where =
-        if ( regex.size == 1 ) regex( 0 )
-        else                   Mobj( $and -> Mlist( regex:_* ) )
-
       val json =
-        ofEntity.db.find( where, Mobj( labelKey -> 1 ) ).
-          limit( 16 ).
-          toSeq.
-          map( o => Map( "id"    -> ofEntity( o ).tid,
-                         "label" -> o.s( labelKey ) ) )
+        if ( nameSearch != null ) {
+          nameSearch( terms )
+        } else {
+          val labelKey = ofEntity.labelAtt.get.name
+          val regex = terms.toLowerCase.tokenize.map { term => Mobj( labelKey -> Mobj( $regex -> term, $options -> "i" ) ) }
+          val where =
+            if ( regex.size == 1 ) regex( 0 )
+            else                   Mobj( $and -> Mlist( regex:_* ) )
+
+          ofEntity.db.find( where, Mobj( labelKey -> 1 ) ).
+            limit( 16 ).
+            toSeq.
+            map( o => Map( "id"    -> ofEntity( o ).tid,
+                           "label" -> o.s( labelKey ) ) )
+        }
 
       web.res.json( json )
 
