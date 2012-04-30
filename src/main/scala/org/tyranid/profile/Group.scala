@@ -36,10 +36,6 @@ import org.tyranid.web.Weblet
 
 /*
 
-      +. add users by Full Name
-
-         +.  add a migration
-
       +. group types:
 
          in-network         vs. out-of-network     ( monitored vs. connection group )
