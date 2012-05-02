@@ -23,6 +23,7 @@ import java.net.URL
 import scala.collection.mutable
 import scala.collection.JavaConversions._
 import scala.xml.NodeSeq
+//import scala.xml.NodeSeq.Empty
 
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
@@ -47,8 +48,10 @@ object DbThumbnail {
 
 case class DbThumbnail( bucket:S3Bucket ) extends DbImageish( bucket ) {
 
-  override def cell( s:Scope, f:PathField ) =
-    <img src={ f.path.s( s.rec ) } style="width:50px; height:50px;"/>
+  override def cell( s:Scope, f:PathField ) = {
+    val v = f.path.s( s.rec ).trim
+    v.isBlank ? NodeSeq.Empty | <img src={ f.path.s( s.rec ) } style="width:50px; height:50px;"/>
+  }
   
   override def ui( s:Scope, f:PathField ): NodeSeq = {
     <div class='thumbnail'>
