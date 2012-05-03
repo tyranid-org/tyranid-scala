@@ -203,7 +203,7 @@ object Smslet extends Weblet {
            </form>
            <footer class="btns">
             <input type="hidden" value="1" name="savingHere"/>
-            <a href={ "/user/edit?id=" + tid } id="cancel" class="greyBtn">Done</a>
+            <a href={ "/user/edit?id=" + tid } id="cancel" class="btn">Done</a>
            </footer> ), 
          "endpoint" -> ( "/sms/edit?id=" + tid ),
          "onCloseRedirect" -> true ) )
@@ -289,11 +289,11 @@ object Smslet extends Weblet {
          <input type="hidden" value={ if ( sms.b( 'ok ) ) sms.s( 'phone ).toOnlyNumbers else null } name="verifiedNumber"/>
          <input type="hidden" value="1" name="sendVerify"/>
          <footer class="btns">
-          <input type="submit" id="dlgSubmit" class="greenBtn" value="Send Verification"/>
+          <input type="submit" id="dlgSubmit" class="go btn" value="Send Verification"/>
           { if ( sms.s( 'phone ).toOnlyNumbers.notBlank ) 
-            <a href={ "/sms/clearNumber?id=" + user.tid } class="greenBtn">Clear Number</a>
+            <a href={ "/sms/clearNumber?id=" + user.tid } class="go btn">Clear Number</a>
           }
-          <a href={ "/user/edit?id=" + user.tid } id="cancel" class="greyBtn">Cancel</a>
+          <a href={ "/user/edit?id=" + user.tid } id="cancel" class="btn">Cancel</a>
          </footer>
         </form>
       } else {
@@ -304,8 +304,8 @@ object Smslet extends Weblet {
             </table>
             <footer class="btns">
              <input type="hidden" value="1" name="verify"/>
-            <input type="submit" id="dlgSubmit" class="greenBtn" value="Verify"/>
-            <a href={ "/user/edit?id=" + user.tid } id="cancel" class="greyBtn">Cancel</a>
+            <input type="submit" id="dlgSubmit" class="go btn" value="Verify"/>
+            <a href={ "/user/edit?id=" + user.tid } id="cancel" class="btn">Cancel</a>
            </footer>
          </form>
       }

@@ -181,7 +181,7 @@ trait Query {
       <div>{ Select( "sort", r.sort != null |* r.sort.name, orderBy.map( _.selectObj ) ) }</div>
      </div> }
     <div class="btns">
-     <input type="submit" value="Search" class="greenBtn" name="saving"/>
+     <input type="submit" value="Search" class="go btn" name="saving"/>
     </div>
    </form>
  }
@@ -397,7 +397,7 @@ case class Report( query:Query ) {
          <td style="padding:0;">
           <table>
            <tr>
-            { ( query.hasSearch        |* <td><button id="rSearch" class="greyBtn">Search</button></td> ) ++
+            { ( query.hasSearch        |* <td><button id="rSearch" class="btn">Search</button></td> ) ++
                                           <td>{ Button.btn( "rPrev", "Prev", disabled = offset == 0 ) }</td> ++
                                           <td>{ Button.btn( "rNext", "Next", disabled = !hasNext ) }</td> }
             { query.extraActions } 

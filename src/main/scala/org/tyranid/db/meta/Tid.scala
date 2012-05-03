@@ -317,7 +317,7 @@ object Tidlet extends Weblet {
        <div style="padding:4px;">
         <label for="tid" style="float:left; width:40px; font-size:16px; line-height:28px; color:#888;">TID</label>
         <input type="text" id="tid" name="tid" value={ tid } style="font-size:20px; width:300px;"/>
-        <input type="submit" class="greenBtn" value="Analyze" style="font-size:16px;"/>
+        <input type="submit" class="go btn" value="Analyze" style="font-size:16px;"/>
        </div>
       </form>
      </div>
@@ -330,7 +330,7 @@ object Tidlet extends Weblet {
          <label style="margin-left:16px;">Label</label><span>{ r.label.summarize() }</span>
          <label style="margin-left:16px;">Entity</label><span><a href={ wpath + "/field?tid=" + entity.tid }>{ entity.name }</a></span>
          <label style="margin-left:16px;">Storage</label><span>{ entity.storageName + ( entity.embedded |* "-Embedded" ) }</span>
-         { entity.isInstanceOf[MongoEntity] |* <a href={ wpath + "/delete?tid=" + tid } class="redBtn" style="float:right; margin:2px 4px;">Delete</a> }
+         { entity.isInstanceOf[MongoEntity] |* <a href={ wpath + "/delete?tid=" + tid } class="stop btn" style="float:right; margin:2px 4px;">Delete</a> }
         </div> ++
         { recordTabBar.draw(
             qs = "?tid=" + tid,
@@ -497,8 +497,8 @@ object Tidlet extends Weblet {
       <h3>Updates:  { results.updates.size }</h3> ++ displayTable( results.updates ) }
      </div>
     </div> ++
-    { results.success && !deleting |* <a href={ wpath + "/delete?tid=" + tid + "&deleting=true" } class="redBtn">Actually Delete</a> } ++
-    <a href={ wpath + "?tid=" + tid } class="greyBtn">Cancel</a>
+    { results.success && !deleting |* <a href={ wpath + "/delete?tid=" + tid + "&deleting=true" } class="stop btn">Actually Delete</a> } ++
+    <a href={ wpath + "?tid=" + tid } class="btn">Cancel</a>
   }
 
   private def displayTable( recs:Seq[Record] ) =

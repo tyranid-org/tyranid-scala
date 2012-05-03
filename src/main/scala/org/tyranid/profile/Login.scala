@@ -79,7 +79,7 @@ $( function() {
           <input type="checkbox" name="save" id="saveLogin" value="Y"/>
           <label for="save" style="line-height:18px;" onClick="cb=$( '#saveLogin' );cb.prop('checked',!cb[0].checked);">Stay Logged In</label>
           <input type="hidden" name="l" value={ web.req.s("l") }/>
-          <input type="submit" value="Login" class="greenBtn" style="padding:2px 16px; display:inline-block; float:right;"/>
+          <input type="submit" value="Login" class="go btn" style="padding:2px 16px; display:inline-block; float:right;"/>
          </td>
         </tr>
        </table>
@@ -199,8 +199,8 @@ $( function() {
               { Scope(user, saving = true, captcha = true).draw(ui) }
             </table>
             <div class="btns">
-              <input type="submit" class="greenBtn" value="Save &amp; Register" name="saving"/>
-              <a href="/" class="greyBtn">Cancel</a>
+              <input type="submit" class="go btn" value="Save &amp; Register" name="saving"/>
+              <a href="/" class="btn">Cancel</a>
             </div>
            </form>
           </div>
@@ -471,7 +471,7 @@ The """ + B.applicationName + """ Team
            </tr>
           </table>
           <div class="btns" style="padding-top:16px;">
-           <input name="create" type="submit" class="greenBtn" value={ "Create a New " + B.applicationName + " Account" }/>
+           <input name="create" type="submit" class="go btn" value={ "Create a New " + B.applicationName + " Account" }/>
           </div>
          </form>
         </div>
@@ -504,7 +504,7 @@ The """ + B.applicationName + """ Team
            </tr>
           </table>
           <div class="btns" style="padding-top:16px;">
-           <input name="link" type="submit" class="greenBtn" value={ "Link your Existing " + B.applicationName + " Account to " + app.networkName }/>
+           <input name="link" type="submit" class="go btn" value={ "Link your Existing " + B.applicationName + " Account to " + app.networkName }/>
           </div>
           {
             val otherNetworks = Social.networks.filter( !_.isActive )
