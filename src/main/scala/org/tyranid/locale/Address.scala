@@ -46,7 +46,8 @@ class Address( override val obj:DBObject = Mobj() ) extends MongoRecord( Address
     val sb = new StringBuilder
     sb ++= ( s( 'street1 ) != null |* s( 'street1 ) )
     sb ++= ( s( 'city ) != null |* ( ( sb.size > 0 |* " " ) + s( 'city ) ) )
-    sb ++= ( s( 'state ).notBlank |* ( ( s( 'city ) |* ", " ) + Region.codeForId( i( 'state ) ) ) )
+    sb ++= ( ( s( 'street1 ) != null || s( 'city ) != null ) |* ", " ) //If either the street1 or city exist, throw in the comma and space
+    sb ++= ( s( 'state ).notBlank |* Region.codeForId( i( 'state ) ) ) 
     sb ++= ( s( 'postalCode ) != null |* ( ( s( 'state ) |* " " ) + s( 'postalCode ) ) )
     sb ++= ( i( 'country ) > 0 |* " " + Country.nameForId( i( 'country ) ) )
     sb.toString
@@ -54,16 +55,16 @@ class Address( override val obj:DBObject = Mobj() ) extends MongoRecord( Address
 
   def cityState = {
     val sb = new StringBuilder
-    sb ++= ( s( 'city ).notBlank |* ( ( sb.size > 0 |* " " ) + s( 'city ) ) )
-    sb ++= ( s( 'state ).notBlank |* ( ( s( 'city ) |* ", " ) + Region.codeForId( i( 'state ) ) ) )
+    sb ++= ( s( 'city ).notBlank |* ( ( sb.size > 0 |* " " ) + s( 'city ) ) + ", " )
+    sb ++= ( s( 'state ).notBlank |* Region.codeForId( i( 'state ) ) ) 
     sb ++= ( i( 'country ) > 0 |* " " + Country.nameForId( i( 'country ) ) )
     sb.toString
   }
 
   def cityStatePostal = {
     val sb = new StringBuilder
-    sb ++= ( s( 'city ).notBlank |* ( ( sb.size > 0 |* " " ) + s( 'city ) ) )
-    sb ++= ( s( 'state ).notBlank |* ( ( s( 'city ) |* ", " ) + Region.codeForId( i( 'state ) ) ) )
+    sb ++= ( s( 'city ).notBlank |* ( ( sb.size > 0 |* " " ) + s( 'city ) ) + ", " )
+    sb ++= ( s( 'state ).notBlank |* Region.codeForId( i( 'state ) ) ) 
     sb += ' ' ++= s( 'postalCode )
     sb ++= ( i( 'country ) > 0 |* " " + Country.nameForId( i( 'country ) ) )
     sb.toString
