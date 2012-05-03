@@ -44,7 +44,7 @@ object Button {
 
   def link( name:String, href:String, color:String, redirectEndpoint:String = null, dialogTitle:String = null, opts:Seq[(String,String)] = null ) =
     if ( redirectEndpoint == null ) {
-      <a class={ color + "Btn" } href={ href }><span>{ name }</span></a>
+      <a class={ color + " btn" } href={ href }><span>{ name }</span></a>
     } else {
       val optsStr:StringBuilder= new StringBuilder
 
@@ -58,7 +58,7 @@ object Button {
         }    
       }
       
-      <a class={ color + "Btn" } href={ href } onClick={ "var td = new TDialog( '" + href + "','" + redirectEndpoint + "', '" + dialogTitle + "' );" + optsStr.toString + " td.open(); return false;" }><span>{ name }</span></a>
+      <a class={ color + " btn" } href={ href } onClick={ "var td = new TDialog( '" + href + "','" + redirectEndpoint + "', '" + dialogTitle + "' );" + optsStr.toString + " td.open(); return false;" }><span>{ name }</span></a>
     } 
     
   def bar( buttons:Node* ) =
