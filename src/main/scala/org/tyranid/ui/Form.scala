@@ -60,7 +60,7 @@ object Form {
     <div class={ controlClass }>
      <div class="left">{ label }</div>
      <div class="right">
-      { href.notBlank |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="greyBtn" id={ editBtnId }>Edit</a> }
+      { href.notBlank |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="btn" id={ editBtnId }>Edit</a> }
       { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, ( dialogTitle == null ) ? label | dialogTitle, opts ) }
       <div class="text">{ if ( link ) <a href={ value.toString } target="_blank">{ value }</a> else { value } }</div>
      </div>
@@ -70,7 +70,7 @@ object Form {
     <div class={ controlClass }>
      <div class="left">{ label1 }</div>
      <div class="right">
-      { href.notBlank |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="greyBtn" id={ editBtnId }>Edit</a> }
+      { href.notBlank |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="btn" id={ editBtnId }>Edit</a> }
       { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, if ( dialogTitle == null ) label1 else dialogTitle, opts ) }
       <div class="text">{ value1 }</div>
      </div>
@@ -84,7 +84,7 @@ object Form {
     <div class={ controlClass }>
      <div class="left">{ label1 }</div>
      <div class="right">
-      { href.notBlank |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="greyBtn" id={ editBtnId }>Edit</a> }
+      { href.notBlank |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="btn" id={ editBtnId }>Edit</a> }
       { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, if ( dialogTitle == null ) label1 else dialogTitle, opts ) }
       <div class="text">{ value1 }</div>
      </div>
@@ -102,7 +102,7 @@ object Form {
     <div class={ controlClass }>
      <div class="left">{ label }</div>
      <div class="right">
-      { href.notBlank |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="greyBtn" id={ editBtnId }>Edit</a> }
+      { href.notBlank |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="btn" id={ editBtnId }>Edit</a> }
       { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, if ( dialogTitle == null ) label else dialogTitle, opts ) }
       <div class="text">{ if ( link ) <a href={value.toUrl.toString()} target="_blank">{ value }</a> else { value } }</div>
      </div>
@@ -112,7 +112,7 @@ object Form {
     <div class={ controlClass }>
      <div class="left">{ label1 }</div>
      <div class="right">
-      { href.notBlank |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="greyBtn" id={ editBtnId }>Edit</a> }
+      { href.notBlank |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="btn" id={ editBtnId }>Edit</a> }
       { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, if ( dialogTitle == null ) label1 else dialogTitle, opts ) }
       <div class="text">{ value1 }</div>
      </div>
@@ -126,7 +126,7 @@ object Form {
     <div class={ controlClass }>
      <div class="left">{ label1 }</div>
      <div class="right">
-      { href.notBlank |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="greyBtn" id={ editBtnId }>Edit</a> }
+      { href.notBlank |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="btn" id={ editBtnId }>Edit</a> }
       { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, if ( dialogTitle == null ) label1 else dialogTitle, opts ) }
       <div class="text">{ value1 }</div>
      </div>
@@ -144,7 +144,7 @@ object Form {
     <div class={ controlClass }>
      <div class="left">{ label }</div>
      <div class="right">
-      { href.notBlank |* <a href={ href } class="greyBtn">Edit</a> }
+      { href.notBlank |* <a href={ href } class="btn">Edit</a> }
       <div class="text">{ value }</div>
      </div>
     </div>
@@ -154,7 +154,7 @@ object Form {
     <div class="control">
      <div class="left">{ label }</div>
      <div class="right">
-      { href.notBlank |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="greyBtn" id={ editBtnId }>{ hrefLabel }</a> }
+      { href.notBlank |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="btn" id={ editBtnId }>{ hrefLabel }</a> }
       { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, if ( dialogTitle == null ) label else dialogTitle, opts ) }
       <div class="photoPreview">
        <img style={ style } src={ src }/>

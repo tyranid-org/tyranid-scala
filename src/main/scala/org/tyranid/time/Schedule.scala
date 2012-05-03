@@ -112,12 +112,12 @@ object Schedulelet extends Weblet {
          <tbody>
           { for ( task <- Scheduler.tasks ) yield
           <tr>
-           <td><a class="greenBtn" href={ wpath + "/run?task=" + task.subject }>Run</a></td>
+           <td><a class="go btn" href={ wpath + "/run?task=" + task.subject }>Run</a></td>
            <td>{
              if ( task.active )
-               <a class="greenBtn" href={ wpath + "/off?task=" + task.subject } style="width:50px;">On</a>
+               <a class="go btn" href={ wpath + "/off?task=" + task.subject } style="width:50px;">On</a>
              else
-               <a class="redBtn" href={ wpath + "/on?task=" + task.subject } style="width:50px;">Off</a>
+               <a class="stop btn" href={ wpath + "/on?task=" + task.subject } style="width:50px;">Off</a>
            }</td>
            <td>{ task.subject }</td>
            <td>{ task.runs }</td>

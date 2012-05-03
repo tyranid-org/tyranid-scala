@@ -107,7 +107,7 @@ case class GroupField( baseName:String, l:String = null,
     <table class="tile" style="width:180px; height:54px;">
      <tr>
       <td class="label">view group</td>
-      <td rowspan="2" style="padding-right:4px;"><a id={ "rGrpBtn" + id } href="#" class="rGrpBtn greyBtn" style="height:40px; padding-top:10px;"><span class="linkIcon contactsIcon"/><span class="label"></span></a></td>
+      <td rowspan="2" style="padding-right:4px;"><a id={ "rGrpBtn" + id } href="#" class="rGrpBtn btn" style="height:40px; padding-top:10px;"><span class="linkIcon contactsIcon"/><span class="label"></span></a></td>
      </tr>
      <tr>
       <td id="rGrpChooser">{ groupValueFor( run.report.searchRec ).drawSelect() }</td>
@@ -312,7 +312,7 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
       </ul>
      </div>
      <div class="btns">
-      <button class="rGrpAddGrp greenBtn" style="float:left;">Add Group</button>
+      <button class="rGrpAddGrp go btn" style="float:left;">Add Group</button>
      </div>
     </div>
     <div id={ "rGrpMain" + gf.id } class="rGrpMain">
@@ -366,9 +366,9 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
      </form> }
     </div> } ++
     <div class="btns">
-     { editable |* <button class="rGrpDelGrp redBtn" style="float:left;">Delete</button> }
-     <button onclick={ "$('#rGrpDlg" + gf.id + "').dialog('close'); return false;" } class="greyBtn" style="float:right;">Done</button>
-     { editable || showAddBy |* <button class="rGrpToggleAddBy greenBtn" style="float:right;">{ if ( showAddBy ) "Show Table" else "Add Members" }</button> }
+     { editable |* <button class="rGrpDelGrp stop btn" style="float:left;">Delete</button> }
+     <button onclick={ "$('#rGrpDlg" + gf.id + "').dialog('close'); return false;" } class="btn" style="float:right;">Done</button>
+     { editable || showAddBy |* <button class="rGrpToggleAddBy go btn" style="float:right;">{ if ( showAddBy ) "Show Table" else "Add Members" }</button> }
     </div>
   }
 
@@ -385,7 +385,7 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
       <div class="note">(separate multiple entries with commas)</div>
       <textarea id="rGrpAddByInput" name="rGrpAddByInput" style="height:292px; width:322px;"/>
     } } ++
-    <div class="btns"><a class="rGrpAddImport greenBtn">Add</a></div>
+    <div class="btns"><a class="rGrpAddImport go btn">Add</a></div>
     }
   }
 
@@ -395,11 +395,11 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
      <form method="post">
       <label for={ "rGrpAddName" + gf.id }>Enter Group Name:</label>
       <div class="title"><input type="text" class="rGrpAddName" name={ "rGrpAddName" + gf.id } id={ "rGrpAddName" + gf.id } style="font-size:20px;"/></div>
-      <div class="btns" style="width:370px;"><a href="#" class="rGrpAddGrpSave greenBtn">Add Group</a></div>
+      <div class="btns" style="width:370px;"><a href="#" class="rGrpAddGrpSave go btn">Add Group</a></div>
      </form>
     </div>
     <div class="btns">
-     <button onclick={ "$('#" + gf.id + "').dialog('close'); return false;" } class="greyBtn" style="float:right;">Cancel</button>
+     <button onclick={ "$('#" + gf.id + "').dialog('close'); return false;" } class="btn" style="float:right;">Cancel</button>
     </div>;
 
   def drawRename =
@@ -408,11 +408,11 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
      <form method="post">
       <label for={ "rGrpRenameName" + gf.id }>Enter Group Name:</label>
       <div class="title"><input type="text" class="rGrpRenameName" name={ "rGrpRenameName" + gf.id } id={ "rGrpRenameName" + gf.id } style="font-size:20px;" value={ dialogGroup.s( 'name ) }/></div>
-      <div class="btns" style="width:370px;"><a href="#" class="rGrpRenameSave greenBtn">Rename Group</a></div>
+      <div class="btns" style="width:370px;"><a href="#" class="rGrpRenameSave go btn">Rename Group</a></div>
      </form>
     </div>
     <div class="btns">
-     <button onclick={ "$('#rGrpDlg" + gf.id + "').dialog('close'); return false;" } class="greyBtn" style="float:right;">Cancel</button>
+     <button onclick={ "$('#rGrpDlg" + gf.id + "').dialog('close'); return false;" } class="btn" style="float:right;">Cancel</button>
     </div>;
 }
 
