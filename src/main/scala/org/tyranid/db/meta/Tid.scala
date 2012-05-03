@@ -276,9 +276,9 @@ object Tidlet extends Weblet {
 
     var tid = web.req.s( 'tid )
     if ( tid.isBlank )
-      tid = t.session.lastTid
+      tid = t.session.cache.s( 'lastTid )
     else
-      t.session.lastTid = tid
+      t.session.cache( 'lastTid ) = tid
 
     rpath match {
     case "/delete" =>

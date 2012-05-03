@@ -224,7 +224,6 @@ trait Session {
    */
 
   private val editings = mutable.Map[ Class[_], AnyRef ]()
-  private val cache = mutable.Map[ String, AnyRef ]()
 
   def editing[ T: Manifest ]( gen: => AnyRef ):T               = editings.getOrElseUpdate( manifest[T].erasure, gen ).asInstanceOf[T]
   
@@ -235,9 +234,16 @@ trait Session {
     editings.remove( manifest[T].erasure )
   def clearAllEditing = editings.clear
 
+
+  /*
+   * * *   Cache
+   */
+
+  val cache = mutable.Map[String,AnyRef]()
   def get( key:String ) = cache.getOrElse( key, null )
   def put( key:String, value:AnyRef ) = cache.put( key, value )
   def clear( key:String = null ) = key.isBlank ? cache.clear | cache.remove( key )
+
 
   /*
    * * *   Notifications
@@ -269,10 +275,6 @@ trait Session {
   def setPathChoiceAt( wpath:String, rpath:String ) = pathChoices.synchronized {
     pathChoices( wpath ) = rpath
   }
-
-
-  // TODO:  move this onto a HashMap, most users won't need this
-  @volatile var lastTid:String = null
 }
 
 object Notification {
