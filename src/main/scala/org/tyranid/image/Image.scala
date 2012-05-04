@@ -28,7 +28,8 @@ import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.{ Domain, Record, Scope }
 import org.tyranid.io.DbFile
-import org.tyranid.ui.{ PathField }
+import org.tyranid.ui.PathField
+import org.tyranid.web.Html
 
 
 class DbImageish( bucket:S3Bucket ) extends DbFile( bucket )
@@ -143,22 +144,29 @@ object Image {
 		None
 	}
 
-  def bestForPage( pageUrl:URL, pageHtml:String ):Image = {
-    def analyze( names:Seq[String] ) = names.distinct.map( url => apply( new URL( pageUrl, url ) ) ).filter( img => img != null && img.pixels > 0 )
+  private def analyze( pageUrl:URL, names:Seq[String] ) = names.distinct.map( url => apply( new URL( pageUrl, url ) ) ).filter( img => img != null && img.pixels > 0 )
 
-    val html = pageHtml.parseHtml
-    val ogImages = analyze( html.ogImages )
+  def bestForPage( pageUrl:URL, html:Html ):Image = {
+
+    val ogImages = analyze( pageUrl, html.ogImages )
     if ( ogImages.size > 0 )
       return ogImages( 0 )
 
     if ( true ) return null
 
-    val images = analyze( html.images )
+    val images = analyze( pageUrl, html.images )
 
     if ( images.size > 0 )
       images.maxBy( _.portraitRank )
     else
       null
+  }
+
+  def optionsForPage( pageUrl:URL, html:Html ):Seq[Image] = {
+    val ogImagePaths = html.ogImages
+    val ogImages = analyze( pageUrl, ogImagePaths )
+
+    ogImages ++ analyze( pageUrl, html.images -- ogImagePaths ).sortBy( _.portraitRank )
   }
 }
 
@@ -166,7 +174,7 @@ case class Image( url:URL, width:Option[Int] = None, height:Option[Int] = None )
 
   def pixels = width.getOrElse( 0 ) * height.getOrElse( 0 )
 
-  def portraitRank = {
+  lazy val portraitRank = {
     val h = height.get
     val w = width.get
 
@@ -181,11 +189,27 @@ case class Image( url:URL, width:Option[Int] = None, height:Option[Int] = None )
 
     val ratioMult = ( 3 - scala.math.abs( ratio - 1.77 ) )
 
-    val overall = ratioMult * sizeMult
+    ratioMult * sizeMult
+  }
 
-spam( "IMG " + w + "x" + h + " rm:" + ratioMult + " sm:" + sizeMult + " ov:" + overall )
+  def cssDimensions( maxWidth:Int = -1, maxHeight:Int = -1 ) = {
+    var bw = width.get
+    var bh = height.get
 
-    overall
+    var w = bw
+    var h = bh
+
+    if ( maxWidth != -1 && w > maxWidth ) {
+      h = maxWidth * h / w
+      w = maxWidth
+    }
+
+    if ( maxHeight != -1 && h > maxHeight ) {
+      w = maxHeight * w / h
+      h = maxHeight
+    }
+
+    "width:" + w + "px;height:" + h + "px;"
   }
 }
 
