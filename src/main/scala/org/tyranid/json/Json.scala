@@ -28,10 +28,25 @@ import org.bson.types.ObjectId
 
 
 
-sealed trait JsCmd
+sealed trait JsCmd {
+  def toJson:String
+}
 
-case class Js    ( js:String )                     extends JsCmd
-case class JqHtml( selector:String, html:NodeSeq ) extends JsCmd
+case class Js( js:String ) extends JsCmd {
+  def toJson = '"' + js.encJson + '"'
+}
+
+case class JqHtml( selector:String, html:NodeSeq ) extends JsCmd {
+  def toJson = "{\"" + selector + "\":\"" + html.toString.encJson + "\"}"
+}
+
+case class JqHide( selector:String ) extends JsCmd {
+  def toJson = "{\"" + selector + "\":\"hide\"}"
+}
+
+case class JqShow( selector:String ) extends JsCmd {
+  def toJson = "{\"" + selector + "\":\"show\"}"
+}
 
 
 object Jobj {
@@ -157,13 +172,7 @@ case class JsonString( root:Any ) {
       write( p._2 )
       sb += '}'
 
-    case js:Js       => sb += '"' ++= js.js.encJson += '"'
-    case html:JqHtml =>
-      sb += '{'
-      write( html.selector )
-      sb += ':'
-      write( html.html.toString )
-      sb += '}'
+    case jscmd:JsCmd => sb ++= jscmd.toJson
 
     case b:java.lang.Boolean => sb ++= b.toString
     case d:java.lang.Double  => sb ++= d.toString
