@@ -24,7 +24,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbBoolean, DbChar, DbDouble, DbEmail, DbLink, DbLong, DbPassword, DbPhone, Record }
+import org.tyranid.db.{ DbBoolean, DbChar, DbDouble, DbEmail, DbLink, DbLong, DbPassword, DbPhone, Record, DbDate, DbDateTime }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.image.DbThumbnail
@@ -48,6 +48,9 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "country"        is DbLink(Country)     ;
   "lang"           is DbLink(Language)    ;
 
+  "lastLogin"      is DbDateTime          ;
+  "createdOn"      is DbDate              ;
+  
   "recaptcha"      is DbReCaptcha( "white" ) is 'temporary as "Verify you are human";
 
   "activationCode" is DbChar(8)           ;
