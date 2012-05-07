@@ -33,5 +33,12 @@ case class Html( html:String ) {
 
   def title = doc.select( "title" ).text
   def description = doc.select( "meta[property=og:description]" ).map( _.attr( "content" ) )
+
+  def favicon = {
+    val s = doc.select( "link[rel=icon]" ).map( _.attr( "href" ) ).headOption.getOrElse( null )
+
+    if ( s.notBlank ) s
+    else              doc.select( "link[rel=shortcut icon]" ).map( _.attr( "href" ) ).headOption.getOrElse( null )
+  }
 }
 

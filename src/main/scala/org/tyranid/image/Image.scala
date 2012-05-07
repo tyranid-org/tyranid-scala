@@ -110,7 +110,7 @@ object Image {
 
 		  } catch {
 			  case e:Exception =>
-			    e.printStackTrace
+			    //e.printStackTrace
 			    None
 
 		  } finally {
@@ -166,7 +166,7 @@ object Image {
     val ogImagePaths = html.ogImages
     val ogImages = analyze( pageUrl, ogImagePaths )
 
-    ogImages ++ analyze( pageUrl, html.images -- ogImagePaths ).sortBy( _.portraitRank )
+    ogImages ++ analyze( pageUrl, html.images -- ogImagePaths ).filter( _.portraitRank > 0.005 ).sortBy( _.portraitRank )
   }
 }
 
@@ -192,7 +192,7 @@ case class Image( url:URL, width:Option[Int] = None, height:Option[Int] = None )
     ratioMult * sizeMult
   }
 
-  def cssDimensions( maxWidth:Int = -1, maxHeight:Int = -1 ) = {
+  def dimensions( maxWidth:Int = -1, maxHeight:Int = -1 ) = {
     var bw = width.get
     var bh = height.get
 
@@ -208,6 +208,12 @@ case class Image( url:URL, width:Option[Int] = None, height:Option[Int] = None )
       w = maxHeight * w / h
       h = maxHeight
     }
+
+    ( w, h )
+  }
+
+  def cssDimensions( maxWidth:Int = -1, maxHeight:Int = -1 ) = {
+    val ( w, h ) = dimensions( maxWidth, maxHeight )
 
     "width:" + w + "px;height:" + h + "px;"
   }
