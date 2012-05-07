@@ -39,12 +39,12 @@ object Link {
 
 object Button {
 
-  def btn( id:String, label:String, color:String = "grey", disabled:Boolean = false ) =
+  def btn( id:String, label:String, color:String = "", disabled:Boolean = false ) =
     Unparsed( "<button id=\"" + id + "\" class=\"" + color + " btn\" " + ( disabled |* " disabled=\"disabled\"" ) + ">" + label + "</button>" )
 
-  def link( name:String, href:String, color:String, redirectEndpoint:String = null, dialogTitle:String = null, opts:Seq[(String,String)] = null ) =
+  def link( name:String, href:String, color:String = null, redirectEndpoint:String = null, dialogTitle:String = null, opts:Seq[(String,String)] = null ) =
     if ( redirectEndpoint == null ) {
-      <a class={ color + "Btn" } href={ href }><span>{ name }</span></a>
+      <a class={ if ( color.notBlank ) color + " btn" else "btn" } href={ href }><span>{ name }</span></a>
     } else {
       val optsStr:StringBuilder= new StringBuilder
 
@@ -58,7 +58,7 @@ object Button {
         }    
       }
       
-      <a class={ color + "Btn" } href={ href } onClick={ "var td = new TDialog( '" + href + "','" + redirectEndpoint + "', '" + dialogTitle + "' );" + optsStr.toString + " td.open(); return false;" }><span>{ name }</span></a>
+      <a class={ if ( color.notBlank ) color + " btn" else "btn" } href={ href } onClick={ "var td = new TDialog( '" + href + "','" + redirectEndpoint + "', '" + dialogTitle + "' );" + optsStr.toString + " td.open(); return false;" }><span>{ name }</span></a>
     } 
     
   def bar( buttons:Node* ) =

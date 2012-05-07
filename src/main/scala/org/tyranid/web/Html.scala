@@ -24,11 +24,14 @@ import org.jsoup.Jsoup
 import org.tyranid.Imp._
 
 
-case class HtmlParser( html:String ) {
+case class Html( html:String ) {
   val doc = Jsoup.parse( html )
 
   def images = doc.select( "img" ).map( _.attr( "src" ) )
 
   def ogImages = doc.select( "meta[property=og:image]" ).map( _.attr( "content" ) )
+
+  def title = doc.select( "title" ).text
+  def description = doc.select( "meta[property=og:description]" ).map( _.attr( "content" ) )
 }
 

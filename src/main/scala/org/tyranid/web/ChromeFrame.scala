@@ -80,7 +80,7 @@ object ChromeFramelet extends Weblet {
           <tyr:chromeShell>
            <p>Your browser is now upgraded.  Thank you!</p>
            { Button.bar(
-              Button.link( "Return to " + B.applicationName + ".", "/", color = "green" ) ) }
+              Button.link( "Return to " + B.applicationName + ".", "/", color = "go" ) ) }
           </tyr:chromeShell> ) )
 
     case _ =>

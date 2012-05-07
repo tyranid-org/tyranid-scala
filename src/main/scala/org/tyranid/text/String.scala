@@ -210,7 +210,7 @@ class StringImp( s:String ) {
   def parseJsonObject = parseJson.as[ObjectMap]
   def parseJsonArray  = parseJson.as[Array[Any]]
 
-  def parseHtml = org.tyranid.web.HtmlParser( s )
+  def parseHtml = org.tyranid.web.Html( s )
 
 
   def matches( r:Regex ) = r.pattern.matcher( s ).matches

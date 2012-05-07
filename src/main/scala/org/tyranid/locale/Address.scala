@@ -55,7 +55,8 @@ class Address( override val obj:DBObject = Mobj() ) extends MongoRecord( Address
 
   def cityState = {
     val sb = new StringBuilder
-    sb ++= ( s( 'city ).notBlank |* ( ( sb.size > 0 |* " " ) + s( 'city ) ) + ", " )
+    sb ++= ( s( 'city ).notBlank |* ( ( sb.size > 0 |* " " ) + s( 'city ) ) )
+    sb ++= ( ( s( 'city ).notBlank && s( 'state ).notBlank ) |* ", ")  //Only put in the comma if both city and state exist
     sb ++= ( s( 'state ).notBlank |* Region.codeForId( i( 'state ) ) ) 
     sb ++= ( i( 'country ) > 0 |* " " + Country.nameForId( i( 'country ) ) )
     sb.toString
