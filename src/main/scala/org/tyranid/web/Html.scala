@@ -32,7 +32,7 @@ case class Html( html:String ) {
   def ogImages = doc.select( "meta[property=og:image]" ).map( _.attr( "content" ) )
 
   def title = doc.select( "title" ).text
-  def description = doc.select( "meta[property=og:description]" ).map( _.attr( "content" ) )
+  def description = doc.select( "meta[property=og:description]" ).map( _.attr( "content" ) ).mkString
 
   def favicon = {
     val s = doc.select( "link[rel=icon]" ).map( _.attr( "href" ) ).headOption.getOrElse( null )

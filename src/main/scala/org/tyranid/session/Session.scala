@@ -227,13 +227,14 @@ trait Session {
 
   def edit[ T: Manifest ]( v:AnyRef ) = editings( manifest[T].erasure ) = v
   def editing[ T: Manifest ]( gen: => AnyRef ):T = editings.getOrElseUpdate( manifest[T].erasure, gen ).asInstanceOf[T]
+
   def editing[ T: Manifest ]:T                   = editings( manifest[T].erasure ).asInstanceOf[T]
   
   // Note that T and clz are not usually the same ... T might be org.tyranid.profile.User while clz represents com.company.profile.User
   def editing2[ T:Manifest ]( clz:Class[_], gen: => AnyRef ):T = editings.getOrElseUpdate( clz, gen ).asInstanceOf[T]
   
-  def doneEditing[ T: Manifest ] =
-    editings.remove( manifest[T].erasure )
+  def doneEditing[ T: Manifest ] = editings.remove( manifest[T].erasure )
+
   def clearAllEditing = editings.clear
 
 
