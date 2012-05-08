@@ -187,8 +187,12 @@ trait Record extends Valid with BsonObject {
 
   def clear:Unit = throw new UnsupportedOperationException
 
-  def remove( key:String )       { remove( view( key ) ) }
+  def remove( key:String ) { remove( view( key ) ) }
   def remove( va:ViewAttribute ):Unit
+
+  def clear( keys:String* ) =
+    for ( key <- keys )
+      remove( view( key ) )
 
 
   /*
