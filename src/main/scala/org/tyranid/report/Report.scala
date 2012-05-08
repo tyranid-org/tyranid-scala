@@ -390,16 +390,13 @@ case class Report( query:Query ) {
      <tr>
       <td>
        <table class="tile" style={ query.actionsStyle }>
-        <tr>
-         <td class="label">actions</td>
-        </tr>
         <tr> 
          <td style="padding:0;">
           <table>
            <tr>
-            { ( query.hasSearch        |* <td><button id="rSearch" class="btn">Search</button></td> ) ++
-                                          <td>{ Button.btn( "rPrev", "Prev", disabled = offset == 0 ) }</td> ++
-                                          <td>{ Button.btn( "rNext", "Next", disabled = !hasNext ) }</td> }
+            { ( query.hasSearch        |* <td>{ Button.img( "rSearch", "search",                                 style = "height:40px; padding-top:1px;" ) }</td> ) ++
+                                          <td>{ Button.img( "rPrev",   "arrowthick-1-w", disabled = offset == 0, style = "height:40px; padding-top:1px;" ) }</td> ++
+                                          <td>{ Button.img( "rNext",   "arrowthick-1-e", disabled = !hasNext,    style = "height:40px; padding-top:1px;" ) }</td> }
             { query.extraActions } 
            </tr>
           </table>
