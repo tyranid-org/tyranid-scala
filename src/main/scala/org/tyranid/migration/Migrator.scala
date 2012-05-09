@@ -32,10 +32,15 @@ class MigrationStatus( override val obj:DBObject = Mobj() ) extends MongoRecord(
   
 
 case class Migrator( migrators:Migrates* ) {
-  if ( migrators != null ) {
-    println( "*** Beginning Migration" )
+  if ( migrators != null && migrators.length > 0 ) {
+    var printedStart = false
     
     for ( migrator <- migrators ) {
+      if ( !printedStart ) {
+        println( "*** Beginning Migration" )
+        printedStart = true
+      }
+      
       if ( !MigrationStatus.db.exists( Mobj( "_id" -> migrator.name ) ) ) {
         println( "[" + migrator.name + ": START]" )
         migrator.migrate
@@ -50,7 +55,8 @@ case class Migrator( migrators:Migrates* ) {
       }
     }
     
-    println( "*** End Migration" )
+    if ( printedStart )
+      println( "*** End Migration" ) 
   }
 }
   

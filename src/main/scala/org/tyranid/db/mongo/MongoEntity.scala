@@ -50,7 +50,6 @@ case object DbMongoId extends Domain {
   override def fromString( s:String ) = new ObjectId( s.trim )
 }
 
-
 case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
   val storageName = "MongoDB"
 
@@ -92,8 +91,13 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
 
   def create {}
   def drop   { db.drop }
-
-  def apply( obj:DBObject ) = if ( obj != null ) MongoRecord( makeView, obj ) else null
+  
+  def apply( obj:DBObject ) = 
+    obj match {
+    case null               => null
+    case record:MongoRecord => record
+    case obj:DBObject       => MongoRecord( makeView, obj )
+    }
 
   override def byRecordTid( recordTid:String ):Option[MongoRecord] = byId( recordTidToId( recordTid ) )
 
