@@ -29,7 +29,7 @@ import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.{ Domain, Record, Scope }
 import org.tyranid.ui.PathField
 
-import org.tyranid.web.{ FileUploadSupport, FileMultiParams }
+import org.tyranid.web.FileUploadSupport
 import org.tyranid.web.FileUploadSupport.BodyParams
 
 object DbFile {
@@ -45,7 +45,7 @@ class DbFile( bucket:S3Bucket ) extends CommonFile {
 
     val fileItem = 
       if ( bodyParams != null ) {
-        val fileItems = bodyParams.fileParams.get( f.va.name )
+        val fileItems = bodyParams.getFileItems( f.va.name )
         
         if ( fileItems.size > 0 )
           fileItems.get(0)
@@ -93,7 +93,7 @@ object DbLocalFile extends CommonFile {
 
     val fileItem = 
       if ( bodyParams != null ) {
-        val fileItems = bodyParams.fileParams.get( f.va.name )
+        val fileItems = bodyParams.getFileItems( f.va.name )
         
         if ( fileItems.size > 0 )
           fileItems.get(0)

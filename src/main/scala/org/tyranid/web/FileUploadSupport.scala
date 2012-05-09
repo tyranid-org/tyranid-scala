@@ -17,78 +17,79 @@
 
 package org.tyranid.web
 
+import java.util.{ List => JList, HashMap => JHashMap, Map => JMap }
+import javax.servlet.http.{ HttpServletRequestWrapper, HttpServletRequest, HttpServletResponse }
+
+import scala.collection.JavaConversions._
+import scala.collection.mutable
+
 import org.apache.commons.fileupload.servlet.ServletFileUpload
-import org.apache.commons.fileupload.{FileItemFactory, FileItem}
-import org.apache.commons.fileupload.disk.{DiskFileItem, DiskFileItemFactory}
-import collection.JavaConversions._
-import scala.util.DynamicVariable
-import java.util.{List => JList, HashMap => JHashMap, Map => JMap}
-import javax.servlet.http.{HttpServletRequestWrapper, HttpServletRequest, HttpServletResponse}
-import collection.Iterable
-import java.lang.String
+import org.apache.commons.fileupload.{ FileItemFactory, FileItem }
+import org.apache.commons.fileupload.disk.{ DiskFileItem, DiskFileItemFactory }
+
+import org.tyranid.Imp._
+
 
 object FileUploadSupport {
-  case class BodyParams(fileParams: FileMultiParams, formParams: Map[String, List[String]])
+
+  val maxFileSize = 1024 * 1000 * 1000 * 2 // 2G
+
+  case class BodyParams( fileParams:collection.Map[String,Seq[FileItem]], formParams:collection.Map[String,Seq[String]] ) {
+    def getFileItems( key:String ) = fileParams.get( key ) orElse fileParams.get( key + "[]" )
+  }
+
   val BodyParamsKey = "org.tyranid.web.fileupload.bodyParams"
 
-  def checkContext( web:WebContext ): WebContext = {
+  def checkContext( web:WebContext ):WebContext = {
     val req = web.req
-    val res = web.res
     
-    if (ServletFileUpload.isMultipartContent(req)) {
-      val bodyParams = extractMultipartParams(req)
-      var mergedParams = bodyParams.formParams
+    if ( ServletFileUpload.isMultipartContent( req ) ) {
+      var mergedParams = extractMultipartParams( req ).formParams.as[ mutable.Map[String,Seq[String]] ]
+
       // Add the query string parameters
-      req.getParameterMap.asInstanceOf[JMap[String, Array[String]]] foreach {
-        case (name, values) =>
-          val formValues = mergedParams.getOrElse(name, List.empty)
-          mergedParams += name -> (values.toList ++ formValues)
+      req.getParameterMap.as[JMap[String, Array[String]]] foreach {
+      case (name, values) => mergedParams( name ) = values.toSeq ++ mergedParams.getOrElse( name, Nil )
       }
       
-      web.copy( req = wrapRequest( req, mergedParams ) )
+      web.copy( req =
+        new HttpServletRequestWrapper( req ) {
+          override def getParameter( name:String )         = mergedParams.get(name) map { _.head } getOrElse null
+          override def getParameterNames                   = mergedParams.keysIterator
+          override def getParameterValues( name:String )   = mergedParams.get(name) map { _.toArray } getOrElse null
+          override def getParameterMap = {
+            val map = new JHashMap[String,Array[String]]()
+            for ( ( k, v ) <- mergedParams )
+              map( k ) = v.toArray
+            map
+          }
+        }
+      )
     } else
       web
   }
   
-  private def extractMultipartParams( req: HttpServletRequest ): BodyParams = {
-    // First look for it cached on the request, because we can't parse it twice.  See GH-16.
-    val attr = req.getAttribute( BodyParamsKey )
-   
-    attr match {
-      case bodyParams:BodyParams =>
-        bodyParams
-      case Some(bodyParams) =>
-        bodyParams.asInstanceOf[BodyParams]
-      case null | None =>
-        val upload = newServletFileUpload
-        val items = upload.parseRequest(req).asInstanceOf[JList[FileItem]]
-        val bodyParams = items.foldRight(BodyParams(FileMultiParams(), Map.empty)) { (item, params) =>
-          if (item.isFormField)
-            BodyParams(params.fileParams, params.formParams + ((item.getFieldName, fileItemToString(req, item) :: params.formParams.getOrElse(item.getFieldName, List[String]()))))
-          else
-            BodyParams(params.fileParams + ((item.getFieldName, item +: params.fileParams.getOrElse(item.getFieldName, List[FileItem]()))), params.formParams)
-          }
-        req.setAttribute(BodyParamsKey, bodyParams )
-        bodyParams
+  private def extractMultipartParams( req:HttpServletRequest ) = {
+    var bodyParams = req.getAttribute( BodyParamsKey ).as[BodyParams]
+  
+    if ( bodyParams == null ) {
+      val sfu = new ServletFileUpload( new DiskFileItemFactory )
+      sfu.setSizeMax( maxFileSize )
+      val items = sfu.parseRequest(req).asInstanceOf[JList[FileItem]]
+
+      var fileParams = mutable.Map[String, Seq[FileItem]]()
+      var formParams = mutable.Map[String, Seq[String]]()
+
+      for ( item <- items )
+        if ( item.isFormField )
+          formParams( item.getFieldName ) = fileItemToString(item) +: formParams.getOrElse(item.getFieldName, Nil )
+        else
+          fileParams( item.getFieldName ) = item +: fileParams.getOrElse(item.getFieldName, Nil )
+
+      bodyParams = BodyParams( fileParams, formParams )
+      req.setAttribute( BodyParamsKey, bodyParams )
     }
 
-    /*
-    attr.asInstanceOf[Option[BodyParams]] match {
-      case Some(bodyParams) =>
-        bodyParams
-      case null | None =>
-        val upload = newServletFileUpload
-        val items = upload.parseRequest(req).asInstanceOf[JList[FileItem]]
-        val bodyParams = items.foldRight(BodyParams(FileMultiParams(), Map.empty)) { (item, params) =>
-          if (item.isFormField)
-            BodyParams(params.fileParams, params.formParams + ((item.getFieldName, fileItemToString(req, item) :: params.formParams.getOrElse(item.getFieldName, List[String]()))))
-          else
-            BodyParams(params.fileParams + ((item.getFieldName, item +: params.fileParams.getOrElse(item.getFieldName, List[FileItem]()))), params.formParams)
-          }
-        req.setAttribute(BodyParamsKey, bodyParams )
-        bodyParams
-    }
-    */
+    bodyParams
   }
 
   /**
@@ -102,64 +103,15 @@ object FileUploadSupport {
    * the request.  If that is unspecified, and it usually isn't, then it
    * falls back to the kernel's charset.
    */
-  protected def fileItemToString(req: HttpServletRequest, item: FileItem): String = {
+  private def fileItemToString( item:FileItem ):String = {
     val charset = item match {
-      case diskItem: DiskFileItem =>
+      case diskItem:DiskFileItem =>
         // Why doesn't FileItem have this method???
-        Option(diskItem.getCharSet())
+        Option( diskItem.getCharSet )
       case _ =>
         None
     }
     item.getString(charset getOrElse "UTF-8" )
   }
-
-  private def wrapRequest(req: HttpServletRequest, formMap: Map[String, Seq[String]]) =
-    new HttpServletRequestWrapper(req) {
-      override def getParameter(name: String) = { formMap.get(name) map { _.head } getOrElse null }
-      override def getParameterNames = formMap.keysIterator
-      override def getParameterValues(name: String) = formMap.get(name) map { _.toArray } getOrElse null
-      override def getParameterMap = new JHashMap[String, Array[String]] ++ (formMap transform { (k, v) => v.toArray })
-    }
-
-  val maxFileSize = 1024 * 1000 * 1000 * 2 // 2G
-  
-  /**
-   * Creates a new file upload handler to parse the request.  By default, it
-   * creates a `ServletFileUpload` instance with the file item factory 
-   * returned by the `fileItemFactory` method.  Override this method to
-   * customize properties such as the maximum file size, progress listener,
-   * etc.
-   *
-   * @return a new file upload handler.
-   */
-  protected def newServletFileUpload: ServletFileUpload = { 
-    val sfu = new ServletFileUpload(fileItemFactory)
-    sfu.setSizeMax( maxFileSize )
-    sfu
-  }
-
-  /**
-   * The file item factory used by the default implementation of 
-   * `newServletFileUpload`.  By default, we use a DiskFileItemFactory.
-   */
-  /*
-   * [non-scaladoc] This method predates newServletFileUpload.  If I had it 
-   * to do over again, we'd have that instead of this.  Oops.
-   */
-  protected def fileItemFactory: FileItemFactory = new DiskFileItemFactory()
-
-  /*
-  protected def fileMultiParams:FileMultiParams = extractMultipartParams(request).fileParams
-
-  protected val _fileParams = new collection.Map[String, FileItem] {
-    def get(key: String) = fileMultiParams.get(key) flatMap { _.headOption }
-    override def size = fileMultiParams.size
-    override def iterator = fileMultiParams map { case(k, v) => (k, v.head) } iterator
-    override def -(key: String) = Map() ++ this - key
-    override def +[B1 >: FileItem](kv: (String, B1)) = Map() ++ this + kv
-  }
-
-  /** @return a Map, keyed on the names of multipart file upload parameters, of all multipart files submitted with the request */
-  def fileParams = _fileParams
-  */
 }
+
