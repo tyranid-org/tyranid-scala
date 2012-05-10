@@ -254,15 +254,15 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
     newobj
   }
 
-  def validateStructure = {
+  def validateStructure {
     for ( key <- keys ) {
-      apply( key ) match {
+      obj.get( key ) match {
       case null =>
       case b:java.lang.Boolean =>
       case i:java.lang.Integer =>
       case l:java.lang.Long =>
       case d:java.lang.Double =>
-      case o:com.mongodb.DBObject =>
+      case o:com.mongodb.DBObject => o.validateStructure
       case oid:org.bson.types.ObjectId =>
       case r:java.util.regex.Pattern =>
       case t:java.util.Date =>

@@ -147,7 +147,7 @@ object Image {
 		None
 	}
 
-  private def analyze( pageUrl:URL, names:Seq[String] ) = names.distinct.map( url => apply( new URL( pageUrl, url ) ) ).filter( img => img != null && img.pixels > 0 )
+  private def analyze( pageUrl:URL, names:Seq[String] ) = names.distinct.map( url => url.safeUrl( base = pageUrl ) ).filter( _ != null ).map( apply ).filter( img => img != null && img.pixels > 0 )
 
   def bestForPage( pageUrl:URL, html:Html ):Image = {
 

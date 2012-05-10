@@ -127,7 +127,7 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
         else
           l( 'm ) = existingMsg + "\n" + m
 
-        l( "ex" ) = t.getStackTrace.take(10).map( _.toString ).mkString( "\n" )
+        l( "ex" ) = t.getStackTrace.take(25).map( _.toString ).mkString( "\n" )
 
       case ( "m", v:String ) =>
         val existingMsg = l.s( 'm )

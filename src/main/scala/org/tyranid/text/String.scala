@@ -17,6 +17,7 @@
 
 package org.tyranid.text
 
+import java.net.URL
 import java.util.Date
 import java.util.regex.Pattern
 
@@ -124,6 +125,22 @@ class StringImp( s:String ) {
   def encRegex = s.replace( ".", "\\." ).replace( "@", "\\@" ).replace( "+", "\\+" )
 
   def toUrl = new java.net.URL( Uri.completeUri( s ) )
+
+  /*
+   * This should not throw any exceptions.  If the URL is invalid in any way, returns null.
+   */
+  def safeUrl( base:URL = null ):URL =
+    try {
+      if ( s.isBlank )
+        null
+      else if ( base != null )
+        new URL( base, s )
+      else
+        new URL( s )
+    } catch {
+    case e:java.net.MalformedURLException =>
+      null
+    }
 
   def toHtmlPreserveWhitespace:NodeSeq =
     s.replace( "\n \n", "\n\n" ).split( "\n\n" ).map( para => <p>{ Unparsed( para.replace( "\r\n", "<br/>" ).replace( "\n", "<br/>" ).replace( "\r", "<br/>" ) ) }</p> ).toSeq
