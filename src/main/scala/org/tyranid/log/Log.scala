@@ -83,7 +83,8 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
   "ua"       is DbLink(UserAgent) as "User Agent";
   "ip"       is DbChar(32)        as "IP";
 
-  lazy val init = {
+  override def init = {
+    super.init
     "uid"                 is DbLink(B.User) as "User";
   }
 

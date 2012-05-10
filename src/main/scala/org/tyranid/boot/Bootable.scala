@@ -194,9 +194,12 @@ trait Bootable {
   def initEntities {
     val finder = ClassFinder()
     val classes = finder.getClasses
+spam( "INVOKED: classes.size=" + classes.size )
     val mongoEntities = ClassFinder.concreteSubclasses("org.tyranid.db.Entity", classes)
-    mongoEntities.foreach {
-      c => if ( !c.name.contains( ".test." ) ) ( Class.forName( c.name ) )
+spam( "INVOKED: size=" + mongoEntities.size )
+    mongoEntities.foreach { c =>
+      if ( !c.name.contains( ".test." ) ) Class.forName( c.name )
+      spam( "c.name=" + c.name )
     }
   }
 }

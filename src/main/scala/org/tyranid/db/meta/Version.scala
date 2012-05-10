@@ -67,6 +67,11 @@ trait Versioning extends Entity {
     super.delete( r )
     Versioning.db( r.entity ).remove( Mobj( "recId" -> r.id ) )
   }
+
+  abstract override def init {
+    super.init
+    Versioning.db( this ).ensureIndex( Mobj( "on" -> -1 ) )
+  }
 }
 
 object Versioning {

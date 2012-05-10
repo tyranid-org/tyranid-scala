@@ -120,9 +120,20 @@ object Entity {
 
     index( en.tid ) = en
   }
+
+  def init {
+    for ( en <- index.values )
+      en.checkInit
+  }
 }
 
 trait Entity extends Domain with DbItem {
+
+  def init { println( "init(): " + name ) }
+
+  lazy val checkInit = init
+
+
   override val isSimple = false
 
   val storageName:String
