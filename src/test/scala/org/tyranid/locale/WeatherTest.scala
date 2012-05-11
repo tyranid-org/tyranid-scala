@@ -78,7 +78,7 @@ class WeatherSuite extends FunSuite {
     assert( entry.sevWeight      === 25 )
     assert( entry.weight         === 58 )
 
-    //spam( "http://alerts.weather.gov/cap/us.php?x=0".GET().toXml )
+    //println( "http://alerts.weather.gov/cap/us.php?x=0".GET().toXml )
 
   }
 

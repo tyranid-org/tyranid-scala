@@ -147,14 +147,14 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
       AWSEmail.client.sendEmail( request )
     } catch {
       case e:MessageRejectedException =>
-        spam(
+        e.logWith( "m" -> (
             "| MessageRejectedException: " + e.getMessage() + "\n" +
             "|  From: " + from.getAddress() + "\n" +
             "|  Sent to: " + primaryRecipients.mkString( "," ) + "\n" +
             "|  Reply to: " + ( if ( replyTo != null && replyTo != from ) replyTo.getAddress() else "" ) + "\n" +
             "|  Subject: " + subject + "\n" +
             "|  Text: " + text + "\n" +
-            "|  HTML: " + html
+            "|  HTML: " + html )
         )
         
         throw e

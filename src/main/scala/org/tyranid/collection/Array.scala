@@ -17,7 +17,6 @@
 
 package org.tyranid.collection
 
-import org.tyranid.Imp.spam
 
 class ArrayImp[A]( array:Array[A] ) {
 

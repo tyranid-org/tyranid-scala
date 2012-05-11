@@ -55,7 +55,6 @@ object Whois {
       }
     }
 
-    spam( str )
     null
 	}
 }

@@ -64,10 +64,10 @@ class Indexer extends Actor {
 
     try {
       if ( json != "{}" )
-        spam( "indexing:  " + ( "http://localhost:9200/" + index + "/" + typ + "/" + id ).POST( content = json ) )
+        ( "http://localhost:9200/" + index + "/" + typ + "/" + id ).POST( content = json )
     } catch {
     case e:org.apache.http.conn.HttpHostConnectException =>
-      spam( "Cannot index in elastic search-- it does not appear to be running: " + e.getMessage )
+      e.logWith( "m" -> "Cannot index in elastic search-- it does not appear to be running" )
     }
   }
 
