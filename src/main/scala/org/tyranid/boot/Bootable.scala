@@ -42,7 +42,6 @@ import org.tyranid.social.google.GoApp
 import org.tyranid.social.linkedin.LiApp
 import org.tyranid.web.{ Weblet, Webloc, CometService }
 
-
 object Boot {
 
   @volatile var instance:Bootable = _
@@ -195,14 +194,15 @@ trait Bootable {
   
   def initEntities {
     val cl = Thread.currentThread.getContextClassLoader
-    val urls = cl.as[java.net.URLClassLoader].getURLs
+    val urls = cl.as[java.net.URLClassLoader].getURLs.map( _.getFile ).filter( !_.endsWith( ".jar" ) )
 
-    val finder = ClassFinder( urls.take(2).map( _.getFile ).map( new File(_) ) )
-    val classes = finder.getClasses//.filter(_.isConcrete)
-    val infoMap = ClassFinder.classInfoMap( classes )
+    val finder = ClassFinder( urls.map( new File(_) ) )
+    val infoMap = ClassFinder.classInfoMap( finder.getClasses )
 
     ClassFinder.concreteSubclasses( "org.tyranid.db.Entity", infoMap ).foreach { c =>
       if ( !c.name.contains( ".test." ) ) Class.forName( c.name )
     }
+
+    org.tyranid.db.Entity.init
   }
 }

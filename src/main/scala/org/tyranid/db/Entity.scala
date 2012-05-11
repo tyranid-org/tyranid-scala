@@ -122,6 +122,9 @@ object Entity {
   }
 
   def init {
+    // 50 is arbitrary, we're checking to make sure that the class loader found all the relevant entities on boot via ClassUtil
+    assert( index.values.size > 50 )
+
     for ( en <- index.values )
       en.checkInit
   }
@@ -129,7 +132,7 @@ object Entity {
 
 trait Entity extends Domain with DbItem {
 
-  def init { println( "init(): " + name ) }
+  def init {}
 
   lazy val checkInit = init
 
