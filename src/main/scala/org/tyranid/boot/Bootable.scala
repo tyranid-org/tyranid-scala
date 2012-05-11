@@ -40,7 +40,6 @@ import org.tyranid.social.google.GoApp
 import org.tyranid.social.linkedin.LiApp
 import org.tyranid.web.{ Weblet, Webloc, CometService }
 
-
 object Boot {
 
   @volatile var instance:Bootable = _
@@ -197,6 +196,8 @@ trait Bootable {
     val classes = finder.getClasses.filter(_.isConcrete)
     val infoMap = ClassFinder.classInfoMap( classes )
 
+    org.tyranid.db.mongo.MongoEntity.getClass
+    
     val mongoEntities = ClassFinder.concreteSubclasses( "org.tyranid.db.mongo.MongoEntity", infoMap )
     
     mongoEntities.foreach { c =>
