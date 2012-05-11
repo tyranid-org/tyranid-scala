@@ -218,7 +218,18 @@ object Tid {
 
     dangling
   }
-
+  
+  // WARNING!  This will perform a blind cascade delete
+  def deleteCascade( tid:String ) {
+    val delStat = delete( tid, true )
+    val cFailures = delStat.cascadeFailures
+    
+    if ( cFailures.nonEmpty ) {
+      cFailures.foreach( f => deleteCascade( f.tid ) )
+      deleteCascade( tid )
+    }
+  }
+  
   def delete( tid:String, performDeletion:Boolean ) = {
 
     val refs = references( tid )
