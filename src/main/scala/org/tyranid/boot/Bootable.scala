@@ -17,6 +17,7 @@
 
 package org.tyranid.boot
 
+import java.io.File
 import java.net.InetAddress
 
 import scala.xml.NodeSeq
@@ -193,14 +194,16 @@ trait Bootable {
   def bucket( bucket:S3Bucket ) = s3Buckets( bucket.prefix ) = bucket
   
   def initEntities {
-    val finder = ClassFinder()
-        
-    val classes = finder.getClasses.filter(_.isConcrete)
-spam( "classes count=" + classes.size )
-    val infoMap = ClassFinder.classInfoMap( classes )
-ClassFinder.classpath.foreach( println( _ ) )
+    val cl = Thread.currentThread.getContextClassLoader
+    val urls = cl.as[java.net.URLClassLoader].getURLs.take( 1 )
+spam( "urls.size=" + urls.size )
 
-spam( System.getProperties.getProperty( "java.class.path" ) )
+    urls foreach { u => spam( "url=" + u ) }
+    val finder = ClassFinder( urls.map( _.toString ).map( new File(_) ) )
+    val classes = finder.getClasses.filter(_.isConcrete)
+spam( "classes.size=" + classes.size )
+    val infoMap = ClassFinder.classInfoMap( classes )
+
 
     val mongoEntities = ClassFinder.concreteSubclasses( "org.tyranid.db.mongo.MongoEntity", infoMap )
     
