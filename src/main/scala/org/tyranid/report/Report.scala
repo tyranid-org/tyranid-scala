@@ -394,9 +394,9 @@ case class Report( query:Query ) {
          <td style="padding:0;">
           <table>
            <tr>
-            { ( query.hasSearch        |* <td>{ Button.img( "rSearch", "search",                                 style = "height:40px; padding-top:1px;" ) }</td> ) ++
-                                          <td>{ Button.img( "rPrev",   "arrowthick-1-w", disabled = offset == 0, style = "height:40px; padding-top:1px;" ) }</td> ++
-                                          <td>{ Button.img( "rNext",   "arrowthick-1-e", disabled = !hasNext,    style = "height:40px; padding-top:1px;" ) }</td> }
+            { ( query.hasSearch        |* <td>{ Button.bigimg( "rSearch", "search",                             style = "height:40px; padding-top:4px;" ) }</td> ) ++
+                                          <td>{ Button.bigimg( "rPrev",   "arrowLeft",  disabled = offset == 0, style = "height:40px; padding-top:4px;" ) }</td> ++
+                                          <td>{ Button.bigimg( "rNext",   "arrowRight", disabled = !hasNext,    style = "height:40px; padding-top:4px;" ) }</td> }
             { query.extraActions } 
            </tr>
           </table>

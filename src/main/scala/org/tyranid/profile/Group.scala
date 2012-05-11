@@ -107,7 +107,7 @@ case class GroupField( baseName:String, l:String = null,
     <table class="tile" style="width:180px; height:54px;">
      <tr>
       <td class="label">view group</td>
-      <td rowspan="2" style="padding-right:4px;"><a id={ "rGrpBtn" + id } href="#" class="rGrpBtn btn" style="height:40px; padding-top:10px;"><span class="linkIcon contactsIcon"/><span class="label"></span></a></td>
+      <td rowspan="2" style="padding-right:4px;"><a id={ "rGrpBtn" + id } href="#" class="rGrpBtn btn" style="height:40px; padding-top:6px;"><span class="bigIcon groupIcon"/><span class="label"></span></a></td>
      </tr>
      <tr>
       <td id="rGrpChooser">{ groupValueFor( run.report.searchRec ).drawSelect() }</td>

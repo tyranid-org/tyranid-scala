@@ -45,6 +45,9 @@ object Button {
   def img( id:String, iconName:String, color:String = "", style:String = null, disabled:Boolean = false ) =
     Unparsed( "<button id=\"" + id + "\" class=\"" + color + " btn\" " + ( disabled |* " disabled=\"disabled\"" ) + ( style.notBlank |* " style=\"" + style + "\"" ) + "><span class=\"ui-icon ui-icon-" + iconName + "\"/></button>" )
 
+  def bigimg( id:String, iconName:String, color:String = "", style:String = null, disabled:Boolean = false ) =
+    Unparsed( "<button id=\"" + id + "\" class=\"" + color + " btn\" " + ( disabled |* " disabled=\"disabled\"" ) + ( style.notBlank |* " style=\"" + style + "\"" ) + "><span class=\"bigIcon " + iconName + "Icon\"/></button>" )
+
   def link( name:String, href:String, color:String = null, redirectEndpoint:String = null, dialogTitle:String = null, opts:Seq[(String,String)] = null ) =
     if ( redirectEndpoint == null ) {
       <a class={ if ( color.notBlank ) color + " btn" else "btn" } href={ href }><span>{ name }</span></a>
