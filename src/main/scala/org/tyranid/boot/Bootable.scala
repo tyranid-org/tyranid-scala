@@ -26,6 +26,7 @@ import org.clapper.classutil.ClassFinder
 
 import com.braintreegateway.BraintreeGateway
 
+import org.tyranid.Imp._
 import org.tyranid.db.Entity
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
@@ -194,7 +195,11 @@ trait Bootable {
   def initEntities {
     val finder = ClassFinder()
     val classes = finder.getClasses.filter(_.isConcrete)
+spam( "classes count=" + classes.size )
     val infoMap = ClassFinder.classInfoMap( classes )
+ClassFinder.classpath.foreach( println( _ ) )
+
+spam( System.getProperties.getProperty( "java.class.path" ) )
 
     val mongoEntities = ClassFinder.concreteSubclasses( "org.tyranid.db.mongo.MongoEntity", infoMap )
     
