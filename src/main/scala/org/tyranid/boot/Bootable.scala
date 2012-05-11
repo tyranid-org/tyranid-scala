@@ -17,6 +17,7 @@
 
 package org.tyranid.boot
 
+import java.io.File
 import java.net.InetAddress
 
 import scala.xml.NodeSeq
@@ -26,6 +27,7 @@ import org.clapper.classutil.ClassFinder
 
 import com.braintreegateway.BraintreeGateway
 
+import org.tyranid.Imp._
 import org.tyranid.db.Entity
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
@@ -191,9 +193,14 @@ trait Bootable {
   def bucket( bucket:S3Bucket ) = s3Buckets( bucket.prefix ) = bucket
   
   def initEntities {
-    val finder = ClassFinder()
-        
+    val cl = Thread.currentThread.getContextClassLoader
+    val urls = cl.as[java.net.URLClassLoader].getURLs.take( 1 )
+spam( "urls.size=" + urls.size )
+
+    urls foreach { u => spam( "url=" + u ) }
+    val finder = ClassFinder( urls.map( _.toString ).map( new File(_) ) )
     val classes = finder.getClasses.filter(_.isConcrete)
+spam( "classes.size=" + classes.size )
     val infoMap = ClassFinder.classInfoMap( classes )
 
     org.tyranid.db.mongo.MongoEntity.getClass
