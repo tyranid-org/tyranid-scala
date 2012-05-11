@@ -192,7 +192,7 @@ trait Bootable {
   def bucket( bucket:S3Bucket ) = s3Buckets( bucket.prefix ) = bucket
   
   def initEntities {
-    val finder = ClassFinder( System.getProperties().getProperty( "java.class.path" ).split( ":" ).map( new java.io.File( _ ) ).toSeq )
+    val finder = ClassFinder()
         
     val classes = finder.getClasses.filter(_.isConcrete)
     val infoMap = ClassFinder.classInfoMap( classes )
