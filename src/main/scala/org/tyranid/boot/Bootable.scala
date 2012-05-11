@@ -195,27 +195,14 @@ trait Bootable {
   
   def initEntities {
     val cl = Thread.currentThread.getContextClassLoader
-    val urls = cl.as[java.net.URLClassLoader].getURLs.take( 1 )
-spam( "urls.size=" + urls.size )
+    val urls = cl.as[java.net.URLClassLoader].getURLs
 
-    urls foreach { u => spam( "url=" + u ) }
-    val finder = ClassFinder( urls.map( _.toString ).map( new File(_) ) )
-    val classes = finder.getClasses.filter(_.isConcrete)
-spam( "classes.size=" + classes.size )
+    val finder = ClassFinder( urls.take(2).map( _.getFile ).map( new File(_) ) )
+    val classes = finder.getClasses//.filter(_.isConcrete)
     val infoMap = ClassFinder.classInfoMap( classes )
 
-
-    val mongoEntities = ClassFinder.concreteSubclasses( "org.tyranid.db.mongo.MongoEntity", infoMap )
-    
-    mongoEntities.foreach { c =>
+    ClassFinder.concreteSubclasses( "org.tyranid.db.Entity", infoMap ).foreach { c =>
       if ( !c.name.contains( ".test." ) ) Class.forName( c.name )
-     println( "c.name=" + c.name )
-    }
-    
-    val ramEntities = ClassFinder.concreteSubclasses( "org.tyranid.db.ram.RamEntity", infoMap )
-    ramEntities.foreach { c =>
-      if ( !c.name.contains( ".test." ) ) Class.forName( c.name )
-     println( "c.name=" + c.name )
     }
   }
 }
