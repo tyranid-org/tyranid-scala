@@ -40,37 +40,52 @@ trait Versioning extends Entity {
     val original = r.original
 
     if ( original != null ) {
-      val diffs = Path.diff( original, r )
+      val diff = Path.diff( original, r )
 
-      if ( diffs.nonEmpty ) {
-        val log = Mobj()
+      if ( diff.nonEmpty ) {
+        val as    = diff.as   .filter( !_.path.leaf.att.noVersion )
+        val bs    = diff.bs   .filter( !_.path.leaf.att.noVersion )
+        val diffs = diff.diffs.filter( !_.path.leaf.att.noVersion )
 
-        log( 'user ) = Session().user.id
-        log( 'on ) = new Date
-        log( 'recId ) = r.id
+        if ( as.nonEmpty || bs.nonEmpty || diffs.nonEmpty ) {
+          val log = Mobj()
 
-        if ( diffs.as.nonEmpty )
-          log( 'removals ) = PathValue.toDbObject( diffs.as )
+          log( 'user ) = Session().user.id
+          log( 'on ) = new Date
+          log( 'recId ) = r.id
+
+          if ( as.nonEmpty )
+            log( 'removals ) = PathValue.toDbObject( as )
         
-        if ( diffs.bs.nonEmpty )
-          log( 'adds ) = PathValue.toDbObject( diffs.bs )
+          if ( bs.nonEmpty )
+            log( 'adds ) = PathValue.toDbObject( bs )
         
-        if ( diffs.diffs.nonEmpty )
-          log( 'updates ) = PathDiff.toDbObject( diffs.diffs )
+          if ( diffs.nonEmpty )
+            log( 'updates ) = PathDiff.toDbObject( diffs )
 
-        Versioning.db( r.entity ).save( log )
+          logdb.save( log )
+        }
       }
     }
   }
 
   abstract override def delete( r:Record ) {
     super.delete( r )
-    Versioning.db( r.entity ).remove( Mobj( "recId" -> r.id ) )
+    logdb.remove( Mobj( "recId" -> r.id ) )
   }
 
   abstract override def init {
     super.init
-    Versioning.db( this ).ensureIndex( Mobj( "on" -> -1 ) )
+    logdb.ensureIndex( Mobj( "on" -> -1 ) )
+  }
+
+  lazy val logdbName = dbName + "_log"
+
+  lazy val logdb = {
+    if ( embedded )
+      problem( "embedded mongodb entities do not have db objects" )
+
+    Mongo.connect.db( B.profileDbName )( logdbName  )
   }
 }
 
@@ -78,12 +93,10 @@ object Versioning {
 
   case class Change( path:String, a:Any, b:Any )
 
-  def db( entity:Entity ) = Mongo.connect.db( B.profileDbName )( entity.dbName + "_log" )
-
   def ui( weblet:Weblet, tid:String ) = {
     val ( en, id ) = Tid.parse( tid )
 
-    val objs = Versioning.db( en ).find( Mobj( "recId" -> id ) ).sort( Mobj( "on" -> -1 ) )
+    val objs = en.as[Versioning].logdb.find( Mobj( "recId" -> id ) ).sort( Mobj( "on" -> -1 ) )
 
     <table class="dtable nested">
      <thead><tr><th style="width:150px;">On</th><th>User</th><th>Attribute</th><th>Old</th><th style="width:200px;">New</th></tr></thead>{

@@ -1,4 +1,4 @@
-/**
+/** )
  * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -399,7 +399,7 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
      </form>
     </div>
     <div class="btns">
-     <button onclick={ "$('#" + gf.id + "').dialog('close'); return false;" } class="btn" style="float:right;">Cancel</button>
+     <button onclick={ "$('#rGrpDlg" + gf.id + "').dialog('close'); return false;" } class="btn" style="float:right;">Cancel</button>
     </div>;
 
   def drawRename =

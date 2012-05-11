@@ -44,6 +44,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   var owner:Boolean = false
   var search:Searchable = NoSearch
   var computation: ( Record ) => Any = null
+  var noVersion:Boolean = false
 
   
   override def toString = entity.name + "." + name
@@ -78,6 +79,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
     case "internal"  => internal = true
     case "inherit"   => if ( domain == null )
                           throw new IllegalArgumentException( "Cannot find inherited attribute '" + name + "' in the entity '" + entity.name + "'." )
+    case "noVersion" => noVersion = true
     }
 
     this
