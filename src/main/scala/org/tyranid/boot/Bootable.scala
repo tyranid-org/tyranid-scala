@@ -194,6 +194,7 @@ trait Bootable {
   
   def initEntities {
     val finder = ClassFinder()
+        
     val classes = finder.getClasses.filter(_.isConcrete)
 spam( "classes count=" + classes.size )
     val infoMap = ClassFinder.classInfoMap( classes )
