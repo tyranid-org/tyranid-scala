@@ -91,7 +91,9 @@ class WebFilter extends Filter {
 
     var web = new WebContext( request.asInstanceOf[HttpServletRequest],
                               response.asInstanceOf[HttpServletResponse], filterConfig.getServletContext() )
-spam( "filter entered, path=" + web.path )
+    
+    if ( web.path.indexOf( "cometd" ) == -1 )
+      spam( "filter entered, path=" + web.path )
 
     if ( boot.requireSsl )
       web.req.getServerPort match {

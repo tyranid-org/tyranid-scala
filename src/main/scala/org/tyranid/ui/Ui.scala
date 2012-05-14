@@ -39,14 +39,14 @@ object Link {
 
 object Button {
 
-  def btn( id:String, label:String, color:String = "", disabled:Boolean = false ) =
-    Unparsed( "<button id=\"" + id + "\" class=\"" + color + " btn\" " + ( disabled |* " disabled=\"disabled\"" ) + ">" + label + "</button>" )
+  def btn( id:String, label:String, color:String = "", disabled:Boolean = false, tip:String = null ) =
+    Unparsed( "<button id=\"" + id + "\" class=\"" + color + ( tip.notBlank |* " tip" ) + " btn\" " + ( disabled |* " disabled=\"disabled\"" ) + ( tip.notBlank |* "title=\"" + tip + "\"" ) + ">" + label + "</button>" )
 
-  def img( id:String, iconName:String, color:String = "", style:String = null, disabled:Boolean = false ) =
-    Unparsed( "<button id=\"" + id + "\" class=\"" + color + " btn\" " + ( disabled |* " disabled=\"disabled\"" ) + ( style.notBlank |* " style=\"" + style + "\"" ) + "><span class=\"ui-icon ui-icon-" + iconName + "\"/></button>" )
+  def img( id:String, iconName:String, color:String = "", style:String = null, disabled:Boolean = false, tip:String = null ) =
+    Unparsed( "<button id=\"" + id + "\" class=\"" + color + " btn\" " + ( disabled |* " disabled=\"disabled\"" ) + ( style.notBlank |* " style=\"" + style + "\"" ) + "><span class=\"" + ( tip.notBlank |* "tip " ) + "ui-icon ui-icon-" + iconName + "\"" + ( tip.notBlank |* " title=\"" + tip + "\"" ) + "/></button>" )
 
-  def bigimg( id:String, iconName:String, color:String = "", style:String = null, disabled:Boolean = false ) =
-    Unparsed( "<button id=\"" + id + "\" class=\"" + color + " btn\" " + ( disabled |* " disabled=\"disabled\"" ) + ( style.notBlank |* " style=\"" + style + "\"" ) + "><span class=\"bigIcon " + iconName + "Icon\"/></button>" )
+  def bigimg( id:String, iconName:String, color:String = "", style:String = null, disabled:Boolean = false, tip:String = null ) =
+    Unparsed( "<button id=\"" + id + "\" class=\"" + color + " btn\" " + ( disabled |* " disabled=\"disabled\"" ) + ( style.notBlank |* " style=\"" + style + "\"" ) + "><span class=\"" + ( tip.notBlank |* "tip " ) + "bigIcon " + iconName + "Icon\"" + ( tip.notBlank |* " title=\"" + tip + "\"" ) + "/></button>" )
 
   def link( name:String, href:String, color:String = null, redirectEndpoint:String = null, dialogTitle:String = null, opts:Seq[(String,String)] = null ) =
     if ( redirectEndpoint == null ) {
