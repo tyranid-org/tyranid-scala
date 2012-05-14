@@ -91,26 +91,26 @@ object S3 {
   }
   
   def download( bucket:S3Bucket, key:String ) = {
-	var obj:S3Object = null
+	  var obj:S3Object = null
 	
-	try {
+	  try {
       obj = s3.getObject( new GetObjectRequest( bucket.name, key ) )
 
-	  //println( "Content-Type: "  + object.getObjectMetadata().getContentType() );
+  	  //println( "Content-Type: "  + object.getObjectMetadata().getContentType() );
 		
       if ( obj != null ) {
-		  val tmpName = "/tmp/" + System.currentTimeMillis + "_" + key
-		  val f = new java.io.File( tmpName )
+		    val tmpName = "/tmp/" + System.currentTimeMillis + "_" + key
+		    val f = new java.io.File( tmpName )
 			
-		  //f.split( "/" )
-		  //f.mkdirs()
+		    //f.split( "/" )
+		    //f.mkdirs()
 			
-		  var fops = new FileOutputStream( f )
-		  obj.getObjectContent.transferTo( fops )
-		  fops.close
-		  f
+		    var fops = new FileOutputStream( f )
+		    obj.getObjectContent.transferTo( fops )
+		    fops.close
+		    f
       }
-	} catch {
+	  } catch {
     case e: AmazonS3Exception =>
       e.log
       null
@@ -118,16 +118,16 @@ object S3 {
   }
   
   def getInputStream( bucket:S3Bucket, key:String ) = {
-	try {
+	  try {
       val obj = s3.getObject( new GetObjectRequest( bucket.name, key ) )
       
       if ( obj != null )
         obj.getObjectContent()
 
-	} catch {
-    case e: AmazonS3Exception =>
-      e.log
-      null
+	  } catch {
+      case e: AmazonS3Exception =>
+        e.log
+        null
     }
   }
   
