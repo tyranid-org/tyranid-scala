@@ -39,8 +39,8 @@ import org.apache.http.params.{ BasicHttpParams, HttpConnectionParams }
 import org.apache.http.protocol.{ ExecutionContext, HttpContext, BasicHttpContext }
 import org.apache.http.util.EntityUtils
 
-
 import org.tyranid.Imp._
+import org.tyranid.web.FileUploadSupport
 
 
 case class RestException( code:String, message:String ) extends Exception
@@ -78,6 +78,15 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
   def a_?( param:String ):Seq[String] = {
     val arr = a( param )
     if ( arr != null ) arr else Nil
+  }
+
+  def file( param:String ):org.apache.commons.fileupload.FileItem = {
+    val bodyParams:FileUploadSupport.BodyParams = req.getAttribute( FileUploadSupport.BodyParamsKey ).asInstanceOf[FileUploadSupport.BodyParams]
+
+    if ( bodyParams != null )
+      bodyParams.getFileItems( param ).headOption getOrElse null
+    else 
+      null
   }
 
   def sReq( param:String ) = {

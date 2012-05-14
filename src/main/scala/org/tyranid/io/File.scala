@@ -29,8 +29,6 @@ import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.{ Domain, Record, Scope }
 import org.tyranid.ui.PathField
 
-import org.tyranid.web.FileUploadSupport
-import org.tyranid.web.FileUploadSupport.BodyParams
 
 object DbFile {
 
@@ -41,37 +39,19 @@ class DbFile( bucket:S3Bucket ) extends CommonFile {
   val sqlName = "TEXT"  // TODO
 
   override def extract( s:Scope, f:PathField ) {
-    val bodyParams:BodyParams = T.web.req.getAttribute( FileUploadSupport.BodyParamsKey ).asInstanceOf[BodyParams]
+    val file = T.web.file( f.va.name )
 
-    val fileItem = 
-      if ( bodyParams != null ) {
-        val fileItems = bodyParams.getFileItems( f.va.name )
-        
-        if ( fileItems.size > 0 )
-          fileItems.get(0)
-        else 
-          null
-      } else 
-        null
-
-    if ( fileItem != null && fileItem.getName().notBlank ) {
+    if ( file != null && file.getName.notBlank ) {
 
       val rootRec     = s.root.rec
       val embeddedRec = s.rec
 
-      rootRec.recordTid match {
-      case null | "null" | "-invalid" => rootRec.save
-      case _ =>
-      }
+      rootRec.ensureId
 
       val pathName = s.fullPath.aidName_( rootRec )
 
-      val path = File.pathFor( rootRec.entityTid, rootRec.recordTid, pathName, fileItem.getName )
-      var in = fileItem.getInputStream
-        
-      S3.write( bucket, path, fileItem.getSize, fileItem.getContentType, in )
-      in.close
-        
+      val path = File.pathFor( rootRec.entityTid, rootRec.recordTid, pathName, file.getName )
+      S3.write( bucket, path, file )
       S3.access( bucket, path, public = true )
         
       embeddedRec( f.va ) = bucket.url( path )
@@ -89,23 +69,12 @@ object DbLocalFile extends CommonFile {
   val sqlName = "TEXT"
 
   override def extract( s:Scope, f:PathField ) {
-    val bodyParams:BodyParams = T.web.req.getAttribute( FileUploadSupport.BodyParamsKey ).asInstanceOf[BodyParams]
+    val file = T.web.file( f.va.name )
 
-    val fileItem = 
-      if ( bodyParams != null ) {
-        val fileItems = bodyParams.getFileItems( f.va.name )
-        
-        if ( fileItems.size > 0 )
-          fileItems.get(0)
-        else 
-          null
-      } else 
-        null
-
-    if ( fileItem != null ) {
-      val tmpName = "/tmp/" + System.currentTimeMillis + "_" + fileItem.getName()
+    if ( file != null ) {
+      val tmpName = "/tmp/" + System.currentTimeMillis + "_" + file.getName()
       var fops = new FileOutputStream( new java.io.File( tmpName ) )
-      var in = fileItem.getInputStream
+      var in = file.getInputStream
       in.transferTo( fops )
       in.close
       fops.close

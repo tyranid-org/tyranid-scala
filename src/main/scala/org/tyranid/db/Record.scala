@@ -181,9 +181,12 @@ trait Record extends Valid with BsonObject {
   def recordTid = view.idVa.flatten( va => va.att.domain.idToRecordTid( this( va ) ), view.entity.problem( "embedded entities don't have IDs" ) )
 
   override def oid = id.as[ObjectId]
-  
 
-
+  def ensureId =
+    recordTid match {
+    case null | "null" | "-invalid" => save
+    case _ =>
+    }
 
   def clear:Unit = throw new UnsupportedOperationException
 

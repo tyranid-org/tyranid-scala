@@ -345,13 +345,17 @@ trait Entity extends Domain with DbItem {
     if ( id == 0 ) {
       ""
     } else {
-		  val t = staticIdIndex( id )
+		  staticIdIndex.get( id ) match {
+      case Some( t ) =>
+        val sb = new StringBuilder
+        for ( lleaf <- t.view.elabels )
+          sb ++= t( lleaf.index ).toString
 
-		  val sb = new StringBuilder
-		  for ( lleaf <- t.view.elabels )
-			  sb ++= t( lleaf.index ).toString
+        sb.toString
 
-		  sb.toString
+      case None =>
+        "key " + id
+      }
     }
 
   def problem( desc:String ) = throw new org.tyranid.db.ModelException( "On Entity '" + name + "':  " + desc )
