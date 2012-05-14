@@ -124,13 +124,31 @@ class PathSuite extends FunSuite {
       assert( view.path( path ).pathName === path )
   }
 
+  test( "pathNameSlash" ) {
+    val view = Widget.makeView
+    val paths = Array(
+      "categories",
+      "categories/1",
+      "categories/1/name",
+      "dims/height",
+      "prices/0/price",
+      "prices/0/type/name",
+      "prices/0/type/quantity",
+      "prices/3a/type/quantity"
+    )
+
+    for ( path <- paths )
+      assert( view.path( path ).name_/ === path )
+  }
+
   test( "dbobject" ) {
     val view = Widget.makeView
     val data = Array(
-      ( "name",        "test" ),
-      ( "dims_height", 20 ),
-      ( "tags_0",      "acme" ),
-      ( "tags_1",      "fun" )
+      ( "name",           "test" ),
+      ( "dims_height",    20 ),
+      ( "tags_0",         "acme" ),
+      ( "tags_1",         "fun" ),
+      ( "prices_0_price", 5 )
     )
 
     val pvs = (

@@ -32,7 +32,7 @@ import org.tyranid.Imp._
 
 object FileUploadSupport {
 
-  val maxFileSize = 1024 * 1000 * 1000 * 2 // 2G
+  val maxFileSize = 1024 * 1000 * 1000 * 2 // 2GB
 
   case class BodyParams( fileParams:collection.Map[String,Seq[FileItem]], formParams:collection.Map[String,Seq[String]] ) {
     def getFileItems( key:String ) = fileParams.get( key ) orElse fileParams.get( key + "[]" )
@@ -111,7 +111,7 @@ object FileUploadSupport {
       case _ =>
         None
     }
-    item.getString(charset getOrElse "UTF-8" )
+    item.getString( charset getOrElse "UTF-8" )
   }
 }
 

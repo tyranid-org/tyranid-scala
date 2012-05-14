@@ -53,12 +53,16 @@ object Tid {
     } else {
       val ( entityTid, recordTid ) = split( tid )
 
-      val en = Entity.byTid( entityTid ).get
+      Entity.byTid( entityTid ) match {
+      case Some( en ) =>
+        if ( recordTid.isBlank )
+          ( en, null )
+        else
+          ( en, en.recordTidToId( recordTid ) )
 
-      if ( recordTid.isBlank )
-        ( en, null )
-      else
-        ( en, en.recordTidToId( recordTid ) )
+      case _ =>
+        ( null, null )
+      }
     }
 
   def toIds( tids:Seq[String], entity:Entity ) =

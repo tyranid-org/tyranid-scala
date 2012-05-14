@@ -76,8 +76,9 @@ trait Path extends Pathable {
 
   def path = this
 
-  def name  = ( 0 until pathSize ).map( i => pathAt( i ).name ).mkString( "." )
-  def name_ = ( 0 until pathSize ).map( i => pathAt( i ).name ).mkString( "_" )
+  def name   = ( 0 until pathSize ).map( i => pathAt( i ).name ).mkString( "." )
+  def name_  = ( 0 until pathSize ).map( i => pathAt( i ).name ).mkString( "_" )
+  def name_/ = ( 0 until pathSize ).map( i => pathAt( i ).name ).mkString( "/" )
 
   // This method uses Array IDs (aid) instead of ArrayIndex.idx's so that the name is the same if the record is reordered inside the array
   def aidName_( rec:Record ) = {
@@ -174,7 +175,7 @@ trait Path extends Pathable {
     !( ostart until other.size ).exists( i => other( i ) != pathAt( i-ostart ).name )
   }
 
-  def pathName = name
+  def pathName      = name
 
   def follow( rec:Record, steps:Int ):Any = {
 
@@ -316,7 +317,7 @@ object PathValue {
     val obj = new BasicDBObject
 
     for ( pv <- pathValues )
-      obj( pv.path.pathName ) = pv.value
+      obj( pv.path.name_/ ) = pv.value
       
     obj
   }
@@ -429,7 +430,8 @@ object Path {
   def parse( root:View, path:String, sep:Char = 0 ):Path = {
 
     val csep =
-      if ( sep != 0 )                        sep
+      if ( sep != 0 )                       sep
+      else if ( path.indexOf( '/' ) != -1 ) '/'
       else if ( path.indexOf( '.' ) != -1 ) '.'
       else                                  '_'
 
