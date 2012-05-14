@@ -103,16 +103,20 @@ case class GroupField( baseName:String, l:String = null,
     <head><script src={ B.buildPrefix + "/js/tag.js" } charset="utf-8"></script></head>
     <div id={ "rGrpDlg" + id } class="rGrpDlg" style="padding:0; display:none;"/>;
 
-  override def drawFilter( run:Run ) =
+  override def drawFilter( run:Run ) = {
+    val groupValue = groupValueFor( run.report.searchRec )
+    
     <table class="tile" style="width:180px; height:54px;">
      <tr>
       <td class="label">view group</td>
-      <td rowspan="2" style="padding-right:4px;"><a id={ "rGrpBtn" + id } href="#" class="rGrpBtn btn" style="height:40px; padding-top:6px;"><span class="bigIcon groupIcon"/><span class="label"></span></a></td>
+      <td rowspan="2" style="padding-right:4px;"><a id={ "rGrpBtn" + id } href="#" class="rGrpBtn btn" style="height:40px; padding-top:6px;"><span title="View Group" class="tip bigIcon groupIcon"/><span class="label"></span></a></td>
+      { ( groupValue.selectedGroup != null ) |* <td rowspan="2" style="padding-right:4px;"><a id={ "rGrpBtn" + id } href="#" class="rGrpBtn btn" style="height:40px; padding-top:6px;"><span title="View Group" class="tip bigIcon groupIcon"/><span class="label"></span></a></td> }
      </tr>
      <tr>
-      <td id="rGrpChooser">{ groupValueFor( run.report.searchRec ).drawSelect() }</td>
+      <td id="rGrpChooser">{ groupValue.drawSelect() }</td>
      </tr>
     </table>
+  }
 
   def queryGroups                         = groupEntity.db.find( Mobj( forKey -> forValue() ) ).map( o => groupEntity( o ) ).toSeq
   def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) ).map( o => ofEntity( o ) ).toIterable
