@@ -110,7 +110,8 @@ case class GroupField( baseName:String, l:String = null,
      <tr>
       <td class="label">view group</td>
       <td rowspan="2" style="padding-right:4px;"><a id={ "rGrpBtn" + id } href="#" class="rGrpBtn btn" style="height:40px; padding-top:6px;"><span title="View Group" class="tip bigIcon groupIcon"/><span class="label"></span></a></td>
-      { ( groupValue.selectedGroup != null ) |* <td rowspan="2" style="padding-right:4px;"><a id={ "rGrpBtn" + id } href="#" class="rGrpBtn btn" style="height:40px; padding-top:6px;"><span title="View Group" class="tip bigIcon groupIcon"/><span class="label"></span></a></td> }
+      { //( groupValue.selectedGroup != null ) |* <td rowspan="2" style="padding-right:4px;"><a id={ "rGrpBtn" + id } href="#" class="rGrpBtn btn" style="height:40px; padding-top:6px;"><span title="View Group" class="tip bigIcon groupIcon"/><span class="label"></span></a></td> 
+      }
      </tr>
      <tr>
       <td id="rGrpChooser">{ groupValue.drawSelect() }</td>
