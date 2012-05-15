@@ -86,12 +86,26 @@ object DbLocalFile extends CommonFile {
 }
 
 object File {
-  def pathFor( entityTid:String, recordTid:String, pathName:String, url:String ) = {
-    val max = scala.math.max( url.lastIndexOf( '/' ), url.lastIndexOf( '.' ) ) 
-    val suffix = if ( max != -1 ) url.substring( max+1 ) else "" 
-    val extension = suffix.replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
 
-    ( entityTid + "/" + recordTid + "/" + pathName + "." + extension )
+  def extension( fileName:String ) = {
+    val max = scala.math.max( fileName.lastIndexOf( '/' ), fileName.lastIndexOf( '.' ) ) 
+    val suffix = if ( max != -1 ) fileName.substring( max+1 ) else "" 
+    suffix.replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
+  }
+
+  def pathFor( entityTid:String, recordTid:String, pathName:String, url:String ) =
+    entityTid + "/" + recordTid + "/" + pathName + "." + extension( url )
+
+  def mimeTypeFor( fileName:String ) = {
+    val mimeType = T.web.ctx.getMimeType( fileName )
+
+    if ( mimeType != null )
+      mimeType
+    else
+      extension( fileName ) match {
+      case "mp4" => "video/mp4"
+      case _     => null
+      }
   }
 
   def download( web:WebContext, bucket:S3Bucket, key:String, fileName:String ) {
@@ -99,11 +113,12 @@ object File {
   
     if ( obj != null ) {
       var length = 0 
-      val op = web.res.getOutputStream()
-      val mimetype = web.ctx.getMimeType( fileName )
+      val mimetype = mimeTypeFor( fileName )
       val res = web.res
 
 spam( "mimeType:" + mimetype )
+spam( "length:" + obj.getObjectMetadata.getContentLength.asInstanceOf[Int] )
+web.req.dump
       
       res.setContentType( ( if ( mimetype != null ) mimetype else "application/octet-stream" ) )
       res.setContentLength( obj.getObjectMetadata.getContentLength.asInstanceOf[Int] )
@@ -111,12 +126,19 @@ spam( "mimeType:" + mimetype )
         
       val out = res.getOutputStream
       val in = obj.getObjectContent
+     
+      try {
+        in.transferTo( out )
       
-      in.transferTo( out )
-      
-      in.close
-      op.flush
-      op.close
+        in.close
+        out.flush
+        out.close
+      } catch {
+      //case e if e.getClass.getSimpleName == "EofException" =>
+        //println( "*** Broken pipe" )
+      case e =>
+        e.log
+      }
     } else {
       throw new RuntimeException( "File not found." )
     }
