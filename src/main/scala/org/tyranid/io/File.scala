@@ -28,6 +28,7 @@ import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.{ Domain, Record, Scope }
 import org.tyranid.ui.PathField
+import org.tyranid.web.WebContext
 
 
 object DbFile {
@@ -91,6 +92,34 @@ object File {
     val extension = suffix.replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
 
     ( entityTid + "/" + recordTid + "/" + pathName + "." + extension )
+  }
+
+  def download( web:WebContext, bucket:S3Bucket, key:String, fileName:String ) {
+    val obj = S3.getObject( bucket, key )
+  
+    if ( obj != null ) {
+      var length = 0 
+      val op = web.res.getOutputStream()
+      val mimetype = web.ctx.getMimeType( fileName )
+      val res = web.res
+
+spam( "mimeType:" + mimetype )
+      
+      res.setContentType( ( if ( mimetype != null ) mimetype else "application/octet-stream" ) )
+      res.setContentLength( obj.getObjectMetadata.getContentLength.asInstanceOf[Int] )
+      res.setHeader( "Content-Disposition", "attachment; filename=\"" + fileName + "\"" )
+        
+      val out = res.getOutputStream
+      val in = obj.getObjectContent
+      
+      in.transferTo( out )
+      
+      in.close
+      op.flush
+      op.close
+    } else {
+      throw new RuntimeException( "File not found." )
+    }
   }
 }
 

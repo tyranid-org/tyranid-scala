@@ -190,7 +190,9 @@ trait Bootable {
 
   def getS3Bucket( prefix:String ): S3Bucket = s3Buckets( prefix + envSuffix ) 
   
-  def bucket( bucket:S3Bucket ) = s3Buckets( bucket.prefix ) = bucket
+  def bucket( buckets:S3Bucket* ) =
+    for ( bucket <- buckets )
+      s3Buckets( bucket.prefix ) = bucket
   
   def initEntities {
     val cl = Thread.currentThread.getContextClassLoader

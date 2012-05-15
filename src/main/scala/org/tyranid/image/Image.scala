@@ -171,6 +171,23 @@ object Image {
 
     ogImages ++ analyze( pageUrl, html.images -- ogImagePaths ).filter( _.portraitRank > 0.005 ).sortBy( _.portraitRank )
   }
+
+  def scale( width:Int, height:Int, maxWidth:Int = -1, maxHeight:Int = -1 ) = {
+    var w = width
+    var h = height
+
+    if ( maxWidth != -1 && w > maxWidth ) {
+      h = maxWidth * h / w
+      w = maxWidth
+    }
+
+    if ( maxHeight != -1 && h > maxHeight ) {
+      w = maxHeight * w / h
+      h = maxHeight
+    }
+
+    ( w, h )
+  }
 }
 
 case class Image( url:URL, width:Option[Int] = None, height:Option[Int] = None ) {
@@ -195,25 +212,7 @@ case class Image( url:URL, width:Option[Int] = None, height:Option[Int] = None )
     ratioMult * sizeMult
   }
 
-  def dimensions( maxWidth:Int = -1, maxHeight:Int = -1 ) = {
-    var bw = width.get
-    var bh = height.get
-
-    var w = bw
-    var h = bh
-
-    if ( maxWidth != -1 && w > maxWidth ) {
-      h = maxWidth * h / w
-      w = maxWidth
-    }
-
-    if ( maxHeight != -1 && h > maxHeight ) {
-      w = maxHeight * w / h
-      h = maxHeight
-    }
-
-    ( w, h )
-  }
+  def dimensions( maxWidth:Int = -1, maxHeight:Int = -1 ) = Image.scale( width.get, height.get, maxWidth, maxHeight )
 
   def cssDimensions( maxWidth:Int = -1, maxHeight:Int = -1 ) = {
     val ( w, h ) = dimensions( maxWidth, maxHeight )
