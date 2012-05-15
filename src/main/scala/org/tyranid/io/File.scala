@@ -116,9 +116,8 @@ object File {
       val mimetype = mimeTypeFor( fileName )
       val res = web.res
 
-spam( "mimeType:" + mimetype )
-spam( "length:" + obj.getObjectMetadata.getContentLength.asInstanceOf[Int] )
-web.req.dump
+//sp-am( "mimeType:" + mimetype )
+//web.req.dump
       
       res.setContentType( ( if ( mimetype != null ) mimetype else "application/octet-stream" ) )
       res.setContentLength( obj.getObjectMetadata.getContentLength.asInstanceOf[Int] )
