@@ -29,6 +29,10 @@ case class DoubleImp( d:Double ) {
   def toMoneyString = {
     String.format( "$%2.2f", double2Double( d ) )
   }
+  
+  def toFormat( fmt:String ) = {
+    String.format( fmt, double2Double( d ) )
+  }
 }
 
 
