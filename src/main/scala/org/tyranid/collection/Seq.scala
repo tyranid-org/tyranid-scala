@@ -72,6 +72,8 @@ class SeqImp[A]( seq:Seq[A] ) {
       _do( a )
     }
   }
+
+  def toMlist:com.mongodb.BasicDBList = org.tyranid.db.mongo.Imp.Mlist( seq:_* )
 }
 
 

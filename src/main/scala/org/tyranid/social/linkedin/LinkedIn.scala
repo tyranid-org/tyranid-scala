@@ -68,9 +68,7 @@ case class LiApp( apiKey:String, secret:String ) extends SoApp {
   }
 
   def removeAttributes( user:DBObject ) {
-    user.remove( 'liid )
-    user.remove( 'lit )
-    user.remove( 'lits )
+    user.clear( 'liid, 'lit, 'lits )
     B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $unset -> Mobj( "liid" -> 1, "lit" -> 1, "lits" -> 1 ) ) )
   }
 

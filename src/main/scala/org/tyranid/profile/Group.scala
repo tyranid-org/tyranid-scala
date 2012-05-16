@@ -1,4 +1,4 @@
-/** )
+/**
  * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,9 +24,11 @@ import scala.xml.{ NodeSeq, Text, Unparsed }
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ Record, Scope }
+import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbInt, DbLink, DbTid, EnumEntity, Record, Scope }
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
+import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
+import org.tyranid.db.ram.RamEntity
+import org.tyranid.db.tuple.Tuple
 import org.tyranid.json.JqHtml
 import org.tyranid.math.Base62
 import org.tyranid.report.{ Report, Run }
@@ -45,13 +47,104 @@ import org.tyranid.web.Weblet
 
  */
 
+
+object GroupType extends RamEntity( tid = "a0Nt" ) with EnumEntity[GroupType] {
+  "_id"    is DbInt      is 'id;
+  "name"   is DbChar(64) is 'label;
+
+  def apply( id:Int, name:String ) = {
+    val t = new GroupType
+    t( '_id )  = id
+    t( 'name ) = name
+    t
+  }
+
+  val Org  = apply( 1, "Org" )
+  val User = apply( 2, "User" )
+
+  static( Org, User )
+}
+
+class GroupType extends Tuple( GroupType.makeView ) {
+
+  lazy val ofEntity =
+    this match {
+    case GroupType.Org  => B.Org
+    case GroupType.User => B.User
+    case _              => problem( "invalid group type" )
+    }
+}
+
+
+
+object Group extends MongoEntity( tid = "a0Yv" ) {
+  "_id"           is DbMongoId                    is 'id;
+  "name"          is DbChar(60)                   is 'label;
+  "builtin"       is DbBoolean                    ;
+  "type"          is DbLink(GroupType)            ;
+
+  override def init = {
+    super.init
+    "org"         is DbLink(B.Org)                is 'owner;
+    "tids"        is DbArray(DbTid(B.Org,B.User)) ;
+  }
+
+  // these fields are implicit:
+//"<orgtid>Ids"  is DbArray(DbMongoId)        ;
+//"<usertid>Ids" is DbArray(DbMongoId)        ;
+
+  //"color"          // future ... colored labels
+  //"search"         { search criteria } // future ... list search for a group, rather than each id explicitly
+
+
+  override def apply( obj:DBObject ):Group =
+    obj match {
+    case null         => null
+    case grp:Group    => grp
+    case obj:DBObject => new Group( obj )
+    }
+
+  db.ensureIndex( Mobj( "org" -> 1, "name" -> 1 ) )
+
+  def flatten( tids:Seq[String] ) =
+    tids.
+      flatMap(
+      _ match {
+     case tid if tid.startsWith( Group.tid ) =>
+       Record.byTid( tid, only = Group ).flatten( _.a_?( 'tids ).toSeq.of[String], Nil )
+
+     case tid =>
+       Seq( tid )
+     } ).
+     distinct
+
+  def idsFor( groupType:GroupType ) = groupType.ofEntity.tid + "Ids"
+}
+
+class Group( override val obj:DBObject = Mobj() ) extends MongoRecord( Group.makeView, obj ) {
+
+  def updateIds =
+    for ( en <- Group.attrib( 'tids ).domain.as[DbArray].of.as[DbTid].of ) {
+
+      val seq = a_?( 'tids ).map( _.as[String] ).filter( _.startsWith( en.tid ) ).map( en.tidToId )
+      val field = en.tid + "Ids"
+
+      if ( seq.nonEmpty )
+        obj( field ) = seq.toMlist
+      else
+        obj.remove( field )
+    }
+}
+
+
+
 case class GroupingAddBy( label:String, keys:String* ) {
   val id = label.toIdentifier
 }
 
 case class GroupField( baseName:String, l:String = null,
                        ofEntity:MongoEntity,
-                       groupEntity:MongoEntity, foreignKey:String, listKey:String, forKey:String, forValue: () => AnyRef,
+                       groupType:GroupType, foreignKey:String, forKey:String, forValue: () => AnyRef,
                        addBys:Seq[GroupingAddBy] = Nil,
                        nameSearch: ( String ) => Any = null,
                        opts:Seq[(String,String)] = Nil ) extends Field {
@@ -66,6 +159,8 @@ case class GroupField( baseName:String, l:String = null,
 
   val showFilter = true
   val show = Show.Editable
+
+  lazy val idsField = Group.idsFor( groupType )
 
   def groupValueFor( rec:Record ) = rec( name ).as[GroupValue]
 
@@ -82,14 +177,14 @@ case class GroupField( baseName:String, l:String = null,
   override def extract( s:Scope ) = groupValueFor( s.rec ).selectedGroupTid = T.web.s( id )
 
   override def cell( s:Scope ) =
-    groupValueFor( s.run.report.searchRec ).groupsFor( s.rec.id ).toNodeSeq
+    groupValueFor( s.run.report.searchRec ).groupsFor( s.rec.tid ).toNodeSeq
 
   override def mongoSearch( run:Run, searchObj:DBObject, value:Any ) = {
     if ( value != null ) {
       val group = groupValueFor( run.report.searchRec ).selectedGroup
       if ( group != null ) {
         val fk = foreignKey
-        searchObj( fk ) = Mobj( $in -> group.a_?( listKey ) )
+        searchObj( fk ) = Mobj( $in -> group.obj.a_?( idsField ) )
       }
     }
   }
@@ -117,8 +212,8 @@ case class GroupField( baseName:String, l:String = null,
     </table>
   }
 
-  def queryGroups                         = groupEntity.db.find( Mobj( forKey -> forValue() ) ).map( o => groupEntity( o ) ).toSeq
-  def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( listKey ) ) ) ).map( o => ofEntity( o ) ).toIterable
+  def queryGroups                         = Group.db.find( Mobj( forKey -> forValue(), "type" -> groupType.id ) ).map( o => Group( o ) ).toSeq
+  def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( idsField ) ) ) ).map( o => ofEntity( o ) ).toIterable
 
   override def handle( weblet:Weblet, rec:Record ) = {
     val gv = groupValueFor( rec )
@@ -148,9 +243,10 @@ case class GroupField( baseName:String, l:String = null,
       val group = Mobj()
       group( forKey ) = forValue()
       group( 'name ) = web.s( "rGrpAddName" + id ) or "Unnamed Group"
-      groupEntity.db.save( group )
+      group( 'type ) = groupType.id
+      Group.db.save( group )
       gv.resetGroups
-      gv.setDialogGroup( groupEntity( group ).tid )
+      gv.setDialogGroup( Group( group ).tid )
 
       web.js(
         JqHtml( "#rGrpDlg" + id, gv.drawPanel ),
@@ -163,7 +259,7 @@ case class GroupField( baseName:String, l:String = null,
     case "/group/renameSave" =>
       if ( !sg.b( 'builtin ) ) {
         sg( 'name ) = web.s( "rGrpRenameName" + id ) or "Unnamed Group"
-        groupEntity.db.save( sg )
+        Group.db.save( sg )
         gv.resetGroups
       }
 
@@ -174,7 +270,7 @@ case class GroupField( baseName:String, l:String = null,
 
     case "/group/deleteGroup" =>
       if ( !sg.b( 'builtin ) ) {
-        groupEntity.remove( Mobj( "_id" -> sg.id ) )
+        Group.remove( Mobj( "_id" -> sg.id ) )
         gv.resetGroups
       }
 
@@ -194,10 +290,10 @@ case class GroupField( baseName:String, l:String = null,
 
       if ( ab != null && sg != null && !sg.b( 'builtin ) ) {
 
-        val ids:Seq[Any] =
+        val tids:Seq[String] =
           ab.label match {
           case "Name" => // TODO:  should match on something better
-            web.a_?( 'addTids ).map( ofEntity.tidToId )
+            web.a_?( 'addTids )
 
           case _ =>
             val keyAtts = ab.keys.map( ofEntity.attrib )
@@ -220,18 +316,23 @@ case class GroupField( baseName:String, l:String = null,
               if ( keys.size == 1 ) keys( 0 )
               else                  Mobj( $or -> Mlist( keys:_* ) )
 
-            ofEntity.db.find( where, Mobj( "_id" -> 1 ) ).map( _( '_id ) ).toSeq
+            ofEntity.db.find( where, Mobj( "_id" -> 1 ) ).map( of => ofEntity.idToTid( of( '_id ) ) ).toSeq
           }
 
-        sg( listKey ) = Mlist( ( sg.a_?( listKey ) ++ ids ).distinct:_* )
-        groupEntity.db.save( sg )
+        sg( "tids" ) = ( sg.a_?( 'tids ) ++ tids ).distinct.toMlist
+        sg.updateIds
+        sg.save
       }
 
       web.js( JqHtml( "#rGrpMain" + id, gv.drawGroup ) )
 
     case "/group/remove" =>
       if ( !sg.b( 'builtin ) ) {
-        groupEntity.db.update( Mobj( "_id" -> sg.id ), Mobj( $pull -> Mobj( listKey -> ofEntity.tidToId( web.s( 'id ) ) ) ) )
+        val tid = web.s( 'id )
+
+        // TODO:  we should be able to do both of these in a single update, but need to figure out how to do two $pulls in a single update's DBObject ... does $and work ?
+        Group.db.update( Mobj( "_id" -> sg.id ), Mobj( $pull -> Mobj( "tids" -> tid ) ) )
+        Group.db.update( Mobj( "_id" -> sg.id ), Mobj( $pull -> Mobj( idsField -> ofEntity.tidToId( tid ) ) ) )
         gv.resetGroups
       }
 
@@ -284,7 +385,7 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
 
     latestGroups
   }
-  def groupsFor( id:AnyRef ) = groups.filter( _.a_?( 'ids ).contains( id ) ).map( _.s( 'name ) ).mkString( ", " )
+  def groupsFor( tid:String ) = groups.filter( _.a_?( 'tids ).contains( tid ) ).map( _.s( 'name ) ).mkString( ", " )
 
   def byId( id:Any ) = groups.find( _.id == id ).get
 
@@ -293,13 +394,13 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
   def get          = selectedGroupTid
   def set( v:Any ) = selectedGroupTid = v._s
 
-  def selectedGroupId = gf.groupEntity.tidToId( selectedGroupTid )
-  def selectedGroup = groups.find( g => g.tid == selectedGroupTid ).getOrElse( null )
+  def selectedGroupId = Group.tidToId( selectedGroupTid )
+  def selectedGroup = Group( groups.find( g => g.tid == selectedGroupTid ).getOrElse( null ) )
   def selectGroup( tid:String ) { selectedGroupTid = tid; dialogGroupTid = tid }
 
   var dialogGroupTid:String = null
-  def dialogGroupId = gf.groupEntity.tidToId( dialogGroupTid )
-  def dialogGroup = groups.find( g => g.tid == dialogGroupTid ).getOrElse( null )
+  def dialogGroupId = Group.tidToId( dialogGroupTid )
+  def dialogGroup = Group( groups.find( g => g.tid == dialogGroupTid ).getOrElse( null ) )
   def setDialogGroup( tid:String ) = dialogGroupTid = tid
 
   def drawSelect( cls:String = "rGrpChr" ) =

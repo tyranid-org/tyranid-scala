@@ -279,6 +279,10 @@ case class DBObjectImp( obj:DBObject ) extends DBObjectWrap with DBValue {
 
   def apply( key:String )         = obj.get( key )
   def update( key:String, v:Any ) = obj.put( key, v )
+
+  def clear( keys:String* ) =
+    for ( key <- keys )
+      removeField( key )
 }
 
 object DBListWrap {
