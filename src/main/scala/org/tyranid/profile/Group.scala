@@ -221,7 +221,7 @@ case class GroupField( baseName:String, l:String = null,
 
     val web = T.web
     val query = report.query
-    val sg = gv.dialogGroup
+    val dg = gv.dialogGroup
 
     weblet.rpath match {
     case "/group" =>
@@ -257,9 +257,9 @@ case class GroupField( baseName:String, l:String = null,
       web.js( JqHtml( "#rGrpMain" + id, gv.drawRename ) )
 
     case "/group/renameSave" =>
-      if ( !sg.b( 'builtin ) ) {
-        sg( 'name ) = web.s( "rGrpRenameName" + id ) or "Unnamed Group"
-        Group.db.save( sg )
+      if ( !dg.b( 'builtin ) ) {
+        dg( 'name ) = web.s( "rGrpRenameName" + id ) or "Unnamed Group"
+        Group.db.save( dg )
         gv.resetGroups
       }
 
@@ -269,8 +269,8 @@ case class GroupField( baseName:String, l:String = null,
       )
 
     case "/group/deleteGroup" =>
-      if ( !sg.b( 'builtin ) ) {
-        Group.remove( Mobj( "_id" -> sg.id ) )
+      if ( !dg.b( 'builtin ) ) {
+        Group.remove( Mobj( "_id" -> dg.id ) )
         gv.resetGroups
       }
 
@@ -288,7 +288,7 @@ case class GroupField( baseName:String, l:String = null,
     case "/group/addMember" =>
       val ab = gv.groupAddBy
 
-      if ( ab != null && sg != null && !sg.b( 'builtin ) ) {
+      if ( ab != null && dg != null && !dg.b( 'builtin ) ) {
 
         val tids:Seq[String] =
           ab.label match {
@@ -316,23 +316,23 @@ case class GroupField( baseName:String, l:String = null,
               if ( keys.size == 1 ) keys( 0 )
               else                  Mobj( $or -> Mlist( keys:_* ) )
 
-            ofEntity.db.find( where, Mobj( "_id" -> 1 ) ).map( of => ofEntity.idToTid( of( '_id ) ) ).toSeq
+            ofEntity.db.find( where, Mobj( "_id" -> 1 ) ).map( of => groupType.ofEntity.idToTid( of( '_id ) ) ).toSeq
           }
 
-        sg( "tids" ) = ( sg.a_?( 'tids ) ++ tids ).distinct.toMlist
-        sg.updateIds
-        sg.save
+        dg( "tids" ) = ( dg.a_?( 'tids ) ++ tids ).distinct.toMlist
+        dg.updateIds
+        dg.save
       }
 
       web.js( JqHtml( "#rGrpMain" + id, gv.drawGroup ) )
 
     case "/group/remove" =>
-      if ( !sg.b( 'builtin ) ) {
+      if ( !dg.b( 'builtin ) ) {
         val tid = web.s( 'id )
 
         // TODO:  we should be able to do both of these in a single update, but need to figure out how to do two $pulls in a single update's DBObject ... does $and work ?
-        Group.db.update( Mobj( "_id" -> sg.id ), Mobj( $pull -> Mobj( "tids" -> tid ) ) )
-        Group.db.update( Mobj( "_id" -> sg.id ), Mobj( $pull -> Mobj( idsField -> ofEntity.tidToId( tid ) ) ) )
+        Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( "tids" -> tid ) ) )
+        Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( idsField -> ofEntity.tidToId( tid ) ) ) )
         gv.resetGroups
       }
 
@@ -358,7 +358,7 @@ case class GroupField( baseName:String, l:String = null,
           ofEntity.db.find( where, Mobj( labelKey -> 1 ) ).
             limit( 16 ).
             toSeq.
-            map( o => Map( "id"    -> ofEntity( o ).tid,
+            map( o => Map( "id"    -> groupType.ofEntity.idToTid( o( '_id ) ),
                            "label" -> o.s( labelKey ) ) )
         }
 
