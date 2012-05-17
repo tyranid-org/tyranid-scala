@@ -215,7 +215,7 @@ trait Session {
   private val reports = mutable.Map[String,org.tyranid.report.Report]()
 
   def reportFor( queryName:String ) = reports.synchronized {
-    reports.getOrElseUpdate( queryName, Query.byName( queryName ).newReport )
+    ( queryName isBlank ) ? null | reports.getOrElseUpdate( queryName, Query.byName( queryName ).newReport )
   }
 
 
