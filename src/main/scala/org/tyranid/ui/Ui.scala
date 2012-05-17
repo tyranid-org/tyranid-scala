@@ -26,6 +26,15 @@ import org.tyranid.logic.Invalid
 import org.tyranid.web.Weblet
 
 
+
+object Tags {
+
+  def tagUi( id:String, label:String ) =
+    <li class="tag">
+     <span>{ label }<a class="close">{ Unparsed( "&#x2715;" ) }</a><input type="hidden" style="display:none;" value={ id } id="to" name="to[]"/></span>
+    </li>
+}
+
 object Link {
 
   def fromUrl( url:String ) =
