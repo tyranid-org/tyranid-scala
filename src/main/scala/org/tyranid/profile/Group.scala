@@ -332,7 +332,7 @@ case class GroupField( baseName:String, l:String = null,
 
         // TODO:  we should be able to do both of these in a single update, but need to figure out how to do two $pulls in a single update's DBObject ... does $and work ?
         Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( "tids" -> tid ) ) )
-        Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( idsField -> ofEntity.tidToId( tid ) ) ) )
+        Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( idsField -> groupType.ofEntity.tidToId( tid ) ) ) )
         gv.resetGroups
       }
 
@@ -461,7 +461,7 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
     <div class="add">
      { editable |*
      <form method="post" id="rGrpAddForm">
-      <div class="title">Add { gf.ofEntity.label.plural }</div>
+      <div class="title">Add { gf.groupType.ofEntity.label.plural }</div>
       <label for="rGrpAddBy">By:</label>
       { Select( "rGrpAddBy", groupAddBy != null |* groupAddBy.id, gf.addBys.map( ab => ( ab.id, ab.label ) ) ) }
       <div id={ "rGrpAddBox" + gf.id } class="rGrpAddBox">
@@ -480,7 +480,7 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
     val addBy = groupAddBy
 
     addBy != null |* {
-    <div class="stitle">Enter { gf.ofEntity.label } { addBy.label.plural } To Add</div> ++
+    <div class="stitle">Enter { gf.groupType.ofEntity.label } { addBy.label.plural } To Add</div> ++
     { addBy.label match {
     case "Name" => // TODO:  should match on something better
       <ul class="rGrpAddName" id={ "rGrpAddName" + gf.id }></ul>
