@@ -169,7 +169,6 @@ $( function() {
 
         if (invalids.isEmpty) {
           user('createdOn) = new Date
-          user('thumbnail) = "/icon_individual.png"
 
           sendActivation( user )
           user.save

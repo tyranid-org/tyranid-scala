@@ -154,14 +154,18 @@ trait Entity extends Domain with DbItem {
 
   def make:Record
 
+  val defaultIcon = "/images/default_icon.png"
+
 
 	/*
-	 * * *  Labels
+	 * * *  Labels & Icons
 	 */
 
   lazy val labelAtt = attribs.find( _.isLabel )
 
   lazy val label = name.camelCaseToSpaceUpper
+
+  lazy val iconAtt = attribs.find( _.name == "icon" ) orElse attribs.find( _.name == "thumbnail" )
 
 
 	/*

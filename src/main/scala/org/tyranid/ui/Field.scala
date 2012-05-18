@@ -320,7 +320,9 @@ case class PathField( baseName:String,
                       labelc:Boolean = true,
                       create:Boolean = false,
                       show:Show = Show.Editable,
-                      default:Option[ () => Any ] = None ) extends Field with UiObj {
+                      default:Option[ () => Any ] = None, // When creating new records, initialize values to this
+                      blank:Option[ Any ]         = None  // When displaying records, and the value is blank, show this instead
+                    ) extends Field with UiObj {
 
   lazy val ( id, effOpts ) = {
     var _id:String = null

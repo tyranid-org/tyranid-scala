@@ -199,7 +199,7 @@ trait Record extends Valid with BsonObject {
 
 
   /*
-   * * *   Labels
+   * * *   Labels & Icons
    */
 
   def label                   = view.labelVa.flatten( va => s( va ), "n/a" )
@@ -208,6 +208,18 @@ trait Record extends Valid with BsonObject {
   def label( va:ViewAttribute )  = va.att.domain.asInstanceOf[DbLink].toEntity.labelFor( apply( va ) )
   def label( key:String ):String = label( view( key ) )
 
+  def icon:String = {
+    entity.iconAtt match {
+    case Some( att ) =>
+      val icon = s( att.name )
+      if ( icon.notBlank )
+        return icon
+    
+    case None =>
+    }
+
+    entity.defaultIcon
+  }
 
 
   /*

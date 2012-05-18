@@ -268,7 +268,6 @@ case class FbApp( apiKey:String, secret:String ) extends SoApp {
     }
 
     user( 'thumbnail ) = "https://graph.facebook.com/" + uid + "/picture?type=square"
-    // "/icon_individual.png"
   }
 }
 

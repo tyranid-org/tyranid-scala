@@ -50,8 +50,11 @@ object DbThumbnail {
 case class DbThumbnail( bucket:S3Bucket ) extends DbImageish( bucket ) {
 
   override def cell( s:Scope, f:PathField ) = {
-    val v = f.path.s( s.rec ).trim
-    v.isBlank ? NodeSeq.Empty | <img src={ f.path.s( s.rec ) } style="width:50px; height:50px;"/>
+    var v = f.path.s( s.rec ).trim
+    if ( v.isBlank )
+      v = f.blank.map( _.toString ) getOrElse null
+
+    v.isBlank ? NodeSeq.Empty | <img src={ v } style="width:50px; height:50px;"/>
   }
   
   override def ui( s:Scope, f:PathField ): NodeSeq = {

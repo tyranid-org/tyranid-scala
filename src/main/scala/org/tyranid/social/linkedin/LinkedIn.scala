@@ -230,11 +230,10 @@ function onLinkedInLoad() {
 
     user( 'firstName ) = profile( 'firstName )
     user( 'lastName )  = profile( 'lastName )
-    user( 'thumbnail ) =
-      if ( profile.contains( 'pictureUrl ) ) {
-        profile( 'pictureUrl )
-      } else
-        "/icon_individual.png"
+
+    if ( profile.contains( 'pictureUrl ) )
+      user( 'thumbnail ) = profile( 'pictureUrl )
+        
     user( 'title )     = profile( 'headline )
 
     val country = profile.o( 'location ).o( 'country ).s( 'code )
@@ -347,9 +346,6 @@ function onLinkedInLoad() {
       storeInS3 = true
     }
 
-    if ( org.s( 'thumbnail ).isBlank )
-      org( 'thumbnail ) = "/icon_company.png"
-
     if ( org.s( 'name ).isBlank )
       string( 'name,          'name )
 
@@ -383,7 +379,6 @@ function onLinkedInLoad() {
       for ( l <- ls.a_?( 'values ).of[ObjectMap] ) {
 
         val loc = Mobj()
-        loc( 'thumbnail ) = "/icon_company.png"
         loc( 'org )       = org.id
 
         val desc = l.s( 'description )

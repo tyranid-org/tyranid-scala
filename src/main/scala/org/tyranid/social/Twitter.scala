@@ -265,10 +265,8 @@ twttr.anywhere( function(T) {
     user( 'firstName ) = profile( 'firstName )
     user( 'lastName )  = profile( 'lastName )
     user( 'thumbnail ) =
-      if ( profile.contains( 'pictureUrl ) ) {
+      if ( profile.contains( 'pictureUrl ) )
         profile( 'pictureUrl )
-      } else
-        "/icon_individual.png"
     user( 'title )     = profile( 'headline )
 
     val country = profile.o( 'location ).o( 'country ).s( 'code )
