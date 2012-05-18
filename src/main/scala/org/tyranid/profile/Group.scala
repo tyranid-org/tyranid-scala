@@ -120,7 +120,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
       flatMap(
       _ match {
      case tid if tid.startsWith( Group.tid ) =>
-       Record.byTid( tid, only = Group ).flatten( _.a_?( 'tids ).toSeq.of[String], Nil )
+       Group.byTid( tid ).flatten( _.a_?( 'tids ).toSeq.of[String], Nil )
 
      case tid =>
        Seq( tid )
