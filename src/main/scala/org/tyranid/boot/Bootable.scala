@@ -180,6 +180,10 @@ trait Bootable {
   @volatile var braintreeGateway:BraintreeGateway = null
   @volatile var braintreeMerchantId:String = null
 
+  // PDF Crowd
+  val pdfCrowdName:String = ""
+  val pdfCrowdKey:String = ""
+  
   // AWS
   import org.tyranid.cloud.aws.S3Bucket
 
