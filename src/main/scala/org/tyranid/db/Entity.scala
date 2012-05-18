@@ -133,6 +133,7 @@ object Entity {
 }
 
 trait Entity extends Domain with DbItem {
+  type RecType >: Null <: Record
 
   def init {}
 

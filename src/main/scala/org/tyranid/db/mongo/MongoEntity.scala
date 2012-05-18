@@ -51,6 +51,8 @@ case object DbMongoId extends Domain {
 }
 
 case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
+  type RecType >: Null <: MongoRecord
+
   val storageName = "MongoDB"
 
 	override lazy val dbName = name.plural
@@ -91,15 +93,17 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
 
   def create {}
   def drop   { db.drop }
-  
-  def apply( obj:DBObject ) = 
+
+  def convert( obj:DBObject ):RecType = MongoRecord( makeView, obj ).as[RecType]
+
+  final def apply( obj:DBObject ):RecType = 
     obj match {
     case null               => null
-    case record:MongoRecord => record
-    case obj:DBObject       => MongoRecord( makeView, obj )
+    case record:MongoRecord => record.as[RecType]
+    case obj:DBObject       => convert( obj )
     }
 
-  override def byRecordTid( recordTid:String ):Option[MongoRecord] = byId( recordTidToId( recordTid ) )
+  override def byRecordTid( recordTid:String ):Option[RecType] = byId( recordTidToId( recordTid ) )
 
   def byId( id:Any ) = {
     val obj = db.findOne( id )

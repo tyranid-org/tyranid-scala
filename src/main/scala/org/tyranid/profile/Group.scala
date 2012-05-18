@@ -90,6 +90,10 @@ class GroupType extends Tuple( GroupType.makeView ) {
 
 
 object Group extends MongoEntity( tid = "a0Yv" ) {
+  type RecType = Group
+  override def convert( obj:DBObject ) = new Group( obj )
+
+
   "_id"           is DbMongoId                    is 'id;
   "name"          is DbChar(60)                   is 'label;
   "builtin"       is DbBoolean                    ;
@@ -108,13 +112,6 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
   //"color"          // future ... colored labels
   //"search"         { search criteria } // future ... list search for a group, rather than each id explicitly
 
-
-  override def apply( obj:DBObject ):Group =
-    obj match {
-    case null         => null
-    case grp:Group    => grp
-    case obj:DBObject => new Group( obj )
-    }
 
   db.ensureIndex( Mobj( "org" -> 1, "name" -> 1 ) )
 

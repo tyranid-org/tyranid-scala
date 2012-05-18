@@ -28,13 +28,15 @@ import org.tyranid.image.DbThumbnail
 
 
 class OrgMeta extends MongoEntity( "a02v" ) {
+  type RecType >: Null <: Org
+  override def convert( obj:DBObject ):RecType = throw new UnsupportedOperationException()
+
   "_id"                is DbMongoId               is 'id;
   "name"               is DbChar(120)             is 'label;
   "domain"             is DbLowerChar(128)        ;
   "thumbnail"          is DbThumbnail( "public" ) as "Logo";
   "website"            is DbUrl                   ;
 
-  override def apply( obj:DBObject ):Org = throw new UnsupportedOperationException()
 }
 
 trait Org extends MongoRecord {

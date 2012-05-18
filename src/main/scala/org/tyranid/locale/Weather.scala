@@ -44,6 +44,9 @@ object Weather {
  * UGF  = Universal Geographic Code ... http://www.nws.noaa.gov/emwin/winugc.htm
  */
 object Cap extends MongoEntity( tid = "a0Et" ) {
+  type RecType = Cap
+  override def convert( obj:DBObject ) = new Cap( obj )
+
   "_id"         is DbChar(128)   is 'id;
 
   "set"         is DbInt         ; // a random number generator so we can keep track of which fields were updated
@@ -73,9 +76,6 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
 
   "longLat"     is DbArray(DbDouble);
   "radius"      is DbDouble;
-
-  override def apply( obj:DBObject ):Cap =
-    if ( obj != null ) new Cap( obj ) else null    
 
   def idFromEntry( entryXml:Node ) = {
     val id = ( entryXml \ "id" ).text

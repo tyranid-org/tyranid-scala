@@ -27,6 +27,8 @@ import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 
 
 object Address extends MongoEntity( tid = "a0Kt" ) {
+  type RecType = Address
+
   "street1"    is DbChar(100)        is 'required is Search();
   "street2"    is DbChar(100)        is Search();
   "city"       is DbChar(30)         is 'required is Search();
@@ -37,7 +39,7 @@ object Address extends MongoEntity( tid = "a0Kt" ) {
 
   "longLat"    is DbArray(DbDouble);
 
-  override def apply( obj:DBObject ) = new Address( obj )
+  override def convert( obj:DBObject ) = new Address( obj )
 }
 
 class Address( override val obj:DBObject = Mobj() ) extends MongoRecord( Address.makeView, obj ) {

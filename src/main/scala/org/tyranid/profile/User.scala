@@ -17,7 +17,6 @@
 
 package org.tyranid.profile
 
-
 import java.util.TimeZone
 
 import org.bson.types.ObjectId
@@ -36,6 +35,9 @@ import org.tyranid.web.WebContext
 
 
 class UserMeta extends MongoEntity( "a01v" ) {
+  type RecType >: Null <: User
+  override def convert( obj:DBObject ):RecType = throw new UnsupportedOperationException
+
   "_id"            is DbMongoId           is 'id;
   "email"          is DbEmail             is 'required;
   "fullName"       is DbChar(64)          is 'label;
@@ -79,8 +81,6 @@ class UserMeta extends MongoEntity( "a01v" ) {
 
   // TODO:  Make this more sophisticated, allow the entire user to be retrieved instead of just the name, and/or maybe something like ProfileItem
   def nameFor( userId:ObjectId ) = "TODO"
-
-  override def apply( obj:DBObject ):User = throw new UnsupportedOperationException
 }
 
 trait User extends MongoRecord {
