@@ -73,6 +73,18 @@ class GroupType extends Tuple( GroupType.makeView ) {
     case GroupType.User => B.User
     case _              => problem( "invalid group type" )
     }
+
+  def iconClass16x16 =
+    this match {
+    case GroupType.Org  => "linkIcon connectionsIcon"
+    case GroupType.User => "linkIcon personIcon"
+    }
+
+  def iconClass32x32 =
+    this match {
+    case GroupType.Org  => "headerIcon headerConnectionsIcon"
+    case GroupType.User => "headerIcon headerContactsIcon"
+    }
 }
 
 
@@ -134,6 +146,11 @@ class Group( override val obj:DBObject = Mobj() ) extends MongoRecord( Group.mak
       else
         obj.remove( field )
     }
+
+  def groupType = GroupType.byId( i( 'type ) ).get.as[GroupType]
+
+  def iconClass16x16 = groupType.iconClass16x16
+  def iconClass32x32 = groupType.iconClass32x32
 }
 
 
@@ -204,7 +221,12 @@ case class GroupField( baseName:String, l:String = null,
     <table class="tile" style="width:180px; height:54px;">
      <tr>
       <td class="label">view group</td>
-      <td rowspan="2" style="padding-right:4px;"><a id={ "rGrpBtn" + id } href="#" class="rGrpBtn btn" style="height:40px; padding-top:6px;"><span title="Groups" class="tip bigIcon groupIcon"/><span class="label"></span></a></td>
+      <td rowspan="2" style="padding-right:4px;">
+       <a id={ "rGrpBtn" + id } href="#" class="rGrpBtn btn" style="height:40px; padding-top:6px;">
+        <span title="Groups" class={ "tip " + /* bigIcon groupIcon */ groupType.iconClass32x32 } style="padding:0;"/>
+        <span class="label"/>
+       </a>
+      </td>
      </tr>
      <tr>
       <td id="rGrpChooser">{ groupValue.drawSelect() }</td>
