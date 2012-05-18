@@ -24,7 +24,7 @@ import scala.xml.{ NodeSeq, Text, Unparsed }
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbInt, DbLink, DbTid, EnumEntity, Record, Scope }
+import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbInt, DbLink, DbTid, Entity, EnumEntity, Record, Scope }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.db.ram.RamEntity
@@ -151,6 +151,15 @@ class Group( override val obj:DBObject = Mobj() ) extends MongoRecord( Group.mak
 
   def iconClass16x16 = groupType.iconClass16x16
   def iconClass32x32 = groupType.iconClass32x32
+
+  def entities = a_?( 'tids ).toSeq.of[String].map( _.substring( 0, 4 ) ).distinct.map( tid => Entity.byTid( tid ).get )
+
+  def members =
+   for ( e <- entities;
+          en = e.as[MongoEntity];
+          r <- en.db.find( Mobj( "_id" -> Mobj( $in -> obj.a_?( en.tid + "Ids" ) ) ) );
+          rec = en( r ) )
+      yield rec
 }
 
 
