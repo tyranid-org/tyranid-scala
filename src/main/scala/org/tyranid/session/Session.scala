@@ -92,6 +92,8 @@ class ThreadData {
   // --- Tyranid Session
 
   private var tyrData:Session = _
+  
+  def becomeSession( s:Session ) = tyrData = s
 
   // rename tyr to session once lift is removed
   def session:Session = {
