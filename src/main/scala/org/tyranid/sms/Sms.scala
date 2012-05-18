@@ -367,14 +367,14 @@ object Smslet extends Weblet {
         // Only take a snapshot if the app owner is not editing this
         if ( orgId == B.appOrgId ) {
           T.session.editing2( B.User.getClass(), {
-            Record.byTid( tid, only = B.User ).getOrElse {
+            B.User.byTid( tid ).getOrElse {
               T.session.warn( "User not found." )
               web.redirect( "/" )
             }
           } )
         } else {
           T.session.editing2( B.User.getClass(), {
-            Record.byTid( tid, only = B.User ).map( _.snapshot.as[User] ).getOrElse {
+            B.User.byTid( tid ).map( _.snapshot ).getOrElse {
               T.session.warn( "User not found." )
               web.redirect( "/" )
             }

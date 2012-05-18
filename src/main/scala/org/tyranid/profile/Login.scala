@@ -216,7 +216,7 @@ $( function() {
         T.session.notice( "Your user was not found." )
       } else {
         val u = B.User.byId( new ObjectId( userId ) ).getOrElse( null ) 
-        val user = if ( u == null ) null else u.as[User]
+        val user = if ( u == null ) null else u
         
         if ( user != null ) {
           T.session.notice( "Your activation code has been sent to your email and should be there shortly." )
