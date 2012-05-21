@@ -75,6 +75,7 @@ object S3 {
     S3.write( bucket, key, file.getSize, file.getContentType, file.getInputStream )
 
   def delete( bucket:S3Bucket, key:String ) = s3.deleteObject( bucket.name, key )
+  
   def copy( bucket:S3Bucket, key:String, bucket2:S3Bucket, key2:String ) = s3.copyObject( bucket.name, key, bucket2.name, key2 )
 
   def access( bucket:S3Bucket, key:String, public:Boolean ) = {
