@@ -31,9 +31,29 @@ import org.tyranid.math.Base62
 import org.tyranid.profile.User
 import org.tyranid.report.Query
 import org.tyranid.social.Social
+import org.tyranid.time.Time
 import org.tyranid.web.WebContext
 
-
+object SessionCleaner { 
+  def clean {
+    val now = System.currentTimeMillis
+    
+    WebSession.sessions.filter( sess => {
+      val httpsess = sess._2; 
+      val tyrsess = httpsess.getAttribute( WebSession.HttpSessionKey ).as[Session]
+      
+      if ( tyrsess != null ) { 
+        val idle = now - httpsess.getLastAccessedTime
+        val user = tyrsess.user
+        
+        user.isNew && idle > (2*Time.OneMinuteMs) || idle > Time.HalfHourMs
+      } else {
+        true
+      }
+    }).foreach( sess => WebSession.sessions.remove( sess._1 ) )
+  }
+}
+   
 object WebSession {
 
   val sessions = mutable.Map[String,HttpSession]()
