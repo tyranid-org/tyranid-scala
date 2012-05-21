@@ -193,8 +193,14 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     )
   }
 
-  def html( xml:NodeSeq, status:Int = 200, headers:Map[String,String] = null, req:HttpServletRequest = null, noCache:Boolean = false ) = {
-    res.setContentType( "text/html" )
+  def html( html:NodeSeq, status:Int = 200, headers:Map[String,String] = null, req:HttpServletRequest = null, noCache:Boolean = false ) =
+    content( html.toString, "text/html", status, headers, req, noCache )
+
+  def rss( rssXml:NodeSeq, status:Int = 200, headers:Map[String,String] = null, req:HttpServletRequest = null, noCache:Boolean = false ) =
+    content( rssXml.toString, "application/rss+xml", status, headers, req, noCache )
+
+  def content( text:String, mimeType:String, status:Int = 200, headers:Map[String,String] = null, req:HttpServletRequest = null, noCache:Boolean = false ) = {
+    res.setContentType( mimeType )
     res.setStatus( status )
 
     if ( noCache ) setNoCacheHeaders( res )
@@ -202,7 +208,7 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
       for ( h <- headers ) 
         res.setHeader( h._1, h._2 )
         
-    out( xml.toString() )
+    out( text )
   }
 
   def setNoCacheHeaders( res:HttpServletResponse ) {

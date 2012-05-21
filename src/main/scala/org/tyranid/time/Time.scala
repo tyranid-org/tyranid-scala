@@ -158,6 +158,9 @@ class DateImp( d:Date ) {
     if ( d == null ) null
     else             Time.Rfc1123Format.format( d )
     
+  def toRfc822 =
+    toRfc1123 // RFC 1123 is an update for RFC 822, might need to support RFC 822 explicitly though
+    
   def daysUntil( other:Date ) = {
     val otherCal = other.toCalendar()
     val myCal = d.toCalendar()

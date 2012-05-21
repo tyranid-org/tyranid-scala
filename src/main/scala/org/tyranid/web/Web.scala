@@ -214,9 +214,8 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
     
   def js( js:JsCmd* ) = res.json( js, req = req, noCache = true )
 
-  def html( xml:NodeSeq, status:Int = 200, headers:Map[String,String] = null, noCache:Boolean = false ) = 
-    res.html( xml, status, headers, req, noCache )
-    
+  def html( xml:NodeSeq, status:Int = 200, headers:Map[String,String] = null, noCache:Boolean = false ) = res.html( xml, status, headers, req, noCache )
+  def rss ( xml:NodeSeq, status:Int = 200, headers:Map[String,String] = null, noCache:Boolean = false ) = res.rss ( xml, status, headers, req, noCache )
 }
 
 case class Webloc( path:String, weblet:Weblet, children:Webloc* ) {
