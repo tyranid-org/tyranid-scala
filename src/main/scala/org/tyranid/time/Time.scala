@@ -174,6 +174,9 @@ class DateImp( d:Date ) {
     val day = toCalendar().get( Calendar.DAY_OF_WEEK ) 
     ( day == Calendar.SUNDAY || day == Calendar.SATURDAY )  
   }
+
+  def +( ms:Long ) = new Date( d.getTime + ms )
+  def -( ms:Long ) = new Date( d.getTime - ms )
 }
 
 object Time {
