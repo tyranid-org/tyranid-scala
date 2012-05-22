@@ -96,7 +96,8 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
 
   "_id"           is DbMongoId                    is 'id;
   "name"          is DbChar(60)                   is 'label;
-  "builtin"       is DbBoolean                    ;
+  "builtin"       is DbBoolean                    help Text( "A builtin group is maintained by the system and is not editable by end users." );
+  "monitor"       is DbBoolean                    help Text( "A monitor group is one that is used to aggregate other members, the other members cannot see it." );
   "type"          is DbLink(GroupType)            ;
 
   override def init = {
@@ -128,6 +129,22 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
      distinct
 
   def idsFor( groupType:GroupType ) = groupType.ofEntity.tid + "Ids"
+
+  def visibleTo( user:User ) = {
+    val tids =
+      if ( user.org != null ) Mobj( $in -> Array( user.tid, user.org.tid ) )
+      else                    user.tid
+
+    Group.db.find(
+      Mobj( "org" -> user.org.id ),
+      Mobj( "name" -> 1 )
+    ).toSeq ++
+    Group.db.find( 
+      Mobj( "tids"    -> tids,
+            "monitor" -> Mobj( $in -> Array( false, null ) ) ),
+      Mobj( "name" -> 1, "org" -> 1 )
+    ).toSeq
+  }
 }
 
 class Group( override val obj:DBObject = Mobj() ) extends MongoRecord( Group.makeView, obj ) {
@@ -144,7 +161,7 @@ class Group( override val obj:DBObject = Mobj() ) extends MongoRecord( Group.mak
         obj.remove( field )
     }
 
-  def groupType = GroupType.byId( i( 'type ) ).get.as[GroupType]
+  def groupType = GroupType.byId( i( 'type ) ).getOrElse( GroupType.Org ).as[GroupType]
 
   def iconClass16x16 = groupType.iconClass16x16
   def iconClass32x32 = groupType.iconClass32x32
