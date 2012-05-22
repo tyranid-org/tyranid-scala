@@ -47,6 +47,13 @@ object Tid {
 
   def split( tid:String ) = tid.splitAt( 4 )
 
+  def tidToId( tid:String ) = {
+
+    val ( entityTid, recordTid ) = Tid.split( tid )
+
+    Entity.byTid( entityTid ).get.recordTidToId( recordTid )
+  }
+
   def parse( tid:String ):(Entity,Any) =
     if ( tid.isBlank ) {
       ( null, null )
