@@ -99,6 +99,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
   "builtin"       is DbBoolean                    help Text( "A builtin group is maintained by the system and is not editable by end users." );
   "monitor"       is DbBoolean                    help Text( "Monitor groups are groups that are not visible to their members, and are used only for personal or organizational purposes.  They are generally not used for collaboration." );
   "type"          is DbLink(GroupType)            ;
+  "pk"            is DbChar(10)                   help Text( "A private-key, generated on-demand.  Used where a group URL needs to be hard-to-guess-yet-publicly-accessible.  For example, RSS Feeds." );
 
   override def init = {
     super.init
@@ -145,6 +146,14 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
       Mobj( "name" -> 1, "org" -> 1 )
     ).toSeq
   }
+
+  def byPrivateId( privateId:String ) = {
+    val split = privateId.length - 10
+    val tid = privateId.substring( 0, split )
+    val pk  = privateId.substring( split )
+
+    byTid( tid ).filter( _.pk == pk )
+  }
 }
 
 class Group( override val obj:DBObject = Mobj() ) extends MongoRecord( Group.makeView, obj ) {
@@ -174,6 +183,21 @@ class Group( override val obj:DBObject = Mobj() ) extends MongoRecord( Group.mak
           r <- en.db.find( Mobj( "_id" -> Mobj( $in -> obj.a_?( en.tid + "Ids" ) ) ) );
           rec = en( r ) )
       yield rec
+
+  def pk = {
+    var v = s( 'pk )
+    if ( v.isBlank ) {
+      v = Base62.make( 10 )
+      update( 'pk, v )
+
+      if ( !isNew )
+        db.update( Mobj( "_id" -> id ), Mobj( $set -> Mobj( "pk" -> v ) ) )
+    }
+
+    v
+  }
+
+  def privateId = tid + pk
 }
 
 
