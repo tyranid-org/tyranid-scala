@@ -136,15 +136,20 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
       if ( user.org != null ) Mobj( $in -> Array( user.tid, user.org.tid ) )
       else                    user.tid
 
-    Group.db.find(
-      Mobj( "org" -> user.org.id ),
-      Mobj( "name" -> 1 )
-    ).toSeq ++
-    Group.db.find( 
-      Mobj( "tids"    -> tids,
-            "monitor" -> Mobj( $in -> Array( false, null ) ) ),
-      Mobj( "name" -> 1, "org" -> 1 )
-    ).toSeq
+    val myGroups =
+      db.find(
+        Mobj( "org" -> user.org.id ),
+        Mobj( "name" -> 1, "org" -> 1 )
+      ).toSeq
+
+    val memberGroups =
+      db.find( 
+        Mobj( "tids"    -> tids,
+              "monitor" -> Mobj( $in -> Array( false, null ) ) ),
+        Mobj( "name" -> 1, "org" -> 1 )
+      ).toSeq.filter( memberGroup => !myGroups.exists( _.id == memberGroup.id ) )
+
+      myGroups ++ memberGroups
   }
 
   def byPrivateId( privateId:String ) = {
@@ -313,6 +318,7 @@ case class GroupField( baseName:String, l:String = null,
       group( forKey ) = forValue()
       group( 'name ) = web.s( "rGrpAddName" + id ) or "Unnamed Group"
       group( 'type ) = groupType.id
+      group( 'monitor ) = web.b( "rGrpMonitor" + id )
       Group.db.save( group )
       gv.resetGroups
       gv.setDialogGroup( Group( group ).tid )
@@ -572,6 +578,11 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
      <form method="post">
       <label for={ "rGrpAddName" + gf.id }>Enter Group Name:</label>
       <div class="title"><input type="text" class="rGrpAddName" name={ "rGrpAddName" + gf.id } id={ "rGrpAddName" + gf.id } style="font-size:20px;"/></div>
+      <div style="padding:8px 0; width:130px;">
+       { Checkbox( "rGrpMonitor" + gf.id, false ) }
+       <label for={ "rGrpMonitor" + gf.id }>Monitor Group</label>
+       { Help( Group.attrib( 'monitor ).help ) }
+      </div>
       <div class="btns" style="width:370px;"><a href="#" class="rGrpAddGrpSave go btn">Add Group</a></div>
      </form>
     </div>
