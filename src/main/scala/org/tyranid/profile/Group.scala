@@ -32,7 +32,7 @@ import org.tyranid.db.tuple.Tuple
 import org.tyranid.json.JqHtml
 import org.tyranid.math.Base62
 import org.tyranid.report.{ Report, Run }
-import org.tyranid.ui.{ Field, Select, Search, Show, Valuable }
+import org.tyranid.ui.{ Checkbox, Field, Help, Select, Search, Show, Valuable }
 import org.tyranid.web.Weblet
 
 
@@ -97,7 +97,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
   "_id"           is DbMongoId                    is 'id;
   "name"          is DbChar(60)                   is 'label;
   "builtin"       is DbBoolean                    help Text( "A builtin group is maintained by the system and is not editable by end users." );
-  "monitor"       is DbBoolean                    help Text( "A monitor group is one that is used to aggregate other members, the other members cannot see it." );
+  "monitor"       is DbBoolean                    help Text( "Monitor groups are groups that are not visible to their members, and are used only for personal or organizational purposes.  They are generally not used for collaboration." );
   "type"          is DbLink(GroupType)            ;
 
   override def init = {
@@ -298,12 +298,13 @@ case class GroupField( baseName:String, l:String = null,
         JqHtml( "#rGrpChooser", gv.drawSelect() )
       )
 
-    case "/group/rename" =>
-      web.js( JqHtml( "#rGrpMain" + id, gv.drawRename ) )
+    case "/group/edit" =>
+      web.js( JqHtml( "#rGrpMain" + id, gv.drawEdit ) )
 
-    case "/group/renameSave" =>
+    case "/group/editSave" =>
       if ( !dg.b( 'builtin ) ) {
-        dg( 'name ) = web.s( "rGrpRenameName" + id ) or "Unnamed Group"
+        dg( 'name )    = web.s( "rGrpRenameName" + id ) or "Unnamed Group"
+        dg( 'monitor ) = web.b( "rGrpMonitor" + id )
         Group.db.save( dg )
         gv.resetGroups
       }
@@ -477,7 +478,10 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
     <div class={ "rGrpEdit " + ( showAddBy ? "shortTable" | "longTable" ) }>
      <div class="title">
       { if ( group != null )
-          Text( group.s( 'name ) + ' ' ) ++ ( editable ? <a href="#" id={ "rGrpRename" + gf.id } class="rGrpRename" style="font-size:12px;">rename</a> | <i style="font-size:12px;">(builtin)</i> ) ++ group.eye
+          Text( group.s( 'name ) + ' ' ) ++
+          ( group.b( 'monitor ) |* <i style="font-size:12px;">(monitor)</i> ++ Text( " " ) ) ++
+          ( editable ? <a href="#" id={ "rGrpEdit" + gf.id } class="rGrpEditLink" style="font-size:12px;">edit</a> | <i style="font-size:12px;">(builtin)</i> ) ++
+          group.eye
         else
           <i>None selected</i> }
      </div>
@@ -551,13 +555,18 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
      <button onclick={ "$('#rGrpDlg" + gf.id + "').dialog('close'); return false;" } class="btn" style="float:right;">Cancel</button>
     </div>;
 
-  def drawRename =
+  def drawEdit =
     <div class="rGrpEdit">
-     <div class="title" style="margin-bottom:16px;">Rename Group</div>
+     <div class="title" style="margin-bottom:16px;">Edit Group</div>
      <form method="post">
       <label for={ "rGrpRenameName" + gf.id }>Enter Group Name:</label>
       <div class="title"><input type="text" class="rGrpRenameName" name={ "rGrpRenameName" + gf.id } id={ "rGrpRenameName" + gf.id } style="font-size:20px;" value={ dialogGroup.s( 'name ) }/></div>
-      <div class="btns" style="width:370px;"><a href="#" class="rGrpRenameSave go btn">Rename Group</a></div>
+      <div style="padding:8px 0; width:130px;">
+       { Checkbox( "rGrpMonitor" + gf.id, dialogGroup.b( 'monitor ) ) }
+       <label for={ "rGrpMonitor" + gf.id }>Monitor Group</label>
+       { Help( Group.attrib( 'monitor ).help ) }
+      </div>
+      <div class="btns" style="width:370px;"><a href="#" class="rGrpEditSave go btn">Save</a></div>
      </form>
     </div>
     <div class="btns">

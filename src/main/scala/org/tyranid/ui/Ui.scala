@@ -26,6 +26,10 @@ import org.tyranid.logic.Invalid
 import org.tyranid.web.Weblet
 
 
+object Help {
+
+  def apply( help:NodeSeq ) = <span class="helpText">{ help }</span><span class="helpIcon"></span>
+}
 
 object Tags {
 
