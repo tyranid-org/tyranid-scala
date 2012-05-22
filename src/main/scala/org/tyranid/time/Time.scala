@@ -166,6 +166,11 @@ class DateImp( d:Date ) {
     val startL = myCal.getTimeInMillis + myCal.getTimeZone.getOffset( myCal.getTimeInMillis )
     ( ( endL - startL ) / Time.OneDayMs ).toInt      
   }
+  
+  def isWeekend = {
+    val day = toCalendar().get( Calendar.DAY_OF_WEEK ) 
+    ( day == Calendar.SUNDAY || day == Calendar.SATURDAY )  
+  }
 }
 
 object Time {
@@ -221,7 +226,7 @@ object Time {
       if ( "AKST".equals( s ) ) "AST"
       else                      su )
   }
-
+  
   def duration( now:Date, date:Date ):String = {
 
     val rawSince = now.getTime - date.getTime

@@ -25,31 +25,33 @@ import org.tyranid.Imp._
 import org.tyranid.web.{ Weblet, WebContext }
 
 
-case class Task( subject:String, var nextMs:Long, periodMs:Long, var active:Boolean, task: () => Unit ) {
+case class Task( subject:String, var nextMs:Long, periodMs:Long, var active:Boolean, task: () => Unit, skipWeekend:Boolean = false ) {
   var runs = 0
   var lastRun:Date = null
 
-  def run( manual:Boolean ) = {
-    println( "Scheduler:  running " + subject + " at " + new Date().toString )
-
-    val start = System.currentTimeMillis
-
-    if ( periodMs > Time.OneHourMs )
-      log( Event.Scheduler, "m" -> ( "running: " + subject ) )
-
-    trylog {
-      task()
+  def run( manual:Boolean ) {
+    if ( !( skipWeekend && new Date().isWeekend ) ) { 
+      println( "Scheduler:  running " + subject + " at " + new Date().toString )
+  
+      val start = System.currentTimeMillis
+  
+      if ( periodMs > Time.OneHourMs )
+        log( Event.Scheduler, "m" -> ( "running: " + subject ) )
+  
+      trylog {
+        task()
+      }
+  
+      runs += 1
+      lastRun = new Date
+  
+      if ( periodMs > Time.OneHourMs )
+        log( Event.Scheduler, "m" -> ( "completed: " + subject ), "du" -> ( System.currentTimeMillis - start ) )
+  
+      if ( !manual )
+        while ( nextMs < System.currentTimeMillis )
+          nextMs += periodMs
     }
-
-    runs += 1
-    lastRun = new Date
-
-    if ( periodMs > Time.OneHourMs )
-      log( Event.Scheduler, "m" -> ( "completed: " + subject ), "du" -> ( System.currentTimeMillis - start ) )
-
-    if ( !manual )
-      while ( nextMs < System.currentTimeMillis )
-        nextMs += periodMs
   }
 }
 
@@ -57,12 +59,12 @@ object Scheduler {
 
   private[time] val tasks = mutable.ArrayBuffer[Task]()
 
-  def schedule( subject:String, start:Date, periodMs:Long, active:Boolean = true )( task: () => Unit ) {
+  def schedule( subject:String, start:Date, periodMs:Long, active:Boolean = true, skipWeekend:Boolean = false )( task: () => Unit ) {
 
     tasks.synchronized {
       val idx = tasks.indexWhere( _.subject == subject )
       if ( idx != -1 ) tasks.remove( idx )
-      tasks += Task( subject, start.getTime, periodMs, active, task )
+      tasks += Task( subject, start.getTime, periodMs, active, task, skipWeekend = skipWeekend )
     }
   }
 
