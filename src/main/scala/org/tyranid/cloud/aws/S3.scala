@@ -98,7 +98,7 @@ object S3 {
 	  var obj:S3Object = null
 	
 	  try {
-      obj = s3.getObject( new GetObjectRequest( bucket.name, key ) )
+      obj = getObject( bucket, key )
 
   	  //println( "Content-Type: "  + object.getObjectMetadata().getContentType() );
 		
@@ -144,9 +144,7 @@ object S3 {
     }
   }
   
-  def getObject( bucket:S3Bucket, key:String ) = {
-    s3.getObject( new GetObjectRequest( bucket.name, key ) )
-  }  
+  def getObject( bucket:S3Bucket, key:String ) = s3.getObject( new GetObjectRequest( bucket.name, key ) )
 
   def storeUrl( bucket:S3Bucket, urlStr:String, path:String ) = {
     val url = new java.net.URL( urlStr )
