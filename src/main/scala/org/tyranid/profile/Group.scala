@@ -491,7 +491,6 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
   def byId( id:Any ) = groups.find( _.id == id ).get
 
   var selectedGroupTid:String = null
-
   def get          = selectedGroupTid
   def set( v:Any ) = selectedGroupTid = v._s
 
