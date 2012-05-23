@@ -32,33 +32,38 @@ class InputStreamImp( is:InputStream ) {
     val in = new InputStreamReader( is, "UTF-8" )
     var read = 0
 
-    do {
-      read = in.read( buffer, 0, buffer.length )
-      if ( read > 0 )
-        sb.appendAll( buffer, 0, read )
-      
-    } while ( read >= 0 )
+    try {
+      do {
+        read = in.read( buffer, 0, buffer.length )
+        if ( read > 0 )
+          sb.appendAll( buffer, 0, read )
+        
+      } while ( read >= 0 )
+    } finally {
+      is.close
+    }
 
-    is.close
     sb.toString
   }
 
   def transferTo( to:OutputStream, closeInput:Boolean = false ) {
-  	val buffer = new Array[Byte]( 8192 )
-
-    @tailrec def transfer {
-  		val read = is.read( buffer )
-
-  		if ( read >= 0 ) {
-  			to.write( buffer, 0, read )
-  			transfer
-  		}
+  	try {
+      val buffer = new Array[Byte]( 8192 )
+  
+      @tailrec def transfer {
+        val read = is.read( buffer )
+  
+        if ( read >= 0 ) {
+          to.write( buffer, 0, read )
+          transfer
+        }
+      }
+        
+      transfer
+  	} finally {
+  	  if ( closeInput )
+  	    is.close
   	}
-  		
-  	transfer
-  	
-  	if ( closeInput )
-  	  is.close
   }
 }
 
