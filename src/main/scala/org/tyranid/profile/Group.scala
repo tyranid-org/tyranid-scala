@@ -396,6 +396,10 @@ case class GroupField( baseName:String, l:String = null,
             ofEntity.db.find( where, Mobj( "_id" -> 1 ) ).map( of => groupType.ofEntity.idToTid( of( '_id ) ) ).toSeq
           }
 
+        // DRAGON-MIXED-TID:  this is a hack because we've got mixed tids inside groups (both Org and ExtendedOrg tids) ... there should only be Org tids!
+        //                    TODO:  remove all references to DRAGON-MIXED-TID once this problem is cleared up
+        assert( tids.forall( _.startsWith( groupType.ofEntity.tid ) ) )
+
         dg( "tids" ) = ( dg.a_?( 'tids ) ++ tids ).distinct.toMlist
         dg.updateIds
         dg.save
@@ -410,6 +414,11 @@ case class GroupField( baseName:String, l:String = null,
         // TODO:  we should be able to do both of these in a single update, but need to figure out how to do two $pulls in a single update's DBObject ... does $and work ?
         Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( "tids" -> tid ) ) )
         Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( idsField -> Tid.tidToId( tid ) ) ) )
+
+        // DRAGON-MIXED-TID
+        if ( tid.startsWith( ofEntity.tid ) ) // bad !
+          Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( "tids" -> groupType.ofEntity.idToTid( Tid.tidToId( tid ) ) ) ) )
+
         gv.resetGroups
       }
 
