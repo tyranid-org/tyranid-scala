@@ -148,10 +148,10 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
     }
 
 
-  def recify( obj:Any, parent:MongoRecord, update: ( MongoRecord ) => Unit ):MongoRecord = {
+  def recify( obj:Any, parent:MongoRecord, update: ( MongoRecord ) => Unit ):RecType = {
 
     if ( obj.isInstanceOf[Record] )
-      return obj.as[MongoRecord]
+      return obj.as[RecType]
 
     val rec = make(
       if ( obj == null ) Mobj()
@@ -161,7 +161,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
     rec
   }
 
-  override def records:Iterable[Record] = db.find.map( obj => apply( obj, null ) ).toIterable
+  override def records:Iterable[RecType] = db.find.map( apply ).toIterable
 
   def query( run:Run, offset:Int = 0, count:Int = 20, sort:Sort = null ) = {
     val search = Mobj()
