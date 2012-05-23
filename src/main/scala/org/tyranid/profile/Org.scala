@@ -21,7 +21,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbLowerChar, DbUrl }
+import org.tyranid.db.{ DbChar, DbLowerChar, DbUrl, DbDate }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.image.DbThumbnail
@@ -34,6 +34,7 @@ class OrgMeta extends MongoEntity( "a02v" ) {
   "_id"                is DbMongoId               is 'id;
   "name"               is DbChar(120)             is 'label;
   "domain"             is DbLowerChar(128)        ;
+  "createdOn"          is DbDate                  ;
   "thumbnail"          is DbThumbnail( "public" ) as "Logo";
   "website"            is DbUrl                   ;
 

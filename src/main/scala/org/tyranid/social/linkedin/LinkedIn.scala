@@ -17,6 +17,7 @@
 
 package org.tyranid.social.linkedin
 
+import java.util.Date
 import javax.servlet.http.Cookie
 
 import scala.annotation.tailrec
@@ -428,6 +429,8 @@ function onLinkedInLoad() {
       val org = Mobj()
       org( 'domain ) = domain
       org( 'vname ) = Uri.domainPart( domain )
+      org( 'createdOn ) = new Date
+
       importCompany( company, org )
       B.Org.db.save( org )
       return B.Org( org )
