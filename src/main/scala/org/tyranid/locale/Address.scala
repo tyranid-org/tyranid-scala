@@ -28,6 +28,7 @@ import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 
 object Address extends MongoEntity( tid = "a0Kt" ) {
   type RecType = Address
+  override def convert( obj:DBObject, parent:MongoRecord ) = new Address( obj, parent )
 
   "street1"    is DbChar(100)        is 'required is Search();
   "street2"    is DbChar(100)        is Search();
@@ -38,11 +39,9 @@ object Address extends MongoEntity( tid = "a0Kt" ) {
   "country"    is DbLink(Country)    is 'required;
 
   "longLat"    is DbArray(DbDouble);
-
-  override def convert( obj:DBObject ) = new Address( obj )
 }
 
-class Address( override val obj:DBObject = Mobj() ) extends MongoRecord( Address.makeView, obj ) {
+class Address( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Address.makeView, obj, parent ) {
 
   def full = {
     val sb = new StringBuilder

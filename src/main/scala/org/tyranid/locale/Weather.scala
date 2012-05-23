@@ -45,7 +45,7 @@ object Weather {
  */
 object Cap extends MongoEntity( tid = "a0Et" ) {
   type RecType = Cap
-  override def convert( obj:DBObject ) = new Cap( obj )
+  override def convert( obj:DBObject, parent:MongoRecord ) = new Cap( obj, parent )
 
   "_id"         is DbChar(128)   is 'id;
 
@@ -220,7 +220,7 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
   }
 }
 
-class Cap( override val obj:DBObject = Mobj() ) extends MongoRecord( Cap.makeView, obj ) {
+class Cap( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Cap.makeView, obj, parent ) {
 
   def sevWeight =
     s( 'sev ) match {

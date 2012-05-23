@@ -68,7 +68,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
 
   def make = apply( Mobj() )
 
-  def make( obj:DBObject, parent:MongoRecord = null ) = MongoRecord( makeView, obj, parent )
+  def make( obj:DBObject, parent:MongoRecord = null ) = apply( obj, parent )
 
   
   override def save( rec:Record ) = {
@@ -94,14 +94,16 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
   def create {}
   def drop   { db.drop }
 
-  def convert( obj:DBObject ):RecType = MongoRecord( makeView, obj ).as[RecType]
+  def convert( obj:DBObject, parent:MongoRecord = null ):RecType = MongoRecord( makeView, obj, parent ).as[RecType]
 
-  final def apply( obj:DBObject ):RecType = 
+  final def apply( obj:DBObject, parent:MongoRecord ):RecType = 
     obj match {
     case null               => null
     case record:MongoRecord => record.as[RecType]
-    case obj:DBObject       => convert( obj )
+    case obj:DBObject       => convert( obj, parent )
     }
+
+  final def apply( obj:DBObject ):RecType = apply( obj, null )
 
   override def byRecordTid( recordTid:String ):Option[RecType] = byId( recordTidToId( recordTid ) )
 
@@ -159,7 +161,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
     rec
   }
 
-  override def records:Iterable[Record] = db.find.map( apply ).toIterable
+  override def records:Iterable[Record] = db.find.map( obj => apply( obj, null ) ).toIterable
 
   def query( run:Run, offset:Int = 0, count:Int = 20, sort:Sort = null ) = {
     val search = Mobj()
@@ -178,7 +180,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
     if ( sort != null )
       cursor = cursor.sort( sort.sortObj )
     
-    cursor.toIterable.map( apply )
+    cursor.toIterable.map( obj => apply( obj, null ) )
   }
 }
 
@@ -258,7 +260,7 @@ case class MongoRecord( override val view:MongoView,
   }
 
   override def deep:MongoRecord = {
-    val copy = new MongoRecord( view, obj.deep, parent )
+    val copy = entity.convert( obj.deep, parent )
 
     if ( temporaries != null )
       copy.temporaries = temporaries.clone

@@ -238,7 +238,6 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
   def string = obj.toString
 
   override def deep:DBObjectWrap = {
-
     val newobj = new BasicDBObject
 
     import scala.collection.JavaConversions._
@@ -293,9 +292,10 @@ object DBListWrap {
     import scala.collection.JavaConversions._
     for ( field <- list.keySet ) {
       list.get( field ) match {
-      case v:Deep     => newlist.put( field, v.deep )
-      case v:DBObject => newlist.put( field, v.deep )
-      case v          => newlist.put( field, v )
+      case v:BasicDBList => newlist.put( field, DBListWrap.deep( v ) )
+      case v:Deep        => newlist.put( field, v.deep )
+      case v:DBObject    => newlist.put( field, v.deep )
+      case v             => newlist.put( field, v )
       }
     }
 

@@ -29,7 +29,7 @@ import org.tyranid.image.DbThumbnail
 
 class OrgMeta extends MongoEntity( "a02v" ) {
   type RecType >: Null <: Org
-  override def convert( obj:DBObject ):RecType = throw new UnsupportedOperationException()
+  override def convert( obj:DBObject, parent:MongoRecord ):RecType = throw new UnsupportedOperationException()
 
   "_id"                is DbMongoId               is 'id;
   "name"               is DbChar(120)             is 'label;

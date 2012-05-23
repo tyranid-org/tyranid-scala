@@ -92,20 +92,20 @@ class GroupType extends Tuple( GroupType.makeView ) {
 
 object Group extends MongoEntity( tid = "a0Yv" ) {
   type RecType = Group
-  override def convert( obj:DBObject ) = new Group( obj )
+  override def convert( obj:DBObject, parent:MongoRecord ) = new Group( obj, parent )
 
 
-  "_id"           is DbMongoId                    is 'id;
-  "name"          is DbChar(60)                   is 'label;
-  "builtin"       is DbBoolean                    help Text( "A builtin group is maintained by the system and is not editable by end users." );
-  "monitor"       is DbBoolean                    help Text( "Monitor groups are groups that are not visible to their members, and are used only for personal or organizational purposes.  They are generally not used for collaboration." );
-  "type"          is DbLink(GroupType)            ;
-  "pk"            is DbChar(10)                   help Text( "A private-key, generated on-demand.  Used where a group URL needs to be hard-to-guess-yet-publicly-accessible.  For example, RSS Feeds." );
+  "_id"     is DbMongoId                    is 'id;
+  "name"    is DbChar(60)                   is 'label;
+  "builtin" is DbBoolean                    help Text( "A builtin group is maintained by the system and is not editable by end users." );
+  "monitor" is DbBoolean                    help Text( "Monitor groups are groups that are not visible to their members, and are used only for personal or organizational purposes.  They are generally not used for collaboration." );
+  "type"    is DbLink(GroupType)            ;
+  "pk"      is DbChar(10)                   help Text( "A private-key, generated on-demand.  Used where a group URL needs to be hard-to-guess-yet-publicly-accessible.  For example, RSS Feeds." );
 
   override def init = {
     super.init
-    "org"         is DbLink(B.Org)                is 'owner;
-    "tids"        is DbArray(DbTid(B.Org,B.User)) ;
+    "org"   is DbLink(B.Org)                is 'owner;
+    "tids"  is DbArray(DbTid(B.Org,B.User)) ;
   }
 
   // these fields are implicit:
@@ -162,7 +162,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
   }
 }
 
-class Group( override val obj:DBObject = Mobj() ) extends MongoRecord( Group.makeView, obj ) {
+class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeView, obj, parent ) {
 
   def updateIds =
     for ( en <- Group.attrib( 'tids ).domain.as[DbArray].of.as[DbTid].of ) {

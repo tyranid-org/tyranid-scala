@@ -36,7 +36,7 @@ import org.tyranid.web.WebContext
 
 class UserMeta extends MongoEntity( "a01v" ) {
   type RecType >: Null <: User
-  override def convert( obj:DBObject ):RecType = throw new UnsupportedOperationException
+  override def convert( obj:DBObject, parent:MongoRecord ):RecType = throw new UnsupportedOperationException
 
   "_id"            is DbMongoId           is 'id;
   "email"          is DbEmail             is 'required;
