@@ -26,6 +26,7 @@ import scala.xml.{ Node, NodeSeq, Unparsed }
 
 import org.bson.types.ObjectId
 
+import org.tyranid.db.mongo.Imp._
 import org.tyranid.Imp._
 import org.tyranid.math.Base62
 import org.tyranid.profile.User
@@ -46,11 +47,11 @@ object SessionCleaner {
         val idle = now - httpsess.getLastAccessedTime
         val user = tyrsess.user
         
-        user.isNew && idle > (2*Time.OneMinuteMs) || idle > Time.HalfHourMs
+        ( user.isNew && idle > (2*Time.OneMinuteMs) ) || idle > Time.HalfHourMs
       } else {
         true
       }
-    }).foreach( sess => WebSession.sessions.remove( sess._1 ) )
+    }).foreach( sess => { WebSession.sessions.remove( sess._1 ); sess._2.invalidate() } )
   }
 }
    
@@ -220,7 +221,7 @@ trait Session {
   def login( user:User ) = {
     this.user = user
     user.loggedIn = true
-    user( 'lastLogin ) = new Date
+    B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "lastLogin" -> new Date ) ) )
   }
 
   def logout = {
