@@ -204,6 +204,21 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
   }
 
   def privateId = tid + pk
+
+  def about = {
+    val sb = new StringBuilder
+
+    sb ++= "<i style=\"font-size:80%;\">("
+
+    if ( b( 'monitor ) )
+      sb ++= "Monitor "
+    if ( b( 'builtin ) )
+      sb ++= "Built-in "
+    sb ++= groupType.label
+    sb ++= " Group)</i>"
+
+    Unparsed( sb.toString )
+  }
 }
 
 
@@ -519,8 +534,8 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
      <div class="title">
       { if ( group != null )
           Text( group.s( 'name ) + ' ' ) ++
-          ( group.b( 'monitor ) |* <i style="font-size:12px;">(monitor)</i> ++ Text( " " ) ) ++
-          ( editable ? <a href="#" id={ "rGrpEdit" + gf.id } class="rGrpEditLink" style="font-size:12px;">edit</a> | <i style="font-size:12px;">(builtin)</i> ) ++
+          group.about ++
+          ( editable |* Text( " " ) ++ <a href="#" id={ "rGrpEdit" + gf.id } class="rGrpEditLink" style="font-size:12px;">edit</a> ) ++
           group.eye
         else
           <i>None selected</i> }
