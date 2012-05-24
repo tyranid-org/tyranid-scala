@@ -62,7 +62,9 @@ case class GoApp( simpleKey:String ) { // extends SoApp {
   }
 */
 
-
+// Another free lookup API 
+// http://nominatim.openstreetmap.org/search?q=135+pilkington+avenue,+birmingham&addressdetails=1&format=json
+    
   def geocode( address:String ):LatLong = {
 
     val str = "https://maps.googleapis.com/maps/api/geocode/json".GET( Map( "address" -> address, "sensor" -> "false" ) ).s
