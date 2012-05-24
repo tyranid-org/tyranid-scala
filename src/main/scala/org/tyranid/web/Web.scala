@@ -105,6 +105,13 @@ class WebFilter extends Filter {
     thread.http = web.req.getSession( false )
     thread.web = web
 
+    if ( thread.http != null ) {
+      val session = T.session
+      
+      if ( session != null )
+        session.put( "lastPath", web.path )
+    }
+    
     AccessLog.log( web, thread )
 
     var multipartHandled = false
