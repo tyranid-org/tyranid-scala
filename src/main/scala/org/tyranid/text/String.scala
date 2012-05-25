@@ -53,6 +53,7 @@ class StringImp( s:String ) {
       ( s, null )
 	}
 
+	def volerroIdPart = ( s == null ) ? null | s.replace( "'", "" ).replace( ", ", "_" ).replace( ".", "" ).replace( " ", "_" ).replace( "__", "_" ).toLowerCase
   /*
    * Faster than s.split( "&" )
    */
