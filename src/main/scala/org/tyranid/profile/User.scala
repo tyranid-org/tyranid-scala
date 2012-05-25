@@ -101,6 +101,7 @@ trait User extends MongoRecord {
     TimeZone.getDefault
 
   def org:Org = null
+  def orgId = if ( org != null ) org.id else null
 
   def isGod = false
 }

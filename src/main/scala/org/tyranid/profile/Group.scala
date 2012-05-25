@@ -164,6 +164,16 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
 
 class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeView, obj, parent ) {
 
+  def isOwner( user:User ) = user.org != null && user.org.id == oid( 'org )
+
+  // A collaborative group is one which everyone inside the group can see each others things.
+  def collaborative = // a.k.a. roundtable a.k.a cooperative
+    !b( 'monitor ) && // monitor groups are never collaborative
+    ( groupType match {
+      case GroupType.Org  => false
+      case GroupType.User => true
+      } )
+
   def updateIds =
     for ( en <- Group.attrib( 'tids ).domain.as[DbArray].of.as[DbTid].of ) {
 

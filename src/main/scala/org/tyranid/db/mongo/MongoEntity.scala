@@ -112,6 +112,8 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
     obj != null |* Some( apply( obj ) )
   }
 
+  def getById( id:Any ) = byId( id ) getOrElse null
+
   def byTid( tid:String ) =
     if ( !tid.startsWith( this.tid ) ) {
       None
@@ -299,8 +301,10 @@ case class MongoRecord( override val view:MongoView,
       if ( temporaries == null )
         temporaries = mutable.HashMap()
       temporaries( va.name ) = v.asInstanceOf[AnyRef]
-    } else {
+    } else if ( v != null ) {
       obj.put( va.name, v )
+    } else {
+      obj.remove( va.name )
     }
 
   override def remove( key:String ) = remove( view( key ) ) // override remove() in DBObjectWrap
