@@ -123,7 +123,7 @@ object TextArea {
     var typ = "text"
     var rows = ""
     var cols = ""
-      
+    
     for ( opt <- opts )
       opt match {
       case ( "class", v ) => sb ++= " class=\"" ++= v += '"'
@@ -134,7 +134,7 @@ object TextArea {
       case ( n,       v ) => throw new RuntimeException( "Unknown field option " + n + " = " + v )
       }
 
-    sb ++= " name=\"" ++= name ++= "\" id=\"" ++= name ++= "\"" ++= ( rows |* " rows=\"" + rows + "\"" ) ++= ( cols |* " cols=\"" + cols + "\"" ) ++= ">" ++= ( value |* value ) ++= "</textarea>" 
+    sb ++= " name=\"" ++= name ++= "\" id=\"" ++= name ++= "\"" ++= ( rows |* " rows=\"" + rows + "\"" ) ++= ( cols |* " cols=\"" + cols + "\"" ) ++= ">" ++= value |* value ++= "</textarea>" 
 
     Unparsed( sb.toString )
   }

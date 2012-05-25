@@ -453,7 +453,7 @@ class StringImp( s:String ) {
 	    
 	  s1
 	}
-
+	
 	val substitutions = Array(
     ( """\bUrl\b""".r, "URL" ),
     ( """\bId\b""".r, "ID" ),
