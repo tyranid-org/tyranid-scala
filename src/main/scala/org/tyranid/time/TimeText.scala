@@ -79,7 +79,8 @@ private class Token {
 		
   def str( s:String ) = t == Type.STRING && s.equals( this.s )
 		
-  def year =  t == Type.INT && len <= 4
+  def year          = t == Type.INT && len <= 4
+  def fourDigitYear = t == Type.INT && len == 4
   def month =
     t match {
     case Type.INT    => i >= 1 && i <= 12
@@ -464,7 +465,17 @@ class TimeParser {
 		    return true
 			}
 		}
-		
+
+    if (   tp + 3 < tcount
+        && t.dayOfMonth && tks( tp+1 ).month && tks( tp+1 ).t == Type.MONTH && tks( tp+2 ).fourDigitYear ) {
+      year       = tks( tp + 2 ).i
+      month      = tks( tp + 1 ).i-1
+      dayOfMonth = t.i
+      dateFound( tp )
+      tp += 3
+      return true
+    }
+
 		if ( t.userRelatives ) {
 			t.i match {
 			case Relative.TODAY | Relative.YESTERDAY | Relative.TOMORROW =>

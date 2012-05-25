@@ -98,15 +98,15 @@ class StringImp( s:String ) {
 
     for ( i <- 0 until s.length ) {
       Character.codePointAt( s, i ) match {
-      // TODO:  not sure about this > 255 algorithm ...
-      case cp if cp > 255 =>
+      // TODO:  not sure about this > 127 algorithm ...
+      case cp if cp > 127 =>
         val sb = new StringBuilder( s.substring( 0, i ) )
 
         for ( j <- i until s.length ) {
           val ch = s.charAt( j )
 
           Character.codePointAt( s, j ) match {
-          case cp if cp > 255 =>
+          case cp if cp > 127 =>
             sb ++= "&#" ++= cp.toString += ';'
 
           case _ =>
@@ -143,8 +143,11 @@ class StringImp( s:String ) {
       null
     }
 
+  def encHtml = s.replace( "<", "&lt;" ).replace( ">", "&gt;" )
+
   def toHtmlPreserveWhitespace:NodeSeq =
-    s.replace( "\n \n", "\n\n" ).split( "\n\n" ).map( para => <p>{ Unparsed( para.replace( "\r\n", "<br/>" ).replace( "\n", "<br/>" ).replace( "\r", "<br/>" ) ) }</p> ).toSeq
+    // TODO:  need to escape javascript in this
+    s.encUnicode.replace( "\n \n", "\n\n" ).split( "\n\n" ).map( para => <p>{ Unparsed( para.replace( "\r\n", "<br/>" ).replace( "\n", "<br/>" ).replace( "\r", "<br/>" ) ) }</p> ).toSeq
 
 	def isBlank  = ( s == null || s.length == 0 )
 	def notBlank = ( s != null && s.length >  0 )

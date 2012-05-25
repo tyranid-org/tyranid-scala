@@ -226,7 +226,7 @@ trait BsonObject extends Deep {
         sb ++= m( "ISODate(\"", "Type" ) ++= m( t.toIso8601, "String" ) ++= m( "\")", "Type" )
 
       case s:String =>
-        sb ++= m( "\"" + s.encJson + '"', "String" )
+        sb ++= m( "\"" + s.encJson.encHtml + '"', "String" )
 
       case i:Integer =>
         sb ++= m( "NumberInt(", "Type" ) ++= i.toString ++= m( ")", "Type" )
