@@ -51,12 +51,11 @@ object SessionCleaner {
       } else {
         true
       }
-    }).foreach( sess => { WebSession.sessions.remove( sess._1 ); sess._2.invalidate() } )
+    }).foreach( sess => { WebSession.sessions.remove( sess._1 ); sess._2.invalidate } )
   }
 }
    
 object WebSession {
-
   val sessions = mutable.Map[String,HttpSession]()
 
   val CometHttpSessionIdKey = "tyrSessId"
@@ -160,13 +159,10 @@ class ThreadData {
 
 
 object SessionMeta {
-
 }
 
 trait SessionMeta {
-
   def apply():Session = ThreadData().session
-
 
   def byHttpSessionId( id:String ) =
     WebSession.sessions( id ) match {

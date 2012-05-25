@@ -92,7 +92,9 @@ class WebFilter extends Filter {
     var web = new WebContext( request.asInstanceOf[HttpServletRequest],
                               response.asInstanceOf[HttpServletResponse], filterConfig.getServletContext() )
     
-    if ( web.path.indexOf( "cometd" ) == -1 )
+    val notComet = web.path.indexOf( "cometd" ) == -1
+    
+    if ( notComet )
       spam( "filter entered, path=" + web.path )
 
     if ( boot.requireSsl )
@@ -105,6 +107,13 @@ class WebFilter extends Filter {
     thread.http = web.req.getSession( false )
     thread.web = web
 
+    if ( notComet && thread.http != null ) {
+      val session = T.session
+      
+      if ( session != null )
+        session.put( "lastPath", web.path )
+    }
+    
     AccessLog.log( web, thread )
 
     var multipartHandled = false
