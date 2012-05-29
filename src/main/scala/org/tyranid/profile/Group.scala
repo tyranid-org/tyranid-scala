@@ -170,6 +170,8 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
     ( user.org != null && owners.has( user.org.tid ) )
   }
 
+  def isOwner( tid:String ) = a_?( 'owners ).has( tid )
+
   // A collaborative group is one which everyone inside the group can see each others things.
   def collaborative = // a.k.a. roundtable a.k.a cooperative
     !b( 'monitor ) && // monitor groups are never collaborative
@@ -245,7 +247,7 @@ case class GroupingAddBy( label:String, keys:String* ) {
 
 case class GroupField( baseName:String, l:String = null,
                        ofEntity:MongoEntity,
-                       groupType:GroupType, foreignKey:String, forKey:String, forValue: () => AnyRef,
+                       groupType:GroupType, foreignKey:String,
                        addBys:Seq[GroupingAddBy] = Nil,
                        nameSearch: ( String ) => Any = null,
                        opts:Seq[(String,String)] = Nil ) extends Field {
@@ -318,7 +320,14 @@ case class GroupField( baseName:String, l:String = null,
     </table>
   }
 
-  def queryGroups                         = Group.db.find( Mobj( forKey -> forValue(), "type" -> groupType.id ) ).map( o => Group( o ) ).toSeq
+  def userOwnerTid = 
+    groupType match {
+    case GroupType.Org  => T.session.orgTid
+    case GroupType.User => T.session.user.tid
+    }
+
+
+  def queryGroups                         = Group.db.find( Mobj( "owners" -> userOwnerTid, "type" -> groupType.id ) ).map( o => Group( o ) ).toSeq
   def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( idsField ) ) ) ).map( o => ofEntity( o ) ).toIterable
 
   override def handle( weblet:Weblet, rec:Record ) = {
@@ -346,12 +355,25 @@ case class GroupField( baseName:String, l:String = null,
       web.js( JqHtml( "#rGrpMain" + id, gv.drawAddGroup ) )
 
     case "/group/addGroupSave" =>
-      val group = Mobj()
-      group( forKey ) = forValue()
-      group( 'name ) = web.s( "rGrpAddName" + id ) or "Unnamed Group"
-      group( 'type ) = groupType.id
-      group( 'monitor ) = web.b( "rGrpMonitor" + id )
-      Group.db.save( group )
+      val monitor = web.b( "rGrpMonitor" + id )
+
+      val group = Group.make
+      group( 'name )    = web.s( "rGrpAddName" + id ) or "Unnamed Group"
+      group( 'type )    = groupType.id
+      group( 'monitor ) = monitor
+
+      group( 'owners ) = Mlist( userOwnerTid )
+
+      if ( !monitor ) {
+        group( 'tids ) =
+          ( groupType match {
+            case GroupType.Org  => Seq( T.session.orgTid )
+            case GroupType.User => Seq( T.session.user.tid )
+            } ).toMlist
+        group.updateIds
+      }
+
+      group.save
       gv.resetGroups
       gv.setDialogGroup( Group( group ).tid )
 
@@ -569,7 +591,7 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
            <tr id={ el.tid }>
             <td>{ el.label }</td>
             { if ( !showAddBy ) gf.addBys.filter( _.label != "Name" ).map( ab => <td>{ el.s( ab.keys( 0 ) ) }</td> ) }
-            { editable |* <td><a href="#">remove</a></td> }
+            <td>{ editable && !group.isOwner( el.tid ) |* <a href="#">remove</a> }</td>
             <td/>
            </tr>
        }

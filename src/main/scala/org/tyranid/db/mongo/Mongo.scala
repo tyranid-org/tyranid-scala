@@ -327,6 +327,7 @@ case class DBListImp( obj:BasicDBList ) extends DBListWrap with Seq[Any] {
   def apply( key:String )         = obj.get( key )
   def update( key:String, v:Any ) = obj.put( key, v )
 
+  override def has( key:String )  = obj.contains( key )
 
   /*
    * * *  ArrayIDs (aid) ... the list must be a list of DBObjects for this to work.
