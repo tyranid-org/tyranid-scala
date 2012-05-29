@@ -24,6 +24,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
+import org.tyranid.collection.ConcurrentExpireAutoMap
 import org.tyranid.db.{ Domain, DbArray, DbLink, DbTid, Entity, ArrayIndex, MultiPath, PathNode, PathValue, Record, Scope }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
@@ -31,8 +32,34 @@ import org.tyranid.db.ram.RamEntity
 import org.tyranid.math.Base64
 import org.tyranid.report.AutoQuery
 import org.tyranid.ui.{ PathField, Tab, TabBar }
+import org.tyranid.time.Time
 import org.tyranid.web.{ Weblet, WebContext }
 
+
+object TidItem {
+
+  def unknown( tid:String ) = {
+    val ( entityTid, recordTid ) = tid.splitAt( 4 )
+
+    Entity.byTid( entityTid ) match {
+    case Some( e ) => TidItem( tid = tid, id = e.tidToId( tid ), org = null, name = "Unknown " + e.label, thumbnail = e.defaultIcon )
+    case None      => TidItem( tid = tid, id = null, org = null, name = "Unknown", thumbnail = B.Org.defaultIcon )
+    }
+  }
+
+  def by( tid:String ) = itemFor( tid )
+
+
+  private lazy val itemFor = new ConcurrentExpireAutoMap( Time.HalfHourMs, ( tid:String ) => {
+    Record.byTid( tid ) match {
+    case Some( rec ) => TidItem( tid = tid, id = rec.id, org = B.Org.orgFor( rec ), name = rec.label, thumbnail = rec.s( 'thumbnail ) )
+    case None        => log( Event.RefInt, "m" -> ( "ERROR:  could not locate tid " + tid ), "ex" -> new RuntimeException() )
+                        unknown( tid )
+    }
+  } )
+}
+
+case class TidItem( tid:String, id:Any, org:ObjectId, name:String, thumbnail:String )
 
 
 case class DeleteResults( ramReferences:Seq[Record], cascadeFailures:Seq[Record], updates:Seq[Record], deletes:Seq[Record] ) {

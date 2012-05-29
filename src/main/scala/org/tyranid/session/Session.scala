@@ -188,6 +188,7 @@ trait Session {
 
   def user:User           = userVar
   def orgId               = ( user.org == null ) ? null | user.org.id.as[ObjectId]
+  def orgTid              = ( user.org == null ) ? null | B.Org.idToTid( orgId )
   def user_=( user:User ) = userVar = user
 
   var loggedEntry = false

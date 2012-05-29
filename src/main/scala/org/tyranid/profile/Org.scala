@@ -21,7 +21,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbLowerChar, DbUrl, DbDate }
+import org.tyranid.db.{ DbChar, DbLowerChar, DbUrl, DbDate, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.image.DbThumbnail
@@ -38,6 +38,12 @@ class OrgMeta extends MongoEntity( "a02v" ) {
   "thumbnail"          is DbThumbnail( "public" ) as "Logo";
   "website"            is DbUrl                   ;
 
+  def orgFor( rec:Record ) =
+    if ( rec.entity == B.Org )
+      rec.oid
+    else
+      // TODO:  this is sort of a hack
+      rec.oid( 'org )
 }
 
 trait Org extends MongoRecord {

@@ -22,7 +22,7 @@ import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
 import org.tyranid.db.es.{ Es, NoSearch, Searchable }
-import org.tyranid.db.meta.Tid
+import org.tyranid.db.meta.{ Tid, TidItem }
 import org.tyranid.db.tuple.{ TupleView, Tuple }
 import org.tyranid.logic.{ Invalid, Valid }
 import org.tyranid.report.{ Run, Sort }
@@ -154,8 +154,6 @@ trait Entity extends Domain with DbItem {
 
   def make:Record
 
-  val defaultIcon = "/images/default_icon.png"
-
 
 	/*
 	 * * *  Labels & Icons
@@ -166,6 +164,10 @@ trait Entity extends Domain with DbItem {
   lazy val label = name.camelCaseToSpaceUpper
 
   lazy val iconAtt = attribs.find( _.name == "icon" ) orElse attribs.find( _.name == "thumbnail" )
+
+  val defaultIcon = "/images/default_icon.png"
+
+  def itemFor( id:Any ) = TidItem.by( idToTid( id ) )
 
 
 	/*
