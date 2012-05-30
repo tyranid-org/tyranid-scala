@@ -112,6 +112,7 @@ trait User extends MongoRecord {
   def orgTid  = if ( org != null ) org.tid else null
 
   // TODO:  cache this somehow
+  def groupIds  = Group.visibleTo( this ).map( _.id )
   def groupTids = Group.visibleTo( this ).map( _.tid )
 
   /**
