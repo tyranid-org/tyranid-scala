@@ -182,6 +182,8 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
 
 class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeView, obj, parent ) {
 
+  def name = s( 'name )
+
   def isOwner( user:User ) = {
     val owners = a_?( 'owners )
     owners.has( user.tid ) ||
