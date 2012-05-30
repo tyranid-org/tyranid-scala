@@ -25,7 +25,7 @@ import com.mongodb.DBObject
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbInt, DbLink, DbTid, Entity, EnumEntity, Record, Scope }
-import org.tyranid.db.meta.Tid
+import org.tyranid.db.meta.{ Tid, TidItem }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.db.ram.RamEntity
@@ -93,17 +93,17 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
   override def convert( obj:DBObject, parent:MongoRecord ) = new Group( obj, parent )
 
 
-  "_id"     is DbMongoId                    is 'id;
-  "name"    is DbChar(60)                   is 'label;
-  "builtin" is DbBoolean                    help Text( "A builtin group is maintained by the system and is not editable by end users." );
-  "monitor" is DbBoolean                    help Text( "Monitor groups are groups that are not visible to their members, and are used only for personal or organizational purposes.  They are generally not used for collaboration." );
-  "type"    is DbLink(GroupType)            ;
-  "pk"      is DbChar(10)                   help Text( "A private-key, generated on-demand.  Used where a group URL needs to be hard-to-guess-yet-publicly-accessible.  For example, RSS Feeds." );
+  "_id"      is DbMongoId                    is 'id;
+  "name"     is DbChar(60)                   is 'label;
+  "builtin"  is DbBoolean                    help Text( "A builtin group is maintained by the system and is not editable by end users." );
+  "monitor"  is DbBoolean                    help Text( "Monitor groups are groups that are not visible to their members, and are used only for personal or organizational purposes.  They are generally not used for collaboration." );
+  "type"     is DbLink(GroupType)            ;
+  "pk"       is DbChar(10)                   help Text( "A private-key, generated on-demand.  Used where a group URL needs to be hard-to-guess-yet-publicly-accessible.  For example, RSS Feeds." );
 
   override def init = {
     super.init
-    "org"   is DbLink(B.Org)                is 'owner;
-    "tids"  is DbArray(DbTid(B.Org,B.User)) ;
+    "tids"   is DbArray(DbTid(B.Org,B.User)) ;
+    "owners" is DbArray(DbTid(B.Org,B.User)) ;
   }
 
   // these fields are implicit:
@@ -114,7 +114,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
   //"search"         { search criteria } // future ... list search for a group, rather than each id explicitly
 
 
-  db.ensureIndex( Mobj( "org" -> 1, "name" -> 1 ) )
+  db.ensureIndex( Mobj( "owners" -> 1, "name" -> 1 ) )
 
   def flatten( tids:Seq[String] ) =
     tids.
@@ -137,15 +137,15 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
 
     val myGroups =
       db.find(
-        Mobj( "org" -> user.org.id ),
-        Mobj( "name" -> 1, "org" -> 1 )
+        Mobj( "owners" -> tids ),
+        Mobj( "name" -> 1 )
       ).toSeq
 
     val memberGroups =
       db.find( 
         Mobj( "tids"    -> tids,
               "monitor" -> Mobj( $in -> Array( false, null ) ) ),
-        Mobj( "name" -> 1, "org" -> 1 )
+        Mobj( "name" -> 1 )
       ).toSeq.filter( memberGroup => !myGroups.exists( _.id == memberGroup.id ) )
 
       myGroups ++ memberGroups
@@ -162,7 +162,13 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
 
 class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeView, obj, parent ) {
 
-  def isOwner( user:User ) = user.org != null && user.org.id == oid( 'org )
+  def isOwner( user:User ) = {
+    val owners = a_?( 'owners )
+    owners.has( user.tid ) ||
+    ( user.org != null && owners.has( user.org.tid ) )
+  }
+
+  def isOwner( tid:String ) = a_?( 'owners ).has( tid )
 
   // A collaborative group is one which everyone inside the group can see each others things.
   def collaborative = // a.k.a. roundtable a.k.a cooperative
@@ -171,6 +177,8 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
       case GroupType.Org  => false
       case GroupType.User => true
       } )
+
+  def ownerNames = a_?( 'owners ).map( tid => TidItem.by( tid.as[String] ).name ).mkString( ", " )
 
   def updateIds =
     for ( en <- Group.attrib( 'tids ).domain.as[DbArray].of.as[DbTid].of ) {
@@ -241,7 +249,7 @@ case class GroupingAddBy( label:String, keys:String* ) {
 
 case class GroupField( baseName:String, l:String = null,
                        ofEntity:MongoEntity,
-                       groupType:GroupType, foreignKey:String, forKey:String, forValue: () => AnyRef,
+                       groupType:GroupType, foreignKey:String,
                        addBys:Seq[GroupingAddBy] = Nil,
                        nameSearch: ( String ) => Any = null,
                        opts:Seq[(String,String)] = Nil ) extends Field {
@@ -314,7 +322,14 @@ case class GroupField( baseName:String, l:String = null,
     </table>
   }
 
-  def queryGroups                         = Group.db.find( Mobj( forKey -> forValue(), "type" -> groupType.id ) ).map( o => Group( o ) ).toSeq
+  def userOwnerTid = 
+    groupType match {
+    case GroupType.Org  => T.session.orgTid
+    case GroupType.User => T.session.user.tid
+    }
+
+
+  def queryGroups                         = Group.db.find( Mobj( "owners" -> userOwnerTid, "type" -> groupType.id ) ).map( o => Group( o ) ).toSeq
   def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( idsField ) ) ) ).map( o => ofEntity( o ) ).toIterable
 
   override def handle( weblet:Weblet, rec:Record ) = {
@@ -342,12 +357,25 @@ case class GroupField( baseName:String, l:String = null,
       web.js( JqHtml( "#rGrpMain" + id, gv.drawAddGroup ) )
 
     case "/group/addGroupSave" =>
-      val group = Mobj()
-      group( forKey ) = forValue()
-      group( 'name ) = web.s( "rGrpAddName" + id ) or "Unnamed Group"
-      group( 'type ) = groupType.id
-      group( 'monitor ) = web.b( "rGrpMonitor" + id )
-      Group.db.save( group )
+      val monitor = web.b( "rGrpMonitor" + id )
+
+      val group = Group.make
+      group( 'name )    = web.s( "rGrpAddName" + id ) or "Unnamed Group"
+      group( 'type )    = groupType.id
+      group( 'monitor ) = monitor
+
+      group( 'owners ) = Mlist( userOwnerTid )
+
+      if ( !monitor ) {
+        group( 'tids ) =
+          ( groupType match {
+            case GroupType.Org  => Seq( T.session.orgTid )
+            case GroupType.User => Seq( T.session.user.tid )
+            } ).toMlist
+        group.updateIds
+      }
+
+      group.save
       gv.resetGroups
       gv.setDialogGroup( Group( group ).tid )
 
@@ -565,7 +593,7 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
            <tr id={ el.tid }>
             <td>{ el.label }</td>
             { if ( !showAddBy ) gf.addBys.filter( _.label != "Name" ).map( ab => <td>{ el.s( ab.keys( 0 ) ) }</td> ) }
-            { editable |* <td><a href="#">remove</a></td> }
+            <td>{ editable && !group.isOwner( el.tid ) |* <a href="#">remove</a> }</td>
             <td/>
            </tr>
        }
