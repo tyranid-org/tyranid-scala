@@ -42,7 +42,11 @@ case object DbMongoId extends Domain {
     case _ => null
     }
 
-  override def recordTidToId( recordTid:String ) = new ObjectId( Base64.toBytes( recordTid ) )
+  override def recordTidToId( recordTid:String ) =
+    if ( recordTid.isBlank )
+      null
+    else
+      new ObjectId( Base64.toBytes( recordTid ) )
 
   override def ui( s:Scope, f:PathField ) =
     Input( f.id, get( s, f )._s, ( f.effOpts ++ Seq( "class" -> "textInput" ) ):_*  )
