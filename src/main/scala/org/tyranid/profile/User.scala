@@ -19,6 +19,8 @@ package org.tyranid.profile
 
 import java.util.TimeZone
 
+import scala.collection.mutable.ArrayBuffer
+
 import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
@@ -91,17 +93,42 @@ trait User extends MongoRecord {
 
   def fullName = s( 'firstName ) + " " + s( 'lastName )
 
+
   /**
    * This is a list of tags that the user is interested in.
    */
   def allowTags:Seq[Int] = Nil
+
+
+
+  /**
+   * This is a list of tids the user is authorized.  It includes their own tid, the tid of their org, and
+   * the tid of all the groups they own or are members of.
+   *
+   * TODO:  cache this somehow
+   */
+  def authorizedProfilesTids = {
+    val tids = ArrayBuffer[String]()
+    tids += tid
+
+    val ot = orgTid
+    if ( ot.notBlank )
+      tids += ot
+
+    tids ++= Group.visibleTo( this ).map( _.tid )
+
+    tids
+  }
+    
+
 
   @volatile var timeZone:TimeZone =
     // TODO:  persist time zone in user record, edit it in UI, etc.
     TimeZone.getDefault
 
   def org:Org = null
-  def orgId = if ( org != null ) org.id else null
+  def orgId   = if ( org != null ) org.oid else null
+  def orgTid  = if ( org != null ) org.tid else null
 
   def isGod = false
 }

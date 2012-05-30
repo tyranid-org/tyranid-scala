@@ -161,14 +161,14 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
       db.find(
         Mobj( "owners" -> tids ),
         Mobj( "name" -> 1 )
-      ).toSeq
+      ).map( apply ).toSeq
 
     val memberGroups =
       db.find( 
         Mobj( "tids"    -> tids,
               "monitor" -> Mobj( $in -> Array( false, null ) ) ),
         Mobj( "name" -> 1 )
-      ).toSeq.filter( memberGroup => !myGroups.exists( _.id == memberGroup.id ) )
+      ).map( apply ).toSeq.filter( memberGroup => !myGroups.exists( _.id == memberGroup.id ) )
 
       myGroups ++ memberGroups
   }
