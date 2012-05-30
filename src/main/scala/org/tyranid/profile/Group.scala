@@ -130,6 +130,26 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
      } ).
      distinct
 
+  def flattenMonitor( tids:Seq[String] ) =
+    tids.
+      flatMap(
+      _ match {
+     case tid if tid.startsWith( Group.tid ) =>
+       Group.byTid( tid ).flatten(
+         grp => {
+           if ( grp.monitor )
+             grp.a_?( 'tids ).toSeq.of[String],
+           else
+             Seq( tid )
+         },
+         Nil
+       )
+
+     case tid =>
+       Seq( tid )
+     } ).
+     distinct
+
   def idsFor( groupType:GroupType ) = groupType.ofEntity.tid + "Ids"
 
   def visibleTo( user:User ) = {
@@ -208,6 +228,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
           rec = en( r ) )
       yield rec
 
+  // "private" key
   def pk = {
     var v = s( 'pk )
     if ( v.isBlank ) {
