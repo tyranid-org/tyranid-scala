@@ -43,7 +43,7 @@ case object DbMongoId extends Domain {
     }
 
   override def recordTidToId( recordTid:String ) =
-    if ( recordTid.isBlank )
+    if ( recordTid.isBlank || recordTid == "null" )
       null
     else
       new ObjectId( Base64.toBytes( recordTid ) )
