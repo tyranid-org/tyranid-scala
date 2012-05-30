@@ -107,7 +107,7 @@ trait User extends MongoRecord {
    *
    * TODO:  cache this somehow
    */
-  def authorizedProfilesTids = {
+  def allowProfileTids = {
     val tids = ArrayBuffer[String]()
     tids += tid
 
