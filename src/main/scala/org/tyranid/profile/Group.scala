@@ -88,8 +88,6 @@ class GroupType extends Tuple( GroupType.makeView ) {
     }
 }
 
-
-
 object Group extends MongoEntity( tid = "a0Yv" ) {
   type RecType = Group
   override def convert( obj:DBObject, parent:MongoRecord ) = new Group( obj, parent )
@@ -260,6 +258,10 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
 
     Unparsed( sb.toString )
   }
+  
+  def isMember( tid:String ) = a_?( 'tids ).toSeq.find( _ == tid ) != None
+  
+  val isBuiltin = b( 'builtin )
 }
 
 
