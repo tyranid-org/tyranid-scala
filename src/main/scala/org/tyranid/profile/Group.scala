@@ -136,7 +136,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
        Group.byTid( tid ).flatten(
          grp => {
            if ( grp.monitor )
-             grp.a_?( 'tids ).toSeq.of[String],
+             grp.a_?( 'tids ).toSeq.of[String]
            else
              Seq( tid )
          },
@@ -190,9 +190,11 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
 
   def isOwner( tid:String ) = a_?( 'owners ).has( tid )
 
+  def monitor = b( 'monitor )
+
   // A collaborative group is one which everyone inside the group can see each others things.
   def collaborative = // a.k.a. roundtable a.k.a cooperative
-    !b( 'monitor ) && // monitor groups are never collaborative
+    !monitor && // monitor groups are never collaborative
     ( groupType match {
       case GroupType.Org  => false
       case GroupType.User => true

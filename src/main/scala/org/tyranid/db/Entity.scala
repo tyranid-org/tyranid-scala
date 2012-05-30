@@ -100,7 +100,16 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
 
   private var localValidations:List[ ( Scope ) => Option[Invalid] ] = Nil
 
-  override def validations = localValidations ++ domain.validations
+  override def validations =
+    if ( domain != null ) {
+      localValidations ++ domain.validations
+    } else {
+      if ( entity == null )
+        spam( "ERROR:  attribute has no entity" )
+      else
+        spam( "ERROR:  attribute.name=" + name + " has no domain on entity " + entity.name )
+      localValidations
+    }
 }
 
 
