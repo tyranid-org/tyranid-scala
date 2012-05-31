@@ -21,6 +21,8 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.xml.{ NodeSeq, Text, Unparsed }
 
+import org.bson.types.ObjectId
+
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
@@ -190,7 +192,15 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
     ( user.org != null && owners.has( user.org.tid ) )
   }
 
+  override def id:ObjectId = super.apply( "_id" ).as[ObjectId]
+  
   def isOwner( tid:String ) = a_?( 'owners ).has( tid )
+
+  def firstOwnerTid:String = {
+    val owners = a_?( 'owners )
+    
+    ( owners.size > 0 ) ? owners.get(0).as[String] | null
+  }
 
   def monitor = b( 'monitor )
 
@@ -262,6 +272,12 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
   }
   
   def isMember( tid:String ) = a_?( 'tids ).toSeq.find( _ == tid ) != None
+  
+  def isMember( user:User ) = {
+    val tids = a_?( 'tids )
+    tids.has( user.tid ) ||
+    ( user.org != null && tids.has( user.org.tid ) )
+  }
   
   val isBuiltin = b( 'builtin )
 }

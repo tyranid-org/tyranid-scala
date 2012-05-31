@@ -131,6 +131,9 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
       }
     }
 
+    
+  def is( atid:String ) = atid.startsWith( this.tid )
+
   def remove( obj:DBObject ) = db.remove( obj )
 
   override def idLabels:Iterable[(AnyRef,String)] = {
