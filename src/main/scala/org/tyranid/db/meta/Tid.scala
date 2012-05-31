@@ -62,6 +62,19 @@ object TidItem {
 case class TidItem( tid:String, id:Any, org:ObjectId, name:String, thumbnail:String )
 
 
+object TidCache {
+}
+
+class TidCache {
+
+  val byTid = new mutable.HashMap[String,Record]()
+
+  def size  = byTid.size
+  def clear = byTid.clear
+  def has( tid:String ) = byTid.contains( tid )
+}
+
+
 case class DeleteResults( ramReferences:Seq[Record], cascadeFailures:Seq[Record], updates:Seq[Record], deletes:Seq[Record] ) {
 
   def success = ramReferences.isEmpty && cascadeFailures.isEmpty

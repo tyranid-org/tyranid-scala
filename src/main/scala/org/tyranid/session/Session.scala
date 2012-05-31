@@ -26,6 +26,7 @@ import scala.xml.{ Node, NodeSeq, Unparsed }
 
 import org.bson.types.ObjectId
 
+import org.tyranid.db.meta.TidCache
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.Imp._
 import org.tyranid.math.Base62
@@ -34,6 +35,7 @@ import org.tyranid.report.Query
 import org.tyranid.social.Social
 import org.tyranid.time.Time
 import org.tyranid.web.WebContext
+
 
 object SessionCleaner { 
   def clean {
@@ -140,7 +142,9 @@ class ThreadData {
     else                   null
 
 
-  // --- WebContext
+  /*
+   * * *  WebContext
+   */
 
   @volatile var web:WebContext = _
 
@@ -155,6 +159,13 @@ class ThreadData {
   def editing( ref:AnyRef ) = B.access( this, org.tyranid.secure.Editing, ref )
 
   def ip = if ( web != null ) web.ip else null
+
+
+  /*
+   * * *  TidCache
+   */
+
+  val tidCache = new TidCache
 }
 
 

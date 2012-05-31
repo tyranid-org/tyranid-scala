@@ -95,7 +95,7 @@ class WebFilter extends Filter {
     val notComet = web.path.indexOf( "cometd" ) == -1
     
     if ( notComet )
-      spam( "filter entered, path=" + web.path )
+      println( "  | " + web.path )
 
     if ( boot.requireSsl )
       web.req.getServerPort match {
@@ -116,7 +116,7 @@ class WebFilter extends Filter {
     
     AccessLog.log( web, thread )
 
-    var multipartHandled = false
+    var first = true
 
     val path = web.req.getServletPath
     if ( path.matches( WebFilter.versionPattern ) ) {
@@ -170,14 +170,17 @@ class WebFilter extends Filter {
         LoginCookie.autoLogin
       }
 
-      if ( !multipartHandled ) {
+      if ( first ) {
         web = FileUploadSupport.checkContext( web )
         thread.web = web
-        multipartHandled = true
+        first = false
       }
 
-      if ( handle( webloc ) )
+      if ( handle( webloc ) ) {
+        spam( "CACHE: CLEARING" )
+        thread.tidCache.clear
         return
+      }
     }
 
     chain.doFilter( request, response )

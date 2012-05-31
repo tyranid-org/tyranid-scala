@@ -111,25 +111,37 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
 
   override def byRecordTid( recordTid:String ):Option[RecType] = byId( recordTidToId( recordTid ) )
 
-  def byId( id:Any ) = {
-    val obj = db.findOne( id )
-    obj != null |* Some( apply( obj ) )
-  }
+  def    byId( id:Any ) = Option( getById( id ) )
 
-  def getById( id:Any ) = byId( id ) getOrElse null
+  def getById( id:Any ) =
+    try {
+      if ( T.tidCache.has( idToTid( id ) ) ) spam( "CACHE: HIT  (size=" + T.tidCache.size + ")" )
+      T.tidCache.byTid.getOrElseUpdate( idToTid( id ), queryById( id ) ).as[RecType]
+      // TODO:  if we already had it here should we clone it ?
+    } catch {
+    case e =>
+      e.logWith( "m" -> ( "tid[" + tid + "]" )  )
+      null
+    }
 
-  def byTid( tid:String ) =
+  def    byTid( tid:String ) = Option( getByTid( tid ) )
+
+  def getByTid( tid:String ) =
     if ( !tid.startsWith( this.tid ) ) {
-      None
+      null
     } else {
       try {
-        byRecordTid( tid.substring( 4 ) )
+        if ( T.tidCache.has( tid ) ) spam( "CACHE: HIT  (size=" + T.tidCache.size + ")" )
+        T.tidCache.byTid.getOrElseUpdate( tid, queryById( recordTidToId( tid.substring( 4 ) ) ) ).as[RecType]
+        // TODO:  if we already had it here should we clone it ?
       } catch {
       case e =>
         e.logWith( "m" -> ( "tid[" + tid + "]" )  )
-        None
+        null
       }
     }
+
+  def queryById( id:Any ) = apply( db.findOne( id ) )
 
     
   def is( atid:String ) = atid.startsWith( this.tid )
