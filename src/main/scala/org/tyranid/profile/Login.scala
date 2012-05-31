@@ -195,8 +195,8 @@ $( function() {
          </div>
          <div class="plainBox">
           <div class="title">Manually Register</div>
-          <div class="contents">
-           <form method="post" action={ web.path } id="f">
+          <div class="contents" style="height:570px;">
+           <form method="post" action={ web.path } id="f" style="float:left">
             <table>
               { Scope(user, saving = true, captcha = true).draw(ui) }
             </table>
@@ -205,6 +205,11 @@ $( function() {
               <a href="/" class="btn">Cancel</a>
             </div>
            </form>
+           <div style="float:right; padding-top: 50px;">
+            <video id="fooVideo" class="video-js vjs-default-skin" controls="controls" preload="auto" width="643" height="276" data-setup="{}">
+             <source src="https://d33lorp9dhlilu.cloudfront.net/videos/Volerro_Sign_Up.mp4" type="video/mp4"/>
+            </video>
+           </div>
           </div>
          </div>
         </tyr:shell> )
