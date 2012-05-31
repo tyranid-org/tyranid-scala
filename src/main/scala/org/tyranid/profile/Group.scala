@@ -427,7 +427,8 @@ case class GroupField( baseName:String, l:String = null,
 
     case "/group/deleteGroup" =>
       if ( !dg.b( 'builtin ) ) {
-        Group.remove( Mobj( "_id" -> dg.id ) )
+        //Group.remove( Mobj( "_id" -> dg.id ) )
+        Tid.deleteCascade( dg.tid )
         gv.resetGroups
       }
 

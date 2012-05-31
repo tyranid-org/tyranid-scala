@@ -254,14 +254,15 @@ function onLinkedInLoad() {
     GET( "/companies::(" + ids.mkString( "," ) + "):" + companyFields, user ).s.parseJsonObject.a_?( 'values ).of[ObjectMap]
 
   def loadCompanies( user:User, domain:String = null, positions:Boolean = false, multi:Boolean = false, bestMatch:Boolean = false ):Seq[ObjectMap] = {
-    val domainPart = domain != null |* Uri.domainPart( domain ).toLowerCase
+    val baseDomain = domain != null |* domain.stripPrefix( "www." )
+    val domainPart = domain != null |* Uri.domainPart( baseDomain ).toLowerCase
 
     var companies = mutable.ArrayBuffer[ObjectMap]()
     var found = false
     val strictMatch = true
 
     if ( domain.notBlank ) {
-      companies ++= GET( "/companies:" + companyFields + "?email-domain=" + domain.encUrl, user ).s.parseJsonObject.a_?( 'values ).of[ObjectMap]
+      companies ++= GET( "/companies:" + companyFields + "?email-domain=" + baseDomain.encUrl, user ).s.parseJsonObject.a_?( 'values ).of[ObjectMap]
       if ( companies.size > 0 )
         found = true
     }
@@ -284,7 +285,7 @@ function onLinkedInLoad() {
     def domainPartPresent = companies.exists( c => Uri.lowerDomainChars( c.s( 'name ) ).contains( domainPart ) )
 
     if ( domain.notBlank && ( companies.size == 0 || !domainPartPresent ) ) {
-      var terms = Uri.nameForDomain( domain )
+      var terms = Uri.nameForDomain( baseDomain )
       if ( terms.notBlank )
         companies ++= GET( "/company-search:(companies:" + companyFields + ")?keywords=" + terms.encUrl, user ).s.parseJsonObject.o_?( 'companies ).a_?( 'values ).of[ObjectMap]
 
@@ -307,7 +308,7 @@ function onLinkedInLoad() {
       }
 
       // website match
-      val websiteUrl = ( "//www." + domain ).toLowerCase
+      val websiteUrl = ( "//www." + baseDomain ).toLowerCase
       candidates = companies.filter( _.s( 'websiteUrl ).toLowerCase.endsWith( websiteUrl ) )
       if ( candidates.size > 0 ) {
         companies = candidates
