@@ -109,6 +109,7 @@ object File {
   }
 
   def download( web:WebContext, bucket:S3Bucket, key:String, fileName:String ) {
+    spam( "bucket:" + bucket + " key:" + key )
     val obj = S3.getObject( bucket, key )
   
     if ( obj != null ) {

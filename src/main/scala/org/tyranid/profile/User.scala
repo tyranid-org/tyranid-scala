@@ -100,14 +100,26 @@ trait User extends MongoRecord {
   def allowTags:Seq[Int] = Nil
 
 
+  @volatile var timeZone:TimeZone =
+    // TODO:  persist time zone in user record, edit it in UI, etc.
+    TimeZone.getDefault
+
+
+  def isGod = false
+
+  def org:Org = null
+  def orgId   = if ( org != null ) org.oid else null
+  def orgTid  = if ( org != null ) org.tid else null
+
+  // TODO:  cache this somehow
+  def groupIds  = Group.visibleTo( this ).map( _.id )
+  def groupTids = Group.visibleTo( this ).map( _.tid )
 
   /**
    * This is a list of tids the user is authorized.  It includes their own tid, the tid of their org, and
    * the tid of all the groups they own or are members of.
-   *
-   * TODO:  cache this somehow
    */
-  def authorizedProfilesTids = {
+  def allowProfileTids = {
     val tids = ArrayBuffer[String]()
     tids += tid
 
@@ -115,21 +127,9 @@ trait User extends MongoRecord {
     if ( ot.notBlank )
       tids += ot
 
-    tids ++= Group.visibleTo( this ).map( _.tid )
+    tids ++= groupTids
 
     tids
   }
-    
-
-
-  @volatile var timeZone:TimeZone =
-    // TODO:  persist time zone in user record, edit it in UI, etc.
-    TimeZone.getDefault
-
-  def org:Org = null
-  def orgId   = if ( org != null ) org.oid else null
-  def orgTid  = if ( org != null ) org.tid else null
-
-  def isGod = false
 }
 

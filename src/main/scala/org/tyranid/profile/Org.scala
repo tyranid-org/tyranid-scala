@@ -38,12 +38,14 @@ class OrgMeta extends MongoEntity( "a02v" ) {
   "thumbnail"          is DbThumbnail( "public" ) as "Logo";
   "website"            is DbUrl                   ;
 
-  def orgFor( rec:Record ) =
+  def orgIdFor( rec:Record ):ObjectId =
     if ( rec.entity == B.Org )
       rec.oid
-    else
+    else if ( rec.entity.attribs.contains( "org" ) )
       // TODO:  this is sort of a hack
       rec.oid( 'org )
+    else
+      null
 }
 
 trait Org extends MongoRecord {
