@@ -300,9 +300,10 @@ case class Tab( rpath:String, label:NodeSeq, cls:String = null, default:Boolean 
 // Currently, this function (alphaFilter) is in main.js-- this needs to be moved to a Tyranid js file
 case class TableAlphaFilter( tableId:String, columnNumber:Int, addedClasses:String = null ) {
   def draw = 
-    <ul class={ ( addedClasses == null ) ? "alphaFilter" | ( "alphaFilter " + addedClasses ) }>
-      <li class="all"><a href="#" onClick={ "alphaFilter( '" + tableId + "'," + columnNumber + ",'all' ); return false;" }>All</a></li>
-      { for ( i <- 65 to 90 ) yield { <li><a href="#" onClick={ "alphaFilter( '" + tableId + "'," + columnNumber + ",'" + i.toChar + "' ); return false;" }>{ i.toChar }</a></li> } }
+    <ul class={ ( addedClasses == null ) ? "alphaFilter" | ( "alphaFilter " + addedClasses ) } data-column={ columnNumber.toString } data-tableid={ tableId }>
+      <li class="all selected"><a href="#">All</a></li>
+      { for ( i <- 65 to 90 ) yield { <li><a href="#">{ i.toChar }</a></li> } }
+      { for ( i <- 48 to 57 ) yield { <li><a href="#">{ i.toChar }</a></li> } }
     </ul>
 }
 
