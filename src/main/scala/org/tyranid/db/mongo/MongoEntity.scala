@@ -111,6 +111,8 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
 
   override def byRecordTid( recordTid:String ):Option[RecType] = byId( recordTidToId( recordTid ) )
 
+  override def getByRecordTid( recordTid:String ):RecType = getById( recordTidToId( recordTid ) )
+
   def    byId( id:Any ) = Option( getById( id ) )
 
   def getById( id:Any ) =

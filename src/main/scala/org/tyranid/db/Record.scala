@@ -137,21 +137,23 @@ object View {
 
 object Record {
 
-  def byTid( tid:String, only:Entity = null ):Option[Record] = {
-
+  def getByTid( tid:String, only:Entity = null ):Record = {
     val ( entityTid, recordTid ) = tid.splitAt( 4 )
 
     try {
       Entity.
         byTid( entityTid ).
         filter( e => only == null || only == e ).
-        flatMap( entity => entity.byRecordTid( recordTid ) )
+        flatMap( entity => entity.byRecordTid( recordTid ) ).
+        getOrElse( null )
     } catch {
     case e =>
       e.logWith( "m" -> ( "tid[" + tid + "]" )  )
-      None
+      null
     }
   }
+
+  def byTid( tid:String, only:Entity = null ):Option[Record] = Option( getByTid( tid, only ) )
 }
 
 trait Record extends Valid with BsonObject {

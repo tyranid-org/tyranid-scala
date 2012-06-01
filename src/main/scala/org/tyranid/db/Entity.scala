@@ -264,6 +264,7 @@ trait Entity extends Domain with DbItem {
   
   def query( run:Run, offset:Int = 0, count:Int = 20, sort:Sort = null ):Iterable[Record]
 
+  def getByRecordTid( recordTid:String ):Record      = throw new UnsupportedOperationException
   def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException
 
   def save( r:Record ) {

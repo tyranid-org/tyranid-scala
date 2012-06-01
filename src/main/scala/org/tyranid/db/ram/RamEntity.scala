@@ -94,6 +94,9 @@ case class RamEntity( tid:String ) extends Entity {
   override def byRecordTid( recordTid:String ):Option[Tuple] =
     byId( recordTidToId( recordTid )._l )
 
+  override def getByRecordTid( recordTid:String ):Tuple =
+    byId( recordTidToId( recordTid )._l ) getOrElse null
+
   override def save( rec:Record )   = throw new UnsupportedOperationException
   override def delete( rec:Record ) = throw new UnsupportedOperationException
 }
