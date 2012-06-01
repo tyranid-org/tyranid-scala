@@ -266,24 +266,23 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
           rec = en( r ) )
       yield rec
 
-  def canSee( member:Record ) = {
-    val u = T.user
+  def canSee( member:Record ):Boolean = canSee( T.user, member )
 
+  def canSee( user:User, member:Record ) =
     mode match {
     case GroupMode.Monitor =>
-      isOwner( u )
+      isOwner( user )
 
     case GroupMode.Moderated =>
-      isMember( u ) &&
+      isMember( user ) &&
       ( groupType match {
-        case GroupType.Org  => member.tid == tid || isOwner( member.tid ) || member.tid == u.orgTid || B.Org.orgIdFor( member ) == u.orgId
+        case GroupType.Org  => member.tid == tid || isOwner( member.tid ) || member.tid == user.orgTid || B.Org.orgIdFor( member ) == user.orgId
         case GroupType.User => member.tid == tid || isOwner( member.tid )
         } )
 
     case GroupMode.Collaborative =>
-      isMember( u )
+      isMember( user )
     }
-  }
 
   // "private" key
   def pk = {
