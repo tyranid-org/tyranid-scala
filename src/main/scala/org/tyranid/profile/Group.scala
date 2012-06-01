@@ -90,6 +90,28 @@ class GroupType extends Tuple( GroupType.makeView ) {
     }
 }
 
+
+object GroupMode extends RamEntity( tid = "a0Ot" ) with EnumEntity[GroupType] {
+  "_id"    is DbInt      is 'id;
+  "name"   is DbChar(64) is 'label;
+
+  def apply( id:Int, name:String ) = {
+    val t = new GroupType
+    t( '_id )  = id
+    t( 'name ) = name
+    t
+  }
+
+  val Monitor   =     apply( 1, "Monitor" )
+  val Moderated     = apply( 2, "Moderated" )
+  val Collaborative = apply( 3, "Collaborative" )
+
+  static( Monitor, Moderated, Collaborative )
+}
+
+class GroupMode extends Tuple( GroupMode.makeView )
+
+
 object Group extends MongoEntity( tid = "a0Yv" ) {
   type RecType = Group
   override def convert( obj:DBObject, parent:MongoRecord ) = new Group( obj, parent )
@@ -203,6 +225,11 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
 
   def monitor = b( 'monitor )
 
+  def mode =
+    if ( monitor )            GroupMode.Monitor 
+    else if ( collaborative ) GroupMode.Collaborative
+    else                      GroupMode.Moderated
+
   // A collaborative group is one which everyone inside the group can see each others things.
   def collaborative = // a.k.a. roundtable a.k.a cooperative
     !monitor && // monitor groups are never collaborative
@@ -239,6 +266,25 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
           rec = en( r ) )
       yield rec
 
+  def canSee( member:Record ) = {
+    val u = T.user
+
+    mode match {
+    case GroupMode.Monitor =>
+      isOwner( u )
+
+    case GroupMode.Moderated =>
+      isMember( u ) &&
+      ( groupType match {
+        case GroupType.Org  => member.tid == tid || isOwner( member.tid ) || member.tid == u.orgTid || B.Org.orgIdFor( member ) == u.orgId
+        case GroupType.User => member.tid == tid || isOwner( member.tid )
+        } )
+
+    case GroupMode.Collaborative =>
+      isMember( u )
+    }
+  }
+
   // "private" key
   def pk = {
     var v = s( 'pk )
@@ -260,10 +306,10 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
 
     sb ++= "<i style=\"font-size:80%;\">("
 
-    if ( b( 'monitor ) )
-      sb ++= "Monitor "
     if ( b( 'builtin ) )
       sb ++= "Built-in "
+
+    sb ++= mode.label += ' '
     sb ++= groupType.label
     sb ++= " Group)</i>"
 
