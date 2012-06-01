@@ -159,15 +159,13 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
 
     val myGroups =
       db.find(
-        Mobj( "owners" -> tids ),
-        Mobj( "name" -> 1 )
+        Mobj( "owners" -> tids )
       ).map( apply ).toSeq
 
     val memberGroups =
       db.find( 
         Mobj( "tids"    -> tids,
-              "monitor" -> Mobj( $in -> Array( false, null ) ) ),
-        Mobj( "name" -> 1 )
+              "monitor" -> Mobj( $in -> Array( false, null ) ) )
       ).map( apply ).toSeq.filter( memberGroup => !myGroups.exists( _.id == memberGroup.id ) )
 
       myGroups ++ memberGroups
@@ -184,7 +182,8 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
 
 class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeView, obj, parent ) {
 
-  def name = s( 'name )
+  def name     = s( 'name )
+  def fullName = name + " (" + ( isOwner( T.user ) ? "me" | ownerNames ) + ")"
 
   def isOwner( user:User ) = {
     val owners = a_?( 'owners )
@@ -369,8 +368,14 @@ case class GroupField( baseName:String, l:String = null,
     case GroupType.User => T.session.user.tid
     }
 
+  def accessTidsQuery = {
+    val s = T.session
+    if ( s.orgTid.notBlank ) Mobj( $in -> Mlist( s.orgTid, s.user.tid ) )
+    else                     s.user.tid
+  }
 
-  def queryGroups                         = Group.db.find( Mobj( "owners" -> userOwnerTid, "type" -> groupType.id ) ).map( o => Group( o ) ).toSeq
+
+  def queryGroups                         = Group.db.find( Mobj( "owners" -> accessTidsQuery, "type" -> groupType.id ) ).map( o => Group( o ) ).toSeq
   def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( idsField ) ) ) ).map( o => ofEntity( o ) ).toIterable
 
   override def handle( weblet:Weblet, rec:Record ) = {
