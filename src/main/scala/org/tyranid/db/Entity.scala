@@ -176,6 +176,7 @@ trait Entity extends Domain with DbItem {
 
   val defaultIcon = "/images/default_icon.png"
 
+  def itemByTid( tid:String ) = TidItem.by( tid )
   def itemById( id:Any ) = TidItem.by( idToTid( id ) )
 
 
