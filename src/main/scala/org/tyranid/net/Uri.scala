@@ -22,6 +22,8 @@ import org.tyranid.Imp._
 
 object Uri {
 
+  def isSecure( uri:String ) = uri.toLowerCase.startsWith( "https://" ) || uri.startsWith( "//" )
+
   /*
    * Given "google.com" returns "google"
    */

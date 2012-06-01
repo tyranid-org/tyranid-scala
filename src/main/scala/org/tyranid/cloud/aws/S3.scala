@@ -25,6 +25,7 @@ import com.amazonaws.services.s3.model.{ AmazonS3Exception, GroupGrantee, Object
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
+import org.tyranid.net.Uri
 
 
 case class S3Bucket( prefix:String, cfDistributionId:String = "", cfDomain:String = "" ) {
@@ -131,4 +132,13 @@ object S3 {
     
     bucket.url( path )
   }
+
+  def storeUnsecureUrl( bucket:S3Bucket, urlStr:String, path:String ) = {
+    if ( !Uri.isSecure( urlStr ) )
+      storeUrl( bucket, urlStr, path )
+    else
+      urlStr
+  }
 }
+
+
