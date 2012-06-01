@@ -206,9 +206,10 @@ $( function() {
             </div>
            </form>
            <div style="float:right; padding-top: 50px;">
-            <video id="fooVideo" class="video-js vjs-default-skin" controls="controls" preload="auto" width="643" height="276" data-setup="{}">
+            <video id="vvideo" class="video-js vjs-default-skin" controls="controls" preload="auto" width="643" height="276" data-setup="{}">
              <source src="https://d33lorp9dhlilu.cloudfront.net/videos/Volerro_Sign_Up.mp4" type="video/mp4"/>
             </video>
+            <div class="title">Volerro Sign Up</div>
            </div>
           </div>
          </div>
