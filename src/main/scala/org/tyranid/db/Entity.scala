@@ -163,6 +163,8 @@ trait Entity extends Domain with DbItem {
 
   def make:Record
 
+  def hasTid( atid:String ) = atid.startsWith( this.tid )
+
 
 	/*
 	 * * *  Labels & Icons

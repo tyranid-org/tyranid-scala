@@ -207,22 +207,8 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
   def name     = s( 'name )
   def fullName = name + " (" + ( isOwner( T.user ) ? "me" | ownerNames ) + ")"
 
-  def isOwner( user:User ) = {
-    val owners = a_?( 'owners )
-    owners.has( user.tid ) ||
-    ( user.org != null && owners.has( user.org.tid ) )
-  }
-
   override def id:ObjectId = super.apply( "_id" ).as[ObjectId]
   
-  def isOwner( tid:String ) = a_?( 'owners ).has( tid )
-
-  def firstOwnerTid:String = {
-    val owners = a_?( 'owners )
-    
-    ( owners.size > 0 ) ? owners.get(0).as[String] | null
-  }
-
   def monitor = b( 'monitor )
 
   def mode =
@@ -237,6 +223,28 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
       case GroupType.Org  => false
       case GroupType.User => true
       } )
+
+  def isOwner( user:User ) = {
+    val owners = a_?( 'owners )
+    owners.has( user.tid ) ||
+    ( user.org != null && owners.has( user.org.tid ) )
+  }
+
+  def isOwner( tid:String ) = {
+    val owners = a_?( 'owners )
+    owners.has( tid ) || (
+      B.User.hasTid( tid ) && {
+        val org = TidItem.by( tid ).org
+        org != null && owners.has( B.Org.idToTid( org ) )
+      }
+    )
+  }
+
+  def firstOwnerTid:String = {
+    val owners = a_?( 'owners )
+    
+    ( owners.size > 0 ) ? owners.get(0).as[String] | null
+  }
 
   def ownerNames = a_?( 'owners ).map( tid => TidItem.by( tid.as[String] ).name ).mkString( ", " )
 
@@ -284,8 +292,8 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
     case GroupMode.Moderated =>
       isMember( user ) &&
       ( groupType match {
-        case GroupType.Org  => member.tid == user.tid || isOwner( member.tid ) || isOwner( user.tid ) || member.tid == user.orgTid || B.Org.orgIdFor( member ) == user.orgId
-        case GroupType.User => member.tid == user.tid || isOwner( member.tid ) || isOwner( user.tid )
+        case GroupType.Org  => member.tid == user.tid || isOwner( member.tid ) || isOwner( user ) || member.tid == user.orgTid || B.Org.orgIdFor( member ) == user.orgId
+        case GroupType.User => member.tid == user.tid || isOwner( member.tid ) || isOwner( user )
         } )
 
     case GroupMode.Collaborative =>

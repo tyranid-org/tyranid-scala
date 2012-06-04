@@ -41,7 +41,7 @@ class OrgMeta extends MongoEntity( "a02v" ) {
   def orgIdFor( rec:Record ):ObjectId =
     if ( rec.entity == B.Org )
       rec.oid
-    else if ( rec.entity.attribs.contains( "org" ) )
+    else if ( rec.entity.attribs.exists( _.name == "org" ) )
       // TODO:  this is sort of a hack
       rec.oid( 'org )
     else
