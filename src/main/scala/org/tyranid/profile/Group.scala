@@ -261,11 +261,19 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
 
   def members =
    for ( e <- entities;
-          en = e.as[MongoEntity];
-          r <- en.db.find( Mobj( "_id" -> Mobj( $in -> obj.a_?( en.tid + "Ids" ) ) ) );
-          rec = en( r ) )
+         en = e.as[MongoEntity];
+         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> obj.a_?( en.tid + "Ids" ) ) ) );
+         rec = en( r ) )
       yield rec
 
+  def isMember( tid:String ) = a_?( 'tids ).toSeq.find( _ == tid ) != None
+  
+  def isMember( user:User ) = {
+    val tids = a_?( 'tids )
+    tids.has( user.tid ) ||
+    ( user.org != null && tids.has( user.org.tid ) )
+  }
+  
   def canSee( member:Record ):Boolean = canSee( T.user, member )
 
   def canSee( user:User, member:Record ) =
@@ -276,8 +284,8 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
     case GroupMode.Moderated =>
       isMember( user ) &&
       ( groupType match {
-        case GroupType.Org  => member.tid == tid || isOwner( member.tid ) || member.tid == user.orgTid || B.Org.orgIdFor( member ) == user.orgId
-        case GroupType.User => member.tid == tid || isOwner( member.tid )
+        case GroupType.Org  => member.tid == user.tid || isOwner( member.tid ) || isOwner( user.tid ) || member.tid == user.orgTid || B.Org.orgIdFor( member ) == user.orgId
+        case GroupType.User => member.tid == user.tid || isOwner( member.tid ) || isOwner( user.tid )
         } )
 
     case GroupMode.Collaborative =>
@@ -313,14 +321,6 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
     sb ++= " Group)</i>"
 
     Unparsed( sb.toString )
-  }
-  
-  def isMember( tid:String ) = a_?( 'tids ).toSeq.find( _ == tid ) != None
-  
-  def isMember( user:User ) = {
-    val tids = a_?( 'tids )
-    tids.has( user.tid ) ||
-    ( user.org != null && tids.has( user.org.tid ) )
   }
   
   val isBuiltin = b( 'builtin )
