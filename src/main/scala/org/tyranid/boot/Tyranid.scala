@@ -92,7 +92,9 @@ object TyranidConfiglet extends Weblet {
       web.redirect( parent.wpath )
     
     case "/recaptcha" =>
-      TyranidConfig()( 'recaptcha ) = !B.requireReCaptcha
+      val obj = TyranidConfig()
+      obj( 'recaptcha ) = !B.requireReCaptcha
+      TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "recaptcha" -> obj.b( 'recaptcha ) ) ) )
       sess.notice( "Recaptcha has been turned " + ( B.requireReCaptcha ? "ON" | "OFF" ) + "." )
       web.redirect( parent.wpath )
 
