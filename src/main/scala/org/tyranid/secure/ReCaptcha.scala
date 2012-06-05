@@ -37,7 +37,6 @@ case class DbReCaptcha( theme:String ) extends Domain {
   override def show( s:Scope ) = !T.session.passedCaptcha
 
   override def ui( s:Scope, f:PathField ) =
-    B.requireReCaptcha |*
     <head>
      <script type="text/javascript" src="https://www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>
 
