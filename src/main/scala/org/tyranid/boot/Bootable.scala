@@ -111,10 +111,17 @@ trait Bootable {
 
   def boot:Unit
 
-  val requireSsl = false
 
+  /*
+   * * *   S e c u r i t y
+   */
+
+  val requireSsl = false
+  def requireReCaptcha = TyranidConfig().b( 'recaptcha )
 
   def access( thread:ThreadData, accessType:AccessType, ref:AnyRef )
+
+
 
   @volatile var newUser:() => User = null
   val userMeta:UserMeta
@@ -197,7 +204,8 @@ trait Bootable {
   def bucket( buckets:S3Bucket* ) =
     for ( bucket <- buckets )
       s3Buckets( bucket.prefix ) = bucket
-  
+ 
+
   def initEntities {
     val cl = Thread.currentThread.getContextClassLoader
     val urls = cl.as[java.net.URLClassLoader].getURLs.map( _.getFile ).filter( !_.endsWith( ".jar" ) )

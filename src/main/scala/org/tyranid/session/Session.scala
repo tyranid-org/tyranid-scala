@@ -205,7 +205,7 @@ trait Session {
   var loggedEntry = false
   var loggedUser  = false
 
-  var passedCaptcha = false
+  var passedCaptcha = !B.requireReCaptcha
 
   def clear {
     reports.clear
