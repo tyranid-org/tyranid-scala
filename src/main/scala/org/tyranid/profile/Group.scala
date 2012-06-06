@@ -190,7 +190,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
               "monitor" -> Mobj( $in -> Array( false, null ) ) )
       ).map( apply ).toSeq.filter( memberGroup => !myGroups.exists( _.id == memberGroup.id ) )
 
-      myGroups ++ memberGroups
+    myGroups ++ memberGroups 
   }
 
   def byPrivateId( privateId:String ) = {
@@ -240,10 +240,17 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
     )
   }
 
-  def firstOwnerTid:String = {
+  def firstOwnerTid( notTid:String ):String = {
     val owners = a_?( 'owners )
     
-    ( owners.size > 0 ) ? owners.get(0).as[String] | null
+    owners.foreach( t => {
+      val tid = t._s
+      
+      if ( tid != notTid)
+        return tid
+    } )
+    
+    null
   }
 
   def ownerNames = a_?( 'owners ).map( tid => TidItem.by( tid.as[String] ).name ).mkString( ", " )

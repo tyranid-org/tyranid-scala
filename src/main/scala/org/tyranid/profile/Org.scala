@@ -21,7 +21,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbLowerChar, DbUrl, DbDate, Record }
+import org.tyranid.db.{ DbChar, DbLowerChar, DbUrl, DbDate, DbLink, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.image.DbThumbnail

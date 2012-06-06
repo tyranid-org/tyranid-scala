@@ -72,6 +72,8 @@ case class LongImp( l:Long ) {
     else  
       "%d mins %d secs".format( mins, secs )
   }
+  
+  def or( o:Long ):Long = ( ( l == 0 ) ? o | l )  
 }
 
 
