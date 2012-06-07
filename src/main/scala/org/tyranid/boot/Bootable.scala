@@ -34,7 +34,7 @@ import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.email.EmailTemplate
 import org.tyranid.profile.{ OrgMeta, User, UserMeta }
 import org.tyranid.secure.{ AccessType, Multipass }
-import org.tyranid.session.{ Session, ThreadData }
+import org.tyranid.session.{ Milestone, Session, ThreadData }
 import org.tyranid.sms.NexmoApp
 import org.tyranid.social.{ TrackurApp, TwApp }
 import org.tyranid.social.facebook.FbApp
@@ -102,6 +102,8 @@ trait Bootable {
 
   val weblocs:Seq[Webloc]
 
+  val milestones:Seq[Milestone]
+
   val templates:List[(String, ( NodeSeq ) => NodeSeq )]
   val emailTemplates:EmailTemplate
 
@@ -117,7 +119,9 @@ trait Bootable {
    */
 
   val requireSsl = false
+
   def requireReCaptcha = TyranidConfig().b( 'recaptcha )
+  def accessLogs       = TyranidConfig().b( 'accessLogs )
 
   def access( thread:ThreadData, accessType:AccessType, ref:AnyRef )
 
@@ -132,7 +136,8 @@ trait Bootable {
 
   lazy val appOrgId = Org.db.findOne( Mobj( "name" -> applicationName ) ).oid
 
-  val loginCookieName:String = null
+  val loginCookieName:String    = null
+  val trackingCookieName:String = null
 
   lazy val hostName = InetAddress.getLocalHost.getHostName
 

@@ -25,7 +25,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbBoolean, DbChar, DbDouble, DbEmail, DbLink, DbLong, DbPassword, DbPhone, Record, DbDate, DbDateTime }
+import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDouble, DbEmail, DbLink, DbLong, DbPassword, DbPhone, Record, DbDate, DbDateTime }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.image.DbThumbnail
@@ -76,6 +76,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "twts"           is DbChar(90)          ; // Twitter OAuth 1.0a token secret
 
   "eye"            is DbBoolean           ;
+  "bids"           is DbArray(DbChar(10)) as "Browser IDs";
 
   def isLoggedIn = Session().user.loggedIn
   

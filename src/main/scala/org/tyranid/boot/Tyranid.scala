@@ -33,8 +33,9 @@ object TyranidConfig extends MongoEntity( tid = "a03t" ) {
   override def convert( obj:DBObject, parent:MongoRecord ) = new TyranidConfig( obj, parent )
 
 
-  "_id"       is DbMongoId         is 'id;
-  "recaptcha" is DbBoolean         as "Enable ReCaptchas";
+  "_id"         is DbMongoId         is 'id;
+  "recaptcha"   is DbBoolean         as "Enable ReCaptchas";
+  "accessLogs"  is DbBoolean         as "Enable Access Logs";
 
 
   def apply():TyranidConfig = singleton
@@ -62,7 +63,8 @@ object TyranidConfiglet extends Weblet {
     <a href={ wpath + "/reindex" } class="stop btn">Re-Index Search</a>
     <a href={ wpath + "/eye" } class={ user.b( 'eye ) ? "go btn" | "stop btn" }>Debug: { user.b( 'eye ) ? "ON" | "OFF" }</a>
     <a href={ wpath + "/sms" } class={ SMS.enabled ? "go btn" | "stop btn" }>SMS: { SMS.enabled ? "ON" | "OFF" }</a>
-    <a href={ wpath + "/recaptcha" } class={ B.requireReCaptcha ? "go btn" | "stop btn" }>Recaptcha: { B.requireReCaptcha ? "ON" | "OFF" }</a>;
+    <a href={ wpath + "/recaptcha" } class={ B.requireReCaptcha ? "go btn" | "stop btn" }>Recaptcha: { B.requireReCaptcha ? "ON" | "OFF" }</a>
+    <a href={ wpath + "/accessLogs" } class={ B.accessLogs ? "go btn" | "stop btn" }>Access Logs: { B.accessLogs ? "ON" | "OFF" }</a>;
   }
 
   def handle( web:WebContext ) = {
@@ -96,6 +98,13 @@ object TyranidConfiglet extends Weblet {
       obj( 'recaptcha ) = !B.requireReCaptcha
       TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "recaptcha" -> obj.b( 'recaptcha ) ) ) )
       sess.notice( "Recaptcha has been turned " + ( B.requireReCaptcha ? "ON" | "OFF" ) + "." )
+      web.redirect( parent.wpath )
+
+    case "/accessLogs" =>
+      val obj = TyranidConfig()
+      obj( 'accessLogs ) = !B.accessLogs
+      TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "accessLogs" -> obj.b( 'accessLogs ) ) ) )
+      sess.notice( "Access Logs have been turned " + ( B.accessLogs ? "ON" | "OFF" ) + "." )
       web.redirect( parent.wpath )
 
     case _ =>

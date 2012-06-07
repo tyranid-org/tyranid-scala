@@ -23,10 +23,12 @@ import javax.servlet.http.HttpSession
 
 import scala.xml.{ Text, Unparsed }
 
+import com.mongodb.DBObject
+
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbChar, DbDateTime, DbInt, DbLink, DbLong, DbText, Record, Scope, EnumEntity }
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
+import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.db.tuple.Tuple
 import org.tyranid.email.AWSEmail
@@ -72,6 +74,8 @@ class Event extends Tuple( Event.makeView ) {
 
 
 object Log extends MongoEntity( tid = "a0Ht" ) {
+  type RecType = Log
+  override def convert( obj:DBObject, parent:MongoRecord ) = new Log( obj, parent )
 
   "_id"      is DbMongoId         is 'id;
   "e"        is DbLink(Event)     as "Event";
@@ -83,10 +87,12 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
   "sid"      is DbChar(64)        as "Session";
   "ua"       is DbLink(UserAgent) as "User Agent";
   "ip"       is DbChar(32)        as "IP";
+  "p"        is DbChar(128)       as "Path";
+  "bid"      is DbChar(10)        as "Browser";
 
   override def init = {
     super.init
-    "uid"                 is DbLink(B.User) as "User";
+    "uid"    is DbLink(B.User)    as "User";
   }
 
   def log( event:Event, opts:(String,Any)* ) = {
@@ -209,6 +215,9 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
   override lazy val defaultSort = Sort( "on", "On", "on" -> -1 )
 }
 
+class Log( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Log.makeView, obj, parent )
+
+
 object LogQuery extends Query {
 
   //def connections( run:Run ) =
@@ -259,10 +268,12 @@ object LogQuery extends Query {
           } )
       }
     },
-    PathField( "ip", search = Search.Subst ),
-    PathField( "ex", search = Search.Subst ),
-    PathField( "ct", search = Search.Gte ),
-    PathField( "du", search = Search.Gte )
+    PathField( "ip",  search = Search.Subst ),
+    PathField( "ex",  search = Search.Subst ),
+    PathField( "ct",  search = Search.Gte ),
+    PathField( "du",  search = Search.Gte ),
+    PathField( "p",   search = Search.Subst ),
+    PathField( "bid", search = Search.Equals )
   )
 
   val defaultFields = dataFields.take( 5 )

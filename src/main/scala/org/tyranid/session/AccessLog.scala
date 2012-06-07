@@ -23,27 +23,127 @@ import scala.collection.mutable
 
 import org.tyranid.Imp._
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.web.WebContext
+import org.tyranid.log.Log
+import org.tyranid.web.{ Weblet, WebContext }
 
+
+case class Milestone( name:String, satisfies:( Log ) => Boolean )
 
 object AccessLog {
 
   def log( web:WebContext, thread:ThreadData ) {
     val session = thread.session
 
-    if ( !session.loggedUser ) {
-      val user = session.user
+    if ( B.accessLogs ) {
+      web.path match {
+      case "/cometd" => // ignore
+      case p if p.endsWith( ".png" ) || p.endsWith( ".js" ) => // ignore
+      case p         =>
+        Log.log( Event.Access,
+                 "p"   -> p, 
+                 "bid" -> TrackingCookie.get,
+                 "ua"  -> web.req.getHeader( "User-Agent" ) )
+      }
 
-      if ( user.loggedIn ) {
+    } else {
+      // still do "digest" access logs
+
+      if ( !session.loggedUser ) {
+        val user = session.user
+
+        if ( user.loggedIn ) {
+          Log.log( Event.Access, "ua" -> web.req.getHeader( "User-Agent" ) )
+          session.loggedUser = true
+          session.loggedEntry = true
+        }
+      }
+
+      if ( !session.loggedEntry && thread.http != null ) {
         Log.log( Event.Access, "ua" -> web.req.getHeader( "User-Agent" ) )
-        session.loggedUser = true
         session.loggedEntry = true
       }
     }
+  }
+}
 
-    if ( !session.loggedEntry && thread.http != null ) {
-      Log.log( Event.Access, "ua" -> web.req.getHeader( "User-Agent" ) )
-      session.loggedEntry = true
+object TrackingCookie {
+
+  def get = {
+    val t = T
+
+    var token = T.web.req.cookieValue( B.trackingCookieName )
+    if ( token.isBlank ) {
+      token = org.tyranid.math.Base62.make( 10 )
+
+      val cookie = new javax.servlet.http.Cookie( B.trackingCookieName, token )
+      cookie.setMaxAge(60 * 60 * 24 * 365) // one year
+      cookie.setPath("/")
+      t.web.res.addCookie( cookie )
+    }
+
+    val u = t.user
+    val tokens = u.a_?( 'bids ).toSeq.of[String]
+
+    if ( !tokens.contains( token ) ) {
+      val list = ( tokens :+ token ).toMlist
+      u( 'bids ) = list
+      B.User.db.update( Mobj( "_id" -> u.id ), Mobj( $set -> Mobj( "bids" -> list ) ) )
+    }
+
+    token
+  }
+
+  def remove = T.web.res.deleteCookie( B.trackingCookieName )
+}
+
+object Accesslet extends Weblet {
+
+  def report = {
+
+    val browsers = mutable.Map[String,mutable.Set[Milestone]]()
+    val counts   = mutable.Map[Milestone,Int]( B.milestones.map( milestone => milestone -> 0 ):_* )
+
+    for ( al <- Log.db.find( Mobj( "e" -> Event.Access.id, "bid" -> Mobj( $exists -> true ) ) ).map( Log.apply ) ) {
+
+      val bid = al.s( 'bid )
+
+      val milestones = browsers.getOrElseUpdate( bid, mutable.Set() )
+
+      for ( milestone <- B.milestones ) {
+
+        if ( !milestones( milestone ) && milestone.satisfies( al ) ) {
+          milestones += milestone
+          counts( milestone ) += 1
+        }
+      }
+    }
+
+    <table class="dtable">
+     <thead>
+      <tr>
+       <th>Milestone</th><th>Count</th>
+      </tr>
+     </thead>
+     { for ( milestone <- B.milestones ) yield
+        <tr>
+         <td>{ milestone.name }</td>
+         <td>{ counts( milestone ) }</td>
+        </tr>
+     }
+    </table>
+  }
+
+  def handle( web:WebContext ) = {
+
+    if ( !T.user.isGod )
+      _404
+
+    rpath match {
+    case "/" =>
+      shell( report )
+
+    case _ =>
+      _404
     }
   }
 }
