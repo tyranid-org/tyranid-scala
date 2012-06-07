@@ -298,16 +298,6 @@ object DbPassword extends DbVarChar( 80 ) {
     ( ( scope:Scope ) => scope.s.filter( s => scope.saving && s.notBlank && s.length < 7 ).map( s => Invalid( scope, "Password too short (7 characters minimum)." ) ) ) ::
     super.validations
   
-  /*
-  override def extract( s:Scope, f:PathField ) {
-    val existing = s.s( f )
-    
-    if ( !commonExtract( s, f ) ) {
-      val v = fromString( T.web.s( f.id ) )._s
-      set( s, f, v.notBlank ? PasswordValue( v ) | null )
-    }
-  }
-  */
   override def extract( s:Scope, f:PathField ) {
     val existing = s.s( f )
     
