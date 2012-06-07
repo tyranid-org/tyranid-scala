@@ -102,9 +102,9 @@ object GroupMode extends RamEntity( tid = "a0Ot" ) with EnumEntity[GroupType] {
     t
   }
 
-  val Monitor   =     apply( 1, "Monitor" )
+  val Monitor   =     apply( 1, "Monitor"   )
   val Moderated     = apply( 2, "Moderated" )
-  val Collaborative = apply( 3, "Collaborative" )
+  val Collaborative = apply( 3, "Open"      )
 
   static( Monitor, Moderated, Collaborative )
 }
