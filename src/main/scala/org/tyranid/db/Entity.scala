@@ -37,15 +37,14 @@ trait AttributeAnnotation
 
 class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid {
 	var domain:Domain = null
-  var label:String = name.camelCaseToSpaceUpper
-  var help:NodeSeq = NodeSeq.Empty
-  var required:Boolean = false
-  var internal:Boolean = false
-  var owner:Boolean = false
+  var label = name.camelCaseToSpaceUpper
+  var help = NodeSeq.Empty
+  var required = false
+  var internal = false
+  var owner = false
   var search:Searchable = NoSearch
   var computation: ( Record ) => Any = null
-  var noVersion:Boolean = false
-
+  var noVersion = false
   
   override def toString = entity.name + "." + name
 

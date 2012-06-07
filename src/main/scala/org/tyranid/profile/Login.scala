@@ -331,6 +331,8 @@ The """ + B.applicationName + """ Team
     }
 
   def getUserByEmailPassword( email:String, pw:String ):User = {
+    import org.mindrot.jbcrypt.BCrypt
+    
     val sess = T.session
 
     if ( !validateEmail( email ) )
@@ -341,11 +343,15 @@ The """ + B.applicationName + """ Team
       return null
     }
 
-    val user = B.User( B.User.db.findOne(Mobj("email" -> ("^" + email.encRegex + "$").toPatternI, "password" -> pw ) ) )
-    if ( user == null )
-      sess.warn( "Invalid login.  Please try again." )
+    val users = B.User.db.find( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) ).toSeq
+    
+    for ( u <- users )
+      if ( BCrypt.checkpw( pw, u.s( 'password ) ) )
+        return B.User( u )
+    
+    sess.warn( "Invalid login.  Please try again." )
 
-    user
+    null
   }
 
   private def copySocialLogins( sessionUser:User, existingUser:User ) {

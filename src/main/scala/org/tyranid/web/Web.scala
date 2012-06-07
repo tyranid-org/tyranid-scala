@@ -155,6 +155,7 @@ class WebFilter extends Filter {
           web.res.sendRedirect( "/" )
         }
       case e:Exception =>
+        println( "GOT EXCEPTION: " + e.getMessage() )
         e.log
         web.template( <tyr:errorPage/> )
       }

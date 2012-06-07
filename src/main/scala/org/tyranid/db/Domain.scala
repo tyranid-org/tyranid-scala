@@ -275,7 +275,7 @@ case class DbUpperChar( len:Int ) extends LimitedText {
   override val uppercase = true
 }
 
-object DbPassword extends DbVarChar( 64 ) {
+object DbPassword extends DbVarChar( 80 ) {
 
   override def ui( s:Scope, f:PathField ) = {
     // Only specify the type of password if it is not specified   
@@ -297,6 +297,36 @@ object DbPassword extends DbVarChar( 64 ) {
       } ) ::
     ( ( scope:Scope ) => scope.s.filter( s => scope.saving && s.notBlank && s.length < 7 ).map( s => Invalid( scope, "Password too short (7 characters minimum)." ) ) ) ::
     super.validations
+  
+  /*
+  override def extract( s:Scope, f:PathField ) {
+    val existing = s.s( f )
+    
+    if ( !commonExtract( s, f ) ) {
+      val v = fromString( T.web.s( f.id ) )._s
+      set( s, f, v.notBlank ? PasswordValue( v ) | null )
+    }
+  }
+  */
+  override def extract( s:Scope, f:PathField ) {
+    val existing = s.s( f )
+    
+    if ( !commonExtract( s, f ) ) {
+      val v = fromString( T.web.s( f.id ) )._s
+
+      if ( v.notBlank ) {
+        import org.mindrot.jbcrypt.BCrypt
+        val salt = T.session.cache.getOrElseUpdate( "pw.salt", BCrypt.gensalt() )._s
+        val hashed = BCrypt.hashpw( v, salt )
+        
+        // Only set the value if it has changed.
+        if ( existing.isBlank || !BCrypt.checkpw( v, existing ) )
+          set( s, f, hashed )
+      } else {
+        remove( s, f )
+      }
+    }
+  }  
 }
 
 object DbUrl extends DbVarChar( 256 ) {

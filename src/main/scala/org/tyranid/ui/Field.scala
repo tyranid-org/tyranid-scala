@@ -44,6 +44,8 @@ trait Valuable {
 
   def get:Any
   def set( v:Any )
+  
+  def dbGet:Any = get
 }
 
 

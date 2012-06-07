@@ -134,10 +134,10 @@ object File {
         out.flush
         out.close
       } catch {
-      //case e if e.getClass.getSimpleName == "EofException" =>
-        //println( "*** Broken pipe" )
-      case e =>
-        e.log
+      case e if e.getClass.getSimpleName == "EofException" =>
+        println( "*** Broken pipe" )
+      case ex =>
+        ex.log
       }
     } else {
       throw new RuntimeException( "File not found." )
