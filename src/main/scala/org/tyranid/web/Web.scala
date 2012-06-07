@@ -99,7 +99,7 @@ class WebFilter extends Filter {
 
     if ( boot.requireSsl )
       web.req.getServerPort match {
-      case 80 | 8080 => return secureRedirect( web )
+      case 80 | 8080 => if ( request.getServerName.contains( B.domain ) ) return secureRedirect( web )
       case _ =>
       }
 
