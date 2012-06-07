@@ -166,6 +166,8 @@ case class DBCursorImp( cursor:DBCursor ) extends Iterator[DBObject] {
 
   def hasNext = cursor.hasNext
   def next = cursor.next
+  
+  override def toSeq = toIndexedSeq
 }
 
 trait DBValue {
