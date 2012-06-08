@@ -90,6 +90,8 @@ trait Bootable {
 
   val domain:String
   
+  val operatorIps = Seq[String]()
+
   // DEV assumes the DNS is in your hosts file
   lazy val website =
     if ( DEV )        "https://dev." + domain + ":8443"

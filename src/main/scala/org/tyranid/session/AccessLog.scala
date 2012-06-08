@@ -20,11 +20,16 @@ package org.tyranid.session
 import javax.servlet.http.HttpSession
 
 import scala.collection.mutable
+import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
+import org.tyranid.db.Scope
+import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.http.UserAgent
 import org.tyranid.log.Log
+import org.tyranid.report.{ Query, Report }
+import org.tyranid.ui.{ Checkbox, CustomField, Search }
 import org.tyranid.web.{ Weblet, WebContext }
 
 
@@ -98,33 +103,100 @@ object TrackingCookie {
 }
 
 
-case class Browser( bid:String, ua:UserAgent, milestones:mutable.Set[Milestone] = mutable.Set[Milestone]() )
+object ActivityQuery extends Query {
+
+  //def connections( run:Run ) =
+    //run.cache.getOrElseUpdate( "connections", Connection.db.find( Mobj( "from" -> Session().user.org.id ) ).toSeq ).asInstanceOf[Seq[DBObject]]
+
+  val entity = Log
+  val name = "activity"
+
+  override def newReport = {
+    var r = super.newReport
+    r.sort = Log.defaultSort
+    r
+  }
+
+  val fields = Seq(
+    new CustomField {
+      val name = "hideOperators$cst"
+      override val search = Search.Custom
+      override lazy val label = "Hide " + B.applicationName + " Users"
+      override def ui( s:Scope ) = Checkbox( id, s.rec.b( name ) )
+      override def extract( s:Scope ) = s.rec( name ) = T.web.b( id )
+    }
+  )
+
+  val defaultFields = dataFields.take( 5 )
+
+  override val searchForm =
+    ( r:Report ) => {
+      val s = Scope( r.searchRec )
+
+      <form method="post" action={ T.web.path } id="rSearchForm" style="padding-top:8px;">
+       <div class="fieldsc" style="margin-top:8px; padding:4px;">
+        <h3>Search By</h3>
+        { searchFields.map { f =>
+            <div class="fieldc">
+             <div class="labelc">{ f.labelUi }</div>
+             <div class="inputc">{ f.ui( s ) }</div>
+            </div>
+          }
+        }
+       </div>
+       <div class="btns">
+        <input type="submit" value="Search" class="go btn" name="saving"/>
+       </div>
+      </form>
+    }
+}
+
+case class Browser( bid:String, ua:UserAgent, milestones:mutable.Set[Milestone] = mutable.Set[Milestone](), var skip:Boolean = false )
 
 object Accesslet extends Weblet {
 
-  def report = {
+  def report:NodeSeq = {
+
+    ActivityQuery.init
+    val report = T.session.reportFor( ActivityQuery.name )
+
+    if ( T.web.s( 'saving ).notBlank )
+      report.extractSearchRec
+
+    val hideOperators = report.searchRec.b( 'hideOperators$cst )
 
     val browsers        = mutable.Map[String,Browser]()
     val milestoneCounts = mutable.Map[Milestone,Int]( B.milestones.map( milestone => milestone -> 0 ):_* )
 
-    for ( al <- Log.db.find( Mobj( "e" -> Event.Access.id, "bid" -> Mobj( $exists -> true ) ) ).map( Log.apply ) ) {
+    def skip( l:Log ) = {
+      hideOperators &&
+      B.operatorIps.contains( l.s( 'ip ) )
+    }
+
+    for ( al <- Log.db.find( Mobj( "e" -> Event.Access.id, "bid" -> Mobj( $exists -> true ) ) ).sort( Mobj( "on" -> -1 ) ).map( Log.apply );
+          if !skip( al ) ) {
 
       val bid = al.s( 'bid )
 
+
       val browser = browsers.getOrElseUpdate( bid, Browser( bid, al.ua.orNull ) )
 
-      for ( milestone <- B.milestones ) {
-
-        if ( !browser.milestones( milestone ) && milestone.satisfies( al ) ) {
-          browser.milestones += milestone
-          milestoneCounts( milestone ) += 1
-        }
+      val uid = al.oid( 'uid )
+      if ( hideOperators && uid != null && TidItem.by( B.User.idToTid( uid ) ).org == B.appOrgId ) {
+        browser.skip = true
+      } else {
+        for ( milestone <- B.milestones )
+          if ( !browser.milestones( milestone ) && milestone.satisfies( al ) )
+            browser.milestones += milestone
       }
     }
 
     val userAgents = mutable.Map[UserAgent,Int]()
 
-    for ( b <- browsers.values ) {
+    for ( b <- browsers.values if !b.skip ) {
+      for ( milestone <- b.milestones )
+        milestoneCounts( milestone ) += 1
+
       b.ua.updateIfNeeded
       if ( !userAgents.contains( b.ua ) )
         userAgents( b.ua ) = 1
@@ -134,6 +206,7 @@ object Accesslet extends Weblet {
 
     val total = milestoneCounts( B.milestones( 0 ) )
 
+    { ActivityQuery.searchForm( report ) } +:
     <div class="fieldhc">
      Milestones
     </div>
