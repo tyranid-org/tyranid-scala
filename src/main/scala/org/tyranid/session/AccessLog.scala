@@ -38,7 +38,7 @@ object AccessLog {
     if ( B.accessLogs ) {
       web.path match {
       case "/cometd" => // ignore
-      case p if p.endsWith( ".png" ) || p.endsWith( ".js" ) => // ignore
+      case p if p.endsWith( ".png" ) || p.endsWith( ".js" ) || p.endsWith( ".gif" ) => // ignore
       case p         =>
         Log.log( Event.Access,
                  "p"   -> p, 
@@ -132,20 +132,26 @@ object Accesslet extends Weblet {
         userAgents( b.ua ) += 1
     }
 
+    val total = milestoneCounts( B.milestones( 0 ) )
+
     <div class="fieldhc">
      Milestones
     </div>
     <table class="dtable">
      <thead>
       <tr>
-       <th>Milestone</th><th># Distinct Users</th>
+       <th>Milestone</th><th style="width:110px;"># Distinct Users</th><th style="width:50px;">%</th>
       </tr>
      </thead>
-     { for ( milestone <- B.milestones ) yield
+     { for ( milestone <- B.milestones ) yield {
+         val count = milestoneCounts( milestone )
+
         <tr>
          <td>{ milestone.name }</td>
-         <td>{ milestoneCounts( milestone ) }</td>
+         <td>{ count }</td>
+         <td>{ "%.0f%%".format( count._d * 100 / total ) }</td>
         </tr>
+      }
      }
     </table>
     <div class="fieldhc">
@@ -154,17 +160,22 @@ object Accesslet extends Weblet {
     <table class="dtable">
      <thead>
       <tr>
-       <th>Name</th><th>Version</th><th>OS</th><th>OS Version</th><th># Distinct Users</th>
+       <th style="width:26px; padding-left:0;"/><th>Name</th><th>Version</th><th>OS</th><th>OS Version</th><th style="width:110px;"># Distinct Users</th><th style="width:50px;">%</th>
       </tr>
      </thead>
-     { for ( ua <- userAgents.keys.toSeq.sortBy( _.s( 'agentName ) ) ) yield
+     { for ( ua <- userAgents.keys.toSeq.sortBy( _.s( 'agentName ) ) ) yield {
+         val count = userAgents( ua )
+
         <tr>
+         <td style="padding-left:0;">{ ua.eye }</td>
          <td>{ ua.s( 'agentName ) }</td>
          <td>{ ua.s( 'agentVersion ) }</td>
          <td>{ ua.s( 'osName ) }</td>
          <td>{ ua.s( 'osVersionNumber ) }</td>
-         <td>{ userAgents( ua ) }</td>
+         <td>{ count }</td>
+         <td>{ "%.0f%%".format( count._d * 100 / total ) }</td>
         </tr>
+      }
      }
     </table>
   }
