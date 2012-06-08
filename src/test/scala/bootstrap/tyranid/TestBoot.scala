@@ -25,6 +25,8 @@ class Boot extends org.tyranid.boot.Bootable {
     "sample" -> ( ( xml:NodeSeq ) => <p>Sample</p> ) ::
     Nil
 
+  val milestones = Seq()
+  
   // AWS
   override val awsCredentials = new com.amazonaws.auth.BasicAWSCredentials( "TODO", "TODO" )
   override val bucketSuffix   = ".volerro.com"
