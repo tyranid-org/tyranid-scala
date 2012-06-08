@@ -46,6 +46,7 @@ object EmailConfig extends MongoEntity( tid = "a0At" ) {
 
 
 object Email {
+  var enabled = B.PRODUCTION
 
   private val wellKnownProviders = Array(
     "@aol.com",
@@ -215,7 +216,11 @@ case class JavaEmail( subject:String, text:String, html:String=null ) extends Em
   @throws(classOf[MessagingException])
   def send:Email = {
     compose
-    Transport.send(message)
+    
+    if ( Email.enabled ) {
+      Transport.send(message)
+    }
+    
     this
   }
 

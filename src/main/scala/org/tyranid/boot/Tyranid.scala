@@ -24,6 +24,7 @@ import org.tyranid.db.DbBoolean
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.sms.SMS
+import org.tyranid.email.Email
 import org.tyranid.web.{ Weblet, WebContext }
 
 
@@ -63,6 +64,7 @@ object TyranidConfiglet extends Weblet {
     <a href={ wpath + "/reindex" } class="stop btn">Re-Index Search</a>
     <a href={ wpath + "/eye" } class={ user.b( 'eye ) ? "go btn" | "stop btn" }>Debug: { user.b( 'eye ) ? "ON" | "OFF" }</a>
     <a href={ wpath + "/sms" } class={ SMS.enabled ? "go btn" | "stop btn" }>SMS: { SMS.enabled ? "ON" | "OFF" }</a>
+    <a href={ wpath + "/email" } class={ Email.enabled ? "go btn" | "stop btn" }>Email: { Email.enabled ? "ON" | "OFF" }</a>
     <a href={ wpath + "/recaptcha" } class={ B.requireReCaptcha ? "go btn" | "stop btn" }>Recaptcha: { B.requireReCaptcha ? "ON" | "OFF" }</a>
     <a href={ wpath + "/accessLogs" } class={ B.accessLogs ? "go btn" | "stop btn" }>Access Logs: { B.accessLogs ? "ON" | "OFF" }</a>;
   }
@@ -91,6 +93,11 @@ object TyranidConfiglet extends Weblet {
     case "/sms" =>
       SMS.enabled = !SMS.enabled
       sess.notice( "SMS has been turned " + ( SMS.enabled ? "ON" | "OFF" ) + "." )
+      web.redirect( parent.wpath )
+    
+    case "/email" =>
+      Email.enabled = !Email.enabled
+      sess.notice( "Email has been turned " + ( Email.enabled ? "ON" | "OFF" ) + "." )
       web.redirect( parent.wpath )
     
     case "/recaptcha" =>

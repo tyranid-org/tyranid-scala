@@ -143,22 +143,24 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
     
     AWSEmail.throttle
     
-    try {
-      AWSEmail.client.sendEmail( request )
-    } catch {
-      case e:MessageRejectedException =>
-        e.logWith( "m" -> (
-            "| MessageRejectedException: " + e.getMessage() + "\n" +
-            "|  From: " + from.getAddress() + "\n" +
-            "|  Sent to: " + primaryRecipients.mkString( "," ) + "\n" +
-            "|  Reply to: " + ( if ( replyTo != null && replyTo != from ) replyTo.getAddress() else "" ) + "\n" +
-            "|  Subject: " + subject + "\n" +
-            "|  Text: " + text + "\n" +
-            "|  HTML: " + html )
-        )
-        
-        throw e
-    } 
+    if ( Email.enabled ) {
+      try {
+        AWSEmail.client.sendEmail( request )
+      } catch {
+        case e:MessageRejectedException =>
+          e.logWith( "m" -> (
+              "| MessageRejectedException: " + e.getMessage() + "\n" +
+              "|  From: " + from.getAddress() + "\n" +
+              "|  Sent to: " + primaryRecipients.mkString( "," ) + "\n" +
+              "|  Reply to: " + ( if ( replyTo != null && replyTo != from ) replyTo.getAddress() else "" ) + "\n" +
+              "|  Subject: " + subject + "\n" +
+              "|  Text: " + text + "\n" +
+              "|  HTML: " + html )
+          )
+          
+          throw e
+      }
+    }
     
     this
   }

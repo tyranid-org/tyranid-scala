@@ -179,9 +179,8 @@ $( function() {
         }
       }
 
-      web.template(
-        <tyr:shell>
-         <div style="margin-top:16px; font-size:24px;">Creating an account with Volerro is Free!</div>
+      def inner =
+         <div style="margin-top:16px; font-size:24px;">Creating an account with Volerro is Free!</div> ++
          <div class="plainBox">
           <div class="title">Use Social Login to Automatically Register</div>
           <div class="contents">
@@ -192,7 +191,7 @@ $( function() {
              network.loginButton( this ) }
            }</div>
           </div>
-         </div>
+         </div> ++
          <div class="plainBox">
           <div class="title">Manually Register</div>
           <div class="contents" style="height:570px;">
@@ -213,7 +212,14 @@ $( function() {
            </div>
           </div>
          </div>
-        </tyr:shell> )
+       
+      val entryApp = sess.cache.getOrElseUpdate( "entryApp", new java.lang.Integer( web.i( 'app ) ) )._i
+      
+      if ( entryApp == 0 ) {
+        web.template( <tyr:shell> { inner } </tyr:shell> )
+      } else {
+        web.template( <tyr:shellNoBar> { inner } </tyr:shellNoBar> )
+      }
 
     case "/resendActivation" =>
       import org.bson.types.ObjectId
