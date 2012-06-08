@@ -292,19 +292,23 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
   def canSee( member:Record ):Boolean = canSee( T.user, member )
 
   def canSee( user:User, member:Record ) =
-    mode match {
-    case GroupMode.Monitor =>
-      isOwner( user )
+    if ( isOwner( user ) ) {
+      true
+    } else {
+      mode match {
+      case GroupMode.Monitor =>
+        false
 
-    case GroupMode.Moderated =>
-      isMember( user ) &&
-      ( groupType match {
-        case GroupType.Org  => member.tid == user.tid || isOwner( member.tid ) || isOwner( user ) || member.tid == user.orgTid || B.Org.orgIdFor( member ) == user.orgId
-        case GroupType.User => member.tid == user.tid || isOwner( member.tid ) || isOwner( user )
-        } )
+      case GroupMode.Moderated =>
+        isMember( user ) &&
+        ( groupType match {
+          case GroupType.Org  => member.tid == user.tid || isOwner( member.tid ) || isOwner( user ) || member.tid == user.orgTid || B.Org.orgIdFor( member ) == user.orgId
+          case GroupType.User => member.tid == user.tid || isOwner( member.tid ) || isOwner( user )
+          } )
 
-    case GroupMode.Collaborative =>
-      isMember( user )
+      case GroupMode.Collaborative =>
+        isMember( user )
+      }
     }
 
   // "private" key
