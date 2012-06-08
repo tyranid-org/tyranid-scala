@@ -279,7 +279,7 @@ object LogQuery extends Query {
     PathField( "bid", search = Search.Equals ),
     new CustomField {
       def name = "agent"
-      override def cell( s:Scope ) = Text( s.rec.as[Log].ua.flatten( ua => ua.s( 'agentName ) + " " + ua.s( 'agentVersion ), "" ) )
+      override def cell( s:Scope ) = Text( s.rec.as[Log].ua.flatten( _.agent, "" ) )
     },
     new CustomField {
       def name = "agentName"
@@ -292,7 +292,7 @@ object LogQuery extends Query {
     new CustomField {
       def name = "os"
       override lazy val label = "OS"
-      override def cell( s:Scope ) = Text( s.rec.as[Log].ua.flatten( ua => ua.s( 'osName ) + ua.s( 'osVersionName ) + " " + ua.s( 'osVersionNumber ), "" ) )
+      override def cell( s:Scope ) = Text( s.rec.as[Log].ua.flatten( _.os, "" ) )
     }
   )
 

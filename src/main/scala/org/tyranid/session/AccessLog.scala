@@ -160,7 +160,7 @@ object Accesslet extends Weblet {
     <table class="dtable">
      <thead>
       <tr>
-       <th style="width:26px; padding-left:0;"/><th>Name</th><th>Version</th><th>OS</th><th>OS Version</th><th style="width:110px;"># Distinct Users</th><th style="width:50px;">%</th>
+       <th style="width:26px; padding-left:0;"/><th>Agent</th><th>OS</th><th style="width:110px;"># Distinct Users</th><th style="width:50px;">%</th>
       </tr>
      </thead>
      { for ( ua <- userAgents.keys.toSeq.sortBy( _.s( 'agentName ) ) ) yield {
@@ -168,10 +168,8 @@ object Accesslet extends Weblet {
 
         <tr>
          <td style="padding-left:0;">{ ua.eye }</td>
-         <td>{ ua.s( 'agentName ) }</td>
-         <td>{ ua.s( 'agentVersion ) }</td>
-         <td>{ ua.s( 'osName ) }</td>
-         <td>{ ua.s( 'osVersionNumber ) }</td>
+         <td>{ ua.agent }</td>
+         <td>{ ua.os }</td>
          <td>{ count }</td>
          <td>{ "%.0f%%".format( count._d * 100 / total ) }</td>
         </tr>
