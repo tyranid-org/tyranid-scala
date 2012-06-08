@@ -215,7 +215,10 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
   override lazy val defaultSort = Sort( "on", "On", "on" -> -1 )
 }
 
-class Log( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Log.makeView, obj, parent )
+class Log( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Log.makeView, obj, parent ) {
+
+  def ua = UserAgent.byId( get( 'ua ) )
+}
 
 
 object LogQuery extends Query {

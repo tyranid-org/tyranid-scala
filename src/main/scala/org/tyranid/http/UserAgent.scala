@@ -19,16 +19,54 @@ package org.tyranid.http
 
 import scala.collection.mutable
 
+import com.mongodb.DBObject
+
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbIntSerial }
+import org.tyranid.db.{ DbChar, DbIntSerial, DbUrl }
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.db.mongo.MongoEntity
+import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.db.meta.AutoIncrement
 
 
+/*
+ { "agent_type":"Browser",
+   "agent_name":"Opera",
+   "agent_version":"9.70",
+   "os_type":"Linux",
+   "os_name":"Linux",
+   "os_versionName":"",
+   "os_versionNumber":"",
+   "os_producer":"",
+   "os_producerURL":"",
+   "linux_distibution":"Null",
+   "agent_language":"English - United States",
+   "agent_languageTag":"en-us"
+ }
+
+*/
+
+
+
 object UserAgent extends MongoEntity( tid = "a0Dt" ) {
-  "_id"     is DbIntSerial   is 'id;
-  "ua"      is DbChar(256)   is 'label as "User Agent";
+  type RecType = UserAgent
+  override def convert( obj:DBObject, parent:MongoRecord ) = new UserAgent( obj, parent )
+
+
+  "_id"               is DbIntSerial   is 'id;
+  "ua"                is DbChar(256)   is 'label as "User Agent";
+
+  "agentType"         is DbChar(64)    ;
+  "agentName"         is DbChar(64)    ;
+  "agentVersion"      is DbChar(64)    ;
+  "osType"            is DbChar(64)    ;
+  "osName"            is DbChar(64)    ;
+  "osVersionName"     is DbChar(64)    ;
+  "osVersionNumber"   is DbChar(64)    ;
+  "osProducer"        is DbChar(64)    ;
+  "osProducerUrl"     is DbUrl         ;
+  "linuxDistribution" is DbChar(64)    ;
+  "agentLanguage"     is DbChar(64)    ;
+  "agentLanguageTag"  is DbChar(64)    ;
 
   private val idByUa = mutable.HashMap[String,Int]()
   private val uaById = mutable.HashMap[Int,String]()
@@ -54,6 +92,32 @@ object UserAgent extends MongoEntity( tid = "a0Dt" ) {
         to.i( "_id" )
       }
     } )
+  }
+}
+
+class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAgent.makeView, obj, parent ) {
+
+  def updateIfNeeded =
+    if ( !has( 'agentName ) )
+      update
+
+  def update = {
+    val json = ( "http://useragentstring.com?uas=" + s( 'ua ).encUrl + "&getJSON=all" ).GET().s.parseJsonObject
+
+    obj( 'agentType )         = json.s( 'agent_type )
+    obj( 'agentName )         = json.s( 'agent_name )
+    obj( 'agentVersion )      = json.s( 'agent_version )
+    obj( 'osType )            = json.s( 'os_type )
+    obj( 'osName )            = json.s( 'os_name )
+    obj( 'osVersionName )     = json.s( 'os_versionName )
+    obj( 'osVersionNumber )   = json.s( 'os_versionNumber )
+    obj( 'osProducer )        = json.s( 'os_producer )
+    obj( 'osProducerUrl )     = json.s( 'os_producerURL )
+    obj( 'linuxDistribution ) = json.s( 'linux_distribution )
+    obj( 'agentLanguage )     = json.s( 'agent_language )
+    obj( 'agentLanguageTag )  = json.s( 'agent_languageTag )
+
+    save
   }
 }
 

@@ -23,6 +23,7 @@ import scala.collection.mutable
 
 import org.tyranid.Imp._
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.http.UserAgent
 import org.tyranid.log.Log
 import org.tyranid.web.{ Weblet, WebContext }
 
@@ -96,38 +97,71 @@ object TrackingCookie {
   def remove = T.web.res.deleteCookie( B.trackingCookieName )
 }
 
+
+case class Browser( bid:String, ua:UserAgent, milestones:mutable.Set[Milestone] = mutable.Set[Milestone]() )
+
 object Accesslet extends Weblet {
 
   def report = {
 
-    val browsers = mutable.Map[String,mutable.Set[Milestone]]()
-    val counts   = mutable.Map[Milestone,Int]( B.milestones.map( milestone => milestone -> 0 ):_* )
+    val browsers        = mutable.Map[String,Browser]()
+    val milestoneCounts = mutable.Map[Milestone,Int]( B.milestones.map( milestone => milestone -> 0 ):_* )
 
     for ( al <- Log.db.find( Mobj( "e" -> Event.Access.id, "bid" -> Mobj( $exists -> true ) ) ).map( Log.apply ) ) {
 
       val bid = al.s( 'bid )
 
-      val milestones = browsers.getOrElseUpdate( bid, mutable.Set() )
+      val browser = browsers.getOrElseUpdate( bid, Browser( bid, al.ua.orNull ) )
 
       for ( milestone <- B.milestones ) {
 
-        if ( !milestones( milestone ) && milestone.satisfies( al ) ) {
-          milestones += milestone
-          counts( milestone ) += 1
+        if ( !browser.milestones( milestone ) && milestone.satisfies( al ) ) {
+          browser.milestones += milestone
+          milestoneCounts( milestone ) += 1
         }
       }
     }
 
+    val userAgents = mutable.Map[UserAgent,Int]()
+
+    for ( b <- browsers.values ) {
+      b.ua.updateIfNeeded
+      if ( !userAgents.contains( b.ua ) )
+        userAgents( b.ua ) = 1
+      else
+        userAgents( b.ua ) += 1
+    }
+
+    <div class="fieldhc">
+     Milestones
+    </div>
     <table class="dtable">
      <thead>
       <tr>
-       <th>Milestone</th><th>Count</th>
+       <th>Milestone</th><th># Distinct Users</th>
       </tr>
      </thead>
      { for ( milestone <- B.milestones ) yield
         <tr>
          <td>{ milestone.name }</td>
-         <td>{ counts( milestone ) }</td>
+         <td>{ milestoneCounts( milestone ) }</td>
+        </tr>
+     }
+    </table>
+    <div class="fieldhc">
+     User Agents
+    </div>
+    <table class="dtable">
+     <thead>
+      <tr>
+       <th>Name</th><th>Version</th><th># Distinct Users</th>
+      </tr>
+     </thead>
+     { for ( ua <- userAgents.keys.toSeq.sortBy( _.s( 'agentName ) ) ) yield
+        <tr>
+         <td>{ ua.s( 'agentName ) }</td>
+         <td>{ ua.s( 'agentVersion ) }</td>
+         <td>{ userAgents( ua ) }</td>
         </tr>
      }
     </table>
