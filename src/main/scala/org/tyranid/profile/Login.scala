@@ -179,8 +179,13 @@ $( function() {
         }
       }
 
+      val entryApp = sess.cache.getOrElseUpdate( "entryApp", new java.lang.Integer( web.i( 'app ) ) )._i
+      
+      //val title = ( entryApp == 0 ) ? "Creating an account with Volerro is Free!" | Application.by
+      val title = "Creating an account with Volerro is Free!"
+        
       def inner =
-         <div style="margin-top:16px; font-size:24px;">Creating an account with Volerro is Free!</div> ++
+         <div style="margin-top:16px; font-size:24px;">{ title } </div> ++
          <div class="plainBox">
           <div class="title">Use Social Login to Automatically Register</div>
           <div class="contents">
@@ -213,7 +218,6 @@ $( function() {
           </div>
          </div>
        
-      val entryApp = sess.cache.getOrElseUpdate( "entryApp", new java.lang.Integer( web.i( 'app ) ) )._i
       
       if ( entryApp == 0 ) {
         web.template( <tyr:shell> { inner } </tyr:shell> )
