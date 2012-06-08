@@ -121,7 +121,7 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
   }
 
   def agent = s( 'agentName ) + " " + s( 'agentVersion )
-  def os    = s( 'osName ) + s( 'osVersionName ) + " " + s( 'osVersionNumber )
+  def os    = s( 'osName ) + " " + s( 'osVersionName ) + " " + s( 'osVersionNumber )
 }
 
 
