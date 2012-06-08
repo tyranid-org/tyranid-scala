@@ -154,13 +154,15 @@ object Accesslet extends Weblet {
     <table class="dtable">
      <thead>
       <tr>
-       <th>Name</th><th>Version</th><th># Distinct Users</th>
+       <th>Name</th><th>Version</th><th>OS</th><th>OS Version</th><th># Distinct Users</th>
       </tr>
      </thead>
      { for ( ua <- userAgents.keys.toSeq.sortBy( _.s( 'agentName ) ) ) yield
         <tr>
          <td>{ ua.s( 'agentName ) }</td>
          <td>{ ua.s( 'agentVersion ) }</td>
+         <td>{ ua.s( 'osName ) }</td>
+         <td>{ ua.s( 'osVersionNumber ) }</td>
          <td>{ userAgents( ua ) }</td>
         </tr>
      }
