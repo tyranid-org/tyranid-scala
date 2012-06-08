@@ -84,11 +84,11 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
   "du"       is DbLong            as "Duration in MS";
   "ct"       is DbInt             as "Count";
   "ex"       is DbText            as "Stack Trace";
-  "sid"      is DbChar(64)        as "Session";
+  "sid"      is DbChar(64)        as "Session ID";
   "ua"       is DbLink(UserAgent) as "User Agent";
   "ip"       is DbChar(32)        as "IP";
   "p"        is DbChar(128)       as "Path";
-  "bid"      is DbChar(10)        as "Browser";
+  "bid"      is DbChar(10)        as "Browser ID";
 
   override def init = {
     super.init
@@ -276,7 +276,24 @@ object LogQuery extends Query {
     PathField( "ct",  search = Search.Gte ),
     PathField( "du",  search = Search.Gte ),
     PathField( "p",   search = Search.Subst ),
-    PathField( "bid", search = Search.Equals )
+    PathField( "bid", search = Search.Equals ),
+    new CustomField {
+      def name = "agent"
+      override def cell( s:Scope ) = Text( s.rec.as[Log].ua.flatten( ua => ua.s( 'agentName ) + " " + ua.s( 'agentVersion ), "" ) )
+    },
+    new CustomField {
+      def name = "agentName"
+      override def cell( s:Scope ) = Text( s.rec.as[Log].ua.flatten( _.s( 'agentName ), "" ) )
+    },
+    new CustomField {
+      def name = "agentVersion"
+      override def cell( s:Scope ) = Text( s.rec.as[Log].ua.flatten( _.s( 'agentVersion ), "" ) )
+    },
+    new CustomField {
+      def name = "os"
+      override lazy val label = "OS"
+      override def cell( s:Scope ) = Text( s.rec.as[Log].ua.flatten( ua => ua.s( 'osName ) + ua.s( 'osVersionName ) + " " + ua.s( 'osVersionNumber ), "" ) )
+    }
   )
 
   val defaultFields = dataFields.take( 5 )
