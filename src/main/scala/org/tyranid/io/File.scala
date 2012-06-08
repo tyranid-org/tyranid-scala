@@ -109,7 +109,6 @@ object File {
   }
 
   def download( web:WebContext, bucket:S3Bucket, key:String, fileName:String ) {
-    spam( "bucket:" + bucket + " key:" + key )
     val obj = S3.getObject( bucket, key )
   
     if ( obj != null ) {
@@ -138,6 +137,8 @@ object File {
         println( "*** Broken pipe" )
       case ex =>
         ex.log
+      } finally {
+        in.close
       }
     } else {
       throw new RuntimeException( "File not found." )

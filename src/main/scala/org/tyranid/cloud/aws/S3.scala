@@ -119,6 +119,7 @@ object S3 {
   }
   
   def getObject( bucket:S3Bucket, key:String ) = s3.getObject( new GetObjectRequest( bucket.name, key ) )
+  def getObjectMetadata( bucket:S3Bucket, key:String ) = s3.getObjectMetadata( bucket.name, key )
 
   def storeUrl( bucket:S3Bucket, urlStr:String, path:String ) = {
     val url = new java.net.URL( urlStr )
