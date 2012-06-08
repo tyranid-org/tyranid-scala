@@ -181,11 +181,8 @@ $( function() {
 
       val entryApp = sess.cache.getOrElseUpdate( "entryApp", new java.lang.Integer( web.i( 'app ) ) )._i
       
-      //val title = ( entryApp == 0 ) ? "Creating an account with Volerro is Free!" | Application.by
-      val title = "Creating an account with Volerro is Free!"
-        
-      def inner =
-         <div style="margin-top:16px; font-size:24px;">{ title } </div> ++
+      web.template( 
+        <tyr:shellApp>
          <div class="plainBox">
           <div class="title">Use Social Login to Automatically Register</div>
           <div class="contents">
@@ -196,7 +193,7 @@ $( function() {
              network.loginButton( this ) }
            }</div>
           </div>
-         </div> ++
+         </div>
          <div class="plainBox">
           <div class="title">Manually Register</div>
           <div class="contents" style="height:570px;">
@@ -217,13 +214,7 @@ $( function() {
            </div>
           </div>
          </div>
-       
-      
-      if ( entryApp == 0 ) {
-        web.template( <tyr:shell> { inner } </tyr:shell> )
-      } else {
-        web.template( <tyr:shellNoBar> { inner } </tyr:shellNoBar> )
-      }
+        </tyr:shellApp> )
 
     case "/resendActivation" =>
       import org.bson.types.ObjectId
