@@ -28,6 +28,7 @@ import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.http.UserAgent
 import org.tyranid.log.Log
+import org.tyranid.net.DnsDomain
 import org.tyranid.report.{ Query, Report }
 import org.tyranid.ui.{ Checkbox, CustomField, Search }
 import org.tyranid.web.{ Weblet, WebContext }
@@ -48,7 +49,9 @@ object AccessLog {
         Log.log( Event.Access,
                  "p"   -> p, 
                  "bid" -> TrackingCookie.get,
-                 "ua"  -> web.req.getHeader( "User-Agent" ) )
+                 "ua"  -> web.req.getHeader( "User-Agent" ),
+                 "d"   -> DnsDomain.idFor( web.req.getServerName.stripPrefix( "www." ) )
+               )
       }
 
     } else {
@@ -262,7 +265,7 @@ object Accesslet extends Weblet {
     <table class="dtable">
      <thead>
       <tr>
-       <th style="width:26px; padding-left:0;"/><th>Agent</th><th style="width:110px;"># Distinct Users</th><th style="width:50px;">%</th>
+       <th style="width:26px; padding-left:0;"/><th>Agent</th><th style="width:110px;"># Distinct Bots</th><th style="width:50px;">%</th>
       </tr>
      </thead>
      { for ( ua <- userAgents.keys.filter( _.bot ).toSeq.sortBy( _.s( 'agentName ) ) ) yield {

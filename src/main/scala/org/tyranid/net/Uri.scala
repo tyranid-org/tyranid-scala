@@ -17,7 +17,15 @@
 
 package org.tyranid.net
 
+import scala.collection.mutable
+
+import com.mongodb.DBObject
+
 import org.tyranid.Imp._
+import org.tyranid.db.{ DbChar, DbIntSerial }
+import org.tyranid.db.meta.AutoIncrement
+import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 
 
 object Uri {
@@ -101,4 +109,42 @@ object Uri {
       return null
     }
 }
+
+
+object DnsDomain extends MongoEntity( tid = "a0Pt" ) {
+  type RecType = DnsDomain
+  override def convert( obj:DBObject, parent:MongoRecord ) = new DnsDomain( obj, parent )
+
+
+  "_id"               is DbIntSerial   is 'id;
+  "domain"            is DbChar(256)   is 'label as "User Agent";
+
+  private val idByDomain = mutable.HashMap[String,Int]()
+  private val domainById = mutable.HashMap[Int,String]()
+
+  def domainFor( id:Int ) = synchronized {
+    domainById.getOrElseUpdate( id, {
+      db.findOne( Mobj( "_id" -> id ) ) match {
+      case null => "unknown"
+      case to   => to.s( "ua" )
+      }
+    } )
+  }
+
+  def idFor( domain:String ) = synchronized {
+    idByDomain.getOrElseUpdate( domain, {
+      db.findOne( Mobj( "domain" -> domain ) ) match {
+      case null =>
+        val id = AutoIncrement( "dnsDomain" )
+        db.save( Mobj( "_id" -> id, "domain" -> domain ) )
+        id
+
+      case to =>
+        to.i( "_id" )
+      }
+    } )
+  }
+}
+
+class DnsDomain( obj:DBObject, parent:MongoRecord ) extends MongoRecord( DnsDomain.makeView, obj, parent )
 
