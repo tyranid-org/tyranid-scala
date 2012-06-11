@@ -86,7 +86,7 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
   "ct"       is DbInt             as "Count";
   "ex"       is DbText            as "Stack Trace";
   "sid"      is DbChar(64)        as "Session ID";
-  "d"        is DbLink(DnsDomain) as "DNS Domain";
+  "d"        is DbLink(DnsDomain) as "Domain";
   "ua"       is DbLink(UserAgent) as "User Agent";
   "ip"       is DbChar(32)        as "IP";
   "p"        is DbChar(128)       as "Path";

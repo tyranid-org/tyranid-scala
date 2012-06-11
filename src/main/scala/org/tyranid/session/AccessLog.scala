@@ -26,11 +26,12 @@ import org.tyranid.Imp._
 import org.tyranid.db.Scope
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.mongo.MongoRecord
 import org.tyranid.http.UserAgent
 import org.tyranid.log.Log
 import org.tyranid.net.DnsDomain
 import org.tyranid.report.{ Query, Report }
-import org.tyranid.ui.{ Checkbox, CustomField, Search }
+import org.tyranid.ui.{ Checkbox, CustomField, PathField, Search }
 import org.tyranid.web.{ Weblet, WebContext }
 
 
@@ -127,7 +128,8 @@ object ActivityQuery extends Query {
       override lazy val label = "Hide " + B.applicationName + " Users"
       override def ui( s:Scope ) = Checkbox( id, s.rec.b( name ) )
       override def extract( s:Scope ) = s.rec( name ) = T.web.b( id )
-    }
+    },
+    PathField( "d", search = Search.Equals )
   )
 
   val defaultFields = dataFields.take( 5 )
@@ -167,6 +169,8 @@ object Accesslet extends Weblet {
       report.extractSearchRec
 
     val hideOperators = report.searchRec.b( 'hideOperators$cst )
+    val domain        = report.searchRec( 'd )
+spam( "searchRec=" + report.searchRec.as[MongoRecord].obj )
 
     val browsers        = mutable.Map[String,Browser]()
     val milestoneCounts = mutable.Map[Milestone,Int]( B.milestones.map( milestone => milestone -> 0 ):_* )
@@ -176,7 +180,12 @@ object Accesslet extends Weblet {
        || (   hideOperators
            && B.operatorIps.contains( l.s( 'ip ) ) ) )
 
-    for ( al <- Log.db.find( Mobj( "e" -> Event.Access.id, "bid" -> Mobj( $exists -> true ) ) ).sort( Mobj( "on" -> -1 ) ).map( Log.apply );
+    val query =  Mobj( "e" -> Event.Access.id, "bid" -> Mobj( $exists -> true ) )
+    if ( domain != null )
+      query( "d" ) = domain
+spam( "query=" + query )
+
+    for ( al <- Log.db.find( query ).sort( Mobj( "on" -> -1 ) ).map( Log.apply );
           if !skip( al ) ) {
 
       val bid = al.s( 'bid )
