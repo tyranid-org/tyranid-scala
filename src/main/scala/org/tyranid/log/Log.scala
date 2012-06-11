@@ -33,6 +33,7 @@ import org.tyranid.db.ram.RamEntity
 import org.tyranid.db.tuple.Tuple
 import org.tyranid.email.AWSEmail
 import org.tyranid.http.UserAgent
+import org.tyranid.net.DnsDomain
 import org.tyranid.report.{ Query, Run, Sort }
 import org.tyranid.ui.{ CustomField, PathField, Search }
 import org.tyranid.web.{ Weblet, WebContext }
@@ -85,6 +86,7 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
   "ct"       is DbInt             as "Count";
   "ex"       is DbText            as "Stack Trace";
   "sid"      is DbChar(64)        as "Session ID";
+  "d"        is DbLink(DnsDomain) as "DNS Domain";
   "ua"       is DbLink(UserAgent) as "User Agent";
   "ip"       is DbChar(32)        as "IP";
   "p"        is DbChar(128)       as "Path";
@@ -271,6 +273,7 @@ object LogQuery extends Query {
           } )
       }
     },
+    PathField( "d",   search = Search.Equals ),
     PathField( "ip",  search = Search.Subst ),
     PathField( "ex",  search = Search.Subst ),
     PathField( "ct",  search = Search.Gte ),
