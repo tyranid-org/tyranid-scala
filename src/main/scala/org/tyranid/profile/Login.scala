@@ -116,7 +116,7 @@ $( function() {
         else if ( email.isBlank )
           sess.warn( "Please log in." )
 
-        web.redirect(redirect.isBlank ? "/" | ("/?l=" + redirect.encUrl))
+        web.redirect(redirect.isBlank ? B.website | ( B.website+"/?l=" + redirect.encUrl ) )
       } else {
         copySocialLogins( sessionUser = sess.user, existingUser = user )
         sess.login( user )
@@ -127,7 +127,7 @@ $( function() {
         if ( web.req.b( 'save ) )
           LoginCookie.set(user)
 
-        web.redirect(redirect.isBlank ? "/" | redirect)
+        web.redirect(redirect.isBlank ? B.website | redirect)
       }
 
     case "/clear" =>
@@ -135,7 +135,7 @@ $( function() {
       web.res.html( NodeSeq.Empty )
     case "/out" =>
       sess.logout
-      web.redirect( "/?lo=1" )
+      web.redirect( B.website + "/?lo=1" )
 
     case s if s.startsWith( "/in" ) =>
       socialLogin( s.substring( 3 ) )
@@ -384,10 +384,10 @@ The """ + B.applicationName + """ Team
     for ( app <- networks;
           uid = suser.s( app.idName );
           if uid.notBlank ) {
-      val user = B.User( B.User.db.findOne( Mobj( app.idName -> uid ) ) )
+      val user = B.User.db.findOne( Mobj( app.idName -> uid ) ) 
 
       if ( user != null )
-        return user
+        return B.User( user )
     }
 
     null
@@ -408,7 +408,7 @@ The """ + B.applicationName + """ Team
     val sess = T.session
 
     if ( !Social.appFor( network ).exchangeToken )
-      T.web.redirect( "/" )
+      T.web.redirect( B.website )
 
     val user = findUser( network )
 
@@ -420,7 +420,7 @@ The """ + B.applicationName + """ Team
       copySocialLogins( sess.user, user )
       sess.login( user )
       LoginCookie.set( user )
-      T.web.redirect( "/" )
+      T.web.redirect( B.website )
     }
   }
 
