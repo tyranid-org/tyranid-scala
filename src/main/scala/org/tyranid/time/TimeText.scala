@@ -789,9 +789,6 @@ class TimeParser {
     dv.set( year, month, dayOfMonth, hour, minute, second )
     dv.set( Calendar.MILLISECOND, milli )
 
-    if ( tzOffsetMin != 0 )
-      dv.add( Calendar.MINUTE, tzOffsetMin )
-
 		if ( rollDaysNeeded != 0 && dayOfWeek == 0 )
 			dv.add( Calendar.DAY_OF_MONTH, rollDaysNeeded )
 		
@@ -804,6 +801,9 @@ class TimeParser {
 						   + " was specified but that date is on a "
 					     + Time.WeekDayNames( dv.get( Calendar.DAY_OF_WEEK ) - 1 ).capitalize + "." )
 		}
+
+    if ( tzOffsetMin != 0 )
+      dv.add( Calendar.MINUTE, tzOffsetMin )
 
     dv
 	}

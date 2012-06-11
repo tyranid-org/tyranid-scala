@@ -168,10 +168,10 @@ object Accesslet extends Weblet {
     val browsers        = mutable.Map[String,Browser]()
     val milestoneCounts = mutable.Map[Milestone,Int]( B.milestones.map( milestone => milestone -> 0 ):_* )
 
-    def skip( l:Log ) = {
-      hideOperators &&
-      B.operatorIps.contains( l.s( 'ip ) )
-    }
+    def skip( l:Log ) =
+      (   l.ua.orNull == null
+       || (   hideOperators
+           && B.operatorIps.contains( l.s( 'ip ) ) ) )
 
     for ( al <- Log.db.find( Mobj( "e" -> Event.Access.id, "bid" -> Mobj( $exists -> true ) ) ).sort( Mobj( "on" -> -1 ) ).map( Log.apply );
           if !skip( al ) ) {
@@ -179,7 +179,7 @@ object Accesslet extends Weblet {
       val bid = al.s( 'bid )
 
 
-      val browser = browsers.getOrElseUpdate( bid, Browser( bid, al.ua.orNull ) )
+      val browser = browsers.getOrElseUpdate( bid, Browser( bid, al.ua.get ) )
 
       val uid = al.oid( 'uid )
       if ( hideOperators && uid != null && TidItem.by( B.User.idToTid( uid ) ).org == B.appOrgId ) {
@@ -228,7 +228,7 @@ object Accesslet extends Weblet {
      }
     </table>
     <div class="fieldhc">
-     User Agents
+     Browsers
     </div>
     <table class="dtable">
      <thead>
@@ -236,7 +236,29 @@ object Accesslet extends Weblet {
        <th style="width:26px; padding-left:0;"/><th>Agent</th><th>OS</th><th style="width:110px;"># Distinct Users</th><th style="width:50px;">%</th>
       </tr>
      </thead>
-     { for ( ua <- userAgents.keys.toSeq.sortBy( _.s( 'agentName ) ) ) yield {
+     { for ( ua <- userAgents.keys.filter( !_.bot ).toSeq.sortBy( _.s( 'agentName ) ) ) yield {
+         val count = userAgents( ua )
+
+        <tr>
+         <td style="padding-left:0;">{ ua.eye }</td>
+         <td>{ ua.agent }</td>
+         <td>{ ua.os }</td>
+         <td>{ count }</td>
+         <td>{ "%.0f%%".format( count._d * 100 / total ) }</td>
+        </tr>
+      }
+     }
+    </table>
+    <div class="fieldhc">
+     Bots
+    </div>
+    <table class="dtable">
+     <thead>
+      <tr>
+       <th style="width:26px; padding-left:0;"/><th>Agent</th><th>OS</th><th style="width:110px;"># Distinct Users</th><th style="width:50px;">%</th>
+      </tr>
+     </thead>
+     { for ( ua <- userAgents.keys.filter( _.bot ).toSeq.sortBy( _.s( 'agentName ) ) ) yield {
          val count = userAgents( ua )
 
         <tr>

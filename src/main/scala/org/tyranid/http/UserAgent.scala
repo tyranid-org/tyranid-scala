@@ -22,7 +22,7 @@ import scala.collection.mutable
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbIntSerial, DbUrl }
+import org.tyranid.db.{ DbBoolean, DbChar, DbIntSerial, DbUrl }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.db.meta.AutoIncrement
@@ -45,8 +45,6 @@ import org.tyranid.db.meta.AutoIncrement
 
 */
 
-
-
 object UserAgent extends MongoEntity( tid = "a0Dt" ) {
   type RecType = UserAgent
   override def convert( obj:DBObject, parent:MongoRecord ) = new UserAgent( obj, parent )
@@ -54,6 +52,7 @@ object UserAgent extends MongoEntity( tid = "a0Dt" ) {
 
   "_id"               is DbIntSerial   is 'id;
   "ua"                is DbChar(256)   is 'label as "User Agent";
+  "bot"               is DbBoolean     ;
 
   "agentType"         is DbChar(64)    ;
   "agentName"         is DbChar(64)    ;
@@ -102,10 +101,22 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
       update
 
   def update = {
-    val json = ( "http://useragentstring.com?uas=" + s( 'ua ).encUrl + "&getJSON=all" ).GET().s.parseJsonObject
+    val ua = s( 'ua )
+    val json = ( "http://useragentstring.com?uas=" + ua.encUrl + "&getJSON=all" ).GET().s.parseJsonObject
+
+    var agentName = json.s( 'agent_name )
+
+    if ( agentName == "unknown" ) {
+      if      ( ua startsWith "LinkedInBot" )
+        agentName = "LinkedInBot"
+      else if ( ua startsWith "Jakarta Commons" )
+        agentName = "Jakarta Commons"
+      else if ( ua startsWith "ZmEu" )
+        agentName = "ZmEu"
+    }
 
     obj( 'agentType )         = json.s( 'agent_type )
-    obj( 'agentName )         = json.s( 'agent_name )
+    obj( 'agentName )         = agentName
     obj( 'agentVersion )      = json.s( 'agent_version )
     obj( 'osType )            = json.s( 'os_type )
     obj( 'osName )            = json.s( 'os_name )
@@ -117,10 +128,28 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
     obj( 'agentLanguage )     = json.s( 'agent_language )
     obj( 'agentLanguageTag )  = json.s( 'agent_languageTag )
 
+    obj.remove( 'bot )
+    if ( agentName match {
+         case "Bingbot"
+            | "FeedFetcher-Google"
+            | "Googlebot"
+            | "Jakarta Commons"
+            | "Java"
+            | "LinkedInBot"
+            | "Python-urllib"
+            | "webcollage"
+            | "YandexBot"
+            | "ZmEu"               => true
+         case _                    => false } )
+      obj( 'bot ) = true
+
     save
   }
 
-  def agent = s( 'agentName ) + " " + s( 'agentVersion )
+  def bot = b( 'bot )
+
+  def agentName = s( 'agentName )
+  def agent = agentName + " " + s( 'agentVersion )
   def os    = s( 'osName ) + " " + s( 'osVersionName ) + " " + s( 'osVersionNumber )
 }
 
