@@ -197,11 +197,16 @@ object Accesslet extends Weblet {
       for ( milestone <- b.milestones )
         milestoneCounts( milestone ) += 1
 
-      b.ua.updateIfNeeded
-      if ( !userAgents.contains( b.ua ) )
-        userAgents( b.ua ) = 1
-      else
-        userAgents( b.ua ) += 1
+      val ua = b.ua
+      
+      if ( ua != null ) {
+        ua.updateIfNeeded
+        
+        if ( !userAgents.contains( ua ) )
+          userAgents( ua ) = 1
+        else
+          userAgents( ua ) += 1
+      }
     }
 
     val total = milestoneCounts( B.milestones( 0 ) )
