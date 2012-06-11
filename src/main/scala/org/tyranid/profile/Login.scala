@@ -340,23 +340,25 @@ The """ + B.applicationName + """ Team
     }
 
   def getUserByEmailPassword( email:String, pw:String ):User = {
-    import org.mindrot.jbcrypt.BCrypt
-    
     val sess = T.session
-
-    if ( !validateEmail( email ) )
-      return null
-
-    if ( pw.isBlank ) {
-      sess.warn( "Please enter in a password." )
-      return null
+  
+    if ( email.notBlank && pw.notBlank ) {
+      import org.mindrot.jbcrypt.BCrypt
+      
+      if ( !validateEmail( email ) )
+        return null
+  
+      if ( pw.isBlank ) {
+        sess.warn( "Please enter in a password." )
+        return null
+      }
+  
+      val users = B.User.db.find( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) ).toSeq
+      
+      for ( u <- users; dbPw = u.s( 'password ) )
+        if ( dbPw.notBlank && BCrypt.checkpw( pw, dbPw ) )
+          return B.User( u )
     }
-
-    val users = B.User.db.find( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) ).toSeq
-    
-    for ( u <- users )
-      if ( BCrypt.checkpw( pw, u.s( 'password ) ) )
-        return B.User( u )
     
     sess.warn( "Invalid login.  Please try again." )
 
