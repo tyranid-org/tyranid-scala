@@ -186,7 +186,7 @@ object Accesslet extends Weblet {
         browser.skip = true
       } else {
         for ( milestone <- B.milestones )
-          if ( !browser.milestones( milestone ) && milestone.satisfies( al ) )
+          if ( !browser.ua.bot && !browser.milestones( milestone ) && milestone.satisfies( al ) )
             browser.milestones += milestone
       }
     }
@@ -209,7 +209,9 @@ object Accesslet extends Weblet {
       }
     }
 
-    val total = milestoneCounts( B.milestones( 0 ) )
+    val totalUsers = milestoneCounts( B.milestones( 0 ) )
+    val totalBots  = browsers.values.count( _.ua.bot )
+
 
     { ActivityQuery.searchForm( report ) } +:
     <div class="fieldhc">
@@ -227,7 +229,7 @@ object Accesslet extends Weblet {
         <tr>
          <td>{ milestone.name }</td>
          <td>{ count }</td>
-         <td>{ "%.0f%%".format( count._d * 100 / total ) }</td>
+         <td>{ "%.0f%%".format( count._d * 100 / totalUsers ) }</td>
         </tr>
       }
      }
@@ -249,7 +251,7 @@ object Accesslet extends Weblet {
          <td>{ ua.agent }</td>
          <td>{ ua.os }</td>
          <td>{ count }</td>
-         <td>{ "%.0f%%".format( count._d * 100 / total ) }</td>
+         <td>{ "%.0f%%".format( count._d * 100 / totalUsers ) }</td>
         </tr>
       }
      }
@@ -260,7 +262,7 @@ object Accesslet extends Weblet {
     <table class="dtable">
      <thead>
       <tr>
-       <th style="width:26px; padding-left:0;"/><th>Agent</th><th>OS</th><th style="width:110px;"># Distinct Users</th><th style="width:50px;">%</th>
+       <th style="width:26px; padding-left:0;"/><th>Agent</th><th style="width:110px;"># Distinct Users</th><th style="width:50px;">%</th>
       </tr>
      </thead>
      { for ( ua <- userAgents.keys.filter( _.bot ).toSeq.sortBy( _.s( 'agentName ) ) ) yield {
@@ -269,9 +271,8 @@ object Accesslet extends Weblet {
         <tr>
          <td style="padding-left:0;">{ ua.eye }</td>
          <td>{ ua.agent }</td>
-         <td>{ ua.os }</td>
          <td>{ count }</td>
-         <td>{ "%.0f%%".format( count._d * 100 / total ) }</td>
+         <td>{ "%.0f%%".format( count._d * 100 / totalBots ) }</td>
         </tr>
       }
      }
