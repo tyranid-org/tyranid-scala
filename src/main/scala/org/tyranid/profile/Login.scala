@@ -155,10 +155,10 @@ $( function() {
       sess.user = user
 
       user.extraVaValidations =
-        ( user.view('email),
+        ( user.view( 'email ),
           { scope:Scope =>
-            B.User.db.exists(Mobj("email" -> user.s('email))) |*
-              Some(Invalid(scope.at('email), "The \"" + user.s( 'email ) + "\" email address is already taken."))
+            B.User.db.exists( Mobj( "email" -> user.s( 'email ) ) ) |*
+              Some( Invalid( scope.at( 'email ), "The \"" + user.s( 'email ) + "\" email address is already taken.") )
           } ) ::
           Nil
 
@@ -171,18 +171,25 @@ $( function() {
         val invalids = Scope(user, initialDraw = false, captcha = true).submit( user, ui )
 
         if (invalids.isEmpty) {
-          user('createdOn) = new Date
+          user( 'createdOn ) = new Date
 
           sendActivation( user )
+          
+          val entryAppVal = sess.get( "entryApp" )
+          
+          if ( entryAppVal != null )
+            user( "entryApp" ) = entryAppVal._i
+            
           user.save
           web.redirect("/")
         }
       }
 
-      val entryApp = sess.cache.getOrElseUpdate( "entryApp", new java.lang.Integer( web.i( 'app ) ) )._i
-      
-      web.template( 
-        <tyr:shellApp>
+      val entryApp = web.i( 'app ) or 0
+      sess.put( "entryApp", new java.lang.Integer( entryApp._i ) )
+
+      val inner = 
+         { ( entryApp == 0 ) |* <div style="margin-top:16px; font-size:24px;">Creating an account with Volerro is Free!</div> } ++
          <div class="plainBox">
           <div class="title">Use Social Login to Automatically Register</div>
           <div class="contents">
@@ -193,10 +200,10 @@ $( function() {
              network.loginButton( this ) }
            }</div>
           </div>
-         </div>
+         </div> ++
          <div class="plainBox">
           <div class="title">Manually Register</div>
-          <div class="contents" style="height:570px;">
+          <div class="contents" style="height:390px;">
            <form method="post" action={ web.path } id="f" style="float:left">
             <table>
               { Scope(user, saving = true, captcha = true).draw(ui) }
@@ -206,7 +213,7 @@ $( function() {
               <a href="/" class="btn">Cancel</a>
             </div>
            </form>
-           <div style="float:right; padding-top: 50px;">
+           <div style="float:right; padding-top: 10px;">
             <video id="vvideo" class="video-js vjs-default-skin" controls="controls" preload="auto" width="643" height="276" data-setup="{}">
              <source src="https://d33lorp9dhlilu.cloudfront.net/videos/Volerro_Sign_Up.mp4" type="video/mp4"/>
             </video>
@@ -214,7 +221,8 @@ $( function() {
            </div>
           </div>
          </div>
-        </tyr:shellApp> )
+
+      web.template( ( entryApp == 0 ) ? <tyr:shell>{ inner }</tyr:shell> | <tyr:shellApp>{ inner }</tyr:shellApp> )
 
     case "/resendActivation" =>
       import org.bson.types.ObjectId

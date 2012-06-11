@@ -17,6 +17,7 @@ class Boot extends org.tyranid.boot.Bootable {
   val systemEmail     = "info@tyranid.org"
   val alertEmail      = "info@tyranid.org"
 
+  val applicationWebloc = null
   val weblocs = Nil
 
   val templates =
