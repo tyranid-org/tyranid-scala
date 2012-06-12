@@ -102,9 +102,12 @@ object GroupMode extends RamEntity( tid = "a0Ot" ) with EnumEntity[GroupType] {
     t
   }
 
-  val Monitor   =     apply( 1, "Monitor"   )
+  def monitorHelp =
+    Text( "Monitor groups are groups that are not visible to their members, and are used only for personal or organizational purposes.  They are generally not used for collaboration." )
+
+  val Monitor       = apply( 1, "Monitor"   )
   val Moderated     = apply( 2, "Moderated" )
-  val Collaborative = apply( 3, "Open"      )
+  val Collaborative = apply( 3, "Open"      ) // A collaborative group is one which everyone inside the group can see each others things.
 
   static( Monitor, Moderated, Collaborative )
 }
@@ -120,8 +123,8 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
   "_id"      is DbMongoId         is 'id;
   "name"     is DbChar(60)        is 'label;
   "builtin"  is DbBoolean         help Text( "A builtin group is maintained by the system and is not editable by end users." );
-  "monitor"  is DbBoolean         help Text( "Monitor groups are groups that are not visible to their members, and are used only for personal or organizational purposes.  They are generally not used for collaboration." );
   "type"     is DbLink(GroupType) ;
+  "mode"     is DbLink(GroupMode) ;
   "pk"       is DbChar(10)        help Text( "A private-key, generated on-demand.  Used where a group URL needs to be hard-to-guess-yet-publicly-accessible.  For example, RSS Feeds." );
 
   override def init = {
@@ -186,8 +189,8 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
 
     val memberGroups =
       db.find( 
-        Mobj( "tids"    -> tids,
-              "monitor" -> Mobj( $in -> Array( false, null ) ) )
+        Mobj( "tids" -> tids,
+              "mode" -> Mobj( $ne -> GroupMode.Monitor.id ) )
       ).map( apply ).toSeq.filter( memberGroup => !myGroups.exists( _.id == memberGroup.id ) )
 
     myGroups ++ memberGroups 
@@ -209,20 +212,20 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
 
   override def id:ObjectId = super.apply( "_id" ).as[ObjectId]
   
-  def monitor = b( 'monitor )
 
-  def mode =
-    if ( monitor )            GroupMode.Monitor 
-    else if ( collaborative ) GroupMode.Collaborative
-    else                      GroupMode.Moderated
+  def mode = GroupMode.byId( i( 'mode ) ).orNull
 
-  // A collaborative group is one which everyone inside the group can see each others things.
-  def collaborative = // a.k.a. roundtable a.k.a cooperative
-    !monitor && // monitor groups are never collaborative
-    ( groupType match {
-      case GroupType.Org  => false
-      case GroupType.User => true
-      } )
+  def monitor       = mode == GroupMode.Monitor
+  def moderated     = mode == GroupMode.Moderated
+  def collaborative = mode == GroupMode.Collaborative
+
+  // TODO:  remove this method once it is no longer used
+  def updateMode( monitor:Boolean ) = {
+    this( 'mode ) =
+      if ( monitor )                         GroupMode.Monitor.id
+      else if ( groupType == GroupType.Org ) GroupMode.Moderated.id
+      else                                   GroupMode.Collaborative.id
+  }
 
   def isOwner( user:User ) = {
     val owners = a_?( 'owners )
@@ -468,11 +471,11 @@ case class GroupField( baseName:String, l:String = null,
 
     case "/group/addGroupSave" =>
       val monitor = web.b( "rGrpMonitor" + id )
-
       val group = Group.make
       group( 'name )    = web.s( "rGrpAddName" + id ) or "Unnamed Group"
       group( 'type )    = groupType.id
-      group( 'monitor ) = monitor
+
+      group.updateMode( monitor )
 
       group( 'owners ) = Mlist( userOwnerTid )
 
@@ -500,8 +503,8 @@ case class GroupField( baseName:String, l:String = null,
     case "/group/editSave" =>
       if ( !dg.b( 'builtin ) ) {
         dg( 'name )    = web.s( "rGrpRenameName" + id ) or "Unnamed Group"
-        dg( 'monitor ) = web.b( "rGrpMonitor" + id )
-        Group.db.save( dg )
+        dg.updateMode( web.b( "rGrpMonitor" + id ) )
+        dg.save
         gv.resetGroups
       }
 
@@ -756,7 +759,7 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
       <div style="padding:8px 0; width:130px;">
        { Checkbox( "rGrpMonitor" + gf.id, false ) }
        <label for={ "rGrpMonitor" + gf.id }>Monitor Group</label>
-       { Help( Group.attrib( 'monitor ).help ) }
+       { Help( GroupMode.monitorHelp ) }
       </div>
       <div class="btns" style="width:370px;"><a href="#" class="rGrpAddGrpSave go btn">Add Group</a></div>
      </form>
@@ -772,9 +775,9 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
       <label for={ "rGrpRenameName" + gf.id }>Enter Group Name:</label>
       <div class="title"><input type="text" class="rGrpRenameName" name={ "rGrpRenameName" + gf.id } id={ "rGrpRenameName" + gf.id } style="font-size:20px;" value={ dialogGroup.s( 'name ) }/></div>
       <div style="padding:8px 0; width:130px;">
-       { Checkbox( "rGrpMonitor" + gf.id, dialogGroup.b( 'monitor ) ) }
+       { Checkbox( "rGrpMonitor" + gf.id, dialogGroup.monitor ) }
        <label for={ "rGrpMonitor" + gf.id }>Monitor Group</label>
-       { Help( Group.attrib( 'monitor ).help ) }
+       { Help( GroupMode.monitorHelp ) }
       </div>
       <div class="btns" style="width:370px;"><a href="#" class="rGrpEditSave go btn">Save</a></div>
      </form>
