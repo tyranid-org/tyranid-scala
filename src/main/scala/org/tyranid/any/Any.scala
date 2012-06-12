@@ -21,8 +21,9 @@ import java.util.Date
 
 import scala.collection.mutable.LinkedHashMap
 
-import org.tyranid.Imp._
+import org.bson.types.ObjectId
 
+import org.tyranid.Imp._
 
 class AnyImp[T <: Any]( v:T ) {
 
@@ -75,6 +76,12 @@ class AnyImp[T <: Any]( v:T ) {
     }
 
   def _s = safeString
+  def _oid:ObjectId = 
+    v match {
+    case oid:ObjectId => oid
+    case s:String => new ObjectId( s ) 
+    case null     => null
+    }
 
   def asJsonObject = if ( v != null ) v.as[LinkedHashMap[String,Any]] else null
 }

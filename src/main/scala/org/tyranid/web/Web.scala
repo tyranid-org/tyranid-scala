@@ -178,7 +178,7 @@ class WebFilter extends Filter {
       }
 
       if ( handle( webloc ) ) {
-        spam( "CACHE: CLEARING" )
+        //spam( "CACHE: CLEARING" )
         thread.tidCache.clear
         return
       }
