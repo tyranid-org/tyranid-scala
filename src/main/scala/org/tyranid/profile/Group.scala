@@ -127,7 +127,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
   override def init = {
     super.init
     "tids"   is DbArray(DbTid(B.Org,B.User)) ;
-    "owners" is DbArray(DbTid(B.Org,B.User)) ;
+    "owners" is DbArray(DbTid(B.Org,B.User)) is 'owner;
   }
 
   // these fields are implicit:
