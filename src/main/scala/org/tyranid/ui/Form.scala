@@ -98,13 +98,21 @@ object Form {
      </div>
     </div>
       
-  def text( label:String, value:String, href:String = null, editBtnId:String = null, redirectHref:String = null, controlClass:String = "control", dialogTitle:String = null, opts:Seq[(String,String)] = null, link:Boolean = false ) =
+  def text( label:String, value:String, valueHref:String = null, valueHrefTarget:String=null, href:String = null, editBtnId:String = null, redirectHref:String = null, controlClass:String = "control", dialogTitle:String = null, opts:Seq[(String,String)] = null, link:Boolean = false ) =
     <div class={ controlClass }>
      <div class="left">{ label }</div>
      <div class="right">
-      { href.notBlank |* <a href={ if ( editBtnId == null ) href else "#" + editBtnId } class="btn" id={ editBtnId }>Edit</a> }
+      { href.notBlank |* <a href={ if ( editBtnId.isBlank ) href else "#" + editBtnId } class="btn" id={ editBtnId }>Edit</a> }
       { if ( editBtnId != null ) dialog( editBtnId, href, redirectHref, if ( dialogTitle == null ) label else dialogTitle, opts ) }
-      <div class="text">{ if ( link ) <a href={value.toUrl.toString()} target="_blank">{ value }</a> else { value } }</div>
+      <div class="text">
+       { 
+         if ( valueHref.notBlank )
+          <a href={ valueHref } target={ valueHrefTarget }>{ value }</a>
+         else if ( link ) 
+          <a href={ value.toUrl.toString() } target="_blank">{ value }</a> 
+         else
+           value
+       }</div>
      </div>
     </div>
 
