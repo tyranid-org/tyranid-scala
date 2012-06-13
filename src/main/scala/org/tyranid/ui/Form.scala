@@ -98,7 +98,7 @@ object Form {
      </div>
     </div>
       
-  def text( label:String, value:String, valueHref:String = null, valueHrefTarget:String=null, href:String = null, editBtnId:String = null, redirectHref:String = null, controlClass:String = "control", dialogTitle:String = null, opts:Seq[(String,String)] = null, link:Boolean = false ) =
+  def text( label:String, value:String, href:String = null, editBtnId:String = null, redirectHref:String = null, controlClass:String = "control", dialogTitle:String = null, opts:Seq[(String,String)] = null, link:Boolean = false, valueHref:String = null, valueHrefTarget:String=null ) =
     <div class={ controlClass }>
      <div class="left">{ label }</div>
      <div class="right">
