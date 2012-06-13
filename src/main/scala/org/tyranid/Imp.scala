@@ -28,7 +28,7 @@ import org.tyranid.log.Log
 /**
  * IMPlicit IMPorts.
  */
-object Imp {
+object Imp { 
 
   type ObjectMap = scala.collection.mutable.LinkedHashMap[String,Any]
 
