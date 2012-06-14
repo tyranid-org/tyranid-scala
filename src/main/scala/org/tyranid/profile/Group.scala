@@ -243,13 +243,13 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
     )
   }
 
-  def firstOwnerTid( notTid:String ):String = {
+  def firstOwnerTid( notTids:String* ):String = {
     val owners = a_?( 'owners )
     
     owners.foreach( t => {
       val tid = t._s
       
-      if ( tid != notTid)
+      if ( !notTids.contains( tid ) )
         return tid
     } )
     
