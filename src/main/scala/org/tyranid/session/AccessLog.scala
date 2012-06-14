@@ -29,13 +29,22 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoRecord
 import org.tyranid.http.UserAgent
 import org.tyranid.log.Log
+import org.tyranid.math.Base62
 import org.tyranid.net.DnsDomain
 import org.tyranid.report.{ Query, Report }
 import org.tyranid.ui.{ Checkbox, CustomField, PathField, Search }
 import org.tyranid.web.{ Weblet, WebContext }
 
 
-case class Milestone( name:String, satisfies:( Log ) => Boolean )
+object Milestone {
+
+  def apply( id:String ) = B.milestones.find( _.id == id )
+
+}
+
+case class Milestone( name:String, satisfies:( Log ) => Boolean ) {
+  lazy val id = Base62.make( 4 )
+}
 
 object AccessLog {
 
@@ -156,34 +165,41 @@ object ActivityQuery extends Query {
     }
 }
 
-case class Browser( bid:String, ua:UserAgent, milestones:mutable.Set[Milestone] = mutable.Set[Milestone](), var skip:Boolean = false )
+case class Browser( bid:String,
+                    ua:UserAgent,
+                    milestones:mutable.Set[Milestone] = mutable.Set[Milestone](),
+                    users:mutable.Set[TidItem] = mutable.Set[TidItem](),
+                    var skip:Boolean = false )
 
 object Accesslet extends Weblet {
 
   def report:NodeSeq = {
+    val web = T.web
 
     ActivityQuery.init
     val report = T.session.reportFor( ActivityQuery.name )
 
-    if ( T.web.s( 'saving ).notBlank )
+    if ( web.s( 'saving ).notBlank )
       report.extractSearchRec
 
     val hideOperators = report.searchRec.b( 'hideOperators$cst )
     val domain        = report.searchRec( 'd )
-spam( "searchRec=" + report.searchRec.as[MongoRecord].obj )
 
     val browsers        = mutable.Map[String,Browser]()
     val milestoneCounts = mutable.Map[Milestone,Int]( B.milestones.map( milestone => milestone -> 0 ):_* )
 
+    val onlyMilestone = web.sOpt( "milestone" ).flatMap( Milestone.apply )
+    val milestones = onlyMilestone.flatten( Seq(_), B.milestones )
+
     def skip( l:Log ) =
       (   l.ua.orNull == null
        || (   hideOperators
-           && B.operatorIps.contains( l.s( 'ip ) ) ) )
+           && B.operatorIps.contains( l.s( 'ip ) ) )
+       || onlyMilestone.exists( !_.satisfies( l ) ) )
 
     val query =  Mobj( "e" -> Event.Access.id, "bid" -> Mobj( $exists -> true ) )
     if ( domain != null )
       query( "d" ) = domain
-spam( "query=" + query )
 
     for ( al <- Log.db.find( query ).sort( Mobj( "on" -> -1 ) ).map( Log.apply );
           if !skip( al ) ) {
@@ -194,12 +210,17 @@ spam( "query=" + query )
       val browser = browsers.getOrElseUpdate( bid, Browser( bid, al.ua.get ) )
 
       val uid = al.oid( 'uid )
-      if ( hideOperators && uid != null && TidItem.by( B.User.idToTid( uid ) ).org == B.appOrgId ) {
+      val user = if ( uid != null ) TidItem.by( B.User.idToTid( uid ) ) else null
+
+      if ( hideOperators && user != null && user.org == B.appOrgId ) {
         browser.skip = true
       } else {
         for ( milestone <- B.milestones )
           if ( !browser.ua.bot && !browser.milestones( milestone ) && milestone.satisfies( al ) )
             browser.milestones += milestone
+
+        if ( user != null )
+          browser.users += user
       }
     }
 
@@ -225,7 +246,30 @@ spam( "query=" + query )
     val totalBots  = browsers.values.count( _.ua.bot )
 
 
-    { ActivityQuery.searchForm( report ) } +:
+    { ActivityQuery.searchForm( report ) } ++
+    { if ( onlyMilestone.isDefined )
+    <div class="fieldhc">
+     Milestone: { onlyMilestone.get.name }
+    </div>
+    <div class="fieldhc">
+     Users
+    </div>
+    <table class="dtable">
+     <thead>
+      <tr>
+       <th style="width:120px;">Browser ID</th><th>User</th>
+      </tr>
+     </thead>
+     { for ( b <- browsers.values ) yield {
+
+        <tr>
+         <td><a href={ "/admin/log?bid=" + b.bid }>{ b.bid }</a></td>
+         <td>{ b.users.map( _.name ).toSeq.sorted.mkString( ", " ) }</td>
+        </tr>
+      }
+     }
+    </table>
+      else
     <div class="fieldhc">
      Milestones
     </div>
@@ -235,17 +279,18 @@ spam( "query=" + query )
        <th>Milestone</th><th style="width:110px;"># Distinct Users</th><th style="width:50px;">%</th>
       </tr>
      </thead>
-     { for ( milestone <- B.milestones ) yield {
+     { for ( milestone <- milestones ) yield {
          val count = milestoneCounts( milestone )
 
         <tr>
-         <td>{ milestone.name }</td>
+         <td><a href={ "?milestone=" + milestone.id }>{ milestone.name }</a></td>
          <td>{ count }</td>
          <td>{ "%.0f%%".format( count._d * 100 / totalUsers ) }</td>
         </tr>
       }
      }
     </table>
+    } ++
     <div class="fieldhc">
      Browsers
     </div>

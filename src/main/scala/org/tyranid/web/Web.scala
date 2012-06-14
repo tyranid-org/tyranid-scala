@@ -220,6 +220,11 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   def a( param:String ):Seq[String]   = req.a( param )
   def a_?( param:String ):Seq[String] = req.a_?( param )
 
+  def sOpt( param:String ) = {
+    val v = s( param )
+    v.notBlank |* Some( v )
+  }
+
   def file( param:String ):org.apache.commons.fileupload.FileItem = req.file( param )
   
   def json( json:Any, status:Int = 200, jsonpCallback:String = null, headers:Map[String,String] = null, noCache:Boolean = false ) = 

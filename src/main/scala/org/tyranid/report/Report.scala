@@ -451,7 +451,12 @@ case class Report( query:Query ) {
      { query.searchForm( this ) }
     </div>
 
-  def draw =
+  def draw = {
+    val web = T.web
+    for ( va <- searchRec.view.vas;
+          v  <- web.sOpt( va.name ) )
+      searchRec( va.name ) = v
+
     <head>
      <script src={ B.buildPrefix + "/js/tyr_report.js" } type="text/javascript"/>
      <script>{ Unparsed( "window.reportObj = { qn:'" + query.name + "', id:'" + id + "' };" ) }</script>
@@ -461,6 +466,7 @@ case class Report( query:Query ) {
      { recalcFields }
      { innerDraw }
     </div>
+  }
 }
 
 case class Run( report:Report ) {

@@ -138,6 +138,7 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
             | "LinkedInBot"
             | "Python-urllib"
             | "webcollage"
+            | "Yahoo! Slurp"
             | "YandexBot"
             | "ZmEu"               => true
          case _                    => false } )
