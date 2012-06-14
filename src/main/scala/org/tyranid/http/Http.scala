@@ -64,7 +64,7 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
     s != null && s.toLaxBoolean
   }
 
-  def oid( param:String ):ObjectId = { 
+  def oid( param:String ):ObjectId = {
     val oid = s( param )
     ( oid == null ) ? null | new ObjectId( oid )
   }
