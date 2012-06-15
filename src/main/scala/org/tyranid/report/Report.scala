@@ -247,7 +247,7 @@ case class Report( query:Query ) {
   val searchRec = {
     val rec = query.entity.make
     for ( sf <- query.searchFields )
-      sf.init( rec, this )
+      sf.init( rec )
     rec 
   }
 

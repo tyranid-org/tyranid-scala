@@ -230,7 +230,7 @@ trait Field {
 
   def fromString( s:String ):Any = s
 
-  def init( rec:Record, report:Report ) = default foreach { d => rec( name ) = d() }
+  def init( rec:Record ) = default foreach { d => rec( name ) = d() }
 
 
   /*

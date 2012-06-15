@@ -378,9 +378,9 @@ case class GroupField( baseName:String, l:String = null,
 
   override lazy val label = if ( l.notBlank ) l else "Group"
 
-  override def init( rec:Record, report:Report ) = {
-    val gv = GroupValue( report, this )
-    gv.set( super.init( rec, report ) )
+  override def init( rec:Record ) = {
+    val gv = GroupValue( this )
+    gv.set( super.init( rec ) )
     rec( name ) = gv
   }
 
@@ -447,10 +447,8 @@ case class GroupField( baseName:String, l:String = null,
 
   override def handle( weblet:Weblet, rec:Record ) = {
     val gv = groupValueFor( rec )
-    val report = gv.report
 
     val web = T.web
-    val query = report.query
     val dg = gv.dialogGroup
 
     weblet.rpath match {
@@ -460,6 +458,7 @@ case class GroupField( baseName:String, l:String = null,
 
     case "/fld/select" =>
       gv.selectGroup( web.s( 'id ) )
+      val report = T.session.reportFor( T.web.s( 'q ) )
       web.res.html( report.innerDraw )
 
     case "/fld/dlgSelect" =>
@@ -625,7 +624,7 @@ case class GroupField( baseName:String, l:String = null,
   }
 }
 
-case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
+case class GroupValue( gf:GroupField ) extends Valuable {
 
   private var latestGroups:Seq[MongoRecord] = null
 
