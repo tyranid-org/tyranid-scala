@@ -788,6 +788,17 @@ case class GroupValue( gf:GroupField ) extends Valuable {
 
 object Grouplet extends Weblet {
 
+  lazy val globalGroupField = {
+    val foreignKey:String = null
+
+    GroupField(
+      foreignKey, "Group",
+      // TODO:  this needs to be Orgs and Users
+      B.Org, GroupType.Org, foreignKey,
+      addBys = Seq( GroupingAddBy( "Name", "name" ) )
+    )
+  }
+
   def handle( web: WebContext ) {
     //val sess = T.session
 
@@ -807,7 +818,9 @@ object Grouplet extends Weblet {
         case None      => _404
         }
       else
+        //globalGroupField.handle( this, searchRec )
         _404
+
     } else {
       rpath match {
 
