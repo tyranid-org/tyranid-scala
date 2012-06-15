@@ -792,10 +792,29 @@ object Grouplet extends Weblet {
   def handle( web: WebContext ) {
     //val sess = T.session
 
-    rpath match {
+    redirectIfNotLoggedIn( web )
+    val sess = T.session
 
-    case _ =>
-      _404
+    val queryId = web.s( 'q )
+    if ( queryId.notBlank ) {
+      val report = sess.reportFor( web.s( 'q ) )
+      val query = report.query
+
+      val fld = web.s( 'fld )
+
+      if ( fld.notBlank )
+        query.fields.find( _.id == fld ) match {
+        case Some( f ) => f.handle( this, report.searchRec )
+        case None      => _404
+        }
+      else
+        _404
+    } else {
+      rpath match {
+
+      case _ =>
+        _404
+      }
     }
   }
 }
