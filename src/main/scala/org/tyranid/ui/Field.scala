@@ -263,7 +263,7 @@ trait Field {
       { topActions( run ) }
      </tr>
      <tr>
-      <td id="rGrpChooser">
+      <td id="grpChooser">
        { ui( s ) }
        { bottomActions( run ) }
       </td>

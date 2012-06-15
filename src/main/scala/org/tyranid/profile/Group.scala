@@ -408,7 +408,7 @@ case class GroupField( baseName:String, l:String = null,
   override def drawPreamble( report:Report ):NodeSeq =
     // TODO:  need to have some mechanism so that we don't include things like tags more than once
     <head><script src={ B.buildPrefix + "/js/tag.js" } charset="utf-8"></script></head>
-    <div id={ "rGrpDlg" + id } class="rGrpDlg" style="padding:0; display:none;"/>;
+    <div id={ "grpDlg" + id } class="grpDlg" style="padding:0; display:none;"/>;
 
   override def drawFilter( run:Run ) = {
     val groupValue = groupValueFor( run.report.searchRec )
@@ -417,14 +417,14 @@ case class GroupField( baseName:String, l:String = null,
      <tr>
       <td class="label">view group</td>
       <td rowspan="2" style="padding-right:4px;">
-       <a id={ "rGrpBtn" + id } href="#" class="rGrpBtn btn" style="height:40px; padding-top:6px;">
+       <a id={ "grpBtn" + id } href="#" class="grpBtn btn" style="height:40px; padding-top:6px;">
         <span tip="Groups" class={ "tip " + /* bigIcon groupIcon */ groupType.iconClass32x32 } style="padding:0;"/>
         <span class="label"/>
        </a>
       </td>
      </tr>
      <tr>
-      <td id="rGrpChooser">{ groupValue.drawSelect() }</td>
+      <td id="grpChooser">{ groupValue.drawSelect() }</td>
      </tr>
     </table>
   }
@@ -454,25 +454,25 @@ case class GroupField( baseName:String, l:String = null,
     val dg = gv.dialogGroup
 
     weblet.rpath match {
-    case "/group" =>
+    case "/fld" =>
       gv.resetGroups
-      web.js( JqHtml( "#rGrpDlg" + id, gv.drawPanel ) )
+      web.js( JqHtml( "#grpDlg" + id, gv.drawPanel ) )
 
-    case "/group/select" =>
+    case "/fld/select" =>
       gv.selectGroup( web.s( 'id ) )
       web.res.html( report.innerDraw )
 
-    case "/group/dlgSelect" =>
+    case "/fld/dlgSelect" =>
       gv.setDialogGroup( web.s( 'id ) )
-      web.js( JqHtml( "#rGrpMain" + id, gv.drawGroup ) )
+      web.js( JqHtml( "#grpMain" + id, gv.drawGroup ) )
 
-    case "/group/addGroup" =>
-      web.js( JqHtml( "#rGrpMain" + id, gv.drawAddGroup ) )
+    case "/fld/addGroup" =>
+      web.js( JqHtml( "#grpMain" + id, gv.drawAddGroup ) )
 
-    case "/group/addGroupSave" =>
-      val monitor = web.b( "rGrpMonitor" + id )
+    case "/fld/addGroupSave" =>
+      val monitor = web.b( "grpMonitor" + id )
       val group = Group.make
-      group( 'name )    = web.s( "rGrpAddName" + id ) or "Unnamed Group"
+      group( 'name )    = web.s( "grpAddName" + id ) or "Unnamed Group"
       group( 'type )    = groupType.id
 
       group.updateMode( monitor )
@@ -493,27 +493,27 @@ case class GroupField( baseName:String, l:String = null,
       gv.setDialogGroup( Group( group ).tid )
 
       web.js(
-        JqHtml( "#rGrpDlg" + id, gv.drawPanel ),
-        JqHtml( "#rGrpChooser", gv.drawSelect() )
+        JqHtml( "#grpDlg" + id, gv.drawPanel ),
+        JqHtml( "#grpChooser", gv.drawSelect() )
       )
 
-    case "/group/edit" =>
-      web.js( JqHtml( "#rGrpMain" + id, gv.drawEdit ) )
+    case "/fld/edit" =>
+      web.js( JqHtml( "#grpMain" + id, gv.drawEdit ) )
 
-    case "/group/editSave" =>
+    case "/fld/editSave" =>
       if ( !dg.b( 'builtin ) ) {
-        dg( 'name )    = web.s( "rGrpRenameName" + id ) or "Unnamed Group"
-        dg.updateMode( web.b( "rGrpMonitor" + id ) )
+        dg( 'name )    = web.s( "grpRenameName" + id ) or "Unnamed Group"
+        dg.updateMode( web.b( "grpMonitor" + id ) )
         dg.save
         gv.resetGroups
       }
 
       web.js(
-        JqHtml( "#rGrpDlg" + id, gv.drawPanel ),
-        JqHtml( "#rGrpChooser", gv.drawSelect() )
+        JqHtml( "#grpDlg" + id, gv.drawPanel ),
+        JqHtml( "#grpChooser", gv.drawSelect() )
       )
 
-    case "/group/deleteGroup" =>
+    case "/fld/deleteGroup" =>
       if ( !dg.b( 'builtin ) ) {
         //Group.remove( Mobj( "_id" -> dg.id ) )
         Tid.deleteCascade( dg.tid )
@@ -521,17 +521,17 @@ case class GroupField( baseName:String, l:String = null,
       }
 
       web.js(
-        JqHtml( "#rGrpDlg" + id, gv.drawPanel ),
-        JqHtml( "#rGrpChooser", gv.drawSelect() )
+        JqHtml( "#grpDlg" + id, gv.drawPanel ),
+        JqHtml( "#grpChooser", gv.drawSelect() )
       )
 
-    case "/group/addBy" =>
+    case "/fld/addBy" =>
       val abid = web.s( 'v )
       gv.groupAddBy = null
       addBys.find( _.id == abid ).foreach { gv.groupAddBy = _ }
-      web.js( JqHtml( "#rGrpAddBox" + id, gv.drawAddBy ) )
+      web.js( JqHtml( "#grpAddBox" + id, gv.drawAddBy ) )
 
-    case "/group/addMember" =>
+    case "/fld/addMember" =>
       val ab = gv.groupAddBy
 
       if ( ab != null && dg != null && !dg.b( 'builtin ) ) {
@@ -544,7 +544,7 @@ case class GroupField( baseName:String, l:String = null,
           case _ =>
             val keyAtts = ab.keys.map( ofEntity.attrib )
 
-            val altIds = web.s( 'rGrpAddByInput ).split( "," ).map( _.trim )
+            val altIds = web.s( 'grpAddByInput ).split( "," ).map( _.trim )
 
             val keys = keyAtts map { att =>
               // TODO:  use att.domain to convert these strings to ints or whatever else is needed based on the domain
@@ -574,9 +574,9 @@ case class GroupField( baseName:String, l:String = null,
         dg.save
       }
 
-      web.js( JqHtml( "#rGrpMain" + id, gv.drawGroup ) )
+      web.js( JqHtml( "#grpMain" + id, gv.drawGroup ) )
 
-    case "/group/remove" =>
+    case "/fld/remove" =>
       if ( !dg.b( 'builtin ) ) {
         val tid = web.s( 'id )
 
@@ -591,13 +591,13 @@ case class GroupField( baseName:String, l:String = null,
         gv.resetGroups
       }
 
-      web.js( JqHtml( "#rGrpMain" + id, gv.drawGroup ) )
+      web.js( JqHtml( "#grpMain" + id, gv.drawGroup ) )
 
-    case "/group/toggleAddBy" =>
+    case "/fld/toggleAddBy" =>
       gv.groupShowAddBy = !gv.groupShowAddBy
-      web.js( JqHtml( "#rGrpMain" + id, gv.drawGroup ) )
+      web.js( JqHtml( "#grpMain" + id, gv.drawGroup ) )
 
-    case "/group/addSearch" =>
+    case "/fld/addSearch" =>
       val terms = web.s( 'term )
 
       val json =
@@ -657,23 +657,23 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
   def dialogGroup = Group( groups.find( g => g.tid == dialogGroupTid ).getOrElse( null ) )
   def setDialogGroup( tid:String ) = dialogGroupTid = tid
 
-  def drawSelect( cls:String = "rGrpChr" ) =
+  def drawSelect( cls:String = "grpChr" ) =
     Select( gf.id, selectedGroupTid, ( "" -> "All" ) +: groups.map( g => g.tid -> g.s( 'name ) ), "class" -> cls, "style" -> "width:120px; max-width:120px;" )
 
   def drawPanel = {
     val stid = dialogGroupTid
 
-    <div class="rGrpLeft">
-     <div class="rGrpSel">
+    <div class="grpLeft">
+     <div class="grpSel">
       <ul class="noSelect">
        { groups.map( g => <li class={ "noSelect" + ( g.tid == stid |* " sel" ) } id={ g.tid }>{ g.s( 'name ) }</li> ) }
       </ul>
      </div>
      <div class="btns">
-      <button class="rGrpAddGrp go btn" style="float:left;">Add Group</button>
+      <button class="grpAddGrp go btn" style="float:left;">Add Group</button>
      </div>
     </div>
-    <div id={ "rGrpMain" + gf.id } class="rGrpMain">
+    <div id={ "grpMain" + gf.id } class="grpMain">
      { drawGroup }
     </div>
   }
@@ -683,12 +683,12 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
     val editable = group != null && !group.b( 'builtin )
     val showAddBy = groupShowAddBy
 
-    <div class={ "rGrpEdit " + ( showAddBy ? "shortTable" | "longTable" ) }>
+    <div class={ "grpEdit " + ( showAddBy ? "shortTable" | "longTable" ) }>
      <div class="title">
       { if ( group != null )
           Text( group.s( 'name ) + ' ' ) ++
           group.about ++
-          ( editable |* Text( " " ) ++ <a href="#" id={ "rGrpEdit" + gf.id } class="rGrpEditLink" style="font-size:12px;">edit</a> ) ++
+          ( editable |* Text( " " ) ++ <a href="#" id={ "grpEdit" + gf.id } class="grpEditLink" style="font-size:12px;">edit</a> ) ++
           group.eye
         else
           <i>None selected</i> }
@@ -717,19 +717,19 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
     { showAddBy |*
     <div class="add">
      { editable |*
-     <form method="post" id="rGrpAddForm">
+     <form method="post" id="grpAddForm">
       <div class="title">Add { gf.groupType.ofEntity.label.plural }</div>
-      <label for="rGrpAddBy">By:</label>
-      { Select( "rGrpAddBy", groupAddBy != null |* groupAddBy.id, gf.addBys.map( ab => ( ab.id, ab.label ) ) ) }
-      <div id={ "rGrpAddBox" + gf.id } class="rGrpAddBox">
+      <label for="grpAddBy">By:</label>
+      { Select( "grpAddBy", groupAddBy != null |* groupAddBy.id, gf.addBys.map( ab => ( ab.id, ab.label ) ) ) }
+      <div id={ "grpAddBox" + gf.id } class="grpAddBox">
        { drawAddBy }
       </div>
      </form> }
     </div> } ++
     <div class="btns">
-     { editable |* <button class="rGrpDelGrp stop btn" style="float:left;">Delete</button> }
-     <button onclick={ "$('#rGrpDlg" + gf.id + "').dialog('close'); return false;" } class="btn" style="float:right;">Done</button>
-     { editable || showAddBy |* <button class="rGrpToggleAddBy go btn" style="float:right;">{ if ( showAddBy ) "Show Table" else "Add Members" }</button> }
+     { editable |* <button class="grpDelGrp stop btn" style="float:left;">Delete</button> }
+     <button onclick={ "$('#grpDlg" + gf.id + "').dialog('close'); return false;" } class="btn" style="float:right;">Done</button>
+     { editable || showAddBy |* <button class="grpToggleAddBy go btn" style="float:right;">{ if ( showAddBy ) "Show Table" else "Add Members" }</button> }
     </div>
   }
 
@@ -740,50 +740,50 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
     <div class="stitle">Enter { gf.groupType.ofEntity.label } { addBy.label.plural } To Add</div> ++
     { addBy.label match {
     case "Name" => // TODO:  should match on something better
-      <ul class="rGrpAddName" id={ "rGrpAddName" + gf.id }></ul>
+      <ul class="grpAddName" id={ "grpAddName" + gf.id }></ul>
 
     case ab =>
       <div class="note">(separate multiple entries with commas)</div>
-      <textarea id="rGrpAddByInput" name="rGrpAddByInput" style="height:292px; width:322px;"/>
+      <textarea id="grpAddByInput" name="grpAddByInput" style="height:292px; width:322px;"/>
     } } ++
-    <div class="btns"><a class="rGrpAddImport go btn">Add</a></div>
+    <div class="btns"><a class="grpAddImport go btn">Add</a></div>
     }
   }
 
   def drawAddGroup =
-    <div class="rGrpEdit">
+    <div class="grpEdit">
      <div class="title" style="margin-bottom:16px;">Add New Group</div>
      <form method="post">
-      <label for={ "rGrpAddName" + gf.id }>Enter Group Name:</label>
-      <div class="title"><input type="text" class="rGrpAddName" name={ "rGrpAddName" + gf.id } id={ "rGrpAddName" + gf.id } style="font-size:20px;"/></div>
+      <label for={ "grpAddName" + gf.id }>Enter Group Name:</label>
+      <div class="title"><input type="text" class="grpAddName" name={ "grpAddName" + gf.id } id={ "grpAddName" + gf.id } style="font-size:20px;"/></div>
       <div style="padding:8px 0; width:130px;">
-       { Checkbox( "rGrpMonitor" + gf.id, false ) }
-       <label for={ "rGrpMonitor" + gf.id }>Monitor Group</label>
+       { Checkbox( "grpMonitor" + gf.id, false ) }
+       <label for={ "grpMonitor" + gf.id }>Monitor Group</label>
        { Help( GroupMode.monitorHelp ) }
       </div>
-      <div class="btns" style="width:370px;"><a href="#" class="rGrpAddGrpSave go btn">Add Group</a></div>
+      <div class="btns" style="width:370px;"><a href="#" class="grpAddGrpSave go btn">Add Group</a></div>
      </form>
     </div>
     <div class="btns">
-     <button onclick={ "$('#rGrpDlg" + gf.id + "').dialog('close'); return false;" } class="btn" style="float:right;">Cancel</button>
+     <button onclick={ "$('#grpDlg" + gf.id + "').dialog('close'); return false;" } class="btn" style="float:right;">Cancel</button>
     </div>;
 
   def drawEdit =
-    <div class="rGrpEdit">
+    <div class="grpEdit">
      <div class="title" style="margin-bottom:16px;">Edit Group</div>
      <form method="post">
-      <label for={ "rGrpRenameName" + gf.id }>Enter Group Name:</label>
-      <div class="title"><input type="text" class="rGrpRenameName" name={ "rGrpRenameName" + gf.id } id={ "rGrpRenameName" + gf.id } style="font-size:20px;" value={ dialogGroup.s( 'name ) }/></div>
+      <label for={ "grpRenameName" + gf.id }>Enter Group Name:</label>
+      <div class="title"><input type="text" class="grpRenameName" name={ "grpRenameName" + gf.id } id={ "grpRenameName" + gf.id } style="font-size:20px;" value={ dialogGroup.s( 'name ) }/></div>
       <div style="padding:8px 0; width:130px;">
-       { Checkbox( "rGrpMonitor" + gf.id, dialogGroup.monitor ) }
-       <label for={ "rGrpMonitor" + gf.id }>Monitor Group</label>
+       { Checkbox( "grpMonitor" + gf.id, dialogGroup.monitor ) }
+       <label for={ "grpMonitor" + gf.id }>Monitor Group</label>
        { Help( GroupMode.monitorHelp ) }
       </div>
-      <div class="btns" style="width:370px;"><a href="#" class="rGrpEditSave go btn">Save</a></div>
+      <div class="btns" style="width:370px;"><a href="#" class="grpEditSave go btn">Save</a></div>
      </form>
     </div>
     <div class="btns">
-     <button onclick={ "$('#rGrpDlg" + gf.id + "').dialog('close'); return false;" } class="btn" style="float:right;">Cancel</button>
+     <button onclick={ "$('#grpDlg" + gf.id + "').dialog('close'); return false;" } class="btn" style="float:right;">Cancel</button>
     </div>;
 }
 
@@ -797,14 +797,18 @@ object Grouplet extends Weblet {
 
     val queryId = web.s( 'q )
     if ( queryId.notBlank ) {
-      val report = sess.reportFor( web.s( 'q ) )
+spam( "queryId=" + queryId )
+      val report = sess.reportFor( queryId )
       val query = report.query
+spam( "report.query.name=" + report.query.name )
 
       val fld = web.s( 'fld )
+spam( "fld=" + fld )
+spam( "field ids = " + query.fields.map( _.id ).mkString( ", " ) )
 
       if ( fld.notBlank )
         query.fields.find( _.id == fld ) match {
-        case Some( f ) => f.handle( this, report.searchRec )
+        case Some( f ) => spam( "found field" ); f.handle( this, report.searchRec )
         case None      => _404
         }
       else
