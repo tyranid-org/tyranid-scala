@@ -797,18 +797,14 @@ object Grouplet extends Weblet {
 
     val queryId = web.s( 'q )
     if ( queryId.notBlank ) {
-spam( "queryId=" + queryId )
       val report = sess.reportFor( queryId )
       val query = report.query
-spam( "report.query.name=" + report.query.name )
 
       val fld = web.s( 'fld )
-spam( "fld=" + fld )
-spam( "field ids = " + query.fields.map( _.id ).mkString( ", " ) )
 
       if ( fld.notBlank )
         query.fields.find( _.id == fld ) match {
-        case Some( f ) => spam( "found field" ); f.handle( this, report.searchRec )
+        case Some( f ) => f.handle( this, report.searchRec )
         case None      => _404
         }
       else
