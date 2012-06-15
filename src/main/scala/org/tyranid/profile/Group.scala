@@ -418,7 +418,7 @@ case class GroupField( baseName:String, l:String = null,
       <td class="label">view group</td>
       <td rowspan="2" style="padding-right:4px;">
        <a id={ "rGrpBtn" + id } href="#" class="rGrpBtn btn" style="height:40px; padding-top:6px;">
-        <span title="Groups" class={ "tip " + /* bigIcon groupIcon */ groupType.iconClass32x32 } style="padding:0;"/>
+        <span tip="Groups" class={ "tip " + /* bigIcon groupIcon */ groupType.iconClass32x32 } style="padding:0;"/>
         <span class="label"/>
        </a>
       </td>
