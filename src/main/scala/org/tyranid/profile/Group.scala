@@ -36,7 +36,7 @@ import org.tyranid.json.JqHtml
 import org.tyranid.math.Base62
 import org.tyranid.report.{ Report, Run }
 import org.tyranid.ui.{ Checkbox, Field, Help, Select, Search, Show, Valuable }
-import org.tyranid.web.Weblet
+import org.tyranid.web.{ WebContext, Weblet }
 
 
 /*
@@ -785,5 +785,18 @@ case class GroupValue( report:Report, gf:GroupField ) extends Valuable {
     <div class="btns">
      <button onclick={ "$('#rGrpDlg" + gf.id + "').dialog('close'); return false;" } class="btn" style="float:right;">Cancel</button>
     </div>;
+}
+
+object Grouplet extends Weblet {
+
+  def handle( web: WebContext ) {
+    //val sess = T.session
+
+    rpath match {
+
+    case _ =>
+      _404
+    }
+  }
 }
 

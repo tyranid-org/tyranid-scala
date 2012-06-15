@@ -146,7 +146,11 @@ class WebFilter extends Filter {
       case fe:WebForwardException =>
         web.ctx.getRequestDispatcher( fe.forward ).forward( web.req, web.res )
       case fe:Web404Exception =>
-        web.ctx.getRequestDispatcher( "/404" ).forward( web.req, web.res )
+        // "" means multiple weblets can handle this path
+        if ( webloc.path == "" )
+          return false
+        else
+          web.ctx.getRequestDispatcher( "/404" ).forward( web.req, web.res )
       case re:org.tyranid.secure.SecureException =>
         if ( !B.User.isLoggedIn ) {
           web.res.sendRedirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
