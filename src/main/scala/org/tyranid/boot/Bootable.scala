@@ -102,9 +102,10 @@ trait Bootable {
   val systemEmail:String
   val alertEmail:String
 
-  val applicationWebloc:Webloc
-  val loginWebloc:Webloc = Webloc( "/log", org.tyranid.profile.Loginlet )
   val weblocs:Seq[Webloc]
+
+  val applicationWebloc:Webloc
+  lazy val loginWebloc = weblocs.find( _.path == "/log" ).get
 
   val milestones:Seq[Milestone]
 
