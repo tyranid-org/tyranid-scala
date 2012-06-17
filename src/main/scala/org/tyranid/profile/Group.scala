@@ -243,6 +243,14 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
     )
   }
 
+  def owners = {
+   for ( e <- oentities;
+         en = e.as[MongoEntity];
+         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> obj.a_?( "owners" ).map( tid => en.tidToId( tid._s ) ).toSeq.toMlist ) ) );
+         rec = en( r ) )
+      yield rec
+  }
+  
   def firstOwnerTid( notTids:String* ):String = {
     val owners = a_?( 'owners )
     
@@ -275,6 +283,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
   def iconClass16x16 = groupType.iconClass16x16
   def iconClass32x32 = groupType.iconClass32x32
 
+  def oentities = a_?( 'owners ).toSeq.of[String].map( _.substring( 0, 4 ) ).distinct.map( tid => Entity.byTid( tid ).get )
   def entities = a_?( 'tids ).toSeq.of[String].map( _.substring( 0, 4 ) ).distinct.map( tid => Entity.byTid( tid ).get )
 
   def members =
@@ -294,8 +303,10 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
   
   def canSee( member:Record ):Boolean = canSee( T.user, member )
 
-  def canSee( user:User, member:Record ) =
-    if ( isOwner( user ) ) {
+  def canSee( user:User, member:Record ) = {
+    val owner = isOwner( user ) 
+
+    if ( owner ) {
       true
     } else {
       mode match {
@@ -305,15 +316,16 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
       case GroupMode.Moderated =>
         isMember( user ) &&
         ( groupType match {
-          case GroupType.Org  => member.tid == user.tid || isOwner( member.tid ) || isOwner( user ) || member.tid == user.orgTid || B.Org.orgIdFor( member ) == user.orgId
-          case GroupType.User => member.tid == user.tid || isOwner( member.tid ) || isOwner( user )
+          case GroupType.Org  => member.tid == user.tid || isOwner( member.tid ) || owner || member.tid == user.orgTid || B.Org.orgIdFor( member ) == user.orgId
+          case GroupType.User => member.tid == user.tid || isOwner( member.tid ) || owner
           } )
 
       case GroupMode.Collaborative =>
         isMember( user )
       }
     }
-
+  }
+  
   // "private" key
   def pk = {
     var v = s( 'pk )

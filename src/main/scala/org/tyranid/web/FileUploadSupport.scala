@@ -28,7 +28,7 @@ import org.apache.commons.fileupload.{ FileItemFactory, FileItem }
 import org.apache.commons.fileupload.disk.{ DiskFileItem, DiskFileItemFactory }
 
 import org.tyranid.Imp._
-
+import org.tyranid.session.Session
 
 object FileUploadSupport {
 

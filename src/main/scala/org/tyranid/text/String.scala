@@ -511,6 +511,10 @@ class StringImp( s:String ) {
     }
   }
 
+  // This assumes that the string is a Tid
+  
+  def isMe( u:org.tyranid.profile.User = T.user ) = u.tid == s || u.org.tid == s
+  def notMe = !isMe()
   
   /*
    * * *   HTTP / URLs
