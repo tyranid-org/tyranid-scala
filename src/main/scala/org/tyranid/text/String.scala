@@ -479,7 +479,9 @@ class StringImp( s:String ) {
     new org.tyranid.time.TimeParser().parse( s, dateOnly = dateOnly, forceUserTime = userTime )
   }
 
-  def parseDate( dateOnly:Boolean = false, userTime:Boolean = false ) = parseCalendar( dateOnly, userTime ).getTime
+  def parseDate( dateOnly:Boolean = false, userTime:Boolean = false ) =
+    if ( s.allBlank ) null
+    else              parseCalendar( dateOnly, userTime ).getTime
 
   /**
    * This method does all the work of parseDate, so it is slow.  Only use if you don't need the date value.
