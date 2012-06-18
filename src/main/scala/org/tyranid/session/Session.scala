@@ -90,7 +90,6 @@ object ThreadData {
 
     td
   }
-
 }
 
 class ThreadData {

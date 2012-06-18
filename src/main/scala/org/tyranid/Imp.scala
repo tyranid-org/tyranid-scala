@@ -23,6 +23,7 @@ import java.util.{ Calendar, Date }
 import scala.xml.{ NodeSeq, Unparsed }
 
 import org.tyranid.log.Log
+import org.tyranid.session.Session
 
 
 /**
@@ -106,7 +107,11 @@ object Imp {
 	}
 
   def background( block: => Unit ) {
+    val s = Session()
+    
     scala.concurrent.ops.spawn {
+      T.becomeSession( s )
+      
       trylog {
         block
       }
