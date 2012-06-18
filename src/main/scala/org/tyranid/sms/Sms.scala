@@ -30,9 +30,11 @@ import org.tyranid.Imp._
 import org.tyranid.math.Base62
 import org.tyranid.profile.User
 import org.tyranid.session.Notification
+import org.tyranid.time.Time
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
 import org.tyranid.ui.{ Grid, Row, PathField, UiStyle }
 
+import java.util.Date
 
 object SMS extends MongoEntity( tid = "a0Gt" ) {
   "phone"        is DbPhone        as "Mobile Number" is 'required;
@@ -58,7 +60,9 @@ object SMS extends MongoEntity( tid = "a0Gt" ) {
 
 case class NexmoApp( apiKey:String, secret:String, defaultFrom:String ) {
    // NexmoSmsClient
-   var client = new NexmoSmsClient( apiKey, secret )
+   val client = new NexmoSmsClient( apiKey, secret )
+   
+   var lastBalanceSentDate:Long = System.currentTimeMillis
    
    def send( to:String, text:String, from:String = defaultFrom ) = {
      //println( "client: " + client )
@@ -80,6 +84,7 @@ case class NexmoApp( apiKey:String, secret:String, defaultFrom:String ) {
        for ( result <- results ) {
          val status = result.getStatus()
          
+         /*
          println( "--------- part [ " + ( num + 1 ) + " ] ------------\n" +
                   "Status [ " + status + " ] ..." )
               
@@ -96,8 +101,22 @@ case class NexmoApp( apiKey:String, secret:String, defaultFrom:String ) {
         if ( result.getMessagePrice() != null )
           println( "Message-Price [ " + result.getMessagePrice() + " ] ..." )
         
-        if ( result.getRemainingBalance() != null )
-          println( "Remaining-Balance [ " + result.getRemainingBalance() + " ] ..." )
+        */
+        val remainingBalance = result.getRemainingBalance
+         
+        if ( remainingBalance != null ) {
+          println( "Remaining-Balance [ " + remainingBalance + " ] ..." )
+          
+          if ( remainingBalance.intValue() < 10 ) {
+            val now = System.currentTimeMillis
+            
+            // Only send one every six hours
+            if ( ( now - lastBalanceSentDate ) > ( 6 * Time.OneHourMs ) ) { 
+              log( Event.Alert, "m" -> ( "SMS Nexmo balance is low, at [" + remainingBalance + "]!" ) )
+              lastBalanceSentDate = now
+            }
+          }
+        }
           
         num += 1
       }

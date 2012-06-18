@@ -140,6 +140,7 @@ trait Bootable {
   @volatile var newSession:() => Session = null
 
   lazy val appOrgId = Org.db.findOne( Mobj( "name" -> applicationName ) ).oid
+  lazy val appOrgTid = Org.idToTid( appOrgId )
 
   val loginCookieName:String    = null
   val trackingCookieName:String = null

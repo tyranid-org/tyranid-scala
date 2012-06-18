@@ -86,6 +86,10 @@ class WebFilter extends Filter {
     ctx.res.sendRedirect( sb.toString )
   }
 
+  val assetPattern = java.util.regex.Pattern.compile( "([^\\s]+(\\.(?i)(jpg|png|gif|bmp|js|css))$)" )
+  
+  def notAsset( path:String ) = !assetPattern.matcher( path ).matches
+  
   def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ):Unit = try {
     val boot = B
 
@@ -110,7 +114,7 @@ class WebFilter extends Filter {
     if ( notComet && thread.http != null ) {
       val session = T.session
       
-      if ( session != null )
+      if ( session != null && notAsset( web.path ) )
         session.put( "lastPath", web.path )
     }
     

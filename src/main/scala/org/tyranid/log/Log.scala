@@ -65,6 +65,7 @@ object Event extends RamEntity( tid = "a0It" ) with EnumEntity[Event] {
   val Eof        = apply( 14, "EOF" )
   val Google     = apply( 15, "Google" )
   val RefInt     = apply( 16, "RefInt" ) // referential integrity violation
+  val Alert      = apply( 17, "Alert" )
 
   static( Access, StackTrace, LinkedIn, Error404, Scraper, Import, Facebook, SmsOut, SmsIn, Scheduler, Noaa, Eof, Google, RefInt )
 }
@@ -167,8 +168,8 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
     l( 'e ) = effEvent.id.as[Int]
     db.save( l )
 
-    if ( effEvent == Event.StackTrace && B.PRODUCTION ) {
-      println( "*** stack trace entering" )
+    if ( ( effEvent == Event.StackTrace || effEvent == Event.Alert ) && B.PRODUCTION ) {
+      println( "*** stack trace/alert entering" )
       val sb = new StringBuilder
 
       if ( user != null )
@@ -195,13 +196,14 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
       if ( msg.notBlank )
         sb ++= "Message:\n\n" + msg
 
-      sb ++= "\n\nStack Trace:\n\n" + throwable.getStackTrace.map( _.toString ).mkString( "\n" )
+      if ( effEvent == Event.StackTrace )
+        sb ++= "\n\nStack Trace:\n\n" + throwable.getStackTrace.map( _.toString ).mkString( "\n" )
 
       background {
         try {
           println( "*** sending email" )
             
-          AWSEmail( subject = "Volerro Stack Trace",
+          AWSEmail( subject = ( effEvent == Event.StackTrace ) ? "Volerro Stack Trace" | "Volerro Alert",
                     text = sb.toString ).
             addTo( B.alertEmail ).
             from( "no-reply@" + B.domain ).

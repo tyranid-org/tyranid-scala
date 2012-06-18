@@ -210,6 +210,8 @@ object Time {
     c
   }
 
+  def now = System.currentTimeMillis
+  
   def next( hour:Int, minute:Int, days:Int = 0 ) = {
 	  val now = Calendar.getInstance
 	  val cal = Calendar.getInstance
