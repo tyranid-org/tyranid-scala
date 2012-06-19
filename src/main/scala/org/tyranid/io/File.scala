@@ -59,11 +59,7 @@ class DbFile( bucket:S3Bucket ) extends CommonFile {
     }
   }
   
-  def url( path:String ) =
-    if ( path.startsWith( "http" ) )
-      path
-    else
-      bucket.url( path )
+  def url( path:String ) = path.startsWith( "http" ) ? path | bucket.url( path )
 }
 
 object DbLocalFile extends CommonFile {
