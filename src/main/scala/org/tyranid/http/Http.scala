@@ -17,6 +17,7 @@
 
 package org.tyranid.http
 
+import java.io.InputStream
 import java.net.URL
 import java.util.Date
 
@@ -32,7 +33,7 @@ import org.bson.types.ObjectId
 import org.apache.http.{ Header, NameValuePair, HttpHost, HttpResponse }
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{ HttpRequestBase, HttpDelete, HttpGet, HttpPost, HttpUriRequest }
-import org.apache.http.entity.StringEntity
+import org.apache.http.entity.{ StringEntity, InputStreamEntity }
 import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.message.{ BasicHeader, BasicNameValuePair }
 import org.apache.http.params.{ BasicHttpParams, HttpConnectionParams }
@@ -349,6 +350,16 @@ object Http {
       }
     }
 
+    execute( request )
+  }
+
+  def POST_S( url:String, stream:InputStream, contentLength: Long, headers:collection.Map[String,String] = null ):HttpResult = {
+    val request = new HttpPost( url )
+
+    if ( headers != null )
+      request.setHeaders( convertHeaders( headers ) )
+
+    request.setEntity( new InputStreamEntity( stream, contentLength ) ) 
     execute( request )
   }
 
