@@ -36,6 +36,7 @@ import org.apache.http.client.methods.{ HttpRequestBase, HttpDelete, HttpGet, Ht
 import org.apache.http.entity.{ StringEntity, InputStreamEntity }
 import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.entity.mime.MultipartEntity 
+import org.apache.http.entity.mime.content.{ InputStreamBody, StringBody } 
 import org.apache.http.message.{ BasicHeader, BasicNameValuePair }
 import org.apache.http.params.{ BasicHttpParams, HttpConnectionParams }
 import org.apache.http.protocol.{ ExecutionContext, HttpContext, BasicHttpContext }
@@ -354,21 +355,25 @@ object Http {
     execute( request )
   }
 
-  def POST_S( url:String, stream:InputStream, contentLength: Long, params:collection.Map[String,String] = null, headers:collection.Map[String,String] = null ):HttpResult = {
+  def POST_S( url:String, stream:InputStream, contentLength: Long, params:collection.Map[String,String] = null, filename:String = null, headers:collection.Map[String,String] = null ):HttpResult = {
     val request = new HttpPost( url )
-
+    
     if ( headers != null )
       request.setHeaders( convertHeaders( headers ) )
 
-    //if ( params != null ) {
-    //  val reqEntity = new MultipartEntity()
-    //  reqEntity.addPart( "someParam", "someValue" )
-    //  //reqEntity.addPart( "someFile", new FileBody("/some/file") )
-
-    //  request.setEntity( reqEntity )
-    //}
-    
-    request.setEntity( new InputStreamEntity( stream, contentLength ) )
+    if ( params != null ) {
+      assert( filename != null )
+      
+      //request.setHeader( "Content-Length", contentLength._s )
+      
+      val reqEntity = new MultipartEntity()
+      
+      params.foreach{ p => reqEntity.addPart( p._1, new StringBody( p._2 ) ) }
+      reqEntity.addPart( "file", new InputStreamBody( stream, filename ) )
+      request.setEntity( reqEntity )
+    } else {
+      request.setEntity( new InputStreamEntity( stream, contentLength ) )
+    }
     
     execute( request )
   }
