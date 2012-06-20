@@ -364,13 +364,15 @@ object Http {
     if ( params != null ) {
       assert( filename != null )
       
+      
+      
+      val multipart = new MultipartEntity()
+      
+      params.foreach{ p => multipart.addPart( p._1, new StringBody( p._2 ) ) }
+      multipart.addPart( "file", new InputStreamBody( stream, filename ) )
+      request.setEntity( multipart )
       //request.setHeader( "Content-Length", contentLength._s )
       
-      val reqEntity = new MultipartEntity()
-      
-      params.foreach{ p => reqEntity.addPart( p._1, new StringBody( p._2 ) ) }
-      reqEntity.addPart( "file", new InputStreamBody( stream, filename ) )
-      request.setEntity( reqEntity )
     } else {
       request.setEntity( new InputStreamEntity( stream, contentLength ) )
     }
