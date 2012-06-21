@@ -17,7 +17,10 @@ package org.tyranid.document
  *
  */
 
+
 import scala.xml.NodeSeq
+
+import java.io.File
 
 import org.bson.types.ObjectId
 import com.mongodb.DBObject
@@ -37,44 +40,32 @@ object Service {
       //B.scribd != null |* Some( B.scribd )
     ).flatten
 
-  def appFor( serviceCode:String ) =
-    services.find( _.serviceCode == serviceCode ).get
+  def appFor( serviceCode:String ) = services.find( _.serviceCode == serviceCode ).getOrElse( null )
+  
+  def statusFor( extDocId:String ) = {
+    val parts = extDocId.split( "," )
+    appFor( parts(0) ).statusFor( parts(1) )
+  }
+  
+  def previewUrlFor( extDocId:String ) = {
+    val parts = extDocId.split( "," )
+    appFor( parts(0) ).previewUrlFor( parts(1) )
+  }  
 }
 
 trait DocApp {
   val serviceCode:String
   val serviceName:String
-
   val supportedFormats:List[String] 
     
-  lazy val idName = serviceCode + "id"
+  def upload( file:File, fileSize:Long, filename:String ):String
+  def statusFor( extDocId:String ):String
+  def previewUrlFor( extDocId:String ):String
+  
+  protected def externalDocId( extDocId:String ) = serviceCode + "," + extDocId
 
-  def copyAttributes( from:User, to:User ):Unit
-  def saveAttributes( user:User ):Unit
-  def removeAttributes( user:DBObject ):Unit
-  def loginButton( weblet:Weblet ):NodeSeq
-  def logoutScript:NodeSeq
-  def removeCookies:Unit
-  def linkButton:NodeSeq
-  def linkPreview( user:User ):NodeSeq
-  def isActive:Boolean
-  def exchangeToken:Boolean
-
-  def importUser( user:User, uid:String )
-
-  def exchangeAttributes( user:User ) = {
-
-    val uid = user.s( idName )
-
-    if ( user.id != null ) {
-      val existing = B.User.db.findOne( Mobj( idName -> uid ) )
-      if ( existing != null && user.id != null && existing.id != user.id )
-        removeAttributes( existing )
-    }
-
-    if ( !user.isNew )
-      saveAttributes( user )
-  }
+  def filetypeFor( filename:String ) = filename.substring( filename.lastIndexOf( '.' ) + 1 )
+  def supports( ext:String ) = supportedFormats.contains( ext.toUpperCase )
 }
 
 

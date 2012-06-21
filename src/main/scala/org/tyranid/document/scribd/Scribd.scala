@@ -1,3 +1,5 @@
+package org.tyranid.document.scribd
+
 /**
  * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
  *
@@ -15,8 +17,6 @@
  *
  */
 
-package org.tyranid.document.crocodoc
-
 import scala.xml.Unparsed
 
 import java.io.File
@@ -27,33 +27,24 @@ import org.tyranid.Imp._
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.json.Json
 import org.tyranid.http.Http
-import org.tyranid.math.Base64
 import org.tyranid.session.Session
 import org.tyranid.document.DocApp
-import org.tyranid.time.Time
-import org.tyranid.ui.Form
 import org.tyranid.web.{ Weblet, WebContext }
 
-object Crocodoc {
-  val code = "croc"
+object Scribd {
+  val code = "scribd"
 }
 
-case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
-  val serviceCode = Crocodoc.code
-  val serviceName = "Crocodoc"
+case class ScribdApp( apiKey:String, secret:String = null ) extends DocApp {
+  val serviceCode = Scribd.code
+  val serviceName = "Scribd"
 
   // scribd: 
-  //val supportedFormats = List( "DOC", "DOCX", "XLS", "XLSX", "PPS", "PPT", "PPTX", "PDF", "PS", "ODT", "FODT", "SXW", "ODP", "FODP", "SXI", "ODS", "FODS", "SXC", "TXT", "RTF", "ODB", "ODG", "FODG", "ODF"  )
+  val supportedFormats = List( "DOC", "DOCX", "XLS", "XLSX", "PPS", "PPT", "PPTX", "PDF", "PS", "ODT", "FODT", "SXW", "ODP", "FODP", "SXI", "ODS", "FODS", "SXC", "TXT", "RTF", "ODB", "ODG", "FODG", "ODF"  )
     
-  val supportedFormats = List( "DOC", "DOCX", "XLS", "XLSX", "PPT", "PPTX", "PDF" )
-  
   def upload( file:File, fileSize:Long, filename:String ):String = {
-    if ( supports( filetypeFor( filename ) ) ) {
-      val result = Http.POST_S( "https://crocodoc.com/api/v2/document/upload", file, fileSize, params = Map( "token" -> apiKey ), filename = filename )._s
-      externalDocId( Json.parse( result ).s( 'uuid ) )
-    } else {
-      null
-    }
+    val result = Http.POST_S( "https://crocodoc.com/api/v2/document/upload", file, fileSize, params = Map( "token" -> apiKey ), filename = filename )._s
+    externalDocId( Json.parse( result ).s( 'uuid ) )
   }
   
   def statusFor( extDocId:String ) = {
@@ -67,7 +58,7 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   }
 }
 
-object Croclet extends Weblet {
+object Scribdlet extends Weblet {
 
   def handle( web:WebContext ) {
     val s = Session()
