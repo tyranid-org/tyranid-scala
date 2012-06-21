@@ -215,7 +215,10 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
 
   def forward( url:String )  = throw WebForwardException( url )
 
-  def redirect( url:String ) = throw WebRedirectException( url )
+  def redirect( url:String ) = {
+    assert( !url.endsWith( "/null" ) )
+    throw WebRedirectException( url )
+  }
   
   def template( template:NodeSeq, status:Int = 200 ) =
     res.html( WebTemplate( template ), status )

@@ -17,7 +17,7 @@
 
 package org.tyranid.http
 
-import java.io.InputStream
+import java.io.{ InputStream, File }
 import java.net.URL
 import java.util.Date
 
@@ -36,7 +36,7 @@ import org.apache.http.client.methods.{ HttpRequestBase, HttpDelete, HttpGet, Ht
 import org.apache.http.entity.{ StringEntity, InputStreamEntity }
 import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.entity.mime.MultipartEntity 
-import org.apache.http.entity.mime.content.{ InputStreamBody, StringBody } 
+import org.apache.http.entity.mime.content.{ InputStreamBody, StringBody, FileBody } 
 import org.apache.http.message.{ BasicHeader, BasicNameValuePair }
 import org.apache.http.params.{ BasicHttpParams, HttpConnectionParams }
 import org.apache.http.protocol.{ ExecutionContext, HttpContext, BasicHttpContext }
@@ -355,7 +355,7 @@ object Http {
     execute( request )
   }
 
-  def POST_S( url:String, stream:InputStream, contentLength: Long, params:collection.Map[String,String] = null, filename:String = null, headers:collection.Map[String,String] = null ):HttpResult = {
+  def POST_S( url:String, file:File, contentLength: Long, params:collection.Map[String,String] = null, filename:String = null, headers:collection.Map[String,String] = null ):HttpResult = {
     val request = new HttpPost( url )
     
     if ( headers != null )
@@ -364,17 +364,17 @@ object Http {
     if ( params != null ) {
       assert( filename != null )
       
-      
-      
       val multipart = new MultipartEntity()
-      
       params.foreach{ p => multipart.addPart( p._1, new StringBody( p._2 ) ) }
-      multipart.addPart( "file", new InputStreamBody( stream, filename ) )
+      
+      val fileBody = new FileBody( file, "application/octect-stream" )
+      multipart.addPart( "file", fileBody )
+
+//      multipart.addPart( "file", new InputStreamBody( stream, filename ) )
       request.setEntity( multipart )
       //request.setHeader( "Content-Length", contentLength._s )
-      
     } else {
-      request.setEntity( new InputStreamEntity( stream, contentLength ) )
+      //request.setEntity( new InputStreamEntity( stream, contentLength ) )
     }
     
     execute( request )
