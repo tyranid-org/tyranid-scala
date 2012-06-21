@@ -35,7 +35,7 @@ object Scribd {
   val code = "scribd"
 }
 
-case class ScribdApp( apiKey:String, secret:String = null ) extends DocApp {
+case class ScribdApp( apiKey:String, secret:String = null, publisher:String = null ) extends DocApp {
   val serviceCode = Scribd.code
   val serviceName = "Scribd"
 
@@ -43,7 +43,9 @@ case class ScribdApp( apiKey:String, secret:String = null ) extends DocApp {
   val supportedFormats = List( "DOC", "DOCX", "XLS", "XLSX", "PPS", "PPT", "PPTX", "PDF", "PS", "ODT", "FODT", "SXW", "ODP", "FODP", "SXI", "ODS", "FODS", "SXC", "TXT", "RTF", "ODB", "ODG", "FODG", "ODF"  )
     
   def upload( file:File, fileSize:Long, filename:String ):String = {
-    val result = Http.POST_S( "https://crocodoc.com/api/v2/document/upload", file, fileSize, params = Map( "token" -> apiKey ), filename = filename )._s
+    val result = Http.POST_S( "http://api.scribd.com/api?", file, fileSize, params = Map( "method" -> "docs.upload", "api_key" -> apiKey ), filename = filename )._s
+    
+    //result.
     externalDocId( Json.parse( result ).s( 'uuid ) )
   }
   
