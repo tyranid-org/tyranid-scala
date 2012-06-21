@@ -461,7 +461,7 @@ case class Report( query:Query ) {
      <script src={ B.buildPrefix + "/js/tyr_report.js" } type="text/javascript"/>
      <script>{ Unparsed( "window.reportObj = { qn:'" + query.name + "', id:'" + id + "' };" ) }</script>
     </head> ++
-    { query.fields.map( _.drawPreamble( this ) ).flatten } ++
+    { query.fields.map( _.drawPreamble ).flatten } ++
     <div class="report greyBox" id={ id }>
      { recalcFields }
      { innerDraw }

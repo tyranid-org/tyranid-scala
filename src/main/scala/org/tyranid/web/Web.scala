@@ -215,7 +215,11 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
 
   def forward( url:String )  = throw WebForwardException( url )
 
-  def redirect( url:String ) = throw WebRedirectException( url )
+  def redirect( url:String ) = {
+    assert( !url.endsWith( "/null" ) )
+
+    throw WebRedirectException( url )
+  }
   
   def template( template:NodeSeq, status:Int = 200 ) =
     res.html( WebTemplate( template ), status )
@@ -355,15 +359,21 @@ class WebTemplate {
       }
 
     case e:Elem if node.label == "head" =>
-      heads ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
+      val id = node.\( "@id" ).text
+      if ( id.isBlank || !heads.exists( _.\( "@id" ).text == id ) )
+        heads ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
       NodeSeq.Empty
 
     case e:Elem if node.label == "top" =>
-      tops ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
+      val id = node.\( "@id" ).text
+      if ( id.isBlank || !tops.exists( _.\( "@id" ).text == id ) )
+        tops ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
       NodeSeq.Empty
 
     case e:Elem if node.label == "tail" =>
-      tails ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
+      val id = node.\( "@id" ).text
+      if ( id.isBlank || !tails.exists( _.\( "@id" ).text == id ) )
+        tails ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
       NodeSeq.Empty
 
     case e:Elem =>

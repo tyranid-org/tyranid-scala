@@ -280,6 +280,8 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
 
   def groupType = GroupType.byId( i( 'type ) ).getOrElse( GroupType.Org ).as[GroupType]
 
+  def idsField = Group.idsFor( groupType )
+
   def iconClass16x16 = groupType.iconClass16x16
   def iconClass32x32 = groupType.iconClass32x32
 
@@ -366,9 +368,24 @@ case class GroupingAddBy( label:String, keys:String* ) {
   val id = label.toIdentifier
 }
 
+object GroupField {
+
+  lazy val common = {
+    val foreignKey:String = "grp"
+
+    GroupField(
+      foreignKey, "Group",
+      // TODO:  this needs to be Orgs and Users
+      B.Org, GroupType.Org, foreignKey,
+      addBys = Seq( GroupingAddBy( "Name", "name" ) )
+    )
+  }
+
+}
+
 case class GroupField( baseName:String, l:String = null,
                        ofEntity:MongoEntity,
-                       groupType:GroupType, foreignKey:String,
+                       fooGroupType:GroupType, foreignKey:String,
                        addBys:Seq[GroupingAddBy] = Nil,
                        nameSearch: ( String ) => Any = null,
                        opts:Seq[(String,String)] = Nil ) extends Field {
@@ -383,8 +400,6 @@ case class GroupField( baseName:String, l:String = null,
 
   val showFilter = true
   val show = Show.Editable
-
-  lazy val idsField = Group.idsFor( groupType )
 
   def groupValueFor( rec:Record ) = rec( name ).as[GroupValue]
 
@@ -408,7 +423,7 @@ case class GroupField( baseName:String, l:String = null,
       val group = groupValueFor( run.report.searchRec ).selectedGroup
       if ( group != null ) {
         val fk = foreignKey
-        searchObj( fk ) = Mobj( $in -> group.obj.a_?( idsField ) )
+        searchObj( fk ) = Mobj( $in -> group.obj.a_?( group.idsField ) )
       }
     }
   }
@@ -417,9 +432,8 @@ case class GroupField( baseName:String, l:String = null,
     // TODO:  implement this
     false
 
-  override def drawPreamble( report:Report ):NodeSeq =
-    // TODO:  need to have some mechanism so that we don't include things like tags more than once
-    <head><script src={ B.buildPrefix + "/js/tag.js" } charset="utf-8"></script></head>
+  override def drawPreamble:NodeSeq =
+    <head id="tag.js"><script src={ B.buildPrefix + "/js/tag.js" } charset="utf-8"></script></head>
     <div id={ "grpDlg" + id } class="grpDlg" style="padding:0; display:none;"/>;
 
   override def drawFilter( run:Run ) = {
@@ -430,7 +444,7 @@ case class GroupField( baseName:String, l:String = null,
       <td class="label">view group</td>
       <td rowspan="2" style="padding-right:4px;">
        <a id={ "grpBtn" + id } href="#" class="grpBtn btn" style="height:40px; padding-top:6px;">
-        <span tip="Groups" class={ "tip " + /* bigIcon groupIcon */ groupType.iconClass32x32 } style="padding:0;"/>
+        <span tip="Groups" class={ "tip " + /* bigIcon groupIcon */ fooGroupType.iconClass32x32 } style="padding:0;"/>
         <span class="label"/>
        </a>
       </td>
@@ -441,12 +455,6 @@ case class GroupField( baseName:String, l:String = null,
     </table>
   }
 
-  def userOwnerTid = 
-    groupType match {
-    case GroupType.Org  => T.session.orgTid
-    case GroupType.User => T.session.user.tid
-    }
-
   def accessTidsQuery = {
     val s = T.session
     if ( s.orgTid.notBlank ) Mobj( $in -> Mlist( s.orgTid, s.user.tid ) )
@@ -454,8 +462,8 @@ case class GroupField( baseName:String, l:String = null,
   }
 
 
-  def queryGroups                         = Group.db.find( Mobj( "owners" -> accessTidsQuery, "type" -> groupType.id ) ).map( o => Group( o ) ).toSeq
-  def queryGroupMembers( group:DBObject ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( idsField ) ) ) ).map( o => ofEntity( o ) ).toIterable
+  def queryGroups                      = Group.db.find( Mobj( "owners" -> accessTidsQuery, "type" -> fooGroupType.id ) ).map( Group.apply ).toSeq
+  def queryGroupMembers( group:Group ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( group.idsField ) ) ) ).map( ofEntity.apply ).toIterable
 
   override def handle( weblet:Weblet, rec:Record ) = {
     val gv = groupValueFor( rec )
@@ -483,16 +491,22 @@ case class GroupField( baseName:String, l:String = null,
     case "/fld/addGroupSave" =>
       val monitor = web.b( "grpMonitor" + id )
       val group = Group.make
+      val gt = fooGroupType
       group( 'name )    = web.s( "grpAddName" + id ) or "Unnamed Group"
-      group( 'type )    = groupType.id
+      group( 'type )    = gt.id
 
       group.updateMode( monitor )
 
-      group( 'owners ) = Mlist( userOwnerTid )
+      group( 'owners ) = Mlist(
+        gt match {
+        case GroupType.Org  => T.session.orgTid
+        case GroupType.User => T.session.user.tid
+        } )
+
 
       if ( !monitor ) {
         group( 'tids ) =
-          ( groupType match {
+          ( gt match {
             case GroupType.Org  => Seq( T.session.orgTid )
             case GroupType.User => Seq( T.session.user.tid )
             } ).toMlist
@@ -573,12 +587,12 @@ case class GroupField( baseName:String, l:String = null,
               if ( keys.size == 1 ) keys( 0 )
               else                  Mobj( $or -> Mlist( keys:_* ) )
 
-            ofEntity.db.find( where, Mobj( "_id" -> 1 ) ).map( of => groupType.ofEntity.idToTid( of( '_id ) ) ).toSeq
+            ofEntity.db.find( where, Mobj( "_id" -> 1 ) ).map( of => dg.groupType.ofEntity.idToTid( of( '_id ) ) ).toSeq
           }
 
         // DRAGON-MIXED-TID:  this is a hack because we've got mixed tids inside groups (both Org and ExtendedOrg tids) ... there should only be Org tids!
         //                    TODO:  remove all references to DRAGON-MIXED-TID once this problem is cleared up
-        assert( tids.forall( _.startsWith( groupType.ofEntity.tid ) ) )
+        assert( tids.forall( _.startsWith( dg.groupType.ofEntity.tid ) ) )
 
         dg( "tids" ) = ( dg.a_?( 'tids ) ++ tids ).distinct.toMlist
         dg.updateIds
@@ -593,11 +607,11 @@ case class GroupField( baseName:String, l:String = null,
 
         // TODO:  we should be able to do both of these in a single update, but need to figure out how to do two $pulls in a single update's DBObject ... does $and work ?
         Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( "tids" -> tid ) ) )
-        Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( idsField -> Tid.tidToId( tid ) ) ) )
+        Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( dg.idsField -> Tid.tidToId( tid ) ) ) )
 
         // DRAGON-MIXED-TID
         if ( tid.startsWith( ofEntity.tid ) ) // bad !
-          Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( "tids" -> groupType.ofEntity.idToTid( Tid.tidToId( tid ) ) ) ) )
+          Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( "tids" -> dg.groupType.ofEntity.idToTid( Tid.tidToId( tid ) ) ) ) )
 
         gv.resetGroups
       }
@@ -624,7 +638,7 @@ case class GroupField( baseName:String, l:String = null,
           ofEntity.db.find( where, Mobj( labelKey -> 1 ) ).
             limit( 16 ).
             toSeq.
-            map( o => Map( "id"    -> groupType.ofEntity.idToTid( o( '_id ) ),
+            map( o => Map( "id"    -> dg.groupType.ofEntity.idToTid( o( '_id ) ),
                            "label" -> o.s( labelKey ) ) )
         }
 
@@ -729,7 +743,7 @@ case class GroupValue( gf:GroupField ) extends Valuable {
     <div class="add">
      { editable |*
      <form method="post" id="grpAddForm">
-      <div class="title">Add { gf.groupType.ofEntity.label.plural }</div>
+      <div class="title">Add { group.groupType.ofEntity.label.plural }</div>
       <label for="grpAddBy">By:</label>
       { Select( "grpAddBy", groupAddBy != null |* groupAddBy.id, gf.addBys.map( ab => ( ab.id, ab.label ) ) ) }
       <div id={ "grpAddBox" + gf.id } class="grpAddBox">
@@ -745,10 +759,11 @@ case class GroupValue( gf:GroupField ) extends Valuable {
   }
 
   def drawAddBy = {
+    val group = dialogGroup
     val addBy = groupAddBy
 
     addBy != null |* {
-    <div class="stitle">Enter { gf.groupType.ofEntity.label } { addBy.label.plural } To Add</div> ++
+    <div class="stitle">Enter { group.groupType.ofEntity.label } { addBy.label.plural } To Add</div> ++
     { addBy.label match {
     case "Name" => // TODO:  should match on something better
       <ul class="grpAddName" id={ "grpAddName" + gf.id }></ul>
@@ -800,43 +815,34 @@ case class GroupValue( gf:GroupField ) extends Valuable {
 
 object Grouplet extends Weblet {
 
-  lazy val globalGroupField = {
-    val foreignKey:String = null
-
-    GroupField(
-      foreignKey, "Group",
-      // TODO:  this needs to be Orgs and Users
-      B.Org, GroupType.Org, foreignKey,
-      addBys = Seq( GroupingAddBy( "Name", "name" ) )
-    )
-  }
-
   def handle( web: WebContext ) {
-    //val sess = T.session
-
-    redirectIfNotLoggedIn( web )
     val sess = T.session
 
-    val queryId = web.s( 'q )
-    if ( queryId.notBlank ) {
-      val report = sess.reportFor( queryId )
-      val query = report.query
+    redirectIfNotLoggedIn( web )
 
-      val fld = web.s( 'fld )
+    val fld = web.s( 'fld )
 
-      if ( fld.notBlank )
+    if ( fld == GroupField.common.id ) {
+      val groupRec = sess.cache.getOrElseUpdate(
+        "groupRec", {
+          val rec = org.tyranid.db.AdHoc.make
+          rec( GroupField.common.name ) = GroupValue( GroupField.common )
+          rec
+        }
+      ).as[Record]
+
+      GroupField.common.handle( this, groupRec )
+    } else {
+      val queryId = web.s( 'q )
+      if ( queryId.notBlank ) {
+        val report = sess.reportFor( queryId )
+        val query = report.query
+
         query.fields.find( _.id == fld ) match {
         case Some( f ) => f.handle( this, report.searchRec )
         case None      => _404
         }
-      else
-        //globalGroupField.handle( this, searchRec )
-        _404
-
-    } else {
-      rpath match {
-
-      case _ =>
+      } else {
         _404
       }
     }

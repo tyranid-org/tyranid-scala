@@ -252,7 +252,7 @@ trait Field {
    * * *   Reports ( TODO:  make more generic/Scope-based than Report/Run-based )
    */
 
-  def drawPreamble( report:Report ):NodeSeq = NodeSeq.Empty
+  def drawPreamble:NodeSeq = NodeSeq.Empty
 
   def drawFilter( run:Run ):NodeSeq = {
     val s = Scope( run.report.searchRec, filtering = true )

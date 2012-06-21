@@ -15,33 +15,21 @@
  *
  */
 
-package org.tyranid.web
+package org.tyranid.db
+
+import com.mongodb.DBObject
 
 import org.tyranid.Imp._
+import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 
 
-object Errorlet extends Weblet {
+object AdHoc extends MongoEntity( tid = "a0Qt" ) {
+  type RecType = AdHoc
+  override def convert( obj:DBObject, parent:MongoRecord ) = new AdHoc( obj, parent )
 
-  def handle( web:WebContext ) {
-
-    rpath match {
-    case "/404" =>
-
-      val originalUrl = web.req.getAttribute( "javax.servlet.forward.request_uri" )
-
-      println( originalUrl )
-      
-      if ( originalUrl != null )
-        log( Event.Error404, "p" -> originalUrl )
-
-      web.template( <tyr:404/> )
-
-    case "/throw" =>
-      throw new RuntimeException( "test exception" )
-
-    case _ =>
-      _404
-    }
-  }
+  override lazy val db = problem( "AdHoc entities do not have a database connection." )
 }
+
+class AdHoc( obj:DBObject, parent:MongoRecord ) extends MongoRecord( AdHoc.makeView, obj, parent )
 
