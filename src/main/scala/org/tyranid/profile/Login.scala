@@ -306,6 +306,9 @@ The """ + B.applicationName + """ Team
           web.redirect( "/user/edit?id=" + user.tid )
         }
       }
+      
+    case "/null" =>
+      log( Event.RefInt, "m" -> ( "null, Referer: " + web.req.getHeader( "referer" ) ) ) 
     }
   }
 

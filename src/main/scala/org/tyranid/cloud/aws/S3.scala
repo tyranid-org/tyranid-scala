@@ -70,6 +70,8 @@ object S3 {
     } finally {
       in.close
     }
+    
+    md
   }
   
   def write( bucket:S3Bucket, key:String, file:org.apache.commons.fileupload.FileItem ):Unit =

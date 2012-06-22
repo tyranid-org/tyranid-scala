@@ -477,8 +477,21 @@ case class GroupField( baseName:String, l:String = null,
       web.js( JqHtml( "#grpDlg" + id, gv.drawPanel ) )
 
     case "/fld/select" =>
-      gv.selectGroup( web.s( 'id ) )
       val report = T.session.reportFor( T.web.s( 'q ) )
+      var query = report.query
+      
+      query.init
+      report.extractSearchRec
+
+      // May need to do something here with sort order
+      //if ( query.orderBy.nonEmpty ) {
+      //  val name = web.s( 'sort )
+      //  report.sort = query.orderBy.find( _.name == name ).get
+      //}
+      
+      report.offset = 0
+      
+      gv.selectGroup( web.s( 'id ) )
       web.res.html( report.innerDraw )
 
     case "/fld/dlgSelect" =>

@@ -30,6 +30,8 @@ import com.braintreegateway.BraintreeGateway
 import org.tyranid.Imp._
 import org.tyranid.db.Entity
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.document.crocodoc.CrocApp
+import org.tyranid.document.scribd.ScribdApp
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.email.EmailTemplate
 import org.tyranid.profile.{ OrgMeta, User, UserMeta }
@@ -186,6 +188,10 @@ trait Bootable {
   val google:GoApp        = null
   val twitter:TwApp       = null
   val trackur:TrackurApp  = null
+  
+  // Document services
+  val crocodoc:CrocApp = null
+  val scribddoc:ScribdApp = null
 
   // ReCaptcha
   val reCaptchaPublicKey  = ""

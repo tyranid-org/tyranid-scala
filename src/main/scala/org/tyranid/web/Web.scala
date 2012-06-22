@@ -217,7 +217,6 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
 
   def redirect( url:String ) = {
     assert( !url.endsWith( "/null" ) )
-
     throw WebRedirectException( url )
   }
   
