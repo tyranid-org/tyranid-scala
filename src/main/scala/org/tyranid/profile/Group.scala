@@ -462,7 +462,7 @@ case class GroupField( baseName:String, l:String = null,
 
 
   def queryGroups                      = Group.db.find( Mobj( "owners" -> accessTidsQuery, "type" -> fooGroupType.id ) ).map( Group.apply ).toSeq
-  def queryGroupMembers( group:Group ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.a_?( group.idsField ) ) ) ).map( ofEntity.apply ).toIterable
+  def queryGroupMembers( group:Group ) = ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.obj.a_?( group.idsField ) ) ) ).map( ofEntity.apply ).toIterable
 
   override def handle( weblet:Weblet, rec:Record ) = {
     val gv = groupValueFor( rec )
