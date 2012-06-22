@@ -19,7 +19,8 @@ package org.tyranid.document.scribd
 
 import scala.xml.Unparsed
 
-import java.io.File
+import java.io.{ File, FileOutputStream }
+import java.security.MessageDigest
 
 import com.mongodb.DBObject
 
@@ -39,24 +40,72 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
   val serviceCode = Scribd.code
   val serviceName = "Scribd"
 
-  // scribd: 
   val supportedFormats = List( "DOC", "DOCX", "XLS", "XLSX", "PPS", "PPT", "PPTX", "PDF", "PS", "ODT", "FODT", "SXW", "ODP", "FODP", "SXI", "ODS", "FODS", "SXC", "TXT", "RTF", "ODB", "ODG", "FODG", "ODF"  )
     
-  def upload( file:File, fileSize:Long, filename:String ):String = {
-    val result = Http.POST_S( "http://api.scribd.com/api?", file, fileSize, params = Map( "method" -> "docs.upload", "api_key" -> apiKey ), filename = filename )._s
+  /*
+  <rsp stat="ok">
+    <doc_id>123456</doc_id>
+    <access_key>key-rvfa2c82sq5bf9q8t6v</access_key>
+    <secret_password>2jzwhplozu43cyqfky1m</secret_password>
+  </rsp>
+  */
     
-    //result.
-    externalDocId( Json.parse( result ).s( 'uuid ) )
+  def upload( file:File, fileSize:Long, filename:String ):String = {
+    val resultStr = Http.POST_S( "http://api.scribd.com/api?", file, fileSize, params = Map( "method" -> "docs.upload", "access" -> "private", "api_key" -> apiKey, "secure" -> "1" ), filename = filename )._s
+
+    val response = resultStr.toXml \\ "rsp"
+    
+    val docId = ( response \\ "doc_id" ).text
+    val accessKey = ( response \\ "access_key" ).text
+    val secretPassword = ( response \\ "secret_password" ).text
+    
+    externalDocId( docId + "," + accessKey + "," + ( secretPassword.isBlank ? "" | secretPassword ) )
   }
   
   def statusFor( extDocId:String ) = {
-    val statusJson = Json.parse( Http.GET( "https://crocodoc.com/api/v2/document/status?token=" + apiKey + "&uuids=" + extDocId ).s ).get(0)
-    statusJson.s( 'status )
+    "DONE"
+    //val statusJson = Json.parse( Http.GET( "https://crocodoc.com/api/v2/document/status?token=" + apiKey + "&uuids=" + extDocId ).s ).get(0)
+    //statusJson.s( 'status )
   }
   
-  def previewUrlFor( extDocId:String ) = {
-    val viewingSessionId = Json.parse( Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s ).s( 'session )
-    "https://crocodoc.com/view/" + viewingSessionId
+  def previewUrlFor( extDocId:String ) = null
+  
+  def previewJsFor( extDocId:String ) = {
+    val parts = extDocId.split( "," )
+    "var scribd_doc = scribd.Document.getDoc(" + parts(0) + ", '" + parts(1) + "');var onDocReady = function(e){scribd_doc.api.setPage(1);};scribd_doc.addParam('jsapi_version', 2);scribd_doc.addEventListener('docReady', onDocReady);scribd_doc.write('scrib_doc');scribd_doc.addParam('use_ssl', true); scribd_doc.grantAccess('" + T.user.tid + "', '" + Session().id + "', '" + MD5( parts(0), Session().id, T.user.tid ) + "');"
+  }
+  
+  def getThumbnailFile( extDocId:String )  = {
+    val parts = extDocId.split( "," )
+    val resultStr = Http.GET( "http://api.scribd.com/api?method=thumbnail.get&api_key=" + apiKey + "&doc_id=" + parts(0) + "&api_sig=" + MD5( parts(0), Session().id, T.user.tid ) )._s
+    
+    val response = resultStr.toXml \\ "rsp"
+    val thumbnailUrl = ( response \\ "thumnail_url" ).text
+    
+    val res = Http.GET( thumbnailUrl )
+    val entity = res.response.getEntity
+    
+    if ( entity != null ) {
+      val instream = entity.getContent
+      val tmpFile = File.createTempFile( extDocId, ".png" )
+      val out = new FileOutputStream( tmpFile )
+       
+      instream.transferTo( out, true )
+
+      tmpFile
+    } else {
+      null
+    }
+  }
+  
+  //MD5([Your API Secret Key]document_id[The Document ID]session_id[Session ID]user_identifier[User Identifier])
+  def MD5( docId:String, sessionId:String, userId:String ) = {
+    val bytes = ( secret + "document_id" + docId + "session_id" + sessionId + "user_identifier" + userId ).getBytes( "UTF-8" )
+    val md5 = MessageDigest.getInstance( "MD5" )
+    
+    md5.reset
+    md5.update( bytes )
+    md5.digest.toHexString
   }
 }
 
