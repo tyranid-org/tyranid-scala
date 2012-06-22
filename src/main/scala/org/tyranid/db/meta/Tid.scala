@@ -271,13 +271,15 @@ object Tid {
   }
   
   // WARNING!  This will perform a blind cascade delete
-  def deleteCascade( tid:String ) {
+  def deleteCascade( tid:String, deletions:mutable.Buffer[Record] = null ) {
     val delStat = delete( tid, true )
     val cFailures = delStat.cascadeFailures
     
     if ( cFailures.nonEmpty ) {
       cFailures.foreach( f => deleteCascade( f.tid ) )
       deleteCascade( tid )
+    } else {
+      deletions ++= delStat.deletes
     }
   }
   
