@@ -17,7 +17,6 @@ package org.tyranid.document
  *
  */
 
-
 import scala.xml.NodeSeq
 
 import java.io.File
@@ -32,24 +31,38 @@ import org.tyranid.io.File
 import org.tyranid.profile.{ Org, User }
 import org.tyranid.web.Weblet
 
-
 object Service {
   lazy val services =
     Seq(
-      B.crocodoc != null |* Some( B.crocodoc )//,
-      //B.scribd != null |* Some( B.scribd )
+      B.crocodoc != null |* Some( B.crocodoc ),
+      B.scribddoc != null |* Some( B.scribddoc )
     ).flatten
 
   def appFor( serviceCode:String ) = services.find( _.serviceCode == serviceCode ).getOrElse( null )
   
   def statusFor( extDocId:String ) = {
     val parts = extDocId.split( "," )
-    appFor( parts(0) ).statusFor( parts(1) )
+    appFor( parts(0) ).statusFor( parts.drop(1).mkString( "," ) )
   }
   
   def previewUrlFor( extDocId:String ) = {
     val parts = extDocId.split( "," )
-    appFor( parts(0) ).previewUrlFor( parts(1) )
+    appFor( parts(0) ).previewUrlFor( parts.drop(1).mkString( "," ) )
+  }  
+  
+  def appCodeForId( extDocId:String ):String = {
+    val parts = extDocId.split( "," )
+    appFor( parts(0) ).serviceCode
+  }
+  
+  def previewJsFor( extDocId:String ) = {
+    val parts = extDocId.split( "," )
+    appFor( parts(0 ) ).previewJsFor( parts.drop(1).mkString( "," ) )
+  }
+  
+  def getThumbnailFile( extDocId:String ) = {
+    val parts = extDocId.split( "," )
+    appFor( parts(0 ) ).getThumbnailFile( parts.drop(1).mkString( "," ) )
   }  
 }
 
@@ -61,12 +74,11 @@ trait DocApp {
   def upload( file:File, fileSize:Long, filename:String ):String
   def statusFor( extDocId:String ):String
   def previewUrlFor( extDocId:String ):String
+  def previewJsFor( extDocId:String ):String
+  def getThumbnailFile( extDocId:String ):File
   
   protected def externalDocId( extDocId:String ) = serviceCode + "," + extDocId
 
   def filetypeFor( filename:String ) = filename.substring( filename.lastIndexOf( '.' ) + 1 )
   def supports( ext:String ) = supportedFormats.contains( ext.toUpperCase )
 }
-
-
-

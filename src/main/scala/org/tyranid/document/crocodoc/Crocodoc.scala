@@ -19,7 +19,7 @@ package org.tyranid.document.crocodoc
 
 import scala.xml.Unparsed
 
-import java.io.File
+import java.io.{ File, FileOutputStream }
 
 import com.mongodb.DBObject
 
@@ -64,6 +64,25 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   def previewUrlFor( extDocId:String ) = {
     val viewingSessionId = Json.parse( Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s ).s( 'session )
     "https://crocodoc.com/view/" + viewingSessionId
+  }
+  
+  def previewJsFor( extDocId:String ) = null
+  
+  def getThumbnailFile( extDocId:String ) = {
+    val res = Http.GET( "https://crocodoc.com/api/v2/download/thumbnail?token=" + apiKey + "&uuids=" + extDocId )
+    val entity = res.response.getEntity
+    
+    if ( entity != null ) {
+      val instream = entity.getContent
+      val tmpFile = File.createTempFile( extDocId, ".png" )
+      val out = new FileOutputStream( tmpFile )
+       
+      instream.transferTo( out, true )
+
+      tmpFile
+    } else {
+      null
+    }
   }
 }
 
