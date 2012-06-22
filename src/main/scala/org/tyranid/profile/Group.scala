@@ -254,13 +254,13 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
   def firstOwnerTid( notTids:String* ):String = {
     val owners = a_?( 'owners )
     
-    owners.foreach( t => {
+    owners foreach { t =>
       val tid = t._s
       
       if ( !notTids.contains( tid ) )
         return tid
-    } )
-    
+    }
+
     null
   }
 
@@ -268,8 +268,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
 
   def updateIds =
     for ( en <- Group.attrib( 'tids ).domain.as[DbArray].of.as[DbTid].of ) {
-
-      val seq = a_?( 'tids ).map( _.as[String] ).filter( _.startsWith( en.tid ) ).map( en.tidToId )
+      val seq = a_?( 'tids ).map( _._s ).filter( _.startsWith( en.tid ) ).map( en.tidToId )
       val field = en.tid + "Ids"
 
       if ( seq.nonEmpty )
@@ -515,7 +514,6 @@ case class GroupField( baseName:String, l:String = null,
         case GroupType.Org  => T.session.orgTid
         case GroupType.User => T.session.user.tid
         } )
-
 
       if ( !monitor ) {
         group( 'tids ) =
