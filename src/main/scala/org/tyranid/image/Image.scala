@@ -33,6 +33,29 @@ import org.tyranid.ui.PathField
 import org.tyranid.web.Html
 
 
+// Might be able to get an image out of pdfbox:
+/*
+ List pages = document.getDocumentCatalog().getAllPages();
+            Iterator iter = pages.iterator();
+            while( iter.hasNext() )
+            {
+                PDPage page = (PDPage)iter.next();
+                PDResources resources = page.getResources();
+                Map images = resources.getImages();
+                if( images != null )
+                {
+                    Iterator imageIter = images.keySet().iterator();
+                    while( imageIter.hasNext() )
+                    {
+                        String key = (String)imageIter.next();
+                        PDXObjectImage image = (PDXObjectImage)images.get( key );
+                        String name = getUniqueFileName( key, image.getSuffix() );
+                        System.out.println( "Writing image:" + name );
+                        image.write2file( name );
+                    }
+                }
+            }
+*/
 class DbImageish( bucket:S3Bucket ) extends DbFile( bucket )
 
 object DbImage {

@@ -41,9 +41,6 @@ object Crocodoc {
 case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   val serviceCode = Crocodoc.code
   val serviceName = "Crocodoc"
-
-  // scribd: 
-  //val supportedFormats = List( "DOC", "DOCX", "XLS", "XLSX", "PPS", "PPT", "PPTX", "PDF", "PS", "ODT", "FODT", "SXW", "ODP", "FODP", "SXI", "ODS", "FODS", "SXC", "TXT", "RTF", "ODB", "ODG", "FODG", "ODF"  )
     
   val supportedFormats = List( "DOC", "DOCX", "XLS", "XLSX", "PPT", "PPTX", "PDF" )
   
@@ -66,8 +63,6 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
     "https://crocodoc.com/view/" + viewingSessionId
   }
   
-  def previewJsFor( extDocId:String ) = null
-  
   def getThumbnailFile( extDocId:String ) = {
     val res = Http.GET( "https://crocodoc.com/api/v2/download/thumbnail?token=" + apiKey + "&uuids=" + extDocId )
     val entity = res.response.getEntity
@@ -82,6 +77,23 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
       tmpFile
     } else {
       null
+    }
+  }
+  
+  def previewParams( extDocId:String, width:String, height:String ) = {
+    statusFor( extDocId ) match {
+      case "DONE" =>
+        val iframeSrc = previewUrlFor( extDocId )
+        
+        Map( "width" -> width, 
+             "height" -> height,
+             "cssClass" -> "no-scroll",
+             "html" -> ( { org.tyranid.session.Notification.box } ++
+                         <iframe style="width:100%;height:100%;" src={ iframeSrc }/> ) )
+      case "ERROR" =>
+        Map( "status" -> ( "Error occured!: " ) ) //+ statusJson.s( 'error ) ) ) )
+      case s =>
+        Map( "status" -> ( "Error, unknown status: " + s._s ) )
     }
   }
 }
