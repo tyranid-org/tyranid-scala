@@ -235,7 +235,7 @@ trait BsonObject extends Deep {
         sb ++= m( "NumberLong(", "Type" ) ++= l.toString ++= m( ")", "Type" )
 
       case oid:org.bson.types.ObjectId =>
-        sb ++= m( "ObjectId(", "Type" ) ++= oid.toString ++= m( ")", "Type" )
+        sb ++= m( "ObjectId('", "Type" ) ++= oid.toString ++= m( "')", "Type" )
 
       case v =>
         sb ++= v.toString
