@@ -279,7 +279,8 @@ object Tid {
       cFailures.foreach( f => deleteCascade( f.tid ) )
       deleteCascade( tid )
     } else {
-      deletions ++= delStat.deletes
+      if ( deletions != null )
+        deletions ++= delStat.deletes
     }
   }
   
