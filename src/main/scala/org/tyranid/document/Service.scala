@@ -45,25 +45,20 @@ object Service {
     appFor( parts(0) ).statusFor( parts.drop(1).mkString( "," ) )
   }
   
-  def previewUrlFor( extDocId:String ) = {
-    val parts = extDocId.split( "," )
-    appFor( parts(0) ).previewUrlFor( parts.drop(1).mkString( "," ) )
-  }  
-  
   def appCodeForId( extDocId:String ):String = {
     val parts = extDocId.split( "," )
     appFor( parts(0) ).serviceCode
   }
   
-  def previewJsFor( extDocId:String ) = {
-    val parts = extDocId.split( "," )
-    appFor( parts(0 ) ).previewJsFor( parts.drop(1).mkString( "," ) )
-  }
-  
   def getThumbnailFile( extDocId:String ) = {
     val parts = extDocId.split( "," )
     appFor( parts(0 ) ).getThumbnailFile( parts.drop(1).mkString( "," ) )
-  }  
+  }
+  
+  def previewParams( extDocId:String, width:String, height:String ) = {
+    val parts = extDocId.split( "," )
+    appFor( parts(0 ) ).previewParams( parts.drop(1).mkString( "," ), width, height )
+  }
 }
 
 trait DocApp {
@@ -73,9 +68,8 @@ trait DocApp {
     
   def upload( file:File, fileSize:Long, filename:String ):String
   def statusFor( extDocId:String ):String
-  def previewUrlFor( extDocId:String ):String
-  def previewJsFor( extDocId:String ):String
   def getThumbnailFile( extDocId:String ):File
+  def previewParams( extDocId:String, width:String, height:String )
   
   protected def externalDocId( extDocId:String ) = serviceCode + "," + extDocId
 
