@@ -113,6 +113,8 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
         agentName = "Jakarta Commons"
       else if ( ua startsWith "ZmEu" )
         agentName = "ZmEu"
+      else if ( ua startsWith "AdsBot-Google" )
+        agentName = "AdsBot-Google"
     }
 
     obj( 'agentType )         = json.s( 'agent_type )
@@ -138,6 +140,7 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
             | "Java"
             | "libwww-perl"
             | "LinkedInBot"
+            | "msnbot"
             | "Python-urllib"
             | "webcollage"
             | "Yahoo! Slurp"

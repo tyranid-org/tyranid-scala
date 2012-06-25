@@ -194,25 +194,29 @@ object Accesslet extends Weblet {
     val milestoneCounts = mutable.Map[Milestone,Int]( B.milestones.map( milestone => milestone -> 0 ):_* )
 
     val onlyMilestone = web.sOpt( "milestone" ).flatMap( Milestone.apply )
-    val milestones = onlyMilestone.flatten( Seq(_), B.milestones )
+    val milestones    = onlyMilestone.flatten( Seq(_), B.milestones )
 
 
     def skipLog( l:Log ) =
       (   l.ua.orNull == null
        || (   hideOperators
-           && B.operatorIps.contains( l.s( 'ip ) ) )
-       || onlyMilestone.exists( !_.satisfies( l ) ) )
+           && B.operatorIps.contains( l.s( 'ip ) ) ) )
 
     def skipBrowser( b:Browser ) =
       b.skip ||
-      ( domain != null && !b.domainFound )
+      ( domain != null && !b.domainFound ) ||
+      ( onlyMilestone.isDefined && !b.milestones( onlyMilestone.get ) )
 
 
     val query =  Mobj( "e" -> Event.Access.id, "bid" -> Mobj( $exists -> true ) )
-    //if ( domain != null )
-      //query( "d" ) = domain
-    if ( dateGte != null )
-      query( "on" ) = Mobj( $gte -> dateGte )
+    if ( dateGte != null || dateLte != null ) {
+      val q = Mobj()
+      if ( dateGte != null )
+        q( $gte ) = dateGte
+      if ( dateLte != null )
+        q( $lte ) = dateLte
+      query( "on" ) = q
+    }
 
     for ( al <- Log.db.find( query ).sort( Mobj( "on" -> -1 ) ).map( Log.apply );
           if !skipLog( al ) ) {
