@@ -106,15 +106,24 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
 
     var agentName = json.s( 'agent_name )
 
+
     if ( agentName == "unknown" ) {
-      if      ( ua startsWith "LinkedInBot" )
+      if      ( ua startsWith "AdsBot-Google" )
+        agentName = "AdsBot-Google"
+      else if ( ua contains "AhrefsBot" )
+        agentName = "AhrefsBot"
+      else if ( ua startsWith "ClickTale bot" )
+        agentName = "ClickTale bot"
+      else if ( ua startsWith "LinkedInBot" )
         agentName = "LinkedInBot"
       else if ( ua startsWith "Jakarta Commons" )
         agentName = "Jakarta Commons"
+      else if ( ua startsWith "Plesk" )
+        agentName = "Plesk"
+      else if ( ua startsWith "SkimBot" )
+        agentName = "SkimBot"
       else if ( ua startsWith "ZmEu" )
         agentName = "ZmEu"
-      else if ( ua startsWith "AdsBot-Google" )
-        agentName = "AdsBot-Google"
     }
 
     obj( 'agentType )         = json.s( 'agent_type )
@@ -132,16 +141,23 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
 
     obj.remove( 'bot )
     if ( agentName match {
-         case "Bingbot"
+         case "AdsBot-Google"
+            | "Baiduspider"
+            | "Bingbot"
+            | "ClickTale bot"
+            | "Exabot"
             | "FeedFetcher-Google"
             | "Googlebot"
             | "Googlebot-Image"
             | "Jakarta Commons"
             | "Java"
+            | "ia_archiver"
             | "libwww-perl"
             | "LinkedInBot"
             | "msnbot"
+            | "Plesk"
             | "Python-urllib"
+            | "SkimBot"
             | "webcollage"
             | "Yahoo! Slurp"
             | "YandexBot"
