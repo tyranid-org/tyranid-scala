@@ -513,6 +513,31 @@ class StringImp( s:String ) {
     }
   }
 
+  /**
+   * Warning!  If the date is invalid, null is returned.  Use parseCalendar() and look for a ParseException with a
+   *           description of any parsing errors if user error reporting is needed.
+   */
+  def toLaxUserDate:Date =
+    try {
+      parseDate( dateOnly = true, userTime = true )
+    } catch {
+    case p:java.text.ParseException =>
+      null
+    }
+  
+  /**
+   * Warning!  If the date is invalid, null is returned.  Use parseCalendar() and look for a ParseException with a
+   *           description of any parsing errors if user error reporting is needed.
+   */
+  def toLaxUserDateTime:Date = {
+    try {
+      parseDate( userTime = true )
+    } catch {
+    case p:java.text.ParseException =>
+      null
+    }
+  }
+
   // This assumes that the string is a Tid
   
   def isMe( u:org.tyranid.profile.User = T.user ) = u.tid == s || u.org.tid == s

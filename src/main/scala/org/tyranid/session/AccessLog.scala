@@ -138,7 +138,9 @@ object ActivityQuery extends Query {
       override def ui( s:Scope ) = Checkbox( id, s.rec.b( name ) )
       override def extract( s:Scope ) = s.rec( name ) = T.web.b( id )
     },
-    PathField( "d", search = Search.Equals )
+    PathField( "d",                                 search = Search.Equals ),
+    PathField( "on", l = "From Date", data = false, search = Search.Gte,   default = Some( () => "last week".toLaxUserDateTime ) ),
+    PathField( "on", l =   "To Date", data = false, search = Search.Lte    )
   )
 
   val defaultFields = dataFields.take( 5 )
@@ -169,7 +171,8 @@ case class Browser( bid:String,
                     ua:UserAgent,
                     milestones:mutable.Set[Milestone] = mutable.Set[Milestone](),
                     users:mutable.Set[TidItem] = mutable.Set[TidItem](),
-                    var skip:Boolean = false )
+                    var skip:Boolean = false,
+                    var domainFound:Boolean = false )
 
 object Accesslet extends Weblet {
 
@@ -184,6 +187,8 @@ object Accesslet extends Weblet {
 
     val hideOperators = report.searchRec.b( 'hideOperators$cst )
     val domain        = report.searchRec( 'd )
+    val dateGte       = report.searchRec( 'on$gte )
+    val dateLte       = report.searchRec( 'on$lte )
 
     val browsers        = mutable.Map[String,Browser]()
     val milestoneCounts = mutable.Map[Milestone,Int]( B.milestones.map( milestone => milestone -> 0 ):_* )
@@ -191,18 +196,26 @@ object Accesslet extends Weblet {
     val onlyMilestone = web.sOpt( "milestone" ).flatMap( Milestone.apply )
     val milestones = onlyMilestone.flatten( Seq(_), B.milestones )
 
-    def skip( l:Log ) =
+
+    def skipLog( l:Log ) =
       (   l.ua.orNull == null
        || (   hideOperators
            && B.operatorIps.contains( l.s( 'ip ) ) )
        || onlyMilestone.exists( !_.satisfies( l ) ) )
 
+    def skipBrowser( b:Browser ) =
+      b.skip ||
+      ( domain != null && !b.domainFound )
+
+
     val query =  Mobj( "e" -> Event.Access.id, "bid" -> Mobj( $exists -> true ) )
-    if ( domain != null )
-      query( "d" ) = domain
+    //if ( domain != null )
+      //query( "d" ) = domain
+    if ( dateGte != null )
+      query( "on" ) = Mobj( $gte -> dateGte )
 
     for ( al <- Log.db.find( query ).sort( Mobj( "on" -> -1 ) ).map( Log.apply );
-          if !skip( al ) ) {
+          if !skipLog( al ) ) {
 
       val bid = al.s( 'bid )
 
@@ -221,12 +234,15 @@ object Accesslet extends Weblet {
 
         if ( user != null )
           browser.users += user
+
+        if ( domain != null && al( 'd ) == domain )
+          browser.domainFound = true
       }
     }
 
     val userAgents = mutable.Map[UserAgent,Int]()
 
-    for ( b <- browsers.values if !b.skip ) {
+    for ( b <- browsers.values if !skipBrowser( b ) ) {
       for ( milestone <- b.milestones )
         milestoneCounts( milestone ) += 1
 

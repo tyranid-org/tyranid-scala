@@ -413,7 +413,7 @@ trait DbDateLike extends Domain {
       input
   }
 
-  override def fromString( s:String ):Any = s.trim.toLaxDate
+  override def fromString( s:String ):Any = s.trim.toLaxUserDate
 
   override def cell( s:Scope, f:PathField ):NodeSeq = {
     val date = get( s, f )._t
@@ -437,7 +437,7 @@ object DbDateTime extends DbDateLike {
       input
   }
 
-  override def fromString( s:String ):Any = s.trim.toLaxDateTime
+  override def fromString( s:String ):Any = s.trim.toLaxUserDateTime
 
   override def cell( s:Scope, f:PathField ):NodeSeq = {
     val date = get( s, f )._t

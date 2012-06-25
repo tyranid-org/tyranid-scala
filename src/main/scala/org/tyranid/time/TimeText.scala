@@ -144,7 +144,10 @@ private class Token {
 		
   def userRelatives =
     t match {
-    case Type.STRING        => eval( Type.USER_RELATIVE, Time.RelativeWords )
+    case Type.STRING        => if ( dayOfWeek )
+                                 false // prioritize things like "mon" as "monday" instead of "month" ... probably a cleaner way to do this
+                               else
+                                 eval( Type.USER_RELATIVE, Relative.Words )
     case Type.USER_RELATIVE => true
     case _                  => false
     }
@@ -174,7 +177,7 @@ private class Token {
     case Type.AMPM          => "!" + Time.AmPmNames( i )
     case Type.TIMEZONE      => "tz" + s.toString
     case Type.FILLER        => "!" + Time.FillerWords( i )
-    case Type.USER_RELATIVE => "!" + Time.RelativeWords( i )
+    case Type.USER_RELATIVE => "!" + Relative.Words( i )
     }
 }
 
@@ -186,6 +189,13 @@ object Relative {
 	val THIS      = 4
 	val LAST      = 5
 	val NOW       = 6
+	val WEEK      = 7
+	val MONTH     = 8
+	val YEAR      = 9
+	val DECADE    = 10
+	val CENTURY   = 11
+
+  val Words  = Array( "tomorrow", "yesterday", "today", "next", "this", "last", "now", "week", "month", "year", "decade", "century" )
 }
 
 sealed trait Comp
@@ -493,20 +503,76 @@ class TimeParser {
 			case Relative.LAST | Relative.NEXT =>
 				dateFound( tp )
         tp += 1
-				if ( tp >= tcount || !tks( tp ).dayOfWeek )
-					fail( "\"" + t.s + "\" did not have a day of the week after it." )
+
+        if ( tp < tcount ) {
+
+          if ( tks( tp ).dayOfWeek ) {
 					
-				t.i match {
-				case Relative.LAST => rollDaysNeeded = -1
-				case Relative.NEXT => rollDaysNeeded = 1
-				}
-				dayOfWeek = tks( tp ).i
-				rollToDayOfWeek = true
-        copyNowDate
-        tp += 1
-				tp = sep( tp )
-				userTime = true
-				return true
+            t.i match {
+            case Relative.LAST => rollDaysNeeded = -1
+            case Relative.NEXT => rollDaysNeeded = 1
+            }
+
+            dayOfWeek = tks( tp ).i
+            rollToDayOfWeek = true
+            copyNowDate
+            tp += 1
+            tp = sep( tp )
+            userTime = true
+            return true
+          } else if ( tks( tp ).userRelatives ) {
+            tks( tp ).i match {
+            case Relative.WEEK    =>
+              t.i match {
+              case Relative.LAST => rollDaysNeeded = -7
+              case Relative.NEXT => rollDaysNeeded = 7
+              }
+
+              copyNowDateTime
+              tp += 1
+              tp = sep( tp )
+              userTime = true
+              return true
+
+            case Relative.MONTH   =>
+              copyNowDateTime
+
+              t.i match {
+              case Relative.LAST => month -= 1; if ( month < 0 )  { month = 11; year -= 1 }
+              case Relative.NEXT => month += 1; if ( month > 11 ) { month = 0;  year += 1 }
+              }
+
+              tp += 1
+              tp = sep( tp )
+              userTime = true
+              return true
+
+            case duration if duration == Relative.YEAR || duration == Relative.DECADE || duration == Relative.CENTURY =>
+              copyNowDateTime
+
+              val d =
+                duration match {
+                case Relative.YEAR    => 1
+                case Relative.DECADE  => 10
+                case Relative.CENTURY => 100
+                }
+
+              t.i match {
+              case Relative.LAST => year -= d
+              case Relative.NEXT => year += d
+              }
+
+              tp += 1
+              tp = sep( tp )
+              userTime = true
+              return true
+
+            }
+          }
+        }
+
+			  fail( "\"" + t.s + "\" did not have a day of the week or time duration after it." )
+
 			case Relative.THIS =>
 				fail( "\"this\" is confusing, try \"last\" or \"next\"." )
 			case Relative.NOW =>
@@ -516,6 +582,8 @@ class TimeParser {
         copyNowDateTime
 				userTime = true
 				return true
+
+      case _ =>
 			}
 		}
 			

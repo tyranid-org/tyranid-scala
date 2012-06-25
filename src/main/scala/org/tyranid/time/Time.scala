@@ -197,7 +197,6 @@ object Time {
   val WeekDayNames   = Array( "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday" )
   val AmPmNames      = Array( "am", "pm" )
   val FillerWords    = Array( "on", "at" )
-  val RelativeWords  = Array( "tomorrow", "yesterday", "today", "next", "this", "last", "now" )
 
   def fourDigitYear( year:Int, len:Int ) =
     if ( len == 4 || year >= 100 ) year
