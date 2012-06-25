@@ -104,6 +104,12 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
     }
   }
   
+  def delete( extDocId:String ):Boolean = {
+    val parts = extDocId.split( "," )
+    val resultStr = Http.GET( "http://api.scribd.com/api?method=docs.delete&api_key=" + apiKey + "&doc_id=" + parts(0) + "&api_sig=" + MD5( parts(0), Session().id, T.user.tid ) )._s
+    false
+  }
+  
   //MD5([Your API Secret Key]document_id[The Document ID]session_id[Session ID]user_identifier[User Identifier])
   def MD5( docId:String, sessionId:String, userId:String ) = {
     val bytes = ( secret + "document_id" + docId + "session_id" + sessionId + "user_identifier" + userId ).getBytes( "UTF-8" )

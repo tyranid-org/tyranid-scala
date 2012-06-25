@@ -96,6 +96,12 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
         Map( "status" -> ( "Error, unknown status: " + s._s ) )
     }
   }
+  
+  def delete( extDocId:String ):Boolean = {
+    val result = Http.POST_S( "https://crocodoc.com/api/v2/document/delete", null, 0, params = Map( "token" -> apiKey, "uuid" -> extDocId ) )._s
+    
+    ( result == "true" )
+  }
 }
 
 object Croclet extends Weblet {

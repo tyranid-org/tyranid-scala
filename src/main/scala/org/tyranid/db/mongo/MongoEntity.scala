@@ -89,6 +89,11 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
     super.save( rec ) // call after, so that tid is available
   }
 
+  override def delete( id:Any ) = {
+    super.delete( id )
+    db.remove( Mobj( "_id" -> id ) )
+  }
+  
   override def delete( rec:Record ) = {
     super.delete( rec )
     db.remove( Mobj( "_id" -> rec.id ) )

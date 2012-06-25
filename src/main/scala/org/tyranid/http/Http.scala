@@ -17,7 +17,7 @@
 
 package org.tyranid.http
 
-import java.io.{ InputStream, File }
+import java.io.{ InputStream, File, FileInputStream }
 import java.net.URL
 import java.util.Date
 
@@ -367,14 +367,13 @@ object Http {
       val multipart = new MultipartEntity()
       params.foreach{ p => multipart.addPart( p._1, new StringBody( p._2 ) ) }
       
-      val fileBody = new FileBody( file, "application/octect-stream" )
-      multipart.addPart( "file", fileBody )
-
-//      multipart.addPart( "file", new InputStreamBody( stream, filename ) )
-      request.setEntity( multipart )
-      //request.setHeader( "Content-Length", contentLength._s )
+      if ( file != null ) {
+        val fileBody = new FileBody( file, "application/octect-stream" )
+        multipart.addPart( "file", fileBody )
+        request.setEntity( multipart )
+      }
     } else {
-      //request.setEntity( new InputStreamEntity( stream, contentLength ) )
+      request.setEntity( new InputStreamEntity( new FileInputStream( file ), contentLength ) )
     }
     
     execute( request )

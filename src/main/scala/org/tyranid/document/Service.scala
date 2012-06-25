@@ -41,23 +41,42 @@ object Service {
   def appFor( serviceCode:String ) = services.find( _.serviceCode == serviceCode ).getOrElse( null )
   
   def statusFor( extDocId:String ) = {
-    val parts = extDocId.split( "," )
-    appFor( parts(0) ).statusFor( parts.drop(1).mkString( "," ) )
+    if ( extDocId.notBlank ) {
+      val parts = extDocId.split( "," )
+      appFor( parts(0) ).statusFor( parts.drop(1).mkString( "," ) )
+    } else
+      null
   }
   
   def appCodeForId( extDocId:String ):String = {
-    val parts = extDocId.split( "," )
-    appFor( parts(0) ).serviceCode
+    if ( extDocId.notBlank ) {
+      val parts = extDocId.split( "," )
+      appFor( parts(0) ).serviceCode
+    } else
+      null
   }
   
   def getThumbnailFile( extDocId:String ) = {
-    val parts = extDocId.split( "," )
-    appFor( parts(0 ) ).getThumbnailFile( parts.drop(1).mkString( "," ) )
+    if ( extDocId.notBlank ) {
+      val parts = extDocId.split( "," )
+      appFor( parts(0 ) ).getThumbnailFile( parts.drop(1).mkString( "," ) )
+    } else 
+      null
   }
   
   def previewParams( extDocId:String, width:String, height:String ) = {
-    val parts = extDocId.split( "," )
-    appFor( parts(0 ) ).previewParams( parts.drop(1).mkString( "," ), width, height )
+    if ( extDocId.notBlank ) {
+      val parts = extDocId.split( "," )
+      appFor( parts(0 ) ).previewParams( parts.drop(1).mkString( "," ), width, height )
+    }
+  }
+  
+  def delete( extDocId:String ) = {
+    if ( extDocId.notBlank ) {
+      val parts = extDocId.split( "," )
+      appFor( parts(0 ) ).delete( parts.drop(1).mkString( "," ) )
+    } else 
+      false
   }
 }
 
@@ -70,6 +89,7 @@ trait DocApp {
   def statusFor( extDocId:String ):String
   def getThumbnailFile( extDocId:String ):File
   def previewParams( extDocId:String, width:String, height:String )
+  def delete( extDocId:String ): Boolean
   
   protected def externalDocId( extDocId:String ) = serviceCode + "," + extDocId
 
