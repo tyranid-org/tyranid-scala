@@ -273,6 +273,10 @@ trait Entity extends Domain with DbItem {
       Es.index( r )
   }
 
+  def delete( id:Any ) {
+    
+  }
+
   def delete( r:Record ) {
     //if ( isSearchable )
       // TODO:  Es.unindex( r )
