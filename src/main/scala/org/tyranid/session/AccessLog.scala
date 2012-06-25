@@ -276,7 +276,7 @@ object Accesslet extends Weblet {
        <th style="width:120px;">Browser ID</th><th>User</th>
       </tr>
      </thead>
-     { for ( b <- browsers.values ) yield {
+     { for ( b <- browsers.values if !skipBrowser( b ) ) yield {
 
         <tr>
          <td><a href={ "/admin/log?bid=" + b.bid }>{ b.bid }</a></td>
