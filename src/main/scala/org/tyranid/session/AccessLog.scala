@@ -54,7 +54,7 @@ object AccessLog {
     if ( B.accessLogs ) {
       web.path match {
       case "/cometd" => // ignore
-      case p if p.endsWith( ".png" ) || p.endsWith( ".js" ) || p.endsWith( ".gif" ) || p.endsWith( ".css" ) || p.endsWith( ".ico" ) || p.endsWith( ".html" ) => // ignore
+      case p if p.endsWith( ".png" ) || p.endsWith( ".js" ) || p.endsWith( ".gif" ) || p.endsWith( ".jpg" ) || p.endsWith( ".css" ) || p.endsWith( ".ico" ) || p.endsWith( ".html" ) => // ignore
       case p         =>
         Log.log( Event.Access,
                  "p"   -> p, 
