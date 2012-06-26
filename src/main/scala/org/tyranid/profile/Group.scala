@@ -177,6 +177,13 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
 
   def idsFor( groupType:GroupType ) = groupType.ofEntity.tid + "Ids"
 
+  def ownedBy( orgTid: String ) = {
+    val tids = Mobj( $in -> Array( orgTid ) )
+    db.find( Mobj( "owners" -> tids ) ).map( apply ).toSeq
+  }
+  
+  def canSeeOther( orgTid:String ) = ownedBy( orgTid ).filter( g => Group( g ).canSee( T.user ) )
+  
   def visibleTo( user:User ) = {
     val tids =
       if ( user.org != null ) Mobj( $in -> Array( user.tid, user.org.tid ) )
