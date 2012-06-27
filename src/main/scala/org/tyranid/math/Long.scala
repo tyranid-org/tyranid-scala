@@ -24,14 +24,16 @@ import scala.math
 
 object LongImp {
   
-  val kb:Long = math.pow( 2.toDouble, 10.toDouble ).toLong
-  val mb:Long = math.pow( 2.toDouble, 20.toDouble ).toLong
-  val gb:Long = math.pow( 2.toDouble, 30.toDouble ).toLong
-  val tb:Long = math.pow( 2.toDouble, 40.toDouble ).toLong
+  val kb:Double = math.pow( 2.toDouble, 10.toDouble )
+  val mb:Double = math.pow( 2.toDouble, 20.toDouble )
+  val gb:Double = math.pow( 2.toDouble, 30.toDouble )
+  val tb:Double = math.pow( 2.toDouble, 40.toDouble )
 }
 
 case class LongImp( l:Long ) {
   def toBytesString = {
+    println( l )
+    
     if ( l >= LongImp.tb )
       String.format( "%2.2f terabytes", double2Double( ( l / LongImp.tb ).asInstanceOf[Double] ) )
     else if ( l >= LongImp.gb ) 
