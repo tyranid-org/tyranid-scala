@@ -80,7 +80,7 @@ class GroupType extends Tuple( GroupType.makeView ) {
   def iconClass16x16 =
     this match {
     case GroupType.Org  => "linkIcon connectionsIcon"
-    case GroupType.User => "linkIcon personIcon"
+    case GroupType.User => "linkIcon contactsIcon"
     }
 
   def iconClass32x32 =

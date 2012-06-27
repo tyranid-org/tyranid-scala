@@ -531,28 +531,32 @@ case class DbLink( toEntity:Entity ) extends Domain {
   override def recordTidToId( recordTid:String ):Any = toEntity.idAtt.flatten( _.domain.recordTidToId( recordTid ), toEntity.problem( "embedded entities don't have IDs" ) )
 
   override def ui( s:Scope, f:PathField ) = {
-    
-    /*
-     * a.  model-based linking
-     * 
-     *     see if there is anything else on the form that links to something in toEntity
-     * 
-     *     for example:  if toEntity == region, and region has a country -> Country,
-     *                   and there is a country -> Country in f.form, restrict the search to that
-     * 
-     * b.  PathField.filter: ( rec:Record ) => Boolean
-     * 
-     */
-
-    val idLabels = f.filter.flatten(
-      filter => toEntity.records.filter( filter ).map( _.idLabel ),
-      toEntity.idLabels )
+    if ( f.scopeOpts( s ).find( t => t._1 == "readonly" ).get != None ) {
+      Text( see( get( s, f ) ) )
+    } else {
       
-    val values = idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq
-    
-    Select( f.id, get( s, f )._s,
-            ( "" -> "-Please Select-" ) +: values,
-            f.scopeOpts( s ):_* )
+      /*
+       * a.  model-based linking
+       * 
+       *     see if there is anything else on the form that links to something in toEntity
+       * 
+       *     for example:  if toEntity == region, and region has a country -> Country,
+       *                   and there is a country -> Country in f.form, restrict the search to that
+       * 
+       * b.  PathField.filter: ( rec:Record ) => Boolean
+       * 
+       */
+  
+      val idLabels = f.filter.flatten(
+        filter => toEntity.records.filter( filter ).map( _.idLabel ),
+        toEntity.idLabels )
+        
+      val values = idLabels.map( v => ( v._1.toString, v._2 ) ).toSeq
+      
+      Select( f.id, get( s, f )._s,
+              ( "" -> "-Please Select-" ) +: values,
+              f.scopeOpts( s ):_* )
+    }
   }
 
   override def fromString( s:String ) = toEntity.idAtt.flatten( _.domain.fromString( s ), toEntity.problem( "embedded entities don't have IDs" ) )

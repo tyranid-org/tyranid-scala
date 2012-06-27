@@ -39,6 +39,7 @@ import org.tyranid.secure.{ AccessType, Multipass }
 import org.tyranid.session.{ Milestone, Session, ThreadData }
 import org.tyranid.sms.NexmoApp
 import org.tyranid.social.{ TrackurApp, TwApp }
+import org.tyranid.social.basecamp.BcApp
 import org.tyranid.social.facebook.FbApp
 import org.tyranid.social.google.GoApp
 import org.tyranid.social.linkedin.LiApp
@@ -188,6 +189,8 @@ trait Bootable {
   val google:GoApp        = null
   val twitter:TwApp       = null
   val trackur:TrackurApp  = null
+
+  val basecamp:BcApp      = null
   
   // Document services
   val crocodoc:CrocApp = null
