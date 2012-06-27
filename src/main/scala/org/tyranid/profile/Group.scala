@@ -394,12 +394,12 @@ case class GroupField( baseName:String, l:String = null,
                        fooGroupType:GroupType, foreignKey:String,
                        addBys:Seq[GroupingAddBy] = Nil,
                        nameSearch: ( String ) => Any = null,
-                       opts:Seq[(String,String)] = Nil ) extends Field {
+                       opts:Seq[(String,String)] = Nil,
+                       data:Boolean = true ) extends Field {
 
   val id = Base62.make( 8 )
   val name = baseName + "$cst"
 
-  val data = true
   val default = None
 
   val search = Search.Custom
