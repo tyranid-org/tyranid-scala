@@ -71,10 +71,11 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "fbt"            is DbChar(90)          ; // Facebook OAuth 2.0 token
   "fbte"           is DbLong              ; // Facebook token expiration
 
-  "bcid"           is DbChar(90)          ; // Basecamp id if linked
   "bct"            is DbChar(90)          ; // Basecamp OAuth 2.0 token
   "bcte"           is DbLong              ; // Basecamp token expiration
+  "bcid"           is DbChar(90)          ; // Basecamp refresh token if linked
 
+  
   "twid"           is DbChar(90)          ; // Twitter member id if linked
   "twt"            is DbChar(90)          ; // Twitter OAuth 1.0a token
   "twts"           is DbChar(90)          ; // Twitter OAuth 1.0a token secret

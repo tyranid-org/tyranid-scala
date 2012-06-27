@@ -17,7 +17,7 @@
 
 package org.tyranid.social.basecamp
 
-import scala.xml.Unparsed
+import scala.xml.{ Unparsed, NodeSeq }
 
 import com.mongodb.DBObject
 
@@ -88,7 +88,11 @@ case class BcApp( apiKey:String, secret:String ) extends SoApp {
 
   def loginButton( weblet:Weblet ) = {
     val loggingOut = T.web.req.s( 'lo ).notBlank
-    <a href={ "https://launchpad.37signals.com/authorization/new?type=web_server&client_id=" + apiKey + "&redirect_uri=" + B.website + "/basecamp" }>Basecamp Login</a>
+    
+    if ( false && !B.PRODUCTION )
+     <a href={ "https://launchpad.37signals.com/authorization/new?type=web_server&client_id=" + apiKey + "&redirect_uri=" + B.website + "/basecamp" }>Basecamp Login</a>
+    else 
+      NodeSeq.Empty
   }
 
   def logoutScript = {
@@ -111,31 +115,10 @@ case class BcApp( apiKey:String, secret:String ) extends SoApp {
   def removeCookies {}
 
   def linkButton = {
-    <top>
-     <div id="fb-root"></div>
-     <script>{ Unparsed( """
-  window.fbAsyncInit = function() {
-    """ + facebookInit + """
-
-    function exchange() {
-      $.post('/facebook/exchange', function(data) {
-        window.location.reload( true );
-      });
-    }
-
-    FB.Event.subscribe('auth.login', function() {
-      exchange();
-    });
-
-    FB.getLoginStatus( function( resp ) {
-      if ( resp.status == 'connected' )
-        exchange();
-    });
-  };
-
-""" + loadFacebookApi ) }</script>
-    </top>
-    <fb:login-button>Sign In with Facebook</fb:login-button>
+    if ( !B.PRODUCTION )
+      <a href={ "https://launchpad.37signals.com/authorization/new?type=web_server&client_id=" + apiKey + "&redirect_uri=" + B.website + "/basecamp/link" }>Authenticate Basecamp</a>
+    else 
+      NodeSeq.Empty
   }
 
   def linkPreview( user:User ) = {
@@ -148,73 +131,29 @@ case class BcApp( apiKey:String, secret:String ) extends SoApp {
   }
 
 
-  private val cookieName = "fbsr_" + apiKey
+  private val cookieName = "bc_" + apiKey
 
   def isActive = T.web.req.cookieValue( cookieName ).notBlank
 
   def exchangeToken:Boolean = {
-
-    val t = T
-
-
-    // 1.  extract client-side code from the javascript api's fbsr_ cookie
-
-    val cookieValue = t.web.req.cookieValue( cookieName )
-
-    if ( cookieValue == null ) {
-        log( Event.Facebook, "m" -> ( "Facebook exchange missing " + cookieName + " cookie.  Cannot exchange linked in bearer token for a server token." ) )
-        return false
-    }
-
-    val ( sigStr, payloadStr ) = cookieValue.splitFirst( '.' )
-
-    val sigBytes     = Base64.toBytes( sigStr )
-    val payloadBytes = Base64.toBytes( payloadStr )
-
-    val sigDecodedStr = new String( sigBytes )
-    val payloadDecodedStr = new String( payloadBytes )
-
-    val json = payloadDecodedStr.parseJsonObject
-
-    val uid = json.s( 'user_id )
-    val sig = sigDecodedStr
-    val code = json.s( 'code )
-    //val issuedAt = json.s( 'issued_at )
-
-
-    // 2.  exchange client-side code for a short-lived server-side token
-
-    val shortLivedAccessToken = 
-      "https://graph.facebook.com/oauth/access_token".POST( Map( "client_id" -> apiKey, "client_secret" -> secret, "redirect_uri" -> "", "code" -> code ) ).s.
-      split( "&" ).map( _.splitFirst( '=' ) ).
-      find( _._1 == "access_token" ).get._2
-
-
-    // 3.  exchange short-lived server-side token for a long-term server-side access token
-
-    val params =
-      "https://graph.facebook.com/oauth/access_token".POST( Map( "client_id" -> apiKey, "client_secret" -> secret, "grant_type" -> "fb_exchange_token", "fb_exchange_token" -> shortLivedAccessToken ) ).s.
-      split( "&" ).map( _.splitFirst( '=' ) )
-
-    params.find( _._1 == "access_token" ).map( _._2 ) match {
-    case Some( accessToken ) =>
-      val expires   = System.currentTimeMillis + params.find( _._1 == "expires" ).get._2.toLong * 1000
-
-      val session   = t.session
-      val user      = session.user
-
-      user( 'fbid ) = uid
-      user( 'fbt )  = accessToken
-      user( 'fbte ) = expires
-
-      exchangeAttributes( user )
-      true
-
-    case _ =>
+    val code = T.web.s( 'code )
+    val responseStr =
+     "https://launchpad.37signals.com/authorization/token".POST( Map( "type" -> "web_server", "client_id" -> apiKey, "client_secret" -> secret, "redirect_uri" -> ( B.website + "/basecamp" ), "code" -> code ) ).s
+     
+    if ( responseStr.startsWith( "error" ) ) {
+      println( responseStr )
       false
+    } else {
+      val responseJson = responseStr.parseJsonObject
+      val u = T.user
+      
+      u( 'bct ) = responseJson.s( 'access_token )
+      u( 'bcte ) = System.currentTimeMillis + responseJson.l( 'expires_in ) * 1000
+      u( 'bcid ) = responseJson.s( 'refresh_token )
+//    https://launchpad.37signals.com/authorization.json
+      true
     }
   }
-
 
   /*
    * * *   People
@@ -227,6 +166,7 @@ case class BcApp( apiKey:String, secret:String ) extends SoApp {
     user( 'lastName )  = profile.s( 'last_name )
 
     val gender = Gender.by( profile.s( 'gender ) )
+    
     if ( gender != null )
       user( 'gender ) = gender.id
 
@@ -247,14 +187,23 @@ case class BcApp( apiKey:String, secret:String ) extends SoApp {
 object Basecamplet extends Weblet {
 
   def handle( web:WebContext ) {
+    val s = Session()
+    val u = s.user
+
     println( "*** BASECAMP ****" )
     web.req.dump
     println( "*** BASECAMP ****" )
     
-    val s = Session()
-    val u = s.user
-
+    val accessCode = web.b( 'code ) // 1058314c
+    
+    if ( accessCode ) {
+      B.basecamp.exchangeToken
+    }
+    
     rpath match {
+    case "/link" =>
+      T.web.redirect( "/user/edit" )
+      
     case "/channel" =>
       web.res.html(
         <script src="//connect.facebook.net/en_US/all.js"/>,
