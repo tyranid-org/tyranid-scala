@@ -99,7 +99,7 @@ class WebFilter extends Filter {
     val notComet = web.path.indexOf( "cometd" ) == -1
     
     if ( notComet )
-      println( "  | " + web.path )
+      println( "  | " + web.path + ", referer: " + web.req.getHeader( "referer" ) )
 
     if ( boot.requireSsl )
       web.req.getServerPort match {
