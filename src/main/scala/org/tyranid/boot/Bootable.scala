@@ -221,6 +221,9 @@ trait Bootable {
   def bucket( buckets:S3Bucket* ) =
     for ( bucket <- buckets )
       s3Buckets( bucket.prefix ) = bucket
+
+  // Groups
+  lazy val commonGroupField:org.tyranid.profile.GroupField = null
  
 
   def initEntities {

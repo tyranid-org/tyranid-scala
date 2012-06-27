@@ -378,6 +378,9 @@ case class GroupMaker( groupType:GroupType,
                        ofEntity:MongoEntity,
                        addBys:Seq[GroupingAddBy] = Nil,
                        nameSearch: ( String ) => Any = null ) {
+
+  def queryGroupMembers( group:Group ) =
+    ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.obj.a_?( group.idsField ) ) ) ).map( ofEntity.apply ).toIterable
 }
 
 case class GroupingAddBy( label:String, keys:String* ) {
@@ -390,19 +393,8 @@ case class GroupingAddBy( label:String, keys:String* ) {
  * * *  GroupField
  */
 
-object GroupField {
-
-  lazy val common =
-    GroupField(
-      "grp", "Group",
-      // TODO:  this needs to be Orgs and Users
-      GroupMaker( GroupType.Org, B.Org, addBys = Seq( GroupingAddBy( "Name", "name" ) ) )
-    )
-
-}
-
 case class GroupField( baseName:String, l:String = null,
-                       maker:GroupMaker,
+                       makers:Seq[GroupMaker],
                        opts:Seq[(String,String)] = Nil ) extends Field {
 
   val id = Base62.make( 8 )
@@ -417,6 +409,8 @@ case class GroupField( baseName:String, l:String = null,
   val show = Show.Editable
 
   def groupValueFor( rec:Record ) = rec( name ).as[GroupValue]
+
+  def makerFor( grp:Group ) = makers.find( _.groupType == grp.groupType ).get
 
   override lazy val label = if ( l.notBlank ) l else "Group"
 
@@ -457,7 +451,7 @@ case class GroupField( baseName:String, l:String = null,
       <td class="label">view group</td>
       <td rowspan="2" style="padding-right:4px;">
        <a id={ "grpBtn" + id } href="#" class="grpBtn btn" style="height:40px; padding-top:6px;">
-        <span tip="Groups" class={ "tip " + /* bigIcon groupIcon */ maker.groupType.iconClass32x32 } style="padding:0;"/>
+        <span tip="Groups" class={ "tip " + /* bigIcon groupIcon */ makers.head.groupType.iconClass32x32 } style="padding:0;"/>
         <span class="label"/>
        </a>
       </td>
@@ -474,9 +468,13 @@ case class GroupField( baseName:String, l:String = null,
     else                     s.user.tid
   }
 
-
-  def queryGroups                      = Group.db.find( Mobj( "owners" -> accessTidsQuery, "type" -> maker.groupType.id ) ).map( Group.apply ).toSeq
-  def queryGroupMembers( group:Group ) = maker.ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.obj.a_?( group.idsField ) ) ) ).map( maker.ofEntity.apply ).toIterable
+  def queryGroups =
+    Group.db.find(
+      Mobj(
+        "owners" -> accessTidsQuery,
+        "type" -> ( if ( makers.length > 1 ) Mobj( $in -> makers.map( _.groupType.id ).toMlist ) else makers.head.groupType.id )
+      )
+    ).map( Group.apply ).toSeq
 
   override def handle( weblet:Weblet, rec:Record ) = {
     val gv = groupValueFor( rec )
@@ -517,7 +515,13 @@ case class GroupField( baseName:String, l:String = null,
     case "/fld/addGroupSave" =>
       val monitor = web.b( "grpMonitor" + id )
       val group = Group.make
-      val gt = maker.groupType
+
+      val gt =
+        if ( makers.size == 1 )
+          makers.head.groupType
+        else
+          GroupType.getById( web.i( "grpType" + id ) )
+
       group( 'name )    = web.s( "grpAddName" + id ) or "Unnamed Group"
       group( 'type )    = gt.id
 
@@ -577,12 +581,14 @@ case class GroupField( baseName:String, l:String = null,
 
     case "/fld/addBy" =>
       val abid = web.s( 'v )
-      gv.groupAddBy = null
-      maker.addBys.find( _.id == abid ).foreach { gv.groupAddBy = _ }
+      val maker = makerFor( dg )
+      gv.groupAddBys( maker ) = null
+      maker.addBys.find( _.id == abid ).foreach { gv.groupAddBys( maker ) = _ }
       web.js( JqHtml( "#grpAddBox" + id, gv.drawAddBy ) )
 
     case "/fld/addMember" =>
-      val ab = gv.groupAddBy
+      val maker = makerFor( dg )
+      val ab = gv.groupAddByFor( maker )
 
       if ( ab != null && dg != null && !dg.b( 'builtin ) ) {
 
@@ -592,7 +598,8 @@ case class GroupField( baseName:String, l:String = null,
             web.a_?( 'addTids )
 
           case _ =>
-            val keyAtts = ab.keys.map( maker.ofEntity.attrib )
+            val ofEntity = maker.ofEntity
+            val keyAtts = ab.keys.map( ofEntity.attrib )
 
             val altIds = web.s( 'grpAddByInput ).split( "," ).map( _.trim )
 
@@ -612,7 +619,7 @@ case class GroupField( baseName:String, l:String = null,
               if ( keys.size == 1 ) keys( 0 )
               else                  Mobj( $or -> Mlist( keys:_* ) )
 
-            maker.ofEntity.db.find( where, Mobj( "_id" -> 1 ) ).map( of => dg.groupType.ofEntity.idToTid( of( '_id ) ) ).toSeq
+            ofEntity.db.find( where, Mobj( "_id" -> 1 ) ).map( of => dg.groupType.ofEntity.idToTid( of( '_id ) ) ).toSeq
           }
 
         // DRAGON-MIXED-TID:  this is a hack because we've got mixed tids inside groups (both Org and ExtendedOrg tids) ... there should only be Org tids!
@@ -635,7 +642,7 @@ case class GroupField( baseName:String, l:String = null,
         Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( dg.idsField -> Tid.tidToId( tid ) ) ) )
 
         // DRAGON-MIXED-TID
-        if ( tid.startsWith( maker.ofEntity.tid ) ) // bad !
+        if ( tid.startsWith( makerFor( dg ).ofEntity.tid ) ) // bad !
           Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( "tids" -> dg.groupType.ofEntity.idToTid( Tid.tidToId( tid ) ) ) ) )
 
         gv.resetGroups
@@ -649,6 +656,7 @@ case class GroupField( baseName:String, l:String = null,
 
     case "/fld/addSearch" =>
       val terms = web.s( 'term )
+      val maker = makerFor( dg )
 
       val json =
         if ( maker.nameSearch != null ) {
@@ -677,9 +685,14 @@ case class GroupField( baseName:String, l:String = null,
 
 case class GroupValue( gf:GroupField ) extends Valuable {
 
-  private var latestGroups:Seq[MongoRecord] = null
+  private var latestGroups:Seq[Group] = null
 
-  @volatile var groupAddBy:GroupingAddBy = gf.maker.addBys( 0 )
+  val groupAddBys = mutable.Map[GroupMaker,GroupingAddBy]()
+
+  def groupAddByFor( maker:GroupMaker ) =
+    groupAddBys.getOrElseUpdate(
+      maker,
+      maker.addBys( 0 ) )
 
   @volatile var groupShowAddBy:Boolean = false
 
@@ -716,7 +729,7 @@ case class GroupValue( gf:GroupField ) extends Valuable {
     <div class="grpLeft">
      <div class="grpSel">
       <ul class="noSelect">
-       { groups.map( g => <li class={ "noSelect" + ( g.tid == stid |* " sel" ) } id={ g.tid }>{ g.s( 'name ) }</li> ) }
+       { groups.map( g => <li class={ "noSelect" + ( g.tid == stid |* " sel" ) } id={ g.tid }><span style="margin-right:4px;" class={ g.iconClass16x16 } />{ g.s( 'name ) }</li> ) }
       </ul>
      </div>
      <div class="btns">
@@ -732,6 +745,7 @@ case class GroupValue( gf:GroupField ) extends Valuable {
     val group = dialogGroup
     val editable = group != null && !group.b( 'builtin )
     val showAddBy = groupShowAddBy
+    val maker = if ( group != null ) gf.makerFor( group ) else null
 
     <div class={ "grpEdit " + ( showAddBy ? "shortTable" | "longTable" ) }>
      <div class="title">
@@ -748,29 +762,32 @@ case class GroupValue( gf:GroupField ) extends Valuable {
       <table class="dtable">
        <thead>
         <tr>
-         <th>Name</th>{ if ( !showAddBy ) gf.maker.addBys.filter( _.label != "Name" ).map( ab => <th>{ ab.label }</th> ) }{ editable |* <th/> }
+         <th>Name</th>{ if ( !showAddBy ) maker.addBys.filter( _.label != "Name" ).map( ab => <th>{ ab.label }</th> ) }{ editable |* <th/> }
          <th style="width:10px;"/>
         </tr>
        </thead>
-       { val members = gf.queryGroupMembers( group ).toSeq.sortBy( _.label )
+       { val members = maker.queryGroupMembers( group ).toSeq.sortBy( _.label )
          for ( el <- members ) yield
            <tr id={ el.tid }>
             <td>{ el.label }</td>
-            { if ( !showAddBy ) gf.maker.addBys.filter( _.label != "Name" ).map( ab => <td>{ el.s( ab.keys( 0 ) ) }</td> ) }
-            <td>{ editable && !group.isOwner( el.tid ) |* <a href="#">remove</a> }</td>
+            { if ( !showAddBy ) maker.addBys.filter( _.label != "Name" ).map( ab => <td>{ el.s( ab.keys( 0 ) ) }</td> ) }
+            <td>{ editable &&
+                   // TODO:  this should really be something like: && !group.isLASTOwner( el.tid )
+                   !group.isOwner( el.tid ) |* <a href="#">remove</a> }</td>
             <td/>
            </tr>
        }
       </table>
      </div> }
     </div> ++
-    { showAddBy |*
+    { group != null && showAddBy |*
     <div class="add">
      { editable |*
      <form method="post" id="grpAddForm">
       <div class="title">Add { group.groupType.ofEntity.label.plural }</div>
       <label for="grpAddBy">By:</label>
-      { Select( "grpAddBy", groupAddBy != null |* groupAddBy.id, gf.maker.addBys.map( ab => ( ab.id, ab.label ) ) ) }
+      { val addBy = groupAddByFor( maker )
+        Select( "grpAddBy", addBy != null |* addBy.id, maker.addBys.map( ab => ( ab.id, ab.label ) ) ) }
       <div id={ "grpAddBox" + gf.id } class="grpAddBox">
        { drawAddBy }
       </div>
@@ -785,7 +802,7 @@ case class GroupValue( gf:GroupField ) extends Valuable {
 
   def drawAddBy = {
     val group = dialogGroup
-    val addBy = groupAddBy
+    val addBy = groupAddByFor( gf.makerFor( group ) )
 
     addBy != null |* {
     <div class="stitle">Enter { group.groupType.ofEntity.label } { addBy.label.plural } To Add</div> ++
@@ -807,6 +824,11 @@ case class GroupValue( gf:GroupField ) extends Valuable {
      <form method="post">
       <label for={ "grpAddName" + gf.id }>Enter Group Name:</label>
       <div class="title"><input type="text" class="grpAddName" name={ "grpAddName" + gf.id } id={ "grpAddName" + gf.id } style="font-size:20px;"/></div>
+      { gf.makers.size > 1 |*
+      <div style="padding:8px 0; width:130px;">
+       <label for={ "grpType" + gf.id }>Group Type:</label>
+       { Select( "grpType" + gf.id, null, gf.makers.map( m => m.groupType.id.toString -> m.groupType.label ), "style" -> "width:120px; max-width:120px;" ) }
+      </div> }
       <div style="padding:8px 0; width:130px;">
        { Checkbox( "grpMonitor" + gf.id, false ) }
        <label for={ "grpMonitor" + gf.id }>Monitor Group</label>
@@ -847,16 +869,16 @@ object Grouplet extends Weblet {
 
     val fld = web.s( 'fld )
 
-    if ( fld == GroupField.common.id ) {
+    if ( fld == B.commonGroupField.id ) {
       val groupRec = sess.cache.getOrElseUpdate(
         "groupRec", {
           val rec = org.tyranid.db.AdHoc.make
-          rec( GroupField.common.name ) = GroupValue( GroupField.common )
+          rec( B.commonGroupField.name ) = GroupValue( B.commonGroupField )
           rec
         }
       ).as[Record]
 
-      GroupField.common.handle( this, groupRec )
+      B.commonGroupField.handle( this, groupRec )
     } else {
       val queryId = web.s( 'q )
       if ( queryId.notBlank ) {

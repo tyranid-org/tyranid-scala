@@ -118,8 +118,6 @@ class WebFilter extends Filter {
         session.put( "lastPath", web.path )
     }
     
-    AccessLog.log( web, thread )
-
     var first = true
 
     val path = web.req.getServletPath
@@ -171,25 +169,33 @@ class WebFilter extends Filter {
       return true
     }
 
-    for ( webloc <- boot.weblocs;
-          if web.matches( webloc.weblet.wpath ) && webloc.weblet.matches( web ) ) {
+    val start = System.currentTimeMillis
 
-      if ( thread.http == null ) {
-        thread.http = web.req.getSession( true )
-        LoginCookie.autoLogin
-      }
+    try {
 
-      if ( first ) {
-        web = FileUploadSupport.checkContext( web )
-        thread.web = web
-        first = false
-      }
+      for ( webloc <- boot.weblocs;
+            if web.matches( webloc.weblet.wpath ) && webloc.weblet.matches( web ) ) {
 
-      if ( handle( webloc ) ) {
-        //spam( "CACHE: CLEARING" )
-        thread.tidCache.clear
-        return
+        if ( thread.http == null ) {
+          thread.http = web.req.getSession( true )
+          LoginCookie.autoLogin
+        }
+
+        if ( first ) {
+          web = FileUploadSupport.checkContext( web )
+          thread.web = web
+          first = false
+        }
+
+        if ( handle( webloc ) ) {
+          //spam( "CACHE: CLEARING" )
+          thread.tidCache.clear
+          thread.requestCache.clear
+          return
+        }
       }
+    } finally {
+      AccessLog.log( web, thread, System.currentTimeMillis - start )
     }
 
     chain.doFilter( request, response )

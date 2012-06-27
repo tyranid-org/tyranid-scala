@@ -165,6 +165,15 @@ class ThreadData {
    */
 
   val tidCache = new TidCache
+
+
+  /*
+   * * *  RequestCache ... prefer TidCache to this, this is problematic to extend into something like memcache
+   */
+
+  val requestCache = mutable.Map[String,Any]()
+
+	def requestCached[ T ]( key:String )( block: => T ):T = requestCache.getOrElseUpdate( key, block ).as[T]
 }
 
 

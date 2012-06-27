@@ -48,7 +48,7 @@ case class Milestone( name:String, satisfies:( Log ) => Boolean ) {
 
 object AccessLog {
 
-  def log( web:WebContext, thread:ThreadData ) {
+  def log( web:WebContext, thread:ThreadData, durationMs:Long ) {
     val session = thread.session
 
     if ( B.accessLogs ) {
@@ -60,6 +60,7 @@ object AccessLog {
                  "p"   -> p, 
                  "bid" -> TrackingCookie.get,
                  "ua"  -> web.req.getHeader( "User-Agent" ),
+                 "du"  -> durationMs,
                  "d"   -> DnsDomain.idFor( web.req.getServerName.stripPrefix( "www." ) )
                )
       }
@@ -174,6 +175,10 @@ case class Browser( bid:String,
                     var skip:Boolean = false,
                     var domainFound:Boolean = false )
 
+case class Path( path:String,
+                 var requests:Int = 0,
+                 var ms:Long      = 0 )
+
 object Accesslet extends Weblet {
 
   def report:NodeSeq = {
@@ -191,7 +196,8 @@ object Accesslet extends Weblet {
     val dateLte       = report.searchRec( 'on$lte )
 
     val browsers        = mutable.Map[String,Browser]()
-    val milestoneCounts = mutable.Map[Milestone,Int]( B.milestones.map( milestone => milestone -> 0 ):_* )
+    val paths           = mutable.Map[String,Path]()
+    val milestoneCounts = mutable.Map[Milestone,Int]( B.milestones.map( _ -> 0 ):_* )
 
     val onlyMilestone = web.sOpt( "milestone" ).flatMap( Milestone.apply )
     val milestones    = onlyMilestone.flatten( Seq(_), B.milestones )
@@ -242,6 +248,11 @@ object Accesslet extends Weblet {
         if ( domain != null && al( 'd ) == domain )
           browser.domainFound = true
       }
+
+      val p = al.s( 'p )
+      val path = paths.getOrElseUpdate( p, new Path( p ) )
+      path.requests += 1
+      path.ms += al.l( 'du )
     }
 
     val userAgents = mutable.Map[UserAgent,Int]()
@@ -350,6 +361,26 @@ object Accesslet extends Weblet {
          <td>{ ua.agent }</td>
          <td>{ count }</td>
          <td>{ "%.0f%%".format( count._d * 100 / totalBots ) }</td>
+        </tr>
+      }
+     }
+    </table>
+    <div class="fieldhc">
+     Paths
+    </div>
+    <table class="dtable">
+     <thead>
+      <tr>
+       <th>Path</th><th style="width:100px;"># Requests</th><th style="width:100px;">Total Time (ms)</th><th style="width:100px;">Avg Time (ms)</th>
+      </tr>
+     </thead>
+     { for ( path <- paths.values.toSeq.sortBy( -_.ms ) ) yield {
+
+        <tr>
+         <td>{ path.path }</td>
+         <td>{ path.requests }</td>
+         <td>{ path.ms }</td>
+         <td>{ path.ms / path.requests }</td>
         </tr>
       }
      }

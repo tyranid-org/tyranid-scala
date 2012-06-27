@@ -91,6 +91,8 @@ case class RamEntity( tid:String ) extends Entity {
 
   def byId( id:Long ) = staticIdIndex.get( id )
 
+  def getById( id:Long ) = byId( id ).orNull
+
   override def byRecordTid( recordTid:String ):Option[Tuple] =
     byId( recordTidToId( recordTid )._l )
 
