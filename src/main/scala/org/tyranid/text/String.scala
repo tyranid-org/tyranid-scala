@@ -24,6 +24,8 @@ import java.util.regex.Pattern
 import scala.util.matching.Regex
 import scala.xml.{ NodeSeq, Text, Unparsed }
 
+import org.mindrot.jbcrypt.BCrypt
+
 import org.tyranid.Imp._
 import org.tyranid.http.Http
 import org.tyranid.net.Uri
@@ -555,5 +557,19 @@ class StringImp( s:String ) {
 
   def DELETE( query:collection.Map[String,String] = null ) =
     Http.DELETE( s, query = query )
+    
+  def shash( salt:String = BCrypt.gensalt() ):String = {
+    if ( s == null )
+      return null
+      
+    BCrypt.hashpw( s, salt )
+  }
+
+  def checkShash( shash:String ):Boolean = {
+    if ( s == null )
+      return false
+      
+    BCrypt.checkpw( s, shash )
+  }
 }
 
