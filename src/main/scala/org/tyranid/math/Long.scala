@@ -32,8 +32,6 @@ object LongImp {
 
 case class LongImp( l:Long ) {
   def toBytesString = {
-    println( l )
-    
     if ( l >= LongImp.tb )
       String.format( "%2.2f terabytes", double2Double( ( l / LongImp.tb ).asInstanceOf[Double] ) )
     else if ( l >= LongImp.gb ) 

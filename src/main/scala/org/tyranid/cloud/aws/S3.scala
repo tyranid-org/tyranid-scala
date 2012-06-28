@@ -97,18 +97,18 @@ object S3 {
     }
   }
   
-  def getInputStream( bucket:S3Bucket, key:String ) = {
+  def getInputStream( bucket:S3Bucket, key:String ):InputStream = {
 	  try {
       val obj = s3.getObject( new GetObjectRequest( bucket.name, key ) )
       
       if ( obj != null )
-        obj.getObjectContent()
-
+        return obj.getObjectContent()
 	  } catch {
       case e: AmazonS3Exception =>
         e.log
-        null
     }
+	  
+	  null
   }
   
   def exists( bucket:S3Bucket, key:String ) = {
