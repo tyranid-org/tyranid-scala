@@ -27,6 +27,8 @@ import org.clapper.classutil.ClassFinder
 
 import com.braintreegateway.BraintreeGateway
 
+import org.bson.types.ObjectId
+
 import org.tyranid.Imp._
 import org.tyranid.db.Entity
 import org.tyranid.db.mongo.Imp._
@@ -34,7 +36,7 @@ import org.tyranid.document.crocodoc.CrocApp
 import org.tyranid.document.scribd.ScribdApp
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.email.EmailTemplate
-import org.tyranid.profile.{ OrgMeta, User, UserMeta }
+import org.tyranid.profile.{ Group, OrgMeta, User, UserMeta }
 import org.tyranid.secure.{ AccessType, Multipass }
 import org.tyranid.session.{ Milestone, Session, ThreadData }
 import org.tyranid.sms.NexmoApp
@@ -227,6 +229,8 @@ trait Bootable {
 
   // Groups
   lazy val commonGroupField:org.tyranid.profile.GroupField = null
+  def defaultFavorites:Seq[ObjectId] = Seq()
+  def availableFavorites:Seq[Group]  = Seq()
  
 
   def initEntities {

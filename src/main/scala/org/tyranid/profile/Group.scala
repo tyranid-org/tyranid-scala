@@ -19,6 +19,7 @@ package org.tyranid.profile
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
+import scala.collection.mutable.Buffer
 import scala.xml.{ NodeSeq, Text, Unparsed }
 
 import org.bson.types.ObjectId
@@ -420,7 +421,7 @@ case class GroupField( baseName:String, l:String = null,
     rec( name ) = gv
   }
 
-  override def ui( s:Scope ) = groupValueFor( s.rec ).drawSelect( "" )
+  override def ui( s:Scope ) = groupValueFor( s.rec ).selectUi( "" )
 
   override def extract( s:Scope ) = groupValueFor( s.rec ).selectedGroupTid = T.web.s( id )
 
@@ -438,6 +439,11 @@ case class GroupField( baseName:String, l:String = null,
   def matchesSearch( run:Run, value:Any, rec:Record ):Boolean =
     // TODO:  implement this
     false
+
+  def closeJs =
+    // TODO:  the grpNavDrag should be less hard-coded
+    "$('#grpDlg" + id + "').dialog('close'); grpNavDrag( 'redraw' ); return false"
+
 
   override def drawPreamble:NodeSeq =
     <head id="tag.js"><script src={ B.buildPrefix + "/js/tag.js" } charset="utf-8"></script></head>
@@ -457,7 +463,7 @@ case class GroupField( baseName:String, l:String = null,
       </td>
      </tr>
      <tr>
-      <td id="grpChooser">{ groupValue.drawSelect() }</td>
+      <td id="grpChooser">{ groupValue.selectUi() }</td>
      </tr>
     </table>
   }
@@ -485,7 +491,29 @@ case class GroupField( baseName:String, l:String = null,
     weblet.rpath match {
     case "/fld" =>
       gv.resetGroups
-      web.js( JqHtml( "#grpDlg" + id, gv.drawPanel ) )
+
+      /*
+      if saving
+      GroupFavorite.saveSelected
+
+      */
+
+      web.js( JqHtml( "#grpDlg" + id, gv.panelUi ) )
+
+    case "/fld/editTab" =>
+      gv.tab = "/edit"
+      web.js( JqHtml( "#grpDlg" + id, gv.panelUi ) )
+
+    case "/fld/favTab" =>
+      gv.tab = "/fav"
+      web.js( JqHtml( "#grpDlg" + id, gv.panelUi ) )
+
+    case "/fld/availType" =>
+      gv.availType = web.s( 'availType )
+      web.js( JqHtml( "#grpFavAvail", GroupFavorite.favAvailableUi( gv.availType ) ) )
+
+    case "/fld/favDrag" => 
+      GroupFavorite.favDrag( gv, web )
 
     case "/fld/select" =>
       val report = T.session.reportFor( T.web.s( 'q ) )
@@ -507,10 +535,10 @@ case class GroupField( baseName:String, l:String = null,
 
     case "/fld/dlgSelect" =>
       gv.setDialogGroup( web.s( 'id ) )
-      web.js( JqHtml( "#grpMain" + id, gv.drawGroup ) )
+      web.js( JqHtml( "#grpMain" + id, gv.groupUi ) )
 
     case "/fld/addGroup" =>
-      web.js( JqHtml( "#grpMain" + id, gv.drawAddGroup ) )
+      web.js( JqHtml( "#grpMain" + id, gv.addGroupUi ) )
 
     case "/fld/addGroupSave" =>
       val monitor = web.b( "grpMonitor" + id )
@@ -547,12 +575,12 @@ case class GroupField( baseName:String, l:String = null,
       gv.setDialogGroup( Group( group ).tid )
 
       web.js(
-        JqHtml( "#grpDlg" + id, gv.drawPanel ),
-        JqHtml( "#grpChooser", gv.drawSelect() )
+        JqHtml( "#grpDlg" + id, gv.panelUi ),
+        JqHtml( "#grpChooser", gv.selectUi() )
       )
 
     case "/fld/edit" =>
-      web.js( JqHtml( "#grpMain" + id, gv.drawEdit ) )
+      web.js( JqHtml( "#grpMain" + id, gv.editUi ) )
 
     case "/fld/editSave" =>
       if ( !dg.b( 'builtin ) ) {
@@ -563,8 +591,8 @@ case class GroupField( baseName:String, l:String = null,
       }
 
       web.js(
-        JqHtml( "#grpDlg" + id, gv.drawPanel ),
-        JqHtml( "#grpChooser", gv.drawSelect() )
+        JqHtml( "#grpDlg" + id, gv.panelUi ),
+        JqHtml( "#grpChooser", gv.selectUi() )
       )
 
     case "/fld/deleteGroup" =>
@@ -575,8 +603,8 @@ case class GroupField( baseName:String, l:String = null,
       }
 
       web.js(
-        JqHtml( "#grpDlg" + id, gv.drawPanel ),
-        JqHtml( "#grpChooser", gv.drawSelect() )
+        JqHtml( "#grpDlg" + id, gv.panelUi ),
+        JqHtml( "#grpChooser", gv.selectUi() )
       )
 
     case "/fld/addBy" =>
@@ -584,7 +612,7 @@ case class GroupField( baseName:String, l:String = null,
       val maker = makerFor( dg )
       gv.groupAddBys( maker ) = null
       maker.addBys.find( _.id == abid ).foreach { gv.groupAddBys( maker ) = _ }
-      web.js( JqHtml( "#grpAddBox" + id, gv.drawAddBy ) )
+      web.js( JqHtml( "#grpAddBox" + id, gv.addByUi ) )
 
     case "/fld/addMember" =>
       val maker = makerFor( dg )
@@ -631,7 +659,7 @@ case class GroupField( baseName:String, l:String = null,
         dg.save
       }
 
-      web.js( JqHtml( "#grpMain" + id, gv.drawGroup ) )
+      web.js( JqHtml( "#grpMain" + id, gv.groupUi ) )
 
     case "/fld/remove" =>
       if ( !dg.b( 'builtin ) ) {
@@ -648,11 +676,11 @@ case class GroupField( baseName:String, l:String = null,
         gv.resetGroups
       }
 
-      web.js( JqHtml( "#grpMain" + id, gv.drawGroup ) )
+      web.js( JqHtml( "#grpMain" + id, gv.groupUi ) )
 
     case "/fld/toggleAddBy" =>
       gv.groupShowAddBy = !gv.groupShowAddBy
-      web.js( JqHtml( "#grpMain" + id, gv.drawGroup ) )
+      web.js( JqHtml( "#grpMain" + id, gv.groupUi ) )
 
     case "/fld/addSearch" =>
       val terms = web.s( 'term )
@@ -687,6 +715,9 @@ case class GroupValue( gf:GroupField ) extends Valuable {
 
   private var latestGroups:Seq[Group] = null
 
+  var tab = "/edit"
+  var availType:String = null // "g", "m", or blank
+
   val groupAddBys = mutable.Map[GroupMaker,GroupingAddBy]()
 
   def groupAddByFor( maker:GroupMaker ) =
@@ -720,28 +751,42 @@ case class GroupValue( gf:GroupField ) extends Valuable {
   def dialogGroup = Group( groups.find( g => g.tid == dialogGroupTid ).getOrElse( null ) )
   def setDialogGroup( tid:String ) = dialogGroupTid = tid
 
-  def drawSelect( cls:String = "grpChr" ) =
+  def selectUi( cls:String = "grpChr" ) =
     Select( gf.id, selectedGroupTid, ( "" -> "All" ) +: groups.map( g => g.tid -> g.s( 'name ) ), "class" -> cls, "style" -> "width:120px; max-width:120px;" )
 
-  def drawPanel = {
+  def panelUi = {
     val stid = dialogGroupTid
 
-    <div class="grpLeft">
-     <div class="grpSel">
-      <ul class="noSelect">
-       { groups.map( g => <li class={ "noSelect" + ( g.tid == stid |* " sel" ) } id={ g.tid }><span style="margin-right:4px;" class={ g.iconClass16x16 } />{ g.s( 'name ) }</li> ) }
-      </ul>
-     </div>
-     <div class="btns">
-      <button class="grpAddGrp go btn" style="float:left;">Add Group</button>
-     </div>
-    </div>
-    <div id={ "grpMain" + gf.id } class="grpMain">
-     { drawGroup }
-    </div>
+    org.tyranid.session.Notification.box ++
+    <div class="tabbar">
+     <ul>
+      <li><a id="grpEditTab" href="#" class={ tab == "/edit" |* "selected" }>Edit</a></li>
+      <li><a id="grpFavTab"  href="#" class={ tab == "/fav"  |* "selected" }>Favorites</a></li>
+     </ul>
+    </div> ++
+    { tab match {
+      case "/edit" =>
+        <div class="grpLeft">
+         <div class="grpSel">
+          <ul class="noSelect">
+           { groups.map( g => <li class={ "noSelect" + ( g.tid == stid |* " sel" ) } id={ g.tid }><span style="margin-right:4px;" class={ g.iconClass16x16 } />{ g.s( 'name ) }</li> ) }
+          </ul>
+         </div>
+         <div class="btns">
+          <button class="grpAddGrp go btn" style="float:left;">Add Group</button>
+         </div>
+        </div>
+        <div id={ "grpMain" + gf.id } class="grpMain">
+         { groupUi }
+        </div>
+
+      case "/fav" =>
+        GroupFavorite.favUi( this )
+      }
+    }
   }
 
-  def drawGroup = {
+  def groupUi = {
     val group = dialogGroup
     val editable = group != null && !group.b( 'builtin )
     val showAddBy = groupShowAddBy
@@ -789,18 +834,18 @@ case class GroupValue( gf:GroupField ) extends Valuable {
       { val addBy = groupAddByFor( maker )
         Select( "grpAddBy", addBy != null |* addBy.id, maker.addBys.map( ab => ( ab.id, ab.label ) ) ) }
       <div id={ "grpAddBox" + gf.id } class="grpAddBox">
-       { drawAddBy }
+       { addByUi }
       </div>
      </form> }
     </div> } ++
     <div class="btns">
      { editable |* <button class="grpDelGrp stop btn" style="float:left;">Delete</button> }
-     <button onclick={ "$('#grpDlg" + gf.id + "').dialog('close'); return false;" } class="btn" style="float:right;">Done</button>
+     <button onclick={ gf.closeJs } class="btn" style="float:right;">Done</button>
      { editable || showAddBy |* <button class="grpToggleAddBy go btn" style="float:right;">{ if ( showAddBy ) "Show Table" else "Add Members" }</button> }
     </div>
   }
 
-  def drawAddBy = {
+  def addByUi = {
     val group = dialogGroup
     val addBy = groupAddByFor( gf.makerFor( group ) )
 
@@ -818,7 +863,7 @@ case class GroupValue( gf:GroupField ) extends Valuable {
     }
   }
 
-  def drawAddGroup =
+  def addGroupUi =
     <div class="grpEdit">
      <div class="title" style="margin-bottom:16px;">Add New Group</div>
      <form method="post">
@@ -841,7 +886,7 @@ case class GroupValue( gf:GroupField ) extends Valuable {
      <button onclick={ "$('#grpDlg" + gf.id + "').dialog('close'); return false;" } class="btn" style="float:right;">Cancel</button>
     </div>;
 
-  def drawEdit =
+  def editUi =
     <div class="grpEdit">
      <div class="title" style="margin-bottom:16px;">Edit Group</div>
      <form method="post">
@@ -860,6 +905,234 @@ case class GroupValue( gf:GroupField ) extends Valuable {
     </div>;
 }
 
+object GroupFavorite extends MongoEntity( tid = "a0Iv" ) {
+  type RecType = GroupFavorite
+  override def convert( obj:DBObject, parent:MongoRecord ) = new GroupFavorite( obj, parent )
+
+  "groups"         is DbArray(DbLink(Group)) ;
+
+  override def init {
+    super.init
+    "_id"          is DbLink(B.User)         is 'id is 'owner;
+  }
+
+  db.ensureIndex( Mobj( "user" -> 1 ) )
+
+
+  val availTypes = Map(
+    "g" -> "My Groups",    // my groups
+    "m" -> "Member Groups" // groups we are a member of
+  )
+
+
+  val FAV_SEL_KEY = "GRP_FAV_SEL"   // the user's favorites currently selected in the dialog
+
+  def favorites = {
+    val sess = T.session
+    val u = sess.user
+
+    var favorites = GroupFavorite.getById( u.id )
+
+    if ( favorites == null ) {
+      favorites = GroupFavorite.make
+      favorites( '_id ) = u.id
+      favorites.setDefaults
+      favorites.save
+    } else if ( favorites.a_!( 'groups ).size == 0 ) {
+      favorites.setDefaults
+      favorites.save
+    }
+
+    favorites
+  }
+
+  def selections = {
+    val sess = T.session
+    var sels = sess.get( FAV_SEL_KEY ).as[Buffer[String]]
+    
+    if ( sels == null ) {
+      sels = Buffer( favorites.a_?( 'groups ).toSeq.of[ObjectId].map( Group.idToTid ):_* )
+      sess.put( FAV_SEL_KEY, sels )
+    }
+    
+    sels
+  }
+  
+  def available = B.availableFavorites.sortBy( _.name.toLowerCase )
+
+  def saveSelected {
+    val sels = selections
+    
+    clearFav
+
+    val f = favorites
+    f( 'groups ) = sels.map( Group.tidToId ).toMlist
+    f.save
+  }
+
+
+
+  /*
+   * * *    Favorite Groups Dialog (*fav*)
+   */
+  
+  def clearFav = T.session.clear( FAV_SEL_KEY )
+  
+  def favUi( gv:GroupValue ) = {
+    val selectedType = T.web.s( 'grpAvailType ) or ""
+    
+    <div class="favDlg noSelect">
+     <div class="favLeft">
+      <h2>Current</h2>
+      <div class="favSel" id="grpFavSel">
+       { favSelectedUi }
+      </div>
+     </div>
+     <div class="favGroup">
+      <h2>Available: { Select( "grpAvailType", selectedType, ( "" -> "- All Types -" ) +: availTypes.toSeq ) }</h2>
+      <div class="favSel" id="grpFavAvail">
+      { favAvailableUi( gv.availType ) }
+      </div>
+     </div>
+     <div style="display:inline-block; width:258px; padding-right:2px;">
+      <button onclick={ gv.gf.closeJs } class="btn" style="margin-top:436px; float:right;">Done</button>
+     </div>
+    </div>
+  }
+  
+  def favSelectedUi = {
+    val orgId = T.session.user.org.id.as[ObjectId]
+
+    <ul class="noSelect">
+     { selections.map( Group.getByTid ).filter( g => g != null ).map( g => <li class='noSelect cgf' id={ g.tid }><span class={ g.iconClass16x16 } /><span class="label"> { g.fullName } { Tid.eye( g.tid ) }</span></li> ) }
+    </ul>
+  }
+
+  def favAvailableUi( availType:String ) =
+    <ul class="noSelect">
+     { ( availType match {
+         case at if at.isBlank => available
+         case "g"              => available.filter( _.isOwner( T.user ) )
+         case "m"              => available.filter( !_.isOwner( T.user ) )
+         } ).
+         map( g => <li class='noSelect cgf' id={ g.tid }><span class={ g.iconClass16x16 } /> <span class="label">{ g.fullName } { Tid.eye( g.tid ) }</span></li> ) 
+     }
+    </ul>
+
+  def favDrag( gv:GroupValue, web:WebContext ) {
+    val ( fromId, toId ) = web.s( 'js ).splitFirst( ':' )
+  
+    val avails = available
+    val sels   = selections
+    
+    toId match {
+    case "grpFavAvail" => // Removing a current one
+      val o = sels.find( _ == fromId ).get
+      sels -= o
+    case "grpFavSel"   => // Adding one to the end
+      val o = avails.find( _.tid == fromId ).get
+      sels += o.tid
+    case id            => // Reordering one
+      val fromCurrent = sels.find( _ == fromId ) != None
+       
+      if ( fromCurrent )
+        sels -= fromId
+
+      val to = sels.find( _ == toId ).get
+      sels.insert( sels.indexOf( to ), fromId )
+    }
+
+    GroupFavorite.saveSelected
+
+    web.js(
+      JqHtml( "#grpFavSel",   GroupFavorite.favSelectedUi ),
+      JqHtml( "#grpFavAvail", GroupFavorite.favAvailableUi( availType = gv.availType ) ) )
+  }
+  
+
+  /*
+   * * *   Group Navigation (*nav*)
+   */
+  
+  def navUi =
+    { B.commonGroupField.drawPreamble } ++
+    <section class="grpNav">
+     { innerNavUi }
+    </section>
+  
+  def innerNavUi:NodeSeq = {
+    val user = T.session.user
+    val org = user.org
+
+  //<h1 id="grpNavRemove"><span>GROUPS <a href="#" id={ "grpNavBtn"                      } tip="Configure Groups" class="tip go btn"><img src="/icons/plus.png"/></a></span>
+
+    <h1 id="grpNavRemove"><span>GROUPS <a href="#" id={ "grpBtn" + B.commonGroupField.id } tip="Configure Groups" class="tip go btn grpBtn"><img src="/icons/plus.png"/></a></span>
+    </h1> ++
+    { for ( g <- favorites.groups; if ( g != null ); firstOwnerTid = g.firstOwnerTid( null ); if firstOwnerTid.notBlank ) yield {
+        val isOwner = g.isOwner( user )
+        <a class={ "gf" + ( !isOwner |* " memberGroup tip" ) } tip={ !isOwner |* ( "Owned by " + TidItem.by( firstOwnerTid ).name ) } id={ g.tid } href={ "/group?g=" + g.tid }>
+         <span class={ g.iconClass16x16 }/><span class="label">{ g.name } </span>
+        </a>
+      }
+    }
+  }
+  
+  def navIconUi = {
+    val user = T.session.user
+    val org = user.org
+
+    <section>
+     <h1>GR</h1>
+     { for ( g <- favorites.groups; if ( g != null ); firstOwnerTid = g.firstOwnerTid( null ); if firstOwnerTid.notBlank ) yield {
+        val isOwner = g.isOwner( user )
+        <a class={ "tip gf" + ( !isOwner |* " memberGroup" ) } tip={ isOwner ? g.name | ( "Owned by " + TidItem.by( firstOwnerTid ).name ) } id={ g.tid } href={ "/group?g=" + g.tid }>
+         <span class={ g.iconClass16x16 }/>
+        </a>
+     } }
+    </section>
+  }
+
+  def navDrag( web:WebContext ) = {
+    val js = web.s( "js" )
+    
+    if ( js != "redraw" ) {
+      val ( fromTid, toTid ) = js.splitFirst( ':' )
+      
+      val favs = favorites
+      val groups = favs.groups.toBuffer.filter( g => g != null )
+      
+      val from = groups.find( _.tid == fromTid ).get
+      groups -= from
+
+      toTid match {
+      case "grpNavRemove" =>
+
+      case _ =>  
+        val to = groups.find( _.tid == toTid ).get
+        groups.insert( groups.indexOf( to ), from )
+      }
+
+      favs( 'groups ) = groups.map( _.id ).toMlist
+      favs.save
+      
+      clearFav
+    }
+
+    web.html( innerNavUi )
+  }
+}
+
+class GroupFavorite( obj:DBObject, parent:MongoRecord ) extends MongoRecord( GroupFavorite.makeView, obj, parent ) {
+  def groups = a_?( 'groups ).map( Group.getById )
+  
+  def setDefaults = {
+    val defFavs = B.defaultFavorites
+
+    if ( defFavs.nonEmpty )
+      obj( 'groups ) = defFavs.toMlist
+  }
+}
+
 object Grouplet extends Weblet {
 
   def handle( web: WebContext ) {
@@ -867,30 +1140,37 @@ object Grouplet extends Weblet {
 
     redirectIfNotLoggedIn( web )
 
-    val fld = web.s( 'fld )
+    rpath match {
+    case "/nav/drag" => 
+      redirectIfNotHasOrg( web )
+      GroupFavorite.navDrag( web )
+    
+    case _ =>
+      val fld = web.s( 'fld )
 
-    if ( fld == B.commonGroupField.id ) {
-      val groupRec = sess.cache.getOrElseUpdate(
-        "groupRec", {
-          val rec = org.tyranid.db.AdHoc.make
-          rec( B.commonGroupField.name ) = GroupValue( B.commonGroupField )
-          rec
-        }
-      ).as[Record]
+      if ( fld == B.commonGroupField.id ) {
+        val groupRec = sess.cache.getOrElseUpdate(
+          "groupRec", {
+            val rec = org.tyranid.db.AdHoc.make
+            rec( B.commonGroupField.name ) = GroupValue( B.commonGroupField )
+            rec
+          }
+        ).as[Record]
 
-      B.commonGroupField.handle( this, groupRec )
-    } else {
-      val queryId = web.s( 'q )
-      if ( queryId.notBlank ) {
-        val report = sess.reportFor( queryId )
-        val query = report.query
-
-        query.fields.find( _.id == fld ) match {
-        case Some( f ) => f.handle( this, report.searchRec )
-        case None      => _404
-        }
+        B.commonGroupField.handle( this, groupRec )
       } else {
-        _404
+        val queryId = web.s( 'q )
+        if ( queryId.notBlank ) {
+          val report = sess.reportFor( queryId )
+          val query = report.query
+
+          query.fields.find( _.id == fld ) match {
+          case Some( f ) => f.handle( this, report.searchRec )
+          case None      => _404
+          }
+        } else {
+          _404
+        }
       }
     }
   }
