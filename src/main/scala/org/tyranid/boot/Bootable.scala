@@ -98,11 +98,16 @@ trait Bootable {
   val operatorIps = Seq[String]()
 
   // DEV assumes the DNS is in your hosts file
-  lazy val website =
-    if ( DEV )        "https://dev." + domain + ":8443"
-    else if ( STAGE ) "https://stage." + domain
-    else              "https://app." + domain
+  
+  lazy val domainPort = 
+    if ( DEV )        "dev." + domain + ":8443"
+    else if ( STAGE ) "stage." + domain
+    else              "app." + domain
+    
+  lazy val website = "https://" + domainPort
 
+  lazy val nonsecureWebsite = "http://" + domainPort
+  
   val bounceEmail = "support@" + domain 
   val systemEmail:String
   val alertEmail:String
@@ -135,6 +140,7 @@ trait Bootable {
 
   def access( thread:ThreadData, accessType:AccessType, ref:AnyRef )
 
+  def secureBypass( url:String ) = false
 
 
   @volatile var newUser:() => User = null

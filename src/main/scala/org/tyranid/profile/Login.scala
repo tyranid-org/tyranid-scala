@@ -346,8 +346,6 @@ The """ + B.applicationName + """ Team
     val sess = T.session
   
     if ( email.notBlank && pw.notBlank ) {
-      import org.mindrot.jbcrypt.BCrypt
-      
       if ( !validateEmail( email ) )
         return null
   
@@ -359,7 +357,7 @@ The """ + B.applicationName + """ Team
       val users = B.User.db.find( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) ).toSeq
       
       for ( u <- users; dbPw = u.s( 'password ) )
-        if ( dbPw.notBlank && BCrypt.checkpw( pw, dbPw ) )
+        if ( dbPw.notBlank && pw.checkShash( dbPw ) )
           return B.User( u )
     }
     

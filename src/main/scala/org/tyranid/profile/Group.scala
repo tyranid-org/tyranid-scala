@@ -396,12 +396,12 @@ case class GroupingAddBy( label:String, keys:String* ) {
 
 case class GroupField( baseName:String, l:String = null,
                        makers:Seq[GroupMaker],
-                       opts:Seq[(String,String)] = Nil ) extends Field {
+                       opts:Seq[(String,String)] = Nil,
+                       data:Boolean = true ) extends Field {
 
   val id = Base62.make( 8 )
   val name = baseName + "$cst"
 
-  val data = true
   val default = None
 
   val search = Search.Custom

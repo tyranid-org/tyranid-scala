@@ -17,11 +17,13 @@
 
 package org.tyranid.text
 
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.FunSuite
 
 import org.tyranid.Imp._
 
-
+@RunWith(classOf[JUnitRunner])
 class StringSuite extends FunSuite {
 
   test( "decUrl" ) {
@@ -50,6 +52,19 @@ class StringSuite extends FunSuite {
 
     assert( "1&2& 3".splitAmp === Array( "1", "2", " 3" ) )
   }
-
+  
+  test ( "phoneMask" ) {
+    assert( "19522003541".toOnlyNumbers == "19522003541" )
+    assert( "19522003541".toPhoneMask == "(952) 200-3541" )
+    assert( "19522003541".toPhoneMask.toOnlyNumbers == "9522003541" )
+    assert( "9522003541".toPhoneMask == "(952) 200-3541" )
+    assert( "9522003541".toPhoneMask.toOnlyNumbers  == "9522003541" )
+  }
+  
+  test( "hashCrypt" ) {
+    val password = "somepassword"
+    
+    assert( password.checkShash( password.shash() ) )
+  }
 }
 
