@@ -657,6 +657,7 @@ case class GroupField( baseName:String, l:String = null,
         dg( "tids" ) = ( dg.a_?( 'tids ) ++ tids ).distinct.toMlist
         dg.updateIds
         dg.save
+        tids foreach { tid => B.groupMemberAdded( dg, tid ) }
       }
 
       web.js( JqHtml( "#grpMain" + id, gv.groupUi ) )
@@ -674,6 +675,7 @@ case class GroupField( baseName:String, l:String = null,
           Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( "tids" -> dg.groupType.ofEntity.idToTid( Tid.tidToId( tid ) ) ) ) )
 
         gv.resetGroups
+        B.groupMemberRemoved( dg, tid )
       }
 
       web.js( JqHtml( "#grpMain" + id, gv.groupUi ) )

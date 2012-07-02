@@ -20,6 +20,7 @@ package org.tyranid
 import java.io.InputStream
 import java.util.{ Calendar, Date }
 
+import scala.collection.mutable.Buffer
 import scala.xml.{ NodeSeq, Unparsed }
 
 import org.tyranid.log.Log
@@ -39,7 +40,9 @@ object Imp {
   // extensions
 	implicit def anyImp[ T <: Any ]( v:T )                          = new org.tyranid.any.AnyImp[T]( v )
 	implicit def anyRefImp[ T <: AnyRef ]( v:T )                    = new org.tyranid.any.AnyRefImp[T]( v )
+  implicit def array[A]( a:Array[A] )                             = new org.tyranid.collection.ArrayImp( a )
 	implicit def boolean( v:Boolean )                               = new org.tyranid.logic.BooleanImp( v )
+  implicit def bufferImp[A]( a:Buffer[A] )                        = new org.tyranid.collection.BufferImp( a )
 	implicit def calendarImp( v:Calendar )                          = new org.tyranid.time.CalendarImp( v )
 	implicit def charImp( v:Char )                                  = new org.tyranid.text.CharImp( v )
 	implicit def dateImp( v:Date )                                  = new org.tyranid.time.DateImp( v )
@@ -48,7 +51,6 @@ object Imp {
   implicit def longImp( v:Long )                                  = new org.tyranid.math.LongImp( v )
   implicit def doubleImp( v:Double )                              = new org.tyranid.math.DoubleImp( v )
 	implicit def stringImp( v:String )                              = new org.tyranid.text.StringImp( v )
-  implicit def array[A]( a:Array[A] )                             = new org.tyranid.collection.ArrayImp( a )
   implicit def objectMapImp( v:scala.collection.Map[String,Any] ) = new org.tyranid.collection.ObjectMapImp( v )
   implicit def seqImp[A]( a:Seq[A] )                              = new org.tyranid.collection.SeqImp( a )
   implicit def byteArray( ba:Array[Byte] )                        = new org.tyranid.math.ByteArray( ba )

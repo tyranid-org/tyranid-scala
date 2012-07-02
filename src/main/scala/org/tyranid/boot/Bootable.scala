@@ -237,6 +237,9 @@ trait Bootable {
   lazy val commonGroupField:org.tyranid.profile.GroupField = null
   def defaultFavorites:Seq[ObjectId] = Seq()
   def availableFavorites:Seq[Group]  = Seq()
+
+  def groupMemberAdded( group:Group, tid:String )   {}
+  def groupMemberRemoved( group:Group, tid:String ) {}
  
 
   def initEntities {

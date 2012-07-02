@@ -175,6 +175,11 @@ class DateImp( d:Date ) {
     ( day == Calendar.SUNDAY || day == Calendar.SATURDAY )  
   }
 
+  def > ( other:Date ) = d.getTime >  other.getTime
+  def >=( other:Date ) = d.getTime >= other.getTime
+  def < ( other:Date ) = d.getTime <  other.getTime
+  def <=( other:Date ) = d.getTime <= other.getTime
+
   def +( ms:Long ) = new Date( d.getTime + ms )
   def -( ms:Long ) = new Date( d.getTime - ms )
 }
