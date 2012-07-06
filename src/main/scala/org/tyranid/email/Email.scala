@@ -28,7 +28,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbInt, DbPassword }
+import org.tyranid.db.{ DbChar, DbInt, DbPassword, DbEmail, DbBoolean }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.profile.User
@@ -40,6 +40,11 @@ object EmailConfig extends MongoEntity( tid = "a0At" ) {
   "port"         is DbInt;
   "authUser"     is DbChar(40);
   "authPassword" is DbPassword;
+  "tls"          is DbBoolean;
+  "ssl"          is DbBoolean;
+  "pollHost"     is DbChar(40);
+  "pollUser"     is DbEmail;
+  "pollPassword" is DbPassword;
   
   override lazy val dbName = name
 }
@@ -65,11 +70,9 @@ object Email {
     "@yahoo.com",
     ".net" )
 
-  def isWellKnownProvider( email:String ) = {
-    val lemail = email.toLowerCase
-    wellKnownProviders exists lemail.endsWith
-  }
-
+  def isWellKnownProvider( email:String ) =
+    wellKnownProviders exists email.toLowerCase.endsWith
+  
   def domainFor( email:String ) =
     email.indexOf( '@' ) match {
     case -1 => ""
@@ -101,13 +104,10 @@ object Email {
 }
 
 trait EmailTemplate {
-
   def welcome( user:User, activationCode:String = null )
-
 }
 
 trait Email {
-
   val subject:String
   val text:String
   val html:String
@@ -242,7 +242,7 @@ case class JavaEmail( subject:String, text:String, html:String=null ) extends Em
     if ( replyTo != null && replyTo != from ) 
       message.setReplyTo( Array[Address]( replyTo ) )
     
-    if (primaryRecipients == null) 
+    if ( primaryRecipients == null ) 
       throw new MessagingException("The primary recipients must be set on this email message.")
 
     message.addRecipients( Message.RecipientType.TO, primaryRecipients.toArray[Address] )
@@ -258,11 +258,11 @@ case class JavaEmail( subject:String, text:String, html:String=null ) extends Em
 
     message.setSentDate( sendDate )
     
-    if ( subject != null ) 
+    if ( subject.notBlank ) 
       message.setSubject( subject )
 
-    if ( text != null ) {
-      if ( html != null ) {
+    if ( text. notBlank ) {
+      if ( html.notBlank ) {
         var multipart:Multipart = new MimeMultipart( "alternative" )
         var plainMessageBodyPart = new MimeBodyPart()
         plainMessageBodyPart.setContent( text,"text/plain" )
@@ -316,40 +316,40 @@ case class JavaEmail( subject:String, text:String, html:String=null ) extends Em
 
   private def getMailSession:Session  = {
     if ( emailSession == null ) {
-      var emailConfig = EmailConfig.db.findOne()
+      val emailConfig = EmailConfig.db.findOne()
       
       if ( emailConfig == null )
         throw new RuntimeException( "Email failed because there is no emailConfig is available." );
         
-      val host = emailConfig get "host"
+      val host = emailConfig.s( 'host )
       
-      if ( host == null )
+      if ( host.isBlank )
         throw new RuntimeException( "WARNING: host not set in emailConfig.  Sending of mail failed!" );
 
       var props:Properties = System.getProperties()
       props.put( "mail.smtp.host", host )
       
-      val port = emailConfig get "port"
+      val port = emailConfig.i( 'port )
       
-      if ( port != null )
-          props.put( "mail.smtp.port", port.toString )
+      if ( port != 0 )
+          props.put( "mail.smtp.port", port._s )
             
-      val tls = emailConfig get "tls"
+      val tls = emailConfig.b( 'tls )
       
-      if ( tls != null )
-          props.put( "mail.smtp.starttls.enable", tls );
+      if ( tls )
+          props.put( "mail.smtp.starttls.enable", "true" );
       
-      val ssl = emailConfig get "ssl"
+      val ssl = emailConfig.b( 'ssl )
       
-      if ( ssl == "true" ) {
+      if ( ssl ) {
           props.put( "mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory" );
           props.put( "mail.smtp.socketFactory.fallback", "false" );
       }
           
 //    props.put( "mail.smtp.debug", "true" );
             
-      val authUser = ( emailConfig get "authUser" ).toString
-      val authPassword = ( emailConfig get "authPassword" ).toString
+      val authUser = emailConfig.s( 'authUser )
+      val authPassword = emailConfig.s( 'authPassword )
       
       if ( authUser notBlank ) {
         props.put( "mail.smtp.auth", "true" );
