@@ -25,7 +25,6 @@ import org.tyranid.session.Session
 
 
 class CalendarImp( c:Calendar ) {
-
   def weekDayName   = Time.WeekDayNames( c.get( Calendar.DAY_OF_WEEK ) - 1 ).capitalize
   def monthName     = Time.MonthNames( c.get( Calendar.MONTH ) ).capitalize
 
@@ -185,6 +184,8 @@ class DateImp( d:Date ) {
 }
 
 object Time {
+  val currentYear = Calendar.getInstance.get( Calendar.YEAR )
+  
   val DateFormat     = new SimpleDateFormat( "MM/dd/yyyy" )
   val DateTimeFormat = new SimpleDateFormat( "MM/dd/yyyy HH:mm:ss" )
   val Rfc1123Format  = new SimpleDateFormat( "EEE, dd MMM yyyyy HH:mm:ss z" )

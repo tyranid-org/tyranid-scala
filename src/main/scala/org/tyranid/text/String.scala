@@ -55,7 +55,8 @@ class StringImp( s:String ) {
       ( s, null )
 	}
 
-	def volerroIdPart = ( s == null ) ? null | s.replace( "'", "" ).replace( ", ", "_" ).replace( ".", "" ).replace( " ", "_" ).replace( "__", "_" ).toLowerCase
+	def volerroIdPart = ( s == null ) ? null | s.replace( "@", "" ).replace( "'", "" ).replace( ", ", "_" ).replace( ".", "" ).replace( " ", "_" ).replace( "__", "_" ).toLowerCase
+	
   /*
    * Faster than s.split( "&" )
    */
@@ -128,6 +129,12 @@ class StringImp( s:String ) {
   def encRegex = s.replace( ".", "\\." ).replace( "@", "\\@" ).replace( "+", "\\+" )
 
   def toUrl = new java.net.URL( Uri.completeUri( s ) )
+  
+  def containsIgnoreCase( v:String ) = 
+    s != null && v.notBlank && s.toLowerCase.contains( v.toLowerCase )
+
+  def endsWithIgnoreCase( v:String ) = 
+    s != null && v.notBlank && s.toLowerCase.endsWith( v.toLowerCase )
 
   /*
    * This should not throw any exceptions.  If the URL is invalid in any way, returns null.

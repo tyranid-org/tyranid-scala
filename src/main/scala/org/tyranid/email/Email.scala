@@ -105,6 +105,8 @@ object Email {
 
 trait EmailTemplate {
   def welcome( user:User, activationCode:String = null )
+  def rejectUnknownFromEmail( unknownFromEmail:String, subject:String )
+  def rejectUnknownTo( from:String, unknownTo:String, subject:String )
 }
 
 trait Email {

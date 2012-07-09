@@ -21,8 +21,11 @@ import org.scalatest.FunSuite
 
 import org.tyranid.Imp._
 
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
+
+@RunWith(classOf[JUnitRunner])
 class LinkedInSuite extends FunSuite {
   org.tyranid.boot.Boot.boot
-
 }
 
