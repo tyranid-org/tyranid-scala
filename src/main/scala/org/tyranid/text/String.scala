@@ -55,7 +55,15 @@ class StringImp( s:String ) {
       ( s, null )
 	}
 
-	def volerroIdPart = ( s == null ) ? null | s.replace( "@", "" ).replace( "'", "" ).replace( ", ", "_" ).replace( ".", "" ).replace( " ", "_" ).replace( "__", "_" ).toLowerCase
+	def removeAllChars( chars:String ) = {
+	  var newS = s
+	  
+	  chars.foreach( c => newS = newS.replace( c._s, "" ) )
+	    
+	  newS
+	}
+	
+	def volerroIdPart = ( s == null ) ? null | s.removeAllChars( "@'().&!#$%^*+={}|\\][:;\"<>/?~`" ).replace( ",", "_" ).replace( " ", "_" ).replace( "__", "_" ).toLowerCase
 	
   /*
    * Faster than s.split( "&" )
