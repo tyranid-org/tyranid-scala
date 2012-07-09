@@ -222,7 +222,7 @@ object Smslet extends Weblet {
            </form>
            <footer class="btns">
             <input type="hidden" value="1" name="savingHere"/>
-            <a href={ "/user/edit?id=" + tid } id="cancel" class="btn">Done</a>
+            <a href={ "/user/edit?id=" + tid } id="cancelsms" class="btn">Done</a>
            </footer> ), 
          "endpoint" -> ( "/sms/edit?id=" + tid ),
          "onCloseRedirect" -> true ) )
@@ -312,7 +312,7 @@ object Smslet extends Weblet {
           { if ( sms.s( 'phone ).toOnlyNumbers.notBlank ) 
             <a href={ "/sms/clearNumber?id=" + user.tid } class="go btn">Clear Number</a>
           }
-          <a href={ "/user/edit?id=" + user.tid } id="cancel" class="btn">Cancel</a>
+          <a href={ "/user/edit?id=" + user.tid } id="cancelsms" class="btn">Cancel</a>
          </footer>
         </form>
       } else {
