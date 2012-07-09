@@ -63,7 +63,7 @@ object Button {
 
   def link( name:String, href:String, color:String = null, redirectEndpoint:String = null, dialogTitle:String = null, opts:Seq[(String,String)] = null ) =
     if ( redirectEndpoint == null ) {
-      <a class={ if ( color.notBlank ) color + " btn" else "btn" } href={ href }><span>{ name }</span></a>
+      <a class={ if ( color.notBlank ) color + " btn" else "btn" } href={ href } id={ name + "btn" }><span>{ name }</span></a>
     } else {
       val optsStr:StringBuilder= new StringBuilder
 
