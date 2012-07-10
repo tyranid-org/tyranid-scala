@@ -19,7 +19,7 @@ package org.tyranid.db.es
 
 import java.util.Date
 
-import com.mongodb.DBObject
+import com.mongodb.{ DBObject, BasicDBList }
 
 import akka.actor.Actor
 import akka.actor.Actor.actorOf
@@ -28,6 +28,7 @@ import org.tyranid.Imp._
 import org.tyranid.db.{ Entity, Record, View }
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.profile.User
 
 
 /*
@@ -36,13 +37,14 @@ import org.tyranid.db.mongo.Imp._
 
 trait Searchable {
 
+  val auth:Boolean
   val text:Boolean
 }
 
-case class Search( text:Boolean = true ) extends Searchable {
-}
+case class Search( text:Boolean = true, auth:Boolean = false ) extends Searchable
 
 case object NoSearch extends Searchable {
+  val auth = false
   val text = false
 }
 
@@ -62,9 +64,14 @@ class Indexer extends Actor {
   def receive = {
   case IndexMsg( index, typ, id, json ) =>
 
+    spam( "received index object" )
+
     try {
-      if ( json != "{}" )
+      if ( json != "{}" ) {
+        spam( "posting index=" + index + "  type=" + typ )
+        spam( "json=" + json )
         ( "http://localhost:9200/" + index + "/" + typ + "/" + id ).POST( content = json )
+      }
     } catch {
     case e:org.apache.http.conn.HttpHostConnectException =>
       e.logWith( "m" -> "Cannot index in elastic search-- it does not appear to be running" )
@@ -91,13 +98,33 @@ case class IndexMsg( index:String, typ:String, id:String, json:String )
  */
 object Es {
 
-  def search( text:String ) = "http://localhost:9200/_search".GET( Map( "q" -> text ) ).s
-
+  def search( text:String, user:User ) =  {
+    val query =
+      Map(
+        "query" -> Map(
+          "filtered" -> Map(
+            "query" -> Map(
+              "query_string" -> Map(
+                "query" -> text
+              )
+            ),
+            "filter" -> Map(
+              "terms" -> Map(
+                "auth" -> ( "public" +: user.allowProfileTids )
+              )
+            )
+          )
+        )
+      ).toJsonStr
+    //sp_am( "query=" + query )
+    "http://localhost:9200/_search".POST( content = query 
+    ).s
+  }
 
   def jsonFor( rec:Record ) = {
     val sb = new StringBuilder
 
-    def enter( rec:Record ) {
+    def enter( rec:Record, root:Boolean = false ) {
       val view = rec.view
 
       sb += '{'
@@ -117,14 +144,30 @@ object Es {
         case dbo:DBObject => enter( rec.rec( va ) )
         case v:Number     => sb ++= v.toString
         case t:Date       => sb ++= t.getTime.toString
-        case v            => sb ++= ( '"' + v.toString.encJson + '"' )
+        case v            => sb += '"' ++= v.toString.encJson += '"'
         }
+      }
+
+      if ( root ) {
+        if ( !first ) sb += ','
+        sb ++= "auth:" ++=
+          ( view.vas.find( _.att.search.auth ) match {
+            case Some( va ) =>
+              rec( va ) match {
+              case tids:BasicDBList => tids.toJsonStr
+              case tid:String       => tid.toJsonStr
+              case _                => "\"none\""
+              }
+
+            case None =>
+              "\"public\""
+            } )
       }
 
       sb += '}'
     }
 
-    enter( rec )
+    enter( rec, root = true )
 
     sb.toString
   }
@@ -134,19 +177,19 @@ object Es {
   def index( rec:Record ) =
     Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
 
-  def indexAll = {
-    for ( e <- Entity.all ) {
-
+  def indexAll =
+    for ( e <- Entity.all )
       e match {
       case e:MongoEntity =>
         val v = e.makeView
-        if ( hasSearchData( v ) )
+spam( "indexing " + e.name )
+        if ( hasSearchData( v ) ) {
+spam( e.name + " has search data" )
           for ( obj <- e.db.find() )
             index( e.make( obj ) )
+        }
 
       case _ =>
       }
-    }
-  }
 }
 
