@@ -64,8 +64,6 @@ class Indexer extends Actor {
   def receive = {
   case IndexMsg( index, typ, id, json ) =>
 
-    spam( "received index object" )
-
     try {
       if ( json != "{}" ) {
         spam( "posting index=" + index + "  type=" + typ )
@@ -182,9 +180,7 @@ object Es {
       e match {
       case e:MongoEntity =>
         val v = e.makeView
-spam( "indexing " + e.name )
         if ( hasSearchData( v ) ) {
-spam( e.name + " has search data" )
           for ( obj <- e.db.find() )
             index( e.make( obj ) )
         }
