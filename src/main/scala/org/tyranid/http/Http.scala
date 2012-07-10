@@ -162,7 +162,7 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     res.setStatus( 200 )
   }
 
-  def json( json:Any, status:Int = 200, jsonpCallback:String = null, headers:Map[String,String] = null, req:HttpServletRequest = null, noCache:Boolean = false ) = {
+  def json( json:Any, status:Int = 200, jsonpCallback:String = null, headers:Map[String,String] = null, req:HttpServletRequest = null, cache:Boolean = false ) = {
     var jsonContentType = "application/json"
       
     if ( req != null ) {
@@ -177,7 +177,7 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     res.setContentType( if ( jsonpCallback != null ) "text/javascript" else jsonContentType )
     res.setStatus( status )
 
-    if ( noCache ) setNoCacheHeaders( res )
+    if ( !cache ) setNoCacheHeaders( res )
     
     if ( headers != null )
       for ( h <- headers ) 
@@ -196,17 +196,17 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     )
   }
 
-  def html( html:NodeSeq, status:Int = 200, headers:Map[String,String] = null, req:HttpServletRequest = null, noCache:Boolean = false ) =
-    content( html.toString, "text/html", status, headers, req, noCache )
+  def html( html:NodeSeq, status:Int = 200, headers:Map[String,String] = null, req:HttpServletRequest = null, cache:Boolean = false ) =
+    content( html.toString, "text/html", status, headers, req, cache )
 
-  def rss( rssXml:NodeSeq, status:Int = 200, headers:Map[String,String] = null, req:HttpServletRequest = null, noCache:Boolean = false ) =
-    content( rssXml.toString, "application/rss+xml", status, headers, req, noCache )
+  def rss( rssXml:NodeSeq, status:Int = 200, headers:Map[String,String] = null, req:HttpServletRequest = null, cache:Boolean = false ) =
+    content( rssXml.toString, "application/rss+xml", status, headers, req, cache )
 
-  def content( text:String, mimeType:String, status:Int = 200, headers:Map[String,String] = null, req:HttpServletRequest = null, noCache:Boolean = false ) = {
+  def content( text:String, mimeType:String, status:Int = 200, headers:Map[String,String] = null, req:HttpServletRequest = null, cache:Boolean = false ) = {
     res.setContentType( mimeType )
     res.setStatus( status )
 
-    if ( noCache ) setNoCacheHeaders( res )
+    if ( !cache ) setNoCacheHeaders( res )
     if ( headers != null )
       for ( h <- headers ) 
         res.setHeader( h._1, h._2 )
