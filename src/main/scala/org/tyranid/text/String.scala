@@ -85,6 +85,9 @@ class StringImp( s:String ) {
   def toPattern = Pattern.compile( s )
   def toPatternI = Pattern.compile( s, Pattern.CASE_INSENSITIVE )
 
+  def stripTags( tagName:String ) =
+    ( "(?s)<" + tagName + ".*?(/>|</" + tagName + ">)" ).toPatternI.matcher( s ).replaceAll( "" )
+	
   def encJson = {
     val sb = new StringBuilder
     val len = s.length

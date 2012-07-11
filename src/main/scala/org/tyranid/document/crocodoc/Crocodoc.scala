@@ -80,7 +80,7 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
     }
   }
   
-  def previewParams( extDocId:String, width:String, height:String ) = {
+  def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef] = {
     statusFor( extDocId ) match {
       case "DONE" =>
         val iframeSrc = previewUrlFor( extDocId )

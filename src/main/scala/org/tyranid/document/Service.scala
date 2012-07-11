@@ -64,10 +64,12 @@ object Service {
       null
   }
   
-  def previewParams( extDocId:String, width:String, height:String ) = {
+  def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef] = {
     if ( extDocId.notBlank ) {
       val parts = extDocId.split( "," )
       appFor( parts(0 ) ).previewParams( parts.drop(1).mkString( "," ), width, height )
+    } else {
+      Map()
     }
   }
   
@@ -88,7 +90,7 @@ trait DocApp {
   def upload( file:File, fileSize:Long, filename:String ):String
   def statusFor( extDocId:String ):String
   def getThumbnailFile( extDocId:String ):File
-  def previewParams( extDocId:String, width:String, height:String )
+  def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef]
   def delete( extDocId:String ): Boolean
   
   protected def externalDocId( extDocId:String ) = serviceCode + "," + extDocId
