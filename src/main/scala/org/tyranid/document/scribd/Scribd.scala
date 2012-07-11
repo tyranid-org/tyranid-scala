@@ -73,11 +73,17 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
     "var scribd_doc = scribd.Document.getDoc(" + parts(0) + ", '" + parts(1) + "');var onDocReady = function(e){scribd_doc.api.setPage(1);};scribd_doc.addParam('jsapi_version', 2);scribd_doc.addEventListener('docReady', onDocReady);scribd_doc.write('scrib_doc');scribd_doc.addParam('use_ssl', true); scribd_doc.grantAccess('" + T.user.tid + "', '" + Session().id + "', '" + MD5( parts(0), Session().id, T.user.tid ) + "');"
   }
   
-  def previewParams( extDocId:String, width:String, height:String ) = {
+  def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef] = {
+    val previewJs = previewJsFor( extDocId )
+    
+    println( "width: " + width )
+    println( "height: " + height )
+    println( "previewJS: " + previewJs )
+    
     Map( "width" -> width, 
          "height" -> height,
          "cssClass" -> "no-scroll",
-         "extraJS" -> previewJsFor( extDocId ),
+         "extraJS" -> previewJs,
          "html" -> <div id='scrib_doc'></div> )
   }
   

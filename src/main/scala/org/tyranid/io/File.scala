@@ -82,6 +82,99 @@ object DbLocalFile extends CommonFile {
 }
 
 object File {
+  val mimeTypeMap = Map( 
+    "doc"      -> "application/msword",
+    "xls"      -> "application/vnd.ms-excel",
+    "ppt"      -> "application/vnd.ms-powerpoint",
+    "mpp"      -> "application/vnd.ms-project",
+    "bin"      -> "application/octet-stream",
+    "oda"      -> "application/oda",
+    "pdf"      -> "application/pdf",
+    "eps"      -> "application/postscript",
+    "ps"       -> "application/postscript",
+    "rtf"      -> "application/rtf",
+    "odt"      -> "application/vnd.oasis.opendocument.text", 
+    "ott"      -> "application/vnd.oasis.opendocument.text-template",   
+    "oth"      -> "application/vnd.oasis.opendocument.text-web",
+    "odm"      -> "application/vnd.oasis.opendocument.text-master",  
+    "odg"      -> "application/vnd.oasis.opendocument.graphics",
+    "otg"      -> "application/vnd.oasis.opendocument.graphics-template",   
+    "odp"      -> "application/vnd.oasis.opendocument.presentation",
+    "otp"      -> "application/vnd.oasis.opendocument.presentation-template",
+    "ods"      -> "application/vnd.oasis.opendocument.spreadsheet",
+    "ots"      -> "application/vnd.oasis.opendocument.spreadsheet-template", 
+    "odc"      -> "application/vnd.oasis.opendocument.chart",  
+    "odf"      -> "application/vnd.oasis.opendocument.formula",  
+    "odb"      -> "application/vnd.oasis.opendocument.database",
+    "odi"      -> "application/vnd.oasis.opendocument.image",
+    "oxt"      -> "application/vnd.openofficeorg.extension", 
+    "mif"      -> "application/x-mif",
+    "csh"      -> "application/x-csh",
+    "dvi"      -> "application/x-dvi",
+    "hdf"      -> "application/x-hdf",
+    "latex"    -> "application/x-latex",
+    "nc"       -> "application/x-netcdf",
+    "cdf"      -> "application/x-netcdf",
+    "sh"       -> "application/x-sh",
+    "tcl"      -> "application/x-tcl",
+    "tex"      -> "application/x-tex",
+    "texinfo"  -> "application/x-texinfo",
+    "texi"     -> "application/x-texinfo",
+    "t"        -> "application/x-troff",
+    "tr"       -> "application/x-troff",
+    "roff"     -> "application/x-troff",
+    "man"      -> "application/x-troff-man",
+    "me"       -> "application/x-troff-me",
+    "ms"       -> "application/x-troff-ms",
+    "src"      -> "application/x-wais-source",
+    "zip"      -> "application/x-zip-compressed",
+    "bcpio"    -> "application/x-bcpio",
+    "cpio"     -> "application/x-cpio",
+    "gtar"     -> "application/x-gtar",
+    "shar"     -> "application/x-shar",
+    "tar"      -> "application/x-tar",
+    "au"       -> "audio/basic",
+    "snd"      -> "audio/basic",
+    "aif"      -> "audio/x-aiff",
+    "aiff"     -> "audio/x-aiff",
+    "aifc"     -> "audio/x-aiff",
+    "wav"      -> "audio/x-wav",
+    "gif"      -> "image/gif",
+    "png"      -> "image/png",
+    "jpg"      -> "image/jpeg",
+    "jpe"      -> "image/jpeg",
+    "jpeg"     -> "image/jpeg",
+    "tif"      -> "image/tiff",
+    "tiff"     -> "image/tiff",
+    "ras"      -> "image/x-cmu-raster",
+    "pnm"      -> "image/x-portable-anymap",
+    "pbm"      -> "image/x-portable-bitmap",
+    "pgm"      -> "image/x-portable-graymap",
+    "ppm"      -> "image/x-portable-pixmap",
+    "rgb"      -> "image/x-rgb",
+    "xbm"      -> "image/x-xbitmap",
+    "xpm"      -> "image/x-xpixmap",
+    "xwd"      -> "image/x-xwindowdump",
+    "htm"      -> "text/html",
+    "html"     -> "text/html",
+    "xml"      -> "text/xml",
+    "xsl"      -> "text/xml",
+    "sgml"     -> "text/x-sgml",
+    "sgm"      -> "text/x-sgml",
+    "txt"      -> "text/plain",
+    "text"     -> "text/plain",
+    "rtx"      -> "text/richtext",
+    "tsv"      -> "text/tab-separated-values",
+    "mp4"      -> "video/mp4",
+    "mpg"      -> "video/mpeg",
+    "mpe"      -> "video/mpeg",
+    "mpeg"     -> "video/mpeg",
+    "qt"       -> "video/quicktime",
+    "mov"      -> "video/quicktime",
+    "avi"      -> "video/x-msvideo",
+    "movie"    -> "video/x-sgi-movie"
+  )
+  
 
   def extension( filename:String ) = {
     val max = scala.math.max( filename.lastIndexOf( '/' ), filename.lastIndexOf( '.' ) ) 
@@ -92,17 +185,8 @@ object File {
   def pathFor( entityTid:String, recordTid:String, pathName:String, url:String ) =
     entityTid + "/" + recordTid + "/" + pathName + "." + extension( url )
 
-  def mimeTypeFor( filename:String ) = {
-    val mimeType = T.web.ctx.getMimeType( filename )
-
-    if ( mimeType.notBlank )
-      mimeType
-    else
-      extension( filename ) match {
-      case "mp4" => "video/mp4"
-      case _     => null
-      }
-  }
+  def mimeTypeFor( filename:String ) =
+    mimeTypeMap.get( extension( filename.safeString.toLowerCase ) ).getOrElse( null )
 
   def download( web:WebContext, bucket:S3Bucket, key:String, fileName:String ) {
     val obj = S3.getObject( bucket, key )
