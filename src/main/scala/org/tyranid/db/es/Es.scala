@@ -75,7 +75,7 @@ class Indexer extends Actor {
       if ( json != "{}" ) {
         spam( "posting index=" + index + "  type=" + typ )
         spam( "json=" + json )
-        ( "http://localhost:9200/" + index + "/" + typ + "/" + id ).POST( content = json )
+        ( Es.host + "/" + index + "/" + typ + "/" + id ).POST( content = json )
       }
     } catch {
     case e:org.apache.http.conn.HttpHostConnectException =>
@@ -103,7 +103,9 @@ case class IndexMsg( index:String, typ:String, id:String, json:String )
  */
 object Es {
 
-  def search( text:String, user:User ) =  {
+  val host = "http://localhost:9200"
+
+  def search( text:String, user:User ) = {
     val query =
       Map(
         "query" -> Map(
@@ -115,14 +117,14 @@ object Es {
             ),
             "filter" -> Map(
               "terms" -> Map(
-                "auth" -> ( "yes" +: user.allowProfileTids )
+                "auth" -> ( "yes" +: user.allowProfileTids ) //.filter( _ == "a01vTzHoIeSwMnKLiSlN" ) )
               )
             )
           )
         )
       ).toJsonStr
-    //sp_am( "query=" + query )
-    "http://localhost:9200/_search".POST( content = query ).s
+    spam( "query=" + query )
+    ( Es.host + "/_search" ).POST( content = query ).s
   }
 
   def jsonFor( rec:Record ) = {
@@ -183,9 +185,21 @@ object Es {
 
   def indexAll {
     for ( index <- Entity.all.filter( e => hasSearchData( e.makeView ) ).map( _.searchIndex ).toSeq.distinct )
-      ( "http://localhost:9200/" + index ).DELETE()
+      ( Es.host + "/" + index ).DELETE()
 
-    for ( e <- Entity.all )
+    for ( e <- Entity.all ) {
+
+      /*
+       * TODO:  finish put mapping
+      ( Es.host + "/" ).PUT( content =
+        Map(
+
+
+
+        ).toJsonStr )
+      */
+
+
       e match {
       case e:MongoEntity =>
         val v = e.makeView
@@ -197,6 +211,7 @@ object Es {
 
       case _ =>
       }
+    }
   }
 }
 

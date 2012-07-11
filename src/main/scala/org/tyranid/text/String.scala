@@ -96,7 +96,7 @@ class StringImp( s:String ) {
       case '\n' => sb ++= "\\n"
       case '\r' => sb ++= "\\r"
       case '\t' => sb ++= "\\t"
-      case '\\' => sb ++= "\\"
+      case '\\' => sb ++= "\\\\"
       case '"'  => sb ++= "\\\""
       case ch   => sb += ch
       }

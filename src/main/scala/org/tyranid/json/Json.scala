@@ -134,6 +134,10 @@ case class JsonString( root:Any ) {
     case s:String            => sb += '"' ++= s.encJson += '"'
     case i:java.lang.Integer => sb ++= i.toString
 
+    // This will probably have to be parsed better to replace all inner quotes
+    case xml:NodeSeq         => 
+      sb += '"' ++= xml.toString.replaceAll( "\"", "\\\\\"" ).replaceAll( "\n", "{--TY_NL--}" ).replaceAll( "\r", "{--TY_LF--}" ) += '"'
+
     case a:Array[_]          =>
       sb += '['
       for ( i <- 0 until a.length ) {
@@ -149,9 +153,6 @@ case class JsonString( root:Any ) {
       }
       sb += ']'
 
-    // This will probably have to be parsed better to replace all inner quotes
-    case xml:NodeSeq         => 
-      sb += '"' ++= xml.toString.replaceAll( "\"", "\\\\\"" ).replaceAll( "\n", "{--TY_NL--}" ).replaceAll( "\r", "{--TY_LF--}" ) += '"'
     case l:Seq[_]            =>
       var first = true
       sb += '['
