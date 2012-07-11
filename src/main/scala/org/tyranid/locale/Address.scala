@@ -21,7 +21,7 @@ import com.mongodb.DBObject
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbArray, DbChar, DbDouble, DbLink }
-import org.tyranid.db.es.Search
+import org.tyranid.db.es.SearchText
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 
@@ -30,12 +30,12 @@ object Address extends MongoEntity( tid = "a0Kt" ) {
   type RecType = Address
   override def convert( obj:DBObject, parent:MongoRecord ) = new Address( obj, parent )
 
-  "street1"    is DbChar(100)        is 'required is Search();
-  "street2"    is DbChar(100)        is Search();
-  "city"       is DbChar(30)         is 'required is Search();
+  "street1"    is DbChar(100)        is 'required is SearchText;
+  "street2"    is DbChar(100)        is SearchText;
+  "city"       is DbChar(30)         is 'required is SearchText;
   // state also means "province"
   "state"      is DbLink(Region)     as "State/Region";
-  "postalCode" is DbChar(10)         as "Zip/Postal Code" is 'required is Search();
+  "postalCode" is DbChar(10)         as "Zip/Postal Code" is 'required is SearchText;
   "country"    is DbLink(Country)    is 'required;
 
   "longLat"    is DbArray(DbDouble);

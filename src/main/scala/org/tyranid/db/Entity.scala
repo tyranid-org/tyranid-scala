@@ -25,6 +25,7 @@ import org.tyranid.db.es.{ Es, NoSearch, Searchable }
 import org.tyranid.db.meta.{ Tid, TidItem }
 import org.tyranid.db.tuple.{ TupleView, Tuple }
 import org.tyranid.logic.{ Invalid, Valid }
+import org.tyranid.profile.User
 import org.tyranid.report.{ Run, Sort }
 
 
@@ -153,9 +154,6 @@ trait Entity extends Domain with DbItem {
   val storageName:String
   val embedded:Boolean
 
-  val searchIndex = "main"
-  lazy val isSearchable = attribs.exists( _.search.text )
-
 	val sqlName = "invalid"
 
   def makeView:View
@@ -163,6 +161,25 @@ trait Entity extends Domain with DbItem {
   def make:Record
 
   def hasTid( atid:String ) = atid.startsWith( this.tid )
+
+
+  /*
+   * * *  Security
+   */
+
+  def canView( rec:Record, user:User ) = true
+
+
+  /*
+   * * *  Search
+   */
+
+  val searchIndex = "main"
+  lazy val isSearchable = attribs.exists( _.search.text )
+
+  def searchIndexable( rec:Record ) = true
+  def searchViewableTo( rec:Record, user:User ) = true
+
 
 
 	/*
@@ -269,7 +286,7 @@ trait Entity extends Domain with DbItem {
   def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException
 
   def save( r:Record ) {
-    if ( isSearchable )
+    if ( isSearchable && searchIndexable( r ) )
       Es.index( r )
   }
 

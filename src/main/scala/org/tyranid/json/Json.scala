@@ -20,6 +20,8 @@ package org.tyranid.json
 import scala.collection.JavaConversions._
 import scala.xml.NodeSeq
 
+import com.mongodb.BasicDBList
+
 import org.codehaus.jackson.JsonNode
 import org.codehaus.jackson.node.{ ArrayNode, JsonNodeFactory, MissingNode, ObjectNode }
 
@@ -131,6 +133,7 @@ case class JsonString( root:Any ) {
     obj match {
     case s:String            => sb += '"' ++= s.encJson += '"'
     case i:java.lang.Integer => sb ++= i.toString
+
     case a:Array[_]          =>
       sb += '['
       for ( i <- 0 until a.length ) {
@@ -138,6 +141,14 @@ case class JsonString( root:Any ) {
         write( a( i ) )
       }
       sb += ']'
+    case l:BasicDBList       =>
+      sb += '['
+      for ( i <- 0 until l.size ) {
+        if ( i > 0 ) sb += ','
+        write( l( i ) )
+      }
+      sb += ']'
+
     // This will probably have to be parsed better to replace all inner quotes
     case xml:NodeSeq         => 
       sb += '"' ++= xml.toString.replaceAll( "\"", "\\\\\"" ).replaceAll( "\n", "{--TY_NL--}" ).replaceAll( "\r", "{--TY_LF--}" ) += '"'

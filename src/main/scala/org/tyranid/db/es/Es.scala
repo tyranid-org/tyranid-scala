@@ -35,13 +35,20 @@ import org.tyranid.profile.User
  * * *   Searchable
  */
 
-trait Searchable {
-
+sealed trait Searchable {
   val auth:Boolean
   val text:Boolean
 }
 
-case class Search( text:Boolean = true, auth:Boolean = false ) extends Searchable
+case object SearchText extends Searchable {
+  val auth = false
+  val text = true
+}
+
+case object SearchAuth extends Searchable {
+  val auth = true
+  val text = false
+}
 
 case object NoSearch extends Searchable {
   val auth = false
@@ -108,15 +115,14 @@ object Es {
             ),
             "filter" -> Map(
               "terms" -> Map(
-                "auth" -> ( "public" +: user.allowProfileTids )
+                "auth" -> ( "yes" +: user.allowProfileTids )
               )
             )
           )
         )
       ).toJsonStr
     //sp_am( "query=" + query )
-    "http://localhost:9200/_search".POST( content = query 
-    ).s
+    "http://localhost:9200/_search".POST( content = query ).s
   }
 
   def jsonFor( rec:Record ) = {
@@ -154,11 +160,11 @@ object Es {
               rec( va ) match {
               case tids:BasicDBList => tids.toJsonStr
               case tid:String       => tid.toJsonStr
-              case _                => "\"none\""
+              case _                => "\"no\""
               }
 
             case None =>
-              "\"public\""
+              "\"yes\""
             } )
       }
 
@@ -175,17 +181,22 @@ object Es {
   def index( rec:Record ) =
     Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
 
-  def indexAll =
+  def indexAll {
+    for ( index <- Entity.all.filter( e => hasSearchData( e.makeView ) ).map( _.searchIndex ).toSeq.distinct )
+      ( "http://localhost:9200/" + index ).DELETE()
+
     for ( e <- Entity.all )
       e match {
       case e:MongoEntity =>
         val v = e.makeView
-        if ( hasSearchData( v ) ) {
-          for ( obj <- e.db.find() )
-            index( e.make( obj ) )
-        }
+        if ( hasSearchData( v ) )
+          for ( obj <- e.db.find();
+                r = e.make( obj );
+                if e.searchIndexable( r ) )
+            index( r )
 
       case _ =>
       }
+  }
 }
 

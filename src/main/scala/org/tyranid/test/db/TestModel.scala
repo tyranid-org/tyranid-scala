@@ -7,7 +7,6 @@ import com.mongodb.DBObject
 import org.tyranid.Imp._
 import org.tyranid.collection.ConcurrentExpireAutoMap
 import org.tyranid.db._
-import org.tyranid.db.es.Search
 import org.tyranid.db.tuple.{ Tuple, TupleView }
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.db.meta.{ UiMap, UiMapping }

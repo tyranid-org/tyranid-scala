@@ -32,6 +32,7 @@ import org.tyranid.db.meta.Tid
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.logic.{ Invalid, Valid }
+import org.tyranid.profile.User
 import org.tyranid.report.Run
 import org.tyranid.ui.{ PathField, Search, UiObj }
 
@@ -222,6 +223,13 @@ trait Record extends Valid with BsonObject {
 
     entity.defaultIcon
   }
+
+
+  /*
+   * * *   Security
+   */
+
+  final def canView( user:User ) = entity.canView( this, user )
 
 
   /*
