@@ -83,22 +83,22 @@ object DbLocalFile extends CommonFile {
 
 object File {
 
-  def extension( fileName:String ) = {
-    val max = scala.math.max( fileName.lastIndexOf( '/' ), fileName.lastIndexOf( '.' ) ) 
-    val suffix = if ( max != -1 ) fileName.substring( max+1 ) else "" 
+  def extension( filename:String ) = {
+    val max = scala.math.max( filename.lastIndexOf( '/' ), filename.lastIndexOf( '.' ) ) 
+    val suffix = if ( max != -1 ) filename.substring( max+1 ) else "" 
     suffix.replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
   }
 
   def pathFor( entityTid:String, recordTid:String, pathName:String, url:String ) =
     entityTid + "/" + recordTid + "/" + pathName + "." + extension( url )
 
-  def mimeTypeFor( fileName:String ) = {
-    val mimeType = T.web.ctx.getMimeType( fileName )
+  def mimeTypeFor( filename:String ) = {
+    val mimeType = T.web.ctx.getMimeType( filename )
 
-    if ( mimeType != null )
+    if ( mimeType.notBlank )
       mimeType
     else
-      extension( fileName ) match {
+      extension( filename ) match {
       case "mp4" => "video/mp4"
       case _     => null
       }
