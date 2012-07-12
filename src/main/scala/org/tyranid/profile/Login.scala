@@ -229,11 +229,6 @@ $( function() {
           <div class="title">Use Social Login to Automatically Register</div>
           <div class="contents">
            Sign in using a Social Network to quickly create an account automatically:
-           <div>{
-            Social.networks.flatMap { network =>
-             <hr style="margin:4px 0 8px;"/> ++
-             network.loginButton( this ) }
-           }</div>
           </div>
          </div> ++
          <div class="plainBox">
