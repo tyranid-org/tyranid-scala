@@ -255,7 +255,6 @@ object Es {
       )
     }
 
-if ( false )
     for ( e <- Entity.all;
           if !e.embedded && e.isSearchable;
           r <- e.records;

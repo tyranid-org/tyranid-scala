@@ -1066,9 +1066,7 @@ object GroupFavorite extends MongoEntity( tid = "a0Iv" ) {
     val user = T.session.user
     val org = user.org
 
-  //<h1 id="grpNavRemove"><span>GROUPS <a href="#" id={ "grpNavBtn"                      } tip="Configure Groups" class="tip go btn"><img src="/icons/plus.png"/></a></span>
-
-    <h1 id="grpNavRemove"><span>GROUPS <a href="#" id={ "grpBtn" + B.commonGroupField.id } tip="Configure Groups" class="tip go btn grpBtn"><img src="/icons/plus.png"/></a></span>
+    <h1 id="grpNavRemove"><span>GROUPS <a href="#" id={ "grpBtn" + B.commonGroupField.id } tip="Configure Groups" class="tip grpBtn"><span class="linkIcon plusGearIcon"/></a></span>
     </h1> ++
     { for ( g <- favorites.groups; if ( g != null ); firstOwnerTid = g.firstOwnerTid( null ); if firstOwnerTid.notBlank ) yield {
         val isOwner = g.isOwner( user )
