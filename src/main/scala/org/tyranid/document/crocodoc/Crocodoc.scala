@@ -46,18 +46,30 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   val supportedFormats = List( "DOC", "DOCX", "XLS", "XLSX", "PPT", "PPTX", "PDF" )
   
   def upload( file:File, fileSize:Long, filename:String ):String = {
+    var externalId:String = null
+    
     if ( supports( filetypeFor( filename ) ) ) {
       println( "filename " + filename )
+      
+//      val resultStr = Http.POST_S( "http://api.scribd.com/api?", file, fileSize, params = Map( "method" -> "docs.upload", "access" -> "private", "api_key" -> apiKey, "secure" -> "1" ), filename = filename )._s
+
       val result = Http.POST_S( "https://crocodoc.com/api/v2/document/upload", file, fileSize, params = Map( "token" -> apiKey ), filename = filename )._s
       
       
       //curl 'https://crocodoc.com/api/v2/document/upload' -F 'token=BJ9Sbqr5Up1dC8oWnIM6c2Ax' -F 'file=@Volerro  Profile Checklist-development feedback.docx'
       
-      println( result )
-      externalDocId( Json.parse( result ).s( 'uuid ) )
-    } else {
-      null
+      println( "croc: " + result )
+      
+      val res = Json.parse( result )
+      val error = res.s( 'error )
+      
+      if ( error.isBlank )
+        externalId = externalDocId( res.s( 'uuid ) )
+      else 
+        log( Event.Crocodoc, "m" -> ( "Failed to upload document: " + filename ) )
     }
+    
+    externalId
   }
   
   def statusFor( extDocId:String ) = {

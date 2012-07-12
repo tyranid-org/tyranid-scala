@@ -54,13 +54,15 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
   def upload( file:File, fileSize:Long, filename:String ):String = {
     val resultStr = Http.POST_S( "http://api.scribd.com/api?", file, fileSize, params = Map( "method" -> "docs.upload", "access" -> "private", "api_key" -> apiKey, "secure" -> "1" ), filename = filename )._s
 
+    println( "scribd: " + resultStr )
+    
     val response = resultStr.toXml \\ "rsp"
     
     val docId = ( response \\ "doc_id" ).text
     val accessKey = ( response \\ "access_key" ).text
     val secretPassword = ( response \\ "secret_password" ).text
     
-    externalDocId( docId + "," + accessKey + "," + ( secretPassword.isBlank ? "" | secretPassword ) )
+    externalDocId( docId + "," + accessKey + ( secretPassword.isBlank ? "" | ( "," + secretPassword ) ) )
   }
   
   def statusFor( extDocId:String ) = {

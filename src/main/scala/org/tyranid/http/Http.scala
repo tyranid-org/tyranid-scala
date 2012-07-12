@@ -355,6 +355,11 @@ object Http {
     execute( request )
   }
 
+  
+//      val resultStr = Http.POST_S( "http://api.scribd.com/api?", file, fileSize, params = Map( "method" -> "docs.upload", "access" -> "private", "api_key" -> apiKey, "secure" -> "1" ), filename = filename )._s
+//      val result = Http.POST_S( "https://crocodoc.com/api/v2/document/upload", file, fileSize, params = Map( "token" -> apiKey ), filename = filename )._s
+      
+  
   def POST_S( url:String, file:File, contentLength: Long, params:collection.Map[String,String] = null, filename:String = null, headers:collection.Map[String,String] = null ):HttpResult = {
     val request = new HttpPost( url )
     
@@ -362,15 +367,13 @@ object Http {
       request.setHeaders( convertHeaders( headers ) )
 
     if ( params != null ) {
-      assert( filename != null )
-      
       val multipart = new MultipartEntity()
+      
       params.foreach{ p => multipart.addPart( p._1, new StringBody( p._2 ) ) }
       
       if ( file != null ) {
-        val mimeType = org.tyranid.io.File.mimeTypeFor( filename ).or( "application/octet-stream" )
-        val fileBody = new FileBody( file, mimeType )
-        multipart.addPart( "file", fileBody )
+        assert( filename != null )
+        multipart.addPart( "file", new FileBody( file, org.tyranid.io.File.mimeTypeFor( filename ).or( "application/octet-stream" ) ) )
         request.setEntity( multipart )
       }
     } else {
