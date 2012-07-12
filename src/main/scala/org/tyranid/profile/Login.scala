@@ -41,6 +41,8 @@ object Loginlet extends Weblet {
     val loggingOut = web.req.s( 'lo ).notBlank
     val noSocial = web.b( 'nosocial )
 
+    val params = noSocial |* "?nosocial=1"
+
     // TODO:  make this more template-based
     <form method="post" action={ wpath + "/in" } id="f">
      <head>
@@ -91,13 +93,14 @@ $( function() {
        }
       </div>
      </div>
-     <a href={ wpath + "/register" } style="float:left; margin-top:4px;">Join { B.applicationName }!</a>
+     <a href={ wpath + "/register" + params } style="float:left; margin-top:4px;">Join { B.applicationName }!</a>
      <a href="#" id="forgot" style="float:right; margin-top:4px;">Forgot password ?</a>
     </form>
   }
 
   def handle(web: WebContext) {
     val sess = T.session
+    val noSocial = web.b( 'nosocial )
 
     rpath match {
     case "/in" | "/" =>
@@ -191,6 +194,7 @@ $( function() {
 
       val innerBak = 
          { ( entryApp == 0 ) |* <div style="margin-top:16px; font-size:24px;">Creating an account with Volerro is Free!</div> } ++
+         { !noSocial |*
          <div class="plainBox">
           <div class="title">Use Social Login to Automatically Register</div>
           <div class="contents">
@@ -201,9 +205,9 @@ $( function() {
              network.loginButton( this ) }
            }</div>
           </div>
-         </div> ++
+         </div> } ++
          <div class="plainBox">
-          <div class="title">Manually Register</div>
+          <div class="title">{ noSocial ? "Register" | "Manually Register" }</div>
           <div class="contents" style="height:390px;">
            <form method="post" action={ web.path } id="f" style="float:left">
             <table>
