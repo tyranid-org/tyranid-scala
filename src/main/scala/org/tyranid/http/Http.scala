@@ -368,7 +368,8 @@ object Http {
       params.foreach{ p => multipart.addPart( p._1, new StringBody( p._2 ) ) }
       
       if ( file != null ) {
-        val fileBody = new FileBody( file, "application/octect-stream" )
+        val mimeType = org.tyranid.io.File.mimeTypeFor( filename ).or( "application/octet-stream" )
+        val fileBody = new FileBody( file, mimeType )
         multipart.addPart( "file", fileBody )
         request.setEntity( multipart )
       }

@@ -59,6 +59,8 @@ class TyranidConfig( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Tyr
 object TyranidConfiglet extends Weblet {
 
   def ui = {
+    import org.tyranid.document.Service
+    
     val user = T.user
 
     <a href={ wpath + "/reindex" } class="stop btn">Re-Index Search</a>
@@ -66,7 +68,7 @@ object TyranidConfiglet extends Weblet {
     <a href={ wpath + "/sms" } class={ SMS.enabled ? "go btn" | "stop btn" }>SMS: { SMS.enabled ? "ON" | "OFF" }</a>
     <a href={ wpath + "/email" } class={ Email.enabled ? "go btn" | "stop btn" }>Email: { Email.enabled ? "ON" | "OFF" }</a>
     <a href={ wpath + "/recaptcha" } class={ B.requireReCaptcha ? "go btn" | "stop btn" }>Recaptcha: { B.requireReCaptcha ? "ON" | "OFF" }</a>
-    <a href={ wpath + "/accessLogs" } class={ B.accessLogs ? "go btn" | "stop btn" }>Access Logs: { B.accessLogs ? "ON" | "OFF" }</a>;
+    <a href={ wpath + "/accessLogs" } class={ B.accessLogs ? "go btn" | "stop btn" }>Access Logs: { B.accessLogs ? "ON" | "OFF" }</a>
   }
 
   def handle( web:WebContext ) = {
