@@ -575,6 +575,9 @@ class StringImp( s:String ) {
   def POST( form:collection.Map[String,String] = null, content:String = null, contentType:String = null, headers:collection.Map[String,String] = null ) =
     Http.POST( s, content, form, contentType, headers )
 
+  def PUT( form:collection.Map[String,String] = null, content:String = null, contentType:String = null, headers:collection.Map[String,String] = null ) =
+    Http.PUT( s, content, form, contentType, headers )
+
   def DELETE( query:collection.Map[String,String] = null ) =
     Http.DELETE( s, query = query )
     

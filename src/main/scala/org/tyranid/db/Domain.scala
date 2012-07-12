@@ -158,7 +158,9 @@ trait Domain extends Valid {
  * * *   Numbers
  */
 
-abstract class DbIntish extends Domain {
+trait DbNumber extends Domain
+
+abstract class DbIntish extends DbNumber {
   override def idToRecordTid( v:Any )                = if ( v != null ) Base64.toString( v._i ) else null
   override def recordTidToId( recordTid:String ):Any = Base64.toInt( recordTid )
 
@@ -179,7 +181,7 @@ object DbIntSerial extends DbIntish {
 }
 
 
-abstract class DbLongish extends Domain {
+abstract class DbLongish extends DbNumber {
   override def idToRecordTid( v:Any )                = if ( v != null ) Base64.toString( v._l ) else null
   override def recordTidToId( recordTid:String ):Any = Base64.toLong( recordTid )
 
@@ -197,7 +199,7 @@ object DbLongSerial extends DbLongish {
 }
 
 
-object DbDouble extends Domain {
+object DbDouble extends DbNumber {
 	val sqlName = "DOUBLE PRECISION"
 }
 

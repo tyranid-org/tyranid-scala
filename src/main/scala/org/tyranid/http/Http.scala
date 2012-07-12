@@ -32,7 +32,7 @@ import org.bson.types.ObjectId
 
 import org.apache.http.{ Header, NameValuePair, HttpHost, HttpResponse }
 import org.apache.http.client.entity.UrlEncodedFormEntity
-import org.apache.http.client.methods.{ HttpRequestBase, HttpDelete, HttpGet, HttpPost, HttpUriRequest }
+import org.apache.http.client.methods.{ HttpRequestBase, HttpDelete, HttpGet, HttpPost, HttpPut, HttpUriRequest, HttpEntityEnclosingRequestBase }
 import org.apache.http.entity.{ StringEntity, InputStreamEntity }
 import org.apache.http.impl.client.DefaultHttpClient
 import org.apache.http.entity.mime.MultipartEntity 
@@ -330,9 +330,13 @@ object Http {
     execute( get )
   }
 
-  def POST( url:String, content:String, form:collection.Map[String,String], contentType:String = null, headers:collection.Map[String,String] = null ):HttpResult = {
-    val request = new HttpPost( url )
+  def POST( url:String, content:String, form:collection.Map[String,String], contentType:String = null, headers:collection.Map[String,String] = null ):HttpResult =
+    executePost( new HttpPost( url ), content, form, contentType, headers )
 
+  def PUT( url:String, content:String, form:collection.Map[String,String], contentType:String = null, headers:collection.Map[String,String] = null ):HttpResult =
+    executePost( new HttpPut( url ), content, form, contentType, headers )
+
+  private def executePost( request:org.apache.http.client.methods.HttpEntityEnclosingRequestBase, content:String, form:collection.Map[String,String], contentType:String, headers:collection.Map[String,String] ):HttpResult = {
     if ( headers != null )
       request.setHeaders( convertHeaders( headers ) )
 
