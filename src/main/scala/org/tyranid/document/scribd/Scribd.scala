@@ -39,6 +39,7 @@ object Scribd {
 case class ScribdApp( apiKey:String, secret:String = null, publisher:String = null ) extends DocApp {
   val serviceCode = Scribd.code
   val serviceName = "Scribd"
+  val websiteUrl = "http://www.scribd.com"
 
   val supportedFormats = List( "DOC", "DOCX", "XLS", "XLSX", "PPS", "PPT", "PPTX", "PDF", "PS", "ODT", "FODT", "SXW", "ODP", "FODP", "SXI", "ODS", "FODS", "SXC", "TXT", "RTF", "ODB", "ODG", "FODG", "ODF"  )
     
@@ -87,12 +88,14 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
          "html" -> <div id='scrib_doc'></div> )
   }
   
-  def getThumbnailFile( extDocId:String )  = {
+  def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 )  = {
     val parts = extDocId.split( "," )
-    val resultStr = Http.GET( "http://api.scribd.com/api?method=thumbnail.get&api_key=" + apiKey + "&doc_id=" + parts(0) + "&api_sig=" + MD5( parts(0), Session().id, T.user.tid ) )._s
+    val resultStr = Http.GET( "http://api.scribd.com/api?method=thumbnail.get&api_key=" + apiKey + "&doc_id=" + parts(0) + "&api_sig=" + MD5( parts(0), Session().id, T.user.tid ) + "&width=" + width + "&height=" + height )._s
+    
+    // <?xml version="1.0" encoding="UTF-8"?><rsp stat="ok"><thumbnail_url>http://imgv2-1.scribdassets.com/img/word_document/97855850/111x142/65d2b8d54c/1342103296</thumbnail_url></rsp>
     
     val response = resultStr.toXml \\ "rsp"
-    val thumbnailUrl = ( response \\ "thumnail_url" ).text
+    val thumbnailUrl = ( response \\ "thumbnail_url" ).text
     
     val res = Http.GET( thumbnailUrl )
     val entity = res.response.getEntity

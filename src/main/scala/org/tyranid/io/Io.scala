@@ -61,6 +61,8 @@ class InputStreamImp( is:InputStream ) {
         
       transfer
   	} finally {
+  	  to.flush
+  	  
   	  if ( closeInput )
   	    is.close
   	}

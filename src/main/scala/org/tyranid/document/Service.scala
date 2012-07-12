@@ -56,7 +56,7 @@ object Service {
       null
   }
   
-  def getThumbnailFile( extDocId:String ) = {
+  def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ) = {
     if ( extDocId.notBlank ) {
       val parts = extDocId.split( "," )
       appFor( parts(0 ) ).getThumbnailFile( parts.drop(1).mkString( "," ) )
@@ -85,15 +85,17 @@ object Service {
 trait DocApp {
   val serviceCode:String
   val serviceName:String
+  val websiteUrl:String
   val supportedFormats:List[String] 
     
   def upload( file:File, fileSize:Long, filename:String ):String
   def statusFor( extDocId:String ):String
-  def getThumbnailFile( extDocId:String ):File
+  def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ):File
   def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef]
   def delete( extDocId:String ): Boolean
   
-  protected def externalDocId( extDocId:String ) = serviceCode + "," + extDocId
+  protected def externalDocId( extDocId:String ) =
+    ( extDocId.notBlank ) ? ( serviceCode + "," + extDocId ) | null
 
   def filetypeFor( filename:String ) = filename.substring( filename.lastIndexOf( '.' ) + 1 )
   def supports( ext:String ) = supportedFormats.contains( ext.toUpperCase )

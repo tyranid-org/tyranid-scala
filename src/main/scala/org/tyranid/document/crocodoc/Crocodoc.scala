@@ -41,12 +41,19 @@ object Crocodoc {
 case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   val serviceCode = Crocodoc.code
   val serviceName = "Crocodoc"
+  val websiteUrl = "http://www.crocodoc.com"
     
   val supportedFormats = List( "DOC", "DOCX", "XLS", "XLSX", "PPT", "PPTX", "PDF" )
   
   def upload( file:File, fileSize:Long, filename:String ):String = {
     if ( supports( filetypeFor( filename ) ) ) {
+      println( "filename " + filename )
       val result = Http.POST_S( "https://crocodoc.com/api/v2/document/upload", file, fileSize, params = Map( "token" -> apiKey ), filename = filename )._s
+      
+      
+      //curl 'https://crocodoc.com/api/v2/document/upload' -F 'token=BJ9Sbqr5Up1dC8oWnIM6c2Ax' -F 'file=@Volerro  Profile Checklist-development feedback.docx'
+      
+      println( result )
       externalDocId( Json.parse( result ).s( 'uuid ) )
     } else {
       null
@@ -63,12 +70,13 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
     "https://crocodoc.com/view/" + viewingSessionId
   }
   
-  def getThumbnailFile( extDocId:String ) = {
-    val res = Http.GET( "https://crocodoc.com/api/v2/download/thumbnail?token=" + apiKey + "&uuids=" + extDocId )
+  def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ) = {
+    val res = Http.GET( "https://crocodoc.com/api/v2/download/thumbnail?token=" + apiKey + "&uuid=" + extDocId + "&size=" + width + "x" + height )
     val entity = res.response.getEntity
     
     if ( entity != null ) {
       val instream = entity.getContent
+      
       val tmpFile = File.createTempFile( extDocId, ".png" )
       val out = new FileOutputStream( tmpFile )
        
