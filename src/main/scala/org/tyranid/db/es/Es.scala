@@ -19,15 +19,15 @@ package org.tyranid.db.es
 
 import java.util.Date
 
+import scala.collection.mutable
+
 import com.mongodb.{ DBObject, BasicDBList }
 
 import akka.actor.Actor
 import akka.actor.Actor.actorOf
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ Entity, Record, View }
-import org.tyranid.db.mongo.MongoEntity
-import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.{ DbArray, DbDateLike, DbNumber, DbTextLike, Domain, Entity, Record, View }
 import org.tyranid.profile.User
 
 
@@ -178,40 +178,89 @@ object Es {
     sb.toString
   }
 
-  def hasSearchData( v:View ) = v.vas.exists( _.att.search.text )
+  def mappingFor( rootEn:Entity ) = {
+
+    def enter( props:mutable.Map[String,Any], en:Entity ) {
+
+      for ( att <- en.attribs;
+            if att.search.text ) {
+
+        def domain( dom:Domain ) {
+          att.domain match {
+          case text:DbTextLike =>
+            props( att.dbName ) = Map( "type" -> "string" )
+
+          case number:DbNumber =>
+            props( att.dbName ) = Map( "type" -> "number" )
+
+          case date:DbDateLike =>
+            props( att.dbName ) = Map( "type" -> "date" )
+
+          case ce:Entity =>
+            if ( ce.isSearchable ) {
+              val cprops = mutable.Map[String,Any]()
+              enter( cprops, ce )
+              props( att.dbName ) = Map( "type" -> "object", "properties" -> cprops )
+            }
+
+          case array:DbArray =>
+            domain( array.of )
+
+          case v =>
+            // unmapped
+          }
+        }
+
+        domain( att.domain )
+      }
+    }
+
+    val props = mutable.Map[String,Any]()
+
+    props( "auth" ) = Map(
+      "type" -> "string",
+      "index" -> "not_analyzed"
+    )
+
+    enter( props, rootEn )
+
+    Map(
+      "properties" -> props
+    )
+  }
 
   def index( rec:Record ) =
     Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
 
   def indexAll {
-    for ( index <- Entity.all.filter( e => hasSearchData( e.makeView ) ).map( _.searchIndex ).toSeq.distinct )
+    for ( index <- Entity.all.filter( e => e.isSearchable && !e.embedded ).map( _.searchIndex ).toSeq.distinct ) {
       ( Es.host + "/" + index ).DELETE()
 
-    for ( e <- Entity.all ) {
+      val mappings = mutable.Map[String,Any]()
 
-      /*
-       * TODO:  finish put mapping
-      ( Es.host + "/" ).PUT( content =
-        Map(
+      for ( e <- Entity.all;
+            if e.searchIndex == index && !e.embedded && e.isSearchable )
+        mappings( e.dbName ) = mappingFor( e )
 
-
-
-        ).toJsonStr )
-      */
-
-
-      e match {
-      case e:MongoEntity =>
-        val v = e.makeView
-        if ( hasSearchData( v ) )
-          for ( obj <- e.db.find();
-                r = e.make( obj );
-                if e.searchIndexable( r ) )
-            index( r )
-
-      case _ =>
-      }
+      ( Es.host + "/" + index + "/" ).PUT(
+        content = Map(
+          "settings" -> Map(
+            "index" -> Map(
+              "number_of_shards" -> 3,
+              "number_of_replicas" -> 2
+            )
+          ),
+          "mappings" -> mappings
+        ).toJsonStr
+      )
     }
+
+if ( false )
+    for ( e <- Entity.all;
+          if !e.embedded && e.isSearchable;
+          r <- e.records;
+          if e.searchIndexable( r ) )
+      index( r )
   }
 }
 

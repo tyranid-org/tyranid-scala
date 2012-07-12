@@ -39,6 +39,7 @@ object Loginlet extends Weblet {
     val user = thread.user
     val web = thread.web
     val loggingOut = web.req.s( 'lo ).notBlank
+    val noSocial = web.b( 'nosocial )
 
     // TODO:  make this more template-based
     <form method="post" action={ wpath + "/in" } id="f">
@@ -83,7 +84,7 @@ $( function() {
          </td>
         </tr>
        </table>
-       { web.req.s( 'na ).isBlank |*
+       { !noSocial && web.req.s( 'na ).isBlank |*
            Social.networks.flatMap { network =>
              <hr style="margin:4px 0 8px;"/> ++
              network.loginButton( this ) }

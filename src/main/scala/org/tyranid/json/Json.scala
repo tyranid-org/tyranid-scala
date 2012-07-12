@@ -164,7 +164,7 @@ case class JsonString( root:Any ) {
         write( v )
       }
       sb += ']'
-    case o:Map[_,_]          =>
+    case o:collection.Map[_,_]          =>
       sb += '{'
       var first = true
       for ( e <- o ) {
