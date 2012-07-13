@@ -91,6 +91,7 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
     
     // <?xml version="1.0" encoding="UTF-8"?><rsp stat="ok"><thumbnail_url>http://imgv2-1.scribdassets.com/img/word_document/97855850/111x142/65d2b8d54c/1342103296</thumbnail_url></rsp>
     
+    println( resultStr )
     val response = resultStr.toXml \\ "rsp"
     val thumbnailUrl = ( response \\ "thumbnail_url" ).text
     
