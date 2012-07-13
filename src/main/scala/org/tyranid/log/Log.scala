@@ -66,8 +66,11 @@ object Event extends RamEntity( tid = "a0It" ) with EnumEntity[Event] {
   val Google     = apply( 15, "Google" )
   val RefInt     = apply( 16, "RefInt" ) // referential integrity violation
   val Alert      = apply( 17, "Alert" )
+  val Crocodoc   = apply( 18, "Crocodoc" )
+  val Scribd     = apply( 19, "Scribd" )
+  val Issuu      = apply( 20, "Issuu" )
 
-  static( Access, StackTrace, LinkedIn, Error404, Scraper, Import, Facebook, SmsOut, SmsIn, Scheduler, Noaa, Eof, Google, RefInt )
+  static( Access, StackTrace, LinkedIn, Error404, Scraper, Import, Facebook, SmsOut, SmsIn, Scheduler, Noaa, Eof, Google, RefInt, Alert, Crocodoc, Scribd, Issuu )
 }
 
 class Event extends Tuple( Event.makeView ) {

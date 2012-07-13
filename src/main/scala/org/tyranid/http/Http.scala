@@ -305,11 +305,11 @@ object Http {
       url
     }
 
-  private def execute( request:HttpRequestBase ) = {
+  private def execute( request:HttpRequestBase, withParams:Boolean = true ) = {
     val httpParams = new BasicHttpParams
     HttpConnectionParams.setConnectionTimeout( httpParams, 30000 ) // 30s
     HttpConnectionParams.setSoTimeout( httpParams, 30000 ) // 30s
-    val client = new DefaultHttpClient( httpParams )
+    val client = withParams ? new DefaultHttpClient( httpParams ) | new DefaultHttpClient( httpParams ) 
     val context = new BasicHttpContext() 
     val response = client.execute( request, context )
 
@@ -359,31 +359,27 @@ object Http {
     execute( request )
   }
 
-  def POST_S( url:String, file:File, contentLength: Long, params:collection.Map[String,String] = null, filename:String = null, headers:collection.Map[String,String] = null ):HttpResult = {
+  
+  def POST_FILE( url:String, file:File, contentLength: Long, filename:String, params:collection.Map[String,String] = null, headers:collection.Map[String,String] = null, filePartName:String = "file" ):HttpResult = {
     val request = new HttpPost( url )
     
     if ( headers != null )
       request.setHeaders( convertHeaders( headers ) )
 
-    if ( params != null ) {
-      assert( filename != null )
-      
-      val multipart = new MultipartEntity()
-      params.foreach{ p => multipart.addPart( p._1, new StringBody( p._2 ) ) }
-      
-      if ( file != null ) {
-        val mimeType = org.tyranid.io.File.mimeTypeFor( filename ).or( "application/octet-stream" )
-        val fileBody = new FileBody( file, mimeType )
-        multipart.addPart( "file", fileBody )
-        request.setEntity( multipart )
+    request.setEntity {
+      if ( params != null ) {
+        val multipart = new MultipartEntity()
+        params.foreach{ p => multipart.addPart( p._1, new StringBody( p._2, java.nio.charset.Charset.forName( "UTF-8" ) ) ) }
+        multipart.addPart( filePartName, new FileBody( file, org.tyranid.io.File.mimeTypeFor( filename ).or( "application/octet-stream" ) ) )
+        multipart
+      } else {
+        new InputStreamEntity( new FileInputStream( file ), contentLength )
       }
-    } else {
-      request.setEntity( new InputStreamEntity( new FileInputStream( file ), contentLength ) )
     }
     
-    execute( request )
+    execute( request, false )
   }
-
+  
   def DELETE( url:String, query:collection.Map[String,String] = null ):HttpResult =
     execute( new HttpDelete( makeUrl( url, query ) ) )
 }

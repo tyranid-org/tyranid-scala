@@ -20,6 +20,7 @@ package org.tyranid.document
 import scala.xml.NodeSeq
 
 import java.io.File
+import java.security.MessageDigest
 
 import org.bson.types.ObjectId
 import com.mongodb.DBObject
@@ -34,8 +35,9 @@ import org.tyranid.web.Weblet
 object Service {
   lazy val services =
     Seq(
-      B.crocodoc != null |* Some( B.crocodoc ),
-      B.scribddoc != null |* Some( B.scribddoc )
+      B.crocodoc != null && B.crocodoc.active |* Some( B.crocodoc ),
+      B.scribd != null && B.scribd.active |* Some( B.scribd ),
+      B.issuu != null && B.issuu.active |* Some( B.issuu )
     ).flatten
 
   def appFor( serviceCode:String ) = services.find( _.serviceCode == serviceCode ).getOrElse( null )
@@ -87,6 +89,7 @@ trait DocApp {
   val serviceName:String
   val websiteUrl:String
   val supportedFormats:List[String] 
+  val active = true
     
   def upload( file:File, fileSize:Long, filename:String ):String
   def statusFor( extDocId:String ):String
@@ -99,4 +102,15 @@ trait DocApp {
 
   def filetypeFor( filename:String ) = filename.substring( filename.lastIndexOf( '.' ) + 1 )
   def supports( ext:String ) = supportedFormats.contains( ext.toUpperCase )
+  
+  def MD5( str:String ):String = {
+    val bytes = ( str ).getBytes( "UTF-8" )
+    val md5 = MessageDigest.getInstance( "MD5" )
+    
+    md5.reset
+    md5.update( bytes )
+    md5.digest.toHexString
+  }
+  
+  
 }

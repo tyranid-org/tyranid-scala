@@ -15,7 +15,7 @@
  *
  */
 
-package org.tyranid.document.crocodoc
+package org.tyranid.document.issuu
 
 import scala.xml.Unparsed
 
@@ -34,16 +34,18 @@ import org.tyranid.time.Time
 import org.tyranid.ui.Form
 import org.tyranid.web.{ Weblet, WebContext }
 
-object Crocodoc {
-  val code = "croc"
+object Issuu {
+  val code = "issuu"
 }
 
-case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
-  val serviceCode = Crocodoc.code
-  val serviceName = "Crocodoc"
-  val websiteUrl = "http://www.crocodoc.com"
+case class IssuuApp( apiKey:String, secret:String = null ) extends DocApp {
+  val serviceCode = Issuu.code
+  val serviceName = "Issuu"
+  val websiteUrl = "http://www.issuu.com"
     
-  val supportedFormats = List( "DOC", "DOCX", "XLS", "XLSX", "PPT", "PPTX", "PDF" )
+  override val active = false
+    
+  val supportedFormats = List( "DOC", "DOCX", "XLS", "XLSX", "PPT", "PPTX", "PDF", "ODT", "ODP", "WPD", "RTF", "SXI" )
   
   def upload( file:File, fileSize:Long, filename:String ):String = {
     var externalId:String = null
@@ -53,31 +55,47 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
       println( file.exists )
       println( file.length )
       
-      val result = Http.POST_FILE( "https://crocodoc.com/api/v2/document/upload", file, fileSize, filename, params = Map( "token" -> apiKey ) )._s
+      val params = scala.collection.mutable.Map( 
+          "apiKey" -> apiKey, 
+          "action" -> "issuu.document.upload", 
+          "format" -> "json", 
+          "access" -> "private" )
+          
+      val result = Http.POST_FILE( "http://upload.issuu.com/1_0", file, fileSize, filename, params = ( params += "signature" -> MD5( params ) ) )._s
       
-      println( "croc: " + result )
+      println( "issuu: " + result )
       
-      val res = Json.parse( result )
-      val error = res.s( 'error )
+      val res = Json.parse( result ).get( 'rsp )
+      val stat = res.s( 'stat )
       
-      if ( error.isBlank )
-        externalId = externalDocId( res.s( 'uuid ) )
-      else 
-        log( Event.Crocodoc, "m" -> ( "Failed to upload document: " + filename ) )
+      if ( stat == "ok" ) {
+        val doc = res.get( '_content ).get( 'document )
+        externalId = externalDocId( res.s( 'documentId ) )
+      } else { 
+        log( Event.Issuu, "m" -> ( "Failed to upload document: " + filename ) )
+      }
     }
     
     externalId
   }
   
+  def MD5( params:scala.collection.mutable.Map[String,String] ):String = {
+    val str = new StringBuilder
+    params.foreach( p => { str ++= ( p._1 + p._2 ) } )
+    MD5( str.toString )
+  }
+
   def statusFor( extDocId:String ) = {
-    val statusJson = Json.parse( Http.GET( "https://crocodoc.com/api/v2/document/status?token=" + apiKey + "&uuids=" + extDocId ).s ).get(0)
-    statusJson.s( 'status )
+    "DONE"
   }
   
-  def previewUrlFor( extDocId:String ) = 
-    "https://crocodoc.com/view/" + Json.parse( Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s ).s( 'session )
+// TODO
+  def previewUrlFor( extDocId:String ) =  
+    //"https://crocodoc.com/view/" + Json.parse( Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s ).s( 'session )
+    "TODO"
   
-  def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ) = {
+// TODO
+    def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ) = {
     val res = Http.GET( "https://crocodoc.com/api/v2/download/thumbnail?token=" + apiKey + "&uuid=" + extDocId + "&size=" + width + "x" + height )
     val entity = res.response.getEntity
     
@@ -95,6 +113,7 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
     }
   }
   
+  // TODO
   def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef] = {
     statusFor( extDocId ) match {
       case "DONE" =>
@@ -112,14 +131,16 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
     }
   }
   
+  // TODO
   def delete( extDocId:String ):Boolean = {
-    val result = Http.POST( "https://crocodoc.com/api/v2/document/delete", "", Map( "token" -> apiKey, "uuid" -> extDocId ) )._s
+    //val result = Http.POST( "https://crocodoc.com/api/v2/document/delete", "", Map( "token" -> apiKey, "uuid" -> extDocId ) )._s
     
-    ( result == "true" )
+    //( result == "true" )
+    false
   }
 }
 
-object Croclet extends Weblet {
+object Issuulet extends Weblet {
 
   def handle( web:WebContext ) {
     val s = Session()
