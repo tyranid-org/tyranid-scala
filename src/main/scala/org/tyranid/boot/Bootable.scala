@@ -33,6 +33,7 @@ import org.tyranid.Imp._
 import org.tyranid.db.Entity
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.document.crocodoc.CrocApp
+import org.tyranid.document.issuu.IssuuApp
 import org.tyranid.document.scribd.ScribdApp
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.email.EmailTemplate
@@ -202,8 +203,9 @@ trait Bootable {
   
   // Document services
   val crocodoc:CrocApp = null
-  val scribddoc:ScribdApp = null
-
+  val scribd:ScribdApp = null
+  val issuu:IssuuApp = null
+  
   // ReCaptcha
   val reCaptchaPublicKey  = ""
   val reCaptchaPrivateKey = ""

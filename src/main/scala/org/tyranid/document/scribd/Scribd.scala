@@ -20,7 +20,6 @@ package org.tyranid.document.scribd
 import scala.xml.Unparsed
 
 import java.io.{ File, FileOutputStream }
-import java.security.MessageDigest
 
 import com.mongodb.DBObject
 
@@ -52,7 +51,7 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
   */
     
   def upload( file:File, fileSize:Long, filename:String ):String = {
-    val resultStr = Http.POST_S( "http://api.scribd.com/api?", file, fileSize, params = Map( "method" -> "docs.upload", "access" -> "private", "api_key" -> apiKey, "secure" -> "1" ), filename = filename )._s
+    val resultStr = Http.POST_FILE( "http://api.scribd.com/api?", file, fileSize, filename, params = Map( "method" -> "docs.upload", "access" -> "private", "api_key" -> apiKey, "secure" -> "1" ) )._s
 
     println( "scribd: " + resultStr )
     
@@ -78,10 +77,6 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
   
   def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef] = {
     val previewJs = previewJsFor( extDocId )
-    
-    println( "width: " + width )
-    println( "height: " + height )
-    println( "previewJS: " + previewJs )
     
     Map( "width" -> width, 
          "height" -> height,
@@ -122,14 +117,7 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
   }
   
   //MD5([Your API Secret Key]document_id[The Document ID]session_id[Session ID]user_identifier[User Identifier])
-  def MD5( docId:String, sessionId:String, userId:String ) = {
-    val bytes = ( secret + "document_id" + docId + "session_id" + sessionId + "user_identifier" + userId ).getBytes( "UTF-8" )
-    val md5 = MessageDigest.getInstance( "MD5" )
-    
-    md5.reset
-    md5.update( bytes )
-    md5.digest.toHexString
-  }
+  def MD5( docId:String, sessionId:String, userId:String ):String = MD5( secret + "document_id" + docId + "session_id" + sessionId + "user_identifier" + userId )
 }
 
 object Scribdlet extends Weblet {

@@ -305,11 +305,11 @@ object Http {
       url
     }
 
-  private def execute( request:HttpRequestBase ) = {
+  private def execute( request:HttpRequestBase, withParams:Boolean = true ) = {
     val httpParams = new BasicHttpParams
     HttpConnectionParams.setConnectionTimeout( httpParams, 30000 ) // 30s
     HttpConnectionParams.setSoTimeout( httpParams, 30000 ) // 30s
-    val client = new DefaultHttpClient( httpParams )
+    val client = withParams ? new DefaultHttpClient( httpParams ) | new DefaultHttpClient( httpParams ) 
     val context = new BasicHttpContext() 
     val response = client.execute( request, context )
 
@@ -360,33 +360,26 @@ object Http {
   }
 
   
-//      val resultStr = Http.POST_S( "http://api.scribd.com/api?", file, fileSize, params = Map( "method" -> "docs.upload", "access" -> "private", "api_key" -> apiKey, "secure" -> "1" ), filename = filename )._s
-//      val result = Http.POST_S( "https://crocodoc.com/api/v2/document/upload", file, fileSize, params = Map( "token" -> apiKey ), filename = filename )._s
-      
-  
-  def POST_S( url:String, file:File, contentLength: Long, params:collection.Map[String,String] = null, filename:String = null, headers:collection.Map[String,String] = null ):HttpResult = {
+  def POST_FILE( url:String, file:File, contentLength: Long, filename:String, params:collection.Map[String,String] = null, headers:collection.Map[String,String] = null, filePartName:String = "file" ):HttpResult = {
     val request = new HttpPost( url )
     
     if ( headers != null )
       request.setHeaders( convertHeaders( headers ) )
 
-    if ( params != null ) {
-      val multipart = new MultipartEntity()
-      
-      params.foreach{ p => multipart.addPart( p._1, new StringBody( p._2 ) ) }
-      
-      if ( file != null ) {
-        assert( filename != null )
-        multipart.addPart( "file", new FileBody( file, org.tyranid.io.File.mimeTypeFor( filename ).or( "application/octet-stream" ) ) )
-        request.setEntity( multipart )
+    request.setEntity {
+      if ( params != null ) {
+        val multipart = new MultipartEntity()
+        params.foreach{ p => multipart.addPart( p._1, new StringBody( p._2, java.nio.charset.Charset.forName( "UTF-8" ) ) ) }
+        multipart.addPart( filePartName, new FileBody( file, org.tyranid.io.File.mimeTypeFor( filename ).or( "application/octet-stream" ) ) )
+        multipart
+      } else {
+        new InputStreamEntity( new FileInputStream( file ), contentLength )
       }
-    } else {
-      request.setEntity( new InputStreamEntity( new FileInputStream( file ), contentLength ) )
     }
     
-    execute( request )
+    execute( request, false )
   }
-
+  
   def DELETE( url:String, query:collection.Map[String,String] = null ):HttpResult =
     execute( new HttpDelete( makeUrl( url, query ) ) )
 }

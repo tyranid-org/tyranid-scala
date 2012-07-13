@@ -192,7 +192,7 @@ $( function() {
       val entryApp = web.i( 'app ) or 0
       sess.put( "entryApp", new java.lang.Integer( entryApp._i ) )
 
-      val innerBak = 
+      val inner = 
          { ( entryApp == 0 ) |* <div style="margin-top:16px; font-size:24px;">Creating an account with Volerro is Free!</div> } ++
          { !noSocial |*
          <div class="plainBox">
@@ -227,35 +227,6 @@ $( function() {
           </div>
          </div>
 
-      val inner = 
-         { ( entryApp == 0 ) |* <div style="margin-top:16px; font-size:24px;">Creating an account with Volerro is Free!</div> } ++
-         <div class="plainBox">
-          <div class="title">Use Social Login to Automatically Register</div>
-          <div class="contents">
-           Sign in using a Social Network to quickly create an account automatically:
-          </div>
-         </div> ++
-         <div class="plainBox">
-          <div class="title">Manually Register</div>
-          <div class="contents" style="height:390px;">
-           <form method="post" action={ web.path } id="f" style="float:left">
-            <table>
-              { Scope(user, saving = true, captcha = true).draw(ui) }
-            </table>
-            <div class="btns">
-              <input type="submit" class="go btn" value="Save &amp; Register" name="saving"/>
-              <a href="/" class="btn">Cancel</a>
-            </div>
-           </form>
-           <div style="float:right; padding-top: 10px;">
-            <video id="vvideo" class="video-js vjs-default-skin" controls="controls" preload="auto" width="643" height="276" data-setup="{}">
-             <source src="https://d33lorp9dhlilu.cloudfront.net/videos/Volerro_Sign_Up.mp4" type="video/mp4"/>
-            </video>
-            <div class="title">Volerro Sign Up</div>
-           </div>
-          </div>
-         </div>
-              
       web.template( ( entryApp == 0 ) ? <tyr:shell>{ inner }</tyr:shell> | <tyr:shellApp>{ inner }</tyr:shellApp> )
 
     case "/resendActivation" =>
