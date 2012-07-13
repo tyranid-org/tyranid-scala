@@ -73,8 +73,8 @@ class Indexer extends Actor {
 
     try {
       if ( json != "{}" ) {
-        spam( "posting index=" + index + "  type=" + typ )
-        spam( "json=" + json )
+        //sp am( "posting index=" + index + "  type=" + typ )
+        //sp am( "json=" + json )
         ( Es.host + "/" + index + "/" + typ + "/" + id ).POST( content = json )
       }
     } catch {
@@ -123,7 +123,7 @@ object Es {
           )
         )
       ).toJsonStr
-    spam( "query=" + query )
+    //sp am( "query=" + query )
     ( Es.host + "/_search" ).POST( content = query ).s
   }
 
