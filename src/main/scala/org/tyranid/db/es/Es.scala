@@ -247,7 +247,7 @@ object Es {
           "settings" -> Map(
             "index" -> Map(
               "number_of_shards" -> 3,
-              "number_of_replicas" -> 2
+              "number_of_replicas" -> 1
             )
           ),
           "mappings" -> mappings
