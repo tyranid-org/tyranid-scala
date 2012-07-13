@@ -61,7 +61,7 @@ object Service {
   def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ) = {
     if ( extDocId.notBlank ) {
       val parts = extDocId.split( "," )
-      appFor( parts(0 ) ).getThumbnailFile( parts.drop(1).mkString( "," ) )
+      appFor( parts(0 ) ).getThumbnailFile( parts.drop(1).mkString( "," ), width, height )
     } else 
       null
   }
