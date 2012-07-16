@@ -358,9 +358,9 @@ object Http {
 
     execute( request )
   }
-
   
   def POST_FILE( url:String, file:File, contentLength: Long, filename:String, params:collection.Map[String,String] = null, headers:collection.Map[String,String] = null, filePartName:String = "file" ):HttpResult = {
+        
     val request = new HttpPost( url )
     
     if ( headers != null )

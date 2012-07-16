@@ -18,11 +18,8 @@
 package org.tyranid.document.crocodoc
 
 import scala.xml.Unparsed
-
 import java.io.{ File, FileOutputStream }
-
 import com.mongodb.DBObject
-
 import org.tyranid.Imp._
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.json.Json
@@ -33,6 +30,7 @@ import org.tyranid.document.DocApp
 import org.tyranid.time.Time
 import org.tyranid.ui.Form
 import org.tyranid.web.{ Weblet, WebContext }
+import java.io.FileInputStream
 
 object Crocodoc {
   val code = "croc"
@@ -49,13 +47,13 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
     var externalId:String = null
     
     if ( supports( filetypeFor( filename ) ) ) {
-      println( "filename " + filename )
-      println( file.exists )
-      println( file.length )
+      //println( "filename " + filename )
+      //println( file.exists )
+      //println( file.length )
+                                    
+      val result = Http.POST_FILE( "https://crocodoc.com/api/v2/document/upload", file, fileSize, filename, params = Map( "token" -> apiKey ) ).s
       
-      val result = Http.POST_FILE( "https://crocodoc.com/api/v2/document/upload", file, fileSize, filename, params = Map( "token" -> apiKey ) )._s
-      
-      println( "croc: " + result )
+      //println( "croc: " + result )
       
       val res = Json.parse( result )
       val error = res.s( 'error )

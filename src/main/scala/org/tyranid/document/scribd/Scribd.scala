@@ -53,7 +53,7 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
   def upload( file:File, fileSize:Long, filename:String ):String = {
     val resultStr = Http.POST_FILE( "http://api.scribd.com/api?", file, fileSize, filename, params = Map( "method" -> "docs.upload", "access" -> "private", "api_key" -> apiKey, "secure" -> "1" ) )._s
 
-    println( "scribd: " + resultStr )
+    //println( "scribd: " + resultStr )
     
     val response = resultStr.toXml \\ "rsp"
     

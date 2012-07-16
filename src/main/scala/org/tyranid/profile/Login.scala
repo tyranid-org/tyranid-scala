@@ -219,9 +219,11 @@ $( function() {
             </div>
            </form>
            <div style="float:right; padding-top: 10px;">
-            <video id="vvideo" class="video-js vjs-default-skin" controls="controls" preload="auto" width="643" height="276" data-setup="{}">
+           { Unparsed( """
+            <video id="vid_sign_up" class="video-js vjs-default-skin" controls preload="auto" width="643" height="276" data-setup="{}">
              <source src="https://d33lorp9dhlilu.cloudfront.net/videos/Volerro_Sign_Up.mp4" type="video/mp4"/>
             </video>
+            """ ) }
             <div class="title">Volerro Sign Up</div>
            </div>
           </div>
