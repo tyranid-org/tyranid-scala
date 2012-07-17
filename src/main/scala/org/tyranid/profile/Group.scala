@@ -868,7 +868,7 @@ case class GroupValue( gf:GroupField ) extends Valuable {
   def addGroupUi =
     <div class="grpEdit">
      <div class="title" style="margin-bottom:16px;">Add New Group</div>
-     <form method="post">
+     <form method="post" id="newGroup">
       <label for={ "grpAddName" + gf.id }>Enter Group Name:</label>
       <div class="title"><input type="text" class="grpAddName" name={ "grpAddName" + gf.id } id={ "grpAddName" + gf.id } style="font-size:20px;"/></div>
       { gf.makers.size > 1 |*
