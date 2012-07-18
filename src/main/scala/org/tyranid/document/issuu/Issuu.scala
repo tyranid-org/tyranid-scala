@@ -79,6 +79,10 @@ case class IssuuApp( apiKey:String, secret:String = null ) extends DocApp {
     externalId
   }
   
+  def getText( extDocId:String ):String = {
+    null  
+  }
+  
   def MD5( params:scala.collection.mutable.Map[String,String] ):String = {
     val str = new StringBuilder
     params.foreach( p => { str ++= ( p._1 + p._2 ) } )

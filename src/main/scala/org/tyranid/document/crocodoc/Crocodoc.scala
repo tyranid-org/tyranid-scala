@@ -93,6 +93,16 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
     }
   }
   
+  def getText( extDocId:String ):String = {
+    val text = Http.GET( "https://crocodoc.com/api/v2/download/text?token=" + apiKey + "&uuid=" + extDocId )._s
+    
+    if ( text.startsWith( "{\"error\"" ) ) {
+      log( Event.Crocodoc, "m" -> ( "Extract text failed for crocodoc uuid: " + extDocId + ", error is: " + text ) )
+      null
+    } else 
+      text
+  }
+  
   def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef] = {
     statusFor( extDocId ) match {
       case "DONE" =>
@@ -113,7 +123,12 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   def delete( extDocId:String ):Boolean = {
     val result = Http.POST( "https://crocodoc.com/api/v2/document/delete", "", Map( "token" -> apiKey, "uuid" -> extDocId ) )._s
     
-    ( result == "true" )
+    if ( result == "true" ) 
+      true
+    else {
+      log( Event.Crocodoc, "m" -> ( "Deletion failed for crocodoc uuid: " + extDocId ) )
+      false
+    }
   }
 }
 
