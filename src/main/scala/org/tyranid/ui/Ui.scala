@@ -298,12 +298,17 @@ case class Tab( rpath:String, label:NodeSeq, cls:String = null, default:Boolean 
  */
 
 // Currently, this function (alphaFilter) is in main.js-- this needs to be moved to a Tyranid js file
-case class TableAlphaFilter( tableId:String, columnNumber:Int, addedClasses:String = null ) {
+case class TableAlphaFilter( tableId:String, columnNumber:Int, addedClasses:String = null, columnFilterOn:String = null ) {
+  val ulClasses = "alphaFilter" + 
+                  { columnFilterOn.notBlank |* " colFilterOn" } +
+                  { addedClasses.notBlank |* ( " " + addedClasses ) }
+
   def draw = 
-    <ul class={ ( addedClasses == null ) ? "alphaFilter" | ( "alphaFilter " + addedClasses ) } data-column={ columnNumber.toString } data-tableid={ tableId }>
+    <ul class={ ulClasses } data-column={ columnNumber._s } data-columnfilters={ columnFilterOn } data-tableid={ tableId }>
       <li class="all selected"><a href="#">All</a></li>
       { for ( i <- 65 to 90 ) yield { <li><a href="#">{ i.toChar }</a></li> } }
       { for ( i <- 48 to 57 ) yield { <li><a href="#">{ i.toChar }</a></li> } }
+      { columnFilterOn.notBlank |* <li><span class="fltArrow"/></li> }
     </ul>
 }
 

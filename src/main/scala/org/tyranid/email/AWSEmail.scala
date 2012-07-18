@@ -118,16 +118,14 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
         request.setDestination( new Destination().withBccAddresses( toAddresses ) )
     }
     
-    val subjContent = new Content().withData( if ( subject == null ) "" else subject )
-
+    val subjContent = new Content().withData( subject.isBlank ? "" | subject )
     val msg = new Message().withSubject( subjContent )
-                
     val body = new Body()
     
-    if ( text != null )
+    if ( text.notBlank )
       body.withText( new Content().withData( text ) )
       
-    if ( html != null )
+    if ( html.notBlank )
       body.withHtml( new Content().withData( html ) )
 
     msg.setBody( body )
@@ -158,7 +156,7 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
               "|  HTML: " + html )
           )
           
-          throw e
+        throw e
       }
     }
     
