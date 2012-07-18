@@ -303,7 +303,6 @@ case class TableAlphaFilter( tableId:String, columnNumber:Int, addedClasses:Stri
                   { columnFilterOn.notBlank |* " colFilterOn" } +
                   { addedClasses.notBlank |* ( " " + addedClasses ) }
 
-                  println( ulClasses )
   def draw = 
     <ul class={ ulClasses } data-column={ columnNumber._s } data-columnfilters={ columnFilterOn } data-tableid={ tableId }>
       <li class="all selected"><a href="#">All</a></li>
