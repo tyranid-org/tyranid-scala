@@ -183,7 +183,9 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
   override def has( key:String )    = obj.containsField( key )
   override def remove( key:String ) = obj.removeField( key )
 
-  def rename( from:String, to:String ) = obj.put( to, obj.removeField( from ) )
+  def rename( from:String, to:String ) =
+    if ( obj.has( from ) )
+      obj.put( to, obj.removeField( from ) )
 
   override def isNew = !has( "_id" )
 
@@ -311,6 +313,9 @@ trait DBListWrap extends DBObjectWrap with BsonList {
 
 
   override def deep:DBListWrap = DBListWrap.deep( obj )
+
+  def hasOnly( v:Any ) = obj.size == 1 && obj( 0 ) == v
+
 
   /*
    * * *   Seq[Any] delegation
