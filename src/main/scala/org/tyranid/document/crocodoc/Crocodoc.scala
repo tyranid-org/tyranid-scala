@@ -46,7 +46,7 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   def upload( file:File, fileSize:Long, filename:String ):String = {
     var externalId:String = null
     
-    if ( supports( filetypeFor( filename ) ) ) {
+    if ( supports( filename.suffix( '.' ) ) ) {
       //println( "filename " + filename )
       //println( file.exists )
       //println( file.length )
