@@ -44,27 +44,34 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   val supportedFormats = List( "DOC", "DOCX", "XLS", "XLSX", "PPT", "PPTX", "PDF" )
   
   def upload( file:File, fileSize:Long, filename:String ):String = {
-    var externalId:String = null
-    
     if ( supports( filename.suffix( '.' ) ) ) {
       //println( "filename " + filename )
       //println( file.exists )
       //println( file.length )
-                                    
-      val result = Http.POST_FILE( "https://crocodoc.com/api/v2/document/upload", file, fileSize, filename, params = Map( "token" -> apiKey ) ).s
+      
+      var error:String = null
+        
+      while ( error.isBlank ) {
+        val result = Http.POST_FILE( "https://crocodoc.com/api/v2/document/upload", file, fileSize, filename, params = Map( "token" -> apiKey ) ).s
       
       //println( "croc: " + result )
       
-      val res = Json.parse( result )
-      val error = res.s( 'error )
-      
-      if ( error.isBlank )
-        externalId = externalDocId( res.s( 'uuid ) )
-      else 
-        log( Event.Crocodoc, "m" -> ( "Failed to upload document: " + filename + ", error=" + error ) )
+        val res = Json.parse( result )
+        error = res.s( 'error )
+        
+        if ( error.isBlank )
+          return externalDocId( res.s( 'uuid ) )
+          
+        if ( error.containsIgnoreCase( "rate limit exceeeded" ) ) {
+          Thread.sleep( 2000 )
+          error = null
+        } else {
+          log( Event.Crocodoc, "m" -> ( "Failed to upload document: " + filename + ", error=" + error ) )
+        }
+      }
     }
     
-    externalId
+    null
   }
   
   def statusFor( extDocId:String ) = {
