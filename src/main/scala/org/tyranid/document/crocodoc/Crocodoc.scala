@@ -61,7 +61,7 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
       if ( error.isBlank )
         externalId = externalDocId( res.s( 'uuid ) )
       else 
-        log( Event.Crocodoc, "m" -> ( "Failed to upload document: " + filename ) )
+        log( Event.Crocodoc, "m" -> ( "Failed to upload document: " + filename + ", error=" + error ) )
     }
     
     externalId
