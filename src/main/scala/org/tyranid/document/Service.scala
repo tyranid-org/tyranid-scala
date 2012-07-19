@@ -109,7 +109,6 @@ trait DocApp {
   protected def externalDocId( extDocId:String ) =
     ( extDocId.notBlank ) ? ( serviceCode + "," + extDocId ) | null
 
-  def filetypeFor( filename:String ) = filename.substring( filename.lastIndexOf( '.' ) + 1 )
   def supports( ext:String ) = supportedFormats.contains( ext.toUpperCase )
   
   def MD5( str:String ):String = {

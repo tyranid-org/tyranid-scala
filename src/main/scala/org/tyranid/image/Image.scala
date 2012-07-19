@@ -20,6 +20,9 @@ package org.tyranid.image
 import java.io.{ FileNotFoundException, IOException }
 import java.net.URL
 
+import javax.imageio.{ ImageIO, ImageReader }
+import javax.imageio.stream.MemoryCacheImageInputStream
+
 import scala.collection.mutable
 import scala.collection.JavaConversions._
 import scala.xml.NodeSeq
@@ -31,6 +34,7 @@ import org.tyranid.db.{ Domain, Record, Scope }
 import org.tyranid.io.DbFile
 import org.tyranid.ui.PathField
 import org.tyranid.web.Html
+    
 
 
 // Might be able to get an image out of pdfbox:
@@ -100,52 +104,79 @@ object Image {
       } )
   }
 
+  
+  def suffixes( contentType:String, path:String ) = {
+    val suffixes = mutable.ArrayBuffer[String]()
+
+    contentType match {
+    case "image/bmp"  => suffixes += "bmp"
+    case "image/gif"  => suffixes += "gif"
+    case "image/jpeg" => suffixes += "jpeg"
+    case "image/png"  => suffixes += "png"
+    case _            =>
+    }
+
+    val suffix = path.suffix( '.' )
+    if ( suffix.length > 0 && !suffixes.contains( suffix ) )
+      suffixes += suffix
+
+    // always try these, if the first choice fails
+    if ( !suffixes.contains( "png" ) )  suffixes += "png"
+    if ( !suffixes.contains( "jpeg" ) ) suffixes += "jpeg"
+    if ( !suffixes.contains( "jpg" ) ) suffixes += "jpg"
+    if ( !suffixes.contains( "gif" ) )  suffixes += "gif"
+
+    suffixes
+  }
+
+  def testImage( reader:ImageReader, iis:MemoryCacheImageInputStream ) =
+    try {
+      iis.seek( 0L )
+      reader.setInput( iis )
+
+      Some( ( reader.getWidth( reader.getMinIndex ),
+              reader.getHeight( reader.getMinIndex ) ) )
+
+    } catch {
+      case e:Exception =>
+        //e.printStackTrace
+        None
+
+    } finally {
+      reader.dispose
+    }
+
+  def queryDimensions( file:java.io.File ):Option[( Int, Int )] = {
+    var iis:MemoryCacheImageInputStream = null
+
+    try {
+      val in = new java.io.FileInputStream( file )
+      iis = new MemoryCacheImageInputStream( in )
+      val contentType = org.tyranid.io.File.mimeTypeFor( file.getName )
+
+      for ( suffix <- suffixes( contentType, file.getName );
+            reader <- ImageIO.getImageReadersBySuffix( suffix );
+            dimensions <- testImage( reader, iis ) )
+        return Some( dimensions )
+
+      println( "dimensions test failed for " + file.getAbsolutePath )
+    } catch {
+    case e:FileNotFoundException =>
+      println( "Image.getDimensions ... File not found: " + file.getAbsolutePath )
+
+    case e:IOException =>
+      e.printStackTrace
+
+    } finally {
+      if ( iis != null )
+        iis.close
+    }
+
+    None
+  }
+  
 	def queryDimensions( url:URL ):Option[( Int, Int )] = {
-    import javax.imageio.{ ImageIO, ImageReader }
-    import javax.imageio.stream.MemoryCacheImageInputStream
-
 		var iis:MemoryCacheImageInputStream = null
-
-	  def suffixes( contentType:String, path:String ) = {
-		  val suffixes = mutable.ArrayBuffer[String]()
-
-		  contentType match {
-		  case "image/bmp"  => suffixes += "bmp"
-		  case "image/gif"  => suffixes += "gif"
-		  case "image/jpeg" => suffixes += "jpeg"
-		  case "image/png"  => suffixes += "png"
-		  case _            =>
-		  }
-
-		  val suffix = path.suffix( '.' )
-      if ( suffix.length > 0 && !suffixes.contains( suffix ) )
-        suffixes += suffix
-
-      // always try these, if the first choice fails
-      if ( !suffixes.contains( "png" ) )  suffixes += "png"
-		  if ( !suffixes.contains( "jpeg" ) ) suffixes += "jpeg"
-      if ( !suffixes.contains( "jpg" ) ) suffixes += "jpg"
-      if ( !suffixes.contains( "gif" ) )  suffixes += "gif"
-
-		  suffixes
-	  }
-
-	  def test( reader:ImageReader ) =
-		  try {
-			  iis.seek( 0L )
-     	  reader.setInput( iis )
-
-			  Some( ( reader.getWidth( reader.getMinIndex ),
-		            reader.getHeight( reader.getMinIndex ) ) )
-
-		  } catch {
-			  case e:Exception =>
-			    //e.printStackTrace
-			    None
-
-		  } finally {
-			  reader.dispose
-		  }
 
 		try {
    		val urlc = url.openConnection
@@ -155,13 +186,13 @@ object Image {
 
 			for ( suffix <- suffixes( urlc.getContentType, url.getPath );
 						reader <- ImageIO.getImageReadersBySuffix( suffix );
-	      		dimensions <- test( reader ) )
+	      		dimensions <- testImage( reader, iis ) )
 				return Some( dimensions )
 
 		  println( "dimensions test failed for " + url.getPath )
 		} catch {
 		case e:FileNotFoundException =>
-      println( "Http.getDimensions ... 404 on " + url.toString )
+      println( "Image.getDimensions ... 404 on " + url.toString )
 
 		case e:IOException =>
 			e.printStackTrace
