@@ -199,17 +199,27 @@ object Image {
     ogImages ++ analyze( pageUrl, html.images -- ogImagePaths ).filter( _.portraitRank > 0.005 ).sortBy( _.portraitRank )
   }
 
-  def scale( width:Int, height:Int, maxWidth:Int = -1, maxHeight:Int = -1 ) = {
+  def scale( width:Int, height:Int, maxWidth:Int = -1, maxHeight:Int = -1, minWidth:Int = -1, minHeight:Int = -1 ) = {
     var w = width
     var h = height
 
+    if ( minWidth != -1 && w < minWidth ) {
+      h = ( minWidth * h.toDouble / w ).toInt
+      w = minWidth
+    }
+
+    if ( minHeight != -1 && h < minHeight ) {
+      w = ( minHeight * w.toDouble / h ).toInt
+      h = minHeight
+    }
+
     if ( maxWidth != -1 && w > maxWidth ) {
-      h = maxWidth * h / w
+      h = ( maxWidth * h.toDouble / w ).toInt
       w = maxWidth
     }
 
     if ( maxHeight != -1 && h > maxHeight ) {
-      w = maxHeight * w / h
+      w = ( maxHeight * w.toDouble / h ).toInt
       h = maxHeight
     }
 
