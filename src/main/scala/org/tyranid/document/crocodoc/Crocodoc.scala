@@ -47,9 +47,9 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
     var externalId:String = null
     
     if ( supports( filetypeFor( filename ) ) ) {
-      println( "filename " + filename )
-      println( file.exists )
-      println( file.length )
+      //println( "filename " + filename )
+      //println( file.exists )
+      //println( file.length )
                                     
       val result = Http.POST_FILE( "https://crocodoc.com/api/v2/document/upload", file, fileSize, filename, params = Map( "token" -> apiKey ) ).s
       
