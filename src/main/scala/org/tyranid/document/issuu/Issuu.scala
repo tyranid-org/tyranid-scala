@@ -50,7 +50,7 @@ case class IssuuApp( apiKey:String, secret:String = null ) extends DocApp {
   def upload( file:File, fileSize:Long, filename:String ):String = {
     var externalId:String = null
     
-    if ( supports( filetypeFor( filename ) ) ) {
+    if ( supports( filename.suffix( '.' ) ) ) {
       println( "filename " + filename )
       println( file.exists )
       println( file.length )
@@ -77,6 +77,10 @@ case class IssuuApp( apiKey:String, secret:String = null ) extends DocApp {
     }
     
     externalId
+  }
+  
+  def getText( extDocId:String ):String = {
+    null  
   }
   
   def MD5( params:scala.collection.mutable.Map[String,String] ):String = {

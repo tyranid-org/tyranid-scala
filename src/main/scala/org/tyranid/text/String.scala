@@ -169,6 +169,10 @@ class StringImp( s:String ) {
     // TODO:  need to escape javascript in this
     s.encUnicode.replace( "\n \n", "\n\n" ).split( "\n\n" ).map( para => <p>{ Unparsed( para.replace( "\r\n", "<br/>" ).replace( "\n", "<br/>" ).replace( "\r", "<br/>" ) ) }</p> ).toSeq
 
+  def toHtmlPreserveWhitespaceCompact:NodeSeq =
+    // TODO:  need to escape javascript in this
+    Unparsed( s.trim.encUnicode.replace( "\n \n", "\n\n" ).replace( "\r\n", "<br/>" ).replace( "\n", "<br/>" ).replace( "\r", "<br/>" ) )
+
 	def isBlank  = ( s == null || s.length == 0 )
 	def notBlank = ( s != null && s.length >  0 )
 	def nonBlank = ( s != null && s.length >  0 )

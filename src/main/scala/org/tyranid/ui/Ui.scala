@@ -308,7 +308,7 @@ case class TableAlphaFilter( tableId:String, columnNumber:Int, addedClasses:Stri
       <li class="all selected"><a href="#">All</a></li>
       { for ( i <- 65 to 90 ) yield { <li><a href="#">{ i.toChar }</a></li> } }
       { for ( i <- 48 to 57 ) yield { <li><a href="#">{ i.toChar }</a></li> } }
-      { columnFilterOn.notBlank |* <li><span class="fltArrow"/></li> }
+      { columnFilterOn.notBlank |* <li><span tip="Selects which column this filter is applied to." class="tip fltArrow"/></li> }
     </ul>
 }
 

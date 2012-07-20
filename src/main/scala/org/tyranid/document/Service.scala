@@ -82,6 +82,14 @@ object Service {
     } else 
       false
   }
+  
+  def getText( extDocId:String ):String = {
+    if ( extDocId.notBlank ) {
+      val parts = extDocId.split( "," )
+      appFor( parts(0 ) ).getText( parts.drop(1).mkString( "," ) )
+    } else 
+      null
+  }
 }
 
 trait DocApp {
@@ -93,6 +101,7 @@ trait DocApp {
     
   def upload( file:File, fileSize:Long, filename:String ):String
   def statusFor( extDocId:String ):String
+  def getText( extDocId:String ):String
   def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ):File
   def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef]
   def delete( extDocId:String ): Boolean
@@ -100,7 +109,6 @@ trait DocApp {
   protected def externalDocId( extDocId:String ) =
     ( extDocId.notBlank ) ? ( serviceCode + "," + extDocId ) | null
 
-  def filetypeFor( filename:String ) = filename.substring( filename.lastIndexOf( '.' ) + 1 )
   def supports( ext:String ) = supportedFormats.contains( ext.toUpperCase )
   
   def MD5( str:String ):String = {
