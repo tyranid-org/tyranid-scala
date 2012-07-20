@@ -31,6 +31,7 @@ import org.tyranid.http.UserAgent
 import org.tyranid.log.Log
 import org.tyranid.math.Base62
 import org.tyranid.net.DnsDomain
+import org.tyranid.profile.User
 import org.tyranid.report.{ Query, Report }
 import org.tyranid.ui.{ Checkbox, CustomField, PathField, Search }
 import org.tyranid.web.{ Weblet, WebContext }
@@ -110,10 +111,43 @@ object TrackingCookie {
       B.User.db.update( Mobj( "_id" -> u.id ), Mobj( $set -> Mobj( "bids" -> list ) ) )
     }
 
+    if ( tokens.size > 12 )
+      consolidate( u )
+
     token
   }
 
   def remove = T.web.res.deleteCookie( B.trackingCookieName )
+
+  def consolidate( user:User ) {
+
+    val bids = user.a_?( 'bids )
+    if ( bids.size <= 1 )
+      return
+
+    val main = bids( 0 )
+
+    for ( bid <- bids if bid != main ) {
+
+      Log.db.update(
+        Mobj( "bid" -> bid ),
+        Mobj( "$set" -> Mobj( "bid" -> main ) ),
+        false,
+        true )
+
+      for ( u <- B.User.db.find( Mobj( "bids" -> bid ) ).map( B.User.apply );
+            if u.tid != user.tid ) {
+        val ubids = u.a_!( 'bids )
+        ubids.remove( bid )
+        if ( !ubids.contains( main ) )
+          ubids.add( main )
+        u.save
+      }
+    }
+
+    user( 'bids ) = Mlist( main )
+    user.save
+  }
 }
 
 
