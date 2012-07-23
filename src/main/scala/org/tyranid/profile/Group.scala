@@ -775,7 +775,7 @@ case class GroupValue( gf:GroupField ) extends Valuable {
           </ul>
          </div>
          <div class="btns">
-          <button class="grpAddGrp go btn" style="float:left;">Add Group</button>
+          <button class="grpAddGrp go btn" style="float:left;" id="addGroupOpen">Add Group</button>
          </div>
         </div>
         <div id={ "grpMain" + gf.id } class="grpMain">
@@ -842,7 +842,7 @@ case class GroupValue( gf:GroupField ) extends Valuable {
     </div> } ++
     <div class="btns">
      { editable |* <button class="grpDelGrp stop btn" style="float:left;">Delete</button> }
-     <button onclick={ gf.closeJs } class="btn" style="float:right;">Done</button>
+     <button onclick={ gf.closeJs } class="btn" style="float:right;" id="doneBtn">Done</button>
      { editable || showAddBy |* <button class="grpToggleAddBy go btn" style="float:right;">{ if ( showAddBy ) "Show Table" else "Add Members" }</button> }
     </div>
   }
@@ -881,7 +881,7 @@ case class GroupValue( gf:GroupField ) extends Valuable {
        <label for={ "grpMonitor" + gf.id }>Monitor Group</label>
        { Help( GroupMode.monitorHelp ) }
       </div>
-      <div class="btns" style="width:370px;"><a href="#" class="grpAddGrpSave go btn">Add Group</a></div>
+      <div class="btns" style="width:370px;"><a href="#" class="grpAddGrpSave go btn" id="addGroupSave">Add Group</a></div>
      </form>
     </div>
     <div class="btns">
