@@ -82,111 +82,159 @@ object DbLocalFile extends CommonFile {
 }
 
 object File {
+  
+  
   val mimeTypeMap = Map( 
-    "doc"      -> "application/msword",
-    "xls"      -> "application/vnd.ms-excel",
-    "ppt"      -> "application/vnd.ms-powerpoint",
-    "mpp"      -> "application/vnd.ms-project",
+    "aif"      -> "audio/x-aiff",
+    "aifc"     -> "audio/x-aiff",
+    "aiff"     -> "audio/x-aiff",
+    "au"       -> "audio/basic",
+    "avi"      -> "video/x-msvideo",
+      
+    "bcpio"    -> "application/x-bcpio",
     "bin"      -> "application/octet-stream",
-    "oda"      -> "application/oda",
-    "pdf"      -> "application/pdf",
+
+    "cdf"      -> "application/x-netcdf",
+    "cpio"     -> "application/x-cpio",
+    "csh"      -> "application/x-csh",
+
+    "doc"      -> "application/msword",
+    "docm"     -> "application/vnd.ms-word.document.macroEnabled.12",
+    "docx"     -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "dot"      -> "application/msword",
+    "dotx"     -> "application/vnd.openxmlformats-officedocument.wordprocessingml.template",
+    "dotm"     -> "application/vnd.ms-word.template.macroEnabled.12",
+    "dvi"      -> "application/x-dvi",
+    
     "eps"      -> "application/postscript",
-    "ps"       -> "application/postscript",
-    "rtf"      -> "application/rtf",
-    "odt"      -> "application/vnd.oasis.opendocument.text", 
-    "ott"      -> "application/vnd.oasis.opendocument.text-template",   
-    "oth"      -> "application/vnd.oasis.opendocument.text-web",
-    "odm"      -> "application/vnd.oasis.opendocument.text-master",  
-    "odg"      -> "application/vnd.oasis.opendocument.graphics",
-    "otg"      -> "application/vnd.oasis.opendocument.graphics-template",   
-    "odp"      -> "application/vnd.oasis.opendocument.presentation",
-    "otp"      -> "application/vnd.oasis.opendocument.presentation-template",
-    "ods"      -> "application/vnd.oasis.opendocument.spreadsheet",
-    "ots"      -> "application/vnd.oasis.opendocument.spreadsheet-template", 
-    "odc"      -> "application/vnd.oasis.opendocument.chart",  
-    "odf"      -> "application/vnd.oasis.opendocument.formula",  
+
+    "gif"      -> "image/gif",
+    "gtar"     -> "application/x-gtar",
+    
+    "hdf"      -> "application/x-hdf",
+    "htm"      -> "text/html",
+    "html"     -> "text/html",
+
+    "jpe"      -> "image/jpeg",
+    "jpeg"     -> "image/jpeg",
+    "jpg"      -> "image/jpeg",
+    
+    "latex"    -> "application/x-latex",
+
+    "man"      -> "application/x-troff-man",
+    "me"       -> "application/x-troff-me",
+    "mif"      -> "application/x-mif",
+    "mov"      -> "video/quicktime",
+    "movie"    -> "video/x-sgi-movie",
+
+    "mp4"      -> "video/mp4",
+    "mpe"      -> "video/mpeg",
+    "mpeg"     -> "video/mpeg",
+    "mpg"      -> "video/mpeg",
+    "mpp"      -> "application/vnd.ms-project",
+    "ms"       -> "application/x-troff-ms",
+    
+    "nc"       -> "application/x-netcdf",
+    
+    "oda"      -> "application/oda",
     "odb"      -> "application/vnd.oasis.opendocument.database",
     "odi"      -> "application/vnd.oasis.opendocument.image",
-    "oxt"      -> "application/vnd.openofficeorg.extension", 
-    "mif"      -> "application/x-mif",
-    "csh"      -> "application/x-csh",
-    "dvi"      -> "application/x-dvi",
-    "hdf"      -> "application/x-hdf",
-    "latex"    -> "application/x-latex",
-    "nc"       -> "application/x-netcdf",
-    "cdf"      -> "application/x-netcdf",
+    "odt"      -> "application/vnd.oasis.opendocument.text", 
+    "odc"      -> "application/vnd.oasis.opendocument.chart",  
+    "odf"      -> "application/vnd.oasis.opendocument.formula",  
+    "odg"      -> "application/vnd.oasis.opendocument.graphics",
+    "odm"      -> "application/vnd.oasis.opendocument.text-master",  
+    "odp"      -> "application/vnd.oasis.opendocument.presentation",
+    "ods"      -> "application/vnd.oasis.opendocument.spreadsheet",
+    "otg"      -> "application/vnd.oasis.opendocument.graphics-template",   
+    "oth"      -> "application/vnd.oasis.opendocument.text-web",
+    "ott"      -> "application/vnd.oasis.opendocument.text-template",   
+    "otp"      -> "application/vnd.oasis.opendocument.presentation-template",
+    "ots"      -> "application/vnd.oasis.opendocument.spreadsheet-template", 
+    "oxt"      -> "application/vnd.openofficeorg.extension",
+    
+    "pbm"      -> "image/x-portable-bitmap",
+    "pdf"      -> "application/pdf",
+    "pgm"      -> "image/x-portable-graymap",
+    "png"      -> "image/png",
+    "pnm"      -> "image/x-portable-anymap",
+    "pot"      -> "application/vnd.ms-powerpoint",
+    "potm"     -> "application/vnd.ms-powerpoint.template.macroEnabled.12",
+    "potx"     -> "application/vnd.openxmlformats-officedocument.presentationml.template",
+    "ppa"      -> "application/vnd.ms-powerpoint",
+    "ppam"     -> "application/vnd.ms-powerpoint.addin.macroEnabled.12",
+    "ppm"      -> "image/x-portable-pixmap",
+    "ppt"      -> "application/vnd.ms-powerpoint",
+    "pps"      -> "application/vnd.ms-powerpoint",
+    "ppsm"     -> "application/vnd.ms-powerpoint.slideshow.macroEnabled.12",
+    "pptm"     -> "application/vnd.ms-powerpoint.presentation.macroEnabled.12",
+    "ppsx"     -> "application/vnd.openxmlformats-officedocument.presentationml.slideshow",
+    "pptx"     -> "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "ps"       -> "application/postscript",
+    
+    "qt"       -> "video/quicktime",
+    
+    "ras"      -> "image/x-cmu-raster",
+    "rgb"      -> "image/x-rgb",
+    "roff"     -> "application/x-troff",
+    "rtf"      -> "application/rtf",
+    "rtx"      -> "text/richtext",
+    
+    "sgm"      -> "text/x-sgml",
+    "sgml"     -> "text/x-sgml",
     "sh"       -> "application/x-sh",
+    "shar"     -> "application/x-shar",
+    "snd"      -> "audio/basic",
+    "src"      -> "application/x-wais-source",
+
+    "t"        -> "application/x-troff",
+    "tar"      -> "application/x-tar",
     "tcl"      -> "application/x-tcl",
     "tex"      -> "application/x-tex",
     "texinfo"  -> "application/x-texinfo",
     "texi"     -> "application/x-texinfo",
-    "t"        -> "application/x-troff",
-    "tr"       -> "application/x-troff",
-    "roff"     -> "application/x-troff",
-    "man"      -> "application/x-troff-man",
-    "me"       -> "application/x-troff-me",
-    "ms"       -> "application/x-troff-ms",
-    "src"      -> "application/x-wais-source",
-    "zip"      -> "application/x-zip-compressed",
-    "bcpio"    -> "application/x-bcpio",
-    "cpio"     -> "application/x-cpio",
-    "gtar"     -> "application/x-gtar",
-    "shar"     -> "application/x-shar",
-    "tar"      -> "application/x-tar",
-    "au"       -> "audio/basic",
-    "snd"      -> "audio/basic",
-    "aif"      -> "audio/x-aiff",
-    "aiff"     -> "audio/x-aiff",
-    "aifc"     -> "audio/x-aiff",
-    "wav"      -> "audio/x-wav",
-    "gif"      -> "image/gif",
-    "png"      -> "image/png",
-    "jpg"      -> "image/jpeg",
-    "jpe"      -> "image/jpeg",
-    "jpeg"     -> "image/jpeg",
+    "text"     -> "text/plain",
     "tif"      -> "image/tiff",
     "tiff"     -> "image/tiff",
-    "ras"      -> "image/x-cmu-raster",
-    "pnm"      -> "image/x-portable-anymap",
-    "pbm"      -> "image/x-portable-bitmap",
-    "pgm"      -> "image/x-portable-graymap",
-    "ppm"      -> "image/x-portable-pixmap",
-    "rgb"      -> "image/x-rgb",
-    "xbm"      -> "image/x-xbitmap",
-    "xpm"      -> "image/x-xpixmap",
-    "xwd"      -> "image/x-xwindowdump",
-    "htm"      -> "text/html",
-    "html"     -> "text/html",
-    "xml"      -> "text/xml",
-    "xsl"      -> "text/xml",
-    "sgml"     -> "text/x-sgml",
-    "sgm"      -> "text/x-sgml",
-    "txt"      -> "text/plain",
-    "text"     -> "text/plain",
-    "rtx"      -> "text/richtext",
+    "tr"       -> "application/x-troff",
     "tsv"      -> "text/tab-separated-values",
-    "mp4"      -> "video/mp4",
-    "mpg"      -> "video/mpeg",
-    "mpe"      -> "video/mpeg",
-    "mpeg"     -> "video/mpeg",
-    "qt"       -> "video/quicktime",
-    "mov"      -> "video/quicktime",
-    "avi"      -> "video/x-msvideo",
-    "movie"    -> "video/x-sgi-movie"
+    "txt"      -> "text/plain",
+    
+    "wav"      -> "audio/x-wav",
+    
+    "xbm"      -> "image/x-xbitmap",
+    "xla"      -> "application/vnd.ms-excel",
+    "xlam"     -> "application/vnd.ms-excel.addin.macroEnabled.12",
+    "xlsm"     -> "application/vnd.ms-excel.sheet.macroEnabled.12",
+    "xltm"     -> "application/vnd.ms-excel.template.macroEnabled.12",
+    "xlsb"     -> "application/vnd.ms-excel.sheet.binary.macroEnabled.12",
+    "xls"      -> "application/vnd.ms-excel",
+    "xlsx"     -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "xlt"      -> "application/vnd.ms-excel",
+    "xltx"     -> "application/vnd.openxmlformats-officedocument.spreadsheetml.template",
+    "xml"      -> "text/xml",
+    "xpm"      -> "image/x-xpixmap",
+    "xsl"      -> "text/xml",
+    "xwd"      -> "image/x-xwindowdump",
+    
+    "zip"      -> "application/x-zip-compressed"
   )
   
+  def mimeTypeFor( filename:String ) = {
+    val fsave = filename.safeString.toLowerCase
+    val ext = filename.suffix( '.' )
+    
+    mimeTypeMap.get( ext ).getOrElse( null )
+  }
 
-  def extension( filename:String ) = {
+  def safeExtension( filename:String ) = {
     val max = scala.math.max( filename.lastIndexOf( '/' ), filename.lastIndexOf( '.' ) ) 
     val suffix = if ( max != -1 ) filename.substring( max+1 ) else "" 
     suffix.replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
   }
 
   def pathFor( entityTid:String, recordTid:String, pathName:String, url:String ) =
-    entityTid + "/" + recordTid + "/" + pathName + "." + extension( url )
-
-  def mimeTypeFor( filename:String ) =
-    mimeTypeMap.get( extension( filename.safeString.toLowerCase ) ).getOrElse( null )
+    entityTid + "/" + recordTid + "/" + pathName + "." + safeExtension( url )
 
   def download( web:WebContext, bucket:S3Bucket, key:String, fileName:String ) {
     val obj = S3.getObject( bucket, key )

@@ -25,7 +25,7 @@ import scala.collection.mutable.ArrayBuffer
 
 import org.tyranid.Imp._
 
-import com.amazonaws.AmazonClientException
+import com.amazonaws.{ AmazonClientException, AmazonServiceException }
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.simpleemail._
 import com.amazonaws.services.simpleemail.model._

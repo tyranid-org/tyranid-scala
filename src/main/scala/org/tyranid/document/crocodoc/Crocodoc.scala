@@ -62,7 +62,7 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
         if ( error.isBlank )
           return externalDocId( res.s( 'uuid ) )
           
-        if ( error.containsIgnoreCase( "rate limit exceeeded" ) ) {
+        if ( error.containsIgnoreCase( "rate limit exceeded" ) ) {
           Thread.sleep( 2000 )
           error = null
         } else {
@@ -79,8 +79,10 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
     statusJson.s( 'status )
   }
   
-  def previewUrlFor( extDocId:String ) = 
-    "https://crocodoc.com/view/" + Json.parse( Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s ).s( 'session )
+  def previewUrlFor( extDocId:String ):String = { 
+    val sessionJson = Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s
+    "https://crocodoc.com/view/" + Json.parse( sessionJson ).s( 'session )
+  }
   
   def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ) = {
     val res = Http.GET( "https://crocodoc.com/api/v2/download/thumbnail?token=" + apiKey + "&uuid=" + extDocId + "&size=" + width + "x" + height )

@@ -94,7 +94,7 @@ case class IssuuApp( apiKey:String, secret:String = null ) extends DocApp {
   }
   
 // TODO
-  def previewUrlFor( extDocId:String ) =  
+  def previewUrlFor( extDocId:String ):String =  
     //"https://crocodoc.com/view/" + Json.parse( Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s ).s( 'session )
     "TODO"
   

@@ -66,6 +66,14 @@ object Service {
       null
   }
   
+  def previewUrlFor( extDocId:String ) = 
+    if ( extDocId.notBlank ) {
+      val parts = extDocId.split( "," )
+      appFor( parts(0 ) ).previewUrlFor( parts.drop(1).mkString( "," ) )
+    } else {
+      null
+    }
+  
   def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef] = {
     if ( extDocId.notBlank ) {
       val parts = extDocId.split( "," )
@@ -104,6 +112,7 @@ trait DocApp {
   def getText( extDocId:String ):String
   def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ):File
   def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef]
+  def previewUrlFor( extDocId:String ):String
   def delete( extDocId:String ): Boolean
   
   protected def externalDocId( extDocId:String ) =
