@@ -111,8 +111,8 @@ object TrackingCookie {
       B.User.db.update( Mobj( "_id" -> u.id ), Mobj( $set -> Mobj( "bids" -> list ) ) )
     }
 
-    if ( tokens.size > 12 )
-      consolidate( u )
+    //if ( tokens.size > 12 )
+      //consolidate( u )
 
     token
   }
@@ -120,6 +120,10 @@ object TrackingCookie {
   def remove = T.web.res.deleteCookie( B.trackingCookieName )
 
   def consolidate( user:User ) {
+
+    // this isn't right ... this will consolidate multiple real users into the same browser id if two different people ever log into the same account
+    // 
+    // taking IP into account would help a little, but still not solve it since people from the same location share the same IP
 
     val bids = user.a_?( 'bids )
     if ( bids.size <= 1 )
