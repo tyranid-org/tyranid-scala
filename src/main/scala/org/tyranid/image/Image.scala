@@ -60,6 +60,9 @@ import org.tyranid.web.Html
                 }
             }
 */
+
+case class Dimensions( height:Int, width:Int )
+
 class DbImageish( bucket:S3Bucket ) extends DbFile( bucket )
 
 object DbImage {
