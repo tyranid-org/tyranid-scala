@@ -61,7 +61,64 @@ import org.tyranid.web.Html
             }
 */
 
-case class Dimensions( height:Int, width:Int )
+case class Dimensions( height:Int, width:Int ) {
+
+  def css = {
+    val sb = new StringBuilder
+    if ( height > 0 )
+      sb ++= "height:" ++= height.toString ++= "px;"
+    if ( width > 0 )
+      sb ++= "width:" ++= width.toString ++= "px;"
+    sb.toString
+  }
+
+  def scale( maxWidth:Int = -1, maxHeight:Int = -1, minWidth:Int = -1, minHeight:Int = -1 ) = {
+    var w = width
+    var h = height
+
+    if ( minWidth != -1 && w < minWidth ) {
+      h = ( minWidth * h.toDouble / w ).toInt
+      w = minWidth
+    }
+
+    if ( minHeight != -1 && h < minHeight ) {
+      w = ( minHeight * w.toDouble / h ).toInt
+      h = minHeight
+    }
+
+    if ( maxWidth != -1 && w > maxWidth ) {
+      h = ( maxWidth * h.toDouble / w ).toInt
+      w = maxWidth
+    }
+
+    if ( maxHeight != -1 && h > maxHeight ) {
+      w = ( maxHeight * w.toDouble / h ).toInt
+      h = maxHeight
+    }
+
+    Dimensions( height = h, width = w )
+  }
+
+  def pixels = height * width
+
+  lazy val portraitRank = {
+    val h = height
+    val w = width
+
+    val ratio = w.toDouble / h.toDouble
+    val pixels = h * w
+    val idealPixels = 720*480
+
+    var sizeMult = pixels.toDouble / idealPixels.toDouble
+
+    if ( sizeMult > 1 )
+      sizeMult = 1 / sizeMult
+
+    val ratioMult = ( 3 - scala.math.abs( ratio - 1.77 ) )
+
+    ratioMult * sizeMult
+  }
+}
 
 class DbImageish( bucket:S3Bucket ) extends DbFile( bucket )
 
@@ -102,8 +159,8 @@ object Image {
     cache.getOrElseUpdate(
       url,
       queryDimensions( url ) match {
-      case Some( ( width, height ) ) => Image( url, Some( width ), Some( height ) )
-      case None                      => new Image( url )
+      case Some( dims ) => Image( url, Some( dims ) )
+      case None         => new Image( url )
       } )
   }
 
@@ -137,8 +194,8 @@ object Image {
       iis.seek( 0L )
       reader.setInput( iis )
 
-      Some( ( reader.getWidth( reader.getMinIndex ),
-              reader.getHeight( reader.getMinIndex ) ) )
+      Some( Dimensions( width  = reader.getWidth( reader.getMinIndex ),
+                        height = reader.getHeight( reader.getMinIndex ) ) )
 
     } catch {
       case e:Exception =>
@@ -149,7 +206,7 @@ object Image {
       reader.dispose
     }
 
-  def queryDimensions( file:java.io.File ):Option[( Int, Int )] = {
+  def queryDimensions( file:java.io.File ):Option[Dimensions] = {
     var iis:MemoryCacheImageInputStream = null
 
     try {
@@ -178,7 +235,7 @@ object Image {
     None
   }
   
-	def queryDimensions( url:URL ):Option[( Int, Int )] = {
+	def queryDimensions( url:URL ):Option[Dimensions] = {
 		var iis:MemoryCacheImageInputStream = null
 
 		try {
@@ -208,7 +265,7 @@ object Image {
 		None
 	}
 
-  private def analyze( pageUrl:URL, names:Seq[String] ) = names.distinct.map( url => url.safeUrl( base = pageUrl ) ).filter( _ != null ).map( apply ).filter( img => img != null && img.pixels > 0 )
+  private def analyze( pageUrl:URL, names:Seq[String] ) = names.distinct.map( _.safeUrl( base = pageUrl ) ).filter( _ != null ).map( apply ).filter( img => img != null && img.pixels > 0 )
 
   def bestForPage( pageUrl:URL, html:Html ):Image = {
 
@@ -232,63 +289,16 @@ object Image {
 
     ogImages ++ analyze( pageUrl, html.images -- ogImagePaths ).filter( _.portraitRank > 0.005 ).sortBy( _.portraitRank )
   }
-
-  def scale( width:Int, height:Int, maxWidth:Int = -1, maxHeight:Int = -1, minWidth:Int = -1, minHeight:Int = -1 ) = {
-    var w = width
-    var h = height
-
-    if ( minWidth != -1 && w < minWidth ) {
-      h = ( minWidth * h.toDouble / w ).toInt
-      w = minWidth
-    }
-
-    if ( minHeight != -1 && h < minHeight ) {
-      w = ( minHeight * w.toDouble / h ).toInt
-      h = minHeight
-    }
-
-    if ( maxWidth != -1 && w > maxWidth ) {
-      h = ( maxWidth * h.toDouble / w ).toInt
-      w = maxWidth
-    }
-
-    if ( maxHeight != -1 && h > maxHeight ) {
-      w = ( maxHeight * w.toDouble / h ).toInt
-      h = maxHeight
-    }
-
-    ( w, h )
-  }
 }
 
-case class Image( url:URL, width:Option[Int] = None, height:Option[Int] = None ) {
+case class Image( url:URL, dims:Option[Dimensions] = None ) {
 
-  def pixels = width.getOrElse( 0 ) * height.getOrElse( 0 )
+  def pixels = dims.flatten( _.pixels, 0 )
 
-  lazy val portraitRank = {
-    val h = height.get
-    val w = width.get
+  def portraitRank = dims.flatten( _.portraitRank, 0.0 )
 
-    val ratio = w.toDouble / h.toDouble
-    val pixels = h * w
-    val idealPixels = 720*480
+  def dimensions( maxWidth:Int = -1, maxHeight:Int = -1 ) = dims.get.scale( maxWidth, maxHeight )
 
-    var sizeMult = pixels.toDouble / idealPixels.toDouble
-
-    if ( sizeMult > 1 )
-      sizeMult = 1 / sizeMult
-
-    val ratioMult = ( 3 - scala.math.abs( ratio - 1.77 ) )
-
-    ratioMult * sizeMult
-  }
-
-  def dimensions( maxWidth:Int = -1, maxHeight:Int = -1 ) = Image.scale( width.get, height.get, maxWidth, maxHeight )
-
-  def cssDimensions( maxWidth:Int = -1, maxHeight:Int = -1 ) = {
-    val ( w, h ) = dimensions( maxWidth, maxHeight )
-
-    "width:" + w + "px;height:" + h + "px;"
-  }
+  def cssDimensions( maxWidth:Int = -1, maxHeight:Int = -1 ) = dimensions( maxWidth, maxHeight ).css
 }
 
