@@ -17,6 +17,8 @@
 
 package org.tyranid.sms
 
+// http://ai.fmcsa.dot.gov/SMS/Data/Downloads.aspx
+
 import scala.xml.{ Unparsed, NodeSeq, Text }
 
 import com.nexmo.messaging.sdk.{ NexmoSmsClient, SmsSubmissionResult }

@@ -102,70 +102,74 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
 
   def update = {
     val ua = s( 'ua )
-    val json = ( "http://useragentstring.com?uas=" + ua.encUrl + "&getJSON=all" ).GET().s.parseJsonObject
-
-    var agentName = json.s( 'agent_name )
-
-
-    if ( agentName == "unknown" ) {
-      if      ( ua startsWith "AdsBot-Google" )
-        agentName = "AdsBot-Google"
-      else if ( ua contains "AhrefsBot" )
-        agentName = "AhrefsBot"
-      else if ( ua startsWith "ClickTale bot" )
-        agentName = "ClickTale bot"
-      else if ( ua startsWith "LinkedInBot" )
-        agentName = "LinkedInBot"
-      else if ( ua startsWith "Jakarta Commons" )
-        agentName = "Jakarta Commons"
-      else if ( ua startsWith "Plesk" )
-        agentName = "Plesk"
-      else if ( ua startsWith "SkimBot" )
-        agentName = "SkimBot"
-      else if ( ua startsWith "ZmEu" )
-        agentName = "ZmEu"
+    
+    try {
+      val json = ( "http://useragentstring.com?uas=" + ua.encUrl + "&getJSON=all" ).GET().s.parseJsonObject
+  
+      var agentName = json.s( 'agent_name )
+  
+      if ( agentName == "unknown" ) {
+        if      ( ua startsWith "AdsBot-Google" )
+          agentName = "AdsBot-Google"
+        else if ( ua contains "AhrefsBot" )
+          agentName = "AhrefsBot"
+        else if ( ua startsWith "ClickTale bot" )
+          agentName = "ClickTale bot"
+        else if ( ua startsWith "LinkedInBot" )
+          agentName = "LinkedInBot"
+        else if ( ua startsWith "Jakarta Commons" )
+          agentName = "Jakarta Commons"
+        else if ( ua startsWith "Plesk" )
+          agentName = "Plesk"
+        else if ( ua startsWith "SkimBot" )
+          agentName = "SkimBot"
+        else if ( ua startsWith "ZmEu" )
+          agentName = "ZmEu"
+      }
+  
+      obj( 'agentType )         = json.s( 'agent_type )
+      obj( 'agentName )         = agentName
+      obj( 'agentVersion )      = json.s( 'agent_version )
+      obj( 'osType )            = json.s( 'os_type )
+      obj( 'osName )            = json.s( 'os_name )
+      obj( 'osVersionName )     = json.s( 'os_versionName )
+      obj( 'osVersionNumber )   = json.s( 'os_versionNumber )
+      obj( 'osProducer )        = json.s( 'os_producer )
+      obj( 'osProducerUrl )     = json.s( 'os_producerURL )
+      obj( 'linuxDistribution ) = json.s( 'linux_distribution )
+      obj( 'agentLanguage )     = json.s( 'agent_language )
+      obj( 'agentLanguageTag )  = json.s( 'agent_languageTag )
+  
+      obj.remove( 'bot )
+      if ( agentName match {
+           case "AdsBot-Google"
+              | "Baiduspider"
+              | "Bingbot"
+              | "ClickTale bot"
+              | "Exabot"
+              | "FeedFetcher-Google"
+              | "Googlebot"
+              | "Googlebot-Image"
+              | "Jakarta Commons"
+              | "Java"
+              | "ia_archiver"
+              | "libwww-perl"
+              | "LinkedInBot"
+              | "msnbot"
+              | "Plesk"
+              | "Python-urllib"
+              | "SkimBot"
+              | "webcollage"
+              | "Yahoo! Slurp"
+              | "YandexBot"
+              | "ZmEu"               => true
+           case _                    => false } )
+        obj( 'bot ) = true
+  
+      save
+    } catch {
+      case e => e.printStackTrace
     }
-
-    obj( 'agentType )         = json.s( 'agent_type )
-    obj( 'agentName )         = agentName
-    obj( 'agentVersion )      = json.s( 'agent_version )
-    obj( 'osType )            = json.s( 'os_type )
-    obj( 'osName )            = json.s( 'os_name )
-    obj( 'osVersionName )     = json.s( 'os_versionName )
-    obj( 'osVersionNumber )   = json.s( 'os_versionNumber )
-    obj( 'osProducer )        = json.s( 'os_producer )
-    obj( 'osProducerUrl )     = json.s( 'os_producerURL )
-    obj( 'linuxDistribution ) = json.s( 'linux_distribution )
-    obj( 'agentLanguage )     = json.s( 'agent_language )
-    obj( 'agentLanguageTag )  = json.s( 'agent_languageTag )
-
-    obj.remove( 'bot )
-    if ( agentName match {
-         case "AdsBot-Google"
-            | "Baiduspider"
-            | "Bingbot"
-            | "ClickTale bot"
-            | "Exabot"
-            | "FeedFetcher-Google"
-            | "Googlebot"
-            | "Googlebot-Image"
-            | "Jakarta Commons"
-            | "Java"
-            | "ia_archiver"
-            | "libwww-perl"
-            | "LinkedInBot"
-            | "msnbot"
-            | "Plesk"
-            | "Python-urllib"
-            | "SkimBot"
-            | "webcollage"
-            | "Yahoo! Slurp"
-            | "YandexBot"
-            | "ZmEu"               => true
-         case _                    => false } )
-      obj( 'bot ) = true
-
-    save
   }
 
   def bot = b( 'bot )
