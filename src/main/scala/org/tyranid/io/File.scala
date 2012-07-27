@@ -233,6 +233,20 @@ object File {
     suffix.replace( " ", "_" ).replace( "\\\\", "" ).replace( "\\", "/" )
   }
 
+  def isImage( filename:String ) = {
+    filename.toLowerCase.suffix( '.' ) match {
+    case "jpg" | "jpeg" | "png" | "gif" => true
+    case _     => false
+    }
+  }
+  
+  def isVideo( filename:String ) = {
+    filename.toLowerCase.suffix( '.' ) match {
+    case "mp4" => true
+    case _     => false
+    }
+  }
+
   def pathFor( entityTid:String, recordTid:String, pathName:String, url:String ) =
     entityTid + "/" + recordTid + "/" + pathName + "." + safeExtension( url )
 
