@@ -181,10 +181,10 @@ object Image {
       suffixes += suffix
 
     // always try these, if the first choice fails
-    if ( !suffixes.contains( "png" ) )  suffixes += "png"
+    if ( !suffixes.contains( "png"  ) ) suffixes += "png"
     if ( !suffixes.contains( "jpeg" ) ) suffixes += "jpeg"
-    if ( !suffixes.contains( "jpg" ) ) suffixes += "jpg"
-    if ( !suffixes.contains( "gif" ) )  suffixes += "gif"
+    if ( !suffixes.contains( "jpg"  ) ) suffixes += "jpg"
+    if ( !suffixes.contains( "gif"  ) ) suffixes += "gif"
 
     suffixes
   }
