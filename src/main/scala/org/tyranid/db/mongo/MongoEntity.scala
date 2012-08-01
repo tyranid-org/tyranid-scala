@@ -77,12 +77,14 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
   
   override def save( rec:Record ) = {
     rec.compute
+
+    val mrec = rec.as[MongoRecord]
     
     try {
-      db.save( rec.as[MongoRecord] )
+      mrec.db.save( mrec )
     } catch {
     case e:IllegalArgumentException =>
-      rec.as[MongoRecord].validateStructure // this should throw a more description exception
+      mrec.validateStructure // this should throw a more description exception
       throw e               // if validate passes, throw the original exception
     }
 
@@ -96,7 +98,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
   
   override def delete( rec:Record ) = {
     super.delete( rec )
-    db.remove( Mobj( "_id" -> rec.id ) )
+    rec.as[MongoRecord].db.remove( Mobj( "_id" -> rec.id ) )
   }
 
 
