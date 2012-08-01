@@ -130,7 +130,7 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   }
   
   def delete( extDocId:String ):Boolean = {
-    val result = Http.POST( "https://crocodoc.com/api/v2/document/delete", "", Map( "token" -> apiKey, "uuid" -> extDocId ) )._s
+    val result = Http.POST( "https://crocodoc.com/api/v2/document/delete", null, Map( "token" -> apiKey, "uuid" -> extDocId ) )._s
     
     if ( result == "true" ) 
       true

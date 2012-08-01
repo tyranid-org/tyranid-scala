@@ -17,7 +17,7 @@
 
 package org.tyranid.http
 
-import java.io.{ InputStream, File, FileInputStream }
+import java.io.{ InputStream, File, FileInputStream, IOException, OutputStream }
 import java.net.URL
 import java.util.Date
 
@@ -211,7 +211,13 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
       for ( h <- headers ) 
         res.setHeader( h._1, h._2 )
         
-    out( text )
+    try {
+      out( text ) 
+    } catch {
+      case e:IOException => ; // bury
+      case e if e.getClass.getSimpleName == "EofException" =>
+      case e2 => throw e2
+    }
   }
 
   def setNoCacheHeaders( res:HttpServletResponse ) {
@@ -225,12 +231,20 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     val blen = bytes.length
 
     res.setContentLength( blen )
-            
-    val out = res.getOutputStream
-    out.write( bytes, 0, blen )
-    out.close
-
-    res.getOutputStream.close
+    var out:OutputStream = null
+    
+    try {
+      out = res.getOutputStream
+      out.write( bytes, 0, blen )
+    } catch {
+      case e:IOException => ; // bury
+      case e if e.getClass.getSimpleName == "EofException" =>
+        println( "*** Broken pipe" )
+      case e2 => throw e2
+    } finally {
+      if ( out != null )
+        out.close
+    }
   }
 
   def deleteCookie( name:String, path:String = "/" ) = {
