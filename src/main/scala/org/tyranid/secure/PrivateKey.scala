@@ -33,7 +33,6 @@ trait PrivateKeyEntity extends MongoEntity {
   "pk"       is DbChar(10)        help Text( "A private-key, generated on-demand.  Used where a group URL needs to be hard-to-guess-yet-publicly-accessible.  For example, RSS Feeds." );
 
 
-
   def byPrivateId( privateId:String ) = {
     val split = privateId.length - 10
     val tid = privateId.substring( 0, split )
@@ -44,8 +43,6 @@ trait PrivateKeyEntity extends MongoEntity {
 }
 
 trait PrivateKeyRecord extends MongoRecord {
-
-
 
   // "private" key
   def pk = {
@@ -62,6 +59,5 @@ trait PrivateKeyRecord extends MongoRecord {
   }
 
   def privateId = tid + pk
-
 }
 
