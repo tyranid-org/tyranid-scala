@@ -1061,7 +1061,7 @@ object GroupFavorite extends MongoEntity( tid = "a0Iv" ) {
      <h1>GR</h1>
      { for ( g <- favorites.groups; if ( g != null ); firstOwnerTid = g.firstOwnerTid( null ); if firstOwnerTid.notBlank ) yield {
         val isOwner = g.isOwner( user )
-        <a class={ "tip gf" + ( !isOwner |* " memberGroup" ) } tip={ isOwner ? g.name | ( "Owned by " + TidItem.by( firstOwnerTid ).name ) } id={ g.tid } href={ "/group?g=" + g.tid }>
+        <a class={ "tip gf" + ( !isOwner |* " memberGroup" ) } tip={ isOwner ? g.name | ( g.name + " - Owned by " + TidItem.by( firstOwnerTid ).name ) } id={ g.tid } href={ "/group?g=" + g.tid }>
          <span class={ g.iconClass16x16 }/>
         </a>
      } }
