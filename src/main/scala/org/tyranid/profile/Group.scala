@@ -36,6 +36,7 @@ import org.tyranid.db.tuple.Tuple
 import org.tyranid.json.JqHtml
 import org.tyranid.math.Base62
 import org.tyranid.report.{ Report, Run }
+import org.tyranid.secure.{ PrivateKeyEntity, PrivateKeyRecord }
 import org.tyranid.ui.{ Checkbox, Field, Help, Select, Search, Show, Valuable }
 import org.tyranid.web.{ WebContext, Weblet }
 
@@ -116,7 +117,7 @@ object GroupMode extends RamEntity( tid = "a0Ot" ) with EnumEntity[GroupType] {
 class GroupMode extends Tuple( GroupMode.makeView )
 
 
-object Group extends MongoEntity( tid = "a0Yv" ) {
+object Group extends MongoEntity( tid = "a0Yv" ) with PrivateKeyEntity {
   type RecType = Group
   override def convert( obj:DBObject, parent:MongoRecord ) = new Group( obj, parent )
 
@@ -126,7 +127,6 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
   "builtin"  is DbBoolean         help Text( "A builtin group is maintained by the system and is not editable by end users." );
   "type"     is DbLink(GroupType) ;
   "mode"     is DbLink(GroupMode) ;
-  "pk"       is DbChar(10)        help Text( "A private-key, generated on-demand.  Used where a group URL needs to be hard-to-guess-yet-publicly-accessible.  For example, RSS Feeds." );
 
   override def init = {
     super.init
@@ -203,17 +203,9 @@ object Group extends MongoEntity( tid = "a0Yv" ) {
 
     myGroups ++ memberGroups 
   }
-
-  def byPrivateId( privateId:String ) = {
-    val split = privateId.length - 10
-    val tid = privateId.substring( 0, split )
-    val pk  = privateId.substring( split )
-
-    byTid( tid ).filter( _.pk == pk )
-  }
 }
 
-class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeView, obj, parent ) {
+class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeView, obj, parent ) with PrivateKeyRecord {
 
   def name     = s( 'name )
   def fullName = name + " (" + ( isOwner( T.user ) ? "me" | ownerNames ) + ")"
@@ -335,22 +327,6 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
     }
   }
   
-  // "private" key
-  def pk = {
-    var v = s( 'pk )
-    if ( v.isBlank ) {
-      v = Base62.make( 10 )
-      update( 'pk, v )
-
-      if ( !isNew )
-        db.update( Mobj( "_id" -> id ), Mobj( $set -> Mobj( "pk" -> v ) ) )
-    }
-
-    v
-  }
-
-  def privateId = tid + pk
-
   def about = {
     val sb = new StringBuilder
 
@@ -1085,7 +1061,7 @@ object GroupFavorite extends MongoEntity( tid = "a0Iv" ) {
      <h1>GR</h1>
      { for ( g <- favorites.groups; if ( g != null ); firstOwnerTid = g.firstOwnerTid( null ); if firstOwnerTid.notBlank ) yield {
         val isOwner = g.isOwner( user )
-        <a class={ "tip gf" + ( !isOwner |* " memberGroup" ) } tip={ isOwner ? g.name | ( "Owned by " + TidItem.by( firstOwnerTid ).name ) } id={ g.tid } href={ "/group?g=" + g.tid }>
+        <a class={ "tip gf" + ( !isOwner |* " memberGroup" ) } tip={ isOwner ? g.name | ( g.name + " - Owned by " + TidItem.by( firstOwnerTid ).name ) } id={ g.tid } href={ "/group?g=" + g.tid }>
          <span class={ g.iconClass16x16 }/>
         </a>
      } }
