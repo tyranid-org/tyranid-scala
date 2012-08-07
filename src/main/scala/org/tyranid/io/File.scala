@@ -290,7 +290,8 @@ object File {
 
 trait CommonFile extends Domain {
   override def ui( s:Scope, f:PathField ): NodeSeq = {
-    <div class='thumbnail'>
+    <div class="thumbnailImg">
+
       { 
         val url = s.s( f )
         

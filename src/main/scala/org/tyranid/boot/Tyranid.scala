@@ -63,7 +63,7 @@ object TyranidConfiglet extends Weblet {
     
     val user = T.user
 
-    <a href={ wpath + "/reindex" } class="stop btn">Re-Index Search</a>
+    <a href={ wpath + "/reindex" } class="btn-danger btn">Re-Index Search</a>
     <a href={ wpath + "/eye" } class={ user.b( 'eye ) ? "go btn" | "stop btn" }>Debug: { user.b( 'eye ) ? "ON" | "OFF" }</a>
     <a href={ wpath + "/sms" } class={ SMS.enabled ? "go btn" | "stop btn" }>SMS: { SMS.enabled ? "ON" | "OFF" }</a>
     <a href={ wpath + "/email" } class={ Email.enabled ? "go btn" | "stop btn" }>Email: { Email.enabled ? "ON" | "OFF" }</a>

@@ -259,7 +259,7 @@ trait Field {
 
     <table id={ id } class="tile" style="width:344px; height:54px;">
      <tr>
-      <td class="label">{ label }</td>
+      <td class="vlabel">{ label }</td>
       { topActions( run ) }
      </tr>
      <tr>

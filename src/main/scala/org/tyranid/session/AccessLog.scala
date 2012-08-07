@@ -200,7 +200,7 @@ object ActivityQuery extends Query {
         }
        </div>
        <div class="btns">
-        <input type="submit" value="Search" class="go btn" name="saving"/>
+        <input type="submit" value="Search" class="btn-success btn" name="saving"/>
        </div>
       </form>
     }

@@ -154,8 +154,8 @@ trait Query {
   }
   
   def extraActions:NodeSeq = Text( "" )
-  val actionsStyle = "width:338px; height:54px;"
-  val sectionStyle = "width:298px; height:54px;"
+  val actionsStyle = "height:54px;"
+  val sectionStyle = "height:54px;"
 
   val orderBy:Seq[Sort] = Nil
 
@@ -181,7 +181,7 @@ trait Query {
       <div>{ Select( "sort", r.sort != null |* r.sort.name, orderBy.map( _.selectObj ) ) }</div>
      </div> }
     <div class="btns">
-     <input type="submit" value="Search" class="go btn" name="saving"/>
+     <input type="submit" value="Search" class="btn-success btn" name="saving"/>
     </div>
    </form>
  }
@@ -410,12 +410,12 @@ case class Report( query:Query ) {
       <td>
        <table class="tile" style={ query.sectionStyle }> 
         <tr>
-         <td class="label">section</td>
+         <td class="vlabel">section</td>
          <td style="width:160px;">{ sectionDropdown }</td>
          <td rowspan="2" id="gab" style="width:130px;">{ addBox }</td>
         </tr>
         <tr>
-         <td class="label">field</td>
+         <td class="vlabel">field</td>
          <td id="gfd" style="width:160px;">{ fieldDropdown }</td>
         </tr>
        </table>

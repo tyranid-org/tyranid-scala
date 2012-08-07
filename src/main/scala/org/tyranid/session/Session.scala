@@ -43,15 +43,24 @@ object SessionCleaner {
     
     WebSession.sessions.filter( sess => {
       val httpsess = sess._2; 
-      val tyrsess = httpsess.getAttribute( WebSession.HttpSessionKey ).as[Session]
-      
-      if ( tyrsess != null ) { 
-        val idle = now - httpsess.getLastAccessedTime
-        val user = tyrsess.user
+    
+      try {
+        val tyrsess = httpsess.getAttribute( WebSession.HttpSessionKey ).as[Session]
         
-        ( user.isNew && idle > (2*Time.OneMinuteMs) ) || idle > Time.HalfHourMs
-      } else {
-        true
+        if ( tyrsess != null ) { 
+          val idle = now - httpsess.getLastAccessedTime
+          val user = tyrsess.user
+          
+          ( user.isNew && idle > (2*Time.OneMinuteMs) ) || idle > Time.HalfHourMs
+        } else {
+          true
+        }
+      } catch {
+        case e:IllegalStateException =>
+          true
+        case e =>
+          e.printStackTrace
+          false
       }
     }).foreach( sess => { WebSession.sessions.remove( sess._1 ); sess._2.invalidate } )
   }
@@ -293,9 +302,9 @@ trait Session {
 
   @volatile private var notes:List[Notification] = Nil
 
-  def notice( msg:AnyRef, extra:NodeSeq = null ) = notes ::= Notification( "notice",  msg.toString, extra )
-  def warn( msg:AnyRef, extra:NodeSeq = null )   = notes ::= Notification( "warning", msg.toString, extra )
-  def error( msg:AnyRef, extra:NodeSeq = null )  = notes ::= Notification( "error",   msg.toString, extra )
+  def notice( msg:AnyRef, extra:NodeSeq = null ) = notes ::= Notification( "alert-success",  msg.toString, extra )
+  def warn( msg:AnyRef, extra:NodeSeq = null )   = notes ::= Notification( "", msg.toString, extra )
+  def error( msg:AnyRef, extra:NodeSeq = null )  = notes ::= Notification( "alert-error",   msg.toString, extra )
 
   def popNotes = {
     val n = notes
@@ -324,15 +333,15 @@ object Notification {
   def box:NodeSeq = {
     val sess = Session()
 
-    <div class="notify">
-     { sess.popNotes.map { note => 
-       <div class={ note.level }>
+     { sess.popNotes.map { note =>
+       println( "Note level: " + note.level )
+       <div class={ "alert" + ( ( note.level.notBlank ) |* ( " " + note.level ) ) } data-dismiss="alert">
+        <a class="close" data-dismiss="alert" href="#">&times;</a>
         { Unparsed( note.msg ) }
         { if ( note.extra != null ) note.extra }
        </div> 
        } 
      }
-    </div>
   }
 }
 

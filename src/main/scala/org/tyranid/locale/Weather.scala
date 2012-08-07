@@ -271,7 +271,7 @@ object Weatherlet extends Weblet {
           NodeSeq.Empty
         else
           <div>
-           <div><b>{ capo.s( 'title ) }</b></div>
+           <div><strong>{ capo.s( 'title ) }</strong></div>
            <div>{ capo.s( 'summary ) }</div>
           </div> )
           /*

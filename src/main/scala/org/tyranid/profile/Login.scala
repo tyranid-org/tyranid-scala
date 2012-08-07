@@ -44,7 +44,7 @@ object Loginlet extends Weblet {
     val params = noSocial |* "?nosocial=1"
 
     // TODO:  make this more template-based
-    <form method="post" action={ wpath + "/in" } id="f">
+    <form method="post" action={ wpath + "/in" } id="f" class="form-horizontal">
      <head>
       <script>{ Unparsed( """
 $( function() {
@@ -54,47 +54,36 @@ $( function() {
 });
 """ ) }</script>
      </head>
-     <div class="loginBox">
-      <div class="title">
-       Log In
-      </div>
-      <div class="contents">
-       <table style="margin-bottom:8px;">
-        <tr>
-         <td>
-          <label for="un">Email:</label>
-         </td>
-         <td>
-          <input type="text" id="un" name="un" style="width:180px;" value={ user.s('email) }/>
-          { Focus("#un") }
-         </td>
-        </tr>
-        <tr>
-         <td>
-          <label for="pw" style="padding-right:8px;">Password:</label>
-         </td>
-         <td>
-          <input type="password" name="pw" style="width:180px;"/>
-         </td>
-        </tr>
-        <tr>
-         <td colspan="2" style="padding-top:8px;">
-          <input type="checkbox" name="save" id="saveLogin" value="Y"/>
-          <label for="save" style="line-height:18px;" onClick="cb=$( '#saveLogin' );cb.prop('checked',!cb[0].checked);">Stay Logged In</label>
-          <input type="hidden" name="l" value={ web.req.s("l") }/>
-          <input type="submit" value="Login" class="go btn" style="padding:2px 16px; display:inline-block; float:right;"/>
-         </td>
-        </tr>
-       </table>
+     <fieldset class="loginBox">
+      <legend><span>Log In</span></legend>
+      <div class="control-group" style="padding: 0px 8px;">
+       <label class="control-label" for="un">Email:</label>
+       <div class="controls">
+        <input type="text" id="un" name="un" value={ user.s('email) }/>
+        { Focus("#un") }
+       </div>
+       <label class="control-label" for="pw">Password:</label>
+       <div class="controls">
+        <input type="password" name="pw"/>
+       </div>
+       <div class="row-fluid">
+         <label class="checkbox span7">
+          <input type="checkbox" name="save" id="saveLogin" value="Y"/> Stay Logged In
+         </label>
+         <div class="span5"><input type="submit" value="Login" class="btn-success btn pull-right"/></div>
+       </div>
        { !noSocial && web.req.s( 'na ).isBlank |*
            Social.networks.flatMap { network =>
              <hr style="margin:4px 0 8px;"/> ++
              network.loginButton( this ) }
        }
       </div>
+     </fieldset>
+     <input type="hidden" name="l" value={ web.req.s("l") }/>
+     <div class="container-fluid" style="padding:0;margin-top:4px;">
+      <a href={ wpath + "/register" + params } class="pull-left">Join { B.applicationName }!</a>
+      <a href="#" id="forgot" class="pull-right">Forgot password ?</a>
      </div>
-     <a href={ wpath + "/register" + params } style="float:left; margin-top:4px;">Join { B.applicationName }!</a>
-     <a href="#" id="forgot" style="float:right; margin-top:4px;">Forgot password ?</a>
     </form>
   }
 
@@ -214,7 +203,7 @@ $( function() {
               { Scope(user, saving = true, captcha = true).draw(ui) }
             </table>
             <div class="btns">
-              <input type="submit" class="go btn" value="Save &amp; Register" name="saving"/>
+              <input type="submit" class="btn-success btn" value="Save &amp; Register" name="saving"/>
               <a href="/" class="btn">Cancel</a>
             </div>
            </form>
@@ -504,7 +493,7 @@ The """ + B.applicationName + """ Team
            </tr>
           </table>
           <div class="btns" style="padding-top:16px;">
-           <input name="create" type="submit" class="go btn" value={ "Create a New " + B.applicationName + " Account" }/>
+           <input name="create" type="submit" class="btn-success btn" value={ "Create a New " + B.applicationName + " Account" }/>
           </div>
          </form>
         </div>
@@ -537,7 +526,7 @@ The """ + B.applicationName + """ Team
            </tr>
           </table>
           <div class="btns" style="padding-top:16px;">
-           <input name="link" type="submit" class="go btn" value={ "Link your Existing " + B.applicationName + " Account to " + app.networkName }/>
+           <input name="link" type="submit" class="btn-success btn" value={ "Link your Existing " + B.applicationName + " Account to " + app.networkName }/>
           </div>
           {
             val otherNetworks = Social.networks.filter( !_.isActive )

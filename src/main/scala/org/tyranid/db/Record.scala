@@ -332,7 +332,7 @@ trait Record extends Valid with BsonObject {
   }
 
   /**
-   * This performs a deep copy of this record.  This does not copy the <b>original</b> record, if any.
+   * This performs a deep copy of this record.  This does not copy the <strong>original</strong> record, if any.
    */
   def deep:Record
 

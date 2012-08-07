@@ -454,11 +454,11 @@ case class GroupField( baseName:String, l:String = null,
     
     <table class="tile" style="width:180px; height:54px;">
      <tr>
-      <td class="label">view group</td>
+      <td class="vlabel">view group</td>
       <td rowspan="2" style="padding-right:4px;">
        <a id={ "grpBtn" + id } href="#" class="grpBtn btn" style="height:40px; padding-top:6px;">
         <span tip="Groups" class={ "tip " + /* bigIcon groupIcon */ makers.head.groupType.iconClass32x32 } style="padding:0;"/>
-        <span class="label"/>
+        <span class="vlabel"/>
        </a>
       </td>
      </tr>
@@ -775,7 +775,7 @@ case class GroupValue( gf:GroupField ) extends Valuable {
           </ul>
          </div>
          <div class="btns">
-          <button class="grpAddGrp go btn" style="float:left;" id="addGroupOpen">Add Group</button>
+          <button class="grpAddGrp btn-success btn" style="float:left;" id="addGroupOpen">Add Group</button>
          </div>
         </div>
         <div id={ "grpMain" + gf.id } class="grpMain">
@@ -802,7 +802,7 @@ case class GroupValue( gf:GroupField ) extends Valuable {
           ( editable |* Text( " " ) ++ <a href="#" id={ "grpEdit" + gf.id } class="grpEditLink" style="font-size:12px;">edit</a> ) ++
           group.eye
         else
-          <i>None selected</i> }
+          <em>None selected</em> }
      </div>
      { group != null |*
      <div class="list">
@@ -841,9 +841,9 @@ case class GroupValue( gf:GroupField ) extends Valuable {
      </form> }
     </div> } ++
     <div class="btns">
-     { editable |* <button class="grpDelGrp stop btn" style="float:left;">Delete</button> }
+     { editable |* <button class="grpDelGrp btn-danger btn" style="float:left;">Delete</button> }
      <button onclick={ gf.closeJs } class="btn" style="float:right;" id="doneBtn">Done</button>
-     { editable || showAddBy |* <button class="grpToggleAddBy go btn" style="float:right;">{ if ( showAddBy ) "Show Table" else "Add Members" }</button> }
+     { editable || showAddBy |* <button class="grpToggleAddBy btn-success btn" style="float:right;">{ if ( showAddBy ) "Show Table" else "Add Members" }</button> }
     </div>
   }
 
@@ -861,7 +861,7 @@ case class GroupValue( gf:GroupField ) extends Valuable {
       <div class="note">(separate multiple entries with commas)</div>
       <textarea id="grpAddByInput" name="grpAddByInput" style="height:292px; width:322px;"/>
     } } ++
-    <div class="btns"><a class="grpAddImport go btn">Add</a></div>
+    <div class="btns"><a class="grpAddImport btn-success btn">Add</a></div>
     }
   }
 
@@ -881,7 +881,7 @@ case class GroupValue( gf:GroupField ) extends Valuable {
        <label for={ "grpMonitor" + gf.id }>Monitor Group</label>
        { Help( GroupMode.monitorHelp ) }
       </div>
-      <div class="btns" style="width:370px;"><a href="#" class="grpAddGrpSave go btn" id="addGroupSave">Add Group</a></div>
+      <div class="btns" style="width:370px;"><a href="#" class="grpAddGrpSave btn-success btn" id="addGroupSave">Add Group</a></div>
      </form>
     </div>
     <div class="btns">
@@ -899,7 +899,7 @@ case class GroupValue( gf:GroupField ) extends Valuable {
        <label for={ "grpMonitor" + gf.id }>Monitor Group</label>
        { Help( GroupMode.monitorHelp ) }
       </div>
-      <div class="btns" style="width:370px;"><a href="#" class="grpEditSave go btn">Save</a></div>
+      <div class="btns" style="width:370px;"><a href="#" class="grpEditSave btn-success btn">Save</a></div>
      </form>
     </div>
     <div class="btns">
@@ -1006,7 +1006,7 @@ object GroupFavorite extends MongoEntity( tid = "a0Iv" ) {
     val orgId = T.session.user.org.id.as[ObjectId]
 
     <ul class="noSelect">
-     { selections.map( Group.getByTid ).filter( g => g != null ).map( g => <li class='noSelect cgf' id={ g.tid }><span class={ g.iconClass16x16 } /><span class="label"> { g.fullName } { Tid.eye( g.tid ) }</span></li> ) }
+     { selections.map( Group.getByTid ).filter( g => g != null ).map( g => <li class='noSelect cgf' id={ g.tid }><span class={ g.iconClass16x16 } /><span class="vlabel"> { g.fullName } { Tid.eye( g.tid ) }</span></li> ) }
     </ul>
   }
 
@@ -1017,7 +1017,7 @@ object GroupFavorite extends MongoEntity( tid = "a0Iv" ) {
          case "g"              => available.filter( _.isOwner( T.user ) )
          case "m"              => available.filter( !_.isOwner( T.user ) )
          } ).
-         map( g => <li class='noSelect cgf' id={ g.tid }><span class={ g.iconClass16x16 } /> <span class="label">{ g.fullName } { Tid.eye( g.tid ) }</span></li> ) 
+         map( g => <li class='noSelect cgf' id={ g.tid }><span class={ g.iconClass16x16 } /> <span class="vlabel">{ g.fullName } { Tid.eye( g.tid ) }</span></li> ) 
      }
     </ul>
 
@@ -1071,7 +1071,7 @@ object GroupFavorite extends MongoEntity( tid = "a0Iv" ) {
     { for ( g <- favorites.groups; if ( g != null ); firstOwnerTid = g.firstOwnerTid( null ); if firstOwnerTid.notBlank ) yield {
         val isOwner = g.isOwner( user )
         <a class={ "gf" + ( !isOwner |* " memberGroup tip" ) } tip={ !isOwner |* ( "Owned by " + TidItem.by( firstOwnerTid ).name ) } id={ g.tid } href={ "/group?g=" + g.tid }>
-         <span class={ g.iconClass16x16 }/><span class="label">{ g.name } </span>
+         <span class={ g.iconClass16x16 }/><span class="vlabel">{ g.name } </span>
         </a>
       }
     }

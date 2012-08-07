@@ -23,7 +23,6 @@ import org.jsoup.Jsoup
 
 import org.tyranid.Imp._
 
-
 case class Html( html:String ) {
   val doc = Jsoup.parse( html )
 
@@ -39,6 +38,6 @@ case class Html( html:String ) {
 
     if ( s.notBlank ) s
     else              doc.select( "link[rel=shortcut icon]" ).map( _.attr( "href" ) ).headOption.getOrElse( null )
-  }
+  }  
 }
 

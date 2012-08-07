@@ -18,13 +18,26 @@
 package org.tyranid.ui
 
 import scala.collection.mutable
-import scala.xml.{ Node, NodeSeq, Unparsed }
+import scala.xml.{ Node, NodeSeq, Unparsed, Text }
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ Record, Path, Scope, View, ViewAttribute }
 import org.tyranid.logic.Invalid
 import org.tyranid.web.Weblet
 
+
+object Ui {
+  // Prints with break at end
+  def br( s:String, strong:Boolean = false ) = 
+    if ( s.nonBlank )
+      if ( strong )
+        <strong>{ s }{ Unparsed("<br>") }</strong>
+      else 
+        { Text( s ) ++ Unparsed("<br>") }
+    else NodeSeq.Empty
+    
+  def gridGuide( cols:Int = 12 ) = { B.DEV |* <div class="row"> { for ( i <- 0 until cols) yield {<div class="row-guide span1"/> } } </div> }
+}
 
 object Help {
 
