@@ -48,7 +48,7 @@ object Tags {
 
   def tagUi( id:String, label:String ) =
     <li class="tag">
-     <span>{ label }<a class="close">{ Unparsed( "&#x2715;" ) }</a><input type="hidden" style="display:none;" value={ id } id="to" name="to[]"/></span>
+     <span>{ label }<a class="closeTag">{ Unparsed( "&#x2715;" ) }</a><input type="hidden" style="display:none;" value={ id } id="to" name="to[]"/></span>
     </li>
 }
 
