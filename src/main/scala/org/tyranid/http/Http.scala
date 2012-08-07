@@ -123,11 +123,13 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
 
     println( "** cookies" )
     for ( c <- cookies )
-      println( "  " + c.getName + " = " + c.getValue.literal +
-            ( c.getDomain != null |* "\n    Domain = " + c.getDomain ) +
-            ( c.getPath != null |* "\n    Path = " + c.getPath ) +
-            ( c.getMaxAge != -1 |* "\n    MaxAge = " + c.getMaxAge ) +
-            ( c.getSecure |* "\n    Secure = true" ) )
+      println(
+        "  " + c.getName + " = " + c.getValue.literal +
+        ( c.getDomain != null |* "\n    Domain = " + c.getDomain ) +
+        ( c.getPath != null   |* "\n    Path = " + c.getPath     ) +
+        ( c.getMaxAge != -1   |* "\n    MaxAge = " + c.getMaxAge ) +
+        ( c.getSecure         |* "\n    Secure = true"           )
+      )
   }
 
   def path = req.getServletPath
@@ -149,12 +151,17 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
     sb.toString
   }
 
-  def cookie( name:String ):Option[Cookie] = {
+  def cookie( name:String, domain:String = null ):Option[Cookie] = {
+dump
     val cookies = req.getCookies
-    cookies != null |* cookies.find( _.getName == name )
+    if ( cookies == null )
+      return None
+
+    ( domain.notBlank |* cookies.find( c => c.getName == name && c.getDomain == domain ) ) orElse
+    cookies.find( _.getName == name )
   }
 
-  def cookieValue( name:String ):String = cookie( name ).map( _.getValue ) getOrElse null
+  def cookieValue( name:String, domain:String = null ):String = cookie( name, domain = domain ).map( _.getValue ) getOrElse null
 }
 
 case class HttpServletResponseOps( res:HttpServletResponse ) {
@@ -247,10 +254,12 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     }
   }
 
-  def deleteCookie( name:String, path:String = "/" ) = {
+  def deleteCookie( name:String, path:String = "/", domain:String = null ) = {
     val cookie = new Cookie( name, "" )
     cookie.setMaxAge( 0 )
     cookie.setPath( path )
+    if ( domain.notBlank )
+      cookie.setDomain( domain )
     res.addCookie( cookie )
   }
 }

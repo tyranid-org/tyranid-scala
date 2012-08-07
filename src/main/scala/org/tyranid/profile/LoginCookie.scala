@@ -21,19 +21,24 @@ import org.tyranid.Imp._
 import org.tyranid.db.Record
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
+import org.tyranid.net.Uri
 
 
 object LoginCookie {
 
+  def domain =
+    if ( B.DEV ) null
+    else         Uri.rootDomain
+
   def getUser:Option[User] = {
-    val cv = T.web.req.cookieValue( B.loginCookieName )
+    val cv = T.web.req.cookieValue( B.loginCookieName, domain = domain )
     if ( cv != null ) {
       cv.splitFirst( '|' ) match {
       case ( tid, token ) if !tid.endsWith( "null" ) =>
         return Record.byTid( tid, only = B.User ).
-         map( _.asInstanceOf[User] ).
-         // loginToken is an attribute that exists on user
-         filter( _.s( 'loginToken ) == token )
+          map( _.asInstanceOf[User] ).
+          // loginToken is an attribute that exists on user
+          filter( _.s( 'loginToken ) == token )
 
       case _ =>
       }
@@ -48,13 +53,17 @@ object LoginCookie {
     val cookie = new javax.servlet.http.Cookie( B.loginCookieName, user.tid + "|" + loginToken )
     cookie.setMaxAge(60 * 60 * 24 * 14) // two weeks
     cookie.setPath("/")
+
+    if ( domain != null )
+      cookie.setDomain( domain )
+
     T.web.res.addCookie(cookie)
             
     user( "loginToken" ) = loginToken
     B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "loginToken" -> loginToken ) ) )
   }
 
-  def remove = T.web.res.deleteCookie( B.loginCookieName )
+  def remove = T.web.res.deleteCookie( B.loginCookieName, domain = domain )
 
   def autoLogin = {
     val sess = T.session
