@@ -26,12 +26,18 @@ import org.tyranid.net.Uri
 
 object LoginCookie {
 
+  lazy val name =
+    B.loginCookieName +
+    ( if ( B.DEV )        "-dev"
+      else if ( B.STAGE ) "-stage"
+      else                "" )
+
   def domain =
     if ( B.DEV ) null
     else         Uri.rootDomain
 
   def getUser:Option[User] = {
-    val cv = T.web.req.cookieValue( B.loginCookieName, domain = domain )
+    val cv = T.web.req.cookieValue( name, domain = domain )
     if ( cv != null ) {
       cv.splitFirst( '|' ) match {
       case ( tid, token ) if !tid.endsWith( "null" ) =>
@@ -50,7 +56,7 @@ object LoginCookie {
   def set( user:User ) = {
     val loginToken = org.tyranid.math.Base62.make( 10 )
 
-    val cookie = new javax.servlet.http.Cookie( B.loginCookieName, user.tid + "|" + loginToken )
+    val cookie = new javax.servlet.http.Cookie( name, user.tid + "|" + loginToken )
     cookie.setMaxAge(60 * 60 * 24 * 14) // two weeks
     cookie.setPath("/")
 
@@ -63,7 +69,12 @@ object LoginCookie {
     B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "loginToken" -> loginToken ) ) )
   }
 
-  def remove = T.web.res.deleteCookie( B.loginCookieName, domain = domain )
+  def remove = {
+    T.web.res.deleteCookie( name, domain = domain )
+
+    if ( domain.notBlank && domain != B.fullDomain )
+      T.web.res.deleteCookie( name, domain = B.fullDomain )
+  }
 
   def autoLogin = {
     val sess = T.session

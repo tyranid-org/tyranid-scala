@@ -100,10 +100,14 @@ trait Bootable {
 
   // DEV assumes the DNS is in your hosts file
   
-  lazy val domainPort = 
-    if ( DEV )        "dev." + domain + ":8443"
+  lazy val fullDomain = 
+    if ( DEV )        "dev." + domain
     else if ( STAGE ) "stage." + domain
     else              "app." + domain
+    
+  lazy val domainPort = 
+    if ( DEV )        fullDomain + ":8443"
+    else              fullDomain
     
   lazy val website = "https://" + domainPort
 
