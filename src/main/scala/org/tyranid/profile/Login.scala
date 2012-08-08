@@ -160,7 +160,6 @@ $( function() {
       user.isAdding = true
       
       if ( web.req.b( 'saving ) ) {
-
         val invalids = Scope(user, initialDraw = false, captcha = true).submit( user, ui )
 
         if (invalids.isEmpty) {
