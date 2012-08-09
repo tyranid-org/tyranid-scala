@@ -27,6 +27,7 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.email.AWSEmail
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
+import org.tyranid.session.Session
 import org.tyranid.social.Social
 import org.tyranid.ui.{ Button, Grid, Row, Focus }
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
@@ -44,7 +45,6 @@ object Loginlet extends Weblet {
     val params = noSocial |* "?nosocial=1"
 
     // TODO:  make this more template-based
-    <form method="post" action={ wpath + "/in" } id="f" class="form-horizontal">
      <head>
       <script>{ Unparsed( """
 $( function() {
@@ -53,7 +53,44 @@ $( function() {
   });
 });
 """ ) }</script>
-     </head>
+     </head> ++
+     { T.session.LnF match {
+       case Session.LnF_RETAIL_BRAND =>
+    <form method="post" action={ wpath + "/in" } id="f" class="login" style="margin-bottom:12px;" data-val="true" data-val-top="1">
+     <fieldset class="loginBox">
+      <div class="container-fluid" style="padding:0;">
+       <div class="row-fluid">
+        <h1 class="span5">Sign-in</h1>
+        <div class="span7 pull-right regLink">or <a href={ wpath + "/register" + params }>Register for { B.applicationName }!</a></div>
+       </div>
+      </div>
+      <hr style="margin:4px 0 30px;"/>
+      <div class="top-error-message"/>
+      <div class="container-fluid" style="padding:0;">
+       <div class="row-fluid">
+        <input type="text" id="un" name="un" placeholder="Email" value={ user.s('email) } data-req="true" data-val-type="email"/>
+        { Focus("#un") }
+       </div>
+       <div class="row-fluid">
+        <input type="password" name="pw" id="pw" placeholder="Password" data-req="true"/>
+       </div>
+       <div class="row-fluid">
+         <div class="span6">
+          <div style="height:40px;display:inline-block;"><input type="checkbox" name="save" id="saveLogin" value="Y"/></div>
+          <label for="saveLogin" style="vertical-align:text-top;display:inline-block;">Stay signed-in</label>
+         </div> 
+         <div class="span6" style="height:40px;padding-top:8px;"><button type="submit" class="btn-success btn pull-right">Sign-In <i class="icon-play"></i></button></div>
+       </div>
+       <hr style="margin:24px 0 0;"/>
+      </div>
+     </fieldset>
+     <input type="hidden" name="l" value={ web.req.s("l") }/>
+    </form> ++
+    <div class="container-fluid" style="padding:0;">
+     <a href="#" id="forgot" class="pull-right">Forgot your password?</a>
+    </div>
+       case _ =>
+    <form method="post" action={ wpath + "/in" } id="f" class="form-horizontal">
      <fieldset class="loginBox">
       <legend><span>Log In</span></legend>
       <div class="control-group" style="padding: 0px 8px;">
@@ -85,6 +122,8 @@ $( function() {
       <a href="#" id="forgot" class="pull-right">Forgot password ?</a>
      </div>
     </form>
+     }
+     }
   }
 
   def handle(web: WebContext) {

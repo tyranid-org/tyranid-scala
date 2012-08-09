@@ -186,10 +186,12 @@ class ThreadData {
 }
 
 
-object SessionMeta {
-}
-
 trait SessionMeta {
+  val LnF_KEY = "LnF"
+    
+  val LnF_RETAIL_BRAND = "rb"
+  val LnF_SUPPLY_CHAIN = "sc"
+  
   def apply():Session = ThreadData().session
 
   def byHttpSessionId( id:String ) =
@@ -209,7 +211,6 @@ trait SessionMeta {
 object Session extends SessionMeta
 
 trait Session {
-
   lazy val id = Base62.make( 10 )
 
   private var userVar = B.newUser()
@@ -224,6 +225,8 @@ trait Session {
 
   var passedCaptcha = !B.requireReCaptcha
 
+  def LnF = get( Session.LnF_KEY )._s or Session.LnF_SUPPLY_CHAIN
+  
   def clear {
     reports.clear
     editings.clear
