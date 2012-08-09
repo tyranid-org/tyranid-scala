@@ -21,9 +21,50 @@ import scala.collection.mutable
 import scala.xml.{ Node, NodeSeq, Unparsed, Text }
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ Record, Path, Scope, View, ViewAttribute }
+import org.tyranid.db.{ DbChar, DbInt, DbText, Record, Path, Scope, View, ViewAttribute }
+import org.tyranid.db.ram.RamEntity
+import org.tyranid.db.tuple.Tuple
 import org.tyranid.logic.Invalid
 import org.tyranid.web.Weblet
+
+
+
+object LnF extends RamEntity( tid = "a0Uw" ) {
+
+  "_id"          is DbInt       is 'id;
+  "name"         is DbText      is 'label;
+  "code"         is DbChar( 2 ) ;
+  "domainPrefix" is DbText      ;
+  "domain"       is DbText      ;
+
+  val SUPPLY_CHAIN = 1
+  val RETAIL_BRAND = 2
+
+  lazy val SupplyChain = getById( SUPPLY_CHAIN )
+  lazy val RetailBrand = getById( RETAIL_BRAND )
+  
+  static { s =>
+    s( "_id",        "name",         "code", "domainPrefix", "domain"         )
+    s( SUPPLY_CHAIN, "Supply Chain", "sc",   "",             "freight-iq.com" ) 
+    s( RETAIL_BRAND, "Retail Brand", "rb",   "rb",           "volerro.com"    )
+  }
+
+  def domainPrefix( appId:Long ) = byId( appId ).get.s( 'domainPrefix )
+
+  // rb.volerro.com, rb-dev.volerro.com
+  def byDomain( domain:String ): Tuple = {
+    val lcDomain = domain.toLowerCase
+
+    records.find { app =>
+      val prefix = app.s( 'domainPrefix )
+      prefix.notBlank && lcDomain.startsWith( prefix )
+    } match {
+    case Some( app ) => app
+    case None        => records( 0 )
+    }
+  }
+}
+
 
 
 object Ui {

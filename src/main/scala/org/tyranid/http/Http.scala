@@ -152,7 +152,6 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
   }
 
   def cookie( name:String, domain:String = null ):Option[Cookie] = {
-dump
     val cookies = req.getCookies
     if ( cookies == null )
       return None

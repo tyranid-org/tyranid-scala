@@ -47,14 +47,6 @@ object Uri {
     "http://" + base
   }
 
-  /*
-  def rootDomain( domain:String ) =
-    if ( B.PRODUCTION && domain.endsWith( B.domain ) )
-      B.domain
-    else
-      domain
-   */
-
   def rootDomain =
     if ( B.PRODUCTION ) B.domain
     else if ( B.STAGE ) "stage." + B.domain

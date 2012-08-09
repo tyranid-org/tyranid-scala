@@ -271,7 +271,7 @@ object Smslet extends Weblet {
                 sms( "vCode" ) = vCode
                 user.save
                 
-                B.sms.send( "1" + smsNumber, B.applicationName + ". Other charges may apply. Please enter this verification code at " + B.website + ": " + vCode )
+                B.sms.send( "1" + smsNumber, B.applicationName + ". Other charges may apply. Please enter this verification code at " + T.website + ": " + vCode )
                 header = sendHeader( smsNumber.toPhoneMask, user.tid )
               }
             }
@@ -352,7 +352,7 @@ object Smslet extends Weblet {
          user.save
       }
       
-      B.sms.send( "1" + sms.s( 'phone ).toOnlyNumbers, B.applicationName + ". Other charges may apply. Please enter this verification code at " + B.website + ": " + vCode )
+      B.sms.send( "1" + sms.s( 'phone ).toOnlyNumbers, B.applicationName + ". Other charges may apply. Please enter this verification code at " + T.website + ": " + vCode )
       sess.notice( "Verfication code has been sent again." )
       web.forward( "/sms/verify?id=" + web.s( "id" ) or "" )
   

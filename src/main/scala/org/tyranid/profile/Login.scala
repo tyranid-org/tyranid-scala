@@ -29,7 +29,7 @@ import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
 import org.tyranid.session.Session
 import org.tyranid.social.Social
-import org.tyranid.ui.{ Button, Grid, Row, Focus }
+import org.tyranid.ui.{ Button, Grid, Row, Focus, LnF }
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
 
 
@@ -55,7 +55,7 @@ $( function() {
 """ ) }</script>
      </head> ++
      { T.session.LnF match {
-       case Session.LnF_RETAIL_BRAND =>
+       case LnF.RetailBrand =>
     <form method="post" action={ wpath + "/in" } id="f" class="login" style="margin-bottom:12px;" data-val="true" data-val-top="1">
      <fieldset class="loginBox">
       <div class="container-fluid" style="padding:0;">
@@ -148,7 +148,7 @@ $( function() {
         else if ( email.isBlank )
           sess.warn( "Please log in." )
 
-        web.redirect(redirect.isBlank ? B.website | ( B.website+"/?l=" + redirect.encUrl ) )
+        web.redirect(redirect.isBlank ? T.website | ( T.website+"/?l=" + redirect.encUrl ) )
       } else {
         copySocialLogins( sessionUser = sess.user, existingUser = user )
         sess.login( user )
@@ -159,7 +159,7 @@ $( function() {
         if ( web.req.b( 'save ) )
           LoginCookie.set(user)
 
-        web.redirect(redirect.isBlank ? B.website | redirect)
+        web.redirect(redirect.isBlank ? T.website | redirect)
       }
 
     case "/clear" =>
@@ -167,7 +167,7 @@ $( function() {
       web.res.html( NodeSeq.Empty )
     case "/out" =>
       sess.logout
-      web.redirect( B.website + "/?lo=1" )
+      web.redirect( T.website + "/?lo=1" )
 
     case s if s.startsWith( "/in" ) =>
       socialLogin( s.substring( 3 ) )
@@ -309,14 +309,14 @@ Hello """ + dbUser.s( 'firstName ) + """,
 
 Forgot your password? No problem. You can access your """ + B.applicationName + """ account with the link below:
 
-""" + B.website + """/user/forgot?a=""" + resetCode + """
+""" + T.website + """/user/forgot?a=""" + resetCode + """
 
 Once you have accessed your account, please update it with a new password.
 
 Thank you!
 
 The """ + B.applicationName + """ Team
-""" + B.website )
+""" + T.website )
           .addTo( user s 'email )
           .from( "volerro@" + B.domain )
           .replyTo( "volerro@" + B.domain )
@@ -443,7 +443,7 @@ The """ + B.applicationName + """ Team
     val sess = T.session
 
     if ( !Social.appFor( network ).exchangeToken )
-      T.web.redirect( B.website )
+      T.web.redirect( T.website )
 
     val user = findUser( network )
 
@@ -455,7 +455,7 @@ The """ + B.applicationName + """ Team
       copySocialLogins( sess.user, user )
       sess.login( user )
       LoginCookie.set( user )
-      T.web.redirect( B.website )
+      T.web.redirect( T.website )
     }
   }
 

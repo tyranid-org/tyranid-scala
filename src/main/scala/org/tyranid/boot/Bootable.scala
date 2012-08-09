@@ -109,7 +109,6 @@ trait Bootable {
     if ( DEV )        fullDomain + ":8443"
     else              fullDomain
     
-  lazy val website = "https://" + domainPort
 
   lazy val nonsecureWebsite = "http://" + domainPort
   

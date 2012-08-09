@@ -28,6 +28,7 @@ import org.bson.types.ObjectId
 
 import org.tyranid.db.meta.TidCache
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.tuple.Tuple
 import org.tyranid.Imp._
 import org.tyranid.math.Base62
 import org.tyranid.profile.User
@@ -102,6 +103,11 @@ object ThreadData {
 }
 
 class ThreadData {
+
+  def website = {
+
+    "https://" + B.domainPort
+  }
 
   // --- HTTP Session
 
@@ -189,9 +195,6 @@ class ThreadData {
 trait SessionMeta {
   val LnF_KEY = "LnF"
     
-  val LnF_RETAIL_BRAND = "rb"
-  val LnF_SUPPLY_CHAIN = "sc"
-  
   def apply():Session = ThreadData().session
 
   def byHttpSessionId( id:String ) =
@@ -225,7 +228,7 @@ trait Session {
 
   var passedCaptcha = !B.requireReCaptcha
 
-  def LnF = get( Session.LnF_KEY )._s or Session.LnF_SUPPLY_CHAIN
+  def LnF = get( Session.LnF_KEY ).as[Tuple] ?| org.tyranid.ui.LnF.SupplyChain
   
   def clear {
     reports.clear
