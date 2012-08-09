@@ -56,7 +56,7 @@ $( function() {
      </head> ++
      { T.session.LnF match {
        case LnF.RetailBrand =>
-    <form method="post" action={ wpath + "/in" } id="f" class="login" style="margin-bottom:12px;" data-val="true" data-val-top="1">
+    <form method="post" action={ wpath + "/in" } id="f" class="login" style="margin-bottom:12px;" data-val="1" data-val-top="1">
      <fieldset class="loginBox">
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
@@ -68,11 +68,11 @@ $( function() {
       <div class="top-error-message"/>
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
-        <input type="text" id="un" name="un" placeholder="Email" value={ user.s('email) } data-req="true" data-val-type="email"/>
+        <input type="text" id="un" name="un" placeholder="Email" value={ user.s('email) } data-val="req,email"/>
         { Focus("#un") }
        </div>
        <div class="row-fluid">
-        <input type="password" name="pw" id="pw" placeholder="Password" data-req="true"/>
+        <input type="password" name="pw" id="pw" placeholder="Password" data-val="req"/>
        </div>
        <div class="row-fluid">
          <div class="span6">
@@ -166,9 +166,9 @@ $( function() {
       sess.clearAllEditing
       web.res.html( NodeSeq.Empty )
     case "/out" =>
+      val website = T.website
       sess.logout
-      web.redirect( T.website + "/?lo=1" )
-
+      web.redirect( website + "/?lo=1" )
     case s if s.startsWith( "/in" ) =>
       socialLogin( s.substring( 3 ) )
 
