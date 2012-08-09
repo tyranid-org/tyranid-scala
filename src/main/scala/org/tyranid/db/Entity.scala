@@ -158,7 +158,7 @@ trait Entity extends Domain with DbItem {
 
   def makeView:View
 
-  def make:Record
+  def make:RecType
 
   def hasTid( atid:String ) = atid.startsWith( this.tid )
 
@@ -321,6 +321,8 @@ trait Entity extends Domain with DbItem {
 	var staticRecords:Array[Tuple] = null
 	var staticIdIndex:mutable.HashMap[Long,Tuple] = null
 
+  def makeTuple( view:TupleView ) = new Tuple( view )
+
   def static( block: ( StaticBuilder ) => Unit ) {
     try {
       val tl = StaticBuilder( this )
@@ -345,7 +347,7 @@ trait Entity extends Domain with DbItem {
     val newTuples = new Array[Tuple]( tlen )
 		for ( ti <- 0 until tlen ) {
 			val rt = tuples( ti )
-			val t = new Tuple( v )
+			val t = makeTuple( v )
 			val values = t.values
       val vlen = rt.productArity
 			for ( vi <- 0 until vlen )
@@ -458,7 +460,7 @@ case class StaticBuilder( en:Entity ) {
       v.leaves = vas
       first = false
     } else {
-			val t = new Tuple( v )
+			val t = en.makeTuple( v )
 			for ( vi <- 0 until vlen ) {
         val any = values( vi )
 				t.values( vi ) =
