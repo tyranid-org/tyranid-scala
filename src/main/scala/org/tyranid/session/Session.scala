@@ -28,13 +28,13 @@ import org.bson.types.ObjectId
 
 import org.tyranid.db.meta.TidCache
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.db.tuple.Tuple
 import org.tyranid.Imp._
 import org.tyranid.math.Base62
 import org.tyranid.profile.User
 import org.tyranid.report.Query
 import org.tyranid.social.Social
 import org.tyranid.time.Time
+import org.tyranid.ui.LnF
 import org.tyranid.web.WebContext
 
 
@@ -109,7 +109,7 @@ class ThreadData {
   def website = {
     val lnf = LnF
 
-    "https://" + lnf.s( 'domainPrefix ) + ( lnf.s( 'domainPrefix ).isBlank ? "" | "-" ) + B.domainPort
+    "https://" + lnf.domainPrefix + ( lnf.domainPrefix.isBlank ? "" | "-" ) + B.domainPort
   }
 
   // --- HTTP Session
@@ -231,7 +231,7 @@ trait Session {
 
   var passedCaptcha = !B.requireReCaptcha
 
-  def LnF = get( Session.LnF_KEY ).as[Tuple] ?| org.tyranid.ui.LnF.SupplyChain
+  def LnF = get( Session.LnF_KEY ).as[LnF] ?| org.tyranid.ui.LnF.SupplyChain
   
   def clear {
     reports.clear

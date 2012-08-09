@@ -26,6 +26,9 @@ import org.tyranid.report.{ Run, Sort }
 
 
 case class RamEntity( tid:String ) extends Entity {
+  type RecType >: Null <: Tuple
+  def convert( view:TupleView ) = ( new Tuple( view ) ).as[RecType]
+
   val storageName = "RAM"
   val embedded = false
 
@@ -55,7 +58,9 @@ case class RamEntity( tid:String ) extends Entity {
     v
   }
 
-  def make = new Tuple( makeView )
+  def make = convert( makeView )
+
+  override def makeTuple( view:TupleView ) = convert( view )
 
 	def create {}
 	def drop   { /* TODO */ }
@@ -89,14 +94,14 @@ case class RamEntity( tid:String ) extends Entity {
 
   override def idLabels:Seq[(AnyRef,String)] = staticRecords.map( _.idLabel )
 
-  def byId( id:Long ) = staticIdIndex.get( id )
+  def byId( id:Long ) = staticIdIndex.get( id ).map( _.as[RecType] )
 
   def getById( id:Long ) = byId( id ).orNull
 
-  override def byRecordTid( recordTid:String ):Option[Tuple] =
+  override def byRecordTid( recordTid:String ):Option[RecType] =
     byId( recordTidToId( recordTid )._l )
 
-  override def getByRecordTid( recordTid:String ):Tuple =
+  override def getByRecordTid( recordTid:String ):RecType =
     byId( recordTidToId( recordTid )._l ) getOrElse null
 
   override def save( rec:Record )   = throw new UnsupportedOperationException
