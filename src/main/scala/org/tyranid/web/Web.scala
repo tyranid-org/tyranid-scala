@@ -41,14 +41,14 @@ case class WebRedirectException( redirect:String ) extends ControlThrowable
 /*
  * Throw this when you want to forward the handling on to the next weblet.
  */
-case class WebIgnoreException()                     extends ControlThrowable
+case class WebIgnoreException()                    extends ControlThrowable
 
-case class WebHandledException()                    extends ControlThrowable
+case class WebHandledException()                   extends ControlThrowable
 
 /*
  * Throw this when you want to trigger a 404, and not pass the handling on to another weblet.
  */
-case class Web404Exception()                        extends ControlThrowable
+case class Web404Exception()                       extends ControlThrowable
 
 
 object WebFilter {
