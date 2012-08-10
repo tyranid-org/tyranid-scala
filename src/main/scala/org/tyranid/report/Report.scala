@@ -429,7 +429,7 @@ case class Report( query:Query ) {
       //org.tyranid.ui.TableAlphaFilter( "grid_" + query.name, 0 ).draw
       NodeSeq.Empty
     } ++
-    <div class="grid">
+    <div class="grid" style="padding-bottom: 40px;">
      <table id={ "grid_" + query.name } style={ query.tableGridStyle }>
       <thead>
        { run.header }
