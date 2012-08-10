@@ -29,7 +29,8 @@ import org.cometd.bayeux.server.BayeuxServer
 import org.tyranid.Imp._
 import org.tyranid.json.JsCmd
 import org.tyranid.profile.{ LoginCookie, User }
-import org.tyranid.session.{ AccessLog, ThreadData }
+import org.tyranid.session.{ AccessLog, Session, ThreadData }
+import org.tyranid.ui.LnF
 
 
 case class WebException( message:String )          extends Exception
@@ -116,8 +117,10 @@ class WebFilter extends Filter {
     if ( notComet && thread.http != null ) {
       val session = T.session
       
-      if ( session != null && notAsset( web.path ) )
+      if ( session != null && notAsset( web.path ) ) {
         session.put( "lastPath", web.path )
+        session.put( Session.LnF_KEY, LnF.byDomain( web.req.getServerName ) )
+      }
     }
     
     var first = true
