@@ -142,7 +142,7 @@ $( function() {
         else
           getUserByEmailPassword( email, password )
 
-      if (user == null || user.s("activationCode").notBlank) {
+      if ( user == null || user.s( "activationCode" ).notBlank) {
         if (user != null)
           notActivatedYet( user )
         else if ( email.isBlank )
