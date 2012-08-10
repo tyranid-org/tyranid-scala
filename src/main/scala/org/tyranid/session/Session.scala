@@ -343,7 +343,6 @@ object Notification {
     val sess = Session()
 
      { sess.popNotes.map { note =>
-       println( "Note level: " + note.level )
        <div class={ "alert" + ( ( note.level.notBlank ) |* ( " " + note.level ) ) } data-dismiss="alert">
         <a class="close" data-dismiss="alert" href="#">&times;</a>
         { Unparsed( note.msg ) }
