@@ -135,7 +135,6 @@ class WebFilter extends Filter {
     }
 
     def handle( webloc:Webloc ):Boolean = {
-
       for ( cwebloc <- webloc.children if web.matches( cwebloc.weblet.wpath ) && cwebloc.weblet.matches( web ) )
         if ( handle( cwebloc ) )
           return true
@@ -183,6 +182,7 @@ class WebFilter extends Filter {
 
         if ( thread.http == null ) {
           thread.http = web.req.getSession( true )
+          T.session.put( Session.LnF_KEY, LnF.byDomain( web.req.getServerName ) )
           LoginCookie.autoLogin
         }
 
@@ -212,8 +212,34 @@ class WebFilter extends Filter {
   }
 }
 
+class WebResponse( web:WebContext, sess:Session ) {
+  var redirect:String = null
+  
+  lazy val notices = sess.popNotices
+  lazy val warnings = sess.popWarnings
+  lazy val errors = sess.popErrors
+  
+  def hasWarnings = warnings.length > 0 
+  def hasErrors = errors.length > 1 
+  
+  var extraJS:String = null
+  
+  var htmlMap:Map[String,Any] = null
+  
+  def toJsonStr = {
+     new org.tyranid.json.JsonString( Map(
+         "notices" -> notices,
+         "warnings" -> warnings,
+         "errors" -> errors,
+         "redirect" -> redirect,
+         "html" -> htmlMap,
+         "extraJS" -> extraJS 
+     ) ).toString 
+  }
+}
 
 case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:ServletContext ) {
+  def jsonRes( sess:Session ) = new WebResponse( this, sess )
   def matches( path:String ) = {
     // TODO:  check for path separators ... i.e. "/foo" should not match "/foobar" but should match "/foo/bar"
     req.getServletPath.startsWith( path )

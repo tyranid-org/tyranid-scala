@@ -29,8 +29,8 @@ import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
 import org.tyranid.session.Session
 import org.tyranid.social.Social
-import org.tyranid.ui.{ Button, Grid, Row, Focus, LnF }
-import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
+import org.tyranid.ui.{ Button, Grid, Row, Focus, LnF, Form }
+import org.tyranid.web.{ Weblet, WebContext, WebTemplate, WebResponse }
 
 
 object Loginlet extends Weblet {
@@ -54,18 +54,18 @@ $( function() {
 });
 """ ) }</script>
      </head> ++
-     { T.session.LnF match {
+     { T.LnF match {
        case LnF.RetailBrand =>
     <form method="post" action={ wpath + "/in" } id="f" class="login" style="margin-bottom:12px;" data-val="1" data-val-top="1">
      <fieldset class="loginBox">
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
         <h1 class="span5">Sign-in</h1>
-        <div class="span7 pull-right regLink">or <a href={ wpath + "/register" + params }>Register for { B.applicationName }!</a></div>
+        <div class="span7 pull-right regLink">or <a href="javascript:void(0);" data-sbt={ Form.attrJson( Map( "href" -> ( wpath + "/register" + params ) ) ) }>Register for { B.applicationName }!</a></div>
        </div>
       </div>
       <hr style="margin:4px 0 30px;"/>
-      <div class="top-error-message"/>
+      <div class="top-form-messages"/>
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
         <input type="text" id="un" name="un" placeholder="Email" value={ user.s('email) } data-val="req,email"/>
@@ -145,10 +145,18 @@ $( function() {
       if ( user == null || user.s( "activationCode" ).notBlank) {
         if (user != null)
           notActivatedYet( user )
-        else if ( email.isBlank )
+        else if ( email.isBlank ) 
           sess.warn( "Please log in." )
 
-        web.redirect(redirect.isBlank ? T.website | ( T.website+"/?l=" + redirect.encUrl ) )
+        // check look and feel, and if rb, do json, otherwise this.
+        T.LnF match {
+           case LnF.RetailBrand =>
+             val jsonRes = web.jsonRes( sess )
+             //jsonRes.redirect = redirect.isBlank ? T.website | ( T.website + "/?l=" + redirect.encUrl )
+             web.json( jsonRes )
+           case _ =>
+             web.redirect( redirect.isBlank ? T.website | ( T.website + "/?l=" + redirect.encUrl ) )
+        }
       } else {
         copySocialLogins( sessionUser = sess.user, existingUser = user )
         sess.login( user )
@@ -156,15 +164,21 @@ $( function() {
         sess.put( "remoteHost", web.req.getRemoteAddr() )
         sess.put( "remoteAddr", web.req.getRemoteAddr() )
         
-        if ( web.req.b( 'save ) )
+        if ( web.b( 'save ) )
           LoginCookie.set(user)
 
-        web.redirect(redirect.isBlank ? T.website | redirect)
+        T.LnF match {
+           case LnF.RetailBrand =>
+             val jsonRes = web.jsonRes( sess )
+             jsonRes.redirect = redirect.isBlank ? T.website | redirect
+             web.json( jsonRes )
+           case _ =>
+             web.redirect(redirect.isBlank ? T.website | redirect)
+        }
       }
-
     case "/clear" =>
       sess.clearAllEditing
-      web.res.html( NodeSeq.Empty )
+      web.html( NodeSeq.Empty )
     case "/out" =>
       val website = T.website
       sess.logout
@@ -219,7 +233,68 @@ $( function() {
       val entryApp = web.i( 'app ) or 0
       sess.put( "entryApp", new java.lang.Integer( entryApp._i ) )
 
-      val inner = 
+      T.LnF match {
+        case LnF.RetailBrand =>
+          val inner =
+   <div class="offset3 span6" style="margin-top:100px;text-align:center;">
+    <img src="/volerro_logo.png" style="width:197px;height:60px;"/>
+   </div> ++
+   <div class="offset2 span8">
+    <form method="post" action={ wpath + "/in" } id="f" class="register" style="margin-bottom:12px;" data-val="1" data-val-top="1">
+     <fieldset class="registerBox">
+      <div class="container-fluid" style="padding:0;">
+       <div class="row-fluid">
+        <h1 class="span5">Register</h1>
+       </div>
+      </div>
+      <hr style="margin:4px 0 30px;"/>
+      <div class="top-form-messages"/>
+      <div class="container-fluid" style="padding:0;">
+       <div class="row-fluid">
+         <div class="container-fluid span6" style="padding:0;">
+          <div class="row-fluid">
+           <div class="span6" ><input type="text" id="firstName" name="firstName" placeholder="First Name" data-val="req"/></div>
+           <div class="span6"><input type="text" id="lastName" name="lastName" placeholder="Last Name" data-val="req"/></div>
+           { Focus("#firstName") }
+          </div>
+          <div class="row-fluid">
+           <input type="text" name="email" id="email" value={ user.s( 'email ) } placeholder="Email address" data-val="req"/>
+          </div>
+          <div class="row-fluid">
+           <input type="password" name="password" id="password" placeholder="Password" data-val="req"/>
+          </div>
+          <div class="row-fluid">
+           <input type="password" name="password2" id="password2" placeholder="Re-type password" data-val="req"/>
+          </div>
+         </div>
+         <div class="row-fluid container-fluid span6">
+         Hint: Use your company or organization email address to easier connect with co-workers.
+         </div>
+       </div>
+       <hr style="margin:20px 0 12px;"/>
+       <div class="row-fluid">
+         <div class="span6">
+          <div style="height:40px;display:inline-block;">Already registered? <a href="#">Sign in here</a></div>
+         </div> 
+         <div class="span6" style="height:40px;padding-top:8px;"><button type="submit" class="btn-success btn pull-right">Register <i class="icon-play"></i></button></div>
+       </div>
+      </div>
+     </fieldset>
+    </form>
+   </div>
+          val jsonRes = web.jsonRes( sess )
+          jsonRes.htmlMap = Map( 
+              "html" -> inner,
+              "target" -> "#main",
+              "transition" -> "fadeOutIn",
+              "duration" -> 500 )
+          
+          //jsonRes.extraJS = "$('#main').fadeOut(500,function(){ $(this).html({--HTML--}).fadeIn(500); });"
+            
+         //jsonRes.redirect = redirect.isBlank ? T.website | ( T.website + "/?l=" + redirect.encUrl )
+         web.json( jsonRes )
+        case _ =>
+          val inner = 
          { ( entryApp == 0 ) |* <div style="margin-top:16px; font-size:24px;">Creating an account with Volerro is Free!</div> } ++
          { !noSocial |*
          <div class="plainBox">
@@ -256,7 +331,8 @@ $( function() {
           </div>
          </div>
 
-      web.template( ( entryApp == 0 ) ? <tyr:shell>{ inner }</tyr:shell> | <tyr:shellApp>{ inner }</tyr:shellApp> )
+          web.template( ( entryApp == 0 ) ? <tyr:shell>{ inner }</tyr:shell> | <tyr:shellApp>{ inner }</tyr:shellApp> )
+      }
 
     case "/resendActivation" =>
       import org.bson.types.ObjectId
@@ -395,7 +471,7 @@ The """ + B.applicationName + """ Team
           return B.User( u )
     }
     
-    sess.warn( "Invalid login.  Please try again." )
+    sess.error( "Invalid login.  Please try again." )
 
     null
   }

@@ -27,8 +27,8 @@ import org.codehaus.jackson.node.{ ArrayNode, JsonNodeFactory, MissingNode, Obje
 
 import org.tyranid.Imp._
 import org.bson.types.ObjectId
-
-
+import org.tyranid.session.Notification
+import org.tyranid.web.WebResponse
 
 sealed trait JsCmd {
   def toJson:String
@@ -168,13 +168,15 @@ case class JsonString( root:Any ) {
       sb += '{'
       var first = true
       for ( e <- o ) {
-        if ( first )
-          first = false
-        else
-          sb += ','
-        write( e._1 )
-        sb += ':'
-        write( e._2 )
+        if ( e._2 != null ) {
+          if ( first )
+            first = false
+          else
+            sb += ','
+          write( e._1 )
+          sb += ':'
+          write( e._2 )
+        }
       }
       sb += '}'
     case p:Pair[_,_] =>
@@ -191,6 +193,8 @@ case class JsonString( root:Any ) {
     case l:java.lang.Long    => sb ++= l.toString
     case f:java.lang.Float   => sb ++= f.toString
     case oid:ObjectId        => sb += '"' ++= oid.toString += '"'
+    case ws:WebResponse      => sb ++= ws.toJsonStr
+    case note:Notification   => sb += '"' ++= note.msg += '"'
     case u => println( "Don't know how to turn " + u + " (" + u.getClass() + ") into JSON" ); sb ++= "\"\"" 
     }
 }

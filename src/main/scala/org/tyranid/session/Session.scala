@@ -310,17 +310,28 @@ trait Session {
    */
 
   @volatile private var notes:List[Notification] = Nil
+  
+  def notice( msg:AnyRef, extra:NodeSeq = null ) = notes ::= Notification( Notification.NOTICE, msg.toString, cssClass = "alert-success", extra )
+  def warn( msg:AnyRef, extra:NodeSeq = null )   = notes ::= Notification( Notification.WARN, msg.toString, cssClass= "alert", extra )
+  def error( msg:AnyRef, extra:NodeSeq = null )  = notes ::= Notification( Notification.ERROR, msg.toString, cssClass= "alert-error", extra )
 
-  def notice( msg:AnyRef, extra:NodeSeq = null ) = notes ::= Notification( "alert-success",  msg.toString, extra )
-  def warn( msg:AnyRef, extra:NodeSeq = null )   = notes ::= Notification( "", msg.toString, extra )
-  def error( msg:AnyRef, extra:NodeSeq = null )  = notes ::= Notification( "alert-error",   msg.toString, extra )
-
-  def popNotes = {
-    val n = notes
-    notes = Nil
-    n
+  def popNotices = popNotes( Notification.NOTICE )
+  def popWarnings = popNotes( Notification.WARN )
+  def popErrors = popNotes( Notification.ERROR )
+   
+  def popNotes( level:Int = 0 ) = {
+    if ( level == 0 ) {
+      val n = notes
+      notes = Nil
+      n
+    } else {
+      var ( n, n2 ) = notes.partition( _.level == level )
+      notes = n2
+      n
+    }
   }
 
+  def peekNotes( level:Int = 0 ): List[Notification] = ( level == 0 ) ? notes | notes.filter( n => n.level == level )
 
   /*
    * * *   Web Paths / Tabs Memory
@@ -338,12 +349,15 @@ trait Session {
 }
 
 object Notification {
-
+  val NOTICE = 1
+  val WARN = 2
+  val ERROR = 3
+  
   def box:NodeSeq = {
     val sess = Session()
 
-     { sess.popNotes.map { note =>
-       <div class={ "alert" + ( ( note.level.notBlank ) |* ( " " + note.level ) ) } data-dismiss="alert">
+     { sess.popNotes().map { note =>
+       <div class={ "alert" + ( ( note.cssClass.notBlank ) |* ( " " + note.level ) ) } data-dismiss="alert">
         <a class="close" data-dismiss="alert" href="#">&times;</a>
         { Unparsed( note.msg ) }
         { if ( note.extra != null ) note.extra }
@@ -353,6 +367,6 @@ object Notification {
   }
 }
 
-case class Notification( level:String, msg:String, extra:NodeSeq = null )
+case class Notification( level:Int, msg:String, cssClass:String = "", extra:NodeSeq = null )
 
 
