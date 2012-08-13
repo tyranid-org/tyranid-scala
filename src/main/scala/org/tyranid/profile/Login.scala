@@ -164,7 +164,10 @@ $( function() {
           T.LnF match {
              case LnF.RetailBrand =>
                val jsonRes = web.jsonRes( sess )
-               //jsonRes.redirect = redirect.isBlank ? T.website | ( T.website + "/?l=" + redirect.encUrl )
+               
+               if ( !sess.hasErrors )
+                 jsonRes.redirect = redirect.isBlank ? T.website | ( T.website + "/?l=" + redirect.encUrl )
+                 
                web.json( jsonRes )
              case _ =>
                web.redirect( redirect.isBlank ? T.website | ( T.website + "/?l=" + redirect.encUrl ) )
@@ -225,10 +228,10 @@ $( function() {
 
       user.isAdding = true
       
-      if ( web.req.b( 'saving ) ) {
-        val invalids = Scope(user, initialDraw = false, captcha = true).submit( user, ui )
+      if ( web.b( 'saving ) || web.b( 'xhrSbt ) ) {
+        val invalids = Scope( user, initialDraw = false, captcha = true ).submit( user, ui )
 
-        if (invalids.isEmpty) {
+        if ( invalids.isEmpty ) {
           user( 'createdOn ) = new Date
 
           sendActivation( user )
@@ -239,7 +242,7 @@ $( function() {
             user( "entryApp" ) = entryAppVal._i
             
           user.save
-          web.redirect("/")
+          web.redirect( "/" )
         }
       }
 
@@ -248,13 +251,14 @@ $( function() {
 
       T.LnF match {
         case LnF.RetailBrand =>
+          
+          //if ( !invalids.is)
           val inner =
    <div class="offset3 span6" style="margin-top:100px;text-align:center;">
     <img src="/volerro_logo.png" style="width:197px;height:60px;"/>
    </div> ++
    <div class="offset2 span8">
-    <script>{ Unparsed( "var valReg = function() { $( '.val-area' ).hide(); }" ) }</script>
-    <form method="post" action={ wpath + "/in" } id="f" class="register" style="margin-bottom:12px;" data-val="1" data-val-top="1" data-val-before="valReg()">
+    <form method="post" action={ wpath + "/register" } id="f" class="register" style="margin-bottom:12px;" data-val="1">
      <fieldset class="registerBox">
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
@@ -270,6 +274,7 @@ $( function() {
            <div class="span3"><input type="text" id="firstName" name="firstName" placeholder="First Name" data-val="req" data-val-with="lastName"/></div>
            <div class="span3"><input type="text" id="lastName" name="lastName" placeholder="Last Name" data-val="req" data-val-with="firstName"/></div>
            { Focus("#firstName") }
+           <div class="span6 val-display"/>
            <div class="span6 hints" style="position:relative;">
             <div>
             Hint: Use your company or organization email address to easier connect with co-workers.
@@ -278,18 +283,21 @@ $( function() {
           </div>
           <div class="row-fluid">
            <div class="span6">
-            <input type="text" name="email" id="email" value={ user.s( 'email ) } placeholder="Email address" data-val="req"/>
+            <input type="text" name="email" id="email" value={ user.s( 'email ) } placeholder="Email address" data-val="req,email"/>
            </div>
+           <div class="span6 val-display"/>
           </div>
           <div class="row-fluid">
            <div class="span6">
             <input type="password" name="password" id="password" placeholder="Password" data-val="req"/>
            </div>
+           <div class="span6 val-display"/> 
           </div>
           <div class="row-fluid">
            <div class="span6">
-            <input type="password" name="password2" id="password2" placeholder="Re-type password" data-val="req"/>
+            <input type="password" name="password2" id="password2" placeholder="Re-type password" data-val="req,same=password"/>
            </div>
+           <div class="span6 val-display"/>
           </div>
          </div>
        </div>

@@ -331,6 +331,12 @@ trait Session {
     }
   }
 
+  def hasNotices = peekNotes( Notification.NOTICE ).length > 0 
+  def hasWarnings = peekNotes( Notification.WARN ).length > 0 
+  def hasErrors = peekNotes( Notification.ERROR ).length > 0
+  
+  def hasAny = notes.length > 0 
+  
   def peekNotes( level:Int = 0 ): List[Notification] = ( level == 0 ) ? notes | notes.filter( n => n.level == level )
 
   /*
