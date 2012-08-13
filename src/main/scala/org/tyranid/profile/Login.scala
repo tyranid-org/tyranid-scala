@@ -306,7 +306,7 @@ $( function() {
    </div>
           val jsonRes = web.jsonRes( sess )
           jsonRes.htmlMap = Map( 
-              "html" -> inner,
+              "html" -> <div class="container">{ inner }</div>,
               "transition" -> "fadeOutIn",
               "duration" -> 500 )
               
