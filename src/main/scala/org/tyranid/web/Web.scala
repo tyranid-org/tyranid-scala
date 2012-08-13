@@ -87,7 +87,7 @@ class WebFilter extends Filter {
     ctx.res.sendRedirect( sb.toString )
   }
 
-  val assetPattern = java.util.regex.Pattern.compile( "([^\\s]+(\\.(?i)(jpg|png|gif|bmp|js|css))$)" )
+  val assetPattern = java.util.regex.Pattern.compile( "([^\\s]+(\\.(?i)(ico|jpg|png|gif|bmp|js|css|html))$)" )
   
   def notAsset( path:String ) = !assetPattern.matcher( path ).matches
   
@@ -113,19 +113,23 @@ class WebFilter extends Filter {
     val thread = T
     thread.http = web.req.getSession( false )
     thread.web = web
-
+    var isAsset = false
+    
     if ( notComet && thread.http != null ) {
       val session = T.session
       
-      if ( session != null && notAsset( web.path ) ) {
-        session.put( "lastPath", web.path )
-        session.put( Session.LnF_KEY, LnF.byDomain( web.req.getServerName ) )
+      if ( session != null ) {
+        isAsset = !notAsset( web.path )
+        
+        if ( !isAsset )
+          session.put( "lastPath", web.path )
       }
     }
     
     var first = true
 
     val path = web.req.getServletPath
+    
     if ( path.matches( WebFilter.versionPattern ) ) {
       val slash = path.indexOf( '/', 1 )
       if ( slash != -1 ) {
@@ -155,8 +159,8 @@ class WebFilter extends Filter {
         // "" means multiple weblets can handle this path
         if ( webloc.path == "" )
           return false
-        else
-          web.ctx.getRequestDispatcher( "/404" ).forward( web.req, web.res )
+        
+        web.ctx.getRequestDispatcher( "/404" ).forward( web.req, web.res )
       case re:org.tyranid.secure.SecureException =>
         if ( !B.User.isLoggedIn ) {
           web.res.sendRedirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
@@ -181,9 +185,15 @@ class WebFilter extends Filter {
             if web.matches( webloc.weblet.wpath ) && webloc.weblet.matches( web ) ) {
 
         if ( thread.http == null ) {
+          val lnf = LnF.byDomain( web.req.getServerName )
           thread.http = web.req.getSession( true )
-          T.session.put( Session.LnF_KEY, LnF.byDomain( web.req.getServerName ) )
-          LoginCookie.autoLogin
+          T.session.put( Session.LnF_KEY, lnf )
+          LoginCookie.autoLogin          
+        }
+        
+        if ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) ) {
+          web.template( B.appShellPage( web ) )
+          return
         }
 
         if ( first ) {

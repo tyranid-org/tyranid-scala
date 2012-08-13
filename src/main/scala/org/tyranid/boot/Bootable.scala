@@ -46,7 +46,7 @@ import org.tyranid.social.basecamp.BcApp
 import org.tyranid.social.facebook.FbApp
 import org.tyranid.social.google.GoApp
 import org.tyranid.social.linkedin.LiApp
-import org.tyranid.web.{ Weblet, Webloc, CometService }
+import org.tyranid.web.{ Weblet, Webloc, CometService, WebContext }
 
 object Boot {
 
@@ -153,6 +153,10 @@ trait Bootable {
   @volatile var Org:OrgMeta = null
   @volatile var Location:MongoEntity = null
   @volatile var newSession:() => Session = null
+
+  @volatile var loginPage:() => NodeSeq = null
+  
+  def appShellPage( web:WebContext ): NodeSeq = NodeSeq.Empty
 
   lazy val appOrgId = Org.db.findOne( Mobj( "name" -> applicationName ) ).oid
   lazy val appOrgTid = Org.idToTid( appOrgId )
