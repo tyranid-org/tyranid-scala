@@ -18,13 +18,11 @@
 package org.tyranid.profile
 
 import java.util.Date
-
 import scala.xml.{ NodeSeq, Unparsed }
-
 import org.tyranid.Imp._
 import org.tyranid.db.Scope
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.email.AWSEmail
+import org.tyranid.email.{ Email, AWSEmail }
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
 import org.tyranid.session.Session
@@ -199,10 +197,16 @@ $( function() {
       val website = T.website
       sess.logout
       web.redirect( website + "/?lo=1" )
+    
     case s if s.startsWith( "/in" ) =>
       socialLogin( s.substring( 3 ) )
 
     case s if s.startsWith( "/register" ) =>
+      if ( T.LnF == LnF.RetailBrand ) {
+        registerRetail( web, sess )
+        return
+      }
+      
       val network = s.substring( 9 )
 
       if ( network.notBlank )
@@ -220,7 +224,7 @@ $( function() {
         ( user.view( 'email ),
           { scope:Scope =>
             B.User.db.exists( Mobj( "email" -> user.s( 'email ) ) ) |*
-              Some( Invalid( scope.at( 'email ), "The \"" + user.s( 'email ) + "\" email address is already taken.") )
+              Some( Invalid( scope.at( 'email ), "'" + user.s( 'email ) + "' email address is already taken.") )
           } ) ::
           Nil
 
@@ -228,7 +232,7 @@ $( function() {
 
       user.isAdding = true
       
-      if ( web.b( 'saving ) || web.b( 'xhrSbt ) ) {
+      if ( web.b( 'saving ) ) {
         val invalids = Scope( user, initialDraw = false, captcha = true ).submit( user, ui )
 
         if ( invalids.isEmpty ) {
@@ -242,6 +246,7 @@ $( function() {
             user( "entryApp" ) = entryAppVal._i
             
           user.save
+          
           web.redirect( "/" )
         }
       }
@@ -249,80 +254,9 @@ $( function() {
       val entryApp = web.i( 'app ) or 0
       sess.put( "entryApp", new java.lang.Integer( entryApp._i ) )
 
-      T.LnF match {
-        case LnF.RetailBrand =>
-          
-          //if ( !invalids.is)
-          val inner =
-   <div class="offset3 span6" style="margin-top:100px;text-align:center;">
-    <img src="/volerro_logo.png" style="width:197px;height:60px;"/>
-   </div> ++
-   <div class="offset2 span8">
-    <form method="post" action={ wpath + "/register" } id="f" class="register" style="margin-bottom:12px;" data-val="1">
-     <fieldset class="registerBox">
-      <div class="container-fluid" style="padding:0;">
-       <div class="row-fluid">
-        <h1 class="span5">Register</h1>
-       </div>
-      </div>
-      <hr style="margin:4px 0 30px;"/>
-      <div class="top-form-messages"/>
-      <div class="container-fluid" style="padding:0;">
-       <div class="row-fluid">
-         <div class="container-fluid span12" style="padding:0;">
-          <div class="row-fluid">
-           <div class="span3"><input type="text" id="firstName" name="firstName" placeholder="First Name" data-val="req" data-val-with="lastName"/></div>
-           <div class="span3"><input type="text" id="lastName" name="lastName" placeholder="Last Name" data-val="req" data-val-with="firstName"/></div>
-           { Focus("#firstName") }
-           <div class="span6 val-display"/>
-           <div class="span6 hints" style="position:relative;">
-            <div>
-            Hint: Use your company or organization email address to easier connect with co-workers.
-            </div> 
-           </div>  
-          </div>
-          <div class="row-fluid">
-           <div class="span6">
-            <input type="text" name="email" id="email" value={ user.s( 'email ) } placeholder="Email address" data-val="req,email"/>
-           </div>
-           <div class="span6 val-display"/>
-          </div>
-          <div class="row-fluid">
-           <div class="span6">
-            <input type="password" name="password" id="password" placeholder="Password" data-val="req"/>
-           </div>
-           <div class="span6 val-display"/> 
-          </div>
-          <div class="row-fluid">
-           <div class="span6">
-            <input type="password" name="password2" id="password2" placeholder="Re-type password" data-val="req,same=password"/>
-           </div>
-           <div class="span6 val-display"/>
-          </div>
-         </div>
-       </div>
-       <hr style="margin:20px 0 12px;"/>
-       <div class="row-fluid">
-         <div class="span6">
-          <div style="height:40px;line-height:40px;position:relative;top:10px;">Already registered? <a href="javascript:void(0);" data-sbt={ Form.attrJson( Map( "href" -> ( wpath + "/in" ) ) ) }>Sign in here</a></div>
-         </div> 
-         <div class="span6" style="height:40px;padding-top:8px;"><button type="submit" class="btn-success btn pull-right">Register <i class="icon-play"></i></button></div>
-       </div>
-      </div>
-     </fieldset>
-    </form>
-   </div>
-          val jsonRes = web.jsonRes( sess )
-          jsonRes.htmlMap = Map( 
-              "html" -> <div class="container">{ inner }</div>,
-              "transition" -> "fadeOutIn",
-              "duration" -> 500 )
-              
-          web.json( jsonRes )
-        case _ =>
-          val inner = 
-         { ( entryApp == 0 ) |* <div style="margin-top:16px; font-size:24px;">Creating an account with Volerro is Free!</div> } ++
-         { !noSocial |*
+      val inner = 
+        { ( entryApp == 0 ) |* <div style="margin-top:16px; font-size:24px;">Creating an account with Volerro is Free!</div> } ++
+        { !noSocial |*
          <div class="plainBox">
           <div class="title">Use Social Login to Automatically Register</div>
           <div class="contents">
@@ -357,9 +291,7 @@ $( function() {
           </div>
          </div>
 
-          web.template( ( entryApp == 0 ) ? <tyr:shell>{ inner }</tyr:shell> | <tyr:shellApp>{ inner }</tyr:shellApp> )
-      }
-
+      web.template( ( entryApp == 0 ) ? <tyr:shell>{ inner }</tyr:shell> | <tyr:shellApp>{ inner }</tyr:shellApp> )
     case "/resendActivation" =>
       import org.bson.types.ObjectId
       
@@ -447,12 +379,192 @@ The """ + B.applicationName + """ Team
       log( Event.RefInt, "m" -> ( "null, Referer: " + web.req.getHeader( "referer" ) ) ) 
     }
   }
+  
+  def registerRetail( web:WebContext, sess:Session ) {
+    val user =
+      sess.user match {
+      case null => B.newUser()
+      case u    => if ( u.isNew ) u else B.newUser()
+    }
+
+    sess.user = user
+
+    user.extraVaValidations =
+      ( user.view( 'email ),
+        { scope:Scope =>
+          B.User.db.exists( Mobj( "email" -> user.s( 'email ) ) ) |*
+            Some( Invalid( scope.at( 'email ), user.s( 'email ) + " is already in use.") )
+        } ) ::
+        Nil
+
+    val ui = user.view.ui( "register" )
+
+    user.isAdding = true
+    
+    if ( web.b( 'xhrSbt ) ) {
+      val invalids = Scope( user, initialDraw = false, captcha = true ).submit( user, ui )
+
+      if ( invalids.isEmpty ) {
+        user( 'createdOn ) = new Date
+
+        sendActivation( user )
+        
+        val entryAppVal = sess.get( "entryApp" )
+        
+        if ( entryAppVal != null )
+          user( "entryApp" ) = entryAppVal._i
+          
+        user.save
+        
+        val emailDomain = Email.domainFor( user.s( 'email ) )._s
+        val org = B.Org.db.findOne( Mobj( "domain" -> emailDomain.toPatternI ) )
+        var inner:NodeSeq = null
+          
+        if ( org != null ) {
+          inner =
+            <div class="container-fluid" style="padding:0;padding-top:1em;">
+             <div class="row-fluid">
+              <div class="span12">A verification email was sent to <b>{ user.s( 'email ) }</b>.</div>
+              <div>Click the activation link in your email to gain access to { org.s( 'name ).possessive } network and projects.</div>
+             </div>
+             <hr/>
+             <div class="row-fluid">
+              <div class="span12 pull-right" style="height:40px;padding-top:8px;">Or activate later and <button type="submit" class="btn-success btn">Continue To Volerro <i class="icon-play"></i></button></div>
+             </div>
+            </div>
+        } else {
+          inner = 
+            <div class="container-fluid" style="padding:0;">
+             <div class="row-fluid">
+              <div>One last step.  Please enter the name of the company below.  This helps other identify you within Volerro.</div>
+             </div>
+             <hr style="margin:4px 0 30px;"/>
+             <div class="row-fluid">
+              <div class="span6"><input type="text" id="companyName" name="companyName" placeholder="Company Name" data-val="req"/></div>
+              <div class="span6 hints" style="position:relative;">
+               <div>
+                Hint: TODO:  Deanna-- add some hint here.
+               </div>
+              </div> 
+              <div class="span12" style="height:40px;padding-top:8px;text-align:right;"><button type="submit" class="btn-success btn">Next <i class="icon-play"></i></button></div>
+             </div>
+            </div>
+        }       
+            
+        val jsonRes = web.jsonRes( sess )
+        jsonRes.htmlMap = Map( 
+            "html" -> 
+              <div class="container">
+               <div class="offset3 span6" style="margin-top:100px;text-align:center;">
+                <img src="/volerro_logo.png" style="width:197px;height:60px;"/>
+               </div>
+               <div class="offset2 span8">
+                <form method="post" action={ wpath + "/register" } id="f" class="register" style="margin-bottom:12px;" data-val="1">
+                 <fieldset class="registerBox">
+                  <div class="top-form-messages"/>
+                  <div class="container-fluid" style="padding:0;">
+                   <div class="row-fluid">
+                    <h1 class="span12">Thanks, { user.s( 'firstName ) }!</h1>
+                   </div>
+                  </div>
+                  { inner }
+                 </fieldset>
+                </form>
+               </div>
+              </div>,
+              "transition" -> "slideLeft",
+              "duration" -> 500 )
+            
+          web.json( jsonRes )
+            
+        return
+      } else {
+        for ( i <- invalids )
+          sess.error( i.message )
+        
+        web.json( web.jsonRes( sess ) )
+        return
+      }
+    }
+
+    val entryApp = web.i( 'app ) or 0
+    sess.put( "entryApp", new java.lang.Integer( entryApp._i ) )
+
+    val inner =
+ <div class="offset3 span6" style="margin-top:100px;text-align:center;">
+    <img src="/volerro_logo.png" style="width:197px;height:60px;"/>
+   </div> ++
+ <div class="offset2 span8">
+    <form method="post" action={ wpath + "/register" } id="f" class="register" style="margin-bottom:12px;" data-val="1">
+     <fieldset class="registerBox">
+      <div class="container-fluid" style="padding:0;">
+       <div class="row-fluid">
+        <h1 class="span5">Register</h1>
+       </div>
+      </div>
+      <hr style="margin:4px 0 30px;"/>
+      <div class="top-form-messages"/>
+      <div class="container-fluid" style="padding:0;">
+       <div class="row-fluid">
+         <div class="container-fluid span12" style="padding:0;">
+          <div class="row-fluid">
+           <div class="span3"><input type="text" id="firstName" name="firstName" placeholder="First Name" data-val="req" data-val-with="lastName"/></div>
+           <div class="span3"><input type="text" id="lastName" name="lastName" placeholder="Last Name" data-val="req" data-val-with="firstName"/></div>
+           { Focus("#firstName") }
+           <div class="span6 val-display"/>
+           <div class="span6 hints" style="position:relative;">
+            <div>
+            Hint: Use your company or organization email address to easier connect with co-workers.
+            </div> 
+           </div>  
+          </div>
+          <div class="row-fluid">
+           <div class="span6">
+            <input type="text" name="email" id="email" value={ user.s( 'email ) } placeholder="Email address" data-val="req,email"/>
+           </div>
+           <div class="span6 val-display"/>
+          </div>
+          <div class="row-fluid">
+           <div class="span6">
+            <input type="password" name="password" id="password" placeholder="Password" data-val="req"/>
+           </div>
+           <div class="span6 val-display"/> 
+          </div>
+          <div class="row-fluid">
+           <div class="span6">
+            <input type="password" name="password2" id="password2" placeholder="Re-type password" data-val="req,same=password"/>
+           </div>
+           <div class="span6 val-display"/>
+          </div>
+         </div>
+       </div>
+       <hr style="margin:20px 0 12px;"/>
+       <div class="row-fluid">
+         <div class="span6">
+          <div style="height:40px;line-height:40px;position:relative;top:10px;">Already registered? <a tabindex="-1" href="javascript:void(0);" data-sbt={ Form.attrJson( Map( "href" -> ( wpath + "/in" ) ) ) }>Sign in here</a></div>
+         </div> 
+         <div class="span6" style="height:40px;padding-top:8px;"><button type="submit" class="btn-success btn pull-right">Register <i class="icon-play"></i></button></div>
+       </div>
+      </div>
+     </fieldset>
+    </form>
+   </div>
+        
+    val jsonRes = web.jsonRes( sess )
+    jsonRes.htmlMap = Map( 
+        "html" -> <div class="container">{ inner }</div>,
+        "transition" -> "fadeOutIn",
+        "duration" -> 500 )
+          
+    web.json( jsonRes )
+  }
 
   def sendActivation( user:User ) = {
     val activationCode = Base62.make(8)
     user('activationCode) = activationCode
 
-    T.session.notice( "Thank you!  You should be receiving an email shortly to verify your account." )
+    if ( T.LnF == LnF.SupplyChain ) 
+      T.session.notice( "Thank you!  You should be receiving an email shortly to verify your account." )
 
     background { B.emailTemplates.welcome( user, activationCode ) }
   }
@@ -578,7 +690,6 @@ The """ + B.applicationName + """ Team
       web.redirect( "/" )
 
     if ( web.req.s( 'create ).notBlank ) {
-
       val email = web.req.s( 'un )
 
       if ( !validateUnusedEmail( email ) )
