@@ -30,6 +30,7 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord, MongoView }
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.db.tuple.Tuple
+import org.tyranid.image.Dimensions
 import org.tyranid.profile.{ Group, Tag, User }
 import org.tyranid.secure.{ PrivateKeyEntity, PrivateKeyRecord }
 
@@ -82,11 +83,15 @@ class ContentType extends Tuple( ContentType.makeView )
 
 
 
-//
-// Replies
-//
+/*
+ * * *  Comments
+ */
 
-object Reply extends MongoEntity( tid = "b00w", embedded = true ) {
+object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
+  type RecType = Comment
+  override def convert( obj:DBObject, parent:MongoRecord ) = new Comment( obj, parent )
+
+
   "on"             is DbDateTime           ;
   "m"              is DbChar(1024)         is 'label;
 
@@ -97,6 +102,25 @@ object Reply extends MongoEntity( tid = "b00w", embedded = true ) {
 
 }
 
+class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.makeView, obj, parent ) {
+
+  def displayDate = t( 'on )
+
+  def fromUser = {
+    val uid = oid( 'u )
+    val user = B.User.getById( uid )
+
+    if ( user == null )
+      B.systemUser
+    else
+      user
+  }
+}
+
+
+/*
+ * * *  Content
+ */
 
 trait ContentMeta extends MongoEntity with PrivateKeyEntity {
 
@@ -138,7 +162,7 @@ trait ContentMeta extends MongoEntity with PrivateKeyEntity {
 
   // Messages
   "m"                 is DbChar(1024)         is 'label is SearchText;
-  "r"                 is DbArray(Reply)       as "Replies";
+  "r"                 is DbArray(Comment)     as "Replies";
 
   // Image / Thumbnail
   "img"               is DbUrl /* TODO:  change to DbImage? */;
@@ -158,14 +182,26 @@ trait ContentMeta extends MongoEntity with PrivateKeyEntity {
   }
 }
 
-class Content( override val view:MongoView,
-               obj:DBObject = Mobj(),
-               override val parent:MongoRecord = null )
+
+object Content {
+  lazy val emailTag     = Tag.idFor( "email" )
+  lazy val messageTag   = Tag.idFor( "message" )
+  lazy val fileshareTag = Tag.idFor( "fileshare" )
+}
+
+abstract class Content( override val view:MongoView,
+                        obj:DBObject = Mobj(),
+                        override val parent:MongoRecord = null )
     extends MongoRecord( view, obj, parent ) with PrivateKeyRecord {
 
   def contentType = ContentType( i( 'type ) )
 
   def hasTag( tag:Int ) = a_?( 'tags ).exists( _ == tag )
+
+
+  /*
+   * * *  Label and Icons
+   */
   
   override def label =
     if ( has( 'name ) )       s( 'name )
@@ -181,17 +217,80 @@ class Content( override val view:MongoView,
     desc.stripPrefix( "<a href=\"" ).startsWith( t ) ||
     title.startsWith( "http://" )
   }
+  
+  def hasImage = imageUrl( false ).notBlank
+
+  def imageUrl( editing:Boolean ) = s( 'img )
+
+  def imageDimensions = {
+    if ( i( 'imgW ) != 0 )
+      Dimensions( height = i( 'imgH ), width = i( 'imgW ) )
+    else if ( contentType == ContentType.Folder ) {
+      Dimensions( 128, 128 )
+    } else {
+      val ext = s( 'fileName ).suffix( '.' ).denull.toLowerCase
+      
+      //if ( FileSystem.supportedIcons.contains( ext ) ) {
+        //Dimensions( 128, 128 )
+      //} else {
+        Dimensions( 128, 128 )
+      //}
+    }
+  }    
 
 
   /*
    * * *   Revisions
    */
 
+  def displayDate = t( 'on )
+  
   def stampLastModified = {
     val u = T.user
     this( 'lastModified )      = new Date
     this( 'lastModifiedBy )    = u.id
     this( 'lastModifiedByOrg ) = u.orgId
+  }
+
+
+  /*
+   * * *   Author
+   */
+
+  def fromUser = {
+    val utid = a_?( 'o ).head.as[String]
+    val user = B.User.getByTid( utid )
+
+    if ( user == null )
+      B.systemUser
+    else
+      user
+  }
+
+  def fromIcon =
+    if ( this.obj.has( 'feed ) ) "/images/rssLarge.png"
+    else                         fromUser.s( 'thumbnail )
+
+
+  /*
+   * * *   Comments
+   */
+
+  def mostRecentComment = {
+    val comments = a_?( 'r )
+
+    if ( comments.size > 0 )
+      Comment( comments.last.as[DBObject] )
+    else if ( s( 'm ).notBlank )
+      Comment(
+        Mobj(
+          "on" -> this( 'on ),
+          "m"  -> this( 'm ),
+          "u"  -> fromUser
+        )
+      )
+    else
+      null
   }
 
 
@@ -245,11 +344,17 @@ class Content( override val view:MongoView,
     val groupTids = u.groupTids
     val rec = Record.getByTid( tid )
 
-    viewerTids.exists { toTid =>
-      toTid.startsWith( Group.tid ) &&
-      groupTids.contains( toTid ) &&
-      Group.byTid( toTid ).exists( _.canSee( u, rec ) )
-    }
+    if ( viewerTids.exists( toTid =>
+           toTid.startsWith( Group.tid ) &&
+           groupTids.contains( toTid ) &&
+           Group.byTid( toTid ).exists( _.canSee( u, rec ) ) ) )
+      return true
+
+    val groupPresent = viewerTids.exists( _.startsWith( Group.tid ) )
+
+    // If no group is present, then regular network rules apply ... for now.  Is this right?
+    // Note:  this u.inNetwork() is also handling the case where they are from the same org ... so if we remove u.inNetwork() will need to add in an org check
+    !groupPresent && u.inNetwork( tid )
   }
 
   def isWriter( user: org.tyranid.profile.User ): Boolean = isWriter( user.tid ) || ( ( user.org != null ) ? isWriter( user.org.tid ) | false )
@@ -322,6 +427,13 @@ class Content( override val view:MongoView,
   }
 
   def group = groupTid.isBlank ? null | Group.getByTid(groupTid)
+
+
+  /*
+   * * *   Child Content (Groups and Folders)
+   */
+
+  def contents:Seq[Content] = Nil
 
 
   /*

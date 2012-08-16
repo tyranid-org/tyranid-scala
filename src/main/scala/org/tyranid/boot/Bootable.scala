@@ -113,8 +113,10 @@ trait Bootable {
   lazy val nonsecureWebsite = "http://" + domainPort
   
   val bounceEmail = "support@" + domain 
-  val systemEmail:String
   val alertEmail:String
+
+  val systemEmail:String
+  val systemUser:User
 
   val weblocs:Seq[Webloc]
 
