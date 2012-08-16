@@ -121,8 +121,10 @@ class WebFilter extends Filter {
       if ( session != null ) {
         isAsset = !notAsset( web.path )
         
-        if ( !isAsset )
+        if ( !isAsset ) {
           session.put( "lastPath", web.path )
+          session.put( Session.LnF_KEY, LnF.byDomain( web.req.getServerName ) )
+        }
       }
     }
     
@@ -191,7 +193,7 @@ class WebFilter extends Filter {
           LoginCookie.autoLogin          
         }
         
-        if ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) ) {
+        if ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) && T.LnF == LnF.RetailBrand ) {
           web.template( B.appShellPage( web ) )
           return
         }

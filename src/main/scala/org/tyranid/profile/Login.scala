@@ -30,6 +30,86 @@ import org.tyranid.social.Social
 import org.tyranid.ui.{ Button, Grid, Row, Focus, LnF, Form }
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate, WebResponse }
 
+object Register {
+  def sendActivation( user:User ) = {
+    val activationCode = Base62.make(8)
+    user('activationCode) = activationCode
+
+    if ( T.LnF == LnF.SupplyChain ) 
+      T.session.notice( "Thank you!  You should be receiving an email shortly to verify your account." )
+
+    background { B.emailTemplates.welcome( user, activationCode ) }
+  }
+
+  def page( user:User, org:com.mongodb.DBObject, jsonRes:WebResponse ) = {
+    val inner:NodeSeq =
+      if ( org != null ) {
+        
+        // if the org domain is the same as MY domain then add them.
+        if ( org.s( 'domain ).toLowerCase == Email.domainFor( user.s( 'email ) ).toLowerCase ) {
+          user( 'org ) = org.id
+        } else {
+          // Must be approved, so send a join request AFTER they activate the account.
+        }
+        
+        sendActivation( user )
+        user.save
+        
+        <div class="container-fluid" style="padding:0;padding-top:1em;">
+         <div class="row-fluid">
+          <div class="span12">A verification email was sent to <b>{ user.s( 'email ) }</b>.</div>
+          <div>Click the activation link in your email to gain access to { org.s( 'name ).possessive } network and projects.</div>
+         </div>
+         <hr/>
+         <div class="row-fluid">
+          <!--div class="span12" style="height:40px;padding-top:8px;text-align:right;">Or activate later and <button type="submit" class="btn-success btn">Continue To Volerro <i class="icon-play"></i></button></div-->
+         </div>
+        </div>
+      } else {
+        jsonRes.extraJS = "$(function(){ tyr.autocomplete( 'companyName', '/log/company' ); $('#companyName').focus(); });"
+        
+        <div class="container-fluid" style="padding:0;">
+         <input type="hidden" name="regStep" value="2"/>
+         <div class="row-fluid">
+          <div style="padding-top:1em;">One last step.  Please enter the name of the company below.  This helps other identify you within Volerro.</div>
+         </div>
+         <hr/>
+         <div class="row-fluid">
+          <div class="span6"><input type="text" id="companyName" name="companyName" placeholder="Company Name" data-val="req"/></div>
+          { Focus( "#companyName" ) }
+          <div class="span6 hints">
+           <div class="fldHint">
+            Hint: TODO:  Deanna-- add some hint here.
+           </div>
+          </div> 
+          <div class="span6 val-display"/>
+         </div> 
+         <div class="row-fluid">
+          <div class="span12" style="height:40px;padding-top:8px;text-align:right;"><button type="submit" class="btn-success btn">Next <i class="icon-play"></i></button></div>
+         </div>
+        </div>
+      }       
+        
+    <div class="container">
+     <div class="offset3 span6" style="margin-top:100px;text-align:center;">
+      <a href="/"><img src="/volerro_logo.png" style="width:197px;height:60px;"/></a>
+     </div>
+     <div class="offset2 span8">
+      <form method="post" action="/user/register" id="f" class="register" style="margin-bottom:12px;" data-val="1">
+       <fieldset class="registerBox">
+        <div class="top-form-messages"/>
+        <div class="container-fluid" style="padding:0;">
+         <div class="row-fluid">
+          <h1 class="span12">Thanks, { user.s( 'firstName ) }! <tyr:loader/></h1>
+         </div>
+        </div>
+        { inner }
+       </fieldset>
+      </form>
+     </div>
+    </div>
+  }
+}
 
 object Loginlet extends Weblet {
 
@@ -42,6 +122,10 @@ object Loginlet extends Weblet {
 
     val params = noSocial |* "?nosocial=1"
 
+    //T.session.error( "test error" )
+    //T.session.warn( "test warn" )
+    //T.session.notice( "test notice" )
+    
     // TODO:  make this more template-based
      <head>
       <script>{ Unparsed( """
@@ -58,7 +142,7 @@ $( function() {
      <fieldset class="loginBox">
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
-        <h1 class="span5">Sign-in</h1>
+        <h1 class="span5">Sign-in <tyr:loader/></h1>
         <div class="span7 pull-right regLink">or <a href="javascript:void(0);" data-sbt={ Form.attrJson( Map( "href" -> ( wpath + "/register" + params ) ) ) }>Register for { B.applicationName }!</a></div>
        </div>
       </div>
@@ -66,7 +150,7 @@ $( function() {
       <div class="top-form-messages"/>
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
-        <input type="text" id="un" name="un" placeholder="Email" value={ user.s('email) } data-val="req,email"/>
+        <input type="text" id="un" name="un" placeholder="Email" data-val="req,email"/>
         { Focus("#un") }
        </div>
        <div class="row-fluid">
@@ -206,7 +290,7 @@ $( function() {
         registerRetail( web, sess )
         return
       }
-      
+
       val network = s.substring( 9 )
 
       if ( network.notBlank )
@@ -238,7 +322,7 @@ $( function() {
         if ( invalids.isEmpty ) {
           user( 'createdOn ) = new Date
 
-          sendActivation( user )
+          Register.sendActivation( user )
           
           val entryAppVal = sess.get( "entryApp" )
           
@@ -292,6 +376,16 @@ $( function() {
          </div>
 
       web.template( ( entryApp == 0 ) ? <tyr:shell>{ inner }</tyr:shell> | <tyr:shellApp>{ inner }</tyr:shellApp> )
+    case "/company" =>
+      val term = web.req.s( 'term ).toLowerCase
+
+      val json = B.Org.db.find( Mobj( "name" -> ( ".*" + term + ".*" ).toPatternI ), Mobj( "name" -> 1 ) ).
+            limit( 16 ).
+            toSeq.
+            map( o => Map( "id"    -> B.Org.idToTid( o( '_id ) ),
+                           "label" -> o.s( "name" ) ) )
+      
+      web.res.json( json )
     case "/resendActivation" =>
       import org.bson.types.ObjectId
       
@@ -402,13 +496,12 @@ The """ + B.applicationName + """ Team
     user.isAdding = true
     
     if ( web.b( 'xhrSbt ) ) {
+      val jsonRes = web.jsonRes( sess )
       val invalids = Scope( user, initialDraw = false, captcha = true ).submit( user, ui )
 
       if ( invalids.isEmpty ) {
         user( 'createdOn ) = new Date
 
-        sendActivation( user )
-        
         val entryAppVal = sess.get( "entryApp" )
         
         if ( entryAppVal != null )
@@ -417,84 +510,30 @@ The """ + B.applicationName + """ Team
         user.save
         
         val emailDomain = Email.domainFor( user.s( 'email ) )._s
-        val org = B.Org.db.findOne( Mobj( "domain" -> emailDomain.toPatternI ) )
-        var inner:NodeSeq = null
-          
-        if ( org != null ) {
-          inner =
-            <div class="container-fluid" style="padding:0;padding-top:1em;">
-             <div class="row-fluid">
-              <div class="span12">A verification email was sent to <b>{ user.s( 'email ) }</b>.</div>
-              <div>Click the activation link in your email to gain access to { org.s( 'name ).possessive } network and projects.</div>
-             </div>
-             <hr/>
-             <div class="row-fluid">
-              <div class="span12 pull-right" style="height:40px;padding-top:8px;">Or activate later and <button type="submit" class="btn-success btn">Continue To Volerro <i class="icon-play"></i></button></div>
-             </div>
-            </div>
-        } else {
-          inner = 
-            <div class="container-fluid" style="padding:0;">
-             <div class="row-fluid">
-              <div>One last step.  Please enter the name of the company below.  This helps other identify you within Volerro.</div>
-             </div>
-             <hr style="margin:4px 0 30px;"/>
-             <div class="row-fluid">
-              <div class="span6"><input type="text" id="companyName" name="companyName" placeholder="Company Name" data-val="req"/></div>
-              <div class="span6 hints" style="position:relative;">
-               <div>
-                Hint: TODO:  Deanna-- add some hint here.
-               </div>
-              </div> 
-              <div class="span12" style="height:40px;padding-top:8px;text-align:right;"><button type="submit" class="btn-success btn">Next <i class="icon-play"></i></button></div>
-             </div>
-            </div>
-        }       
-            
-        val jsonRes = web.jsonRes( sess )
+        val org = B.Org.db.findOne( Mobj( "domain" -> emailDomain.toPatternI ), Mobj( "name" -> 1, "domain" -> 1 ) )
+        
         jsonRes.htmlMap = Map( 
-            "html" -> 
-              <div class="container">
-               <div class="offset3 span6" style="margin-top:100px;text-align:center;">
-                <img src="/volerro_logo.png" style="width:197px;height:60px;"/>
-               </div>
-               <div class="offset2 span8">
-                <form method="post" action={ wpath + "/register" } id="f" class="register" style="margin-bottom:12px;" data-val="1">
-                 <fieldset class="registerBox">
-                  <div class="top-form-messages"/>
-                  <div class="container-fluid" style="padding:0;">
-                   <div class="row-fluid">
-                    <h1 class="span12">Thanks, { user.s( 'firstName ) }!</h1>
-                   </div>
-                  </div>
-                  { inner }
-                 </fieldset>
-                </form>
-               </div>
-              </div>,
-              "transition" -> "slideLeft",
-              "duration" -> 500 )
-            
-          web.json( jsonRes )
-            
-        return
+            "html" -> WebTemplate( Register.page( user, org, jsonRes ) ),
+            "transition" -> "slideLeft",
+            "duration" -> 500 )
       } else {
         for ( i <- invalids )
           sess.error( i.message )
         
-        web.json( web.jsonRes( sess ) )
-        return
       }
+      
+      web.json( jsonRes )
+      return
     }
 
     val entryApp = web.i( 'app ) or 0
     sess.put( "entryApp", new java.lang.Integer( entryApp._i ) )
 
     val inner =
- <div class="offset3 span6" style="margin-top:100px;text-align:center;">
-    <img src="/volerro_logo.png" style="width:197px;height:60px;"/>
+   <div class="offset3 span6" style="margin-top:100px;text-align:center;">
+    <a href="/"><img src="/volerro_logo.png" style="width:197px;height:60px;"/></a>
    </div> ++
- <div class="offset2 span8">
+   <div class="offset2 span8">
     <form method="post" action={ wpath + "/register" } id="f" class="register" style="margin-bottom:12px;" data-val="1">
      <fieldset class="registerBox">
       <div class="container-fluid" style="padding:0;">
@@ -526,13 +565,13 @@ The """ + B.applicationName + """ Team
           </div>
           <div class="row-fluid">
            <div class="span6">
-            <input type="password" name="password" id="password" placeholder="Password" data-val="req"/>
+            <input type="password" name="password" id="password" placeholder="Password" data-val="req,min=5"/>
            </div>
            <div class="span6 val-display"/> 
           </div>
           <div class="row-fluid">
            <div class="span6">
-            <input type="password" name="password2" id="password2" placeholder="Re-type password" data-val="req,same=password"/>
+            <input type="password" name="password2" id="password2" placeholder="Re-type password" data-val="req,same=password,min=5"/>
            </div>
            <div class="span6 val-display"/>
           </div>
@@ -550,6 +589,8 @@ The """ + B.applicationName + """ Team
     </form>
    </div>
         
+          
+          println( "sending out HTML!!!" )
     val jsonRes = web.jsonRes( sess )
     jsonRes.htmlMap = Map( 
         "html" -> <div class="container">{ inner }</div>,
@@ -557,16 +598,6 @@ The """ + B.applicationName + """ Team
         "duration" -> 500 )
           
     web.json( jsonRes )
-  }
-
-  def sendActivation( user:User ) = {
-    val activationCode = Base62.make(8)
-    user('activationCode) = activationCode
-
-    if ( T.LnF == LnF.SupplyChain ) 
-      T.session.notice( "Thank you!  You should be receiving an email shortly to verify your account." )
-
-    background { B.emailTemplates.welcome( user, activationCode ) }
   }
 
   def validateEmail( email:String ) =
@@ -700,7 +731,7 @@ The """ + B.applicationName + """ Team
       user( 'email )     = email
       user( 'createdOn ) = new Date
 
-      sendActivation( user )
+      Register.sendActivation( user )
 
       user.save
       
