@@ -286,7 +286,7 @@ abstract class Content( override val view:MongoView,
         Mobj(
           "on" -> this( 'on ),
           "m"  -> this( 'm ),
-          "u"  -> fromUser
+          "u"  -> fromUser.id
         )
       )
     else
