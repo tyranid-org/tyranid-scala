@@ -83,11 +83,15 @@ class ContentType extends Tuple( ContentType.makeView )
 
 
 
-//
-// Replies
-//
+/*
+ * * *  Comments
+ */
 
-object Reply extends MongoEntity( tid = "b00w", embedded = true ) {
+object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
+  type RecType = Comment
+  override def convert( obj:DBObject, parent:MongoRecord ) = new Comment( obj, parent )
+
+
   "on"             is DbDateTime           ;
   "m"              is DbChar(1024)         is 'label;
 
@@ -98,6 +102,25 @@ object Reply extends MongoEntity( tid = "b00w", embedded = true ) {
 
 }
 
+class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.makeView, obj, parent ) {
+
+  def displayDate = t( 'on )
+
+  def fromUser = {
+    val uid = oid( 'u )
+    val user = B.User.getById( uid )
+
+    if ( user == null )
+      B.systemUser
+    else
+      user
+  }
+}
+
+
+/*
+ * * *  Content
+ */
 
 trait ContentMeta extends MongoEntity with PrivateKeyEntity {
 
@@ -139,7 +162,7 @@ trait ContentMeta extends MongoEntity with PrivateKeyEntity {
 
   // Messages
   "m"                 is DbChar(1024)         is 'label is SearchText;
-  "r"                 is DbArray(Reply)       as "Replies";
+  "r"                 is DbArray(Comment)     as "Replies";
 
   // Image / Thumbnail
   "img"               is DbUrl /* TODO:  change to DbImage? */;
@@ -247,6 +270,28 @@ abstract class Content( override val view:MongoView,
   def fromIcon =
     if ( this.obj.has( 'feed ) ) "/images/rssLarge.png"
     else                         fromUser.s( 'thumbnail )
+
+
+  /*
+   * * *   Comments
+   */
+
+  def mostRecentComment = {
+    val comments = a_?( 'r )
+
+    if ( comments.size > 0 )
+      Comment( comments.last.as[DBObject] )
+    else if ( s( 'm ).notBlank )
+      Comment(
+        Mobj(
+          "on" -> this( 'on ),
+          "m"  -> this( 'm ),
+          "u"  -> fromUser
+        )
+      )
+    else
+      null
+  }
 
 
   /*
