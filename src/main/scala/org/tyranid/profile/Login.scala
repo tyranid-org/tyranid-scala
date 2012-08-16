@@ -589,8 +589,6 @@ The """ + B.applicationName + """ Team
     </form>
    </div>
         
-          
-          println( "sending out HTML!!!" )
     val jsonRes = web.jsonRes( sess )
     jsonRes.htmlMap = Map( 
         "html" -> <div class="container">{ inner }</div>,
