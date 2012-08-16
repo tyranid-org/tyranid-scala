@@ -127,17 +127,35 @@ object Loginlet extends Weblet {
     //T.session.notice( "test notice" )
     
     // TODO:  make this more template-based
-     <head>
-      <script>{ Unparsed( """
-$( function() {
-  $('#forgot').click(function(e) {
-    window.location.assign( '""" + wpath + """/forgot?un=' + encodeURIComponent( $("#un").val() ) );
-  });
-});
-""" ) }</script>
-     </head> ++
      { T.LnF match {
        case LnF.RetailBrand =>
+    <script>{ Unparsed( """
+$( function() {
+  $('#forgot').click(function(e) {
+    var un = $( "#un" );
+    var msg = "";
+    var fldVal = un.val();
+        
+    if ( !fldVal ) {
+      msg = "Please enter an email address";
+    } else if ( !tyr.Validator.validEmail( fldVal ) ) {
+      msg = "Please enter a valid email address";
+    }
+       
+    var formHandler = tyr.FormHandler.get( un.get() );
+        
+    if ( msg ) {
+      formHandler.topEl().empty();
+      formHandler.addTopMessage( "error", msg );
+      return false;
+    }
+    
+    formHandler.topEl().empty();
+    tyr.navTo( '""" + wpath + """/forgot?xhr=1&un=' + encodeURIComponent( fldVal ) );
+  });
+});
+""" ) }
+    </script> ++
     <form method="post" action={ wpath + "/in" } id="f" class="login" style="margin-bottom:12px;" data-val="1" data-val-top="1">
      <fieldset class="loginBox">
       <div class="container-fluid" style="padding:0;">
@@ -172,6 +190,14 @@ $( function() {
      <a href="#" id="forgot" class="pull-right">Forgot your password?</a>
     </div>
        case _ =>
+    <script>{ Unparsed( """
+$( function() {
+  $('#forgot').click(function(e) {
+    window.location.assign( '""" + wpath + """/forgot?un=' + encodeURIComponent( fldVal ) );
+  });
+});
+""" ) }
+    </script> ++
     <form method="post" action={ wpath + "/in" } id="f" class="form-horizontal">
      <fieldset class="loginBox">
       <legend><span>Log In</span></legend>
@@ -267,7 +293,7 @@ $( function() {
           T.LnF match {
              case LnF.RetailBrand =>
                val jsonRes = web.jsonRes( sess )
-               jsonRes.redirect = redirect.isBlank ? T.website | redirect
+               jsonRes.extraJS = "tyr.app.loadMenubar( '/user/menubar' ); tyr.app.loadMain( '" + ( redirect.isBlank ? "/dashboard" | redirect ) + "' );"
                web.json( jsonRes )
              case _ =>
                web.redirect(redirect.isBlank ? T.website | redirect)
@@ -414,13 +440,21 @@ $( function() {
 
         if ( email.isBlank ) {
           sess.warn( "Please enter in an email address." )
-          web.redirect("/")
+          
+          if ( T.LnF == LnF.RetailBrand )
+            return web.json( web.jsonRes( sess ) )
+            
+          web.redirect( "/" )
         }
 
         val dbUser = B.User.db.findOne( Mobj( "email" -> email ) )
 
-        if (dbUser == null) {
-          sess.warn("Sorry, it doesn't look like the email address " + email + " is on " + B.applicationName + ".")
+        if ( dbUser == null ) {
+          sess.warn( "Sorry, it doesn't look like the email address " + email + " is on " + B.applicationName + "." )
+
+          if ( T.LnF == LnF.RetailBrand )
+            return web.json( web.jsonRes( sess ) )
+            
           web.redirect("/")
         }
         
@@ -450,6 +484,9 @@ The """ + B.applicationName + """ Team
           .replyTo( "volerro@" + B.domain )
           .send
 
+        if ( T.LnF == LnF.RetailBrand )
+          return web.json( web.jsonRes( sess ) )
+            
         web.redirect("/")
       } else {
         val dbUser = B.User.db.findOne(Mobj("resetCode" -> forgotCode))
@@ -519,7 +556,6 @@ The """ + B.applicationName + """ Team
       } else {
         for ( i <- invalids )
           sess.error( i.message )
-        
       }
       
       web.json( jsonRes )
