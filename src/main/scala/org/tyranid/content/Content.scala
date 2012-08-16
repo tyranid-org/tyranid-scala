@@ -195,7 +195,6 @@ class Content( override val view:MongoView,
   }
 
 
-
   /*
    * * *   Security
    */
@@ -329,6 +328,9 @@ class Content( override val view:MongoView,
    * * *   File Attachment
    */
 
+  def isDocument = false
+  def docId:String = isDocument ? s( 'file ).split( "/" )(1) | null 
+  
   def fileType =
     contentType match {
     case ContentType.Document => s( 'fileName ).suffix( '.' ).toLowerCase
