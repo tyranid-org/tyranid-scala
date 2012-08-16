@@ -17,16 +17,21 @@
 
 package org.tyranid.content
 
+import java.util.Date
+
 import scala.xml.Text
 
+import com.mongodb.DBObject
+
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDateTime, DbInt, DbLink, DbLong, DbTid, DbText, DbUrl, EnumEntity }
+import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDateTime, DbInt, DbLink, DbLong, DbTid, DbText, DbUrl, EnumEntity, Record }
 import org.tyranid.db.es.{ SearchAuth, SearchText }
-import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
+import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord, MongoView }
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.db.tuple.Tuple
-import org.tyranid.profile.{ Group, Tag }
-import org.tyranid.secure.PrivateKeyEntity
+import org.tyranid.profile.{ Group, Tag, User }
+import org.tyranid.secure.{ PrivateKeyEntity, PrivateKeyRecord }
 
 
 // TODO:  should this be in ui ?
@@ -152,4 +157,193 @@ trait ContentMeta extends MongoEntity with PrivateKeyEntity {
   "feedItemId"        is DbChar(128)          ;
   }
 }
+
+class Content( override val view:MongoView,
+               obj:DBObject = Mobj(),
+               override val parent:MongoRecord = null )
+    extends MongoRecord( view, obj, parent ) with PrivateKeyRecord {
+
+  def contentType = ContentType( i( 'type ) )
+
+  def hasTag( tag:Int ) = a_?( 'tags ).exists( _ == tag )
+  
+  override def label =
+    if ( has( 'name ) )       s( 'name )
+    else if ( has( 'title ) ) s( 'title )
+    else                      "n/a"
+
+  def titleInDesc( title:String, desc:String ):Boolean = {
+    var t = title
+    if ( t.endsWith( "..." ) )
+      t = title.substring( 0, t.length - 3 )
+
+    desc.startsWith( t ) ||
+    desc.stripPrefix( "<a href=\"" ).startsWith( t ) ||
+    title.startsWith( "http://" )
+  }
+
+
+  /*
+   * * *   Revisions
+   */
+
+  def stampLastModified = {
+    val u = T.user
+    this( 'lastModified )      = new Date
+    this( 'lastModifiedBy )    = u.id
+    this( 'lastModifiedByOrg ) = u.orgId
+  }
+
+
+
+  /*
+   * * *   Security
+   */
+
+  def viewerTids = obj.a_?( 'v ).toSeq.of[String]
+
+  // TODO:  make this name more generic / less Volee-ish
+  def isTo( u:User ):Boolean = {
+    val userTid    = u.tid
+    val userOrgTid = u.orgTid
+
+    val viewers = viewerTids
+
+    def isSubTo = {
+      val subV = obj.a_?( 'subV ).toSeq.of[String]
+      subV.isEmpty || subV.exists( tid => tid == userTid || tid == userOrgTid )
+    }
+
+    for ( tid <- viewers )
+      if ( tid == userTid || tid == userOrgTid )
+        return isSubTo
+
+    val from = Record.getByTid( this.a_?( 'o ).head.as[String] )
+    
+    if ( from == null ) {
+//spam( a_?( 'o ) )
+      return false
+    }
+
+    val groupTids = u.groupTids
+    for ( tid <- viewers;
+          if Group.hasTid( tid ) && groupTids.contains( tid );
+          grp <- Group.byTid( tid );
+          if grp.canSee( u, from ) )
+      return isSubTo
+
+    false
+  }
+
+  /**
+   * This is like "isTo()" except that this controls whether a user can see a participant in the volee (either on the "v"/to list or a "reply" from them)
+   */
+  def canSee( u:User, tid:String ):Boolean = {
+    if (   this.a_?( 'o ).contains( u.tid )
+        || u.allowProfileTids.contains( tid ) )
+      return true
+
+    val groupTids = u.groupTids
+    val rec = Record.getByTid( tid )
+
+    viewerTids.exists { toTid =>
+      toTid.startsWith( Group.tid ) &&
+      groupTids.contains( toTid ) &&
+      Group.byTid( toTid ).exists( _.canSee( u, rec ) )
+    }
+  }
+
+  def isWriter( user: org.tyranid.profile.User ): Boolean = isWriter( user.tid ) || ( ( user.org != null ) ? isWriter( user.org.tid ) | false )
+
+  def isWriter( tid: String ): Boolean = {
+    if ( tid.isBlank )
+      return false
+
+    val owners = a_?( 'o )
+
+    owners.foreach( t => {
+      if ( t == tid )
+        return true
+
+      val ot = t._s
+
+      if ( Group.hasTid( ot ) ) {
+        val group = Group.getByTid( ot )
+
+        if ( group.collaborative || group.isOwner( tid ) )
+          return true
+      }
+    })
+
+    return false
+  }
+
+  def isReader( user: org.tyranid.profile.User ): Boolean = isReader( user.tid ) || ( ( user.org != null ) ? isReader( user.org.tid ) | false )
+
+  def isReader( tid: String ): Boolean = {
+    if ( tid.isBlank )
+      return false
+
+    val viewers = a_?( 'v )
+
+    viewers.foreach( t => {
+      if ( t == tid )
+        return true
+
+      val ot = t._s
+      
+      if ( Group.hasTid( ot ) ) {
+        val group = Group.getByTid( ot )
+
+        if (group.isMember(tid))
+          return true
+      }
+    })
+
+    return false
+  }
+
+
+  /*
+   * * *   Groups
+   */
+
+  lazy val groupTid: String = {
+    val gTid: String = a_?('o).map(_._s).find(Group.hasTid).getOrElse(null)
+
+    if (gTid.isBlank) {
+      val gOid = oid('parentGroup)
+
+      if (gOid == null)
+        null
+      else
+        Group.idToTid(gOid)
+    } else
+      gTid
+  }
+
+  def group = groupTid.isBlank ? null | Group.getByTid(groupTid)
+
+
+  /*
+   * * *   File Attachment
+   */
+
+  def fileType =
+    contentType match {
+    case ContentType.Document => s( 'fileName ).suffix( '.' ).toLowerCase
+    case c                    => c.label
+    }
+
+  def hasFile = fileUrl.notBlank
+  def fileUrl:String = null
+
+  def fileMimeType = {
+    if ( obj.has( 'fileMimeType ) )
+      s( 'fileMimeType )
+    else
+      org.tyranid.io.File.mimeTypeFor( s( 'fileName ) )          
+  }
+}
+
 
