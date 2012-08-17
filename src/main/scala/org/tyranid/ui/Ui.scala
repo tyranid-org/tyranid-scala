@@ -53,6 +53,14 @@ object Tags {
     </li>
 }
 
+object Dialog {
+
+  def closeBtn =
+    <div class="closeBtn">
+     <button type="button" class="close" data-dismiss="modal">{ Unparsed( """&#x2715;""" ) }</button>
+    </div>
+}
+
 object Link {
 
   def fromUrl( url:String ) =
