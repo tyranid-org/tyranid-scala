@@ -48,12 +48,13 @@ object ViewType extends RamEntity( tid = "a13v" ) with EnumEntity[ViewType] {
     t
   }
 
-  val Post  = apply( 1, "Post"  )
-  val Card  = apply( 2, "Card"  )
-  val Table = apply( 3, "Table" )
-  val Grid  = apply( 4, "Grid"  )
+  val Post   = apply( 1, "Post"  )
+  val Card   = apply( 2, "Card"  )
+  val Table  = apply( 3, "Table" )
+  val Grid   = apply( 4, "Grid"  )
+  val Kanban = apply( 5, "Kanban"  )
 
-  static( Post, Card, Table, Grid )
+  static( Post, Card, Table, Grid, Kanban )
 }
 
 class ViewType extends Tuple( ViewType.makeView )
@@ -286,7 +287,7 @@ abstract class Content( override val view:MongoView,
         Mobj(
           "on" -> this( 'on ),
           "m"  -> this( 'm ),
-          "u"  -> fromUser
+          "u"  -> fromUser.id
         )
       )
     else
