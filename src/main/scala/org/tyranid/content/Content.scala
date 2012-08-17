@@ -31,6 +31,8 @@ import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord, MongoView }
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.db.tuple.Tuple
 import org.tyranid.image.Dimensions
+import org.tyranid.io.HasText
+
 import org.tyranid.profile.{ Group, Tag, User }
 import org.tyranid.secure.{ PrivateKeyEntity, PrivateKeyRecord }
 
@@ -193,12 +195,19 @@ object Content {
 abstract class Content( override val view:MongoView,
                         obj:DBObject = Mobj(),
                         override val parent:MongoRecord = null )
-    extends MongoRecord( view, obj, parent ) with PrivateKeyRecord {
+    extends MongoRecord( view, obj, parent ) with PrivateKeyRecord with HasText {
 
   def contentType = ContentType( i( 'type ) )
 
   def hasTag( tag:Int ) = a_?( 'tags ).exists( _ == tag )
 
+  override def text:String = {
+    // If I am/have a document (FileSystem):
+    //  1) Do I have an externalId ?  If so, look up the document service (crocodoc) and get the text from that
+    //  2) TextExtractors.extract( file )
+    //
+    ""
+  }
 
   /*
    * * *  Label and Icons

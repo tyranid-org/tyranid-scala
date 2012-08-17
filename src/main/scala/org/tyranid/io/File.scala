@@ -17,8 +17,13 @@
 
 package org.tyranid.io
 
-import java.io.{ IOException, FileOutputStream, InputStream, OutputStream }
+import org.jsoup.Jsoup
+
+import java.io.{ IOException, FileOutputStream, FileInputStream, InputStream, OutputStream, File => SysFile }
 import java.net.URL
+
+import javax.swing.text._
+import javax.swing.text.rtf.RTFEditorKit
 
 import scala.collection.mutable
 import scala.collection.JavaConversions._
@@ -30,9 +35,76 @@ import org.tyranid.db.{ Domain, Record, Scope }
 import org.tyranid.ui.PathField
 import org.tyranid.web.WebContext
 
+trait HasText {
+  def text:String
+}
+
+abstract class TextExtractor {
+  val mimeTypes:Seq[String]
+  val extTypes:Seq[String]  
+  def extract( file:SysFile ):String
+}
+
+object TextExtractors {
+  val extractors = Seq[TextExtractor](
+                                        new TxtTextExtractor(),
+                                        new HtmlTextExtractor(),
+                                        new RtfTextExtractor()
+                                     )
+                                     
+  def findByFilename( filename:String ) = {
+    val ext = filename.suffix( '.' ).toLowerCase
+    
+    extractors.find( e => e.extTypes.contains( ext ) ).getOrElse( null )
+  }
+  
+  def extract( file:SysFile ):String = {
+    val filename = file.getName
+    val extractor = findByFilename( filename )
+    ( extractor == null ) ? "" | extractor.extract( file )
+  } 
+}
+
+class TxtTextExtractor extends TextExtractor {
+  override val mimeTypes = Seq( "text/plain" )
+  override val extTypes = Seq( "txt", "text" )
+  
+  override def extract( file:SysFile ) = 
+    ( file != null && file.exists ) ? new FileInputStream( file ).asString | ""
+}
+
+class HtmlTextExtractor extends TextExtractor {
+  override val mimeTypes = Seq( "text/html" )
+  override val extTypes = Seq( "htm", "html" )
+  
+  override def extract( file:SysFile ) = 
+    ( file != null && file.exists ) ? Jsoup.parse( new FileInputStream( file ).asString ).text() | ""
+}
+
+class RtfTextExtractor extends TextExtractor {
+  override val mimeTypes = Seq( "application/rtf", "text/richtext" )
+  override val extTypes = Seq( "rtf", "rtx" )
+  
+  override def extract( file:SysFile ) = {
+    val styledDoc = new DefaultStyledDocument()
+    var is:InputStream = null 
+    
+    try {
+      is = new FileInputStream( file )
+      new RTFEditorKit().read( is, styledDoc, 0 )
+      styledDoc.getText( 0, styledDoc.getLength() )
+    } catch {
+      case e =>
+        e.printStackTrace
+        ""
+    } finally {
+      if ( is != null )
+        is.close()
+    }
+  }
+}
 
 object DbFile {
-
   def apply( bucketPrefix:String ):DbFile = new DbFile( B.getS3Bucket( bucketPrefix ) )
 }
 
@@ -81,9 +153,7 @@ object DbLocalFile extends CommonFile {
   }
 }
 
-object File {
-  
-  
+object File {  
   val mimeTypeMap = Map( 
     "aif"      -> "audio/x-aiff",
     "aifc"     -> "audio/x-aiff",
@@ -226,7 +296,7 @@ object File {
     
     mimeTypeMap.get( ext ).getOrElse( null )
   }
-
+  
   def safeExtension( filename:String ) = {
     val max = scala.math.max( filename.lastIndexOf( '/' ), filename.lastIndexOf( '.' ) ) 
     val suffix = if ( max != -1 ) filename.substring( max+1 ) else "" 
