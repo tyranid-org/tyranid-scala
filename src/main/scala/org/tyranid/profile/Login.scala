@@ -574,7 +574,7 @@ The """ + B.applicationName + """ Team
      <fieldset class="registerBox">
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
-        <h1 class="span5">Register</h1>
+        <h1 class="span5">Register <tyr:loader/></h1>
        </div>
       </div>
       <hr style="margin:4px 0 30px;"/>

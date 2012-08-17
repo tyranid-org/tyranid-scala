@@ -153,6 +153,10 @@ class DateImp( d:Date ) {
 
   def toIso8601 = toUtcCalendar.format( iso8601 = true )
 
+  def toAttr =
+    if ( d == null ) null
+    else             Time.AttrFormat.format( d )
+    
   def toRfc1123 =
     if ( d == null ) null
     else             Time.Rfc1123Format.format( d )
@@ -189,6 +193,7 @@ object Time {
   val DateFormat     = new SimpleDateFormat( "MM/dd/yyyy" )
   val DateTimeFormat = new SimpleDateFormat( "MM/dd/yyyy HH:mm:ss" )
   val Rfc1123Format  = new SimpleDateFormat( "EEE, dd MMM yyyyy HH:mm:ss z" )
+  val AttrFormat     = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mmZ" )
 
   val OneMinuteMs    =                 60 * 1000
   val FiveMinutesMs  =             5 * 60 * 1000
