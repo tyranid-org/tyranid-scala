@@ -122,34 +122,30 @@ object Group extends MongoEntity( tid = "a0Yv" ) with PrivateKeyEntity {
   override def convert( obj:DBObject, parent:MongoRecord ) = new Group( obj, parent )
 
 
-  "_id"      is DbMongoId         is 'id;
-  "name"     is DbChar(60)        is 'label;
-  "builtin"  is DbBoolean         help Text( "A builtin group is maintained by the system and is not editable by end users." );
-  "type"     is DbLink(GroupType) ;
-  "mode"     is DbLink(GroupMode) ;
+  "_id"       is DbMongoId         is 'id;
+  "name"      is DbChar(60)        is 'label;
+  "builtin"   is DbBoolean         help Text( "A builtin group is maintained by the system and is not editable by end users." );
+  "groupType" is DbLink(GroupType) ;
+  "groupMode" is DbLink(GroupMode) ;
 
   override def init = {
     super.init
-    "tids"   is DbArray(DbTid(B.Org,B.User)) ;
-    "owners" is DbArray(DbTid(B.Org,B.User)) is 'owner;
+    "v"       is DbArray(DbTid(B.Org,B.User)) ;
+    "o"       is DbArray(DbTid(B.Org,B.User)) is 'owner;
   }
-
-  // these fields are implicit:
-//"<orgtid>Ids"  is DbArray(DbMongoId)        ;
-//"<usertid>Ids" is DbArray(DbMongoId)        ;
 
   //"color"          // future ... colored labels
   //"search"         { search criteria } // future ... list search for a group, rather than each id explicitly
 
 
-  db.ensureIndex( Mobj( "owners" -> 1, "name" -> 1 ) )
+  db.ensureIndex( Mobj( "o" -> 1, "name" -> 1 ) )
 
   def flatten( tids:Seq[String] ) =
     tids.
       flatMap(
       _ match {
      case tid if tid.startsWith( Group.tid ) =>
-       Group.byTid( tid ).flatten( _.a_?( 'tids ).toSeq.of[String], Nil )
+       Group.byTid( tid ).flatten( _.a_?( 'v ).toSeq.of[String], Nil )
 
      case tid =>
        Seq( tid )
@@ -164,7 +160,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) with PrivateKeyEntity {
        Group.byTid( tid ).flatten(
          grp => {
            if ( grp.monitor )
-             grp.a_?( 'tids ).toSeq.of[String]
+             grp.a_?( 'v ).toSeq.of[String]
            else
              Seq( tid )
          },
@@ -176,11 +172,9 @@ object Group extends MongoEntity( tid = "a0Yv" ) with PrivateKeyEntity {
      } ).
      distinct
 
-  def idsFor( groupType:GroupType ) = groupType.ofEntity.tid + "Ids"
-
   def ownedBy( orgTid: String ) = {
     val tids = Mobj( $in -> Array( orgTid ) )
-    db.find( Mobj( "owners" -> tids ) ).map( apply ).toSeq
+    db.find( Mobj( "o" -> tids ) ).map( apply ).toSeq
   }
   
   def canSeeOther( orgTid:String ) = ownedBy( orgTid ).filter( g => Group( g ).canSee( T.user ) )
@@ -192,13 +186,13 @@ object Group extends MongoEntity( tid = "a0Yv" ) with PrivateKeyEntity {
 
     val myGroups =
       db.find(
-        Mobj( "owners" -> tids )
+        Mobj( "o" -> tids )
       ).map( apply ).toSeq
 
     val memberGroups =
       db.find( 
-        Mobj( "tids" -> tids,
-              "mode" -> Mobj( $ne -> GroupMode.Monitor.id ) )
+        Mobj( "v" -> tids,
+              "groupMode" -> Mobj( $ne -> GroupMode.Monitor.id ) )
       ).map( apply ).toSeq.filter( memberGroup => !myGroups.exists( _.id == memberGroup.id ) )
 
     myGroups ++ memberGroups 
@@ -213,28 +207,28 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
   override def id:ObjectId = super.apply( "_id" ).as[ObjectId]
   
 
-  def mode = GroupMode.byId( i( 'mode ) ).orNull
+  def groupMode = GroupMode.byId( i( 'groupMode ) ).orNull
 
-  def monitor       = mode == GroupMode.Monitor
-  def moderated     = mode == GroupMode.Moderated
-  def collaborative = mode == GroupMode.Collaborative
+  def monitor       = groupMode == GroupMode.Monitor
+  def moderated     = groupMode == GroupMode.Moderated
+  def collaborative = groupMode == GroupMode.Collaborative
 
   // TODO:  remove this method once it is no longer used
   def updateMode( monitor:Boolean ) = {
-    this( 'mode ) =
+    this( 'groupMode ) =
       if ( monitor )                         GroupMode.Monitor.id
       else if ( groupType == GroupType.Org ) GroupMode.Moderated.id
       else                                   GroupMode.Collaborative.id
   }
 
   def isOwner( user:User ) = {
-    val owners = a_?( 'owners )
+    val owners = a_?( 'o )
     owners.has( user.tid ) ||
     ( user.org != null && owners.has( user.org.tid ) )
   }
 
   def isOwner( tid:String ) = {
-    val owners = a_?( 'owners )
+    val owners = a_?( 'o )
     owners.has( tid ) || (
       B.User.hasTid( tid ) && {
         val org = TidItem.by( tid ).org
@@ -246,13 +240,13 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
   def owners = {
    for ( e <- oentities;
          en = e.as[MongoEntity];
-         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> obj.a_?( "owners" ).map( tid => en.tidToId( tid._s ) ).toSeq.toMlist ) ) );
+         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> obj.a_?( "o" ).map( tid => en.tidToId( tid._s ) ).toSeq.toMlist ) ) );
          rec = en( r ) )
       yield rec
   }
   
   def firstOwnerTid( notTids:String* ):String = {
-    val owners = a_?( 'owners )
+    val owners = a_?( 'o )
     
     owners foreach { t =>
       val tid = t._s
@@ -264,42 +258,33 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
     null
   }
 
-  def ownerNames = a_?( 'owners ).map( tid => TidItem.by( tid.as[String] ).name ).mkString( ", " )
+  def ownerNames = a_?( 'o ).map( tid => TidItem.by( tid.as[String] ).name ).mkString( ", " )
 
-  def updateIds =
-    for ( en <- Group.attrib( 'tids ).domain.as[DbArray].of.as[DbTid].of ) {
-      val seq = a_?( 'tids ).map( _._s ).filter( _.startsWith( en.tid ) ).map( en.tidToId )
-      val field = en.tid + "Ids"
+  def idsForEntity( en:Entity ) = a_?( 'v ).map( _._s ).filter( _.startsWith( en.tid ) ).map( en.tidToId )
+  def idsForGroupType = idsForEntity( groupType.ofEntity )
 
-      if ( seq.nonEmpty )
-        obj( field ) = seq.toMlist
-      else
-        obj.remove( field )
-    }
+  def groupType = GroupType.byId( i( 'groupType ) ).getOrElse( GroupType.Org ).as[GroupType]
 
-  def groupType = GroupType.byId( i( 'type ) ).getOrElse( GroupType.Org ).as[GroupType]
-
-  def idsField = Group.idsFor( groupType )
 
   def iconClass16x16 = groupType.iconClass16x16
   def iconClass32x32 = groupType.iconClass32x32
 
-  def oentities = a_?( 'owners ).toSeq.of[String].map( _.substring( 0, 4 ) ).distinct.map( tid => Entity.byTid( tid ).get )
-  def entities = a_?( 'tids ).toSeq.of[String].map( _.substring( 0, 4 ) ).distinct.map( tid => Entity.byTid( tid ).get )
+  def oentities = a_?( 'o ).toSeq.of[String].map( _.substring( 0, 4 ) ).distinct.map( tid => Entity.byTid( tid ).get )
+  def entities = a_?( 'v ).toSeq.of[String].map( _.substring( 0, 4 ) ).distinct.map( tid => Entity.byTid( tid ).get )
 
   def members =
    for ( e <- entities;
          en = e.as[MongoEntity];
-         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> obj.a_?( en.tid + "Ids" ) ) ) );
+         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> idsForEntity( en ) ) ) );
          rec = en( r ) )
-      yield rec
+     yield rec
 
-  def isMember( tid:String ) = a_?( 'tids ).toSeq.find( _ == tid ) != None
+  def isMember( tid:String ) = a_?( 'v ).toSeq.find( _ == tid ) != None
   
   def isMember( user:User ) = {
-    val tids = a_?( 'tids )
-    tids.has( user.tid ) ||
-    ( user.org != null && tids.has( user.org.tid ) )
+    val members = a_?( 'v )
+    members.has( user.tid ) ||
+    ( user.org != null && members.has( user.org.tid ) )
   }
   
   def canSee( member:Record ):Boolean = canSee( T.user, member )
@@ -310,7 +295,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
     if ( owner ) {
       true
     } else {
-      mode match {
+      groupMode match {
       case GroupMode.Monitor =>
         false
 
@@ -335,7 +320,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
     if ( b( 'builtin ) )
       sb ++= "Built-in "
 
-    sb ++= mode.label += ' '
+    sb ++= groupMode.label += ' '
     sb ++= groupType.label
     sb ++= " Group)</i>"
 
@@ -357,7 +342,7 @@ case class GroupMaker( groupType:GroupType,
                        nameSearch: ( String ) => Any = null ) {
 
   def queryGroupMembers( group:Group ) =
-    ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.obj.a_?( group.idsField ) ) ) ).map( ofEntity.apply ).toIterable
+    ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.idsForGroupType ) ) ).map( ofEntity.apply ).toIterable
 }
 
 case class GroupingAddBy( label:String, keys:String* ) {
@@ -408,7 +393,7 @@ case class GroupField( baseName:String, l:String = null,
     if ( value != null ) {
       val group = groupValueFor( run.report.searchRec ).selectedGroup
       if ( group != null )
-        searchObj( baseName ) = Mobj( $in -> group.obj.a_?( group.idsField ) )
+        searchObj( baseName ) = Mobj( $in -> group.idsForGroupType.toMlist )
     }
   }
 
@@ -453,8 +438,8 @@ case class GroupField( baseName:String, l:String = null,
   def queryGroups =
     Group.db.find(
       Mobj(
-        "owners" -> accessTidsQuery,
-        "type" -> ( if ( makers.length > 1 ) Mobj( $in -> makers.map( _.groupType.id ).toMlist ) else makers.head.groupType.id )
+        "o" -> accessTidsQuery,
+        "groupType" -> ( if ( makers.length > 1 ) Mobj( $in -> makers.map( _.groupType.id ).toMlist ) else makers.head.groupType.id )
       )
     ).map( Group.apply ).toSeq
 
@@ -526,24 +511,23 @@ case class GroupField( baseName:String, l:String = null,
         else
           GroupType.getById( web.i( "grpType" + id ) )
 
-      group( 'name )    = web.s( "grpAddName" + id ) or "Unnamed Group"
-      group( 'type )    = gt.id
+      group( 'name )      = web.s( "grpAddName" + id ) or "Unnamed Group"
+      group( 'groupType ) = gt.id
 
       group.updateMode( monitor )
 
-      group( 'owners ) = Mlist(
+      group( 'o ) = Mlist(
         gt match {
         case GroupType.Org  => T.session.orgTid
         case GroupType.User => T.session.user.tid
         } )
 
       if ( !monitor ) {
-        group( 'tids ) =
+        group( 'v ) =
           ( gt match {
             case GroupType.Org  => Seq( T.session.orgTid )
             case GroupType.User => Seq( T.session.user.tid )
             } ).toMlist
-        group.updateIds
       }
 
       group.save
@@ -596,7 +580,7 @@ case class GroupField( baseName:String, l:String = null,
 
       if ( ab != null && dg != null && !dg.b( 'builtin ) ) {
 
-        val tids:Seq[String] =
+        val addTids:Seq[String] =
           ab.label match {
           case "Name" => // TODO:  should match on something better
             web.a_?( 'addTids )
@@ -628,12 +612,11 @@ case class GroupField( baseName:String, l:String = null,
 
         // DRAGON-MIXED-TID:  this is a hack because we've got mixed tids inside groups (both Org and ExtendedOrg tids) ... there should only be Org tids!
         //                    TODO:  remove all references to DRAGON-MIXED-TID once this problem is cleared up
-        assert( tids.forall( _.startsWith( dg.groupType.ofEntity.tid ) ) )
+        assert( addTids.forall( _.startsWith( dg.groupType.ofEntity.tid ) ) )
 
-        dg( "tids" ) = ( dg.a_?( 'tids ) ++ tids ).distinct.toMlist
-        dg.updateIds
+        dg( "v" ) = ( dg.a_?( 'v ) ++ addTids ).distinct.toMlist
         dg.save
-        tids foreach { tid => B.groupMemberAdded( dg, tid ) }
+        addTids foreach { tid => B.groupMemberAdded( dg, tid ) }
       }
 
       web.js( JqHtml( "#grpMain" + id, gv.groupUi ) )
@@ -642,13 +625,11 @@ case class GroupField( baseName:String, l:String = null,
       if ( !dg.b( 'builtin ) ) {
         val tid = web.s( 'id )
 
-        // TODO:  we should be able to do both of these in a single update, but need to figure out how to do two $pulls in a single update's DBObject ... does $and work ?
-        Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( "tids" -> tid ) ) )
-        Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( dg.idsField -> Tid.tidToId( tid ) ) ) )
+        Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( "v" -> tid ) ) )
 
         // DRAGON-MIXED-TID
         if ( tid.startsWith( makerFor( dg ).ofEntity.tid ) ) // bad !
-          Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( "tids" -> dg.groupType.ofEntity.idToTid( Tid.tidToId( tid ) ) ) ) )
+          Group.db.update( Mobj( "_id" -> dg.id ), Mobj( $pull -> Mobj( "v" -> dg.groupType.ofEntity.idToTid( Tid.tidToId( tid ) ) ) ) )
 
         gv.resetGroups
         B.groupMemberRemoved( dg, tid )
@@ -712,7 +693,7 @@ case class GroupValue( gf:GroupField ) extends Valuable {
 
     latestGroups
   }
-  def groupsFor( tid:String ) = groups.filter( _.a_?( 'tids ).contains( tid ) ).map( _.s( 'name ) ).mkString( ", " )
+  def groupsFor( tid:String ) = groups.filter( _.a_?( 'v ).contains( tid ) ).map( _.s( 'name ) ).mkString( ", " )
 
   def byId( id:Any ) = groups.find( _.id == id ).get
 

@@ -78,8 +78,9 @@ object ContentType extends RamEntity( tid = "a10v" ) with EnumEntity[ContentType
   val Content            = apply( 3, "Content" )
   val Folder             = apply( 4, "Folder" )
   val Document           = apply( 5, "Document" )
+  val Group              = apply( 6, "Group" )
 
-  static( ChangeLog, Message, Content, Folder, Document )
+  static( ChangeLog, Message, Content, Folder, Document, Group )
 }
 
 class ContentType extends Tuple( ContentType.makeView )
