@@ -32,6 +32,7 @@ import scala.xml.{ NodeSeq, Unparsed }
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.{ Domain, Record, Scope }
+import org.tyranid.document.OpenOfficeParser
 import org.tyranid.ui.PathField
 import org.tyranid.web.WebContext
 
@@ -49,7 +50,8 @@ object TextExtractors {
   val extractors = Seq[TextExtractor](
                                         new TxtTextExtractor(),
                                         new HtmlTextExtractor(),
-                                        new RtfTextExtractor()
+                                        new RtfTextExtractor(),
+                                        new OpenOfficeTextExtractor()
                                      )
                                      
   def findByFilename( filename:String ) = {
@@ -103,6 +105,31 @@ class RtfTextExtractor extends TextExtractor {
     }
   }
 }
+
+// Open Office Spreadsheet
+class OpenOfficeTextExtractor extends TextExtractor {
+  override val mimeTypes = Seq(
+    "application/oda",
+    "application/vnd.oasis.opendocument.database",
+    "application/vnd.oasis.opendocument.image",
+    "application/vnd.oasis.opendocument.chart",  
+    "application/vnd.oasis.opendocument.formula",  
+    "application/vnd.oasis.opendocument.graphics",
+    "application/vnd.oasis.opendocument.text-master",  
+    "application/vnd.oasis.opendocument.presentation",
+    "application/vnd.oasis.opendocument.spreadsheet",
+    "application/vnd.oasis.opendocument.text", 
+    "application/vnd.oasis.opendocument.graphics-template",   
+    "application/vnd.oasis.opendocument.text-web",
+    "application/vnd.oasis.opendocument.text-template",   
+    "application/vnd.oasis.opendocument.presentation-template",
+    "application/vnd.oasis.opendocument.spreadsheet-template", 
+    "application/vnd.openofficeorg.extension" )
+  override val extTypes = Seq(     "oda", "odb", "odi", "odc", "odf", "odg", "odm", "odp", "ods", "odt", "otg", "oth", "ott", "otp",  "ots", "oxt" )
+  
+  override def extract( file:SysFile ) = OpenOfficeParser.getText( file.getPath() )
+}
+
 
 object DbFile {
   def apply( bucketPrefix:String ):DbFile = new DbFile( B.getS3Bucket( bucketPrefix ) )
@@ -209,13 +236,13 @@ object File {
     "oda"      -> "application/oda",
     "odb"      -> "application/vnd.oasis.opendocument.database",
     "odi"      -> "application/vnd.oasis.opendocument.image",
-    "odt"      -> "application/vnd.oasis.opendocument.text", 
     "odc"      -> "application/vnd.oasis.opendocument.chart",  
     "odf"      -> "application/vnd.oasis.opendocument.formula",  
     "odg"      -> "application/vnd.oasis.opendocument.graphics",
     "odm"      -> "application/vnd.oasis.opendocument.text-master",  
     "odp"      -> "application/vnd.oasis.opendocument.presentation",
     "ods"      -> "application/vnd.oasis.opendocument.spreadsheet",
+    "odt"      -> "application/vnd.oasis.opendocument.text", 
     "otg"      -> "application/vnd.oasis.opendocument.graphics-template",   
     "oth"      -> "application/vnd.oasis.opendocument.text-web",
     "ott"      -> "application/vnd.oasis.opendocument.text-template",   
