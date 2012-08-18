@@ -43,6 +43,8 @@ case class Migrator( migrators:Migrates* ) {
       
       if ( !MigrationStatus.db.exists( Mobj( "_id" -> migrator.name ) ) ) {
         println( "[" + migrator.name + ": START]" )
+        migrator.desc.lines.foreach( println )
+        
         migrator.migrate
 
         if ( migrator.commit ) {
@@ -68,4 +70,5 @@ trait Migrates {
   val name:String
   def migrate
   val commit = true
+  val desc:String = ""
 }
