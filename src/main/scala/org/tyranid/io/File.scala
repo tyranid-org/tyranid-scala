@@ -317,6 +317,10 @@ object File {
     "zip"      -> "application/x-zip-compressed"
   )
   
+  def getExtension( mimetype:String ) = {
+    mimeTypeMap.entrySet().find( _.getValue() == mimetype ).flatten( _.getKey(), null )
+  }
+  
   def mimeTypeFor( filename:String ) = {
     val fsave = filename.safeString.toLowerCase
     val ext = filename.suffix( '.' )
