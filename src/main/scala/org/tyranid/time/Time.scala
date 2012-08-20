@@ -17,14 +17,16 @@
 
 package org.tyranid.time
 
+import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
 import java.util.{ Calendar, Date, TimeZone }
 
 import org.tyranid.Imp._
 import org.tyranid.session.Session
 
-
 class CalendarImp( c:Calendar ) {
+  lazy val weekdays = new DateFormatSymbols().getWeekdays()
+  
   def weekDayName   = Time.WeekDayNames( c.get( Calendar.DAY_OF_WEEK ) - 1 ).capitalize
   def monthName     = Time.MonthNames( c.get( Calendar.MONTH ) ).capitalize
 
@@ -74,6 +76,8 @@ class CalendarImp( c:Calendar ) {
     } while ( c.get( Calendar.DAY_OF_WEEK ) != dayOfWeek )
   }
 
+  def weekday = { weekdays( c.get( Calendar.DAY_OF_WEEK ) ) }
+  
   def format( iso8601:Boolean = false ) = {
     val sb = new StringBuilder
     sb ++= "%04d-%02d-%02d%s%02d:%02d".format(
@@ -112,7 +116,6 @@ class CalendarImp( c:Calendar ) {
 }
 
 class DateImp( d:Date ) {
-
   def toCalendar( tz:TimeZone = null ) = {
     val c = ( tz == null ) ? Calendar.getInstance | Calendar.getInstance( tz )
     c.setTime( d )
@@ -123,6 +126,8 @@ class DateImp( d:Date ) {
 
   def toUserCalendar = toCalendar( Session().user.timeZone )
   def toUtcCalendar  = toCalendar( Time.Utc )
+
+  def weekday = toUserCalendar.weekday
 
   def toDay = {
     val c = toUserCalendar
@@ -159,6 +164,14 @@ class DateImp( d:Date ) {
   def toDateTimeStr =
     if ( d == null ) null
     else             Time.DateTimeFormat.format( d )
+
+  def toTime12Str =
+    if ( d == null ) null
+    else             Time.TimeFormat12.format( d )
+
+  def toTime24Str =
+    if ( d == null ) null
+    else             Time.TimeFormat24.format( d )
 
   def toIso8601 = toUtcCalendar.format( iso8601 = true )
 
@@ -201,6 +214,9 @@ object Time {
   
   val DateFormat     = new SimpleDateFormat( "MM/dd/yyyy" )
   val DateTimeFormat = new SimpleDateFormat( "MM/dd/yyyy HH:mm:ss" )
+  val TimeFormat24 = new SimpleDateFormat( "HH:mm" )
+  val TimeFormat12 = new SimpleDateFormat( "hh:mma" )
+  
   val Rfc1123Format  = new SimpleDateFormat( "EEE, dd MMM yyyyy HH:mm:ss z" )
   val AttrFormat     = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mmZ" )
 

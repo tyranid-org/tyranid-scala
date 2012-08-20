@@ -219,8 +219,11 @@ object File {
     "latex"    -> "application/x-latex",
 
     "man"      -> "application/x-troff-man",
+    "markdown" -> "text/plain",
+    "md"       -> "text/plain",
     "me"       -> "application/x-troff-me",
     "mif"      -> "application/x-mif",
+    "mkd"      -> "text/plain",
     "mov"      -> "video/quicktime",
     "movie"    -> "video/x-sgi-movie",
 
