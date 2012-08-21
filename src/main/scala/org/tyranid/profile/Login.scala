@@ -44,7 +44,6 @@ object Register {
   def page( user:User, org:com.mongodb.DBObject, jsonRes:WebResponse ) = {
     val inner:NodeSeq =
       if ( org != null ) {
-        
         // if the org domain is the same as MY domain then add them.
         if ( org.s( 'domain ).toLowerCase == Email.domainFor( user.s( 'email ) ).toLowerCase ) {
           user( 'org ) = org.id
