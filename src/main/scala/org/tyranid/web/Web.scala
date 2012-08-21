@@ -245,6 +245,7 @@ class WebResponse( web:WebContext, sess:Session ) {
          "errors" -> errors,
          "redirect" -> redirect,
          "html" -> htmlMap,
+
          "extraJS" -> extraJS 
      ) ).toString 
   }
