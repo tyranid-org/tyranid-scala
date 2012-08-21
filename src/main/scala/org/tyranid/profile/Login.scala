@@ -61,7 +61,7 @@ object Register {
          </div>
          <hr/>
          <div class="row-fluid">
-          <!--div class="span12" style="height:40px;padding-top:8px;text-align:right;">Or activate later and <button type="submit" class="btn-success btn">Continue To Volerro <i class="icon-play"></i></button></div-->
+          <!--div class="span12" style="height:40px;padding-top:8px;text-align:right;">Or activate later and <button type="submit" class="btn-success btn">Continue To Volerro <i class="icon-caret-right"></i></button></div-->
          </div>
         </div>
       } else {
@@ -84,7 +84,7 @@ object Register {
           <div class="span6 val-display"/>
          </div> 
          <div class="row-fluid">
-          <div class="span12" style="height:40px;padding-top:8px;text-align:right;"><button type="submit" class="btn-success btn">Next <i class="icon-play"></i></button></div>
+          <div class="span12" style="height:40px;padding-top:8px;text-align:right;"><button type="submit" class="btn-success btn">Next <i class="icon-caret-right"></i></button></div>
          </div>
         </div>
       }       
@@ -178,7 +178,7 @@ $( function() {
           <div style="height:40px;display:inline-block;"><input type="checkbox" name="save" id="saveLogin" value="Y"/></div>
           <label for="saveLogin" style="vertical-align:text-top;display:inline-block;">Stay signed-in</label>
          </div> 
-         <div class="span6" style="height:40px;padding-top:8px;"><button type="submit" class="btn-success btn pull-right">Sign-In <i class="icon-play"></i></button></div>
+         <div class="span6" style="height:40px;padding-top:8px;"><button type="submit" class="btn-success btn pull-right">Sign-In <i class="icon-caret-right"></i></button></div>
        </div>
        <hr style="margin:24px 0 0;"/>
       </div>
@@ -617,7 +617,7 @@ The """ + B.applicationName + """ Team
          <div class="span6">
           <div style="height:40px;line-height:40px;position:relative;top:10px;">Already registered? <a tabindex="-1" href="javascript:void(0);" data-sbt={ Form.attrJson( Map( "href" -> ( wpath + "/in" ) ) ) }>Sign in here</a></div>
          </div> 
-         <div class="span6" style="height:40px;padding-top:8px;"><button type="submit" class="btn-success btn pull-right">Register <i class="icon-play"></i></button></div>
+         <div class="span6" style="height:40px;padding-top:8px;"><button type="submit" class="btn-success btn pull-right">Register <i class="icon-caret-right"></i></button></div>
        </div>
       </div>
      </fieldset>
