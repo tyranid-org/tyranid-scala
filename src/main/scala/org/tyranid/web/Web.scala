@@ -238,6 +238,8 @@ class WebResponse( web:WebContext, sess:Session ) {
   
   var htmlMap:Map[String,Any] = null
   
+  var variables:Map[String,Any] = null
+  
   def toJsonStr = {
      new org.tyranid.json.JsonString( Map(
          "notices" -> notices,
@@ -245,8 +247,8 @@ class WebResponse( web:WebContext, sess:Session ) {
          "errors" -> errors,
          "redirect" -> redirect,
          "html" -> htmlMap,
-
-         "extraJS" -> extraJS 
+         "extraJS" -> extraJS,
+         "vars" -> variables
      ) ).toString 
   }
 }
