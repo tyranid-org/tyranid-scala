@@ -52,6 +52,10 @@ trait BsonObject extends Deep {
 
   def remove( key:String )
 
+  def tidFor( key:String,  en:org.tyranid.db.Entity ) = {
+    a_?( key ).find( t => en.hasTid( t._s ) ).getOrElse( "" )._s
+  }
+  
   def a_?( key:String ) =
     apply( key ) match {
     case null          => Mongo.EmptyArray
