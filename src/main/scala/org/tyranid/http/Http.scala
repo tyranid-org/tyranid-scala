@@ -43,8 +43,9 @@ import org.apache.http.protocol.{ ExecutionContext, HttpContext, BasicHttpContex
 import org.apache.http.util.EntityUtils
 
 import org.tyranid.Imp._
+import org.tyranid.math.Base36
+import org.tyranid.pdf.Pdf
 import org.tyranid.web.FileUploadSupport
-
 
 case class RestException( code:String, message:String ) extends Exception
 
@@ -202,6 +203,41 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     )
   }
 
+  def pdf( url:String, prefix:String = "file" ) {
+    if ( res.isCommitted )
+      return
+      
+    var pdfFile:File = null
+    
+    try {
+      val pdfFileName = prefix + "_" + Base36.make( 4 ) + ".pdf"
+      pdfFile = new File( pdfFileName )
+      
+      Pdf.urlToFile( url, pdfFile )
+      
+      val op = res.getOutputStream
+    
+      res.setContentType( "application/pdf" )
+      res.setContentLength( pdfFile.length.toInt )
+      res.setHeader( "Content-Disposition", "attachment; filename=\"" + pdfFileName + "\"" )
+      
+      val out = res.getOutputStream
+      val in = new FileInputStream( pdfFile )
+    
+      in.transferTo( out )
+    
+      in.close
+      op.flush
+      op.close
+    } catch {
+      case e:IOException =>
+        e.printStackTrace();
+    } finally {
+      if ( pdfFile != null )
+        pdfFile.delete
+    }
+  }
+  
   def html( html:NodeSeq, status:Int = 200, headers:Map[String,String] = null, req:HttpServletRequest = null, cache:Boolean = false ) =
     content( html.toString, "text/html", status, headers, req, cache )
 
