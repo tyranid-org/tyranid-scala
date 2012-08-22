@@ -106,7 +106,7 @@ class RtfTextExtractor extends TextExtractor {
   }
 }
 
-// Open Office Spreadsheet
+// Open Office - Should cover all Open Office products
 class OpenOfficeTextExtractor extends TextExtractor {
   override val mimeTypes = Seq(
     "application/oda",
