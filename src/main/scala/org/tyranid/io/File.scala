@@ -379,7 +379,7 @@ object File {
         out.flush
         out.close
       } catch {
-      case e if e.getClass.getSimpleName == "EofException" =>
+      case e if e.getClass.getSimpleName == "EofException" || e.getMessage == "Broken pipe" =>
         println( "*** Broken pipe" )
       case ex =>
         ex.log

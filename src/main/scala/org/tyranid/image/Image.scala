@@ -17,7 +17,10 @@
 
 package org.tyranid.image
 
-import java.io.{ FileNotFoundException, IOException }
+import java.awt.{ Color, RenderingHints }
+import java.awt.image.{ BufferedImage }
+
+import java.io.{ FileNotFoundException, IOException, File }
 import java.net.URL
 
 import javax.imageio.{ ImageIO, ImageReader }
@@ -34,6 +37,8 @@ import org.tyranid.db.{ Domain, Record, Scope }
 import org.tyranid.io.DbFile
 import org.tyranid.ui.PathField
 import org.tyranid.web.Html
+
+
     
 
 
@@ -292,13 +297,59 @@ object Image {
 }
 
 case class Image( url:URL, dims:Option[Dimensions] = None ) {
-
   def pixels = dims.flatten( _.pixels, 0 )
-
   def portraitRank = dims.flatten( _.portraitRank, 0.0 )
-
   def dimensions( maxWidth:Int = -1, maxHeight:Int = -1 ) = dims.get.scale( maxWidth, maxHeight )
-
   def cssDimensions( maxWidth:Int = -1, maxHeight:Int = -1 ) = dimensions( maxWidth, maxHeight ).css
 }
 
+
+// 260 x 170 (Dashboard)
+// 140 x 91 (Timeline)
+// 100 x 65 (Project header)
+// 40 x 26 (Dashboard drop-down)
+
+object ThumbnailGenerator {
+  def transform( originalFile:File, thumbnailFile:File, thumbW:Int, thumbH:Int ):File = {
+    val image = ImageIO.read( originalFile )
+    val imageWidth  = image.getWidth( null )
+    val imageHeight = image.getHeight( null )
+    
+    // Do not create thumbs that are bigger than the original image
+    if ( thumbW > imageWidth || thumbH > imageHeight )
+      return originalFile
+      
+    val thumbRatio:Double = double2Double( thumbW ) / double2Double( thumbH )
+    val imageRatio:Double = double2Double( imageWidth ) / double2Double( imageHeight )
+    
+    var thumbHeight = thumbH
+    var thumbWidth  = thumbW
+    
+    if ( thumbRatio < imageRatio )  {
+      thumbHeight = ( thumbWidth / imageRatio )._i
+    } else {
+      thumbWidth = ( thumbHeight * imageRatio )._i
+    }
+      
+    if ( imageWidth < thumbWidth && imageHeight < thumbHeight ) {
+      thumbWidth = imageWidth
+      thumbHeight = imageHeight
+    } else if ( imageWidth < thumbWidth ) {
+      thumbWidth = imageWidth
+    } else if ( imageHeight < thumbHeight ) {
+      thumbHeight = imageHeight
+    }
+
+    val thumbImage = new BufferedImage( thumbWidth, thumbHeight, BufferedImage.TYPE_INT_RGB )
+    val graphics2D = thumbImage.createGraphics()
+    graphics2D.setBackground( Color.WHITE )
+    graphics2D.setPaint( Color.WHITE );
+    graphics2D.fillRect( 0, 0, thumbWidth, thumbHeight )
+    graphics2D.setRenderingHint( RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR )
+    graphics2D.drawImage( image, 0, 0, thumbWidth, thumbHeight, null )
+      
+    ImageIO.write( thumbImage, "JPG", thumbnailFile );
+    
+    return thumbnailFile
+  }
+}

@@ -38,16 +38,25 @@ case class Js( js:String ) extends JsCmd {
   def toJson = '"' + js.encJson + '"'
 }
 
-case class JqHtml( selector:String, html:NodeSeq ) extends JsCmd {
-  def toJson = "{\"" + selector + "\":\"" + html.toString.encJson + "\"}"
+case class JqHtml( // this is the target selector to place the html at
+                   target:String,
+                   html:NodeSeq,
+
+                   // this is the target selector for a modal dialog to open, if present
+                   modal:String = null,
+
+                   transition:String = null,
+                   duration:Int = 250 ) extends JsCmd {
+
+  def toJson = "{\"" + target + "\":\"" + html.toString.encJson + "\"}"
 }
 
-case class JqHide( selector:String ) extends JsCmd {
-  def toJson = "{\"" + selector + "\":\"hide\"}"
+case class JqHide( target:String ) extends JsCmd {
+  def toJson = "{\"" + target + "\":\"hide\"}"
 }
 
-case class JqShow( selector:String ) extends JsCmd {
-  def toJson = "{\"" + selector + "\":\"show\"}"
+case class JqShow( target:String ) extends JsCmd {
+  def toJson = "{\"" + target + "\":\"show\"}"
 }
 
 

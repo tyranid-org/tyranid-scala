@@ -27,7 +27,7 @@ import scala.xml.{ Elem, Node, NodeSeq, Text, TopScope }
 import org.cometd.bayeux.server.BayeuxServer
 
 import org.tyranid.Imp._
-import org.tyranid.json.JsCmd
+import org.tyranid.json.{ JsCmd, Js, JqHide, JqShow, JqHtml }
 import org.tyranid.profile.{ LoginCookie, User }
 import org.tyranid.session.{ AccessLog, Session, ThreadData }
 import org.tyranid.ui.LnF
@@ -236,7 +236,9 @@ class WebResponse( web:WebContext, sess:Session ) {
   
   var extraJS:String = null
   
-  var htmlMap:Map[String,Any] = null
+  var htmlMap:collection.Map[String,Any] = null
+  
+  var variables:Map[String,Any] = null
   
   def toJsonStr = {
      new org.tyranid.json.JsonString( Map(
@@ -245,14 +247,46 @@ class WebResponse( web:WebContext, sess:Session ) {
          "errors" -> errors,
          "redirect" -> redirect,
          "html" -> htmlMap,
-
-         "extraJS" -> extraJS 
+         "extraJS" -> extraJS,
+         "vars" -> variables
      ) ).toString 
   }
 }
 
 case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:ServletContext ) {
   def jsonRes( sess:Session ) = new WebResponse( this, sess )
+
+  // TODO:  eliminate "def js" and "tyr.js" since it is redundant with this way of doing it, then rename this to "js"
+  def jsRes( js:JsCmd* ) = {
+    val res = jsonRes( T.session )
+
+    for ( cmd <- js )
+      cmd match {
+      case cmd:JqHtml =>
+        val htmlMap = mutable.Map[String,Any]()
+
+        htmlMap( "html" )   = cmd.html
+        htmlMap( "target" ) = cmd.target
+
+        if ( cmd.modal.notBlank )
+          htmlMap( "modal" ) = cmd.modal
+
+        if ( cmd.transition.notBlank ) {
+          htmlMap( "transition" ) = cmd.transition
+          htmlMap( "duration" )   = cmd.duration.toString
+        }
+
+        res.htmlMap = htmlMap
+
+      case cmd:Js     => throw new RuntimeException( "not yet implemented" )
+      case cmd:JqHide => throw new RuntimeException( "not yet implemented" )
+      case cmd:JqShow => throw new RuntimeException( "not yet implemented" )
+      }
+
+    json( res )
+  }
+
+
   def matches( path:String ) = {
     // TODO:  check for path separators ... i.e. "/foo" should not match "/foobar" but should match "/foo/bar"
     req.getServletPath.startsWith( path )

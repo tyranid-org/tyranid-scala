@@ -169,6 +169,10 @@ class DateImp( d:Date ) {
     if ( d == null ) null
     else             Time.TimeFormat12.format( d )
 
+  def toMonthDayStr =
+    if ( d == null ) null
+    else             Time.MonthDay.format( d )
+
   def toTime24Str =
     if ( d == null ) null
     else             Time.TimeFormat24.format( d )
@@ -214,8 +218,9 @@ object Time {
   
   val DateFormat     = new SimpleDateFormat( "MM/dd/yyyy" )
   val DateTimeFormat = new SimpleDateFormat( "MM/dd/yyyy HH:mm:ss" )
-  val TimeFormat24 = new SimpleDateFormat( "HH:mm" )
-  val TimeFormat12 = new SimpleDateFormat( "hh:mma" )
+  val TimeFormat24   = new SimpleDateFormat( "HH:mm" )
+  val TimeFormat12   = new SimpleDateFormat( "hh:mma" )
+  val MonthDay       = new SimpleDateFormat( "MMM dd" )
   
   val Rfc1123Format  = new SimpleDateFormat( "EEE, dd MMM yyyyy HH:mm:ss z" )
   val AttrFormat     = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mmZ" )
