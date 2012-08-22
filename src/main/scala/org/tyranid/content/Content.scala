@@ -169,7 +169,7 @@ trait ContentMeta extends MongoEntity with PrivateKeyEntity {
   "r"                 is DbArray(Comment)     as "Replies";
 
   // Image / Thumbnail
-  "img"               is DbUrl /* TODO:  change to DbImage? */;
+  "img"               is DbUrl                /* TODO:  change to DbImage? */;
   "imgH"              is DbInt                help Text( "The actual height of the image." );
   "imgW"              is DbInt                help Text( "The actual width of the image." );
   
@@ -248,8 +248,28 @@ abstract class Content( override val view:MongoView,
       //}
     }
   }    
+  
+  // 260 x 169 (Dashboard)
+  def largeThumb:String = {
+    null
+  }
 
+  // 140 x 91 (Timeline)
+  def mediumThumb:String = {
+    null
+  }
+  
+  // 100 x 65 (Project header)  
+  def smallThumb:String = {
+    null
+  }
+  
+  // 40 x 26 (Dashboard drop-down)
+  def tinyThumb:String = {
+    null
+  }  
 
+  
   /*
    * * *   Revisions
    */

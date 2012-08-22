@@ -303,12 +303,6 @@ case class Image( url:URL, dims:Option[Dimensions] = None ) {
   def cssDimensions( maxWidth:Int = -1, maxHeight:Int = -1 ) = dimensions( maxWidth, maxHeight ).css
 }
 
-
-// 260 x 170 (Dashboard)
-// 140 x 91 (Timeline)
-// 100 x 65 (Project header)
-// 40 x 26 (Dashboard drop-down)
-
 object ThumbnailGenerator {
   def transform( originalFile:File, thumbnailFile:File, thumbW:Int, thumbH:Int ):File = {
     val image = ImageIO.read( originalFile )
@@ -316,21 +310,20 @@ object ThumbnailGenerator {
     val imageHeight = image.getHeight( null )
     
     // Do not create thumbs that are bigger than the original image
-    if ( thumbW > imageWidth || thumbH > imageHeight )
+    if ( thumbW > imageWidth && thumbH > imageHeight )
       return originalFile
       
-    val thumbRatio:Double = double2Double( thumbW ) / double2Double( thumbH )
+    //val thumbRatio:Double = double2Double( thumbW ) / double2Double( thumbH )
     val imageRatio:Double = double2Double( imageWidth ) / double2Double( imageHeight )
     
     var thumbHeight = thumbH
     var thumbWidth  = thumbW
     
-    if ( thumbRatio < imageRatio )  {
+    if ( imageWidth > imageHeight )
       thumbHeight = ( thumbWidth / imageRatio )._i
-    } else {
+    else
       thumbWidth = ( thumbHeight * imageRatio )._i
-    }
-      
+    
     if ( imageWidth < thumbWidth && imageHeight < thumbHeight ) {
       thumbWidth = imageWidth
       thumbHeight = imageHeight
@@ -342,14 +335,32 @@ object ThumbnailGenerator {
 
     val thumbImage = new BufferedImage( thumbWidth, thumbHeight, BufferedImage.TYPE_INT_RGB )
     val graphics2D = thumbImage.createGraphics()
+    
     graphics2D.setBackground( Color.WHITE )
     graphics2D.setPaint( Color.WHITE );
     graphics2D.fillRect( 0, 0, thumbWidth, thumbHeight )
     graphics2D.setRenderingHint( RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR )
     graphics2D.drawImage( image, 0, 0, thumbWidth, thumbHeight, null )
+     
+    // Only crop if needed
+    if ( imageWidth < thumbW || imageHeight < thumbH ) {
+      ImageIO.write( thumbImage, "JPG", thumbnailFile )
+    } else {
+      //println( "orig: " + thumbWidth + ", " + thumbHeight )
       
-    ImageIO.write( thumbImage, "JPG", thumbnailFile );
+      var (x,y,w,h) = ( 0, 0, thumbW, thumbH )
+      
+      if ( thumbWidth > thumbW ) {
+        x = ( thumbWidth - thumbW ) / 2 
+      } else if ( thumbHeight > thumbH ) {
+        y = ( thumbHeight - thumbH ) / 2
+      }
+      
+      //println( "cropped: " + x + ", " + y + ", " + w + ", " + h )
+      
+      ImageIO.write( thumbImage.getSubimage( x, y, w, h ), "JPG", thumbnailFile )
+    }
     
     return thumbnailFile
-  }
+  }  
 }

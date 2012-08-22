@@ -21,7 +21,9 @@ import scala.annotation.tailrec
 
 import java.io.{ IOException, FileOutputStream, InputStream, InputStreamReader, OutputStream }
 
+import org.tyranid.db.meta.{ TidItem }
 import org.tyranid.Imp._
+import org.tyranid.web.{ WebContext, Weblet }
 
 
 class InputStreamImp( is:InputStream ) {
@@ -69,5 +71,41 @@ class InputStreamImp( is:InputStream ) {
   }
 }
 
+object Iolet extends Weblet {
+  def handle( web:WebContext ) {
+
+    rpath match {
+      
+    // example: /thumb/a09vUCwNUOSweddROKEl/l
+    case s if s.startsWith( "/thumb" ) =>
+      val parts = s.substring( 6 ).split( "/" )
+      
+      val tid = parts(0)
+      
+      val tidItem = TidItem.by( tid )
+
+      //tidItem.tid match {
+      //  case 
+     // }
+      
+      val size = parts(1)
+      
+      
+
+
+      //val originalUrl = web.req.getAttribute( "javax.servlet.forward.request_uri" )
+
+      //println( originalUrl )
+      
+      //if ( originalUrl != null )
+      //  log( Event.Error404, "p" -> originalUrl )
+
+      //web.template( <tyr:404/> )
+
+    case _ =>
+      _404
+    }
+  }
+}
 
 

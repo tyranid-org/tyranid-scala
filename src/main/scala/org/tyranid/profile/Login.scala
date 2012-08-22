@@ -30,6 +30,16 @@ import org.tyranid.social.Social
 import org.tyranid.ui.{ Button, Grid, Row, Focus, LnF, Form }
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate, WebResponse }
 
+/*
+     new Form( "/user/regsiter", "register" )
+       .style( "margin-bottom:12px;" )
+       .data( "val", "1" )
+       .fieldsetClass( "registerBox" )
+       .title( "Thanks, " + user.s( 'firstName ) + "!" )
+       .hidden( "regStep", "2" )
+
+
+ */
 object Register {
   def sendActivation( user:User ) = {
     val activationCode = Base62.make(8)
