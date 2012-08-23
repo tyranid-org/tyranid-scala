@@ -18,6 +18,7 @@
 package org.tyranid.db
 
 import scala.collection.mutable
+import scala.collection.mutable.{ ArrayBuffer, Buffer }
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
@@ -318,7 +319,7 @@ trait Entity extends Domain with DbItem {
   def isStatic = staticView != null
 
 	var staticView:TupleView = null
-	var staticRecords:Array[Tuple] = null
+	var staticRecords:Buffer[Tuple] = null
 	var staticIdIndex:mutable.HashMap[Long,Tuple] = null
 
   def makeTuple( view:TupleView ) = new Tuple( view )
@@ -366,9 +367,9 @@ trait Entity extends Domain with DbItem {
 
 		val tlen = tuples.size
     // TODO:  use a toArray method or similar
-		staticRecords = new Array[Tuple]( tlen )
+		staticRecords = new ArrayBuffer[Tuple]( tlen )
 		for ( ti <- 0 until tlen )
-      staticRecords( ti ) = tuples( ti )
+      staticRecords.insert( ti, tuples( ti ) )
 
 		val keys = staticView.ekeys
 		if ( keys.size == 1 ) {
@@ -382,6 +383,54 @@ trait Entity extends Domain with DbItem {
 			}
 		}
 	}
+
+  def addStatic( tuple:Tuple ) = {
+    if ( staticRecords == null ) {
+      staticView = tuple.view
+      staticRecords = Buffer()
+    }
+
+    staticRecords += tuple
+
+		val keys = staticView.ekeys
+		if ( keys.size == 1 ) {
+      if ( staticIdIndex == null )
+			  staticIdIndex = new mutable.HashMap[Long,Tuple]
+
+			val idIdx = keys( 0 ).index
+
+			val id = tuple( idIdx ).asInstanceOf[Number].longValue
+			staticIdIndex( id ) = tuple
+		}
+  }
+
+  val addNames:Seq[String] = Nil
+
+  def add( values:Any* ):RecType = {
+
+    require( addNames.size > 0,            "define addNames first before invoking add()" )
+    require( addNames.size == values.size, "number of addNames must equal number of add() parameters" )
+
+    if ( staticView == null ) {
+		  staticView = new TupleView
+		  val leafCount = addNames.size
+		  val vas = new Array[ViewAttribute]( leafCount )
+		  for ( li <- 0 until leafCount )
+			  vas( li ) = new ViewAttribute( staticView, attrib( addNames( li ) ), li )
+		  staticView.leaves = vas
+    }
+
+    if ( staticRecords == null )
+      staticRecords = Buffer()
+
+		val tuple = makeTuple( staticView )
+		val tvalues = tuple.values
+		for ( vi <- 0 until values.size )
+			tvalues( vi ) = values( vi ).asInstanceOf[AnyRef]
+
+    addStatic( tuple )
+    tuple.as[RecType]
+  }
 
 	def staticLabelFor( id:Long ) =
     if ( id == 0 ) {
@@ -418,28 +467,8 @@ trait Entity extends Domain with DbItem {
     }
   }
 
+
   Entity.register( this )
-}
-
-// TODO:  should this extend RamEntity ?
-trait EnumEntity[ T >: Null <: Tuple ] extends Entity {
-
-	def apply( id:Int ):T =
-    if ( id == 0 ) null
-    else           staticIdIndex( id ).asInstanceOf[T]
-
-  def arrayToSeq( rec:Record, name:String ) = {
-    import org.tyranid.db.mongo.Imp._
-
-    rec.a( name ).map(
-      _ match {
-      case i:Int    => apply( i )
-      case d:Double => apply( d.toInt )
-      case o        => o.asInstanceOf[T]
-      } ).toSeq
-  }
-
-  def values( implicit mt:Manifest[T] ) = staticRecords.of[T]
 }
 
 case class StaticBuilder( en:Entity ) {

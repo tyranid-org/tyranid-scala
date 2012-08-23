@@ -27,12 +27,12 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbInt, DbLink, DbTid, DbUrl, Entity, EnumEntity, Record, Scope }
+import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbInt, DbLink, DbTid, DbUrl, Entity, Record, Scope }
 import org.tyranid.db.meta.{ Tid, TidItem }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.db.ram.RamEntity
-import org.tyranid.db.tuple.Tuple
+import org.tyranid.db.tuple.{ Tuple, TupleView }
 import org.tyranid.json.JqHtml
 import org.tyranid.math.Base62
 import org.tyranid.report.{ Report, Run }
@@ -53,24 +53,21 @@ import org.tyranid.web.{ WebContext, Weblet }
  */
 
 
-object GroupType extends RamEntity( tid = "a0Nt" ) with EnumEntity[GroupType] {
+object GroupType extends RamEntity( tid = "a0Nt" ) {
+  type RecType = GroupType
+  override def convert( view:TupleView ) = new GroupType( view )
+
   "_id"    is DbInt      is 'id;
   "name"   is DbChar(64) is 'label;
 
-  def apply( id:Int, name:String ) = {
-    val t = new GroupType
-    t( '_id )  = id
-    t( 'name ) = name
-    t
-  }
 
-  val Org  = apply( 1, "Org" )
-  val User = apply( 2, "User" )
+  override val addNames = Seq( "_id", "name" )
 
-  static( Org, User )
+  val Org  = add( 1, "Org" )
+  val User = add( 2, "User" )
 }
 
-class GroupType extends Tuple( GroupType.makeView ) {
+case class GroupType( override val view:TupleView ) extends Tuple( view ) {
 
   lazy val ofEntity =
     this match {
@@ -93,28 +90,25 @@ class GroupType extends Tuple( GroupType.makeView ) {
 }
 
 
-object GroupMode extends RamEntity( tid = "a0Ot" ) with EnumEntity[GroupType] {
+object GroupMode extends RamEntity( tid = "a0Ot" ) {
+  type RecType = GroupMode
+  override def convert( view:TupleView ) = new GroupMode( view )
+
   "_id"    is DbInt      is 'id;
   "name"   is DbChar(64) is 'label;
 
-  def apply( id:Int, name:String ) = {
-    val t = new GroupType
-    t( '_id )  = id
-    t( 'name ) = name
-    t
-  }
 
   def monitorHelp =
     Text( "Monitor groups are groups that are not visible to their members, and are used only for personal or organizational purposes.  They are generally not used for collaboration." )
 
-  val Monitor       = apply( 1, "Monitor"   )
-  val Moderated     = apply( 2, "Moderated" )
-  val Collaborative = apply( 3, "Open"      ) // A collaborative group is one which everyone inside the group can see each others things.
+  override val addNames = Seq( "_id", "name" )
 
-  static( Monitor, Moderated, Collaborative )
+  val Monitor       = add( 1, "Monitor"   )
+  val Moderated     = add( 2, "Moderated" )
+  val Collaborative = add( 3, "Open"      ) // A collaborative group is one which everyone inside the group can see each others things.
 }
 
-class GroupMode extends Tuple( GroupMode.makeView )
+case class GroupMode( override val view:TupleView ) extends Tuple( view )
 
 
 object Group extends MongoEntity( tid = "a0Yv" ) with PrivateKeyEntity {

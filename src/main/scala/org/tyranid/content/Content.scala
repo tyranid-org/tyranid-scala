@@ -24,12 +24,12 @@ import scala.xml.Text
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDateTime, DbInt, DbLink, DbLong, DbTid, DbText, DbUrl, EnumEntity, Record }
+import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDateTime, DbInt, DbLink, DbLong, DbTid, DbText, DbUrl, Record }
 import org.tyranid.db.es.{ SearchAuth, SearchText }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord, MongoView }
 import org.tyranid.db.ram.RamEntity
-import org.tyranid.db.tuple.Tuple
+import org.tyranid.db.tuple.{ Tuple, TupleView }
 import org.tyranid.image.Dimensions
 import org.tyranid.io.HasText
 
@@ -39,51 +39,45 @@ import org.tyranid.secure.{ PrivateKeyEntity, PrivateKeyRecord }
 
 // TODO:  should this be in ui ?
 
-object ViewType extends RamEntity( tid = "a13v" ) with EnumEntity[ViewType] {
+object ViewType extends RamEntity( tid = "a13v" ) {
+  type RecType = ViewType
+  override def convert( view:TupleView ) = new ViewType( view )
+
   "_id"    is DbInt      is 'id;
   "name"   is DbChar(64) is 'label;
 
-  def apply( id:Int, name:String ) = {
-    val t = new ViewType
-    t( '_id )  = id
-    t( 'name ) = name
-    t
-  }
 
-  val Post   = apply( 1, "Post"  )
-  val Card   = apply( 2, "Card"  )
-  val Table  = apply( 3, "Table" )
-  val Grid   = apply( 4, "Grid"  )
-  val Kanban = apply( 5, "Kanban"  )
+  override val addNames = Seq( "_id", "name" )
 
-  static( Post, Card, Table, Grid, Kanban )
+  val Post   = add( 1, "Post"  )
+  val Card   = add( 2, "Card"  )
+  val Table  = add( 3, "Table" )
+  val Grid   = add( 4, "Grid"  )
+  val Kanban = add( 5, "Kanban"  )
 }
 
-class ViewType extends Tuple( ViewType.makeView )
+case class ViewType( override val view:TupleView ) extends Tuple( view )
 
 
-object ContentType extends RamEntity( tid = "a10v" ) with EnumEntity[ContentType] {
+object ContentType extends RamEntity( tid = "a10v" ) {
+  type RecType = ContentType
+  override def convert( view:TupleView ) = new ContentType( view )
+
   "_id"    is DbInt      is 'id;
   "name"   is DbChar(64) is 'label;
 
-  def apply( id:Int, name:String ) = {
-    val t = new ContentType
-    t( '_id )  = id
-    t( 'name ) = name
-    t
-  }
 
-  val ChangeLog          = apply( 1, "ChangeLog" )
-  val Message            = apply( 2, "Message" )
-  val Content            = apply( 3, "Content" )
-  val Folder             = apply( 4, "Folder" )
-  val Document           = apply( 5, "Document" )
-  val Group              = apply( 6, "Group" )
+  override val addNames = Seq( "_id", "name" )
 
-  static( ChangeLog, Message, Content, Folder, Document, Group )
+  val ChangeLog          = add( 1, "ChangeLog" )
+  val Message            = add( 2, "Message" )
+  val Content            = add( 3, "Content" )
+  val Folder             = add( 4, "Folder" )
+  val Document           = add( 5, "Document" )
+  val Group              = add( 6, "Group" )
 }
 
-class ContentType extends Tuple( ContentType.makeView )
+case class ContentType( override val view:TupleView ) extends Tuple( view )
 
 
 
@@ -198,7 +192,7 @@ abstract class Content( override val view:MongoView,
                         override val parent:MongoRecord = null )
     extends MongoRecord( view, obj, parent ) with PrivateKeyRecord with HasText {
 
-  def contentType = ContentType( i( 'type ) )
+  def contentType = ContentType.getById( i( 'type ) )
 
   def hasTag( tag:Int ) = a_?( 'tags ).exists( _ == tag )
 
