@@ -85,21 +85,7 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   }
   
   def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ) = {
-    val res = Http.GET( "https://crocodoc.com/api/v2/download/thumbnail?token=" + apiKey + "&uuid=" + extDocId + "&size=" + width + "x" + height )
-    val entity = res.response.getEntity
-    
-    if ( entity != null ) {
-      val instream = entity.getContent
-      
-      val tmpFile = File.createTempFile( extDocId, ".png" )
-      val out = new FileOutputStream( tmpFile )
-       
-      instream.transferTo( out, true )
-
-      tmpFile
-    } else {
-      null
-    }
+    Http.GET_File( "https://crocodoc.com/api/v2/download/thumbnail?token=" + apiKey + "&uuid=" + extDocId + "&size=" + width + "x" + height, ext = ".png" )
   }
   
   def getText( extDocId:String ):String = {

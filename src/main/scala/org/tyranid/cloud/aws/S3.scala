@@ -17,7 +17,7 @@
 
 package org.tyranid.cloud.aws
 
-import java.io.{ ByteArrayInputStream, FileOutputStream, InputStream }
+import java.io.{ ByteArrayInputStream, FileOutputStream, InputStream, File }
 
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.{ AmazonS3Exception, GroupGrantee, ObjectMetadata, Permission, S3Object, GetObjectRequest }
@@ -36,6 +36,8 @@ case class S3Bucket( prefix:String, cfDistributionId:String = "", cfDomain:Strin
       "https://s3.amazonaws.com/" + name + "/" + path
     else
       "https://" + cfDomain + ".cloudfront.net/" + path
+      
+  def file( path:String ) = S3.getFile( this, path )  
 }
 
 object S3 {
@@ -109,6 +111,16 @@ object S3 {
     }
 	  
 	  null
+  }
+  
+  def getFile( bucket:S3Bucket, key:String, ext:String = ".tmp" ): File = {
+     val tmpFile = File.createTempFile( "tmp", ext )
+     val in = getInputStream( bucket, key )
+     
+     if ( in != null )
+       in.transferTo( new FileOutputStream( tmpFile ) )
+     
+     tmpFile
   }
   
   def exists( bucket:S3Bucket, key:String ) = {

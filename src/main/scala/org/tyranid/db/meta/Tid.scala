@@ -57,42 +57,7 @@ object TidItem {
   } )
 }
 
-case class TidItem( tid:String, id:Any, org:ObjectId, name:String, thumbnail:String ) {
-  def entity = Entity.byTid( tid )
-  def record = Record.getByTid( tid ) 
-
-  var _largeThumb:String = null
-  def largeThumb = {
-    if ( _largeThumb == null && entity.is[Content] )
-      _largeThumb = record.as[Content].largeThumb
-    
-    _largeThumb
-  }
-
-  var _mediumThumb:String = null
-  def mediumThumb = {
-    if ( _mediumThumb == null && entity.is[Content] )
-      _mediumThumb = record.as[Content].mediumThumb
-    
-    _mediumThumb
-  }
-  
-  var _smallThumb:String = null
-  def smallThumb = {
-    if ( _smallThumb == null && entity.is[Content] )
-      _smallThumb = record.as[Content].smallThumb
-    
-    _smallThumb
-  }
-  
-  var _tinyThumb:String = null
-  def tinyThumb = {
-    if ( _tinyThumb == null && entity.is[Content] )
-      _tinyThumb = record.as[Content].tinyThumb
-    
-    _tinyThumb
-  }  
-}
+case class TidItem( tid:String, id:Any, org:ObjectId, name:String, thumbnail:String ) {}
 
 object TidCache {}
 

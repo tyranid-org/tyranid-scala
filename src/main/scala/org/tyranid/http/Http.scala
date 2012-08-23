@@ -17,7 +17,7 @@
 
 package org.tyranid.http
 
-import java.io.{ InputStream, File, FileInputStream, IOException, OutputStream }
+import java.io.{ InputStream, File, FileInputStream, FileOutputStream, IOException, OutputStream }
 import java.net.URL
 import java.util.Date
 
@@ -42,10 +42,11 @@ import org.apache.http.params.{ BasicHttpParams, HttpConnectionParams }
 import org.apache.http.protocol.{ ExecutionContext, HttpContext, BasicHttpContext }
 import org.apache.http.util.EntityUtils
 
+import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.Imp._
 import org.tyranid.math.Base36
 import org.tyranid.pdf.Pdf
-import org.tyranid.web.FileUploadSupport
+import org.tyranid.web.{ FileUploadSupport, WebHandledException }
 
 case class RestException( code:String, message:String ) extends Exception
 
@@ -203,11 +204,30 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     )
   }
 
+  def s3( bucket:S3Bucket, path:String ) {
+    var out:OutputStream = null
+    
+    try {
+      val obj = S3.getObject( bucket, path )
+      val mimeType = obj.getObjectMetadata.getContentType
+      res.setContentType( ( if ( mimeType.notBlank ) mimeType else "application/octet-stream" ) )
+      res.setContentLength( obj.getObjectMetadata.getContentLength.toInt )
+      out = res.getOutputStream
+      obj.getObjectContent.transferTo( out, true )
+    } finally {
+      if ( out != null ) {
+        out.flush
+        out.close
+      }
+    }
+  }
+  
   def pdf( url:String, prefix:String = "file" ) {
     if ( res.isCommitted )
       return
       
     var pdfFile:File = null
+    var out:OutputStream = null
     
     try {
       val pdfFileName = prefix + "_" + Base36.make( 4 ) + ".pdf"
@@ -221,20 +241,19 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
       res.setContentLength( pdfFile.length.toInt )
       res.setHeader( "Content-Disposition", "attachment; filename=\"" + pdfFileName + "\"" )
       
-      val out = res.getOutputStream
-      val in = new FileInputStream( pdfFile )
-    
-      in.transferTo( out )
-    
-      in.close
-      op.flush
-      op.close
+      out = res.getOutputStream
+      new FileInputStream( pdfFile ).transferTo( out, true )
     } catch {
       case e:IOException =>
         e.printStackTrace();
     } finally {
       if ( pdfFile != null )
         pdfFile.delete
+        
+      if ( out != null ) {
+        out.flush
+        out.close
+      }
     }
   }
   
@@ -380,6 +399,24 @@ object Http {
   private def convertHeaders( headers:collection.Map[String,String] ) =
     headers.toSeq.map( p => new BasicHeader( p._1, p._2 ) ).toArray[Header]
 
+  def GET_File( url:String, ext:String = null ) = {
+    val res = GET( url )
+    val entity = res.response.getEntity
+    
+    if ( entity != null ) {
+      val instream = entity.getContent
+      
+      val tmpFile = File.createTempFile( "tmp", ext.isBlank ? ".tmp" | ext )
+      val out = new FileOutputStream( tmpFile )
+       
+      instream.transferTo( out, true )
+
+      tmpFile
+    } else {
+      null
+    }
+  }
+  
   def GET( url:String, query:collection.Map[String,String] = null, headers:collection.Map[String,String] = null ):HttpResult = {
     val get = new HttpGet( makeUrl( url, query ) )
     if ( headers != null )
