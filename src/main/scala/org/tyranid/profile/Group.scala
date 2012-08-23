@@ -27,7 +27,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbInt, DbLink, DbTid, Entity, EnumEntity, Record, Scope }
+import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbInt, DbLink, DbTid, DbUrl, Entity, EnumEntity, Record, Scope }
 import org.tyranid.db.meta.{ Tid, TidItem }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
@@ -127,6 +127,12 @@ object Group extends MongoEntity( tid = "a0Yv" ) with PrivateKeyEntity {
   "builtin"   is DbBoolean         help Text( "A builtin group is maintained by the system and is not editable by end users." );
   "groupType" is DbLink(GroupType) ;
   "groupMode" is DbLink(GroupMode) ;
+
+  // Image / Thumbnail
+  "img"               is DbUrl /* TODO:  change to DbImage? */;
+  "imgH"              is DbInt                help Text( "The actual height of the image." );
+  "imgW"              is DbInt                help Text( "The actual width of the image." );
+ 
 
   override def init = {
     super.init
