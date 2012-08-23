@@ -17,7 +17,7 @@
 
 package org.tyranid.cloud.aws
 
-import java.io.{ ByteArrayInputStream, FileOutputStream, InputStream, File }
+import java.io.{ ByteArrayInputStream, FileOutputStream, FileInputStream, InputStream, File }
 
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.{ AmazonS3Exception, GroupGrantee, ObjectMetadata, Permission, S3Object, GetObjectRequest }
@@ -43,7 +43,25 @@ case class S3Bucket( prefix:String, cfDistributionId:String = "", cfDomain:Strin
 object S3 {
   private val s3 = new AmazonS3Client( B.awsCredentials )
 
-  def write( bucket:S3Bucket, key:String, file:java.io.File ) = s3.putObject( bucket.name, key, file )
+  def write( bucket:S3Bucket, key:String, file:java.io.File ) = {
+    val mimeType = org.tyranid.io.File.mimeTypeFor( file.getName )
+    
+    if ( mimeType.notBlank ) {
+      val md = new ObjectMetadata
+      md.setContentLength( file.length )
+      md.setContentType( mimeType )
+
+      val in = new FileInputStream( file )
+      
+      try {
+        s3.putObject( bucket.name, key, in, md )
+      } finally {
+        in.close
+      }
+    } else {
+      s3.putObject( bucket.name, key, file )
+    }
+  }
   
   def write( bucket:S3Bucket, key:String, mimeType:String, data:Array[Byte] ) = {
     val md = new ObjectMetadata
@@ -77,7 +95,7 @@ object S3 {
   }
   
   def write( bucket:S3Bucket, key:String, file:org.apache.commons.fileupload.FileItem ):Unit =
-    S3.write( bucket, key, file.getSize, file.getContentType, file.getInputStream )
+    write( bucket, key, file.getSize, file.getContentType, file.getInputStream )
 
   def delete( bucket:S3Bucket, key:String ) = s3.deleteObject( bucket.name, key )
   
