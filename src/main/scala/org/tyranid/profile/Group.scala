@@ -27,6 +27,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
+import org.tyranid.content.{ ContentMeta, Content, ContentType }
 import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbInt, DbLink, DbTid, DbUrl, Entity, Record, Scope }
 import org.tyranid.db.meta.{ Tid, TidItem }
 import org.tyranid.db.mongo.Imp._
@@ -36,7 +37,6 @@ import org.tyranid.db.tuple.{ Tuple, TupleView }
 import org.tyranid.json.JqHtml
 import org.tyranid.math.Base62
 import org.tyranid.report.{ Report, Run }
-import org.tyranid.secure.{ PrivateKeyEntity, PrivateKeyRecord }
 import org.tyranid.ui.{ Checkbox, Field, Help, Select, Search, Show, Valuable }
 import org.tyranid.web.{ WebContext, Weblet }
 
@@ -111,28 +111,11 @@ object GroupMode extends RamEntity( tid = "a0Ot" ) {
 case class GroupMode( override val view:TupleView ) extends Tuple( view )
 
 
-object Group extends MongoEntity( tid = "a0Yv" ) with PrivateKeyEntity {
+object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   type RecType = Group
   override def convert( obj:DBObject, parent:MongoRecord ) = new Group( obj, parent )
 
 
-  "_id"       is DbMongoId         is 'id;
-  "name"      is DbChar(60)        is 'label;
-  "builtin"   is DbBoolean         help Text( "A builtin group is maintained by the system and is not editable by end users." );
-  "groupType" is DbLink(GroupType) ;
-  "groupMode" is DbLink(GroupMode) ;
-
-  // Image / Thumbnail
-  "img"               is DbUrl /* TODO:  change to DbImage? */;
-  "imgH"              is DbInt                help Text( "The actual height of the image." );
-  "imgW"              is DbInt                help Text( "The actual width of the image." );
- 
-
-  override def init = {
-    super.init
-    "v"       is DbArray(DbTid(B.Org,B.User)) ;
-    "o"       is DbArray(DbTid(B.Org,B.User)) is 'owner;
-  }
 
   //"color"          // future ... colored labels
   //"search"         { search criteria } // future ... list search for a group, rather than each id explicitly
@@ -199,7 +182,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) with PrivateKeyEntity {
   }
 }
 
-class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeView, obj, parent ) with PrivateKeyRecord {
+class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView, obj, parent ) {
 
   def name     = s( 'name )
   def fullName = name + " (" + ( isOwner( T.user ) ? "me" | ownerNames ) + ")"
@@ -221,45 +204,6 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
       else                                   GroupMode.Collaborative.id
   }
 
-  def isOwner( user:User ) = {
-    val owners = a_?( 'o )
-    owners.has( user.tid ) ||
-    ( user.org != null && owners.has( user.org.tid ) )
-  }
-
-  def isOwner( tid:String ) = {
-    val owners = a_?( 'o )
-    owners.has( tid ) || (
-      B.User.hasTid( tid ) && {
-        val org = TidItem.by( tid ).org
-        org != null && owners.has( B.Org.idToTid( org ) )
-      }
-    )
-  }
-
-  def owners = {
-   for ( e <- oentities;
-         en = e.as[MongoEntity];
-         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> obj.a_?( "o" ).map( tid => en.tidToId( tid._s ) ).toSeq.toMlist ) ) );
-         rec = en( r ) )
-      yield rec
-  }
-  
-  def firstOwnerTid( notTids:String* ):String = {
-    val owners = a_?( 'o )
-    
-    owners foreach { t =>
-      val tid = t._s
-      
-      if ( !notTids.contains( tid ) )
-        return tid
-    }
-
-    null
-  }
-
-  def ownerNames = a_?( 'o ).map( tid => TidItem.by( tid.as[String] ).name ).mkString( ", " )
-
   def idsForEntity( en:Entity ) = a_?( 'v ).map( _._s ).filter( _.startsWith( en.tid ) ).map( en.tidToId )
   def idsForGroupType = idsForEntity( groupType.ofEntity )
 
@@ -269,24 +213,6 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
   def iconClass16x16 = groupType.iconClass16x16
   def iconClass32x32 = groupType.iconClass32x32
 
-  def oentities = a_?( 'o ).toSeq.of[String].map( _.substring( 0, 4 ) ).distinct.map( tid => Entity.byTid( tid ).get )
-  def entities = a_?( 'v ).toSeq.of[String].map( _.substring( 0, 4 ) ).distinct.map( tid => Entity.byTid( tid ).get )
-
-  def members =
-   for ( e <- entities;
-         en = e.as[MongoEntity];
-         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> idsForEntity( en ) ) ) );
-         rec = en( r ) )
-     yield rec
-
-  def isMember( tid:String ) = a_?( 'v ).toSeq.find( _ == tid ) != None
-  
-  def isMember( user:User ) = {
-    val members = a_?( 'v )
-    members.has( user.tid ) ||
-    ( user.org != null && members.has( user.org.tid ) )
-  }
-  
   def canSee( member:Record ):Boolean = canSee( T.user, member )
 
   def canSee( user:User, member:Record ) = {
@@ -300,14 +226,14 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
         false
 
       case GroupMode.Moderated =>
-        isMember( user ) &&
+        isReader( user ) &&
         ( groupType match {
           case GroupType.Org  => member.tid == user.tid || isOwner( member.tid ) || owner || member.tid == user.orgTid || B.Org.orgIdFor( member ) == user.orgId
           case GroupType.User => member.tid == user.tid || isOwner( member.tid ) || owner
           } )
 
       case GroupMode.Collaborative =>
-        isMember( user )
+        isReader( user )
       }
     }
   }
@@ -326,8 +252,6 @@ class Group( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Group.makeV
 
     Unparsed( sb.toString )
   }
-  
-  val isBuiltin = b( 'builtin )
 }
 
 
@@ -512,6 +436,7 @@ case class GroupField( baseName:String, l:String = null,
           GroupType.getById( web.i( "grpType" + id ) )
 
       group( 'name )      = web.s( "grpAddName" + id ) or "Unnamed Group"
+      group( 'type )      = ContentType.Group.id
       group( 'groupType ) = gt.id
 
       group.updateMode( monitor )

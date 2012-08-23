@@ -24,16 +24,16 @@ import scala.xml.Text
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDateTime, DbInt, DbLink, DbLong, DbTid, DbText, DbUrl, Record }
+import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDateTime, DbInt, DbLink, DbLong, DbTid, DbText, DbUrl, Entity, Record }
 import org.tyranid.db.es.{ SearchAuth, SearchText }
+import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord, MongoView }
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.db.tuple.{ Tuple, TupleView }
 import org.tyranid.image.Dimensions
 import org.tyranid.io.HasText
-
-import org.tyranid.profile.{ Group, Tag, User }
+import org.tyranid.profile.{ Group, GroupType, GroupMode, Tag, User }
 import org.tyranid.secure.{ PrivateKeyEntity, PrivateKeyRecord }
 
 
@@ -75,6 +75,7 @@ object ContentType extends RamEntity( tid = "a10v" ) {
   val Folder             = add( 4, "Folder" )
   val Document           = add( 5, "Document" )
   val Group              = add( 6, "Group" )
+  val Project            = add( 7, "Project" )
 }
 
 case class ContentType( override val view:TupleView ) extends Tuple( view )
@@ -127,6 +128,8 @@ trait ContentMeta extends MongoEntity with PrivateKeyEntity {
   override def init = {
     super.init
 
+  "builtin"           is DbBoolean            help Text( "Builtin content is maintained by the system and is not editable by end users." );
+
   "on"                is DbDateTime           is 'required;
   "type"              is DbLink(ContentType)  is 'required;
   "tags"              is DbArray(DbLink(Tag)) ;
@@ -152,6 +155,10 @@ trait ContentMeta extends MongoEntity with PrivateKeyEntity {
 
   "video"             is DbBoolean            ;
 
+
+  // Groups / Projects
+  "groupType"         is DbLink(GroupType)    ;
+  "groupMode"         is DbLink(GroupMode)    ;
 
   // Attachment / File
   "fileName"          is DbChar(128)          is 'required;
@@ -191,6 +198,8 @@ abstract class Content( override val view:MongoView,
                         obj:DBObject = Mobj(),
                         override val parent:MongoRecord = null )
     extends MongoRecord( view, obj, parent ) with PrivateKeyRecord with HasText {
+
+  val isBuiltin = b( 'builtin )
 
   def contentType = ContentType.getById( i( 'type ) )
 
@@ -263,7 +272,7 @@ abstract class Content( override val view:MongoView,
    */
 
   def fromUser = {
-    val utid = a_?( 'o ).head.as[String]
+    val utid = firstOwnerTid()
     val user = B.User.getByTid( utid )
 
     if ( user == null )
@@ -302,6 +311,41 @@ abstract class Content( override val view:MongoView,
   /*
    * * *   Security
    */
+
+  def owners = {
+   for ( e <- ownerEntities;
+         en = e.as[MongoEntity];
+         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> obj.a_?( "o" ).map( tid => en.tidToId( tid._s ) ).toSeq.toMlist ) ) );
+         rec = en( r ) )
+      yield rec
+  }
+
+  def writers = owners
+  
+  def readers =
+   for ( e <- viewerEntities;
+         en = e.as[MongoEntity];
+         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> obj.a_?( "v" ).map( tid => en.tidToId( tid._s ) ).toSeq.toMlist ) ) );
+         rec = en( r ) )
+     yield rec
+
+  def ownerNames = a_?( 'o ).map( tid => TidItem.by( tid.as[String] ).name ).mkString( ", " )
+
+  def firstOwnerTid( notTids:String* ):String = {
+    val owners = a_?( 'o )
+    
+    owners foreach { t =>
+      val tid = t._s
+      
+      if ( !notTids.contains( tid ) )
+        return tid
+    }
+
+    null
+  }
+
+  def ownerEntities = a_?( 'o ).toSeq.of[String].map( _.substring( 0, 4 ) ).distinct.map( tid => Entity.byTid( tid ).get )
+  def viewerEntities = a_?( 'v ).toSeq.of[String].map( _.substring( 0, 4 ) ).distinct.map( tid => Entity.byTid( tid ).get )
 
   def viewerTids = obj.a_?( 'v ).toSeq.of[String]
 
@@ -362,9 +406,9 @@ abstract class Content( override val view:MongoView,
     !groupPresent && u.inNetwork( tid )
   }
 
-  def isWriter( user: org.tyranid.profile.User ): Boolean = isWriter( user.tid ) || ( ( user.org != null ) ? isWriter( user.org.tid ) | false )
+  def isOwner( user: org.tyranid.profile.User ): Boolean = isOwner( user.tid ) || ( ( user.org != null ) ? isOwner( user.org.tid ) | false )
 
-  def isWriter( tid: String ): Boolean = {
+  def isOwner( tid: String ): Boolean = {
     if ( tid.isBlank )
       return false
 
@@ -387,6 +431,15 @@ abstract class Content( override val view:MongoView,
     return false
   }
 
+
+  /*
+   * NOTE:  isWriter() currently is the same as isOwner() but this might change in the future
+   */
+
+  def isWriter( user: org.tyranid.profile.User ) = isOwner( user )
+  def isWriter( tid: String ):Boolean            = isOwner( tid )
+
+
   def isReader( user: org.tyranid.profile.User ): Boolean = isReader( user.tid ) || ( ( user.org != null ) ? isReader( user.org.tid ) | false )
 
   def isReader( tid: String ): Boolean = {
@@ -404,7 +457,7 @@ abstract class Content( override val view:MongoView,
       if ( Group.hasTid( ot ) ) {
         val group = Group.getByTid( ot )
 
-        if (group.isMember(tid))
+        if (group.isReader(tid))
           return true
       }
     })
