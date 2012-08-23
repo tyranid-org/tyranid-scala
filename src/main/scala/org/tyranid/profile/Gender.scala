@@ -18,27 +18,25 @@
 package org.tyranid.profile
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbInt, EnumEntity }
+import org.tyranid.db.{ DbChar, DbInt }
 import org.tyranid.db.ram.RamEntity
-import org.tyranid.db.tuple.Tuple
+import org.tyranid.db.tuple.{ Tuple, TupleView }
 
 
-object Gender extends RamEntity( tid = "a00t" ) with EnumEntity[Gender] {
+object Gender extends RamEntity( tid = "a00t" ) {
+  type RecType = Gender
+  override def convert( view:TupleView ) = new Gender( view )
+
   "_id"    is DbInt      is 'id;
   "name"   is DbChar(64) is 'label;
 
-  def apply( id:Int, name:String ) = {
-    val t = new Gender
-    t( '_id )  = id
-    t( 'name ) = name
-    t
-  }
 
-  val Male   = apply( 1, "Male" )
-  val Female = apply( 2, "Female" )
-  val Other  = apply( 3, "Other" )
+  override val addNames = Seq( "_id", "name" )
 
-  static( Male, Female, Other )
+  val Male   = add( 1, "Male" )
+  val Female = add( 2, "Female" )
+  val Other  = add( 3, "Other" )
+
 
   def by( name:String ) =
     name.toLowerCase match {
@@ -48,7 +46,7 @@ object Gender extends RamEntity( tid = "a00t" ) with EnumEntity[Gender] {
     }
 }
 
-class Gender extends Tuple( Gender.makeView ) {
+case class Gender( override val view:TupleView ) extends Tuple( view ) {
 
   def name = s( 'name )
 }

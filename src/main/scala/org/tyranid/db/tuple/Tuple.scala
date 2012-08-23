@@ -39,7 +39,7 @@ class Tuple( val view:TupleView ) extends Record {
 
   override def id = apply( "_id" )
 
-  override def equals( t:Any ) = id == t.asInstanceOf[Tuple].id
+  override def equals( t:Any ) = t != null && id == t.asInstanceOf[Tuple].id
   
   def keys = view.leaves.map( _.name )
 

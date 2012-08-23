@@ -26,11 +26,11 @@ import scala.xml.{ Text, Unparsed }
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbDateTime, DbInt, DbLink, DbLong, DbText, Record, Scope, EnumEntity }
+import org.tyranid.db.{ DbChar, DbDateTime, DbInt, DbLink, DbLong, DbText, Record, Scope }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.db.ram.RamEntity
-import org.tyranid.db.tuple.Tuple
+import org.tyranid.db.tuple.{ Tuple, TupleView }
 import org.tyranid.email.AWSEmail
 import org.tyranid.http.UserAgent
 import org.tyranid.net.DnsDomain
@@ -39,41 +39,38 @@ import org.tyranid.ui.{ CustomField, PathField, Search }
 import org.tyranid.web.{ Weblet, WebContext }
 
 
-object Event extends RamEntity( tid = "a0It" ) with EnumEntity[Event] {
+object Event extends RamEntity( tid = "a0It" ) {
+  type RecType = Event
+  override def convert( view:TupleView ) = new Event( view )
+
+
   "_id"    is DbInt      is 'id;
   "name"   is DbChar(64) is 'label;
 
-  def apply( id:Int, name:String ) = {
-    val t = new Event
-    t( '_id )  = id
-    t( 'name ) = name
-    t
-  }
+  override val addNames = Seq( "_id", "name" )
 
-  val Access     = apply(  1, "Access" )
-  val StackTrace = apply(  2, "StackTrace" )
-  val LinkedIn   = apply(  3, "LinkedIn" )
-  val Error404   = apply(  4, "404" )
-  val Scraper    = apply(  5, "Scraper" )
-  val Import     = apply(  6, "Import" )
-  val Facebook   = apply(  7, "Facebook" )
-  val SmsOut     = apply(  8, "SMS-Out" )
-  val SmsIn      = apply( 10, "SMS-In" )
-  val Scheduler  = apply( 11, "Scheduler" )
-  val Trackur    = apply( 12, "Trackur" )
-  val Noaa       = apply( 13, "NOAA" )
-  val Eof        = apply( 14, "EOF" )
-  val Google     = apply( 15, "Google" )
-  val RefInt     = apply( 16, "RefInt" ) // referential integrity violation
-  val Alert      = apply( 17, "Alert" )
-  val Crocodoc   = apply( 18, "Crocodoc" )
-  val Scribd     = apply( 19, "Scribd" )
-  val Issuu      = apply( 20, "Issuu" )
-
-  static( Access, StackTrace, LinkedIn, Error404, Scraper, Import, Facebook, SmsOut, SmsIn, Scheduler, Noaa, Eof, Google, RefInt, Alert, Crocodoc, Scribd, Issuu )
+  val Access     = add(  1, "Access" )
+  val StackTrace = add(  2, "StackTrace" )
+  val LinkedIn   = add(  3, "LinkedIn" )
+  val Error404   = add(  4, "404" )
+  val Scraper    = add(  5, "Scraper" )
+  val Import     = add(  6, "Import" )
+  val Facebook   = add(  7, "Facebook" )
+  val SmsOut     = add(  8, "SMS-Out" )
+  val SmsIn      = add( 10, "SMS-In" )
+  val Scheduler  = add( 11, "Scheduler" )
+  val Trackur    = add( 12, "Trackur" )
+  val Noaa       = add( 13, "NOAA" )
+  val Eof        = add( 14, "EOF" )
+  val Google     = add( 15, "Google" )
+  val RefInt     = add( 16, "RefInt" ) // referential integrity violation
+  val Alert      = add( 17, "Alert" )
+  val Crocodoc   = add( 18, "Crocodoc" )
+  val Scribd     = add( 19, "Scribd" )
+  val Issuu      = add( 20, "Issuu" )
 }
 
-class Event extends Tuple( Event.makeView ) {
+case class Event( override val view:TupleView ) extends Tuple( view ) {
   def name = s( 'name )
 }
 

@@ -77,7 +77,7 @@ case class RamEntity( tid:String ) extends Entity {
     case id     => id.toString
     }
 
-  override def records = staticRecords
+  override def records = staticRecords.as[Seq[RecType]]
 
   def query( run:Run, offset:Int = 0, count:Int = 20, sort:Sort = null ) = {
 
@@ -106,12 +106,16 @@ case class RamEntity( tid:String ) extends Entity {
 
   override def save( rec:Record )   = throw new UnsupportedOperationException
   override def delete( rec:Record ) = throw new UnsupportedOperationException
-}
 
+  def arrayToSeq( rec:Record, name:String ) = {
+    import org.tyranid.db.mongo.Imp._
 
-abstract class RamEnumEntity( nameLen:Int, tid:String ) extends RamEntity( tid ) {
-
-	"_id"  is DbIntSerial       is 'id   ;
-	"name" is DbChar( nameLen ) is 'label ;
+    rec.a( name ).map(
+      _ match {
+      case i:Int    => getById( i )
+      case d:Double => getById( d.toInt )
+      case o        => o.asInstanceOf[RecType]
+      } ).toSeq
+  }
 }
 
