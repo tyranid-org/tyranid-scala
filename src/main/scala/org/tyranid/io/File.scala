@@ -17,13 +17,15 @@
 
 package org.tyranid.io
 
-import org.jsoup.Jsoup
+import org.apache.tika.detect.{ DefaultDetector, Detector }
+import org.apache.tika.io.TikaInputStream
+import org.apache.tika.metadata.Metadata
+import org.apache.tika.parser.{ AutoDetectParser, Parser, ParseContext }
+import org.apache.tika.parser.html.HtmlParser
+import org.apache.tika.sax.BodyContentHandler
 
-import java.io.{ IOException, FileOutputStream, FileInputStream, InputStream, OutputStream, File => SysFile }
+import java.io.{ IOException, FileOutputStream, FileInputStream, InputStream, OutputStream, File => SysFile, ByteArrayOutputStream }
 import java.net.URL
-
-import javax.swing.text._
-import javax.swing.text.rtf.RTFEditorKit
 
 import scala.collection.mutable
 import scala.collection.JavaConversions._
@@ -47,89 +49,61 @@ abstract class TextExtractor {
 }
 
 object TextExtractors {
-  val extractors = Seq[TextExtractor](
-                                        new TxtTextExtractor(),
-                                        new HtmlTextExtractor(),
-                                        new RtfTextExtractor(),
-                                        new OpenOfficeTextExtractor()
-                                     )
+  val extractors = Seq[TextExtractor]( 
+      new HtmlTextExtractor() )
                                      
   def findByFilename( filename:String ) = {
     val ext = filename.suffix( '.' ).toLowerCase
-    
     extractors.find( e => e.extTypes.contains( ext ) ).getOrElse( null )
   }
   
   def extract( file:SysFile ):String = {
     val filename = file.getName
     val extractor = findByFilename( filename )
-    ( extractor == null ) ? "" | extractor.extract( file )
+    ( extractor != null ) ? extractor.extract( file ) | new TikaExtractor().extract( file )
   } 
 }
 
-class TxtTextExtractor extends TextExtractor {
-  override val mimeTypes = Seq( "text/plain" )
-  override val extTypes = Seq( "txt", "text" )
+class TikaExtractor extends TextExtractor {
+  override val mimeTypes = null
+  override val extTypes = null
   
-  override def extract( file:SysFile ) = 
-    ( file != null && file.exists ) ? new FileInputStream( file ).asString | ""
+  override def extract( file:SysFile ) = {
+    val parser = new AutoDetectParser( new DefaultDetector() )
+    val context =  new ParseContext()
+    
+    context.set( classOf[Parser], parser )
+  
+    val out = new ByteArrayOutputStream()
+    var is:TikaInputStream = null
+    
+    try {
+      is = TikaInputStream.get( file )
+      parser.parse( is, new BodyContentHandler( out ), new Metadata(), context ) 
+      out.toString
+    } finally {
+      is.close()
+    } 
+  }
 }
 
 class HtmlTextExtractor extends TextExtractor {
   override val mimeTypes = Seq( "text/html" )
   override val extTypes = Seq( "htm", "html" )
   
-  override def extract( file:SysFile ) = 
-    ( file != null && file.exists ) ? Jsoup.parse( new FileInputStream( file ).asString ).text() | ""
-}
-
-class RtfTextExtractor extends TextExtractor {
-  override val mimeTypes = Seq( "application/rtf", "text/richtext" )
-  override val extTypes = Seq( "rtf", "rtx" )
-  
   override def extract( file:SysFile ) = {
-    val styledDoc = new DefaultStyledDocument()
-    var is:InputStream = null 
-    
+    var is:InputStream = null
+   
     try {
       is = new FileInputStream( file )
-      new RTFEditorKit().read( is, styledDoc, 0 )
-      styledDoc.getText( 0, styledDoc.getLength() )
-    } catch {
-      case e =>
-        e.printStackTrace
-        ""
+      val handler = new BodyContentHandler()
+      new HtmlParser().parse( is, handler, new Metadata(), new ParseContext() )
+      handler.toString()    
     } finally {
-      if ( is != null )
-        is.close()
+      is.close
     }
   }
 }
-
-// Open Office - Should cover all Open Office products
-class OpenOfficeTextExtractor extends TextExtractor {
-  override val mimeTypes = Seq(
-    "application/oda",
-    "application/vnd.oasis.opendocument.database",
-    "application/vnd.oasis.opendocument.image",
-    "application/vnd.oasis.opendocument.chart",  
-    "application/vnd.oasis.opendocument.formula",  
-    "application/vnd.oasis.opendocument.graphics",
-    "application/vnd.oasis.opendocument.text-master",  
-    "application/vnd.oasis.opendocument.presentation",
-    "application/vnd.oasis.opendocument.spreadsheet",
-    "application/vnd.oasis.opendocument.text", 
-    "application/vnd.oasis.opendocument.graphics-template",   
-    "application/vnd.oasis.opendocument.text-web",
-    "application/vnd.oasis.opendocument.text-template",   
-    "application/vnd.oasis.opendocument.presentation-template",
-    "application/vnd.oasis.opendocument.spreadsheet-template", 
-    "application/vnd.openofficeorg.extension" )
-  override val extTypes = Seq(     "oda", "odb", "odi", "odc", "odf", "odg", "odm", "odp", "ods", "odt", "otg", "oth", "ott", "otp",  "ots", "oxt" )
-  
-  override def extract( file:SysFile ) = OpenOfficeParser.getText( file.getPath() )
-}
-
 
 object DbFile {
   def apply( bucketPrefix:String ):DbFile = new DbFile( B.getS3Bucket( bucketPrefix ) )
