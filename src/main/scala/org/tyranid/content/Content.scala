@@ -286,9 +286,13 @@ abstract class Content( override val view:MongoView,
   // 100 x 65 (Project header)  
   // 40 x 26 (Dashboard drop-down)
   def imageForThumbs:File = {
-    println( "This class (" + this.getClass.getName + " needs to generate thumbs, so you must implement the 'imageForThumbs' method!" )
-    null 
-  }
+    val imgUrl = imageUrl( false )
+    val dlUrl:String = ( imgUrl.notBlank ) ?
+      ( imgUrl.toLowerCase.startsWith( "http" ) ? imgUrl | T.website + imgUrl ) | null
+    
+    ( dlUrl.notBlank ) ? Http.GET_File( dlUrl ) | null
+  }  
+  
   
   def generateThumbs {
     val imgFile = imageForThumbs //Http.GET_File( dlUrl )

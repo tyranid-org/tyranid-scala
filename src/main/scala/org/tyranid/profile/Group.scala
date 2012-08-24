@@ -18,9 +18,12 @@
 package org.tyranid.profile
 
 import scala.collection.JavaConversions._
+
 import scala.collection.mutable
 import scala.collection.mutable.Buffer
 import scala.xml.{ NodeSeq, Text, Unparsed }
+
+import java.io.File
 
 import org.bson.types.ObjectId
 
@@ -34,6 +37,7 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.db.tuple.{ Tuple, TupleView }
+import org.tyranid.http.Http
 import org.tyranid.json.JqHtml
 import org.tyranid.math.Base62
 import org.tyranid.report.{ Report, Run }
@@ -253,7 +257,6 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     Unparsed( sb.toString )
   }
 }
-
 
 /*
  * * *  GroupMaker
