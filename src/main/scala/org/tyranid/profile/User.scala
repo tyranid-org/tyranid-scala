@@ -34,8 +34,8 @@ import org.tyranid.sms.SMS
 import org.tyranid.locale.{ Country, Language }
 import org.tyranid.secure.DbReCaptcha
 import org.tyranid.session.{ Session, ThreadData }
+import org.tyranid.ui.LnF
 import org.tyranid.web.WebContext
-
 
 class UserMeta extends MongoEntity( "a01v" ) {
   type RecType >: Null <: User
@@ -83,6 +83,8 @@ class UserMeta extends MongoEntity( "a01v" ) {
 
   "eye"            is DbBoolean           ;
   "bids"           is DbArray(DbChar(10)) as "Browser IDs";
+  
+  "lnf"            is DbLink(LnF)         ;
 
   def isLoggedIn = Session().user.loggedIn
   

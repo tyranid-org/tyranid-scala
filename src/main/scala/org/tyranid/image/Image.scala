@@ -303,53 +303,77 @@ case class Image( url:URL, dims:Option[Dimensions] = None ) {
   def cssDimensions( maxWidth:Int = -1, maxHeight:Int = -1 ) = dimensions( maxWidth, maxHeight ).css
 }
 
-
-// 260 x 170 (Dashboard)
-// 140 x 91 (Timeline)
-// 100 x 65 (Project header)
-// 40 x 26 (Dashboard drop-down)
-
-object ThumbnailGenerator {
-  def transform( originalFile:File, thumbnailFile:File, thumbW:Int, thumbH:Int ):File = {
+object Thumbnail {
+  def generate( originalFile:File, thumbW:Int, thumbH:Int, thumbnailFile:File = null ):File = {
     val image = ImageIO.read( originalFile )
+    
+    if ( image == null ) {
+      println( "Error: Unable to get thumb from file: " + originalFile.getAbsolutePath )
+      return null
+    }
+    
     val imageWidth  = image.getWidth( null )
     val imageHeight = image.getHeight( null )
+
+    val thumbFile = ( thumbnailFile == null ) ? File.createTempFile( originalFile.getName(), ".tmp" ) | thumbnailFile 
     
     // Do not create thumbs that are bigger than the original image
-    if ( thumbW > imageWidth || thumbH > imageHeight )
-      return originalFile
-      
-    val thumbRatio:Double = double2Double( thumbW ) / double2Double( thumbH )
-    val imageRatio:Double = double2Double( imageWidth ) / double2Double( imageHeight )
-    
-    var thumbHeight = thumbH
-    var thumbWidth  = thumbW
-    
-    if ( thumbRatio < imageRatio )  {
-      thumbHeight = ( thumbWidth / imageRatio )._i
+    if ( thumbW > imageWidth && thumbH > imageHeight ) {
+      org.apache.commons.io.FileUtils.copyFile( originalFile, thumbFile )
     } else {
-      thumbWidth = ( thumbHeight * imageRatio )._i
-    }
+      //val thumbRatio:Double = double2Double( thumbW ) / double2Double( thumbH )
+      val imageRatio:Double = double2Double( imageWidth ) / double2Double( imageHeight )
       
-    if ( imageWidth < thumbWidth && imageHeight < thumbHeight ) {
-      thumbWidth = imageWidth
-      thumbHeight = imageHeight
-    } else if ( imageWidth < thumbWidth ) {
-      thumbWidth = imageWidth
-    } else if ( imageHeight < thumbHeight ) {
-      thumbHeight = imageHeight
-    }
-
-    val thumbImage = new BufferedImage( thumbWidth, thumbHeight, BufferedImage.TYPE_INT_RGB )
-    val graphics2D = thumbImage.createGraphics()
-    graphics2D.setBackground( Color.WHITE )
-    graphics2D.setPaint( Color.WHITE );
-    graphics2D.fillRect( 0, 0, thumbWidth, thumbHeight )
-    graphics2D.setRenderingHint( RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR )
-    graphics2D.drawImage( image, 0, 0, thumbWidth, thumbHeight, null )
+      var thumbHeight = thumbH
+      var thumbWidth  = thumbW
       
-    ImageIO.write( thumbImage, "JPG", thumbnailFile );
+      if ( imageWidth > imageHeight )
+        thumbHeight = ( thumbWidth / imageRatio )._i
+      else
+        thumbWidth = ( thumbHeight * imageRatio )._i
+      
+      if ( imageWidth < thumbWidth && imageHeight < thumbHeight ) {
+        thumbWidth = imageWidth
+        thumbHeight = imageHeight
+      } else if ( imageWidth < thumbWidth ) {
+        thumbWidth = imageWidth
+      } else if ( imageHeight < thumbHeight ) {
+        thumbHeight = imageHeight
+      }
+  
+      val thumbImage = new BufferedImage( thumbWidth, thumbHeight, BufferedImage.TYPE_INT_RGB )
+      val graphics2D = thumbImage.createGraphics()
+      
+      graphics2D.setBackground( Color.WHITE )
+      graphics2D.setPaint( Color.WHITE );
+      graphics2D.fillRect( 0, 0, thumbWidth, thumbHeight )
+      graphics2D.setRenderingHint( RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR )
+      graphics2D.drawImage( image, 0, 0, thumbWidth, thumbHeight, null )
+       
+      // Only crop if needed
+      if ( thumbWidth < thumbW || thumbHeight < thumbH ) {
+//      if ( imageWidth < thumbW || imageHeight < thumbH ) {
+        ImageIO.write( thumbImage, "JPG", thumbFile )
+      } else {
+        var (x,y,w,h) = ( 0, 0, thumbW, thumbH )
+        
+        if ( thumbWidth > thumbW ) {
+          x = ( thumbWidth - thumbW ) / 2 
+        } else if ( thumbHeight > thumbH ) {
+          y = ( thumbHeight - thumbH ) / 2
+        }
+        
+        try {
+          ImageIO.write( thumbImage.getSubimage( x, y, w, h ), "JPG", thumbFile ) 
+        } catch {
+          case e =>
+            println( "ERROR: " + e.getMessage() )
+            println( "orig: " + thumbWidth + ", " + thumbHeight )
+            println( "cropped: " + x + ", " + y + ", " + w + ", " + h )
+        }
+      }
+    }
     
-    return thumbnailFile
-  }
+    return thumbFile
+  }  
 }

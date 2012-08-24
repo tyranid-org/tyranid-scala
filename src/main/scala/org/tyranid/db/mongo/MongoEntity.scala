@@ -39,6 +39,7 @@ case object DbMongoId extends Domain {
   override def idToRecordTid( v:Any ) =
     v match {
     case oid:ObjectId => Base64.toString( oid.toByteArray )
+    case s:String     => Base64.toString( s._oid.toByteArray ) 
     case _ => null
     }
 

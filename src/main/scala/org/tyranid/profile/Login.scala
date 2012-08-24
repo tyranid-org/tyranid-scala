@@ -30,15 +30,28 @@ import org.tyranid.social.Social
 import org.tyranid.ui.{ Button, Grid, Row, Focus, LnF, Form }
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate, WebResponse }
 
+/*
+     new Form( "/user/regsiter", "register" )
+       .style( "margin-bottom:12px;" )
+       .data( "val", "1" )
+       .fieldsetClass( "registerBox" )
+       .title( "Thanks, " + user.s( 'firstName ) + "!" )
+       .hidden( "regStep", "2" )
+
+
+ */
 object Register {
   def sendActivation( user:User ) = {
+    val lnf = T.LnF
     val activationCode = Base62.make(8)
-    user('activationCode) = activationCode
+    
+    user( 'activationCode ) = activationCode
+    user( 'lnf ) = lnf.id
 
     if ( T.LnF == LnF.SupplyChain ) 
       T.session.notice( "Thank you!  You should be receiving an email shortly to verify your account." )
 
-    background { B.emailTemplates.welcome( user, activationCode ) }
+    background { B.emailTemplates.welcome( lnf, user, activationCode ) }
   }
 
   def page( user:User, org:com.mongodb.DBObject, jsonRes:WebResponse ) = {
@@ -424,7 +437,7 @@ $( function() {
         
         if ( user != null ) {
           T.session.notice( "Your activation code has been sent to your email and should be there shortly." )
-          background { B.emailTemplates.welcome( user ) }
+          background { B.emailTemplates.welcome( T.LnF, user ) }
         } else {
           T.session.notice( "Your user was not found." )
         }

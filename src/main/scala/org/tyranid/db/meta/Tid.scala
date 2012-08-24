@@ -24,6 +24,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
+import org.tyranid.content.Content
 import org.tyranid.collection.ConcurrentExpireAutoMap
 import org.tyranid.db.{ Domain, DbArray, DbLink, DbTid, Entity, ArrayIndex, MultiPath, PathNode, PathValue, Record, Scope }
 import org.tyranid.db.mongo.Imp._
@@ -35,9 +36,7 @@ import org.tyranid.ui.{ PathField, Tab, TabBar }
 import org.tyranid.time.Time
 import org.tyranid.web.{ Weblet, WebContext }
 
-
 object TidItem {
-
   def unknown( tid:String ) = {
     val ( entityTid, recordTid ) = tid.splitAt( 4 )
 
@@ -49,7 +48,6 @@ object TidItem {
 
   def by( tid:String ) = itemFor( tid )
 
-
   private lazy val itemFor = new ConcurrentExpireAutoMap( Time.HalfHourMs, ( tid:String ) => {
     Record.byTid( tid ) match {
     case Some( rec ) => TidItem( tid = tid, id = rec.id, org = B.Org.orgIdFor( rec ), name = rec.label, thumbnail = rec.icon )
@@ -59,14 +57,11 @@ object TidItem {
   } )
 }
 
-case class TidItem( tid:String, id:Any, org:ObjectId, name:String, thumbnail:String )
+case class TidItem( tid:String, id:Any, org:ObjectId, name:String, thumbnail:String ) {}
 
-
-object TidCache {
-}
+object TidCache {}
 
 class TidCache {
-
   val byTid = new mutable.HashMap[String,Record]()
 
   def size  = byTid.size
@@ -74,9 +69,7 @@ class TidCache {
   def has( tid:String ) = byTid.contains( tid )
 }
 
-
 case class DeleteResults( ramReferences:Seq[Record], cascadeFailures:Seq[Record], updates:Seq[Record], deletes:Seq[Record] ) {
-
   def success = ramReferences.isEmpty && cascadeFailures.isEmpty
 }
 
@@ -88,7 +81,6 @@ object Tid {
   def split( tid:String ) = tid.splitAt( 4 )
 
   def tidToId( tid:String ) = {
-
     val ( entityTid, recordTid ) = Tid.split( tid )
 
     Entity.byTid( entityTid ).get.recordTidToId( recordTid )
@@ -278,14 +270,12 @@ object Tid {
     if ( cFailures.nonEmpty ) {
       cFailures.foreach( f => deleteCascade( f.tid ) )
       deleteCascade( tid )
-    } else {
-      if ( deletions != null )
-        deletions ++= delStat.deletes
+    } else if ( deletions != null ) {
+      deletions ++= delStat.deletes
     }
   }
   
   def delete( tid:String, performDeletion:Boolean ) = {
-
     val refs = references( tid )
 
     val ramReferences   = mutable.ArrayBuffer[Record]()
@@ -309,6 +299,7 @@ object Tid {
     }
 
     val rec = Record.byTid( tid ).get
+    
     if ( rec.view.entity.isInstanceOf[RamEntity] )
       ramReferences += rec
     else
@@ -437,7 +428,6 @@ object Tidlet extends Weblet {
   }
 
   def fields( rec:Record ) = {
-
     def ui( rec:Record ) = {
       val pathValues = rec.flatten.sorted( PathValue.orderByLabel )
       val scope = new Scope( rec )
@@ -511,7 +501,6 @@ object Tidlet extends Weblet {
   def refs( tid:String ) = displayTable( Tid.references( tid ) )
 
   def attribs( en:Entity ) = {
-
     def describe( d:Domain ):String = {
       d match {
       case    en:Entity  => tidLink( en.tid, en.label ).toString
@@ -574,7 +563,6 @@ object Tidlet extends Weblet {
           <td>{ r.view.entity.name }</td><td><strong>{ r.label }</strong></td><td><em>{ tidLink( r.tid ) }</em></td>
          </tr>
        }
-    }</table>
+     }
+    </table>
 }
-
-

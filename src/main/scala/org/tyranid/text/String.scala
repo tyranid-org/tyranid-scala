@@ -17,6 +17,7 @@
 
 package org.tyranid.text
 
+import java.io.FileWriter
 import java.net.URL
 import java.util.Date
 import java.util.regex.Pattern
@@ -597,6 +598,18 @@ class StringImp( s:String ) {
       return false
       
     BCrypt.checkpw( s, shash )
+  }
+  
+  def toFile( filename:String ) {
+    var out:FileWriter = null
+    
+    try {
+      out = new FileWriter( filename )
+      out.write( s )
+    } finally {
+      if ( out != null )
+        out.close
+    }
   }
 }
 

@@ -17,6 +17,7 @@
 
 package org.tyranid.content
 
+import java.io.File
 import java.util.Date
 
 import scala.xml.Text
@@ -24,6 +25,7 @@ import scala.xml.Text
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
+import org.tyranid.cloud.aws.{ S3Bucket, S3 }
 import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDateTime, DbInt, DbLink, DbLong, DbTid, DbText, DbUrl, Entity, Record }
 import org.tyranid.db.es.{ SearchAuth, SearchText }
 import org.tyranid.db.meta.TidItem
@@ -31,11 +33,11 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord, MongoView }
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.db.tuple.{ Tuple, TupleView }
-import org.tyranid.image.Dimensions
+import org.tyranid.image.{ Dimensions, Thumbnail }
+import org.tyranid.http.Http
 import org.tyranid.io.HasText
 import org.tyranid.profile.{ Group, GroupType, GroupMode, Tag, User }
 import org.tyranid.secure.{ PrivateKeyEntity, PrivateKeyRecord }
-
 
 // TODO:  should this be in ui ?
 
@@ -121,7 +123,7 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
  * * *  Content
  */
 
-trait ContentMeta extends MongoEntity with PrivateKeyEntity {
+trait ContentMeta extends PrivateKeyEntity {
 
   "_id"               is DbMongoId            is 'id;
 
@@ -170,7 +172,7 @@ trait ContentMeta extends MongoEntity with PrivateKeyEntity {
   "r"                 is DbArray(Comment)     as "Replies";
 
   // Image / Thumbnail
-  "img"               is DbUrl /* TODO:  change to DbImage? */;
+  "img"               is DbUrl                /* TODO:  change to DbImage? */;
   "imgH"              is DbInt                help Text( "The actual height of the image." );
   "imgW"              is DbInt                help Text( "The actual width of the image." );
   
@@ -185,10 +187,37 @@ trait ContentMeta extends MongoEntity with PrivateKeyEntity {
   "feed"              is DbMongoId // should be DbLink(Feed)                               ;
   "feedItemId"        is DbChar(128)          ;
   }
+  
+  private def deleteThumbs( tid:String ) {
+    val pathParts = tid.splitAt( 4 )
+    val urlPath = pathParts._1 + "/" + pathParts._2 + "/"
+    
+    try {
+      S3.delete( Content.thumbsBucket, urlPath + "l" )
+      S3.delete( Content.thumbsBucket, urlPath + "m" )
+      S3.delete( Content.thumbsBucket, urlPath + "s" )
+      S3.delete( Content.thumbsBucket, urlPath + "t" )
+    } catch {
+      case nop=> ;
+    }
+  }
+  
+  override def delete( id: Any ) {
+    deleteThumbs( this.idToTid( id ) )
+    super.delete(id)
+  }
+
+  override def delete( rec: Record ) {
+    deleteThumbs( rec.tid )
+    super.delete(rec)
+  }
 }
 
-
 object Content {
+  // Thumbs are stored on S3 in the "thumbs" bucket:
+  //   thumbs/[entity tid]/record tid/l
+  lazy val thumbsBucket = new S3Bucket( "thumbs" )
+  
   lazy val emailTag     = Tag.idFor( "email" )
   lazy val messageTag   = Tag.idFor( "message" )
   lazy val fileshareTag = Tag.idFor( "fileshare" )
@@ -251,8 +280,51 @@ abstract class Content( override val view:MongoView,
       //}
     }
   }    
+  
+  // 260 x 169 (Dashboard)
+  // 140 x 91 (Timeline)
+  // 100 x 65 (Project header)  
+  // 40 x 26 (Dashboard drop-down)
+  def imageForThumbs:File = {
+    val imgUrl = imageUrl( false )
+    val dlUrl:String = ( imgUrl.notBlank ) ?
+      ( imgUrl.toLowerCase.startsWith( "http" ) ? imgUrl | T.website + imgUrl ) | null
+    
+    ( dlUrl.notBlank ) ? Http.GET_File( dlUrl ) | null
+  }  
+  
+  
+  def generateThumbs {
+    val imgFile = imageForThumbs //Http.GET_File( dlUrl )
 
-
+    if ( imgFile != null ) {
+      val pathParts = tid.splitAt( 4 )
+      val urlPath = pathParts._1 + "/" + pathParts._2 + "/"
+      
+      def thumb( s:String, w:Int, h:Int ) = {
+        var f:File = null
+        
+        try {
+          f = Thumbnail.generate( imgFile, w, h )
+          S3.write( Content.thumbsBucket, urlPath + s, f )
+          S3.access( Content.thumbsBucket, urlPath + s, true )
+        } finally {
+          if ( f != null )
+            f.delete
+        }
+      }
+      
+      try {
+        thumb( "l", 260, 169 )
+        thumb( "m", 140, 91 )
+        thumb( "s", 100, 65 )
+        thumb( "t", 40, 26 )
+      } finally {
+        imgFile.delete
+      }
+    }
+  }
+  
   /*
    * * *   Revisions
    */

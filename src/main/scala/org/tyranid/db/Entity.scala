@@ -124,7 +124,7 @@ object Entity {
 
   def all = index.values
 
-  def byTid( tid:String ) = index.get( tid )
+  def byTid( tid:String ) = ( tid.size >= 4 ) ? index.get( tid.take( 4 ) ) | None 
 
   def register( en:Entity ) = {
     if ( index.contains( en.tid ) )
@@ -197,6 +197,7 @@ trait Entity extends Domain with DbItem {
 
   def itemByTid( tid:String ) = TidItem.by( tid )
   def itemById( id:Any ) = TidItem.by( idToTid( id ) )
+  
 
 
 	/*

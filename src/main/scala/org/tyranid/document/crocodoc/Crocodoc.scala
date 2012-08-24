@@ -89,14 +89,19 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
     val entity = res.response.getEntity
     
     if ( entity != null ) {
-      val instream = entity.getContent
-      
-      val tmpFile = File.createTempFile( extDocId, ".png" )
-      val out = new FileOutputStream( tmpFile )
-       
-      instream.transferTo( out, true )
-
-      tmpFile
+      if ( "application/json" == entity.getContentType.getValue ) {
+        log( Event.Crocodoc, "m" -> ( "Get Thumbnail failed for crocodoc uuid: " + extDocId + ", error is: " + res._s ) )
+        null 
+      } else {
+        val instream = entity.getContent
+        
+        val tmpFile = File.createTempFile( "tmp", ".png" )
+        val out = new FileOutputStream( tmpFile )
+         
+        instream.transferTo( out, true )
+  
+        tmpFile
+      }
     } else {
       null
     }

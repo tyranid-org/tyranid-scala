@@ -20,9 +20,13 @@ package org.tyranid.io
 import scala.annotation.tailrec
 
 import java.io.{ IOException, FileOutputStream, InputStream, InputStreamReader, OutputStream }
+import com.amazonaws.services.s3.model.{ AmazonS3Exception }
 
+import org.tyranid.db.{ Entity, Record }
+import org.tyranid.db.meta.{ TidItem }
 import org.tyranid.Imp._
-
+import org.tyranid.content.{ Content, ContentMeta }
+import org.tyranid.web.{ WebContext, Weblet, WebHandledException }
 
 class InputStreamImp( is:InputStream ) {
 
@@ -69,5 +73,57 @@ class InputStreamImp( is:InputStream ) {
   }
 }
 
+object Iolet extends Weblet {
+  lazy val notFoundUrl = B.getS3Bucket( "public" ).url( "icons/na.png" )
+  
+  def handle( web:WebContext ) {
+    rpath match {
+     // <img src="/io/thumb/a09vUCwNUOSweddROKEl/l|m|s|t"/>
+    case s if s.startsWith( "/thumb" ) =>
+      val parts = s.substring( 7 ).split( "/" )
+      val tid = parts(0)
+      val size = parts(1)
+      val pathParts = tid.splitAt( 4 )
+      val urlPath = pathParts._1 + "/" + pathParts._2 + "/" + size
+        
+      while ( true ) {
+        try {
+          web.res.s3( Content.thumbsBucket, urlPath )
+          return
+        } catch {
+          case e:AmazonS3Exception if e.getStatusCode == 404 =>
+            def entity = Entity.byTid( tid ).getOrElse( null )
+           
+            if ( entity == null || !entity.is[ContentMeta] ) {
+              web.res.setStatus( 302 )
+              web.res.setHeader( "Location", notFoundUrl )
+              web.res.setHeader( "Connection", "close" )
+              //web.res.setStatus( 404 )
+              return
+            }
+           
+            val rec = Record.getByTid( tid ) 
+  
+            if ( rec == null ) {
+              web.res.setStatus( 302 )
+              web.res.setHeader( "Location", notFoundUrl )
+              web.res.setHeader( "Connection", "close" )
+              //web.res.setStatus( 404 )
+              return
+            }
+           
+            rec.as[Content].generateThumbs
+          case e2 =>
+            web.res.setStatus( 302 )
+            web.res.setHeader( "Location", notFoundUrl )
+            web.res.setHeader( "Connection", "close" )
+            throw e2
+        }
+      }
+    case _ =>
+      _404
+    }
+  }
+}
 
 
