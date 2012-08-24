@@ -42,13 +42,16 @@ import org.tyranid.web.{ Weblet, WebContext, WebTemplate, WebResponse }
  */
 object Register {
   def sendActivation( user:User ) = {
+    val lnf = T.LnF
     val activationCode = Base62.make(8)
-    user('activationCode) = activationCode
+    
+    user( 'activationCode ) = activationCode
+    user( 'lnf ) = lnf.id
 
     if ( T.LnF == LnF.SupplyChain ) 
       T.session.notice( "Thank you!  You should be receiving an email shortly to verify your account." )
 
-    background { B.emailTemplates.welcome( user, activationCode ) }
+    background { B.emailTemplates.welcome( lnf, user, activationCode ) }
   }
 
   def page( user:User, org:com.mongodb.DBObject, jsonRes:WebResponse ) = {
@@ -434,7 +437,7 @@ $( function() {
         
         if ( user != null ) {
           T.session.notice( "Your activation code has been sent to your email and should be there shortly." )
-          background { B.emailTemplates.welcome( user ) }
+          background { B.emailTemplates.welcome( T.LnF, user ) }
         } else {
           T.session.notice( "Your user was not found." )
         }
