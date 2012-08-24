@@ -17,7 +17,7 @@
 
 package org.tyranid.profile
 
-import java.util.TimeZone
+import java.util.{ Date, TimeZone }
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -90,6 +90,41 @@ class UserMeta extends MongoEntity( "a01v" ) {
 
   // TODO:  Make this more sophisticated, allow the entire user to be retrieved instead of just the name, and/or maybe something like ProfileItem
   def nameFor( userId:ObjectId ) = "TODO"
+
+  def ensureUser( email:String ) = {
+
+    var u = db.findOne( Mobj( "email" -> ( "^" + email.encRegex + "$" ).toPatternI ) )
+
+    if ( u != null )
+      apply( u )
+    else
+      createUser( email )
+  }
+
+  def createUser( email:String, possibleNames:String = null ) = {
+    val user = make
+    user( 'email ) = email
+    user( 'activationCode ) = org.tyranid.math.Base62.make(8)
+    user( 'createdOn ) = new Date
+    
+    if ( possibleNames.notBlank ) {
+      val names = possibleNames.split( " " )
+      
+      if ( names.length > 1 ) {
+        user( 'firstName ) = names(0)
+        user( 'lastName ) = names(1)
+      } else {
+        user( 'firstName ) = possibleNames
+        user( 'lastName ) = possibleNames
+      }
+    } else {
+      user( 'firstName ) = "unknown"
+      user( 'lastName ) = "unknown"
+    }
+    
+    user.save
+    user
+  }
 }
 
 trait User extends MongoRecord {

@@ -27,7 +27,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.content.{ ContentMeta, Content, ContentType }
+import org.tyranid.content.{ ContentMeta, Content, ContentOrder, ContentType }
 import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbInt, DbLink, DbTid, DbUrl, Entity, Record, Scope }
 import org.tyranid.db.meta.{ Tid, TidItem }
 import org.tyranid.db.mongo.Imp._
@@ -162,20 +162,22 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   
   def canSeeOther( orgTid:String ) = ownedBy( orgTid ).filter( g => Group( g ).canSee( T.user ) )
   
-  def visibleTo( user:User ) = {
+  def visibleTo( user:User, contentType:ContentType = ContentType.Group ) = {
     val tids =
       if ( user.org != null ) Mobj( $in -> Array( user.tid, user.org.tid ) )
       else                    user.tid
 
     val myGroups =
       db.find(
-        Mobj( "o" -> tids )
+        Mobj( "o" -> tids,
+              "type" -> contentType.id )
       ).map( apply ).toSeq
 
     val memberGroups =
       db.find( 
         Mobj( "v" -> tids,
-              "groupMode" -> Mobj( $ne -> GroupMode.Monitor.id ) )
+              "groupMode" -> Mobj( $ne -> GroupMode.Monitor.id ),
+              "type" -> contentType.id )
       ).map( apply ).toSeq.filter( memberGroup => !myGroups.exists( _.id == memberGroup.id ) )
 
     myGroups ++ memberGroups 
@@ -215,8 +217,8 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
 
   def canSee( member:Record ):Boolean = canSee( T.user, member )
 
-  def canSee( user:User, member:Record ) = {
-    val owner = isOwner( user ) 
+  def canSee( viewer:User, member:Record ) = {
+    val owner = isOwner( viewer ) 
 
     if ( owner ) {
       true
@@ -226,14 +228,14 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
         false
 
       case GroupMode.Moderated =>
-        isReader( user ) &&
+        isReader( viewer ) &&
         ( groupType match {
-          case GroupType.Org  => member.tid == user.tid || isOwner( member.tid ) || owner || member.tid == user.orgTid || B.Org.orgIdFor( member ) == user.orgId
-          case GroupType.User => member.tid == user.tid || isOwner( member.tid ) || owner
+          case GroupType.Org  => member.tid == viewer.tid || isOwner( member.tid ) || owner || member.tid == viewer.orgTid || B.Org.orgIdFor( member ) == viewer.orgId
+          case GroupType.User => member.tid == viewer.tid || isOwner( member.tid ) || owner
           } )
 
       case GroupMode.Collaborative =>
-        isReader( user )
+        isReader( viewer )
       }
     }
   }
@@ -1057,4 +1059,31 @@ object Grouplet extends Weblet {
     }
   }
 }
+
+
+/*
+ * * *  Group Settings
+ */
+
+object GroupSettings extends MongoEntity( tid = "a0Rt" ) {
+  type RecType = GroupSettings
+  override def convert( obj:DBObject, parent:MongoRecord ) = new GroupSettings( obj, parent )
+
+  override def init {
+    super.init
+
+  "_id"            is DbMongoId              ;
+
+  "u"              is DbLink(B.User)         as "User";
+  "g"              is DbLink(Group)          as "Group";
+
+  "order"          is DbArray(ContentOrder)  as "Ordering";
+
+  }
+
+  db.ensureIndex( Mobj( "g" -> 1, "u" -> 1 ) )
+}
+
+class GroupSettings( obj:DBObject, parent:MongoRecord ) extends MongoRecord( GroupFavorite.makeView, obj, parent )
+
 

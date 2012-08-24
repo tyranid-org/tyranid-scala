@@ -519,3 +519,24 @@ abstract class Content( override val view:MongoView,
 }
 
 
+/*
+ * * *  Content Ordering
+ */
+
+object ContentOrder extends MongoEntity( tid = "a0St", embedded = true ) {
+  type RecType = ContentOrder
+  override def convert( obj:DBObject, parent:MongoRecord ) = new ContentOrder( obj, parent )
+
+  override def init {
+    super.init
+
+  // indicates that a is before b
+
+  "a"              is DbTid( B.ContentEntities:_* ) ;
+  "b"              is DbTid( B.ContentEntities:_* ) ;
+
+  }
+}
+
+class ContentOrder( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.makeView, obj, parent )
+

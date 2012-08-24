@@ -156,6 +156,8 @@ trait Bootable {
   @volatile var Location:MongoEntity = null
   @volatile var newSession:() => Session = null
 
+  def ContentEntities:Seq[MongoEntity] = Nil
+
   @volatile var loginPage:() => NodeSeq = null
   
   def appShellPage( web:WebContext ): NodeSeq = NodeSeq.Empty
