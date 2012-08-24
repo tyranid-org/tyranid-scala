@@ -306,6 +306,12 @@ case class Image( url:URL, dims:Option[Dimensions] = None ) {
 object Thumbnail {
   def generate( originalFile:File, thumbW:Int, thumbH:Int, thumbnailFile:File = null ):File = {
     val image = ImageIO.read( originalFile )
+    
+    if ( image == null ) {
+      println( "Error: Unable to get thumb from file: " + originalFile.getAbsolutePath )
+      return null
+    }
+    
     val imageWidth  = image.getWidth( null )
     val imageHeight = image.getHeight( null )
 
