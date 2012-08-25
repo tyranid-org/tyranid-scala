@@ -99,22 +99,8 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
     
     //println( resultStr )
     val response = resultStr.toXml \\ "rsp"
-    val thumbnailUrl = ( response \\ "thumbnail_url" ).text
     
-    val res = Http.GET( thumbnailUrl )
-    val entity = res.response.getEntity
-    
-    if ( entity != null ) {
-      val instream = entity.getContent
-      val tmpFile = File.createTempFile( extDocId, ".png" )
-      val out = new FileOutputStream( tmpFile )
-       
-      instream.transferTo( out, true )
-
-      tmpFile
-    } else {
-      null
-    }
+    Http.GET_File( ( response \\ "thumbnail_url" ).text, ".png" )
   }
   
   def delete( extDocId:String ):Boolean = {
