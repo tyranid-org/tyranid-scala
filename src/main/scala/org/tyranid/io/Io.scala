@@ -81,6 +81,14 @@ object Iolet extends Weblet {
      // <img src="/io/thumb/a09vUCwNUOSweddROKEl/l|m|s|t"/>
     case s if s.startsWith( "/thumb" ) =>
       val parts = s.substring( 7 ).split( "/" )
+      
+      if ( parts.size < 2 ) {
+        web.res.setStatus( 302 )
+        web.res.setHeader( "Location", notFoundUrl )
+        web.res.setHeader( "Connection", "close" )
+        return
+      }
+        
       val tid = parts(0)
       val size = parts(1)
       val pathParts = tid.splitAt( 4 )

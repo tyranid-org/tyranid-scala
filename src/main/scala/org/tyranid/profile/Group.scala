@@ -258,6 +258,11 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
 
     Unparsed( sb.toString )
   }
+  
+  override def imageForThumbs:File = {
+    val file = super.imageForThumbs
+    ( file != null ) ? file | B.getS3Bucket( "public" ).file( "/images/default_project_image.png" )
+  }  
 }
 
 /*

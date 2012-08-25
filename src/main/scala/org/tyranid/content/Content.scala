@@ -293,9 +293,8 @@ abstract class Content( override val view:MongoView,
     ( dlUrl.notBlank ) ? Http.GET_File( dlUrl ) | null
   }  
   
-  
   def generateThumbs {
-    val imgFile = imageForThumbs //Http.GET_File( dlUrl )
+    val imgFile = imageForThumbs
 
     if ( imgFile != null ) {
       val pathParts = tid.splitAt( 4 )
