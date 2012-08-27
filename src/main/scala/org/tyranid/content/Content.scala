@@ -291,7 +291,17 @@ abstract class Content( override val view:MongoView,
       ( imgUrl.toLowerCase.startsWith( "http" ) ? imgUrl | T.website + imgUrl ) | null
     
     ( dlUrl.notBlank ) ? Http.GET_File( dlUrl ) | null
-  }  
+  }
+
+  def thumbClass( size:String ) =
+    size match {
+    case "l" => "thumbLarge"
+    case "m" => "thumbMedium"
+    case "s" => "thumbSmall"
+    case "t" => "thumbTiny"
+    }
+
+  def thumbHtml( size:String ) = <div class={ thumbClass( size ) }><img src={ "/io/thumb/" + tid + "/" + size }/></div>
   
   def generateThumbs {
     val imgFile = imageForThumbs
@@ -393,7 +403,7 @@ abstract class Content( override val view:MongoView,
 
   def writers = owners
   
-  def readers =
+  def viewers =
    for ( e <- viewerEntities;
          en = e.as[MongoEntity];
          r <- en.db.find( Mobj( "_id" -> Mobj( $in -> obj.a_?( "v" ).map( tid => en.tidToId( tid._s ) ).toSeq.toMlist ) ) );
