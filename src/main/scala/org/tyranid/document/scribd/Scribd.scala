@@ -17,7 +17,7 @@ package org.tyranid.document.scribd
  *
  */
 
-import scala.xml.Unparsed
+import scala.xml.{ Unparsed, NodeSeq }
 
 import java.io.{ File, FileOutputStream }
 
@@ -76,9 +76,14 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
   
   def previewUrlFor( extDocId:String ):String = null
   
-  def previewJsFor( extDocId:String ) = {
+  def docPreviewContainer( extDocId:String, height:String="100%" ): NodeSeq = {
     val parts = extDocId.split( "," )
-    "var scribd_doc = scribd.Document.getDoc(" + parts(0) + ", '" + parts(1) + "');var onDocReady = function(e){scribd_doc.api.setPage(1);};scribd_doc.addParam('jsapi_version', 2);scribd_doc.addEventListener('docReady', onDocReady);scribd_doc.write('scrib_doc');scribd_doc.addParam('use_ssl', true); scribd_doc.grantAccess('" + T.user.tid + "', '" + Session().id + "', '" + MD5( parts(0), Session().id, T.user.tid ) + "');"
+    <div id={ "scrib_doc_" + parts(0) }></div>    
+  }
+
+  override def previewJsFor( extDocId:String ) = {
+    val parts = extDocId.split( "," )
+    "var scribd_doc = scribd.Document.getDoc(" + parts(0) + ", '" + parts(1) + "');var onDocReady = function(e){scribd_doc.api.setPage(1);};scribd_doc.addParam('jsapi_version', 2);scribd_doc.addEventListener('docReady', onDocReady);scribd_doc.write('scrib_doc_" + parts(0) + "');scribd_doc.addParam('use_ssl', true); scribd_doc.grantAccess('" + T.user.tid + "', '" + Session().id + "', '" + MD5( parts(0), Session().id, T.user.tid ) + "');"
   }
   
   def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef] = {
@@ -88,7 +93,7 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
          "height" -> height,
          "cssClass" -> "no-scroll",
          "extraJS" -> previewJs,
-         "html" -> <div id='scrib_doc'></div> )
+         "html" -> docPreviewContainer( extDocId ) )
   }
   
   def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 )  = {

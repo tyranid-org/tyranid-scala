@@ -19,6 +19,7 @@ package org.tyranid.http
 
 import java.io.{ InputStream, File, FileInputStream, FileOutputStream, IOException, OutputStream }
 import java.net.URL
+import java.text.DateFormat
 import java.util.Date
 
 import scala.collection.JavaConversions._
@@ -46,6 +47,7 @@ import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.Imp._
 import org.tyranid.math.Base36
 import org.tyranid.pdf.Pdf
+import org.tyranid.time.Time
 import org.tyranid.web.{ FileUploadSupport, WebHandledException }
 
 case class RestException( code:String, message:String ) extends Exception
@@ -204,16 +206,54 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     )
   }
 
-  def s3( bucket:S3Bucket, path:String ) {
+  def s3( bucket:S3Bucket, path:String, req:HttpServletRequest ) {
     var out:OutputStream = null
     
     try {
       val obj = S3.getObject( bucket, path )
-      val mimeType = obj.getObjectMetadata.getContentType
+      val md = obj.getObjectMetadata
+      val mimeType = md.getContentType
       res.setContentType( ( if ( mimeType.notBlank ) mimeType else "application/octet-stream" ) )
-      res.setContentLength( obj.getObjectMetadata.getContentLength.toInt )
-      out = res.getOutputStream
-      obj.getObjectContent.transferTo( out, true )
+      res.setContentLength( md.getContentLength.toInt )
+      
+      val lastModified = md.getLastModified()
+      var headOnly = false
+      
+      if ( lastModified != null ) {
+        res.setDateHeader( "Last-modified", lastModified.getTime )
+        
+        var ifModSinceStr = req.getHeader( "If-Modified-Since" )
+        var ifModSince = -1l
+  
+        if ( ifModSinceStr.notBlank ) {
+          val semi = ifModSinceStr.indexOf( ';' )
+          
+          if ( semi != -1 )
+            ifModSinceStr = ifModSinceStr.substring( 0, semi )
+            
+          try {
+            ifModSince = Time.Rfc1123Format.parse( ifModSinceStr ).getTime
+          } catch {
+          case _ => 
+            try {
+              ifModSince = DateFormat.getDateInstance().parse( ifModSinceStr ).getTime()
+            } catch {
+            case _ =>
+              println( "cannot parse date: " + ifModSinceStr )
+            }
+          }
+        }
+        
+        if ( ifModSince != -1 && ifModSince >= lastModified.getTime ) {
+          res.setStatus( HttpServletResponse.SC_NOT_MODIFIED )
+          headOnly = true;
+        }        
+      }
+      
+      if ( !headOnly ) {
+        out = res.getOutputStream
+        obj.getObjectContent.transferTo( out, true )
+      }
     } finally {
       if ( out != null ) {
         out.flush

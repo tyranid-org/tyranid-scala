@@ -44,12 +44,13 @@ object S3 {
   private val s3 = new AmazonS3Client( B.awsCredentials )
 
   def write( bucket:S3Bucket, key:String, file:java.io.File ) = {
-    val mimeType = org.tyranid.io.File.mimeTypeFor( file.getName )
+    val mimeType = new FileInputStream( file ).detectMimeType( file.getName )
     
     if ( mimeType.notBlank ) {
       val md = new ObjectMetadata
       md.setContentLength( file.length )
       md.setContentType( mimeType )
+      md.setLastModified( new java.util.Date() )
 
       val in = new FileInputStream( file )
       

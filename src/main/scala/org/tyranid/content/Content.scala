@@ -310,13 +310,15 @@ abstract class Content( override val view:MongoView,
       val pathParts = tid.splitAt( 4 )
       val urlPath = pathParts._1 + "/" + pathParts._2 + "/"
       
-      def thumb( s:String, w:Int, h:Int ) = {
+      def thumb( s:String, w:Int, h:Int ) {
         var f:File = null
         
         try {
           f = Thumbnail.generate( imgFile, w, h )
-          S3.write( Content.thumbsBucket, urlPath + s, f )
-          S3.access( Content.thumbsBucket, urlPath + s, true )
+          if ( f != null ) {
+            S3.write( Content.thumbsBucket, urlPath + s, f )
+            S3.access( Content.thumbsBucket, urlPath + s, true )
+          }
         } finally {
           if ( f != null )
             f.delete
