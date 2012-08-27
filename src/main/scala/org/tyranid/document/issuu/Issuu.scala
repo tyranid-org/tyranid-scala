@@ -17,7 +17,7 @@
 
 package org.tyranid.document.issuu
 
-import scala.xml.Unparsed
+import scala.xml.{ Unparsed, NodeSeq }
 
 import java.io.{ File, FileOutputStream }
 
@@ -93,6 +93,8 @@ case class IssuuApp( apiKey:String, secret:String = null ) extends DocApp {
     "DONE"
   }
   
+  def docPreviewContainer( extDocId:String, height:String="100%" ): NodeSeq = NodeSeq.Empty
+    
 // TODO
   def previewUrlFor( extDocId:String ):String =  
     //"https://crocodoc.com/view/" + Json.parse( Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s ).s( 'session )

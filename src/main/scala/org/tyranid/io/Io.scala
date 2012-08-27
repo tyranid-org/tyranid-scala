@@ -112,8 +112,11 @@ object Iolet extends Weblet {
       val size = parts(1)
       val pathParts = tid.splitAt( 4 )
       val urlPath = pathParts._1 + "/" + pathParts._2 + "/" + size
+      var tries = 0
+      
+      while ( tries < 3 ) {
+        tries += 1
         
-      while ( true ) {
         try {
           web.res.s3( Content.thumbsBucket, urlPath, web.req )
           return
@@ -147,6 +150,8 @@ object Iolet extends Weblet {
             throw e2
         }
       }
+      
+      web.res.setStatus( 404 )
     case _ =>
       _404
     }

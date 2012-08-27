@@ -17,7 +17,7 @@
 
 package org.tyranid.document.crocodoc
 
-import scala.xml.Unparsed
+import scala.xml.{ Unparsed, NodeSeq }
 import java.io.{ File, FileOutputStream }
 import com.mongodb.DBObject
 import org.tyranid.Imp._
@@ -78,6 +78,9 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
     val statusJson = Json.parse( Http.GET( "https://crocodoc.com/api/v2/document/status?token=" + apiKey + "&uuids=" + extDocId ).s ).get(0)
     statusJson.s( 'status )
   }
+  
+  def docPreviewContainer( extDocId:String, height:String="100%" ): NodeSeq =
+    <iframe style={ "width:100%;height:" + height + "px;" } src={ previewUrlFor( extDocId ) }/>    
   
   def previewUrlFor( extDocId:String ):String = { 
     val sessionJson = Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s
