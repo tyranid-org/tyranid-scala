@@ -20,7 +20,16 @@ package org.tyranid.io
 import scala.annotation.tailrec
 
 import java.io.{ IOException, FileOutputStream, InputStream, InputStreamReader, OutputStream }
+import java.util.HashMap
+
 import com.amazonaws.services.s3.model.{ AmazonS3Exception }
+
+import org.xml.sax.helpers.DefaultHandler
+
+import org.apache.tika.detect.{ DefaultDetector, Detector }
+import org.apache.tika.metadata.{ Metadata, TikaMetadataKeys, HttpHeaders }
+import org.apache.tika.mime.MediaType
+import org.apache.tika.parser.{ AutoDetectParser, Parser, ParseContext }
 
 import org.tyranid.db.{ Entity, Record }
 import org.tyranid.db.meta.{ TidItem }
@@ -71,6 +80,16 @@ class InputStreamImp( is:InputStream ) {
   	    is.close
   	}
   }
+  
+  def detectMimeType( filename:String ) = {
+    val parser = new AutoDetectParser()
+    parser.setParsers( new HashMap[MediaType, Parser]() )
+    val metadata = new Metadata()
+    metadata.add( TikaMetadataKeys.RESOURCE_NAME_KEY, filename )
+    parser.parse( is, new DefaultHandler(), metadata, new ParseContext() )
+    is.close()
+    metadata.get( HttpHeaders.CONTENT_TYPE )
+  }
 }
 
 object Iolet extends Weblet {
@@ -96,7 +115,7 @@ object Iolet extends Weblet {
         
       while ( true ) {
         try {
-          web.res.s3( Content.thumbsBucket, urlPath )
+          web.res.s3( Content.thumbsBucket, urlPath, web.req )
           return
         } catch {
           case e:AmazonS3Exception if e.getStatusCode == 404 =>

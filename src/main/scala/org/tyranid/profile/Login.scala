@@ -22,7 +22,7 @@ import scala.xml.{ NodeSeq, Unparsed }
 import org.tyranid.Imp._
 import org.tyranid.db.Scope
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.email.{ Email, AWSEmail }
+import org.tyranid.email.Email
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
 import org.tyranid.session.Session
@@ -477,24 +477,7 @@ $( function() {
 
         sess.notice( "Instructions for changing your password have been sent to " + email + "." )
 
-        // TODO:  move this to email templates
-        AWSEmail(subject = B.applicationName + " account access", text = """
-Hello """ + dbUser.s( 'firstName ) + """,
-
-Forgot your password? No problem. You can access your """ + B.applicationName + """ account with the link below:
-
-""" + T.website + """/user/forgot?a=""" + resetCode + """
-
-Once you have accessed your account, please update it with a new password.
-
-Thank you!
-
-The """ + B.applicationName + """ Team
-""" + T.website )
-          .addTo( user s 'email )
-          .from( "volerro@" + B.domain )
-          .replyTo( "volerro@" + B.domain )
-          .send
+        B.emailTemplates.forgotPassword( T.LnF, user )
 
         if ( T.LnF == LnF.RetailBrand )
           return web.json( web.jsonRes( sess ) )

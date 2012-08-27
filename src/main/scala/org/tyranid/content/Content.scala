@@ -300,7 +300,7 @@ abstract class Content( override val view:MongoView,
       val pathParts = tid.splitAt( 4 )
       val urlPath = pathParts._1 + "/" + pathParts._2 + "/"
       
-      def thumb( s:String, w:Int, h:Int ) = {
+      def thumb( s:String, w:Int, h:Int ) {
         var f:File = null
         
         try {
