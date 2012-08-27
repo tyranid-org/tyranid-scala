@@ -305,8 +305,10 @@ abstract class Content( override val view:MongoView,
         
         try {
           f = Thumbnail.generate( imgFile, w, h )
-          S3.write( Content.thumbsBucket, urlPath + s, f )
-          S3.access( Content.thumbsBucket, urlPath + s, true )
+          if ( f != null ) {
+            S3.write( Content.thumbsBucket, urlPath + s, f )
+            S3.access( Content.thumbsBucket, urlPath + s, true )
+          }
         } finally {
           if ( f != null )
             f.delete
