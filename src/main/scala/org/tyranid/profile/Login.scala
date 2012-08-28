@@ -510,18 +510,23 @@ $( function() {
     val user =
       sess.user match {
       case null => B.newUser()
-      case u    => if ( u.isNew ) u else B.newUser()
+      case u    => if ( u.isNew || web.b( 'keep ) )
+                     u
+                   else
+                     B.newUser()
     }
 
-    sess.user = user
-
-    user.extraVaValidations =
-      ( user.view( 'email ),
-        { scope:Scope =>
-          B.User.db.exists( Mobj( "email" -> user.s( 'email ) ) ) |*
-            Some( Invalid( scope.at( 'email ), user.s( 'email ) + " is already in use.") )
-        } ) ::
-        Nil
+    if ( user.isNew  ) {
+      sess.user = user
+  
+      user.extraVaValidations =
+        ( user.view( 'email ),
+          { scope:Scope =>
+            B.User.db.exists( Mobj( "email" -> user.s( 'email ) ) ) |*
+              Some( Invalid( scope.at( 'email ), user.s( 'email ) + " is already in use.") )
+          } ) ::
+          Nil
+    }
 
     val ui = user.view.ui( "register" )
 
@@ -602,6 +607,7 @@ $( function() {
           </div>
           <div class="row-fluid">
            <div class="span6">
+            <input type="hidden" name="keep" value={ web.s( 'keep ) }/>
             <input type="password" name="password2" id="password2" placeholder="Re-type password" data-val="req,same=password,min=5"/>
            </div>
            <div class="span6 val-display"/>
