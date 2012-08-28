@@ -193,7 +193,7 @@ class WebFilter extends Filter {
           LoginCookie.autoLogin          
         }
         
-        if ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) && T.LnF == LnF.RetailBrand ) {
+        if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) && T.LnF == LnF.RetailBrand  )) {
           web.template( B.appShellPage( web ) )
           return
         }
