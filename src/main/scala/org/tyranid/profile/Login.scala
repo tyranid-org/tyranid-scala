@@ -377,7 +377,8 @@ $( function() {
       sess.put( "entryApp", new java.lang.Integer( entryApp._i ) )
 
       val inner = 
-        { ( entryApp == 0 ) |* <div style="margin-top:16px; font-size:24px;">Creating an account with Volerro is Free!</div> } ++
+       <div class="container">
+        { ( entryApp == 0 ) |* <div style="margin-top:16px; font-size:24px;">Creating an account with Volerro is Free!</div> }
         { !noSocial |*
          <div class="plainBox">
           <div class="title">Use Social Login to Automatically Register</div>
@@ -385,11 +386,11 @@ $( function() {
            Sign in using a Social Network to quickly create an account automatically:
            <div>{
             Social.networks.flatMap { network =>
-             <hr style="margin:4px 0 8px;"/> ++
+             <hr style="margin:4px 0 8px;"/>++ 
              network.loginButton( this ) }
            }</div>
           </div>
-         </div> } ++
+         </div> }
          <div class="plainBox">
           <div class="title">{ noSocial ? "Register" | "Manually Register" }</div>
           <div class="contents" style="height:390px;">
@@ -412,7 +413,8 @@ $( function() {
            </div>
           </div>
          </div>
-
+        </div>
+           
       web.template( ( entryApp == 0 ) ? <tyr:shell>{ inner }</tyr:shell> | <tyr:shellApp>{ inner }</tyr:shellApp> )
     case "/company" =>
       val term = web.req.s( 'term ).toLowerCase
