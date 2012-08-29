@@ -30,7 +30,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.content.{ ContentMeta, Content, ContentOrder, ContentType }
+import org.tyranid.content.{ ContentMeta, Content, ContentType }
 import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbInt, DbLink, DbTid, DbUrl, Entity, Record, Scope }
 import org.tyranid.db.meta.{ Tid, TidItem }
 import org.tyranid.db.mongo.Imp._
@@ -263,6 +263,8 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     val file = super.imageForThumbs
     ( file != null ) ? file | B.getS3Bucket( "public" ).file( "images/default_project_image.png" )
   }  
+
+  def settingsFor( user:User ) = GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> user.id, "g" -> this.id ) ) )
 }
 
 /*
@@ -1080,18 +1082,42 @@ object GroupSettings extends MongoEntity( tid = "a0Rt" ) {
   override def init {
     super.init
 
-  "_id"            is DbMongoId              ;
+  "_id"            is DbMongoId                              ;
 
-  "u"              is DbLink(B.User)         as "User";
-  "g"              is DbLink(Group)          as "Group";
+  "u"              is DbLink(B.User)                         as "User";
+  "g"              is DbLink(Group)                          as "Group";
 
-  "order"          is DbArray(ContentOrder)  as "Ordering";
+  "order"          is DbArray(DbTid( B.ContentEntities:_* )) as "Ordering";
 
   }
 
   db.ensureIndex( Mobj( "g" -> 1, "u" -> 1 ) )
 }
 
-class GroupSettings( obj:DBObject, parent:MongoRecord ) extends MongoRecord( GroupFavorite.makeView, obj, parent )
+class GroupSettings( obj:DBObject, parent:MongoRecord ) extends MongoRecord( GroupSettings.makeView, obj, parent ) {
 
+  def order = a_?( 'order )
+
+  def update( content:Seq[Content] ) = {
+
+    val oldOrder = order
+    val newOrder = Buffer[Content]()
+
+    for ( tid <- oldOrder;
+          c <- content.find( _.tid == tid ) )
+      newOrder += c
+
+    for ( c <- content )
+      if ( !newOrder.exists( _.tid == c.tid ) )
+        newOrder += c
+
+    if (   oldOrder.size != newOrder.size
+        || ( 0 until oldOrder.size ).exists( i => oldOrder( i ) != newOrder( i ).tid ) ) {
+      obj( 'order ) = newOrder.map( _.tid ).toMlist
+      save
+    }
+
+    newOrder
+  }
+}
 
