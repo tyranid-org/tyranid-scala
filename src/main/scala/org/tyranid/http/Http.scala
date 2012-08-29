@@ -208,7 +208,6 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
 
   def s3( bucket:S3Bucket, path:String, req:HttpServletRequest ) {
     var out:OutputStream = null
-    var in:InputStream = null
     
     try {
       val obj = S3.getObject( bucket, path )
@@ -253,17 +252,13 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
       
       if ( !headOnly ) {
         out = res.getOutputStream
-        in = obj.getObjectContent
-        in.transferTo( out, true )
+        obj.getObjectContent.transferTo( out, true )
       }
     } finally {
       if ( out != null ) {
         out.flush
         out.close
       }
-      
-      if ( in != null )
-        in.close
     }
   }
   

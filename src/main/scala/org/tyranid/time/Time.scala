@@ -173,6 +173,10 @@ class DateImp( d:Date ) {
     if ( d == null ) null
     else             Time.MonthDay.format( d )
 
+  def toMonthDayTimeStr =
+    if ( d == null ) null
+    else             Time.MonthDay.format( d ) + ", " + Time.TimeFormat12.format( d ).toLowerCase 
+
   def toTime24Str =
     if ( d == null ) null
     else             Time.TimeFormat24.format( d )

@@ -51,17 +51,27 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
   */
     
   def upload( file:File, fileSize:Long, filename:String ):String = {
-    val resultStr = Http.POST_FILE( "http://api.scribd.com/api?", file, fileSize, filename, params = Map( "method" -> "docs.upload", "access" -> "private", "api_key" -> apiKey, "secure" -> "1" ) )._s
+    if ( supports( filename.suffix( '.' ) ) ) {
+      val resultStr = Http.POST_FILE( "http://api.scribd.com/api?", file, fileSize, filename, params = Map( "method" -> "docs.upload", "access" -> "private", "api_key" -> apiKey, "secure" -> "1" ) )._s
 
-    //println( "scribd: " + resultStr )
+      //println( "scribd: " + resultStr )
     
-    val response = resultStr.toXml \\ "rsp"
-    
-    val docId = ( response \\ "doc_id" ).text
-    val accessKey = ( response \\ "access_key" ).text
-    val secretPassword = ( response \\ "secret_password" ).text
-    
-    externalDocId( docId + "," + accessKey + ( secretPassword.isBlank ? "" | ( "," + secretPassword ) ) )
+      val response = resultStr.toXml \\ "rsp"
+      val stat = ( response \ "@stat" ).text
+
+      if ( stat == "ok" ) {
+        val docId = ( response \\ "doc_id" ).text
+        val accessKey = ( response \\ "access_key" ).text
+        val secretPassword = ( response \\ "secret_password" ).text
+      
+        externalDocId( docId + "," + accessKey + ( secretPassword.isBlank ? "" | ( "," + secretPassword ) ) )
+      } else {
+        log( Event.Scribd, "m" -> ( "Failed to upload document: " + filename + ", error=" + ( response \\ "error" \ "@message" ).text ) )
+        null
+      }
+    } else {
+      null
+    }
   }
   
   def statusFor( extDocId:String ) = {
@@ -96,16 +106,22 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
          "html" -> docPreviewContainer( extDocId ) )
   }
   
-  def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 )  = {
+  def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ) = {
     val parts = extDocId.split( "," )
     val resultStr = Http.GET( "http://api.scribd.com/api?method=thumbnail.get&api_key=" + apiKey + "&doc_id=" + parts(0) + "&api_sig=" + MD5( parts(0), Session().id, T.user.tid ) + "&width=" + width + "&height=" + height )._s
     
     // <?xml version="1.0" encoding="UTF-8"?><rsp stat="ok"><thumbnail_url>http://imgv2-1.scribdassets.com/img/word_document/97855850/111x142/65d2b8d54c/1342103296</thumbnail_url></rsp>
     
-    //println( resultStr )
-    val response = resultStr.toXml \\ "rsp"
+    val response = ( resultStr.toXml \\ "rsp" )
+     
+    val stat = ( response \ "@stat" ).text
     
-    Http.GET_File( ( response \\ "thumbnail_url" ).text, ".png" )
+    if ( stat == "ok" )
+      Http.GET_File( ( response \\ "thumbnail_url" ).text, ".png" )
+    else {
+      log( Event.Scribd, "m" -> ( "Get Thumbnail failed for scribd uuid: " + extDocId + ", error is: " + ( response \\ "error" \ "@message" ).text ) )
+      null
+    }
   }
   
   def delete( extDocId:String ):Boolean = {
