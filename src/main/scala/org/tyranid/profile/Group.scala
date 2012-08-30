@@ -264,6 +264,44 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     ( file != null ) ? file | B.getS3Bucket( "public" ).file( "images/default_project_image.png" )
   }  
 
+    // TODO: Replace this with Carl's pallete
+  def getRandomColor = { 
+    import java.util.Random
+    val random = new Random()
+    val hue = random.nextFloat()
+    val saturation = random.nextFloat()
+    val luminance = random.nextFloat()
+    val color = java.awt.Color.getHSBColor(hue, saturation, luminance)
+    color.darker()
+    color.darker()
+    color.darker()
+    Integer.toHexString( color.getRGB() ).substring(2, 8)
+  }
+
+  override def thumbHtml( size:String ) = {
+    val imageUrl = s( 'img )
+    val style:String = imageUrl.isBlank ? {
+      var color = s( 'color )
+      
+      if ( color.isBlank ) {
+        color = getRandomColor
+        this( 'color ) = color
+        save
+      } 
+      
+      "background-color:#" + color 
+    } | null
+    
+    <div class={ thumbClass( size ) } style={ style }>
+    { if ( imageUrl.notBlank ) {
+       <img src={ "/io/thumb/" + tid + "/" + size }/>
+      } else {
+       <div class="text">{ s( 'name ) }</div>  
+    } }
+    </div>
+  }
+
+  
   def settingsFor( user:User ) = GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> user.id, "g" -> this.id ) ) )
 }
 

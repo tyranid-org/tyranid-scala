@@ -304,42 +304,10 @@ abstract class Content( override val view:MongoView,
     case "t" => "thumbTiny"
     }
 
-  // TODO: Replace this with Carl's pallete
-  def getRandomColor = { 
-    import java.util.Random
-    val random = new Random()
-    val hue = random.nextFloat()
-    val saturation = random.nextFloat()
-    val luminance = random.nextFloat()
-    val color = java.awt.Color.getHSBColor(hue, saturation, luminance)
-    color.darker()
-    color.darker()
-    color.darker()
-    Integer.toHexString( color.getRGB() ).substring(2, 8)
-  }
-
-  def thumbHtml( size:String ) = {
-    val imageUrl = s( 'img )
-    val style:String = imageUrl.isBlank ? {
-      var color = s( 'color )
-      
-      if ( color.isBlank ) {
-        color = getRandomColor
-        this( 'color ) = color
-        save
-      } 
-      
-      "background-color:#" + color 
-    } | null
-    
-    <div class={ thumbClass( size ) } style={ style }>
-    { if ( imageUrl.notBlank ) {
-       <img src={ "/io/thumb/" + tid + "/" + size }/>
-      } else {
-       <div class="text">{ s( 'name ) }</div>  
-    } }
+  def thumbHtml( size:String ) =
+    <div class={ thumbClass( size ) }>
+     <img src={ "/io/thumb/" + tid + "/" + size }/>
     </div>
-  }
   
   def generateThumbs {
     val imgFile = imageForThumbs
