@@ -210,8 +210,7 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     var out:OutputStream = null
     
     try {
-      val obj = S3.getObject( bucket, path )
-      val md = obj.getObjectMetadata
+      val md = S3.getObjectMetadata( bucket, path )
       val mimeType = md.getContentType
       res.setContentType( ( if ( mimeType.notBlank ) mimeType else "application/octet-stream" ) )
       res.setContentLength( md.getContentLength.toInt )
@@ -252,7 +251,7 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
       
       if ( !headOnly ) {
         out = res.getOutputStream
-        obj.getObjectContent.transferTo( out, true )
+        S3.getObject( bucket, path ).getObjectContent.transferTo( out, true )
       }
     } finally {
       if ( out != null ) {
