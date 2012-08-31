@@ -233,6 +233,8 @@ class WebResponse( web:WebContext, sess:Session ) {
   
   def hasWarnings = warnings.length > 0 
   def hasErrors = errors.length > 1 
+
+  val cmds = mutable.Buffer[JsCmd]()
   
   var extraJS:String = null
   
@@ -241,16 +243,47 @@ class WebResponse( web:WebContext, sess:Session ) {
   var variables:Map[String,Any] = null
   
   def toJsonStr = {
-     new org.tyranid.json.JsonString( Map(
-         "notices" -> notices,
-         "warnings" -> warnings,
-         "errors" -> errors,
-         "redirect" -> redirect,
-         "html" -> htmlMap,
-         "extraJS" -> extraJS,
-         "vars" -> variables
-     ) ).toString 
+    val main =
+      Map( "notices" -> notices,
+           "warnings" -> warnings,
+           "errors" -> errors,
+           "redirect" -> redirect,
+           "html" -> htmlMap,
+           "extraJS" -> extraJS,
+           "vars" -> variables )
+
+    new org.tyranid.json.JsonString(
+      if ( cmds.isEmpty )
+        main
+      else
+        Array(
+          cmds.map( cmdToMap ) + main
+        )
+    ).toString
   }
+
+  def cmdToMap( cmd:JsCmd ) =
+    cmd match {
+    case cmd:JqHtml =>
+      val htmlMap = mutable.Map[String,Any]()
+
+      htmlMap( "html" )   = cmd.html
+      htmlMap( "target" ) = cmd.target
+
+      if ( cmd.modal.notBlank )
+        htmlMap( "modal" ) = cmd.modal
+
+      if ( cmd.transition.notBlank ) {
+        htmlMap( "transition" ) = cmd.transition
+        htmlMap( "duration" )   = cmd.duration.toString
+      }
+
+      Map( "html" -> htmlMap )
+
+    case cmd:Js     => Map( "extraJS" -> cmd.js )
+    case cmd:JqHide => throw new RuntimeException( "not yet implemented" )
+    case cmd:JqShow => throw new RuntimeException( "not yet implemented" )
+    }
 }
 
 case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:ServletContext ) {
@@ -259,30 +292,7 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   // TODO:  eliminate "def js" and "tyr.js" since it is redundant with this way of doing it, then rename this to "js"
   def jsRes( js:JsCmd* ) = {
     val res = jsonRes( T.session )
-
-    for ( cmd <- js )
-      cmd match {
-      case cmd:JqHtml =>
-        val htmlMap = mutable.Map[String,Any]()
-
-        htmlMap( "html" )   = cmd.html
-        htmlMap( "target" ) = cmd.target
-
-        if ( cmd.modal.notBlank )
-          htmlMap( "modal" ) = cmd.modal
-
-        if ( cmd.transition.notBlank ) {
-          htmlMap( "transition" ) = cmd.transition
-          htmlMap( "duration" )   = cmd.duration.toString
-        }
-
-        res.htmlMap = htmlMap
-
-      case cmd:Js     => throw new RuntimeException( "not yet implemented" )
-      case cmd:JqHide => throw new RuntimeException( "not yet implemented" )
-      case cmd:JqShow => throw new RuntimeException( "not yet implemented" )
-      }
-
+    res.cmds ++= js
     json( res )
   }
 
