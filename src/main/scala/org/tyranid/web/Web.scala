@@ -257,7 +257,7 @@ class WebResponse( web:WebContext, sess:Session ) {
         main
       else
         Array(
-          cmds.map( cmdToMap ) + main
+          cmds.map( cmdToMap ) += main
         )
     ).toString
   }
