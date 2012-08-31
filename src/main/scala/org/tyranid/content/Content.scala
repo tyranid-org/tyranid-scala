@@ -355,6 +355,8 @@ abstract class Content( override val view:MongoView,
     this( 'lastModifiedByOrg ) = u.orgId
   }
 
+  def ownerTidItem = TidItem.by( firstOwnerTid() )
+
 
   /*
    * * *   Author
