@@ -173,7 +173,7 @@ $( function() {
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
         <h1 class="span5">Sign-in <tyr:loader/></h1>
-        <div class="span7 pull-right regLink">or <a href="javascript:void(0);" data-sbt={ Form.attrJson( Map( "href" -> ( wpath + "/register" + params ) ) ) }>Register for { B.applicationName }!</a></div>
+        <div class="span7 pull-right regLink">or <a href="javascript:void(0);" data-sbt={ Form.attrJson( Map( "href" -> ( wpath + "/register" + params ), "top" -> 1 ) ) }>Register for { B.applicationName }!</a></div>
        </div>
       </div>
       <hr style="margin:4px 0 30px;"/>
@@ -619,7 +619,7 @@ $( function() {
        <hr style="margin:20px 0 12px;"/>
        <div class="row-fluid">
          <div class="span6">
-          <div style="height:40px;line-height:40px;position:relative;top:10px;">Already registered? <a tabindex="-1" href="javascript:void(0);" data-sbt={ Form.attrJson( Map( "href" -> ( wpath + "/in" ) ) ) }>Sign in here</a></div>
+          <div style="height:40px;line-height:40px;position:relative;top:10px;">Already registered? <a tabindex="-1" href="javascript:void(0);" data-sbt={ Form.attrJson( Map( "href" -> ( wpath + "/in" ), "top" -> 1 ) ) }>Sign in here</a></div>
          </div> 
          <div class="span6" style="height:40px;padding-top:8px;"><button type="submit" class="btn-success btn pull-right">Register <i class="icon-caret-right"></i></button></div>
        </div>
