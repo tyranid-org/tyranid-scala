@@ -291,16 +291,11 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
       
       "background-color:#" + color 
     } | null
-    
+
     <div class={ thumbClass( size ) } style={ style }>
-    { if ( imageUrl.notBlank ) {
-       <img src={ "/io/thumb/" + tid + "/" + size }/>
-      } else {
-       <div class="text">{ s( 'name ) }</div>  
-    } }
+     { imageUrl.notBlank ? <img src={ "/io/thumb/" + tid + "/" + size }/> | <div class="text">{ s( 'name ) }</div> }
     </div>
   }
-
   
   def settingsFor( user:User ) = GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> user.id, "g" -> this.id ) ) )
 }
