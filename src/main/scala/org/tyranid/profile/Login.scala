@@ -31,15 +31,14 @@ import org.tyranid.ui.{ Button, Grid, Row, Focus, LnF, Form }
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate, WebResponse }
 
 /*
-     new Form( "/user/regsiter", "register" )
+     new Form( "/user/register", "register" )
        .style( "margin-bottom:12px;" )
        .data( "val", "1" )
        .fieldsetClass( "registerBox" )
        .title( "Thanks, " + user.s( 'firstName ) + "!" )
        .hidden( "regStep", "2" )
-
-
  */
+
 object Register {
   def sendActivation( user:User ) = {
     val lnf = T.LnF
@@ -134,10 +133,6 @@ object Loginlet extends Weblet {
 
     val params = noSocial |* "?nosocial=1"
 
-    //T.session.error( "test error" )
-    //T.session.warn( "test warn" )
-    //T.session.notice( "test notice" )
-    
     // TODO:  make this more template-based
      { T.LnF match {
        case LnF.RetailBrand =>
@@ -419,11 +414,22 @@ $( function() {
     case "/company" =>
       val term = web.req.s( 'term ).toLowerCase
 
-      val json = B.Org.db.find( Mobj( "name" -> ( ".*" + term + ".*" ).toPatternI ), Mobj( "name" -> 1 ) ).
-            limit( 16 ).
+      def icon( thumb:String ) = thumb.notBlank ? thumb | B.Org.defaultIcon
+        
+      val json = B.Org.db.find( Mobj( "name" -> ( ".*" + term + ".*" ).toPatternI ), Mobj( "name" -> 1, "thumbnail" -> 1 ) ).
+            limit( 8 ).
             toSeq.
             map( o => Map( "id"    -> B.Org.idToTid( o( '_id ) ),
-                           "label" -> o.s( "name" ) ) )
+                           "value" -> o.s( "name" ),
+                           "label" -> 
+                              <div>
+                               <div class="tno">
+                                <img src={ icon( o.s( 'thumbnail ) ) }/>
+                               </div>
+                               <div class="lbl">  
+                                { o.s( "name" ) }
+                               </div>
+                              </div> ) )
       
       web.res.json( json )
     case "/resendActivation" =>
@@ -546,11 +552,18 @@ $( function() {
         if ( entryAppVal != null )
           user( "entryApp" ) = entryAppVal._i
           
-        user.save
+        //user.save
         
-        val emailDomain = Email.domainFor( user.s( 'email ) )._s
-        val org = B.Org.db.findOne( Mobj( "domain" -> emailDomain.toPatternI ), Mobj( "name" -> 1, "domain" -> 1 ) )
+        val email = user.s( 'email )
         
+        val org = Email.isWellKnownProvider( email ) ? null | {
+          val emailDomain = Email.domainFor( email )
+          B.Org.db.findOne( Mobj( "domain" -> emailDomain.toPatternI ), Mobj( "name" -> 1, "domain" -> 1 ) )
+        }
+        
+        if ( org != null )
+          user.save
+          
         jsonRes.htmlMap = Map( 
             "html" -> WebTemplate( Register.page( user, org, jsonRes ) ),
             "transition" -> "slideLeft",

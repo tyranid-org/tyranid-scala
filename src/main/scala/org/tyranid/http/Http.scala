@@ -233,7 +233,9 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
           try {
             ifModSince = Time.Rfc1123Format.parse( ifModSinceStr ).getTime
           } catch {
-          case _ => 
+          case e =>
+            e.printStackTrace
+            
             try {
               ifModSince = DateFormat.getDateInstance().parse( ifModSinceStr ).getTime()
             } catch {
