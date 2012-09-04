@@ -30,6 +30,16 @@ class CalendarImp( c:Calendar ) {
   def weekDayName   = Time.WeekDayNames( c.get( Calendar.DAY_OF_WEEK ) - 1 ).capitalize
   def monthName     = Time.MonthNames( c.get( Calendar.MONTH ) ).capitalize
 
+  def year   = c.get( Calendar.YEAR )
+  def hour12 = c.get( Calendar.HOUR )
+  def hour24 = c.get( Calendar.HOUR_OF_DAY )
+  def ampm   = c.get( Calendar.AM_PM ) match {
+               case Calendar.AM => "am"
+               case Calendar.PM => "pm"
+               }
+  def minute = c.get( Calendar.MINUTE )
+  def second = c.get( Calendar.SECOND )
+
   def isSameYearAs( other:Calendar ) =
     c.get( Calendar.YEAR )         == other.get( Calendar.YEAR )
 
@@ -164,6 +174,25 @@ class DateImp( d:Date ) {
   def toDateTimeStr =
     if ( d == null ) null
     else             Time.DateTimeFormat.format( d )
+
+  def toDisplay = {
+
+    // TODO:  this should be configurable by Bootable based on the application's user interface and the user's local time conventions
+
+    val cal = toUserCalendar
+    val now = Time.createUserNowCalendar
+
+    val sb = new StringBuilder
+
+    sb ++= toMonthDayStr
+
+    if ( now.year != cal.year )
+      sb ++= ", " ++= cal.year.toString
+
+    sb ++= ", %d:%02d%s".format( cal.hour12, cal.minute, cal.ampm )
+
+    sb.toString
+  }
 
   def toTime12Str =
     if ( d == null ) null

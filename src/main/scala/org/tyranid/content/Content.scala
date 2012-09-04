@@ -141,9 +141,9 @@ trait ContentMeta extends PrivateKeyEntity {
   "v"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Viewers" is SearchAuth;
   "subV"              is DbArray(DbTid(B.Org,B.User))                   ; // for showing content inside a group
 
-  "lastModified"      is DbDateTime is 'required;
-  "lastModifiedBy"    is DbLink(B.User) is 'required;
-  "lastModifiedByOrg" is DbLink(B.Org) is 'required;
+  "lastModified"      is DbDateTime           is 'required;
+  "lastModifiedBy"    is DbLink(B.User)       is 'required;
+  "lastModifiedByOrg" is DbLink(B.Org)        is 'required;
 
   // Volees
   "fit"               is DbBoolean            as "From in To" help <div>Indicates that the posting user is in the to list.  This will normally be false unless a user explicitly addresses a volee to themselves.</div>
@@ -356,6 +356,8 @@ abstract class Content( override val view:MongoView,
   }
 
   def ownerTidItem = TidItem.by( firstOwnerTid() )
+
+  def lastModifiedByTidItem = TidItem.by( B.User.idToTid( oid( 'lastModifiedBy ) ) )
 
 
   /*

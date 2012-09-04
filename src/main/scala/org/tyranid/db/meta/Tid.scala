@@ -57,7 +57,14 @@ object TidItem {
   } )
 }
 
-case class TidItem( tid:String, id:Any, org:ObjectId, name:String, thumbnail:String ) {}
+case class TidItem( tid:String, id:Any, org:ObjectId, name:String, thumbnail:String ) {
+
+  def label = name
+  def icon = thumbnail
+
+  def orgTid     = B.Org.idToTid( org )
+  def orgTidItem = TidItem.by( orgTid )
+}
 
 object TidCache {}
 
