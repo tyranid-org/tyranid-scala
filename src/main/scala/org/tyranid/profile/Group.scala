@@ -31,7 +31,7 @@ import com.mongodb.DBObject
 
 import org.tyranid.Imp._
 import org.tyranid.content.{ ContentMeta, Content, ContentType }
-import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbInt, DbLink, DbTid, DbUrl, Entity, Record, Scope }
+import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbInt, DbLong, DbLink, DbTid, DbUrl, Entity, Record, Scope }
 import org.tyranid.db.meta.{ Tid, TidItem }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
@@ -292,9 +292,15 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
       "background-color:#" + color 
     } | null
 
-    <div class={ thumbClass( size ) } style={ style }>
-     { imageUrl.notBlank ? <img src={ "/io/thumb/" + tid + "/" + size }/> | <div class="text">{ s( 'name ) }</div> }
-    </div>
+    val projectSettings = this.settingsFor( T.user )
+    val newBox = size == "l" && !projectSettings.hasVisited // Only care about this if it is a large thumb
+    
+    val inner = 
+      <div class={ thumbClass( size ) } style={ style }>
+       { imageUrl.notBlank ? <img src={ "/io/thumb/" + tid + "/" + size }/> | <div class="text">{ s( 'name ) }</div> }
+      </div>
+
+    newBox ? <div class="newBox">{ inner }<div class="newOverlay"><div class="text">NEW</div></div></div> | inner
   }
   
   def settingsFor( user:User ) = GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> user.id, "g" -> this.id ) ) )
@@ -1121,10 +1127,13 @@ object GroupSettings extends MongoEntity( tid = "a0Rt" ) {
   "g"              is DbLink(Group)                          as "Group";
 
   "order"          is DbArray(DbTid( B.ContentEntities:_* )) as "Ordering";
-
+  
+  "flags"          is DbLong                                 as "Flags";
   }
 
   db.ensureIndex( Mobj( "g" -> 1, "u" -> 1 ) )
+  
+  val FLAG_VISITED = 1
 }
 
 class GroupSettings( obj:DBObject, parent:MongoRecord ) extends MongoRecord( GroupSettings.makeView, obj, parent ) {
@@ -1152,5 +1161,10 @@ class GroupSettings( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Gro
 
     newOrder
   }
+  
+  def hasVisited =
+    ( l( 'flags ) & GroupSettings.FLAG_VISITED ) == GroupSettings.FLAG_VISITED
+  
+  def setVisited = this( 'flags ) = l( 'flags ) | GroupSettings.FLAG_VISITED
 }
 
