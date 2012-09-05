@@ -25,6 +25,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
+import org.tyranid.content.ContentType
 import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDouble, DbEmail, DbLink, DbLong, DbPassword, DbPhone, Record, DbDate, DbDateTime }
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
@@ -160,6 +161,11 @@ trait User extends MongoRecord {
   def groupIds  = groups.map( _.id )
   def groupTids = groups.map( _.tid )
 
+  // TODO:  cache this better somehow
+  def projects = T.requestCached( "projects" ) { Group.visibleTo( this, ContentType.Project ) }
+  def projectIds  = projects.map( _.id )
+  def projectTids = projects.map( _.tid )
+
   /**
    * This is a list of tids the user is authorized.  It includes their own tid, the tid of their org, and
    * the tid of all the groups they own or are members of.
@@ -174,6 +180,20 @@ trait User extends MongoRecord {
         tids += ot
 
       tids ++= groupTids
+
+      tids
+    }
+
+  def allowProfileProjectTids =
+    T.requestCached( "appt" ) {
+      val tids = ArrayBuffer[String]()
+      tids += tid
+
+      val ot = orgTid
+      if ( ot.notBlank )
+        tids += ot
+
+      tids ++= projectTids
 
       tids
     }
