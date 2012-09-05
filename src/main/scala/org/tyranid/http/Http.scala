@@ -230,17 +230,19 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
           if ( semi != -1 )
             ifModSinceStr = ifModSinceStr.substring( 0, semi )
             
-          try {
-            ifModSince = Time.Rfc1123Format.parse( ifModSinceStr ).getTime
-          } catch {
-          case e =>
-            e.printStackTrace
-            
+          if ( ifModSinceStr.notBlank ) {
             try {
-              ifModSince = DateFormat.getDateInstance().parse( ifModSinceStr ).getTime()
+              ifModSince = Time.Rfc1123Format.parse( ifModSinceStr ).getTime
             } catch {
-            case _ =>
-              println( "cannot parse date: " + ifModSinceStr )
+            case e =>
+              e.printStackTrace
+              
+              try {
+                ifModSince = DateFormat.getDateInstance().parse( ifModSinceStr ).getTime()
+              } catch {
+              case _ =>
+                println( "cannot parse date: " + ifModSinceStr )
+              }
             }
           }
         }
