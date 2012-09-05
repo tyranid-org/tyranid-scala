@@ -356,14 +356,23 @@ abstract class Content( override val view:MongoView,
     this( 'lastModifiedByOrg ) = u.orgId
   }
 
-  def ownerTidItem = TidItem.by( firstOwnerTid() )
-
   def lastModifiedByTidItem = TidItem.by( B.User.idToTid( oid( 'lastModifiedBy ) ) )
+
+  def lastModifiedByUser = {
+    val user = B.User.getById( this( 'lastModifiedBy )._oid )
+
+    if ( user == null )
+      B.systemUser
+    else
+      user
+  }
 
 
   /*
    * * *   Author
    */
+
+  def ownerTidItem = TidItem.by( firstOwnerTid() )
 
   def fromUser = {
     val utid = firstOwnerTid()
@@ -378,7 +387,6 @@ abstract class Content( override val view:MongoView,
   def fromIcon =
     if ( this.obj.has( 'feed ) ) "/images/rssLarge.png"
     else                         fromUser.s( 'thumbnail )
-
 
   /*
    * * *   Comments
