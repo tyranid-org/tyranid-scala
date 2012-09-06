@@ -26,7 +26,7 @@ import com.mongodb.DBObject
 
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3Bucket, S3 }
-import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDateTime, DbInt, DbLink, DbLong, DbTid, DbText, DbUrl, Entity, Record }
+import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDateTime, DbDouble, DbInt, DbLink, DbLong, DbTid, DbText, DbUrl, Entity, Record }
 import org.tyranid.db.es.{ SearchAuth, SearchText }
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
@@ -95,6 +95,12 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
 
   "on"             is DbDateTime           ;
   "m"              is DbChar(1024)         is 'label;
+
+  "pn"             is DbInt                as "Page Number";
+  "x"              is DbDouble             as "X";
+  "y"              is DbDouble             as "Y";
+
+  "r"              is DbArray(Comment)     as "Replies";
 
   override def init = {
     super.init
