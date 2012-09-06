@@ -79,13 +79,30 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
     statusJson.s( 'status )
   }
   
+//    <iframe style={ "width:100%;height:" + height + "px;" } src={ previewUrlFor( extDocId ) }/>    
   def docPreviewContainer( extDocId:String, height:String="100%" ): NodeSeq =
-    <iframe style={ "width:100%;height:" + height + "px;" } src={ previewUrlFor( extDocId ) }/>    
+    <div class="doc-view crocodoc" id={ "dv_" + extDocId }/>
   
-  def previewUrlFor( extDocId:String ):String = { 
+  override def previewJsFor( extDocId:String ) = {
     val sessionJson = Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s
-    "https://crocodoc.com/view/" + Json.parse( sessionJson ).s( 'session )
+    val session = Json.parse( sessionJson ).s( 'session )
+
+    Http.GET( "https://crocodoc.com/webservice/document.js?session=" + session )._s +
+    """; var docviewer = new DocViewer({ "id": "dv_""" + extDocId + """" });"""
+    
+//    """
+//    $.getJSON( "https://crocodoc.com/webservice/document.js", { session:'""" + session + """' }, function(d) {
+//      var docviewer = new DocViewer({ "id": "DocViewer" });
+ //   });
+  //  """
   }
+  
+  def previewUrlFor( extDocId:String ):String = null
+  
+  //def previewUrlFor( extDocId:String ):String = { 
+  //  val sessionJson = Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s
+  //  "https://crocodoc.com/view/" + Json.parse( sessionJson ).s( 'session )
+  //}
   
   def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ) = {
     val res = Http.GET( "https://crocodoc.com/api/v2/download/thumbnail?token=" + apiKey + "&uuid=" + extDocId + "&size=" + width + "x" + height )
