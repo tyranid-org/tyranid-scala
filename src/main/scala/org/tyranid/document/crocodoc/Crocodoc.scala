@@ -104,12 +104,18 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   //  "https://crocodoc.com/view/" + Json.parse( sessionJson ).s( 'session )
   //}
   
-  def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ) = {
+  def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ):File = {
     val res = Http.GET( "https://crocodoc.com/api/v2/download/thumbnail?token=" + apiKey + "&uuid=" + extDocId + "&size=" + width + "x" + height )
     val entity = res.response.getEntity
     
     if ( entity != null ) {
       if ( "application/json" == entity.getContentType.getValue ) {
+        
+        val json = Json.parse( res._s )
+        
+        if ( json.s( 'error ) == "thumbnail not available" )
+          return getThumbnailFile( extDocId, width, height )
+        
         log( Event.Crocodoc, "m" -> ( "Get Thumbnail failed for crocodoc uuid: " + extDocId + ", error is: " + res._s ) )
         null 
       } else {
