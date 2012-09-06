@@ -22,7 +22,7 @@ import java.util.Date
 
 import scala.xml.Text
 
-import com.mongodb.DBObject
+import com.mongodb.{ BasicDBList, DBObject }
 
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3Bucket, S3 }
@@ -92,6 +92,7 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
   type RecType = Comment
   override def convert( obj:DBObject, parent:MongoRecord ) = new Comment( obj, parent )
 
+  "_id"            is DbInt                is 'id;
 
   "on"             is DbDateTime           ;
   "m"              is DbChar(1024)         is 'label;
@@ -107,6 +108,46 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
     "u"            is DbLink(B.User)       ;           // user who created the reply
   }
 
+  def maxId( comments:BasicDBList ):Int = {
+    val candidates = comments.toSeq.map( obj => Comment.apply( obj.as[DBObject] ).maxId )
+
+    if ( candidates.size > 0 )
+      candidates.max
+    else
+      0
+  }
+
+  def idify( comments:BasicDBList ) {
+
+    var nextId = maxId( comments )
+
+    def enterComment( comment:Comment ) {
+      if ( comment.i( '_id ) == 0 ) {
+        comment( '_id ) = nextId
+        nextId += 1
+      }
+
+      enterList( comment.a_?( 'r ) )
+    }
+
+    def enterList( comments:BasicDBList ) {
+      for ( c <- comments.toSeq.map( obj => Comment.apply( obj.as[DBObject] ) ) )
+        enterComment( c )
+    }
+
+    enterList( comments )
+  }
+
+  def find( comments:BasicDBList, id:Int ):Comment = {
+
+    for ( c <- comments.toSeq.map( obj => Comment.apply( obj.as[DBObject] ) ) ) {
+      val found = c.find( id )
+      if ( found != null )
+        return found
+    }
+
+    null
+  }
 }
 
 class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.makeView, obj, parent ) {
@@ -122,6 +163,14 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
     else
       user
   }
+
+  def maxId:Int = i( '_id ) max Comment.maxId( a_?( 'r ) )
+
+  def find( id:Int ):Comment =
+    if ( i( '_id ) == id )
+      this
+    else
+      Comment.find( a_?( 'r ), id )
 }
 
 
