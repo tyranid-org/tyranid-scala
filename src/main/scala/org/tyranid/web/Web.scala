@@ -97,7 +97,7 @@ class WebFilter extends Filter {
     var web = new WebContext( request.asInstanceOf[HttpServletRequest],
                               response.asInstanceOf[HttpServletResponse], filterConfig.getServletContext() )
     
-    val notComet = web.path.indexOf( "cometd" ) == -1
+    val notComet = !web.path.endsWith( "/cometd" )
     
     if ( notComet )
       println( "  | " + web.path + ( !B.DEV |* ", referer: " + web.req.getHeader( "referer" ) ) )
@@ -193,7 +193,7 @@ class WebFilter extends Filter {
           LoginCookie.autoLogin          
         }
         
-        if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) && T.LnF == LnF.RetailBrand  )) {
+        if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) && T.LnF == LnF.RetailBrand ) && notComet ) {
           web.template( B.appShellPage( web ) )
           return
         }
