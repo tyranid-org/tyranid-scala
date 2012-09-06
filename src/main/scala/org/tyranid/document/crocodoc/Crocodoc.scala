@@ -88,13 +88,7 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
     val session = Json.parse( sessionJson ).s( 'session )
 
     Http.GET( "https://crocodoc.com/webservice/document.js?session=" + session )._s +
-    """; var docviewer = new DocViewer({ "id": "dv_""" + extDocId + """" });"""
-    
-//    """
-//    $.getJSON( "https://crocodoc.com/webservice/document.js", { session:'""" + session + """' }, function(d) {
-//      var docviewer = new DocViewer({ "id": "DocViewer" });
- //   });
-  //  """
+    """; if ( proj ) { proj.initViewer('""" + extDocId + """'); } else { var docViewer = new DocViewer({ "id": "dv_""" + extDocId + """" }); }"""
   }
   
   def previewUrlFor( extDocId:String ):String = null
@@ -105,32 +99,41 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   //}
   
   def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ):File = {
-    val res = Http.GET( "https://crocodoc.com/api/v2/download/thumbnail?token=" + apiKey + "&uuid=" + extDocId + "&size=" + width + "x" + height )
-    val entity = res.response.getEntity
+    var tries = 0
     
-    if ( entity != null ) {
-      if ( "application/json" == entity.getContentType.getValue ) {
-        
-        val json = Json.parse( res._s )
-        
-        if ( json.s( 'error ) == "thumbnail not available" )
-          return getThumbnailFile( extDocId, width, height )
-        
-        log( Event.Crocodoc, "m" -> ( "Get Thumbnail failed for crocodoc uuid: " + extDocId + ", error is: " + res._s ) )
-        null 
+    while ( tries < 8 ) {
+      tries += 1
+      val res = Http.GET( "https://crocodoc.com/api/v2/download/thumbnail?token=" + apiKey + "&uuid=" + extDocId + "&size=" + width + "x" + height )
+      val entity = res.response.getEntity
+    
+      if ( entity != null ) {
+        if ( "application/json" == entity.getContentType.getValue ) {
+          val json = Json.parse( res._s )
+          
+          if ( json.s( 'error ) == "thumbnail not available" ) {
+            Thread.sleep( 2000 ) // retry -- this is the only time this method does not return out of this while loop
+          } else {
+            log( Event.Crocodoc, "m" -> ( "Get Thumbnail failed for crocodoc uuid: " + extDocId + ", error is: " + res._s ) )
+            return null 
+          }
+        } else {
+          val tmpFile = File.createTempFile( "tmp", ".png" )
+          val out = new FileOutputStream( tmpFile )
+          
+          try {
+            entity.getContent.transferTo( out, true )
+          } finally {
+             out.close
+          }
+    
+          return tmpFile
+        }
       } else {
-        val instream = entity.getContent
-        
-        val tmpFile = File.createTempFile( "tmp", ".png" )
-        val out = new FileOutputStream( tmpFile )
-         
-        instream.transferTo( out, true )
-  
-        tmpFile
+        return null
       }
-    } else {
-      null
     }
+    
+    return null
   }
   
   def getText( extDocId:String ):String = {
