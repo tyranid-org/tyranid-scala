@@ -48,6 +48,7 @@ class InputStreamImp( is:InputStream ) {
     try {
       do {
         read = in.read( buffer, 0, buffer.length )
+        
         if ( read > 0 )
           sb.appendAll( buffer, 0, read )
         
