@@ -117,13 +117,15 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
       0
   }
 
-  def idify( comments:BasicDBList ) {
+  def idify( comments:BasicDBList ):Boolean = {
 
-    var nextId = maxId( comments )
+    var nextId = maxId( comments ) + 1
+    var didAnything = false
 
     def enterComment( comment:Comment ) {
       if ( comment.i( '_id ) == 0 ) {
         comment( '_id ) = nextId
+        didAnything = true
         nextId += 1
       }
 
@@ -131,22 +133,31 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
     }
 
     def enterList( comments:BasicDBList ) {
-      for ( c <- comments.toSeq.map( obj => Comment.apply( obj.as[DBObject] ) ) )
+      for ( c <- comments.toSeq.map( obj => Comment( obj.as[DBObject] ) ) )
         enterComment( c )
     }
 
     enterList( comments )
+    didAnything
   }
 
   def find( comments:BasicDBList, id:Int ):Comment = {
 
-    for ( c <- comments.toSeq.map( obj => Comment.apply( obj.as[DBObject] ) ) ) {
+    for ( c <- comments.toSeq.map( obj => Comment( obj.as[DBObject] ) ) ) {
       val found = c.find( id )
       if ( found != null )
         return found
     }
 
     null
+  }
+
+  def remove( comments:BasicDBList, id:Int ) {
+    for ( c <- comments.toSeq.of[DBObject] )
+      if ( c.i( '_id ) == id )
+        comments.remove( c )
+      else
+        remove( c.a_?( 'r ), id )
   }
 }
 
@@ -171,6 +182,8 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
       this
     else
       Comment.find( a_?( 'r ), id )
+
+  def replies = a_?( 'r ).map( obj => Comment( obj.as[DBObject] ) )
 }
 
 
@@ -443,9 +456,18 @@ abstract class Content( override val view:MongoView,
     if ( this.obj.has( 'feed ) ) "/images/rssLarge.png"
     else                         fromUser.s( 'thumbnail )
 
+
   /*
    * * *   Comments
    */
+
+  def commentTid( comment:Comment ) = tid + "_" + comment.id
+
+  def commentTidToId( tid:String ) =
+    if ( tid.isBlank )
+      0
+    else
+      tid.substring( this.tid.length + 1 )._i
 
   def mostRecentComment = {
     val comments = a_?( 'r )
@@ -462,6 +484,29 @@ abstract class Content( override val view:MongoView,
       )
     else
       null
+  }
+
+  def commentById( id:Int ) = Comment.find( a_?( 'r ), id )
+
+  def comment( msg:String, user:User, replyTo:Comment = null ) = {
+
+    val comments = a_!( 'r )
+
+    val comment = Comment( Mobj( "_id" -> ( Comment.maxId( comments ) + 1 ), "on" -> new Date, "m" -> msg, "u" -> user.id ) )
+
+    if ( replyTo != null )
+      replyTo.a_!( 'r ).add( comment )
+    else
+      comments.add( comment )
+
+    save
+
+    comment
+  }
+
+  def commentRemove( id:Int ) = {
+    Comment.remove( a_!( 'r ), id )
+    save
   }
 
 
@@ -524,10 +569,8 @@ abstract class Content( override val view:MongoView,
 
     val from = Record.getByTid( this.a_?( 'o ).head.as[String] )
     
-    if ( from == null ) {
-//spam( a_?( 'o ) )
+    if ( from == null )
       return false
-    }
 
     val groupTids = u.groupTids
     for ( tid <- viewers;
