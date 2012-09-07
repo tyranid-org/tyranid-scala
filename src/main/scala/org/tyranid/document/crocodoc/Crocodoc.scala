@@ -44,8 +44,10 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   val supportedFormats = List( "DOC", "DOCX", "XLS", "XLSX", "PPT", "PPTX", "PDF" )
   
   def upload( file:File, fileSize:Long, filename:String ):String = {
-    if ( supports( filename.suffix( '.' ) ) ) {
-      //println( "filename " + filename )
+    val suffix = filename.suffix( '.' )
+    
+    if ( supports( suffix ) ) {
+      //println( "filename " + useFilename )
       //println( file.exists )
       //println( file.length )
       
@@ -81,7 +83,7 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   
 //    <iframe style={ "width:100%;height:" + height + "px;" } src={ previewUrlFor( extDocId ) }/>    
   def docPreviewContainer( extDocId:String, height:String="100%" ): NodeSeq =
-    <div class="doc-view crocodoc" id={ "dv_" + extDocId }/>
+    <div class="doc-view doc crocodoc" id={ "dv_" + extDocId }/>
   
   override def previewJsFor( extDocId:String ) = {
     val sessionJson = Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s

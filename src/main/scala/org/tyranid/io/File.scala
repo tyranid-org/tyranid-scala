@@ -156,6 +156,7 @@ object DbLocalFile extends CommonFile {
 
 object File {  
   val mimeTypeMap = Map( 
+    "ai"       -> "application/illustrator",
     "aif"      -> "audio/x-aiff",
     "aifc"     -> "audio/x-aiff",
     "aiff"     -> "audio/x-aiff",
