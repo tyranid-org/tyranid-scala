@@ -142,7 +142,7 @@ object Tid {
 
       case en:Entity =>
         val v = en.makeView
-        for ( va <- v.vas )
+        for ( va <- v.vas if !path.contains( va ) )
           enter( va :: path, va.domain )
 
       case _ =>
