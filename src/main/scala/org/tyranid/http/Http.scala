@@ -31,6 +31,9 @@ import javax.servlet.http.{ Cookie, HttpServlet, HttpServletRequest, HttpServlet
 
 import org.bson.types.ObjectId
 
+import org.apache.commons.httpclient.util.DateUtil
+import org.apache.commons.lang.time.DateUtils
+
 import org.apache.http.{ Header, NameValuePair, HttpHost, HttpResponse }
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{ HttpRequestBase, HttpDelete, HttpGet, HttpPost, HttpPut, HttpUriRequest, HttpEntityEnclosingRequestBase }
@@ -207,6 +210,8 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
   }
 
   def s3( bucket:S3Bucket, path:String, req:HttpServletRequest ) {
+    import org.apache.commons.httpclient.util.DateUtil
+    
     var out:OutputStream = null
     
     try {
@@ -221,31 +226,8 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
       if ( lastModified != null ) {
         res.setDateHeader( "Last-modified", lastModified.getTime )
         
-        var ifModSinceStr = req.getHeader( "If-Modified-Since" )
-        var ifModSince = -1l
-  
-        if ( ifModSinceStr.notBlank ) {
-          val semi = ifModSinceStr.indexOf( ';' )
-          
-          if ( semi != -1 )
-            ifModSinceStr = ifModSinceStr.substring( 0, semi )
-            
-          if ( ifModSinceStr.notBlank ) {
-            try {
-              ifModSince = Time.Rfc1123Format.parse( ifModSinceStr ).getTime
-            } catch {
-            case e =>
-              e.printStackTrace
-              
-              try {
-                ifModSince = DateFormat.getDateInstance().parse( ifModSinceStr ).getTime()
-              } catch {
-              case _ =>
-                println( "cannot parse date: " + ifModSinceStr )
-              }
-            }
-          }
-        }
+        val ifModSinceStr = req.getHeader( "If-Modified-Since" )
+        val ifModSince = ifModSinceStr.notBlank ? DateUtil.parseDate( ifModSinceStr ).getTime | -1l
         
         if ( ifModSince != -1 && ifModSince >= lastModified.getTime ) {
           res.setStatus( HttpServletResponse.SC_NOT_MODIFIED )
