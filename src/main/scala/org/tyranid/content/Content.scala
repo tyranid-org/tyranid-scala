@@ -141,7 +141,21 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
     didAnything
   }
 
-  def asComments( comments:BasicDBList ) = comments.toSeq.map( obj => Comment( obj.as[DBObject] ) )
+  def asComments( comments:BasicDBList, pageNumber:Int = 0 ) = {
+    var seq = comments.toSeq.map( obj => Comment( obj.as[DBObject] ) )
+
+    if ( pageNumber != 0 )
+      seq = seq.filter { comment =>
+        val pn = comment.i( 'pn )
+
+        pageNumber match {
+        case 1 => pn == 0 || pn == 1
+        case n => pn == n
+        }
+      }
+
+    seq
+  }
 
   def find( comments:BasicDBList, id:Int ):Comment = {
 
@@ -513,11 +527,14 @@ abstract class Content( override val view:MongoView,
 
   def commentById( id:Int ) = Comment.find( a_?( 'r ), id )
 
-  def comment( msg:String, user:User, replyTo:Comment = null ) = {
+  def comment( msg:String, user:User, replyTo:Comment = null, pageNumber:Int = 0 ) = {
 
     val comments = a_!( 'r )
 
     val comment = Comment( Mobj( "_id" -> ( Comment.maxId( comments ) + 1 ), "on" -> new Date, "m" -> msg, "u" -> user.id ) )
+
+    if ( pageNumber != 0 )
+      comment( 'pn ) = pageNumber
 
     if ( replyTo != null )
       replyTo.a_!( 'r ).add( comment )
