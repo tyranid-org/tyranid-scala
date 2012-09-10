@@ -267,8 +267,14 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   }  
 
     // TODO: Replace this with Carl's pallete
-  def getRandomColor = { 
+  val defaultColors = Array( "5f89a2", "597b7c", "93278f", "e72967", "f47b20", "ef5033", "009591", "9fd5b5", "1bb7ea", "73d0f9" )
+  def getRandomColor = {
     import java.util.Random
+    val rand = new Random( System.currentTimeMillis )
+    val pick = rand.nextInt( defaultColors.length )
+    defaultColors( pick )
+    
+    /*
     val random = new Random()
     val hue = random.nextFloat()
     val saturation = random.nextFloat()
@@ -278,6 +284,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     color.darker()
     color.darker()
     Integer.toHexString( color.getRGB() ).substring(2, 8)
+    */
   }
 
   override def thumbHtml( size:String ) = {
@@ -319,7 +326,7 @@ case class GroupMaker( groupType:GroupType,
                        nameSearch: ( String ) => Any = null ) {
 
   def queryGroupMembers( group:Group ) =
-    ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.idsForGroupType ) ) ).map( ofEntity.apply ).toIterable
+    ofEntity.db.find( Mobj( "_id" -> Mobj( $in -> group.idsForGroupType.toMlist ) ) ).map( ofEntity.apply ).toIterable
 }
 
 case class GroupingAddBy( label:String, keys:String* ) {

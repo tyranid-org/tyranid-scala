@@ -32,7 +32,6 @@ import javax.servlet.http.{ Cookie, HttpServlet, HttpServletRequest, HttpServlet
 import org.bson.types.ObjectId
 
 import org.apache.commons.httpclient.util.DateUtil
-import org.apache.commons.lang.time.DateUtils
 
 import org.apache.http.{ Header, NameValuePair, HttpHost, HttpResponse }
 import org.apache.http.client.entity.UrlEncodedFormEntity
