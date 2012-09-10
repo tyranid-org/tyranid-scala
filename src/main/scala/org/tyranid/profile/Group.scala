@@ -240,6 +240,8 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
 
       case GroupMode.Collaborative =>
         isReader( viewer )
+      case _ =>
+        isReader( viewer )
       }
     }
   }
