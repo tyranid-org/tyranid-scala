@@ -126,6 +126,19 @@ class CalendarImp( c:Calendar ) {
 }
 
 class DateImp( d:Date ) {
+
+  def max( o:Date ) =
+    if ( o.getTime > d.getTime )
+      o
+    else
+      d
+
+  def min( o:Date ) =
+    if ( o.getTime < d.getTime )
+      o
+    else
+      d
+
   def toCalendar( tz:TimeZone = null ) = {
     val c = ( tz == null ) ? Calendar.getInstance | Calendar.getInstance( tz )
     c.setTime( d )
