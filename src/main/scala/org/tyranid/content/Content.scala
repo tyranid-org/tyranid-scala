@@ -303,6 +303,8 @@ abstract class Content( override val view:MongoView,
 
   def contentType = ContentType.getById( i( 'type ) )
 
+  def hasPages = has( 'externalId )
+  
   def hasTag( tag:Int ) = a_?( 'tags ).exists( _ == tag )
 
   override def text:String = {
