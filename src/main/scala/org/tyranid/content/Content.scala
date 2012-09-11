@@ -133,7 +133,7 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
     }
 
     def enterList( comments:BasicDBList ) {
-      for ( c <- comments.toSeq.map( obj => Comment( obj.as[DBObject] ) ) )
+      for ( c <- asComments( comments ) )
         enterComment( c )
     }
 
@@ -141,9 +141,25 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
     didAnything
   }
 
+  def asComments( comments:BasicDBList, pageNumber:Int = 0 ) = {
+    var seq = comments.toSeq.map( obj => Comment( obj.as[DBObject] ) )
+
+    if ( pageNumber != 0 )
+      seq = seq.filter { comment =>
+        val pn = comment.i( 'pn )
+
+        pageNumber match {
+        case 1 => pn == 0 || pn == 1
+        case n => pn == n
+        }
+      }
+
+    seq
+  }
+
   def find( comments:BasicDBList, id:Int ):Comment = {
 
-    for ( c <- comments.toSeq.map( obj => Comment( obj.as[DBObject] ) ) ) {
+    for ( c <- asComments( comments) ) {
       val found = c.find( id )
       if ( found != null )
         return found
@@ -159,11 +175,17 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
       else
         remove( c.a_?( 'r ), id )
   }
+
+  def sort( comments:Seq[Comment], newestFirst:Boolean ) = {
+
+    if ( newestFirst )
+      comments.sortBy( _.mostRecentOn ).reverse
+    else
+      comments.sortBy( _.on )
+  }
 }
 
 class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.makeView, obj, parent ) {
-
-  def displayDate = t( 'on )
 
   def fromUser = {
     val uid = oid( 'u )
@@ -183,7 +205,22 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
     else
       Comment.find( a_?( 'r ), id )
 
-  def replies = a_?( 'r ).map( obj => Comment( obj.as[DBObject] ) )
+  def replies = Comment.asComments( a_?( 'r ) )
+
+  def hasAnnotation = has( 'pn ) || has( 'x ) || has ('y )
+
+
+  def on = t( 'on )
+  def displayDate = t( 'on )
+
+  def mostRecentOn:Date = {
+    val r = replies
+
+    if ( r.nonEmpty )
+      on max r.map( _.mostRecentOn ).max
+    else
+      on
+  }
 }
 
 
@@ -490,11 +527,14 @@ abstract class Content( override val view:MongoView,
 
   def commentById( id:Int ) = Comment.find( a_?( 'r ), id )
 
-  def comment( msg:String, user:User, replyTo:Comment = null ) = {
+  def comment( msg:String, user:User, replyTo:Comment = null, pageNumber:Int = 0 ) = {
 
     val comments = a_!( 'r )
 
     val comment = Comment( Mobj( "_id" -> ( Comment.maxId( comments ) + 1 ), "on" -> new Date, "m" -> msg, "u" -> user.id ) )
+
+    if ( pageNumber != 0 )
+      comment( 'pn ) = pageNumber
 
     if ( replyTo != null )
       replyTo.a_!( 'r ).add( comment )
