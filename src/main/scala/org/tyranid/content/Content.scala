@@ -149,7 +149,7 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
         val pn = comment.i( 'pn )
 
         pageNumber match {
-        case 1 => pn == 0 || pn == 1
+        case 1 => pn == 0 || pn == 1 // OMEGA-7
         case n => pn == n
         }
       }
@@ -205,7 +205,7 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
     else
       Comment.find( a_?( 'r ), id )
 
-  def replies = Comment.asComments( a_?( 'r ) )
+  def comments = Comment.asComments( a_?( 'r ) )
 
   def hasAnnotation = has( 'pn ) || has( 'x ) || has ('y )
 
@@ -214,10 +214,10 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
   def displayDate = t( 'on )
 
   def mostRecentOn:Date = {
-    val r = replies
+    val c = comments
 
-    if ( r.nonEmpty )
-      on max r.map( _.mostRecentOn ).max
+    if ( c.nonEmpty )
+      on max c.map( _.mostRecentOn ).max
     else
       on
   }
@@ -550,6 +550,11 @@ abstract class Content( override val view:MongoView,
     Comment.remove( a_!( 'r ), id )
     save
   }
+
+  def comments = Comment.asComments( a_?( 'r ) )
+
+  def annotatedPages = comments.map( _.i( 'pn ) ).distinct
+
 
 
   /*
