@@ -278,6 +278,9 @@ class WebResponse( web:WebContext, sess:Session ) {
         htmlMap( "duration" )   = cmd.duration.toString
       }
 
+      if ( cmd.handler.notBlank )
+        htmlMap( "handler" ) = cmd.handler
+      
       Map( "html" -> htmlMap )
 
     case cmd:Js     => Map( "extraJS" -> cmd.js )

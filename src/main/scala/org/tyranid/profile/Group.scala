@@ -313,6 +313,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   }
   
   def settingsFor( user:User ) = GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> user.id, "g" -> this.id ) ) )
+  def settingsFor( userTid:String ) = GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> B.User.tidToId( userTid ), "g" -> this.id ) ) )
 }
 
 /*
