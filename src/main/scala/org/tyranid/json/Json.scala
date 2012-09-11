@@ -46,7 +46,8 @@ case class JqHtml( // this is the target selector to place the html at
                    modal:String = null,
 
                    transition:String = null,
-                   duration:Int = 250 ) extends JsCmd {
+                   duration:Int = 250,
+                   handler:String = null ) extends JsCmd {
 
   def toJson = "{\"" + target + "\":\"" + html.toString.encJson + "\"}"
 }
