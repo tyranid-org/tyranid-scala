@@ -31,13 +31,13 @@ object Glyph {
 object Focus {
 
   def apply( id:String ) =
-    <script>{ Unparsed( """$( $('""" + id + """').focus(); );""" ) }</script>
+    <script>{ Unparsed( """$( $('""" + id + """').focus() );""" ) }</script>
 }
 
 object Blur {
 
   def apply( id:String ) =
-    <script>{ Unparsed( """$( $('""" + id + """').blur(); );""" ) }</script>
+    <script>{ Unparsed( """$( $('""" + id + """').blur() );""" ) }</script>
 }
 
 /*

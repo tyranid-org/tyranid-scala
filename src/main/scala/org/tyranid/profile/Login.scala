@@ -156,7 +156,7 @@ $( function() {
       formHandler.addTopMessage( "error", msg );
       return false;
     }
-    
+
     formHandler.topEl().empty();
     tyr.navTo( '""" + wpath + """/forgot?xhr=1&un=' + encodeURIComponent( fldVal ) );
   });
