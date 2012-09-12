@@ -209,6 +209,7 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
 
   def hasAnnotation = has( 'pn ) || has( 'x ) || has ('y )
 
+  def annotationType:String = has( 'pn ) ? "page" | ( ( has( 'x ) ? "xy" ) | null )
 
   def on = t( 'on )
   def displayDate = t( 'on )
