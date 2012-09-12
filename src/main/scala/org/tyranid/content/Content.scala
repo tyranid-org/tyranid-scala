@@ -252,7 +252,7 @@ trait ContentMeta extends PrivateKeyEntity {
   "lastModifiedByOrg" is DbLink(B.Org)        is 'required;
 
   // Volees
-  "fit"               is DbBoolean            as "From in To" help <div>Indicates that the posting user is in the to list.  This will normally be false unless a user explicitly addresses a volee to themselves.</div>
+  "fit"               is DbBoolean            as "From in To" help <div>Indicates that the posting user is in the to list.  This will normally be false unless a user explicitly addresses a message to themselves.</div>
   "s3"                is DbBoolean            help Text( "Indicates that the file or img is stored by us in S3." );
 
   "logTid"            is DbChar(64)           ; // TODO:  this is really a DbTid that contains an entity instead of a record
@@ -631,7 +631,7 @@ abstract class Content( override val view:MongoView,
   }
 
   /**
-   * This is like "isTo()" except that this controls whether a user can see a participant in the volee (either on the "v"/to list or a "reply" from them)
+   * This is like "isTo()" except that this controls whether a user can see a participant in the content (either on the "v"/to list or a "reply" from them)
    */
   def canSee( u:User, tid:String ):Boolean = {
     if (   this.a_?( 'o ).contains( u.tid )
