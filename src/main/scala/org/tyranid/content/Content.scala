@@ -528,7 +528,7 @@ abstract class Content( override val view:MongoView,
 
   def commentById( id:Int ) = Comment.find( a_?( 'r ), id )
 
-  def comment( msg:String, user:User, replyTo:Comment = null, pageNumber:Int = 0 ) = {
+  def comment( msg:String, user:User, replyTo:Comment = null, pageNumber:Int = 0, x:Double = 0.0, y:Double = 0.0 ) = {
 
     val comments = a_!( 'r )
 
@@ -537,6 +537,9 @@ abstract class Content( override val view:MongoView,
     if ( pageNumber != 0 )
       comment( 'pn ) = pageNumber
 
+    comment( 'x ) = x
+    comment( 'y ) = y
+      
     if ( replyTo != null )
       replyTo.a_!( 'r ).add( comment )
     else

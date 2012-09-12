@@ -322,6 +322,7 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
     
   def s( param:String ):String        = req.s( param )
   def i( param:String ):Int           = req.i( param )
+  def d( param:String ):Double        = req.d( param )
   def l( param:String ):Long          = req.l( param )
   def b( param:String ):Boolean       = req.b( param )
   def oid( param:String )             = req.oid( param  )
