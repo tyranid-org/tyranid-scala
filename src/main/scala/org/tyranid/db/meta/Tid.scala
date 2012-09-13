@@ -374,64 +374,66 @@ object Tidlet extends Weblet {
     val ( entity, id ) = Tid.parse( tid )
     val rec = id != null |* Record.byTid( tid )
 
-    <div class="plainbox">
-     <div class="content">
-      <form method="post" action={ wpath } style="margin-top:8px;">
-       <div style="padding:4px;">
-        <label for="tid" style="float:left; width:40px; font-size:16px; line-height:28px; color:#888;">TID</label>
-        <input type="text" id="tid" name="tid" value={ tid } style="font-size:20px; width:300px;"/>
-        <input type="submit" class="btn-success btn" value="Analyze" style="font-size:16px;"/>
-       </div>
-      </form>
+    <div class="tiditor">
+     <div class="plainbox">
+      <div class="content">
+       <form method="post" action={ wpath } style="margin-top:8px;">
+        <div style="padding:4px;">
+         <label for="tid" style="float:left; width:40px; font-size:16px; line-height:28px; color:#888;">TID</label>
+         <input type="text" id="tid" name="tid" value={ tid } style="font-size:20px; width:300px;"/>
+         <input type="submit" class="btn-success btn" value="Analyze" style="font-size:16px;"/>
+        </div>
+       </form>
+      </div>
      </div>
-    </div> ++
-    { if ( rec.isDefined ) {
-        val r = rec.get
+     { if ( rec.isDefined ) {
+         val r = rec.get
 
-        <div class="fieldHeader">
-         <label>Type</label><span>Record</span>
-         <label style="margin-left:16px;">Label</label><span>{ r.label.summarize().encUnicode }</span>
-         <label style="margin-left:16px;">Entity</label><span><a href={ wpath + "/field?tid=" + entity.tid }>{ entity.name }</a></span>
-         <label style="margin-left:16px;">Storage</label><span>{ entity.storageName + ( entity.embedded |* "-Embedded" ) }</span>
-         { entity.isInstanceOf[MongoEntity] |* <a href={ wpath + "/delete?tid=" + tid } class="btn-danger btn" style="float:right; margin:2px 4px;">Delete</a> }
-        </div> ++
-        { recordTabBar.draw(
-            qs = "?tid=" + tid,
-            except = Seq(
-              !entity.isInstanceOf[MongoEntity] |* Some( "/json" ),
-              !entity.isInstanceOf[Versioning]  |* Some( "/version" )
-            ).flatten
-          ) } ++
-        { recordTabBar.choice match {
-          case "/field"   => fields( r )
-          case "/json"    => json( r )
-          case "/ref"     => refs( tid )
-          case "/version" => <div style="overflow:scroll;">{ Versioning.ui( this, tid ) }</div>
-          }
-        }
-      } else if ( entity != null ) {
-        <div class="fieldHeader">
-         <label>Type</label><span>{ if ( Tid.isRecordTid( tid ) ) "Record" else "Entity" }</span>
-         <label style="margin-left:16px;">Label</label><span>{ entity.label }</span>
-         <label style="margin-left:16px;">Entity</label><span>{ entity.name }</span>
-         <label style="margin-left:16px;">Storage</label><span>{ entity.storageName + ( entity.embedded |* "-Embedded" ) }</span>
-        </div> ++
-        { if ( Tid.isRecordTid( tid ) )
-            <div style="color:red;">Invalid TID.</div>
-          else
-            entityTabBar.draw(
-              qs = "?tid=" + tid,
-              except = if ( entity.embedded ) Seq( "/record" ) else Nil ) ++
-            { entityTabBar.choice match {
-              case "/attrib" => attribs( entity )
-              case "/record" => AutoQuery.byEntity( entity ).draw
-              }
-            }
-        }
-      } else {
-        tid.notBlank |* Unparsed( """<span style="color:red;">Invalid TID.</span>""" )
-      }
-    }
+         <div class="fieldHeader">
+          <label>Type</label><span>Record</span>
+          <label style="margin-left:16px;">Label</label><span>{ r.label.summarize().encUnicode }</span>
+          <label style="margin-left:16px;">Entity</label><span><a href={ wpath + "/field?tid=" + entity.tid }>{ entity.name }</a></span>
+          <label style="margin-left:16px;">Storage</label><span>{ entity.storageName + ( entity.embedded |* "-Embedded" ) }</span>
+          { entity.isInstanceOf[MongoEntity] |* <a href={ wpath + "/delete?tid=" + tid } class="btn-danger btn" style="float:right; margin:2px 4px;">Delete</a> }
+         </div> ++
+         { recordTabBar.draw(
+             qs = "?tid=" + tid,
+             except = Seq(
+               !entity.isInstanceOf[MongoEntity] |* Some( "/json" ),
+               !entity.isInstanceOf[Versioning]  |* Some( "/version" )
+             ).flatten
+           ) } ++
+         { recordTabBar.choice match {
+           case "/field"   => fields( r )
+           case "/json"    => json( r )
+           case "/ref"     => refs( tid )
+           case "/version" => <div style="overflow:scroll;">{ Versioning.ui( this, tid ) }</div>
+           }
+         }
+       } else if ( entity != null ) {
+         <div class="fieldHeader">
+          <label>Type</label><span>{ if ( Tid.isRecordTid( tid ) ) "Record" else "Entity" }</span>
+          <label style="margin-left:16px;">Label</label><span>{ entity.label }</span>
+          <label style="margin-left:16px;">Entity</label><span>{ entity.name }</span>
+          <label style="margin-left:16px;">Storage</label><span>{ entity.storageName + ( entity.embedded |* "-Embedded" ) }</span>
+         </div> ++
+         { if ( Tid.isRecordTid( tid ) )
+             <div style="color:red;">Invalid TID.</div>
+           else
+             entityTabBar.draw(
+               qs = "?tid=" + tid,
+               except = if ( entity.embedded ) Seq( "/record" ) else Nil ) ++
+             { entityTabBar.choice match {
+               case "/attrib" => attribs( entity )
+               case "/record" => AutoQuery.byEntity( entity ).draw
+               }
+             }
+         }
+       } else {
+         tid.notBlank |* Unparsed( """<span style="color:red;">Invalid TID.</span>""" )
+       }
+     }
+    </div>
   }
 
   def fields( rec:Record ) = {
