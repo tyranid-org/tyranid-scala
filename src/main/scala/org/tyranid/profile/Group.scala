@@ -1131,7 +1131,7 @@ object GroupSettings extends MongoEntity( tid = "a0Rt" ) {
   override def init {
     super.init
 
-  "_id"            is DbMongoId                              ;
+  "_id"            is DbMongoId                              is 'id;
 
   "u"              is DbLink(B.User)                         as "User";
   "g"              is DbLink(Group)                          as "Group";
