@@ -163,7 +163,6 @@ $( function() {
 });
 """ ) }
     </script> ++
-    <i class="icon-refresh"></i>
     <form method="post" action={ wpath + "/in" } id="f" class="login" style="margin-bottom:12px;" data-val="1" data-val-top="1">
      <fieldset class="loginBox">
       <div class="container-fluid" style="padding:0;">
