@@ -537,7 +537,7 @@ abstract class Content( override val view:MongoView,
     if ( pageNumber != 0 )
       comment( 'pn ) = pageNumber
 
-    if ( x != 0.0 || y != 0.0 ) {
+    if ( x != 0.0 && y != 0.0 ) {
       comment( 'x ) = x
       comment( 'y ) = y
     }
