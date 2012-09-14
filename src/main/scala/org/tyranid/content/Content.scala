@@ -567,22 +567,32 @@ abstract class Content( override val view:MongoView,
    * * *   Security
    */
 
+  def isJustTo( user:User ) = {
+    val v = viewerTids
+    v.size == 1 && v( 0 ) == user.tid
+  }
+
   def owners = {
+   val tids = ownerTids
+
    for ( e <- ownerEntities;
          en = e.as[MongoEntity];
-         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> obj.a_?( "o" ).map( tid => en.tidToId( tid._s ) ).toSeq.toMlist ) ) );
+         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> tids.filter( en.hasTid ).map( tid => en.tidToId( tid ) ).toSeq.toMlist ) ) );
          rec = en( r ) )
       yield rec
   }
 
   def writers = owners
   
-  def viewers =
+  def viewers = {
+   val tids = viewerTids
+
    for ( e <- viewerEntities;
          en = e.as[MongoEntity];
-         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> obj.a_?( "v" ).map( tid => en.tidToId( tid._s ) ).toSeq.toMlist ) ) );
+         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> tids.filter( en.hasTid ).map( tid => en.tidToId( tid ) ).toSeq.toMlist ) ) );
          rec = en( r ) )
      yield rec
+  }
 
   def ownerNames = a_?( 'o ).map( tid => TidItem.by( tid.as[String] ).name ).mkString( ", " )
 
@@ -602,6 +612,7 @@ abstract class Content( override val view:MongoView,
   def ownerEntities = a_?( 'o ).toSeq.of[String].map( _.substring( 0, 4 ) ).distinct.map( tid => Entity.byTid( tid ).get )
   def viewerEntities = a_?( 'v ).toSeq.of[String].map( _.substring( 0, 4 ) ).distinct.map( tid => Entity.byTid( tid ).get )
 
+  def ownerTids  = obj.a_?( 'o ).toSeq.of[String]
   def viewerTids = obj.a_?( 'v ).toSeq.of[String]
 
   // TODO:  make this name more generic / less Volee-ish
