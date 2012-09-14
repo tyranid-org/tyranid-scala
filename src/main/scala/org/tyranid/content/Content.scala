@@ -187,6 +187,8 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
 
 class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.makeView, obj, parent ) {
 
+  def m = s( 'm )
+
   def fromUser = {
     val uid = oid( 'u )
     val user = B.User.getById( uid )
