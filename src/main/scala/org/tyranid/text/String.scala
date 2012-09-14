@@ -269,6 +269,11 @@ class StringImp( s:String ) {
 
   def lowerWord = word.toLowerCase
 
+  def firstSuffix( sep:Char ) = {
+    val idx = s.indexOf( sep )
+    if ( idx != -1 ) s.substring( idx+1 ) else ""
+  }
+	
   def suffix( sep:Char ) = {
     val idx = s.lastIndexOf( sep )
     if ( idx != -1 ) s.substring( idx+1 ) else ""
