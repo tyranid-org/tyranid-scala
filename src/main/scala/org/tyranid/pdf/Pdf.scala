@@ -26,31 +26,37 @@ import org.tyranid.math.Base36
 import org.tyranid.Imp._
       
 object Pdf {
-  def urlToFile( url:String, outFile:File, enableHyperlinks:Boolean = false ) = {
-    var fileStream:FileOutputStream = null
+  val lock = ""
     
-	  try {
-	    fileStream = new FileOutputStream( outFile )     
-	 
-	    // create an API client instance
-	    val client:Client = new Client( B.pdfCrowdName, B.pdfCrowdKey )
-	    client.useSSL( true )
-	        
-	    // convert a web page and save the PDF to a file
-      client.setPageHeight( -1 );
-      client.enableHyperlinks( enableHyperlinks )
-	    client.convertURI( url, fileStream )
-	  } catch {
-	    case why:PdfcrowdError =>
-	      val msg = why.getMessage
-        println( msg )
-        throw new RuntimeException( msg.firstSuffix( '-' ) or msg )
-	    case e:IOException =>
-        println( e.getMessage )
-        throw new RuntimeException( e )
-	  } finally {
-	    if ( fileStream != null )
-	      fileStream.close
-	  }
+  def urlToFile( url:String, outFile:File, enableHyperlinks:Boolean = false ) = {
+    // PDF Crowd API only allows one at a time
+    lock.synchronized {
+      var fileStream:FileOutputStream = null
+      
+  	  try {
+  	    fileStream = new FileOutputStream( outFile )     
+  	 
+  	    // create an API client instance
+  	    val client:Client = new Client( B.pdfCrowdName, B.pdfCrowdKey )
+  	    client.useSSL( true )
+  	        
+  	    // convert a web page and save the PDF to a file
+        client.setPageHeight( -1 );
+        client.enableHyperlinks( enableHyperlinks )
+  	    client.convertURI( url, fileStream )
+  	  } catch {
+  	    case why:PdfcrowdError =>
+          //503 - Simultaneous API calls from a single IP are not allowed.
+  	      val msg = why.getMessage
+          println( msg )
+          throw new RuntimeException( msg.firstSuffix( '-' ) or msg )
+  	    case e:IOException =>
+          println( e.getMessage )
+          throw new RuntimeException( e )
+  	  } finally {
+  	    if ( fileStream != null )
+  	      fileStream.close
+  	  }
+    }
   }
 }
