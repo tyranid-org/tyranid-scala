@@ -111,7 +111,7 @@ object Register {
         <div class="top-form-messages"/>
         <div class="container-fluid" style="padding:0;">
          <div class="row-fluid">
-          <h1 class="span12">Thanks, { user.s( 'firstName ) }! <tyr:loader/></h1>
+          <h1 class="span12">Thanks, { user.s( 'firstName ) }!</h1>
          </div>
         </div>
         { inner }
@@ -167,7 +167,7 @@ $( function() {
      <fieldset class="loginBox">
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
-        <h1 class="span5">Sign-in <tyr:loader/></h1>
+        <h1 class="span5">Sign-in</h1>
         <div class="span7 pull-right regLink">or <a href="javascript:void(0);" data-sbt={ Form.attrJson( Map( "href" -> ( wpath + "/register" + params ), "top" -> 1 ) ) }>Register for { B.applicationName }!</a></div>
        </div>
       </div>
@@ -589,7 +589,7 @@ $( function() {
      <fieldset class="registerBox">
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
-        <h1 class="span5">Register <tyr:loader/></h1>
+        <h1 class="span5">Register</h1>
        </div>
       </div>
       <hr style="margin:4px 0 30px;"/>
