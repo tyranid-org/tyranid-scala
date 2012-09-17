@@ -57,6 +57,8 @@ object Pdf {
   	    if ( fileStream != null )
   	      fileStream.close
   	  }
+  	  
+  	  outFile
     }
   }
 }

@@ -427,14 +427,14 @@ object Http {
   private def convertHeaders( headers:collection.Map[String,String] ) =
     headers.toSeq.map( p => new BasicHeader( p._1, p._2 ) ).toArray[Header]
 
-  def GET_File( url:String, ext:String = null ) = {
+  def GET_File( url:String, ext:String = ".tmp", prefix:String = "tmp" ) = {
     val res = GET( url )
     val entity = res.response.getEntity
     
     if ( entity != null ) {
       val instream = entity.getContent
       
-      val tmpFile = File.createTempFile( "tmp", ext.isBlank ? ".tmp" | ext )
+      val tmpFile = File.createTempFile( prefix, ext )
       val out = new FileOutputStream( tmpFile )
        
       instream.transferTo( out, true )
