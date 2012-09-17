@@ -248,6 +248,7 @@ object Image {
    		urlc.setConnectTimeout( 45000 )
 			
 			iis = new MemoryCacheImageInputStream( urlc.getInputStream )
+spam( "contentType:" + urlc.getContentType + " path:" + url.getPath )
 
 			for ( suffix <- suffixes( urlc.getContentType, url.getPath );
 						reader <- ImageIO.getImageReadersBySuffix( suffix );
