@@ -445,7 +445,7 @@ abstract class Content( override val view:MongoView,
         thumb( "l", 260, 169 )
         thumb( "m", 140, 91 )
         thumb( "s", 100, 65 )
-        thumb( "t", 40, 26 )
+        thumb( "t", 40, 40 )
       } finally {
         imgFile.delete
       }
