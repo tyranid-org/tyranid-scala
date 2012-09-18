@@ -333,10 +333,8 @@ object File {
     val obj = S3.getObject( bucket, key )
   
     if ( obj != null ) {
-spam( "fileName=" + fileName )
       var length = 0 
       val mimetype = mimeTypeFor( fileName )
-spam( "mimetype=" + mimetype )
       val res = web.res
 
 //sp-am( "mimeType:" + mimetype )
