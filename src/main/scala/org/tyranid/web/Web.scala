@@ -87,7 +87,7 @@ class WebFilter extends Filter {
     ctx.res.sendRedirect( sb.toString )
   }
 
-  val assetPattern = java.util.regex.Pattern.compile( "([^\\s]+(\\.(?i)(ico|jpg|png|gif|bmp|js|css|html|ttf|woff|svg))$)" )
+  val assetPattern = java.util.regex.Pattern.compile( "([^\\s]+(\\.(?i)(ico|jpg|png|gif|bmp|js|css|html|ttf|woff|svg|html))$)" )
   
   def notAsset( path:String ) = !assetPattern.matcher( path ).matches
   
@@ -113,18 +113,14 @@ class WebFilter extends Filter {
     val thread = T
     thread.http = web.req.getSession( false )
     thread.web = web
-    var isAsset = false
-    
+    var isAsset = notComet && !notAsset( web.path )
+
     if ( notComet && thread.http != null ) {
       val session = T.session
       
-      if ( session != null ) {
-        isAsset = !notAsset( web.path )
-        
-        if ( !isAsset ) {
-          session.put( "lastPath", web.path )
-          session.put( Session.LnF_KEY, LnF.byDomain( web.req.getServerName ) )
-        }
+      if ( session != null && !isAsset ) {
+        session.put( "lastPath", web.path )
+        session.put( Session.LnF_KEY, LnF.byDomain( web.req.getServerName ) )
       }
     }
     

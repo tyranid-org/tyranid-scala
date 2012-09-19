@@ -18,6 +18,7 @@
 package org.tyranid.http
 
 import scala.collection.mutable
+import scala.xml.{ NodeSeq, Unparsed }
 
 import com.mongodb.DBObject
 
