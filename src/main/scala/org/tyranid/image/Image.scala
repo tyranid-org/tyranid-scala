@@ -316,9 +316,9 @@ object Thumbnail {
     val imageHeight = image.getHeight( null )
 
     val thumbFile = ( thumbnailFile == null ) ? File.createTempFile( originalFile.getName(), ".tmp" ) | thumbnailFile 
-    
-    // Do not create thumbs that are bigger than the original image
-    if ( thumbW > imageWidth && thumbH > imageHeight ) {
+
+    // Do not create thumbs that are bigger than the original image, or if the original image is the right size, then use that
+    if ( ( thumbW > imageWidth && thumbH > imageHeight ) || ( imageWidth == thumbW && imageHeight == thumbH ) ) {
       org.apache.commons.io.FileUtils.copyFile( originalFile, thumbFile )
     } else {
       //val thumbRatio:Double = double2Double( thumbW ) / double2Double( thumbH )
