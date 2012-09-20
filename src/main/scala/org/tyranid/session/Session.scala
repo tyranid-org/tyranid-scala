@@ -201,9 +201,9 @@ trait SessionMeta {
   def apply():Session = ThreadData().session
 
   def byHttpSessionId( id:String ) =
-    WebSession.sessions( id ) match {
-    case s:HttpSession => from( s )
-    case _             => null
+    WebSession.sessions.get( id ) match {
+    case Some( s ) => from( s )
+    case None      => null
     }
 
   def from( httpSession:HttpSession ) =
@@ -256,6 +256,10 @@ trait Session {
     this.user = user
     user.loggedIn = true
     B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "lastLogin" -> new Date ) ) )
+
+    val onLogin = B.onLogin
+    if ( onLogin != null )
+      onLogin( this )
   }
 
   def logout = {
@@ -338,6 +342,9 @@ trait Session {
   def hasAny = notes.length > 0 
   
   def peekNotes( level:Int = 0 ): List[Notification] = ( level == 0 ) ? notes | notes.filter( n => n.level == level )
+
+  @volatile var unshownPosts:Int = 0
+
 
   /*
    * * *   Web Paths / Tabs Memory
