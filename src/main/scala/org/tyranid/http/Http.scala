@@ -177,7 +177,7 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
   def ok = {
     res.setStatus( 200 )
   }
-
+  
   def json( json:Any, status:Int = 200, jsonpCallback:String = null, headers:Map[String,String] = null, req:HttpServletRequest = null, cache:Boolean = false ) = {
     var jsonContentType = "application/json"
       
