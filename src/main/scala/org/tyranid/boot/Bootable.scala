@@ -148,6 +148,7 @@ trait Bootable {
 
   def secureBypass( url:String ) = false
 
+  @volatile var onLogin: ( Session ) => Unit = null
 
   @volatile var newUser:() => User = null
   val userMeta:UserMeta

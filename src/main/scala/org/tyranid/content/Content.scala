@@ -92,20 +92,21 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
   type RecType = Comment
   override def convert( obj:DBObject, parent:MongoRecord ) = new Comment( obj, parent )
 
-  "_id"            is DbInt                is 'id;
+  "_id"            is DbInt                  is 'id;
 
-  "on"             is DbDateTime           ;
-  "m"              is DbChar(1024)         is 'label;
+  "on"             is DbDateTime             ;
+  "m"              is DbChar(1024)           is 'label;
 
-  "pn"             is DbInt                as "Page Number";
-  "x"              is DbDouble             as "X";
-  "y"              is DbDouble             as "Y";
+  "pn"             is DbInt                  as "Page Number";
+  "x"              is DbDouble               as "X";
+  "y"              is DbDouble               as "Y";
 
-  "r"              is DbArray(Comment)     as "Replies";
+  "r"              is DbArray(Comment)       as "Replies";
+
 
   override def init = {
     super.init
-    "u"            is DbLink(B.User)       ;           // user who created the reply
+    "u"            is DbLink(B.User)         ;           // user who created the reply
   }
 
   def maxId( comments:BasicDBList ):Int = {
@@ -248,6 +249,8 @@ trait ContentMeta extends PrivateKeyEntity {
   "o"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Owners" is 'owner;
   "v"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Viewers" is SearchAuth;
   "subV"              is DbArray(DbTid(B.Org,B.User))                   ; // for showing content inside a group
+
+  "shown"             is DbArray(DbTid(B.User)) as "Shown To" ; // list of tids of users who have "read" this content; only maintained for some content types, like messages
 
   "lastModified"      is DbDateTime           is 'required;
   "lastModifiedBy"    is DbLink(B.User)       is 'required;
@@ -476,6 +479,10 @@ abstract class Content( override val view:MongoView,
     else
       user
   }
+
+  def wasShownTo( user:User ) = a_?( 'shown ).has( user.tid )
+
+  def markShownTo( user:User ) = db.update( Mobj( "_id" -> id ), $push( "shown", user.tid ) )
 
 
   /*
