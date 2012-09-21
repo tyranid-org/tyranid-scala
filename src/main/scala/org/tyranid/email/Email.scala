@@ -52,7 +52,7 @@ object EmailConfig extends MongoEntity( tid = "a0At" ) {
 
 
 object Email {
-  var enabled = B.PRODUCTION
+  var enabled = !B.DEV
 
   private val wellKnownProviders = Array(
     "@aol.com",

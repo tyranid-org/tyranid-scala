@@ -103,7 +103,7 @@ object Register {
         
     <div class="container">
      <div class="offset3 span6" style="margin-top:100px;text-align:center;">
-      <a href="/"><img src="/volerro_logo.png" style="width:197px;height:60px;"/></a>
+      <a href="/"><img src="/volerro_logo.png"/></a>
      </div>
      <div class="offset2 span8">
       <form method="post" action="/user/register" id="f" class="register" style="margin-bottom:12px;" data-val="1">
@@ -582,7 +582,7 @@ $( function() {
 
     val inner =
    <div class="offset3 span6" style="margin-top:100px;text-align:center;">
-    <a href="/"><img src="/volerro_logo.png" style="width:197px;height:60px;"/></a>
+    <a href="/"><img src="/volerro_logo.png"/></a>
    </div> ++
    <div class="offset2 span8">
     <form method="post" action={ wpath + "/register" } id="f" class="register" style="margin-bottom:12px;" data-val="1">
