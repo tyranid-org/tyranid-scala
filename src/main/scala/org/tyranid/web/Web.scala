@@ -189,7 +189,11 @@ class WebFilter extends Filter {
           LoginCookie.autoLogin          
         }
         
+        if ( "/log/in"== web.req.uriAndQueryString ) {
+          println(1);
+        }
         if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) && T.LnF == LnF.RetailBrand ) && notComet ) {
+          println( "serving shell for: " + web.req.uriAndQueryString )
           web.template( B.appShellPage( web ) )
           return
         }
@@ -352,7 +356,7 @@ trait Weblet {
     
   def redirectIfNotLoggedIn( web:WebContext ) = 
     if ( !B.User.isLoggedIn )
-     web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
+      web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
 
   def redirectIfNotHasOrg( web:WebContext ) = {
     redirectIfNotLoggedIn( web )
