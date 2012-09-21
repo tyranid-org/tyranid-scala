@@ -161,10 +161,11 @@ class WebFilter extends Filter {
         web.ctx.getRequestDispatcher( "/404" ).forward( web.req, web.res )
       case re:org.tyranid.secure.SecureException =>
         if ( !B.User.isLoggedIn ) {
-          web.res.sendRedirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
+          val redirectUrl = web.req.uriAndQueryString.replaceAll( "&?xhr=1", "" )
+          web.res.sendRedirect( "/log/in?l=" + redirectUrl.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
         } else {
           thread.session.warn( "Access denied." )
-          web.res.sendRedirect( "/" )
+          web.res.sendRedirect( "/" + ( web.b( 'xhr ) ? "?xhr=1" | "" ) )
         }
       case e:Exception =>
         println( "GOT EXCEPTION: " + e.getMessage() )
@@ -189,11 +190,7 @@ class WebFilter extends Filter {
           LoginCookie.autoLogin          
         }
         
-        if ( "/log/in"== web.req.uriAndQueryString ) {
-          println(1);
-        }
         if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) && T.LnF == LnF.RetailBrand ) && notComet ) {
-          println( "serving shell for: " + web.req.uriAndQueryString )
           web.template( B.appShellPage( web ) )
           return
         }

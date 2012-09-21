@@ -275,14 +275,12 @@ $( function() {
           else if ( email.isBlank ) 
             sess.warn( "Please log in." )
   
-            println( "WTF" )
           // check look and feel, and if rb, do json, otherwise this.
           T.LnF match {
              case LnF.RetailBrand =>
                val jsonRes = web.jsonRes( sess )
                
                if ( !sess.hasErrors ) {
-                 println( redirect )
                  jsonRes.redirect = redirect.isBlank ? T.website | ( T.website + "/?l=" + redirect.encUrl )
                }
                  
