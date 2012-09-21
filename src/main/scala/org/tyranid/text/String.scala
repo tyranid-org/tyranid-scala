@@ -90,23 +90,27 @@ class StringImp( s:String ) {
     ( "(?s)<" + tagName + ".*?(/>|</" + tagName + ">)" ).toPatternI.matcher( s ).replaceAll( "" )
 	
   def encJson = {
-    val sb = new StringBuilder
-    val len = s.length
-
-    for ( i <- 0 until len ) {
-      s.charAt( i ) match {
-      case '\b' => sb ++= "\\b"
-      case '\f' => sb ++= "\\f"
-      case '\n' => sb ++= "\\n"
-      case '\r' => sb ++= "\\r"
-      case '\t' => sb ++= "\\t"
-      case '\\' => sb ++= "\\\\"
-      case '"'  => sb ++= "\\\""
-      case ch   => sb += ch
+    if ( s != null ) {
+      val sb = new StringBuilder
+      val len = s.length
+  
+      for ( i <- 0 until len ) {
+        s.charAt( i ) match {
+        case '\b' => sb ++= "\\b"
+        case '\f' => sb ++= "\\f"
+        case '\n' => sb ++= "\\n"
+        case '\r' => sb ++= "\\r"
+        case '\t' => sb ++= "\\t"
+        case '\\' => sb ++= "\\\\"
+        case '"'  => sb ++= "\\\""
+        case ch   => sb += ch
+        }
       }
+  
+      sb.toString
+    } else {
+      null
     }
-
-    sb.toString
   }
   
   def encUnicode:String = {
