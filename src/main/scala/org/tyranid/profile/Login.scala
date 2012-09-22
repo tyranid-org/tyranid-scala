@@ -314,8 +314,7 @@ $( function() {
     case "/out" =>
       val website = T.website
       sess.logout
-      web.redirect( website + "/?lo=1" )
-    
+      web.redirect( website + "/?lo=1" + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
     case s if s.startsWith( "/in" ) =>
       socialLogin( s.substring( 3 ) )
 

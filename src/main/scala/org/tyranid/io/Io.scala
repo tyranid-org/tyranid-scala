@@ -26,7 +26,6 @@ import com.amazonaws.services.s3.model.{ AmazonS3Exception }
 
 import org.xml.sax.helpers.DefaultHandler
 
-import org.apache.tika.detect.{ DefaultDetector, Detector }
 import org.apache.tika.metadata.{ Metadata, TikaMetadataKeys, HttpHeaders }
 import org.apache.tika.mime.MediaType
 import org.apache.tika.parser.{ AutoDetectParser, Parser, ParseContext }
