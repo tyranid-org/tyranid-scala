@@ -164,6 +164,7 @@ $( function() {
 """ ) }
     </script> ++
     <form method="post" action={ wpath + "/in" } id="f" class="login" style="margin-bottom:12px;" data-val="1" data-val-top="1">
+     { /*web.s( 'l ).notBlank |* <input name="l" value={ web.s( 'l ) }/> */ }
      <fieldset class="loginBox">
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
@@ -246,6 +247,7 @@ $( function() {
 
     rpath match {
     case "/in" | "/" =>
+      //web.req.dump
       val saving = web.b( "xhrSbt" )
       
       if ( web.b( "xhr" ) && !saving ) {
@@ -259,9 +261,9 @@ $( function() {
               
         web.json( jsonRes )              
       } else {
-        val email    = web.req.s( 'un )
-        val password = web.req.s( 'pw )
-        val redirect = web.req.s( 'l  )
+        val email    = web.s( 'un )
+        val password = web.s( 'pw )
+        val redirect = web.s( 'l  )
   
         val user =
           if ( email.isBlank )
