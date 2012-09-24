@@ -155,6 +155,8 @@ object DbLocalFile extends CommonFile {
 }
 
 object File {  
+  val tempBucket = new S3Bucket( "temp" )
+
   val mimeTypeMap = Map( 
     "ai"       -> "application/illustrator",
     "aif"      -> "audio/x-aiff",

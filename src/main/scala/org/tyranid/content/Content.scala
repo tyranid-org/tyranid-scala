@@ -274,6 +274,7 @@ trait ContentMeta extends PrivateKeyEntity {
   "groupMode"         is DbLink(GroupMode)    ;
 
   // Attachment / File
+  "sourceUrl"         is DbUrl                ;
   "fileName"          is DbChar(128)          is 'required;
   "size"              is DbLong               ;
   "desc"              is DbText               is SearchText;
