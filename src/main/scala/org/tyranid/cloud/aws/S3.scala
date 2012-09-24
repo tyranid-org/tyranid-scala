@@ -102,6 +102,11 @@ object S3 {
   
   def copy( bucket:S3Bucket, key:String, bucket2:S3Bucket, key2:String ) = s3.copyObject( bucket.name, key, bucket2.name, key2 )
 
+  def move( bucketFrom:S3Bucket, fromPath:String, bucketTo:S3Bucket, toPath:String ) = {
+    copy( bucketFrom, fromPath, bucketTo, toPath )
+    delete( bucketFrom, fromPath )
+  }
+
   def access( bucket:S3Bucket, key:String, public:Boolean ) = {
     try {
       val acl = s3.getObjectAcl( bucket.name, key )
@@ -154,7 +159,7 @@ object S3 {
   def getObject( bucket:S3Bucket, key:String ) = s3.getObject( new GetObjectRequest( bucket.name, key ) )
   def getObjectMetadata( bucket:S3Bucket, key:String ) = s3.getObjectMetadata( bucket.name, key )
 
-  def storeUrl( bucket:S3Bucket, urlStr:String, path:String ) = {
+  def storeUrl( bucket:S3Bucket, urlStr:String, path:String, isPublic:Boolean = true ) = {
     val url = new java.net.URL( urlStr )
     val conn = url.openConnection
     val in = conn.getInputStream
@@ -162,14 +167,14 @@ object S3 {
     S3.write( bucket, path, conn.getContentLength, conn.getContentType(), in )
     in.close
       
-    S3.access( bucket, path, public = true )
+    S3.access( bucket, path, public = isPublic )
     
     bucket.url( path )
   }
 
-  def storeUnsecureUrl( bucket:S3Bucket, urlStr:String, path:String ) = {
+  def storeUnsecureUrl( bucket:S3Bucket, urlStr:String, path:String, isPublic:Boolean = true ) = {
     if ( !Uri.isSecure( urlStr ) )
-      storeUrl( bucket, urlStr, path )
+      storeUrl( bucket, urlStr, path, isPublic )
     else
       urlStr
   }
