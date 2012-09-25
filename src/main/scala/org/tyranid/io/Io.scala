@@ -19,7 +19,9 @@ package org.tyranid.io
 
 import scala.annotation.tailrec
 
-import java.io.{ IOException, FileOutputStream, InputStream, InputStreamReader, OutputStream }
+import org.apache.commons.fileupload.disk.DiskFileItem
+
+import java.io.{ IOException, FileOutputStream, InputStream, InputStreamReader, OutputStream, File => JFile }
 import java.util.HashMap
 
 import com.amazonaws.services.s3.model.{ AmazonS3Exception }
@@ -30,11 +32,13 @@ import org.apache.tika.metadata.{ Metadata, TikaMetadataKeys, HttpHeaders }
 import org.apache.tika.mime.MediaType
 import org.apache.tika.parser.{ AutoDetectParser, Parser, ParseContext }
 
+import org.tyranid.Imp._
+import org.tyranid.cloud.aws.S3
+import org.tyranid.content.{ Content, ContentMeta }
 import org.tyranid.db.{ Entity, Record }
 import org.tyranid.db.meta.{ TidItem }
-import org.tyranid.Imp._
-import org.tyranid.content.{ Content, ContentMeta }
-import org.tyranid.web.{ WebContext, Weblet, WebHandledException }
+import org.tyranid.web.{ WebContext, Weblet, WebHandledException, FileUploadSupport }
+import org.tyranid.web.FileUploadSupport.BodyParams
 
 class InputStreamImp( is:InputStream ) {
 
@@ -152,6 +156,35 @@ object Iolet extends Weblet {
       }
       
       web.res.setStatus( 404 )
+    case "/tempUpload" =>
+      val url = web.s( 'url )
+
+      if ( url.notBlank ) {
+        val ext = org.tyranid.io.File.safeExtension( url )
+        val randName = math.random * Int.MaxValue + "_" + System.currentTimeMillis + "." + ext 
+
+        S3.storeUrl( org.tyranid.io.File.tempBucket, url, randName, true )
+        web.res.json( Map( "thumbSrc" -> org.tyranid.io.File.tempBucket.url( randName ) ) )
+      } else {      
+        val bodyParams = web.req.getAttribute(FileUploadSupport.BodyParamsKey).as[BodyParams]
+  
+        if ( bodyParams == null) {
+          //errStr = "Unable to determine file body (2)."
+        } else {
+          val formParams = bodyParams.formParams
+          val fileItem = bodyParams.getFileItems( "files", bodyParams.getFileItems( "thumb" ) )(0) 
+          
+          val imgFile:JFile = fileItem.as[DiskFileItem].getStoreLocation
+  
+          if ( !imgFile.exists )
+            fileItem.write( imgFile )
+  
+          val randName = math.random * Int.MaxValue + "_" + System.currentTimeMillis + "_" + fileItem.getName 
+          S3.write( org.tyranid.io.File.tempBucket, randName, imgFile )
+          S3.access( org.tyranid.io.File.tempBucket, randName, true )
+          web.res.json( Map( "thumbSrc" -> org.tyranid.io.File.tempBucket.url( randName ) ) )
+        }
+      }
     case _ =>
       _404
     }

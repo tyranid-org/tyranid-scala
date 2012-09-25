@@ -162,7 +162,6 @@ class WebFilter extends Filter {
       case re:org.tyranid.secure.SecureException =>
         if ( !B.User.isLoggedIn ) {
           val redirectUrl = web.req.uriAndQueryString.replaceAll( "&?xhr=1", "" )
-          println( "security: " + redirectUrl )
           web.res.sendRedirect( "/log/in?l=" + redirectUrl.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
         } else {
           thread.session.warn( "Access denied." )

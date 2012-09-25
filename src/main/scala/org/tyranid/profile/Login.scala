@@ -618,14 +618,14 @@ $( function() {
           </div>
           <div class="row-fluid">
            <div class="span6">
-            <input type="password" name="password" id="password" placeholder="Password" data-val="req,min=5"/>
+            <input type="password" name="password" id="password" placeholder="Password" data-val="req,min=7"/>
            </div>
            <div class="span6 val-display"/> 
           </div>
           <div class="row-fluid">
            <div class="span6">
             <input type="hidden" name="keep" value={ web.s( 'keep ) }/>
-            <input type="password" name="password2" id="password2" placeholder="Re-type password" data-val="req,same=password,min=5"/>
+            <input type="password" name="password2" id="password2" placeholder="Re-type password" data-val="req,same=password,min=7"/>
            </div>
            <div class="span6 val-display"/>
           </div>

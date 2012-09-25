@@ -304,7 +304,8 @@ object DbPassword extends DbVarChar( 80 ) {
     val existing = s.s( f )
     
     if ( !commonExtract( s, f ) ) {
-      val v = fromString( T.web.s( f.id ) )._s
+      val vs = T.web.s( f.id )
+      val v = vs.notBlank ? fromString( vs )._s | null
 
       if ( v.notBlank ) {
         val salt = T.session.cache.getOrElseUpdate( "pw.salt", org.mindrot.jbcrypt.BCrypt.gensalt )._s
@@ -344,6 +345,18 @@ object DbEmail extends DbVarChar( 128 ) {
 
 object DbPhone extends DbChar( 14 ) {
   override def inputcClasses = " phone"
+    
+  override def extract( s:Scope, f:PathField ) {
+    if ( !commonExtract( s, f ) ) {
+      val v = fromString( T.web.s( f.id ) )._s
+
+      if ( v.notBlank ) {
+        set( s, f, v.toOnlyNumbers )
+      } else {
+        remove( s, f )
+      }
+    }
+  }  
 }
 
 
