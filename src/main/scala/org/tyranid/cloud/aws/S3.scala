@@ -162,7 +162,7 @@ object S3 {
   def getObject( bucket:S3Bucket, key:String ) = s3.getObject( new GetObjectRequest( bucket.name, key ) )
   def getObjectMetadata( bucket:S3Bucket, key:String ) = s3.getObjectMetadata( bucket.name, key )
 
-  def storeUrl( bucket:S3Bucket, urlStr:String, path:String, isPublic:Boolean = true ) = {
+  def storeUrl( bucket:S3Bucket, urlStr:String, path:String, isPublic:Boolean = true ):S3StoreResult = {
     val url = new java.net.URL( urlStr )
     val conn = url.openConnection
     val in = conn.getInputStream
@@ -176,9 +176,9 @@ object S3 {
     S3StoreResult( bucket.url( path ), mimeType )
   }
 
-  def storeUnsecureUrl( bucket:S3Bucket, urlStr:String, path:String, isPublic:Boolean = true ) = {
+  def storeUnsecureUrl( bucket:S3Bucket, urlStr:String, path:String, isPublic:Boolean = true ):String = {
     if ( !Uri.isSecure( urlStr ) )
-      storeUrl( bucket, urlStr, path, isPublic )
+      storeUrl( bucket, urlStr, path, isPublic ).url
     else
       urlStr
   }
