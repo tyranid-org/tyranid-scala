@@ -28,6 +28,9 @@ import org.tyranid.Imp._
 import org.tyranid.net.Uri
 
 
+
+case class S3StoreResult( url:String, mimeType:String )
+
 case class S3Bucket( prefix:String, cfDistributionId:String = "", cfDomain:String = "" ) {
   val name = prefix + B.envSuffix + B.bucketSuffix
 
@@ -163,13 +166,14 @@ object S3 {
     val url = new java.net.URL( urlStr )
     val conn = url.openConnection
     val in = conn.getInputStream
+    val mimeType = conn.getContentType
     
-    S3.write( bucket, path, conn.getContentLength, conn.getContentType(), in )
+    S3.write( bucket, path, conn.getContentLength, mimeType, in )
     in.close
       
     S3.access( bucket, path, public = isPublic )
     
-    bucket.url( path )
+    S3StoreResult( bucket.url( path ), mimeType )
   }
 
   def storeUnsecureUrl( bucket:S3Bucket, urlStr:String, path:String, isPublic:Boolean = true ) = {

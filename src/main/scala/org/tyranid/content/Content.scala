@@ -35,7 +35,7 @@ import org.tyranid.db.ram.RamEntity
 import org.tyranid.db.tuple.{ Tuple, TupleView }
 import org.tyranid.image.{ Dimensions, Thumbnail }
 import org.tyranid.http.Http
-import org.tyranid.io.HasText
+import org.tyranid.io.{ HasText, MimeType }
 import org.tyranid.profile.{ Group, GroupType, GroupMode, Tag, User }
 import org.tyranid.secure.{ PrivateKeyEntity, PrivateKeyRecord }
 
@@ -379,9 +379,11 @@ abstract class Content( override val view:MongoView,
     title.startsWith( "http://" )
   }
   
-  def hasImage = imageUrl( false ).notBlank
+  def hasImage = s( 'img ).notBlank || MimeType.isImage( fileMimeType ) //imageUrl( false ).notBlank
 
-  def imageUrl( editing:Boolean ) = s( 'img )
+  def hasVideo = MimeType.isVideo( fileMimeType )
+
+  def imageUrl( editing:ContentEdit = null ) = s( 'img )
 
   def imageDimensions = {
     if ( i( 'imgW ) != 0 )
@@ -404,7 +406,7 @@ abstract class Content( override val view:MongoView,
   // 100 x 65 (Project header)  
   // 40 x 26 (Dashboard drop-down)
   def imageForThumbs:File = {
-    val imgUrl = imageUrl( false )
+    val imgUrl = imageUrl( editing = null )
     val dlUrl:String = ( imgUrl.notBlank ) ?
       ( imgUrl.toLowerCase.startsWith( "http" ) ? imgUrl | T.website + imgUrl ) | null
     
@@ -785,11 +787,18 @@ abstract class Content( override val view:MongoView,
   def hasFile = fileUrl.notBlank
   def fileUrl:String = null
 
+  //def filePath =
+
+
   def fileMimeType = {
     if ( obj.has( 'fileMimeType ) )
       s( 'fileMimeType )
     else
       org.tyranid.io.File.mimeTypeFor( s( 'fileName ) )          
   }
+}
+
+trait ContentEdit {
+  def tempPath:String
 }
 
