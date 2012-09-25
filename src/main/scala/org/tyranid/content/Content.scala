@@ -368,10 +368,11 @@ abstract class Content( override val view:MongoView,
    */
   
   override def label =
-    if ( has( 'name ) )       s( 'name )
-    else if ( has( 'm ) )     s( 'm )
-    else if ( has( 'title ) ) s( 'title )
-    else                      "n/a"
+    if ( has( 'name ) )          s( 'name )
+    else if ( has( 'm ) )        s( 'm )
+    else if ( has( 'title ) )    s( 'title )
+    else if ( has( 'fileName ) ) s( 'fileName )
+    else                         "n/a"
 
   def titleInDesc( title:String, desc:String ):Boolean = {
     var t = title
