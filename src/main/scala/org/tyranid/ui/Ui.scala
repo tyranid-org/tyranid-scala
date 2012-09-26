@@ -14,7 +14,6 @@
  * limitations under the License.
  *
  */
-
 package org.tyranid.ui
 
 import scala.collection.mutable
@@ -24,8 +23,6 @@ import org.tyranid.Imp._
 import org.tyranid.db.{ Record, Path, Scope, View, ViewAttribute }
 import org.tyranid.logic.Invalid
 import org.tyranid.web.Weblet
-
-
 
 object Ui {
   // Prints with break at end
@@ -314,7 +311,6 @@ case class Tab( rpath:String, label:NodeSeq, cls:String = null, default:Boolean 
   }
 }
 
-
 /*
  * * *   UI
  */
@@ -342,7 +338,6 @@ object UiStyle {
 }
 
 trait UiObj {
-
   def bind( view:View ):UiObj
 
   def draw( scope:Scope ):NodeSeq = NodeSeq.Empty
@@ -351,7 +346,6 @@ trait UiObj {
 
   def fields:Iterable[PathField]
 }
-
 
 case class Row( fields:PathField* ) extends UiObj {
 

@@ -307,13 +307,18 @@ object DbPassword extends DbVarChar( 80 ) {
       val vs = T.web.s( f.id )
       val v = vs.notBlank ? fromString( vs )._s | null
 
+      println(1)
       if ( v.notBlank ) {
         val salt = T.session.cache.getOrElseUpdate( "pw.salt", org.mindrot.jbcrypt.BCrypt.gensalt )._s
         val hashed = v.shash( salt )
         
         // Only set the value if it has changed.
-        if ( existing.isBlank || !v.checkShash( existing ) )
+      println(2)
+        if ( existing.isBlank || !v.checkShash( existing ) ) {
           set( s, f, hashed )
+                println(3)
+
+        }
       } else {
         remove( s, f )
       }
