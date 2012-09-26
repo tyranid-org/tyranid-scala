@@ -66,14 +66,28 @@ import org.tyranid.web.Html
             }
 */
 
-case class Dimensions( height:Int, width:Int ) {
-
+case class Dimensions( height:Int = -1, width:Int = -1,
+                       minWidth:Int = -1,
+                       maxWidth:Int = -1,
+                       minHeight:Int = -1,
+                       maxHeight:Int = -1 ) {
   def css = {
     val sb = new StringBuilder
     if ( height > 0 )
       sb ++= "height:" ++= height.toString ++= "px;"
     if ( width > 0 )
       sb ++= "width:" ++= width.toString ++= "px;"
+
+    if ( minHeight > 0 )
+      sb ++= "min-height:" ++= minHeight.toString ++= "px;"
+    if ( maxHeight > 0 )
+      sb ++= "max-height:" ++= maxHeight.toString ++= "px;"
+
+    if ( minWidth > 0 )
+      sb ++= "min-width:" ++= minWidth.toString ++= "px;"
+    if ( maxWidth > 0 )
+      sb ++= "max-width:" ++= maxWidth.toString ++= "px;"
+
     sb.toString
   }
 
@@ -81,27 +95,34 @@ case class Dimensions( height:Int, width:Int ) {
     var w = width
     var h = height
 
-    if ( minWidth != -1 && w < minWidth ) {
-      h = ( minWidth * h.toDouble / w ).toInt
-      w = minWidth
-    }
+    // if we know the dimensions, scale on the server side ... otherwise pass along the min-maxes along to the child dimensions class so we can use css styles
 
-    if ( minHeight != -1 && h < minHeight ) {
-      w = ( minHeight * w.toDouble / h ).toInt
-      h = minHeight
-    }
+    if ( w == -1 || h == -1 ) {
+      Dimensions( height = h, width = w, minWidth = minWidth, maxWidth = maxWidth, minHeight = minHeight, maxHeight = maxHeight )
+    } else {
 
-    if ( maxWidth != -1 && w > maxWidth ) {
-      h = ( maxWidth * h.toDouble / w ).toInt
-      w = maxWidth
-    }
+      if ( minWidth != -1 && w < minWidth ) {
+        h = ( minWidth * h.toDouble / w ).toInt
+        w = minWidth
+      }
 
-    if ( maxHeight != -1 && h > maxHeight ) {
-      w = ( maxHeight * w.toDouble / h ).toInt
-      h = maxHeight
-    }
+      if ( minHeight != -1 && h < minHeight ) {
+        w = ( minHeight * w.toDouble / h ).toInt
+        h = minHeight
+      }
 
-    Dimensions( height = h, width = w )
+      if ( maxWidth != -1 && w > maxWidth ) {
+        h = ( maxWidth * h.toDouble / w ).toInt
+        w = maxWidth
+      }
+
+      if ( maxHeight != -1 && h > maxHeight ) {
+        w = ( maxHeight * w.toDouble / h ).toInt
+        h = maxHeight
+      }
+
+      Dimensions( height = h, width = w )
+    }
   }
 
   def pixels = height * width
@@ -303,7 +324,17 @@ case class Image( url:URL, dims:Option[Dimensions] = None ) {
   def cssDimensions( maxWidth:Int = -1, maxHeight:Int = -1 ) = dimensions( maxWidth, maxHeight ).css
 }
 
+
+case class Thumbnail( name:String, code:String, dimensions:Dimensions ) {
+  def url( tid:String ) = "/io/thumb/" + tid + "/" + code
+}
+
 object Thumbnail {
+  val Large  = Thumbnail( "large",  "l", Dimensions( 260, 169 ) ) // Dashboard
+  val Medium = Thumbnail( "medium", "m", Dimensions( 140,  91 ) ) // Timeline
+  val Small  = Thumbnail( "small",  "s", Dimensions( 100,  65 ) ) // Project header
+  val Tiny   = Thumbnail( "tiny",   "t", Dimensions(  40,  40 ) ) // Dashboard drop-down
+
   def generate( originalFile:File, thumbW:Int, thumbH:Int, thumbnailFile:File = null ):File = {
     val image = ImageIO.read( originalFile )
     
@@ -377,3 +408,4 @@ object Thumbnail {
     return thumbFile
   }  
 }
+

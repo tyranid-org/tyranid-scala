@@ -41,6 +41,7 @@ import org.tyranid.secure.{ PrivateKeyEntity, PrivateKeyRecord }
 
 // TODO:  should this be in ui ?
 
+
 object ViewType extends RamEntity( tid = "a13v" ) {
   type RecType = ViewType
   override def convert( view:TupleView ) = new ViewType( view )
@@ -169,6 +170,20 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
     null
   }
 
+  def mostRecent( comments:Seq[Comment] ):Comment = {
+
+    var mostRecent:Comment = null
+
+    for ( c <- comments ) {
+      val mrc = c.mostRecent
+
+      if ( mostRecent == null || mrc.id._i > mostRecent.id._i )
+        mostRecent = mrc
+    }
+
+    mostRecent
+  }
+
   def remove( comments:BasicDBList, id:Int ) {
     for ( c <- comments.toSeq.of[DBObject] )
       if ( c.i( '_id ) == id )
@@ -224,6 +239,15 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
       on max c.map( _.mostRecentOn ).max
     else
       on
+  }
+
+  def mostRecent:Comment = {
+    var mostRecentChild = Comment.mostRecent( comments )
+
+    if ( mostRecentChild != null && mostRecentChild.id._i > id._i )
+      mostRecentChild
+    else
+      this
   }
 }
 
@@ -401,15 +425,12 @@ abstract class Content( override val view:MongoView,
       //if ( FileSystem.supportedIcons.contains( ext ) ) {
         //Dimensions( 128, 128 )
       //} else {
-        Dimensions( 128, 128 )
+        Dimensions()
       //}
     }
   }    
-  
-  // 260 x 169 (Dashboard)
-  // 140 x 91 (Timeline)
-  // 100 x 65 (Project header)  
-  // 40 x 26 (Dashboard drop-down)
+ 
+  // see Thumbnail for sizes
   def imageForThumbs:File = {
     val imgUrl = imageUrl( editing = null )
     val dlUrl:String = ( imgUrl.notBlank ) ?
@@ -527,22 +548,7 @@ abstract class Content( override val view:MongoView,
     else
       tid.substring( this.tid.length + 1 )._i
 
-  def mostRecentComment = {
-    val comments = a_?( 'r )
-
-    if ( comments.size > 0 )
-      Comment( comments.last.as[DBObject] )
-    else if ( s( 'm ).notBlank )
-      Comment(
-        Mobj(
-          "on" -> this( 'on ),
-          "m"  -> this( 'm ),
-          "u"  -> fromUser.id
-        )
-      )
-    else
-      null
-  }
+  def mostRecentComment = Comment.mostRecent( comments )
 
   def commentById( id:Int ) = Comment.find( a_?( 'r ), id )
 
