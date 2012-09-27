@@ -323,7 +323,11 @@ object Time {
       else                      su )
   }
   
-  def duration( now:Date, date:Date ):String = {
+  def duration( now:Date, date:Date, brief:Boolean = false ):String = {
+
+    def display( s:String ) =
+      if ( brief ) s.substring( 0, 3 )
+      else         s
 
     val rawSince = now.getTime - date.getTime
 
@@ -358,27 +362,28 @@ object Time {
         days += 1
       }
 
-      "%s at %d:%02d%s".format(
+      "%s%s %d:%02d%s".format(
         if ( days == 0 ) {
           ""
         } else if ( days == 1 ) {
           future ? "tomorrow" | "yesterday"
         } else if ( sameWeek ) {
-          c.weekDayName
+          display( c.weekDayName )
         } else {
-          ( future ? "next " | "last " ) + c.weekDayName
+          ( future ? "next " | "last " ) + display( c.weekDayName )
         },
+        brief ? ", " | " at ",
         c.get( Calendar.HOUR ) match { case 0 => 12 case i => i },
         c.get( Calendar.MINUTE ),
         c.get( Calendar.AM_PM ) match { case 0 => "am" case 1 => "pm" } )
     } else {
       val sb = new StringBuilder
-      sb ++= "%s, %s %d%s%s%d:%02d".format(
-        c.weekDayName,
-        c.monthName, c.get( Calendar.DAY_OF_MONTH ),
+      sb ++= "%s%s %d%s%s%d:%02d".format(
+        !brief |* display( c.weekDayName ) + ", ",
+        display( c.monthName ), c.get( Calendar.DAY_OF_MONTH ),
         if ( c.isSameYearAs( nc ) ) ""
         else                        ", " + c.get( Calendar.YEAR ),
-        " at ",
+        brief ? ", " | " at ",
         c.get( Calendar.HOUR ) match { case 0 => 12 case i => i },
         c.get( Calendar.MINUTE ) )
 
