@@ -425,7 +425,7 @@ $( function() {
                            "value" -> o.s( "name" ),
                            "label" -> 
                               <div>
-                               <div class="tno">
+                               <div class="tno orgIcon" data-org={ B.Org.idToTid( o( '_id ) ) }>
                                 <img src={ icon( o.s( 'thumbnail ) ) }/>
                                </div>
                                <div class="lbl">  
