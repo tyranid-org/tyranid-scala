@@ -329,6 +329,9 @@ object Time {
       if ( brief ) s.substring( 0, 3 )
       else         s
 
+    if ( date == null )
+      return "n/a"
+
     val rawSince = now.getTime - date.getTime
 
     val tz = Session().user.timeZone
