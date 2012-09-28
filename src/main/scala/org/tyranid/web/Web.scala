@@ -287,6 +287,7 @@ class WebResponse( web:WebContext, sess:Session ) {
 }
 
 case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:ServletContext ) {
+  var upload = false
   def jsonRes( sess:Session ) = new WebResponse( this, sess )
 
   // TODO:  eliminate "def js" and "tyr.js" since it is redundant with this way of doing it, then rename this to "js"

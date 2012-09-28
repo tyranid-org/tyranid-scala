@@ -44,14 +44,14 @@ object FileUploadSupport {
     val req = web.req
     
     if ( ServletFileUpload.isMultipartContent( req ) ) {
-      var mergedParams = extractMultipartParams( req ).formParams.as[ mutable.Map[String,Seq[String]] ]
+      val mergedParams = extractMultipartParams( req ).formParams.as[ mutable.Map[String,Seq[String]] ]
 
       // Add the query string parameters
       req.getParameterMap.as[JMap[String, Array[String]]] foreach {
       case (name, values) => mergedParams( name ) = values.toSeq ++ mergedParams.getOrElse( name, Nil )
       }
       
-      web.copy( req =
+      val newWeb = web.copy( req =
         new HttpServletRequestWrapper( req ) {
           override def getParameter( name:String )         = mergedParams.get(name) map { _.head } getOrElse null
           override def getParameterNames                   = mergedParams.keysIterator
@@ -64,6 +64,9 @@ object FileUploadSupport {
           }
         }
       )
+      
+      newWeb.upload = true
+      newWeb
     } else
       web
   }
