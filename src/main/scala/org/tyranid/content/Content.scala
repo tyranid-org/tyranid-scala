@@ -329,6 +329,8 @@ trait ContentMeta extends PrivateKeyEntity {
   
   
   "color"             is DbChar(6)            ;
+  
+  "locked"            is DbBoolean;
   }
   
   private def deleteThumbs( tid:String ) {
@@ -372,6 +374,8 @@ abstract class Content( override val view:MongoView,
     extends MongoRecord( view, obj, parent ) with PrivateKeyRecord with HasText {
 
   val isBuiltin = b( 'builtin )
+  
+  def isLocked = b( 'locked )
 
   def contentType = ContentType.getById( i( 'type ) )
 
@@ -724,11 +728,14 @@ abstract class Content( override val view:MongoView,
    * NOTE:  isWriter() currently is the same as isOwner() but this might change in the future
    */
 
+  
   def isWriter( user: org.tyranid.profile.User ) = isOwner( user )
   def isWriter( tid: String ):Boolean            = isOwner( tid )
 
 
   def isReader( user: org.tyranid.profile.User ): Boolean = isReader( user.tid ) || ( ( user.org != null ) ? isReader( user.org.tid ) | false )
+
+  def isMember( user:org.tyranid.profile.User ) = isWriter( user ) || isReader( user )
 
   def isReader( tid: String ): Boolean = {
     if ( tid.isBlank )
