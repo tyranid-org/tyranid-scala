@@ -113,6 +113,7 @@ case class RamEntity( tid:String ) extends Entity {
     rec.a( name ).map(
       _ match {
       case i:Int    => getById( i )
+      case l:Long   => getById( l )
       case d:Double => getById( d.toInt )
       case o        => o.asInstanceOf[RecType]
       } ).toSeq

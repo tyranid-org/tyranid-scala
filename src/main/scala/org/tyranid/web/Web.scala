@@ -191,6 +191,7 @@ class WebFilter extends Filter {
         }
         
         if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) && T.LnF == LnF.RetailBrand ) && notComet ) {
+          println( "full shell page!" )
           web.template( B.appShellPage( web ) )
           return
         }
@@ -354,13 +355,13 @@ trait Weblet {
     
   def redirectIfNotLoggedIn( web:WebContext ) = 
     if ( !B.User.isLoggedIn )
-      web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl )
+      web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
 
   def redirectIfNotHasOrg( web:WebContext ) = {
     redirectIfNotLoggedIn( web )
     
     if ( !org.tyranid.session.Session().user.has( 'org ) )
-        web.redirect( "/" )
+      web.redirect( "/" + ( web.b( 'xhr ) ? "?xhr=1" | "" ) )
   }
      
   def matches( web:WebContext ) = true
