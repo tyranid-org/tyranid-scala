@@ -167,21 +167,27 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   def canSeeOther( orgTid:String ) = ownedBy( orgTid ).filter( g => Group( g ).canSee( T.user ) )
   
   def visibleTo( user:User, contentType:ContentType = ContentType.Group ) = {
+
+    def query( obj:DBObject ) = {
+      if ( contentType != null )
+        obj( "type" ) = contentType.id
+
+      obj
+    }
+
+
     val tids =
       if ( user.org != null ) Mobj( $in -> Array( user.tid, user.org.tid ) )
       else                    user.tid
 
     val myGroups =
       db.find(
-        Mobj( "o" -> tids,
-              "type" -> contentType.id )
+        query( Mobj( "o" -> tids ) )
       ).map( apply ).toSeq
 
     val memberGroups =
       db.find( 
-        Mobj( "v" -> tids,
-              "groupMode" -> Mobj( $ne -> GroupMode.Monitor.id ),
-              "type" -> contentType.id )
+        query( Mobj( "v" -> tids, "groupMode" -> Mobj( $ne -> GroupMode.Monitor.id ) ) )
       ).map( apply ).toSeq.filter( memberGroup => !myGroups.exists( _.id == memberGroup.id ) )
 
     myGroups ++ memberGroups 

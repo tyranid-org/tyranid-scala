@@ -157,12 +157,12 @@ trait User extends MongoRecord {
   def orgTid  = if ( org != null ) org.tid else null
 
   // TODO:  cache this better somehow
-  def groups    = T.requestCached( "groups" ) { Group.visibleTo( this ) }
+  def groups    = T.requestCached( "groups" ) { Group.visibleTo( this, contentType = null ) }
   def groupIds  = groups.map( _.id )
   def groupTids = groups.map( _.tid )
 
   // TODO:  cache this better somehow
-  def projects = T.requestCached( "projects" ) { Group.visibleTo( this, ContentType.Project ) }
+  def projects = T.requestCached( "projects" ) { Group.visibleTo( this, contentType = ContentType.Project ) }
   def projectIds  = projects.map( _.id )
   def projectTids = projects.map( _.tid )
 

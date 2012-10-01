@@ -318,7 +318,7 @@ trait ContentMeta extends PrivateKeyEntity {
   
   
   // Attachment
-  "title"             is DbChar(128)          ;
+  "title"             is DbChar(128)          is SearchText;
   "link"              is DbUrl                ;
   "icon"              is DbUrl /* TODO:  should be DbImage ? */     ; // for links, this is the favicon
   
