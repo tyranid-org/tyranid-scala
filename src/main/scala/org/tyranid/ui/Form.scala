@@ -180,6 +180,7 @@ object Form {
      </div>
     </div>
   
+  def checkbox( name:String, checked:Boolean ) = checked ? <input type="checkbox" name={ name } id={ name } checked="checked"/> | <input type="checkbox" name={ name } id={ name }/>
   
   def dialog( elId: String, postEndpoint:String, redirectEndpoint:String, title:String = "", opts:Seq[(String,String)] = null ) = 
     <head>
