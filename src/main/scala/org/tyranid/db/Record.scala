@@ -202,6 +202,15 @@ trait Record extends Valid with BsonObject {
 
 
   /*
+   * * *   S e a r c h
+   */
+
+  var searchIndex = true
+
+  def searchText:String = null
+
+
+  /*
    * * *   Labels & Icons
    */
 
@@ -239,6 +248,7 @@ trait Record extends Valid with BsonObject {
   def compute =
     for ( c <- view.entity.computations )
       this( c.name ) = c.computation( this )
+
 
 
   /**

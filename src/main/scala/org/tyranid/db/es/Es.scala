@@ -168,6 +168,13 @@ object Es {
             case None =>
               "\"yes\""
             } )
+
+        if ( rec.entity.searchText ) {
+          var t = rec.searchText
+
+          if ( t.notBlank )
+            sb ++= ",st:\"" ++= t.encJson += '"'
+        }
       }
 
       sb += '}'
@@ -223,6 +230,9 @@ object Es {
     )
 
     enter( props, rootEn )
+
+    if ( rootEn.searchText )
+      props( "st" ) = Map( "type" -> "string" )
 
     Map(
       "properties" -> props

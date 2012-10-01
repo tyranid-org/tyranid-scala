@@ -178,6 +178,7 @@ trait Entity extends Domain with DbItem {
   val searchIndex = "main"
   lazy val isSearchable = attribs.exists( _.search.text )
 
+  def searchText = false
   def searchIndexable( rec:Record ) = true
   def searchViewableTo( rec:Record, user:User ) = true
 
@@ -288,7 +289,7 @@ trait Entity extends Domain with DbItem {
   def byRecordTid( recordTid:String ):Option[Record] = throw new UnsupportedOperationException
 
   def save( r:Record ) {
-    if ( isSearchable && searchIndexable( r ) )
+    if ( r.searchIndex && isSearchable && searchIndexable( r ) )
       Es.index( r )
   }
 

@@ -38,6 +38,7 @@ import org.tyranid.document.OpenOfficeParser
 import org.tyranid.ui.PathField
 import org.tyranid.web.WebContext
 
+
 trait HasText {
   def text:String
 }

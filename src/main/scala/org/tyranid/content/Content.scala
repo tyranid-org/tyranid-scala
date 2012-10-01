@@ -332,6 +332,8 @@ trait ContentMeta extends PrivateKeyEntity {
   
   "locked"            is DbBoolean;
   }
+
+  override def searchText = true
   
   private def deleteThumbs( tid:String ) {
     val pathParts = tid.splitAt( 4 )
@@ -390,6 +392,14 @@ abstract class Content( override val view:MongoView,
     //
     ""
   }
+
+  override def searchText = {
+    val t = text
+
+    if ( t.notBlank ) t
+    else              null
+  }
+
 
   /*
    * * *  Label and Icons
