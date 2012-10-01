@@ -31,31 +31,48 @@ import org.tyranid.logic.Invalid
 import org.tyranid.ui.PathField
 
 
+object DbReCaptcha {
+  val scriptSrc = "https://www.google.com/recaptcha/api/js/recaptcha_ajax.js"
+    
+  def showFunction( theme:String ) = """
+function showRecaptcha(element) {
+  Recaptcha.create( """" + B.reCaptchaPublicKey + """", element, {
+  theme: """" + theme + """",
+  callback: Recaptcha.focus_response_field});
+}"""
+
+  def div = <div id="recaptcha_div"></div>
+    
+  def callShowFunction = "showRecaptcha('recaptcha_div');"
+    
+  def passed = { 
+    val web = T.web
+    
+    "https://www.google.com/recaptcha/api/verify".POST(
+      form = Map(
+        "privatekey" -> B.reCaptchaPrivateKey,
+        "remoteip"   -> ( web.req.getRemoteAddr or "localhost" ),
+        "challenge"  -> web.s( 'recaptcha_challenge_field ),
+        "response"   -> web.s( 'recaptcha_response_field )
+      ) ).s.trim.startsWith( "true" )
+  }
+}
+
 case class DbReCaptcha( theme:String ) extends Domain {
   val sqlName = "invalid"
     
   override def show( s:Scope ) = !T.session.passedCaptcha
 
-  override def ui( s:Scope, f:PathField ) =
+  override def ui( s:Scope, f:PathField ) = {
     <head>
-     <script type="text/javascript" src="https://www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>
-
-     <script type="text/javascript">{ Unparsed( """
-       function showRecaptcha(element) {
-         Recaptcha.create( """" + B.reCaptchaPublicKey + """", element, {
-           theme: """" + theme + """",
-           callback: Recaptcha.focus_response_field});
-       }
-      """ ) } </script>
-    </head>
-
-    <div id="recaptcha_div"></div>
-      
+     <script type="text/javascript" src={ DbReCaptcha.scriptSrc }></script>
+     <script>{ Unparsed( DbReCaptcha.showFunction( theme ) ) }</script>
+    </head> ++
+    { DbReCaptcha.div } ++
     <tail>
-    <script type="text/javascript">{ Unparsed( """
-       showRecaptcha('recaptcha_div');      
-     """ ) } </script>
-    </tail>;
+     <script type="text/javascript">{ Unparsed( DbReCaptcha.callShowFunction ) } </script>
+    </tail>
+  }
 
   override def inputcClasses = " recaptcha"
 
@@ -66,15 +83,7 @@ case class DbReCaptcha( theme:String ) extends Domain {
       scope.captcha &&
       !sess.passedCaptcha &&
       scope.rec.hasSubmitted && {
-        val web = T.web
-        val passedCaptcha =
-          "https://www.google.com/recaptcha/api/verify".POST(
-            form = Map(
-              "privatekey" -> B.reCaptchaPrivateKey,
-              "remoteip"   -> ( web.req.getRemoteAddr or "localhost" ),
-              "challenge"  -> web.req.s( "recaptcha_challenge_field" ),
-              "response"   -> web.req.s( "recaptcha_response_field" )
-            ) ).s.trim.startsWith( "true" )
+        val passedCaptcha = DbReCaptcha.passed
 
         if ( passedCaptcha )
           sess.passedCaptcha = true

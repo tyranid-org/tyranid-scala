@@ -25,10 +25,12 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.email.Email
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
+import org.tyranid.secure.DbReCaptcha
 import org.tyranid.session.Session
 import org.tyranid.social.Social
 import org.tyranid.ui.{ Button, Grid, Row, Focus, LnF, Form }
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate, WebResponse }
+import org.tyranid.secure.DbReCaptcha
 
 /*
      new Form( "/user/register", "register" )
@@ -629,6 +631,14 @@ $( function() {
            </div>
            <div class="span6 val-display"/>
           </div>
+          <div class="row-fluid">
+           <div class="span6">
+            
+            <script>{ Unparsed( "jQuery.getScript( \"" + DbReCaptcha.scriptSrc + "\" );" + DbReCaptcha.showFunction( "white" ) ) }</script>
+            { DbReCaptcha.div }
+           </div>
+           <div class="span6 val-display"/> 
+          </div>
          </div>
        </div>
        <hr style="margin:20px 0 12px;"/>
@@ -647,7 +657,8 @@ $( function() {
     jsonRes.htmlMap = Map( 
         "html" -> <div class="container">{ inner }</div>,
         "transition" -> "fadeOutIn",
-        "duration" -> 500 )
+        "duration" -> 500, 
+        "extraJS" -> DbReCaptcha.callShowFunction )
           
     web.json( jsonRes )
   }
