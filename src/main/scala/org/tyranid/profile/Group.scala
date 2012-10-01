@@ -1143,7 +1143,11 @@ object GroupSettings extends MongoEntity( tid = "a0Rt" ) {
 
   db.ensureIndex( Mobj( "g" -> 1, "u" -> 1 ) )
   
-  val FLAG_VISITED = 1
+  val FLAG_VISITED         = 1
+  val FLAG_HIDDEN_COMMENTS = 2
+  
+  def forGroupTid( tid:String ) = 
+    GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> T.user.id , "g" -> Group.tidToId( tid ) ) ) )
 }
 
 class GroupSettings( obj:DBObject, parent:MongoRecord ) extends MongoRecord( GroupSettings.makeView, obj, parent ) {
@@ -1176,5 +1180,13 @@ class GroupSettings( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Gro
     ( l( 'flags ) & GroupSettings.FLAG_VISITED ) == GroupSettings.FLAG_VISITED
   
   def setVisited = this( 'flags ) = l( 'flags ) | GroupSettings.FLAG_VISITED
+  
+  def hasHiddenComments =
+    ( l( 'flags ) & GroupSettings.FLAG_HIDDEN_COMMENTS ) == GroupSettings.FLAG_HIDDEN_COMMENTS
+  
+  def toggleHiddenComments = {
+    var flags = this.l( 'flags )
+    this( 'flags ) = hasHiddenComments ? ( flags ^ GroupSettings.FLAG_HIDDEN_COMMENTS ) | ( flags | GroupSettings.FLAG_HIDDEN_COMMENTS )
+  }
 }
 
