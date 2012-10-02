@@ -46,6 +46,7 @@ object ContactInfo extends MongoEntity( tid = "a0Ov" ) {
   "createdAt"        is DbDateTime       ;
   "company"          is DbChar(50)       ;
   "beta"             is DbBoolean        ;
+  "lastInviteDate"   is DbDateTime       ;
   
   def ensure( email:String, name:String, company:String = null, beta:Boolean = false ) = {
     val contactInfo = ContactInfo.db.findOrMake( Mobj( "email" -> email.toPatternI ) )

@@ -273,6 +273,8 @@ class StringImp( s:String ) {
 
   def lowerWord = word.toLowerCase
 
+  def prefix( sep:Char ) = s.reverse.firstSuffix( sep ).reverse
+	
   def firstSuffix( sep:Char ) = {
     val idx = s.indexOf( sep )
     if ( idx != -1 ) s.substring( idx+1 ) else ""
