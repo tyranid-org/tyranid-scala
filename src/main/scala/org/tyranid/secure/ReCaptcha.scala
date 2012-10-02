@@ -35,26 +35,30 @@ object DbReCaptcha {
   val scriptSrc = "https://www.google.com/recaptcha/api/js/recaptcha_ajax.js"
     
   def showFunction( theme:String ) = """
-function showRecaptcha(element) {
+window.showRecaptcha = function(element) {
   Recaptcha.create( """" + B.reCaptchaPublicKey + """", element, {
   theme: """" + theme + """",
   callback: Recaptcha.focus_response_field});
 }"""
 
-  def div = <div id="recaptcha_div"></div>
+  val div = <div id="recaptcha_div"></div>
     
-  def callShowFunction = "showRecaptcha('recaptcha_div');"
+  val callShowFunction = "showRecaptcha( $( '#recaptcha_div' ).get(0) );"
     
   def passed = { 
     val web = T.web
     
-    "https://www.google.com/recaptcha/api/verify".POST(
+    val res = "https://www.google.com/recaptcha/api/verify".POST(
       form = Map(
         "privatekey" -> B.reCaptchaPrivateKey,
         "remoteip"   -> ( web.req.getRemoteAddr or "localhost" ),
         "challenge"  -> web.s( 'recaptcha_challenge_field ),
         "response"   -> web.s( 'recaptcha_response_field )
-      ) ).s.trim.startsWith( "true" )
+      ) ).s.trim
+      
+    println( res )
+    
+    res.startsWith( "true" )
   }
 }
 

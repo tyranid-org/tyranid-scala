@@ -30,7 +30,6 @@ import org.tyranid.session.Session
 import org.tyranid.social.Social
 import org.tyranid.ui.{ Button, Grid, Row, Focus, LnF, Form }
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate, WebResponse }
-import org.tyranid.secure.DbReCaptcha
 
 /*
      new Form( "/user/register", "register" )
@@ -575,6 +574,9 @@ $( function() {
       } else {
         for ( i <- invalids )
           sess.error( i.message )
+          
+        if ( B.requireReCaptcha )
+          jsonRes.extraJS = "Recaptcha.reload();"
       }
       
       web.json( jsonRes )
@@ -584,8 +586,10 @@ $( function() {
     val entryApp = web.i( 'app ) or 0
     sess.put( "entryApp", new java.lang.Integer( entryApp._i ) )
 
+    val doRecaptcha = B.requireReCaptcha;
+    
     val inner =
-   <div class="offset3 span6" style="margin-top:100px;text-align:center;">
+   <div class="offset3 span6" style={ "margin-top:" + ( doRecaptcha ? "50" | "100" ) + "px;text-align:center;" }>
     <a href="/"><img src="/volerro_logo.png"/></a>
    </div> ++
    <div class="offset2 span8">
@@ -631,14 +635,15 @@ $( function() {
            </div>
            <div class="span6 val-display"/>
           </div>
+          { doRecaptcha |*
           <div class="row-fluid">
            <div class="span6">
-            
             <script>{ Unparsed( "jQuery.getScript( \"" + DbReCaptcha.scriptSrc + "\" );" + DbReCaptcha.showFunction( "white" ) ) }</script>
             { DbReCaptcha.div }
            </div>
            <div class="span6 val-display"/> 
           </div>
+          }
          </div>
        </div>
        <hr style="margin:20px 0 12px;"/>
@@ -654,12 +659,15 @@ $( function() {
    </div>
         
     val jsonRes = web.jsonRes( sess )
+    
     jsonRes.htmlMap = Map( 
         "html" -> <div class="container">{ inner }</div>,
         "transition" -> "fadeOutIn",
-        "duration" -> 500, 
-        "extraJS" -> DbReCaptcha.callShowFunction )
-          
+        "duration" -> 500 )
+    
+    if ( doRecaptcha )
+      jsonRes.extraJS = "tyr.callWhen( function() { return window.Recaptcha !== undefined && window.showRecapcha !== null; }, function() {" + DbReCaptcha.callShowFunction + "}, 100 );"
+      
     web.json( jsonRes )
   }
 
