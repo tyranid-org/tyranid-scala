@@ -121,6 +121,31 @@ object Register {
      </div>
     </div>
   }
+  
+  def beta( user:User, jsonRes:WebResponse ) = {
+    <div class="container">
+     <div class="offset3 span6" style="margin-top:100px;text-align:center;">
+      <a href="/"><img src="/volerro_logo.png"/></a>
+     </div>
+     <div class="offset2 span8">
+      <form method="post" action="/user/register" id="f" class="register" style="margin-bottom:12px;" data-val="1">
+       <fieldset class="registerBox">
+        <div class="top-form-messages"/>
+        <div class="container-fluid" style="padding:0;">
+         <div class="row-fluid">
+          <h1 class="span12">Thanks, { user.s( 'firstName ) }!</h1>
+         </div>
+        </div>
+        <div class="container-fluid" style="padding:0;padding-top:1em;">
+         <div class="row-fluid">
+          <div class="span12">We will be sending you an invitation to our private beta very soon!</div>
+         </div>
+        </div>
+       </fieldset>
+      </form>
+     </div>
+    </div>
+  }
 }
 
 object Loginlet extends Weblet {
@@ -518,6 +543,8 @@ $( function() {
   }
   
   def registerRetail( web:WebContext, sess:Session ) {
+    val beta = web.b( 'beta )
+    
     val user =
       sess.user match {
       case null => B.newUser()
@@ -539,13 +566,13 @@ $( function() {
           Nil
     }
 
-    val ui = user.view.ui( "register" )
+    val ui = user.view.ui( "register" + ( beta ? "beta" | "" ) )
 
     user.isAdding = true
     
     if ( web.b( 'xhrSbt ) ) {
       val jsonRes = web.jsonRes( sess )
-      val invalids = Scope( user, initialDraw = false, captcha = true ).submit( user, ui )
+      val invalids = Scope( user, initialDraw = false, captcha = !beta ).submit( user, ui )
 
       if ( invalids.isEmpty ) {
         user( 'createdOn ) = new Date
@@ -559,23 +586,32 @@ $( function() {
         
         val email = user.s( 'email )
         
-        val org = Email.isWellKnownProvider( email ) ? null | {
-          val emailDomain = Email.domainFor( email )
-          B.Org.db.findOne( Mobj( "domain" -> emailDomain.toPatternI ), Mobj( "name" -> 1, "domain" -> 1 ) )
-        }
-        
-        if ( org != null )
-          user.save
+        if ( !beta ) {
+          val org = Email.isWellKnownProvider( email ) ? null | {
+            val emailDomain = Email.domainFor( email )
+            B.Org.db.findOne( Mobj( "domain" -> emailDomain.toPatternI ), Mobj( "name" -> 1, "domain" -> 1 ) )
+          }
           
-        jsonRes.htmlMap = Map( 
-            "html" -> WebTemplate( Register.page( user, org, jsonRes ) ),
-            "transition" -> "slideLeft",
-            "duration" -> 500 )
+          if ( org != null )
+            user.save
+            
+          jsonRes.htmlMap = Map( 
+              "html" -> WebTemplate( Register.page( user, org, jsonRes ) ),
+              "transition" -> "slideLeft",
+              "duration" -> 500 )
+        } else {
+          org.tyranid.profile.ContactInfo.ensure( user.s( 'email ), user.fullName, beta = true )
+          
+          jsonRes.htmlMap = Map( 
+              "html" -> WebTemplate( Register.beta( user, jsonRes ) ),
+              "transition" -> "slideLeft",
+              "duration" -> 500 )
+        }
       } else {
         for ( i <- invalids )
           sess.error( i.message )
           
-        if ( B.requireReCaptcha )
+        if ( B.requireReCaptcha && !beta )
           jsonRes.extraJS = "Recaptcha.reload();"
       }
       
@@ -592,12 +628,13 @@ $( function() {
    <div class="offset3 span6" style={ "margin-top:" + ( doRecaptcha ? "50" | "100" ) + "px;text-align:center;" }>
     <a href="/"><img src="/volerro_logo.png"/></a>
    </div> ++
-   <div class="offset2 span8">
+   <div class={ "offset2 span8" + ( beta |* " beta" ) }>
     <form method="post" action={ wpath + "/register" } id="f" class="register" style="margin-bottom:12px;" data-val="1">
+     <input type="hidden" name="beta" value={ beta._s }/>
      <fieldset class="registerBox">
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
-        <h1 class="span5">Register</h1>
+        <h1 class="span12">{ beta ? "Join our private beta!" | "Register" }</h1>
        </div>
       </div>
       <hr style="margin:4px 0 30px;"/>
@@ -611,9 +648,7 @@ $( function() {
            { Focus("#firstName") }
            <div class="span6 val-display"/>
            <div class="span6 hints" style="position:relative;">
-            <div>
-            Hint: Use your company or organization email address to easier connect with co-workers.
-            </div> 
+            <div>Hint: Use your company or organization email address to easier connect with co-workers.</div> 
            </div>  
           </div>
           <div class="row-fluid">
@@ -622,6 +657,7 @@ $( function() {
            </div>
            <div class="span6 val-display"/>
           </div>
+          { !beta |*
           <div class="row-fluid">
            <div class="span6">
             <input type="password" name="password" id="password" placeholder="Password" data-val="req,min=7"/>
@@ -635,7 +671,8 @@ $( function() {
            </div>
            <div class="span6 val-display"/>
           </div>
-          { doRecaptcha |*
+          }
+          { ( doRecaptcha && !beta ) |*
           <div class="row-fluid">
            <div class="span6">
             <script>{ Unparsed( "jQuery.getScript( \"" + DbReCaptcha.scriptSrc + "\" );" + DbReCaptcha.showFunction( "white" ) ) }</script>
@@ -648,10 +685,12 @@ $( function() {
        </div>
        <hr style="margin:20px 0 12px;"/>
        <div class="row-fluid">
+         { !beta |* 
          <div class="span6">
           <div style="height:40px;line-height:40px;position:relative;top:10px;">Already registered? <a tabindex="-1" href="javascript:void(0);" data-sbt={ Form.attrJson( Map( "href" -> ( wpath + "/in" ), "top" -> 1 ) ) }>Sign in here</a></div>
          </div> 
-         <div class="span6" style="height:40px;padding-top:8px;"><button type="submit" class="btn-success btn pull-right">Register <i class="icon-caret-right"></i></button></div>
+         } 
+         <div class={ "span6" + ( beta |* " offset6" ) } style="height:40px;padding-top:8px;"><button type="submit" class="btn-success btn pull-right">{ beta ? "Sign-up" | "Register" } <i class="icon-caret-right"></i></button></div>
        </div>
       </div>
      </fieldset>
@@ -665,7 +704,7 @@ $( function() {
         "transition" -> "fadeOutIn",
         "duration" -> 500 )
     
-    if ( doRecaptcha )
+    if ( doRecaptcha && !beta )
       jsonRes.extraJS = "tyr.callWhen( function() { return window.Recaptcha !== undefined && window.showRecapcha !== null; }, function() {" + DbReCaptcha.callShowFunction + "}, 100 );"
       
     web.json( jsonRes )

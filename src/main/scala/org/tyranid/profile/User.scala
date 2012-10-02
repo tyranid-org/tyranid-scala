@@ -38,6 +38,34 @@ import org.tyranid.session.{ Session, ThreadData }
 import org.tyranid.ui.LnF
 import org.tyranid.web.WebContext
 
+
+object ContactInfo extends MongoEntity( tid = "a0Ov" ) {
+  "_id"              is DbMongoId  is 'id;
+  "name"             is DbChar(40)       ;
+  "email"            is DbEmail          ;
+  "createdAt"        is DbDateTime       ;
+  "company"          is DbChar(50)       ;
+  "beta"             is DbBoolean        ;
+  
+  def ensure( email:String, name:String, company:String = null, beta:Boolean = false ) = {
+    val contactInfo = ContactInfo.db.findOrMake( Mobj( "email" -> email.toPatternI ) )
+        
+    contactInfo( 'name ) = name
+    contactInfo( 'email ) =  email
+    contactInfo( 'company ) = company
+        
+    if ( contactInfo.isNew )
+      contactInfo( 'createdAt ) = new Date
+          
+    if ( beta )
+      contactInfo( 'beta ) = true
+      
+    ContactInfo.db.save( contactInfo )
+    
+    contactInfo
+  }
+}
+
 class UserMeta extends MongoEntity( "a01v" ) {
   type RecType >: Null <: User
   override def convert( obj:DBObject, parent:MongoRecord ):RecType = throw new UnsupportedOperationException
@@ -206,4 +234,3 @@ trait User extends MongoRecord {
     org != null && tidOrgId != null && org.id == tidOrgId
   }
 }
-
