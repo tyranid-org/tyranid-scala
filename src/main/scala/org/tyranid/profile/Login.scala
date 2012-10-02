@@ -83,7 +83,7 @@ object Register {
         <div class="container-fluid" style="padding:0;">
          <input type="hidden" name="regStep" value="2"/>
          <div class="row-fluid">
-          <div style="padding-top:1em;">One last step.  Please enter the name of the company below.  This helps other identify you within Volerro.</div>
+          <div style="padding-top:1em;">One last step.  Please enter the name of your company below.  This helps other identify you within Volerro.</div>
          </div>
          <hr/>
          <div class="row-fluid">
@@ -91,7 +91,7 @@ object Register {
           { Focus( "#companyName" ) }
           <div class="span6 hints">
            <div class="fldHint">
-            Hint: TODO:  Deanna-- add some hint here.
+            Hint: Use your own name (ex: BobSmith Co) if you are not in a company.
            </div>
           </div> 
           <div class="span6 val-display"/>
