@@ -175,6 +175,8 @@ trait Bootable {
   lazy val STAGE = !DEV && hostName.indexOf( "-x" ) != -1
   lazy val PRODUCTION = !( DEV || STAGE )
 
+  val BETA = true
+  
   def mode =
     if ( DEV )        "development"
     else if ( STAGE ) "stage"

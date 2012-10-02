@@ -190,6 +190,13 @@ class WebFilter extends Filter {
           LoginCookie.autoLogin          
         }
         
+        //println( !web.b( 'xhr ) ) 
+        //println( !isAsset )
+        //println( T.user == null || !T.user.loggedIn )
+        //println( T.LnF == LnF.RetailBrand )
+        //println( notComet )
+        
+        //if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && T.LnF == LnF.RetailBrand ) && notComet ) {
         if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) && T.LnF == LnF.RetailBrand ) && notComet ) {
           //println( "full shell page!" )
           web.template( B.appShellPage( web ) )

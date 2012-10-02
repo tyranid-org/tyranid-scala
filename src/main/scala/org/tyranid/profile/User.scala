@@ -46,6 +46,7 @@ object ContactInfo extends MongoEntity( tid = "a0Ov" ) {
   "createdAt"        is DbDateTime       ;
   "company"          is DbChar(50)       ;
   "beta"             is DbBoolean        ;
+  "inviteCode"       is DbBoolean        ;
   "lastInviteDate"   is DbDateTime       ;
   
   def ensure( email:String, name:String, company:String = null, beta:Boolean = false ) = {
@@ -88,7 +89,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   
   "recaptcha"      is DbReCaptcha( "white" ) is 'temporary as "Verify you are human";
 
-  "activationCode" is DbChar(8)           ;
+  "activationCode" is DbChar(8)           as "Code";
   "resetCode"      is DbChar(8)           ;
   "loginToken"     is DbChar(10)          ;
 

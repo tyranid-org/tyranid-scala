@@ -297,7 +297,7 @@ $( function() {
           else
             getUserByEmailPassword( email, password )
   
-        if ( user == null || user.s( "activationCode" ).notBlank) {
+        if ( user == null || user.s( "activationCode" ).notBlank ) {
           if (user != null)
             notActivatedYet( user )
           else if ( email.isBlank ) 
@@ -543,6 +543,37 @@ $( function() {
   }
   
   def registerRetail( web:WebContext, sess:Session ) {
+    
+    if ( web.b( 'updateFld ) ) {
+      val updateFld = web.s( 'updateFld )
+      
+      updateFld match {
+        case "activationCode" =>
+          val contact = ContactInfo.db.findOne( Mobj( "inviteCode" -> web.s( 'activationCode ) ) )
+              
+          if ( contact != null ) {
+            web.jsRes( org.tyranid.json.Js( """ 
+  $('#email').val( '""" + contact.s( 'email ) + """' );
+  $('#firstName').val( '""" + contact.s( 'name ).split( ' ' )(0) + """' );
+  $('#lastName').val( '""" + contact.s( 'name ).split( ' ' )(1) + """' );""" ) ) 
+          } else {
+            sess.error( "Invalid invite code" )
+            web.jsRes()
+          }
+        case "email" =>
+          val exists = B.User.db.exists( Mobj( "email" -> web.s( 'email ) ) )
+
+          if ( exists ) {
+            sess.error( "Email is already in use." )
+            web.jsRes()
+          }
+        case _ => 
+           web.jsRes()
+      }
+      
+      return
+    }
+    
     val beta = web.b( 'beta )
     
     val user =
@@ -564,9 +595,23 @@ $( function() {
               Some( Invalid( scope.at( 'email ), user.s( 'email ) + " is already in use.") )
           } ) ::
           Nil
+          
+      val inviteCode = web.s( 'code )
+      
+      if ( inviteCode.notBlank ) {
+        user( 'activationCode ) = inviteCode
+        
+        val contact = ContactInfo.db.findOne( Mobj( "inviteCode" -> inviteCode ) )
+        
+        if ( contact != null ) {
+          user( 'email ) = contact.s( 'email )
+          user( "firstName" ) = contact.s( 'name ).split( ' ' )(0)
+          user( 'lastName ) = contact.s( 'name ).split( ' ' )(1)
+        }
+      }
     }
 
-    val ui = user.view.ui( "register" + ( beta ? "beta" | "" ) )
+    val ui = user.view.ui( "register" + ( beta ? "beta" | "rb" ) )
 
     user.isAdding = true
     
@@ -600,7 +645,7 @@ $( function() {
               "transition" -> "slideLeft",
               "duration" -> 500 )
         } else {
-          org.tyranid.profile.ContactInfo.ensure( user.s( 'email ), user.fullName, beta = true )
+          ContactInfo.ensure( user.s( 'email ), user.fullName, beta = true )
           
           jsonRes.htmlMap = Map( 
               "html" -> WebTemplate( Register.beta( user, jsonRes ) ),
@@ -625,7 +670,7 @@ $( function() {
     val doRecaptcha = B.requireReCaptcha;
     
     val inner =
-   <div class="offset3 span6" style={ "margin-top:" + ( doRecaptcha ? "50" | "100" ) + "px;text-align:center;" }>
+   <div class="offset3 span6" style={ "margin-top:" + ( doRecaptcha ? ( B.BETA ? "25" | "50" )  | "100" ) + "px;text-align:center;" }>
     <a href="/"><img src="/volerro_logo.png"/></a>
    </div> ++
    <div class={ "offset2 span8" + ( beta |* " beta" ) }>
@@ -642,18 +687,37 @@ $( function() {
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
          <div class="container-fluid span12" style="padding:0;">
+          { ( B.BETA && !beta ) |*
           <div class="row-fluid">
-           <div class="span3"><input type="text" id="firstName" name="firstName" placeholder="First Name" data-val="req" data-val-with="lastName"/></div>
-           <div class="span3"><input type="text" id="lastName" name="lastName" placeholder="Last Name" data-val="req" data-val-with="firstName"/></div>
+           <div class="span6">
+            <input type="text" name="activationCode" id="activationCode" value={ user.s( 'activationCode ) } placeholder="Invite Code" data-update="blur" data-val="req"/>
+           </div>
+           <div class="span6 val-display"/>
+          </div>
+          }
+          { ( B.BETA && !beta ) ?
+          <div class="row-fluid">
+           <div class="span3"><input type="text" id="firstName" name="firstName" disabled="disabled"  placeholder="First Name" value={ user.s( 'firstName ) }/></div>
+           <div class="span3"><input type="text" id="lastName" name="lastName" disabled="disabled" placeholder="Last Name" value={ user.s( 'lastName ) }/></div>
+           { Focus("#activationCode") }
+           <div class="span6 val-display"/>
+          </div> |
+          <div class="row-fluid">
+           <div class="span3"><input type="text" id="firstName" name="firstName" value={ user.s( 'firstName ) } placeholder="First Name" data-val="req" data-val-with="lastName"/></div>
+           <div class="span3"><input type="text" id="lastName" name="lastName" value={ user.s( 'lastName ) } placeholder="Last Name" data-val="req" data-val-with="firstName"/></div>
            { Focus("#firstName") }
            <div class="span6 val-display"/>
            <div class="span6 hints" style="position:relative;">
             <div>Hint: Use your company or organization email address to easier connect with co-workers.</div> 
            </div>  
           </div>
+          }
           <div class="row-fluid">
            <div class="span6">
-            <input type="text" name="email" id="email" value={ user.s( 'email ) } placeholder="Email address" data-val="req,email"/>
+            { ( B.BETA && !beta ) ?
+              <input type="text" name="email" id="email" value={ user.s( 'email ) } disabled="disabled" placeholder="Email address"/> |
+              <input type="text" name="email" id="email" value={ user.s( 'email ) } placeholder="Email address" data-update="blur" data-val="req,email"/>
+            }
            </div>
            <div class="span6 val-display"/>
           </div>
