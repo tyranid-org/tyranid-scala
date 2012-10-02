@@ -670,7 +670,7 @@ $( function() {
     val doRecaptcha = B.requireReCaptcha;
     
     val inner =
-   <div class="offset3 span6" style={ "margin-top:" + ( doRecaptcha ? ( B.BETA ? "25" | "50" )  | "100" ) + "px;text-align:center;" }>
+   <div class="offset3 span6" style={ "margin-top:" + ( doRecaptcha ? ( B.beta ? "25" | "50" )  | "100" ) + "px;text-align:center;" }>
     <a href="/"><img src="/volerro_logo.png"/></a>
    </div> ++
    <div class={ "offset2 span8" + ( beta |* " beta" ) }>
@@ -687,7 +687,7 @@ $( function() {
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
          <div class="container-fluid span12" style="padding:0;">
-          { ( B.BETA && !beta ) |*
+          { ( B.beta && !beta ) |*
           <div class="row-fluid">
            <div class="span6">
             <input type="text" name="activationCode" id="activationCode" value={ user.s( 'activationCode ) } placeholder="Invite Code" data-update="blur" data-val="req"/>
@@ -695,7 +695,7 @@ $( function() {
            <div class="span6 val-display"/>
           </div>
           }
-          { ( B.BETA && !beta ) ?
+          { ( B.beta && !beta ) ?
           <div class="row-fluid">
            <div class="span3"><input type="text" id="firstName" name="firstName" disabled="disabled"  placeholder="First Name" value={ user.s( 'firstName ) }/></div>
            <div class="span3"><input type="text" id="lastName" name="lastName" disabled="disabled" placeholder="Last Name" value={ user.s( 'lastName ) }/></div>
@@ -714,7 +714,7 @@ $( function() {
           }
           <div class="row-fluid">
            <div class="span6">
-            { ( B.BETA && !beta ) ?
+            { ( B.beta && !beta ) ?
               <input type="text" name="email" id="email" value={ user.s( 'email ) } disabled="disabled" placeholder="Email address"/> |
               <input type="text" name="email" id="email" value={ user.s( 'email ) } placeholder="Email address" data-update="blur" data-val="req,email"/>
             }

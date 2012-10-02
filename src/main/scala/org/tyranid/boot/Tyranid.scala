@@ -37,6 +37,7 @@ object TyranidConfig extends MongoEntity( tid = "a03t" ) {
   "_id"         is DbMongoId         is 'id;
   "recaptcha"   is DbBoolean         as "Enable ReCaptchas";
   "accessLogs"  is DbBoolean         as "Enable Access Logs";
+  "beta"        is DbBoolean         as "Enable Beta Mode";
 
 
   def apply():TyranidConfig = singleton
@@ -69,6 +70,7 @@ object TyranidConfiglet extends Weblet {
     <a href={ wpath + "/email" } class={ Email.enabled ? "go btn" | "stop btn" }>Email: { Email.enabled ? "ON" | "OFF" }</a>
     <a href={ wpath + "/recaptcha" } class={ B.requireReCaptcha ? "go btn" | "stop btn" }>Recaptcha: { B.requireReCaptcha ? "ON" | "OFF" }</a>
     <a href={ wpath + "/accessLogs" } class={ B.accessLogs ? "go btn" | "stop btn" }>Access Logs: { B.accessLogs ? "ON" | "OFF" }</a>
+    <a href={ wpath + "/enableBeta" } class={ B.beta ? "go btn" | "stop btn" }>BETA Mode: { B.beta ? "ON" | "OFF" }</a>
   }
 
   def handle( web:WebContext ) = {
@@ -114,6 +116,13 @@ object TyranidConfiglet extends Weblet {
       obj( 'accessLogs ) = !B.accessLogs
       TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "accessLogs" -> obj.b( 'accessLogs ) ) ) )
       sess.notice( "Access Logs have been turned " + ( B.accessLogs ? "ON" | "OFF" ) + "." )
+      web.redirect( parent.wpath )
+
+    case "/enableBeta" =>
+      val obj = TyranidConfig()
+      obj( 'beta ) = !B.beta
+      TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "beta" -> obj.b( 'beta ) ) ) )
+      sess.notice( "Beta mode has been turned " + ( B.beta ? "ON" | "OFF" ) + "." )
       web.redirect( parent.wpath )
 
     case _ =>

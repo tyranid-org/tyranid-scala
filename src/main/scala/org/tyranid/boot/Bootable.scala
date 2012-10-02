@@ -143,6 +143,7 @@ trait Bootable {
 
   def requireReCaptcha = TyranidConfig().b( 'recaptcha )
   def accessLogs       = TyranidConfig().b( 'accessLogs )
+  def beta             = TyranidConfig().b( 'beta )
 
   def access( thread:ThreadData, accessType:AccessType, ref:AnyRef )
 
@@ -175,8 +176,6 @@ trait Bootable {
   lazy val STAGE = !DEV && hostName.indexOf( "-x" ) != -1
   lazy val PRODUCTION = !( DEV || STAGE )
 
-  val BETA = true
-  
   def mode =
     if ( DEV )        "development"
     else if ( STAGE ) "stage"
