@@ -117,15 +117,17 @@ case class GroupMode( override val view:TupleView ) extends Tuple( view )
 
 object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   type RecType = Group
+  
   override def convert( obj:DBObject, parent:MongoRecord ) = new Group( obj, parent )
 
-
+  "members"   is DbArray(DbTid(B.Org,B.User,Group)) as "Members";
 
   //"color"          // future ... colored labels
   //"search"         { search criteria } // future ... list search for a group, rather than each id explicitly
 
 
   db.ensureIndex( Mobj( "o" -> 1, "name" -> 1 ) )
+  db.ensureIndex( Mobj( "members" -> 1 ) )
 
   def flatten( tids:Seq[String] ) =
     tids.
