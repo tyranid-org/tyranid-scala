@@ -56,11 +56,14 @@ trait BsonObject extends Deep {
     a_?( key ).find( t => en.hasTid( t._s ) ).getOrElse( "" )._s
   }
   
+  // return list or empty guard array
   def a_?( key:String ) =
     apply( key ) match {
     case null          => Mongo.EmptyArray
     case a:BasicDBList => a
     }
+  
+  // return mutable array (even if empty)
   def a_!( key:String ) =
     apply( key ) match {
     case null          => val a = new BasicDBList
@@ -68,6 +71,7 @@ trait BsonObject extends Deep {
                           a
     case a:BasicDBList => a
     }
+  
   def a( key:String )   = apply( key ).asInstanceOf[BasicDBList]
 
   def b( key:String )   = apply( key )._b
