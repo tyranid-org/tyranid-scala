@@ -121,6 +121,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   override def convert( obj:DBObject, parent:MongoRecord ) = new Group( obj, parent )
 
   "members"   is DbArray(DbTid(B.Org,B.User,Group)) as "Members";
+  "private"   is DbBoolean;
 
   //"color"          // future ... colored labels
   //"search"         { search criteria } // future ... list search for a group, rather than each id explicitly

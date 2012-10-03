@@ -103,6 +103,7 @@ trait Bootable {
   lazy val fullDomain = 
     if ( DEV )        "dev." + domain
     else if ( STAGE ) "stage." + domain
+    else if ( BETA )  "beta." + domain
     else              "app." + domain
     
   lazy val domainPort = 
@@ -174,11 +175,13 @@ trait Bootable {
 
   lazy val DEV = hostName.indexOf( "macbook" ) != -1 || hostName.indexOf( "iMac" ) != -1 || hostName.indexOf( "imac" ) != -1 || hostName.indexOf( "-mac-" ) != -1 || hostName.indexOf( ".local" ) != -1
   lazy val STAGE = !DEV && hostName.indexOf( "-x" ) != -1
-  lazy val PRODUCTION = !( DEV || STAGE )
+  lazy val BETA = !DEV && !STAGE && hostName.indexOf( "-beta" ) != -1
+  lazy val PRODUCTION = !( DEV || STAGE || BETA )
 
   def mode =
     if ( DEV )        "development"
     else if ( STAGE ) "stage"
+    else if ( BETA )  "beta"
     else              "production"
 
   
