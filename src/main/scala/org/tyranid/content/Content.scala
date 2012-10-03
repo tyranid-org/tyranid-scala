@@ -85,6 +85,129 @@ case class ContentType( override val view:TupleView ) extends Tuple( view )
 
 
 
+object ContentOrder extends RamEntity( tid = "a0St" ) {
+  type RecType = ContentOrder
+  override def convert( view:TupleView ) = new ContentOrder( view )
+
+  "_id"    is DbInt      is 'id;
+  "name"   is DbChar(64) is 'label;
+
+
+  override val addNames = Seq( "_id", "name" )
+
+  val Manual          = add( 1, "Manual" )
+  val LastModified    = add( 2, "Last Modified" )
+  val Label           = add( 3, "Label" )
+}
+
+case class ContentOrder( override val view:TupleView ) extends Tuple( view ) {
+
+  def sort( content:Seq[Content] ) =
+    this match {
+    case ContentOrder.Manual       => content.sortBy( _.i( 'pos ) )
+    case ContentOrder.LastModified => content.sortBy( -_.lastModifiedMs )
+    case ContentOrder.Label        => content.sortBy( _.label )
+    }
+}
+
+
+
+object ContentMoveMode extends RamEntity( tid = "a0Tt" ) {
+  type RecType = ContentMoveMode
+  override def convert( view:TupleView ) = new ContentMoveMode( view )
+
+  "_id"    is DbInt      is 'id;
+  "name"   is DbChar(64) is 'label;
+
+
+  override val addNames = Seq( "_id", "name" )
+
+  val Before  = add( 1, "Before" )
+  val Into    = add( 2, "Into" )
+}
+
+case class ContentMoveMode( override val view:TupleView ) extends Tuple( view )
+
+
+object Repositioning {
+
+  def apply( moving:Content, to:Content, mode:ContentMoveMode ) {
+
+    def updatePos( c:Content, pos:Int ) {
+      val ePos = c.i( 'pos )
+
+      if ( ePos != pos ) {
+        c( 'pos ) = pos
+        c.db.update( Mobj( "_id" -> c.id ), Mobj( $set -> Mobj( "pos" -> pos ) ) )
+      }
+    }
+
+    // PERFORMANCE-TODO:  instead of using contents, add a query method that just returns a Seq[DBObject] just containing '_id and 'pos ...
+
+    if ( to.id == moving.id )
+      return
+
+    var fromContainer:Content = null
+    var fromContents:Seq[Content] = null
+
+    var toContainer:Content = null
+    var toContents:Seq[Content] = null
+
+    var before:Content = null
+
+    mode match {
+    case ContentMoveMode.Before =>
+      fromContainer = moving.container
+
+      toContainer = to.container
+      toContents = toContainer.contents
+
+      before = to
+
+    case ContentMoveMode.Into =>
+      fromContainer = moving.container
+
+      toContainer = to
+      toContents = toContainer.contents
+
+      before =
+        if ( toContents.nonEmpty ) toContents.head
+        else                       null
+    }
+
+    if ( toContainer.id != fromContainer.id ) {
+
+      fromContents = fromContainer.contents.filter( _.id != moving.id )
+
+      for ( i <- 0 until fromContents.size )
+        updatePos( fromContents( i ), i )
+    }
+
+    toContents = toContents.filter( _.id != moving.id )
+
+    if ( before != null ) {
+
+      val idx = toContents.indexWhere( _.id == before.id )
+
+      toContents = ( toContents.slice( 0, idx ) :+ moving ) ++ toContents.slice( idx, toContents.size )
+    } else {
+      toContents = moving +: toContents
+    }
+
+    for ( i <- 0 until toContents.size )
+      updatePos( toContents( i ), i )
+
+    Repositioning( toContainer = toContainer, toContents = toContents, fromContainer = fromContainer, fromContents = fromContents )
+  }
+}
+
+case class Repositioning( toContainer:Content,
+                          toContents:Seq[Content],
+                          fromContainer:Content,
+                          fromContents:Seq[Content] )
+
+
+
 /*
  * * *  Comments
  */
@@ -270,11 +393,13 @@ trait ContentMeta extends PrivateKeyEntity {
   "tags"              is DbArray(DbLink(Tag)) ;
   "name"              is DbChar(50)           is 'label is 'required is SearchText;
 
+  "pos"               is DbInt                ; // the position of this content within its parent (group, folder, board, etc.)
+
   "o"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Owners" is 'owner;
   "v"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Viewers" is SearchAuth;
-  "subV"              is DbArray(DbTid(B.Org,B.User))                   ; // for showing content inside a group
+  "subV"              is DbArray(DbTid(B.Org,B.User))       ; // for showing content inside a group
 
-  "shown"             is DbArray(DbTid(B.User)) as "Shown To" ; // list of tids of users who have "read" this content; only maintained for some content types, like messages
+  "shown"             is DbArray(DbTid(B.User))             as "Shown To" ; // list of tids of users who have "read" this content; only maintained for some content types, like messages
 
   "lastModified"      is DbDateTime           is 'required;
   "lastModifiedBy"    is DbLink(B.User)       is 'required;
@@ -291,7 +416,7 @@ trait ContentMeta extends PrivateKeyEntity {
   "logTid"            is DbChar(64)           ; // TODO:  this is really a DbTid that contains an entity instead of a record
   "logId"             is DbMongoId            ; // TODO:  this is a link to the "*_log" table for the above entity, model it better
 
-  "file"              is DbUrl /* TODO:  change to DbFile */        ; // if s3 this is a S3 path, otherwise it is an absolute URL
+  "file"              is DbUrl                ; // TODO: change to DbFile ... if s3 this is a S3 path, otherwise it is an absolute URL
   "fileMimeType"      is DbChar(64)           ;
 
   "video"             is DbBoolean            ;
@@ -312,7 +437,7 @@ trait ContentMeta extends PrivateKeyEntity {
   "r"                 is DbArray(Comment)     as "Replies";
 
   // Image / Thumbnail
-  "img"               is DbUrl                /* TODO:  change to DbImage? */;
+  "img"               is DbUrl                ; // TODO:  change to DbImage?
   "imgH"              is DbInt                help Text( "The actual height of the image." );
   "imgW"              is DbInt                help Text( "The actual width of the image." );
   
@@ -320,7 +445,7 @@ trait ContentMeta extends PrivateKeyEntity {
   // Attachment
   "title"             is DbChar(128)          is SearchText;
   "link"              is DbUrl                ;
-  "icon"              is DbUrl /* TODO:  should be DbImage ? */     ; // for links, this is the favicon
+  "icon"              is DbUrl                ; // ( TODO:  should be DbImage? ) for links, this is the favicon
   
   // RSS & Atom Feeds
   "feedOut"           is DbBoolean            help <span>If this is enabled, outgoing <b>public</b> RSS and Atom feeds are generated.</span>;
@@ -522,6 +647,11 @@ abstract class Content( override val view:MongoView,
       B.systemUser
     else
       user
+  }
+
+  def lastModifiedMs:Long = {
+    val lm = t( 'lastModified )
+    lm != null |* lm.getTime
   }
 
   def wasShownTo( user:User ) = a_?( 'shown ).has( user.tid )
@@ -793,10 +923,13 @@ abstract class Content( override val view:MongoView,
 
 
   /*
-   * * *   Child Content (Groups and Folders)
+   * * *   Containers & Contents  (Groups and Folders)
    */
 
+  def container:Content = null
   def contents:Seq[Content] = Nil
+
+  def reposition( to:Content, mode:ContentMoveMode ) = Repositioning( moving = this, to = to, mode = mode )
 
 
   /*
