@@ -131,21 +131,58 @@ case class ContentMoveMode( override val view:TupleView ) extends Tuple( view )
 
 object Repositioning {
 
-  def apply( moving:Content, to:Content, mode:ContentMoveMode ) {
+  def apply( container:Content, newOrderTids:Seq[String] ):Repositioning = {
 
-    def updatePos( c:Content, pos:Int ) {
-      val ePos = c.i( 'pos )
+    val contents = container.contents
 
-      if ( ePos != pos ) {
-        c( 'pos ) = pos
-        c.db.update( Mobj( "_id" -> c.id ), Mobj( $set -> Mobj( "pos" -> pos ) ) )
+    val newOrder:Seq[Content] = newOrderTids.map( tid => contents.find( _.tid == tid ).get )
+
+    // reverse-engineer what was moved where to where by comparing the newOrder to the oldOrder
+    //
+    // For example, given:
+    //
+    // full original order: A B C D E
+    //   new partial order: A D C E
+    //
+    // this algorithm yields:
+    //
+    //  moving: D
+    //  before: C
+
+    for ( c <- contents ) {
+      val idx = newOrder.indexWhere( _.id == c.id )
+
+      if ( idx >= 0 ) {
+
+        for ( i <- idx until newOrder.size ) {
+          val noc = newOrder( i ) // noc = newOrder content
+finish this
+
+
+        }
       }
     }
+
+
+
+
+
+    val moving:Content = null
+    val before:Content = null
+
+  
+
+    val repos = Repositioning( moving = moving, before = before, toContainer = container, toContents = contents, fromContainer = container, fromContents = null )
+    repos.reposition
+    repos
+  }
+
+  def apply( moving:Content, to:Content, mode:ContentMoveMode ):Repositioning = {
 
     // PERFORMANCE-TODO:  instead of using contents, add a query method that just returns a Seq[DBObject] just containing '_id and 'pos ...
 
     if ( to.id == moving.id )
-      return
+      return null
 
     var fromContainer:Content = null
     var fromContents:Seq[Content] = null
@@ -175,12 +212,37 @@ object Repositioning {
         else                       null
     }
 
+    val repos = Repositioning( moving = moving, before = before, toContainer = toContainer, toContents = toContents, fromContainer = fromContainer, fromContents = fromContents )
+    repos.reposition
+    repos
+  }
+
+  def updatePos( c:Content, pos:Int ) {
+    val ePos = c.i( 'pos )
+
+    if ( ePos != pos ) {
+      c( 'pos ) = pos
+      c.db.update( Mobj( "_id" -> c.id ), Mobj( $set -> Mobj( "pos" -> pos ) ) )
+    }
+  }
+
+}
+
+case class Repositioning( var moving:Content,
+                          var before:Content,
+                          var toContainer:Content,
+                          var toContents:Seq[Content],
+                          var fromContainer:Content,
+                          var fromContents:Seq[Content] ) {
+
+  def reposition {
+
     if ( toContainer.id != fromContainer.id ) {
 
       fromContents = fromContainer.contents.filter( _.id != moving.id )
 
       for ( i <- 0 until fromContents.size )
-        updatePos( fromContents( i ), i )
+        Repositioning.updatePos( fromContents( i ), i )
     }
 
     toContents = toContents.filter( _.id != moving.id )
@@ -195,16 +257,9 @@ object Repositioning {
     }
 
     for ( i <- 0 until toContents.size )
-      updatePos( toContents( i ), i )
-
-    Repositioning( toContainer = toContainer, toContents = toContents, fromContainer = fromContainer, fromContents = fromContents )
+      Repositioning.updatePos( toContents( i ), i )
   }
 }
-
-case class Repositioning( toContainer:Content,
-                          toContents:Seq[Content],
-                          fromContainer:Content,
-                          fromContents:Seq[Content] )
 
 
 
