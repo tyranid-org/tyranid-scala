@@ -30,6 +30,7 @@ object LoginCookie {
     B.loginCookieName +
     ( if ( B.DEV )        "-dev"
       else if ( B.STAGE ) "-stage"
+      else if ( B.BETA )  "-beta"
       else                "" )
 
   def domain =

@@ -121,6 +121,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   override def convert( obj:DBObject, parent:MongoRecord ) = new Group( obj, parent )
 
   "members"   is DbArray(DbTid(B.Org,B.User,Group)) as "Members";
+  "private"   is DbBoolean;
 
   //"color"          // future ... colored labels
   //"search"         { search criteria } // future ... list search for a group, rather than each id explicitly
@@ -194,6 +195,16 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
 
     myGroups ++ memberGroups 
   }
+  
+  def ensureVisibility( groupTid:String, tid:String ) {
+    val group = Group.getByTid( groupTid )
+    val visibleTids = group.a_!( 'v )
+    
+    if ( !visibleTids.contains( tid ) ) {
+      visibleTids.add( tid )
+      group.save
+    }
+  }
 }
 
 class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView, obj, parent ) {
@@ -223,7 +234,19 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
 
   def groupType = GroupType.byId( i( 'groupType ) ).getOrElse( GroupType.Org ).as[GroupType]
 
+  def memberEntities = a_?( 'members ).toSeq.of[String].map( _.substring( 0, 4 ) ).distinct.map( tid => Entity.byTid( tid ).get )
+  def memberTids = obj.a_?( 'members ).toSeq.of[String]
 
+  def members = {
+   val tids = memberTids
+
+   for ( e <- memberEntities;
+         en = e.as[MongoEntity];
+         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> tids.filter( en.hasTid ).map( tid => en.tidToId( tid ) ).toSeq.toMlist ) ) );
+         rec = en( r ) )
+     yield rec
+  }
+  
   def iconClass16x16 = groupType.iconClass16x16
   def iconClass32x32 = groupType.iconClass32x32
 
