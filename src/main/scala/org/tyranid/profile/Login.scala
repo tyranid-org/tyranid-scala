@@ -574,13 +574,18 @@ $( function() {
     }
     
     val beta = web.b( 'beta )
+    val keep = web.b( 'keep )
     
     val user =
       sess.user match {
       case null => B.newUser()
-      case u    => if ( u.isNew || web.b( 'keep ) )
+      case u    => if ( u.isNew || keep ) {
+                     if ( keep ) {
+                       u( "firstName" ) = ""
+                       u( "lastName" ) = ""
+                     }
                      u
-                   else
+                   } else
                      B.newUser()
     }
 
@@ -604,7 +609,7 @@ $( function() {
         
         if ( contact != null ) {
           user( 'email ) = contact.s( 'email )
-          user( "firstName" ) = contact.s( 'name ).split( ' ' )(0)
+          user( 'firstName ) = contact.s( 'name ).split( ' ' )(0)
           user( 'lastName ) = contact.s( 'name ).split( ' ' )(1)
         }
       }
@@ -686,7 +691,7 @@ $( function() {
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
          <div class="container-fluid span12" style="padding:0;">
-          { ( B.beta && !beta ) |*
+          { !keep && ( B.beta && !beta ) |*
           <div class="row-fluid">
            <div class="span6">
             <input type="text" name="activationCode" id="activationCode" value={ user.s( 'activationCode ) } placeholder="Invite Code" data-update="blur" data-val="req"/>
@@ -694,9 +699,9 @@ $( function() {
            <div class="span6 val-display"/>
           </div>
           }
-          { ( B.beta && !beta ) ?
+          { ( !keep && ( B.beta && !beta ) ) ?
           <div class="row-fluid">
-           <div class="span3"><input type="text" id="firstName" name="firstName" readonly="readonly"  placeholder="First Name" value={ user.s( 'firstName ) }/></div>
+           <div class="span3"><input type="text" id="firstName" name="firstName" readonly="readonly" placeholder="First Name" value={ user.s( 'firstName ) }/></div>
            <div class="span3"><input type="text" id="lastName" name="lastName" readonly="readonly" placeholder="Last Name" value={ user.s( 'lastName ) }/></div>
            { Focus("#activationCode") }
            <div class="span6 val-display"/>
