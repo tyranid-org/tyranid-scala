@@ -87,7 +87,7 @@ object Register {
          </div>
          <hr/>
          <div class="row-fluid">
-          <div class="span6"><input type="text" id="companyName" name="companyName" placeholder="Company Name" data-val="req"/></div>
+          <div class="span6"><input type="text" id="companyName" name="companyName" placeholder="Company Name" data-update="blur" data-val="req"/></div>
           { Focus( "#companyName" ) }
           <div class="span6 hints">
            <div class="fldHint">
@@ -368,7 +368,7 @@ $( function() {
       user.extraVaValidations =
         ( user.view( 'email ),
           { scope:Scope =>
-            B.User.db.exists( Mobj( "email" -> user.s( 'email ) ) ) |*
+            B.User.db.exists( Mobj( "email" -> ("^" + user.s( 'email ).encRegex + "$").toPatternI ) ) |*
               Some( Invalid( scope.at( 'email ), "'" + user.s( 'email ) + "' email address is already taken.") )
           } ) ::
           Nil
@@ -543,7 +543,6 @@ $( function() {
   }
   
   def registerRetail( web:WebContext, sess:Session ) {
-    
     if ( web.b( 'updateFld ) ) {
       val updateFld = web.s( 'updateFld )
       
@@ -561,7 +560,7 @@ $( function() {
             web.jsRes()
           }
         case "email" =>
-          val exists = B.User.db.exists( Mobj( "email" -> web.s( 'email ) ) )
+          val exists = B.User.db.exists( Mobj( "email" -> ("^" + web.s( 'email ).encRegex + "$").toPatternI ) )
 
           if ( exists ) {
             sess.error( "Email is already in use." )
@@ -697,8 +696,8 @@ $( function() {
           }
           { ( B.beta && !beta ) ?
           <div class="row-fluid">
-           <div class="span3"><input type="text" id="firstName" name="firstName" disabled="disabled"  placeholder="First Name" value={ user.s( 'firstName ) }/></div>
-           <div class="span3"><input type="text" id="lastName" name="lastName" disabled="disabled" placeholder="Last Name" value={ user.s( 'lastName ) }/></div>
+           <div class="span3"><input type="text" id="firstName" name="firstName" readonly="readonly"  placeholder="First Name" value={ user.s( 'firstName ) }/></div>
+           <div class="span3"><input type="text" id="lastName" name="lastName" readonly="readonly" placeholder="Last Name" value={ user.s( 'lastName ) }/></div>
            { Focus("#activationCode") }
            <div class="span6 val-display"/>
           </div> |
@@ -715,7 +714,7 @@ $( function() {
           <div class="row-fluid">
            <div class="span6">
             { ( B.beta && !beta ) ?
-              <input type="text" name="email" id="email" value={ user.s( 'email ) } disabled="disabled" placeholder="Email address"/> |
+              <input type="text" name="email" id="email" value={ user.s( 'email ) } readonly="readonly" placeholder="Email address"/> |
               <input type="text" name="email" id="email" value={ user.s( 'email ) } placeholder="Email address" data-update="blur" data-val="req,email"/>
             }
            </div>

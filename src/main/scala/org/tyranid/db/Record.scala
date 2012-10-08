@@ -34,7 +34,7 @@ import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.logic.{ Invalid, Valid }
 import org.tyranid.profile.User
 import org.tyranid.report.Run
-import org.tyranid.ui.{ PathField, Search, UiObj }
+import org.tyranid.ui.{ PathField, Search, UiObj, LnF }
 
 
 /*
@@ -449,7 +449,7 @@ case class Scope( rec:Record,
     copy( rec = r, path = path.slice( lastRecPi, plen ), pathFromParent = path.slice( 0, lastRecPi ), parent = this, vaScope = vaScope )
   }
 
-  def required = rec.hasSubmitted |* s.filter( _.isBlank ).map( s => Invalid( this, "Please fill in." ) )
+  def required = rec.hasSubmitted |* s.filter( _.isBlank ).map( s => Invalid( this, "Please fill in" + ( ( T.LnF == LnF.RetailBrand ) ? ( " " + va.get.label ) | "" ) + "." ) )
 
   def draw( ui:UiObj ) = ui.draw( this )
 

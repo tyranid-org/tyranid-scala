@@ -156,7 +156,7 @@ object Repositioning {
 
         for ( i <- idx until newOrder.size ) {
           val noc = newOrder( i ) // noc = newOrder content
-finish this
+//TODO: finish this
 
 
         }
