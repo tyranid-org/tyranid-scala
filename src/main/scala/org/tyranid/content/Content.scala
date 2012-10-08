@@ -129,6 +129,9 @@ object ContentMoveMode extends RamEntity( tid = "a0Tt" ) {
 case class ContentMoveMode( override val view:TupleView ) extends Tuple( view )
 
 
+/**
+ * This code manages the 'pos property in Content.
+ */
 object Repositioning {
 
   def apply( container:Content, newOrderTids:Seq[String] ):Repositioning = {
@@ -137,44 +140,72 @@ object Repositioning {
 
     val newOrder:Seq[Content] = newOrderTids.map( tid => contents.find( _.tid == tid ).get )
 
-    // reverse-engineer what was moved where to where by comparing the newOrder to the oldOrder
-    //
-    // For example, given:
-    //
-    // full original order: A B C D E
-    //   new partial order: A D C E
-    //
-    // this algorithm yields:
-    //
-    //  moving: D
-    //  before: C
+    var moving:Content = null
+    var before:Content = null
 
-    for ( c <- contents ) {
-      val idx = newOrder.indexWhere( _.id == c.id )
+    /**
+     * Reverse-Engineer what was moved where to where by comparing the newOrder to the oldOrder
+     * 
+     * Example #1, given:
+     * 
+     *  full original order: A B C D E
+     *    new partial order: A D C E
+     * 
+     * this algorithm yields:
+     * 
+     * moving: D
+     * before: C
+     *
+     *
+     * Example #2, given:
+     *
+     *  full original order: A B C D E
+     *    new partial order: C D E A
+     * 
+     * this algorithm yields:
+     * 
+     * moving: A
+     * before: null
+     *
+     *
+     * Algorithm:  Find the first out of order in the partial order
+     *
+     *   for each element X in the new order ...
+     *     find X's position in the old order
+     *     is the element Y after X in the new order before it in the old array ?
+     *       if so,
+     *         X is "moving"
+     *         Y is "to"
+     */
+    def findMoving {
+      for ( ni <- 0 until newOrder.size - 1 ) {
+        val nic = newOrder( ni ) // nc = new content
 
-      if ( idx >= 0 ) {
+        val oi = contents.indexWhere( _.id == nic.id )
+        val nj = ni + 1
+        val njc = newOrder( nj )
 
-        for ( i <- idx until newOrder.size ) {
-          val noc = newOrder( i ) // noc = newOrder content
-//TODO: finish this
+        for ( oj <- 0 until oi ) {
+          val ojc = contents( oj )
 
-
+          if ( ojc.id == njc.id ) {
+            moving = nic
+            before = njc
+            return
+          }
         }
       }
     }
 
+    findMoving
 
-
-
-
-    val moving:Content = null
-    val before:Content = null
-
-  
-
-    val repos = Repositioning( moving = moving, before = before, toContainer = container, toContents = contents, fromContainer = container, fromContents = null )
-    repos.reposition
-    repos
+    if ( moving == null ) {
+      null
+    } else {
+      val repos = Repositioning( moving = moving, before = before, beforeEnd = ( before == null ), toContainer = container, toContents = contents, fromContainer = container, fromContents = null )
+      repos.reposition
+      repos
+    }
   }
 
   def apply( moving:Content, to:Content, mode:ContentMoveMode ):Repositioning = {
@@ -212,7 +243,7 @@ object Repositioning {
         else                       null
     }
 
-    val repos = Repositioning( moving = moving, before = before, toContainer = toContainer, toContents = toContents, fromContainer = fromContainer, fromContents = fromContents )
+    val repos = Repositioning( moving = moving, before = before, beforeEnd = false, toContainer = toContainer, toContents = toContents, fromContainer = fromContainer, fromContents = fromContents )
     repos.reposition
     repos
   }
@@ -230,6 +261,7 @@ object Repositioning {
 
 case class Repositioning( var moving:Content,
                           var before:Content,
+                          var beforeEnd:Boolean,
                           var toContainer:Content,
                           var toContents:Seq[Content],
                           var fromContainer:Content,
@@ -248,10 +280,11 @@ case class Repositioning( var moving:Content,
     toContents = toContents.filter( _.id != moving.id )
 
     if ( before != null ) {
-
       val idx = toContents.indexWhere( _.id == before.id )
 
       toContents = ( toContents.slice( 0, idx ) :+ moving ) ++ toContents.slice( idx, toContents.size )
+    } else if ( beforeEnd ) {
+      toContents = toContents :+ moving
     } else {
       toContents = moving +: toContents
     }
@@ -448,7 +481,7 @@ trait ContentMeta extends PrivateKeyEntity {
   "tags"              is DbArray(DbLink(Tag)) ;
   "name"              is DbChar(50)           is 'label is 'required is SearchText;
 
-  "pos"               is DbInt                ; // the position of this content within its parent (group, folder, board, etc.)
+  "pos"               is DbInt                ; // the position of this content within its parent (group, folder, board, etc.) ... see the class "Repositioning"
 
   "o"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Owners" is 'owner;
   "v"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Viewers" is SearchAuth;
