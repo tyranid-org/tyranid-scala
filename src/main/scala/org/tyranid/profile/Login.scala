@@ -64,8 +64,8 @@ object Register {
           // Must be approved, so send a join request AFTER they activate the account.
         }
         
-        sendActivation( user )
         user.save
+        sendActivation( user )
         
         <div class="container-fluid" style="padding:0;padding-top:1em;">
          <div class="row-fluid">
@@ -82,6 +82,7 @@ object Register {
         
         <div class="container-fluid" style="padding:0;">
          <input type="hidden" name="regStep" value="2"/>
+         { T.web.b( 'keep ) |* <input type="hidden" name="keep" value="1"/> }
          <div class="row-fluid">
           <div style="padding-top:1em;">One last step.  Please enter the name of your company below.  This helps other identify you within Volerro.</div>
          </div>
@@ -580,7 +581,7 @@ $( function() {
       sess.user match {
       case null => B.newUser()
       case u    => if ( u.isNew || keep ) {
-                     if ( keep ) {
+                     if ( keep && u.s( 'firstName ) == "unknown" ) {
                        u( "firstName" ) = ""
                        u( "lastName" ) = ""
                      }
@@ -644,10 +645,28 @@ $( function() {
           if ( org != null )
             user.save
             
-          jsonRes.htmlMap = Map( 
-              "html" -> WebTemplate( Register.page( user, org, jsonRes ) ),
-              "transition" -> "slideLeft",
-              "duration" -> 500 )
+          if ( keep ) {
+            if ( org != null ) {
+              user( 'org ) = org.id
+              sess.login( user )
+              user.save
+              val jsonRes = web.jsonRes( sess )
+              jsonRes.extraJS = "tyr.app.loadMenubar( '/user/menubar' ); tyr.app.loadMain( '/dashboard' );"
+              web.json( jsonRes )
+              return
+            } else {
+              jsonRes.htmlMap = Map( 
+                  "html" -> WebTemplate( Register.page( user, org, jsonRes ) ),
+                  "transition" -> "slideLeft",
+                  "duration" -> 500 )
+            }
+          } else {
+            jsonRes.htmlMap = Map( 
+                "html" -> WebTemplate( Register.page( user, org, jsonRes ) ),
+                "transition" -> "slideLeft",
+                "duration" -> 500 )
+          }
+            
         } else {
           ContactInfo.ensure( user.s( 'email ), user.fullName, beta = true )
           
@@ -679,6 +698,7 @@ $( function() {
    </div> ++
    <div class={ "offset2 span8" + ( beta |* " beta" ) }>
     <form method="post" action={ wpath + "/register" } id="f" class="register" style="margin-bottom:12px;" data-val="1">
+     { keep |* <input type="hidden" name="keep" value="1"/> }
      <input type="hidden" name="beta" value={ beta._s }/>
      <fieldset class="registerBox">
       <div class="container-fluid" style="padding:0;">
