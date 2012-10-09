@@ -78,7 +78,7 @@ object Register {
          </div>
         </div>
       } else {
-        jsonRes.extraJS = "$(function(){ tyr.autocomplete( 'companyName', '/log/company' ); $('#companyName').focus(); });"
+        //jsonRes.extraJS = "$(function(){ tyr.callWhenHtmlDone( function() { tyr.autocomplete( 'companyName', '/log/company' ); $('#companyName').focus(); }, 1000 ) } );"
         
         <div class="container-fluid" style="padding:0;">
          <input type="hidden" name="regStep" value="2"/>
@@ -645,28 +645,23 @@ $( function() {
           if ( org != null )
             user.save
             
-          if ( keep ) {
-            if ( org != null ) {
-              user( 'org ) = org.id
-              sess.login( user )
-              user.save
-              val jsonRes = web.jsonRes( sess )
-              jsonRes.extraJS = "tyr.app.loadMenubar( '/user/menubar' ); tyr.app.loadMain( '/dashboard' );"
-              web.json( jsonRes )
-              return
-            } else {
-              jsonRes.htmlMap = Map( 
-                  "html" -> WebTemplate( Register.page( user, org, jsonRes ) ),
-                  "transition" -> "slideLeft",
-                  "duration" -> 500 )
-            }
+          if ( keep && org != null ) {
+            user( 'org ) = org.id
+            sess.login( user )
+            user.save
+            
+            B.welcomeUserEvent
+            val jsonRes = web.jsonRes( sess )
+            jsonRes.extraJS = "tyr.app.loadMenubar( '/user/menubar' ); tyr.app.loadMain( '/dashboard' );"
+            web.json( jsonRes )
+            
+            return
           } else {
             jsonRes.htmlMap = Map( 
                 "html" -> WebTemplate( Register.page( user, org, jsonRes ) ),
                 "transition" -> "slideLeft",
                 "duration" -> 500 )
           }
-            
         } else {
           ContactInfo.ensure( user.s( 'email ), user.fullName, beta = true )
           

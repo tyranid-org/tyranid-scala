@@ -158,6 +158,8 @@ trait Bootable {
   @volatile var Org:OrgMeta = null
   @volatile var Location:MongoEntity = null
   @volatile var newSession:() => Session = null
+  
+  def welcomeUserEvent
 
   def ContentEntities:Seq[MongoEntity] = Nil
 
@@ -173,12 +175,12 @@ trait Bootable {
 
   lazy val hostName = InetAddress.getLocalHost.getHostName
 
-  //lazy val DEV = hostName.indexOf( "macbook" ) != -1 || hostName.indexOf( "iMac" ) != -1 || hostName.indexOf( "imac" ) != -1 || hostName.indexOf( "-mac-" ) != -1 || hostName.indexOf( ".local" ) != -1
-  lazy val DEV = false
+  lazy val DEV = hostName.indexOf( "macbook" ) != -1 || hostName.indexOf( "iMac" ) != -1 || hostName.indexOf( "imac" ) != -1 || hostName.indexOf( "-mac-" ) != -1 || hostName.indexOf( ".local" ) != -1
+  //lazy val DEV = false
   lazy val STAGE = !DEV && hostName.indexOf( "-x" ) != -1
   //lazy val STAGE = false
-  //lazy val BETA = !DEV && !STAGE && hostName.indexOf( "-beta" ) != -1
-  lazy val BETA = true
+  lazy val BETA = !DEV && !STAGE && hostName.indexOf( "-beta" ) != -1
+  //lazy val BETA = true
   lazy val PRODUCTION = !( DEV || STAGE || BETA )
 
   def mode =
