@@ -297,7 +297,6 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     ( file != null ) ? file | B.getS3Bucket( "public" ).file( "images/default_project_image.png" )
   }  
 
-    // TODO: Replace this with Carl's pallete
   val defaultColors = Array( "5f89a2", "597b7c", "93278f", "e72967", "f47b20", "ef5033", "009591", "9fd5b5", "1bb7ea", "73d0f9" )
   def getRandomColor = {
     import java.util.Random
