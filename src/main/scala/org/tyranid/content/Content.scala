@@ -83,8 +83,6 @@ object ContentType extends RamEntity( tid = "a10v" ) {
 
 case class ContentType( override val view:TupleView ) extends Tuple( view )
 
-
-
 object ContentOrder extends RamEntity( tid = "a0St" ) {
   type RecType = ContentOrder
   override def convert( view:TupleView ) = new ContentOrder( view )
