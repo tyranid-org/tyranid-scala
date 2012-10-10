@@ -568,7 +568,11 @@ trait ContentMeta extends PrivateKeyEntity {
   }
 
   override def delete( rec: Record ) {
-    deleteThumbs( rec.tid )
+    val contentType = ContentType.getById( rec.i( 'type ) )
+    
+    if ( contentType != ContentType.Folder )
+      deleteThumbs( rec.tid )
+      
     super.delete(rec)
   }
 }
