@@ -574,7 +574,7 @@ $( function() {
       return
     }
     
-    val beta = web.b( 'beta )
+    val betaSignup = web.b( 'beta )
     val keep = web.b( 'keep )
     
     val user =
@@ -616,13 +616,16 @@ $( function() {
       }
     }
 
-    val ui = user.view.ui( "register" + ( beta ? "beta" | "rb" ) )
+    val registerView = "register" + ( betaSignup ? "beta" | ( "rb" + ( B.BETA ? "beta" | "" ) ) )
+    
+    println( registerView )
+    val ui = user.view.ui( registerView )
 
     user.isAdding = true
     
     if ( web.b( 'xhrSbt ) ) {
       val jsonRes = web.jsonRes( sess )
-      val invalids = Scope( user, initialDraw = false, captcha = !beta ).submit( user, ui )
+      val invalids = Scope( user, initialDraw = false, captcha = !betaSignup ).submit( user, ui )
 
       if ( invalids.isEmpty ) {
         user( 'createdOn ) = new Date
@@ -636,7 +639,7 @@ $( function() {
         
         val email = user.s( 'email )
         
-        if ( !beta ) {
+        if ( !betaSignup ) {
           val org = Email.isWellKnownProvider( email ) ? null | {
             val emailDomain = Email.domainFor( email )
             B.Org.db.findOne( Mobj( "domain" -> emailDomain.toPatternI ), Mobj( "name" -> 1, "domain" -> 1 ) )
@@ -674,7 +677,7 @@ $( function() {
         for ( i <- invalids )
           sess.error( i.message )
           
-        if ( B.requireReCaptcha && !beta )
+        if ( B.requireReCaptcha && !betaSignup )
           jsonRes.extraJS = "Recaptcha.reload();"
       }
       
@@ -685,20 +688,20 @@ $( function() {
     val entryApp = web.i( 'app ) or 0
     sess.put( "entryApp", new java.lang.Integer( entryApp._i ) )
 
-    val doRecaptcha = B.requireReCaptcha;
+    val doRecaptcha = B.requireReCaptcha && !betaSignup
     
     val inner =
-   <div class="offset3 span6" style={ "margin-top:" + ( doRecaptcha ? ( B.beta ? "25" | "50" )  | "100" ) + "px;text-align:center;" }>
+   <div class="offset3 span6" style={ "margin-top:" + ( doRecaptcha ? ( B.BETA ? "25" | "50" )  | "100" ) + "px;text-align:center;" }>
     <a href="/"><img src="/volerro_logo.png"/></a>
    </div> ++
-   <div class={ "offset2 span8" + ( beta |* " beta" ) }>
+   <div class={ "offset2 span8" + ( betaSignup |* " beta" ) }>
     <form method="post" action={ wpath + "/register" } id="f" class="register" style="margin-bottom:12px;" data-val="1">
      { keep |* <input type="hidden" name="keep" value="1"/> }
-     <input type="hidden" name="beta" value={ beta._s }/>
+     { betaSignup |* <input type="hidden" name="beta" value="1"/> }
      <fieldset class="registerBox">
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
-        <h1 class="span12">{ beta ? "Join our private beta!" | "Register" }</h1>
+        <h1 class="span12">{ betaSignup ? "Join our private beta!" | ( "Register" + ( B.BETA ? " for Beta access." | "" ) ) }</h1>
        </div>
       </div>
       <hr style="margin:4px 0 30px;"/>
@@ -706,7 +709,7 @@ $( function() {
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
          <div class="container-fluid span12" style="padding:0;">
-          { !keep && ( B.beta && !beta ) |*
+          { !keep && ( B.BETA && !betaSignup ) |*
           <div class="row-fluid">
            <div class="span6">
             <input type="text" name="activationCode" id="activationCode" value={ user.s( 'activationCode ) } placeholder="Invite Code" data-update="blur" data-val="req"/>
@@ -714,7 +717,7 @@ $( function() {
            <div class="span6 val-display"/>
           </div>
           }
-          { ( !keep && ( B.beta && !beta ) ) ?
+          { ( !keep && ( B.BETA && !betaSignup ) ) ?
           <div class="row-fluid">
            <div class="span3"><input type="text" id="firstName" name="firstName" readonly="readonly" placeholder="First Name" value={ user.s( 'firstName ) }/></div>
            <div class="span3"><input type="text" id="lastName" name="lastName" readonly="readonly" placeholder="Last Name" value={ user.s( 'lastName ) }/></div>
@@ -733,14 +736,14 @@ $( function() {
           }
           <div class="row-fluid">
            <div class="span6">
-            { ( B.beta && !beta ) ?
+            { ( B.BETA && !betaSignup ) ?
               <input type="text" name="email" id="email" value={ user.s( 'email ) } readonly="readonly" placeholder="Email address"/> |
               <input type="text" name="email" id="email" value={ user.s( 'email ) } placeholder="Email address" data-update="blur" data-val="req,email"/>
             }
            </div>
            <div class="span6 val-display"/>
           </div>
-          { !beta |*
+          { !betaSignup |*
           <div class="row-fluid">
            <div class="span6">
             <input type="password" name="password" id="password" placeholder="Password" data-val="req,min=7"/>
@@ -755,7 +758,7 @@ $( function() {
            <div class="span6 val-display"/>
           </div>
           }
-          { ( doRecaptcha && !beta ) |*
+          { doRecaptcha |*
           <div class="row-fluid">
            <div class="span6">
             <script>{ Unparsed( "jQuery.getScript( \"" + DbReCaptcha.scriptSrc + "\" );" + DbReCaptcha.showFunction( "white" ) ) }</script>
@@ -768,12 +771,12 @@ $( function() {
        </div>
        <hr style="margin:20px 0 12px;"/>
        <div class="row-fluid">
-         { !beta |* 
+         { !betaSignup |* 
          <div class="span6">
           <div style="height:40px;line-height:40px;position:relative;top:10px;">Already registered? <a tabindex="-1" href="javascript:void(0);" data-sbt={ Form.attrJson( Map( "href" -> ( wpath + "/in" ), "top" -> 1 ) ) }>Sign in here</a></div>
          </div> 
          } 
-         <div class={ "span6" + ( beta |* " offset6" ) } style="height:40px;padding-top:8px;"><button type="submit" class="btn-success btn pull-right">{ beta ? "Sign-up" | "Register" } <i class="icon-caret-right"></i></button></div>
+         <div class={ "span6" + ( betaSignup |* " offset6" ) } style="height:40px;padding-top:8px;"><button type="submit" class="btn-success btn pull-right">{ betaSignup ? "Sign-up" | "Register" } <i class="icon-caret-right"></i></button></div>
        </div>
       </div>
      </fieldset>
@@ -787,7 +790,7 @@ $( function() {
         "transition" -> "fadeOutIn",
         "duration" -> 500 )
     
-    if ( doRecaptcha && !beta )
+    if ( doRecaptcha )
       jsonRes.extraJS = "tyr.callWhen( function() { return window.Recaptcha !== undefined && window.showRecapcha !== null; }, function() {" + DbReCaptcha.callShowFunction + "}, 100 );"
       
     web.json( jsonRes )

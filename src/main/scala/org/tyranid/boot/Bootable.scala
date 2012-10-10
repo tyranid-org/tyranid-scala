@@ -144,7 +144,6 @@ trait Bootable {
 
   def requireReCaptcha = TyranidConfig().b( 'recaptcha )
   def accessLogs       = TyranidConfig().b( 'accessLogs )
-  def beta             = TyranidConfig().b( 'beta )
 
   def access( thread:ThreadData, accessType:AccessType, ref:AnyRef )
 
