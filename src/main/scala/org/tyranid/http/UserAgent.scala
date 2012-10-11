@@ -126,6 +126,8 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
           agentName = "SkimBot"
         else if ( ua startsWith "ZmEu" )
           agentName = "ZmEu"
+        else if ( ua startsWith "Morfeus Fucking Scanner" ) 
+          agentName = "Morfeus Fucking Scanner"
       }
   
       obj( 'agentType )         = json.s( 'agent_type )
@@ -156,6 +158,7 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
               | "ia_archiver"
               | "libwww-perl"
               | "LinkedInBot"
+              | "Morfeus Fucking Scanner"
               | "msnbot"
               | "Plesk"
               | "Python-urllib"
