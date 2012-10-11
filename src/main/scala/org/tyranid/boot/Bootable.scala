@@ -30,6 +30,7 @@ import com.braintreegateway.BraintreeGateway
 import org.bson.types.ObjectId
 
 import org.tyranid.Imp._
+import org.tyranid.content.Content
 import org.tyranid.db.Entity
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.document.crocodoc.CrocApp
@@ -262,6 +263,7 @@ trait Bootable {
 
   def groupMemberAdded( group:Group, tid:String )   {}
   def groupMemberRemoved( group:Group, tid:String ) {}
+  def groupContents( group:Group ):Seq[Content] = Nil
  
 
   def initEntities {

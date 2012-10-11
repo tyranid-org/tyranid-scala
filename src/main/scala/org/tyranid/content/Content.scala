@@ -124,6 +124,7 @@ object ContentMoveMode extends RamEntity( tid = "a0Tt" ) {
 
   val Before  = add( 1, "Before" )
   val Into    = add( 2, "Into" )
+  val End     = add( 3, "End" )
 }
 
 case class ContentMoveMode( override val view:TupleView ) extends Tuple( view )
@@ -138,7 +139,11 @@ object Repositioning {
 
     val contents = container.contents
 
+
     val newOrder:Seq[Content] = newOrderTids.map( tid => contents.find( _.tid == tid ).get )
+
+spam( "OLD " + contents.map( _.label ).mkString( ", " ) )
+spam( "NEW " + newOrder.map( _.label ).mkString( ", " ) )
 
     var moving:Content = null
     var before:Content = null
@@ -172,27 +177,34 @@ object Repositioning {
      *
      *   for each element X in the new order ...
      *     find X's position in the old order
-     *     is the element Y after X in the new order before it in the old array ?
+     *           are any elements BEFORE X in the new order AFTER X in the old order
+     *     -OR - are any elements AFTER X in the new order BEFORE X in the old order ?
      *       if so,
-     *         X is "moving"
-     *         Y is "to"
+     *         moving = X
+     *         to = element after X in newOrder or else null if X is already at the end
      */
     def findMoving {
-      for ( ni <- 0 until newOrder.size - 1 ) {
+      val olen = contents.size
+      val nlen = newOrder.size
+
+      for ( ni <- 0 until nlen ) {
         val nic = newOrder( ni ) // nc = new content
 
         val oi = contents.indexWhere( _.id == nic.id )
-        val nj = ni + 1
-        val njc = newOrder( nj )
 
-        for ( oj <- 0 until oi ) {
-          val ojc = contents( oj )
-
-          if ( ojc.id == njc.id ) {
-            moving = nic
-            before = njc
-            return
-          }
+        if (   // are any elements BEFORE ni in the new order while AFTER oi in the old order ?
+               newOrder.slice( 0, ni - 1 ).exists( njc =>
+                 contents.slice( oi+1, olen ).exists( _.id == njc.id )
+               )
+            || // are any elements AFTER ni in the new order while BEFORE oi in the old order ?
+               newOrder.slice( ni + 1, nlen ).exists( njc =>
+                 contents.slice( 0, oi ).exists( _.id == njc.id )
+               )
+            ) {
+          moving = nic
+          before = if ( ni + 1 < nlen ) newOrder( ni + 1 )
+                   else                 null
+          return
         }
       }
     }
@@ -200,8 +212,10 @@ object Repositioning {
     findMoving
 
     if ( moving == null ) {
+spam( "moving=null" )
       null
     } else {
+spam( "moving=" + moving.label )
       val repos = Repositioning( moving = moving, before = before, beforeEnd = ( before == null ), toContainer = container, toContents = contents, fromContainer = container, fromContents = null )
       repos.reposition
       repos
@@ -212,7 +226,7 @@ object Repositioning {
 
     // PERFORMANCE-TODO:  instead of using contents, add a query method that just returns a Seq[DBObject] just containing '_id and 'pos ...
 
-    if ( to.id == moving.id )
+    if ( to != null && to.id == moving.id )
       return null
 
     var fromContainer:Content = null
@@ -222,6 +236,7 @@ object Repositioning {
     var toContents:Seq[Content] = null
 
     var before:Content = null
+    var beforeEnd = false
 
     mode match {
     case ContentMoveMode.Before =>
@@ -241,9 +256,22 @@ object Repositioning {
       before =
         if ( toContents.nonEmpty ) toContents.head
         else                       null
+
+    case ContentMoveMode.End =>
+      fromContainer = moving.container
+
+      toContainer = if ( to != null ) to else fromContainer
+      toContents = toContainer.contents
+
+      beforeEnd = true
     }
 
-    val repos = Repositioning( moving = moving, before = before, beforeEnd = false, toContainer = toContainer, toContents = toContents, fromContainer = fromContainer, fromContents = fromContents )
+spam( "     moving=" + moving.label )
+spam( "         to=" + ( if ( to != null ) to.label else "null" ) )
+spam( "   moveMode=" + mode.label )
+spam( "toContainer=" + toContainer.label )
+
+    val repos = Repositioning( moving = moving, before = before, beforeEnd = beforeEnd, toContainer = toContainer, toContents = toContents, fromContainer = fromContainer, fromContents = fromContents )
     repos.reposition
     repos
   }
@@ -251,7 +279,7 @@ object Repositioning {
   def updatePos( c:Content, pos:Int ) {
     val ePos = c.i( 'pos )
 
-    if ( ePos != pos ) {
+    if ( !c.obj.has( 'pos ) || ePos != pos ) {
       c( 'pos ) = pos
       c.db.update( Mobj( "_id" -> c.id ), Mobj( $set -> Mobj( "pos" -> pos ) ) )
     }
@@ -268,8 +296,14 @@ case class Repositioning( var moving:Content,
                           var fromContents:Seq[Content] ) {
 
   def reposition {
+spam( "fromContainer: " + fromContainer.label )
+spam( "  toContainer: " + toContainer.label )
+spam( "       moving: " + moving.label )
+spam( "       before: " + ( if ( before != null ) before.label else null ) )
+spam( "    beforeEnd: " + beforeEnd )
 
     if ( toContainer.id != fromContainer.id ) {
+spam( "1" )
 
       fromContents = fromContainer.contents.filter( _.id != moving.id )
 
@@ -278,11 +312,14 @@ case class Repositioning( var moving:Content,
     }
 
     toContents = toContents.filter( _.id != moving.id )
+spam( "toContents 1= " + toContents.map( _.label ).mkString( ", " ) )
 
     if ( before != null ) {
       val idx = toContents.indexWhere( _.id == before.id )
+spam( "before idx=" + idx )
 
       toContents = ( toContents.slice( 0, idx ) :+ moving ) ++ toContents.slice( idx, toContents.size )
+spam( "toContents 2= " + toContents.map( _.label ).mkString( ", " ) )
     } else if ( beforeEnd ) {
       toContents = toContents :+ moving
     } else {
