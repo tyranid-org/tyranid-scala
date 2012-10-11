@@ -83,8 +83,6 @@ object ContentType extends RamEntity( tid = "a10v" ) {
 
 case class ContentType( override val view:TupleView ) extends Tuple( view )
 
-
-
 object ContentOrder extends RamEntity( tid = "a0St" ) {
   type RecType = ContentOrder
   override def convert( view:TupleView ) = new ContentOrder( view )
@@ -605,7 +603,11 @@ trait ContentMeta extends PrivateKeyEntity {
   }
 
   override def delete( rec: Record ) {
-    deleteThumbs( rec.tid )
+    val contentType = ContentType.getById( rec.i( 'type ) )
+    
+    if ( contentType != ContentType.Folder )
+      deleteThumbs( rec.tid )
+      
     super.delete(rec)
   }
 }

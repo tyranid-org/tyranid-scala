@@ -202,7 +202,8 @@ class DateImp( d:Date ) {
     if ( now.year != cal.year )
       sb ++= ", " ++= cal.year.toString
 
-    sb ++= ", %d:%02d%s".format( cal.hour12, cal.minute, cal.ampm )
+    val hour = ( cal.hour12 == 0 ) ? 12 | cal.hour12
+    sb ++= ", %d:%02d%s".format( hour, cal.minute, cal.ampm )
 
     sb.toString
   }
