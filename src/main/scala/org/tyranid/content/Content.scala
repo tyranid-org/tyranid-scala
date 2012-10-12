@@ -135,13 +135,10 @@ object Repositioning {
 
   def apply( container:Content, newOrderTids:Seq[String] ):Repositioning = {
 
-    val contents = container.contents
+    val contents = ContentOrder.Manual.sort( container.contents )
 
 
     val newOrder:Seq[Content] = newOrderTids.map( tid => contents.find( _.tid == tid ).get )
-
-spam( "OLD " + contents.map( _.label ).mkString( ", " ) )
-spam( "NEW " + newOrder.map( _.label ).mkString( ", " ) )
 
     var moving:Content = null
     var before:Content = null
@@ -210,10 +207,8 @@ spam( "NEW " + newOrder.map( _.label ).mkString( ", " ) )
     findMoving
 
     if ( moving == null ) {
-spam( "moving=null" )
       null
     } else {
-spam( "moving=" + moving.label )
       val repos = Repositioning( moving = moving, before = before, beforeEnd = ( before == null ), toContainer = container, toContents = contents, fromContainer = container, fromContents = null )
       repos.reposition
       repos
@@ -264,11 +259,6 @@ spam( "moving=" + moving.label )
       beforeEnd = true
     }
 
-spam( "     moving=" + moving.label )
-spam( "         to=" + ( if ( to != null ) to.label else "null" ) )
-spam( "   moveMode=" + mode.label )
-spam( "toContainer=" + toContainer.label )
-
     val repos = Repositioning( moving = moving, before = before, beforeEnd = beforeEnd, toContainer = toContainer, toContents = toContents, fromContainer = fromContainer, fromContents = fromContents )
     repos.reposition
     repos
@@ -294,14 +284,7 @@ case class Repositioning( var moving:Content,
                           var fromContents:Seq[Content] ) {
 
   def reposition {
-spam( "fromContainer: " + fromContainer.label )
-spam( "  toContainer: " + toContainer.label )
-spam( "       moving: " + moving.label )
-spam( "       before: " + ( if ( before != null ) before.label else null ) )
-spam( "    beforeEnd: " + beforeEnd )
-
     if ( toContainer.id != fromContainer.id ) {
-spam( "1" )
 
       fromContents = fromContainer.contents.filter( _.id != moving.id )
 
@@ -310,14 +293,11 @@ spam( "1" )
     }
 
     toContents = toContents.filter( _.id != moving.id )
-spam( "toContents 1= " + toContents.map( _.label ).mkString( ", " ) )
 
     if ( before != null ) {
       val idx = toContents.indexWhere( _.id == before.id )
-spam( "before idx=" + idx )
 
       toContents = ( toContents.slice( 0, idx ) :+ moving ) ++ toContents.slice( idx, toContents.size )
-spam( "toContents 2= " + toContents.map( _.label ).mkString( ", " ) )
     } else if ( beforeEnd ) {
       toContents = toContents :+ moving
     } else {
