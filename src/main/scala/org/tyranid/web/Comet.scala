@@ -17,10 +17,13 @@
 
 package org.tyranid.web
 
-import org.cometd.bayeux.server.BayeuxServer
+import scala.collection.JavaConversions._
+
+import org.cometd.bayeux.server.{ BayeuxServer, ServerSession }
 import org.cometd.server.AbstractService
 
 import org.tyranid.Imp._
+import org.tyranid.session.{ Session, WebSession }
 
 
 case class CometService( name:String, create: ( BayeuxServer ) => AbstractService ) {
@@ -29,6 +32,33 @@ case class CometService( name:String, create: ( BayeuxServer ) => AbstractServic
 
   def init( bayeux:BayeuxServer ) {
     service = create( bayeux )
+  }
+}
+
+
+case class Comet( serviceSession:ServerSession, fromSession:ServerSession, session:Session ) {
+
+  def send( output:collection.Map[String,AnyRef] ) {
+    val jOutput:java.util.Map[String,Object] = output
+    fromSession.deliver( serviceSession, "/volee", jOutput, null )
+  }
+
+}
+
+object Comet {
+
+  def visit( visitor: ( Comet ) => Unit ) = {
+    val serverSession = B.comets.find( _.name == "volee" ).get.service.getServerSession
+
+    for ( session <- B.bayeux.getSessions ) {
+      val httpSessionId = session.getAttribute( WebSession.CometHttpSessionIdKey )
+
+      if ( httpSessionId != null ) {
+        val tyrSession = Session.byHttpSessionId( httpSessionId.as[String] ).as[Session] // as a Volerro session
+
+        visitor( Comet( serverSession, session, tyrSession ) )
+      }
+    }
   }
 }
 
