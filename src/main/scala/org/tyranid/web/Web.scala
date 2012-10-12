@@ -87,7 +87,7 @@ class WebFilter extends Filter {
     ctx.res.sendRedirect( sb.toString )
   }
 
-  val assetPattern = java.util.regex.Pattern.compile( "([^\\s]+(\\.(?i)(ico|jpg|png|gif|bmp|js|css|html|ttf|woff|svg|html))$)" )
+  val assetPattern = java.util.regex.Pattern.compile( "([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|woff|svg|html))$)" )
   
   def notAsset( path:String ) = !assetPattern.matcher( path ).matches
   
