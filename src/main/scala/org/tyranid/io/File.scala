@@ -165,7 +165,7 @@ object File {
   
   def mimeTypeFor( filename:String ) = {
     val fsave = filename.safeString.toLowerCase
-    val ext = filename.suffix( '.' )
+    val ext = fsave.suffix( '.' )
     
     MimeType.byExtension.get( ext ).getOrElse( null )
   }
