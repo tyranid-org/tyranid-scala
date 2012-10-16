@@ -75,6 +75,7 @@ object Imp {
   */
 
   def $push( field:String, value:Any ) = Mobj( "$push" -> Mobj( field -> value ) )
+  def $addToSet( field:String, value:Any ) = Mobj( "$addToSet" -> Mobj( field -> value ) )
 
 	implicit def mongoImp( mongo:com.mongodb.Mongo ) = new MongoImp( mongo )
 	implicit def dbImp( db:DB )                      = new DBImp( db )

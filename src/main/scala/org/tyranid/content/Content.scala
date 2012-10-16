@@ -493,7 +493,7 @@ trait ContentMeta extends PrivateKeyEntity {
 
   "on"                is DbDateTime           is 'required;
   "type"              is DbLink(ContentType)  is 'required;
-  "tags"              is DbArray(DbLink(Tag)) ;
+  "tags"              is DbArray(DbLink(Tag)) is SearchText;
   "name"              is DbChar(50)           is 'label is 'required is SearchText;
 
   "pos"               is DbInt                ; // the position of this content within its parent (group, folder, board, etc.) ... see the class "Repositioning"

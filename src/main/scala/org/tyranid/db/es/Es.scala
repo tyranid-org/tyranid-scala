@@ -28,7 +28,8 @@ import akka.actor.Actor
 import akka.actor.Actor.actorOf
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbArray, DbDateLike, DbNumber, DbTextLike, Domain, Entity, Record, View }
+import org.tyranid.db.{ DbArray, DbDateLike, DbLink, DbNumber, DbTextLike, Domain, Entity, Record, View, ViewAttribute }
+import org.tyranid.db.mongo.Imp._
 import org.tyranid.profile.User
 
 
@@ -131,6 +132,10 @@ object Es {
   def jsonFor( rec:Record ) = {
     val sb = new StringBuilder
 
+    def array( va:ViewAttribute, arr:BasicDBList ) {
+      sb += '[' ++= arr.toSeq.map( v => va.domain.as[DbArray].of.see( v ).toJsonStr ).mkString( "," ) += ']'
+    }
+
     def enter( rec:Record, root:Boolean = false ) {
       val view = rec.view
 
@@ -147,11 +152,12 @@ object Es {
 
         sb ++= va.att.dbName += ':'
         v match {
-        case crec:Record  => enter( crec )
-        case dbo:DBObject => enter( rec.rec( va ) )
-        case v:Number     => sb ++= v.toString
-        case t:Date       => sb ++= t.getTime.toString
-        case v            => sb += '"' ++= v.toString.encJson += '"'
+        case crec:Record     => enter( crec )
+        case arr:BasicDBList => array( va, arr )
+        case dbo:DBObject    => enter( rec.rec( va ) )
+        case v:Number        => sb ++= v.toString
+        case t:Date          => sb ++= t.getTime.toString
+        case v               => sb += '"' ++= v.toString.encJson += '"'
         }
       }
 
@@ -194,8 +200,11 @@ object Es {
             if att.search.text ) {
 
         def domain( dom:Domain ) {
-          att.domain match {
+          dom match {
           case text:DbTextLike =>
+            props( att.dbName ) = Map( "type" -> "string" )
+
+          case link:DbLink =>
             props( att.dbName ) = Map( "type" -> "string" )
 
           case number:DbNumber =>
@@ -250,9 +259,9 @@ object Es {
       val mappings = mutable.Map[String,Any]()
 
       for ( e <- Entity.all;
-            if e.searchIndex == index && !e.embedded && e.isSearchable )
+            if e.searchIndex == index && !e.embedded && e.isSearchable ) {
         mappings( e.dbName ) = mappingFor( e )
-
+      }
       ( Es.host + "/" + index + "/" ).PUT(
         content = Map(
           "settings" -> Map(
