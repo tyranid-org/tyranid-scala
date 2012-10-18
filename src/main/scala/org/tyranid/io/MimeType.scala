@@ -153,7 +153,7 @@ object MimeType {
     map
   }
 
-  lazy val byExtension:Map[String,MimeType] =
+  lazy val byExtension:collection.Map[String,MimeType] =
     Map(
       ( for ( mt <- types;
               ext <- mt.extensions )
