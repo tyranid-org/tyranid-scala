@@ -1070,6 +1070,15 @@ abstract class Content( override val view:MongoView,
       s( 'fileMimeType )
     else
       org.tyranid.io.File.mimeTypeFor( s( 'fileName ) )          
+
+  def getFileMimeType = {
+    val mts = fileMimeType
+    var mt = MimeType.byMimeType.getOrElse( mts, null )
+    if ( mt == null )
+      mt = MimeType.byExtension.getOrElse( mts, null )
+
+    mt
+  }
 }
 
 trait ContentEdit {
