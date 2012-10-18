@@ -104,7 +104,7 @@ class Indexer extends Actor {
  *       *** going with REST/JSON for now ***
  */
 object Es {
-
+  val UTF8_CHARSET = java.nio.charset.Charset.forName("UTF-8")
   val host = "http://localhost:9200"
 
   def search( text:String, user:User ) = {
@@ -138,6 +138,7 @@ object Es {
 
     def enter( rec:Record, root:Boolean = false ) {
       val view = rec.view
+      
 
       sb += '{'
       var first = true
@@ -157,6 +158,7 @@ object Es {
         case dbo:DBObject    => enter( rec.rec( va ) )
         case v:Number        => sb ++= v.toString
         case t:Date          => sb ++= t.getTime.toString
+        //case v               => sb += '"' ++= new String( v.toString.getBytes(UTF8_CHARSET), UTF8_CHARSET ).encJson += '"'
         case v               => sb += '"' ++= v.toString.encJson += '"'
         }
       }
