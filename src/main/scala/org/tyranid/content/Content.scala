@@ -693,9 +693,11 @@ abstract class Content( override val view:MongoView,
     case "t" => "thumbTiny"
     }
 
+  def thumbUrl( size:String ) = "/io/thumb/" + tid + "/" + size
+
   def thumbHtml( size:String ) =
     <div class={ thumbClass( size ) }>
-     <img src={ "/io/thumb/" + tid + "/" + size }/>
+     <img src={ thumbUrl( size ) }/>
     </div>
   
   def generateThumbs {
@@ -1063,12 +1065,11 @@ abstract class Content( override val view:MongoView,
   //def filePath =
 
 
-  def fileMimeType = {
+  def fileMimeType =
     if ( obj.has( 'fileMimeType ) )
       s( 'fileMimeType )
     else
       org.tyranid.io.File.mimeTypeFor( s( 'fileName ) )          
-  }
 }
 
 trait ContentEdit {

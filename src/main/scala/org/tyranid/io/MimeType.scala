@@ -37,7 +37,7 @@ object MimeType {
   val types = Seq(
     MimeType( "application/illustrator",                                                   "Adobe Illustrator",             Seq( "ai" ) ),
     MimeType( "application/msword",                                                        "Microsoft Word",                Seq( "doc", "dot" ) ),
-    MimeType( "application/octet-stream",                                                  null,                            Seq( "bin" ) ),
+    MimeType( "application/octet-stream",                                                  null,                            Seq( "bin", "exe" ) ),
     MimeType( "application/oda",                                                           null,                            Seq( "oda" ) ),
     MimeType( "application/postscript",                                                    "PostScript",                    Seq( "ps", "eps" ) ),
     MimeType( "application/pdf",                                                           "Portable Document Format",      Seq( "pdf" ) ),
@@ -93,8 +93,10 @@ object MimeType {
     MimeType( "application/x-latex",                                                       "LaTeX",                         Seq( "latex" ) ),
     MimeType( "application/x-mif",                                                         "MIF",                           Seq( "mif" ) ),
     MimeType( "application/x-netcdf",                                                      null,                            Seq( "cdf", "nc" ) ),
+    MimeType( "application/x-perl",                                                        "Perl",                          Seq( "pl" ) ),
     MimeType( "application/x-sh",                                                          null,                            Seq( "sh" ) ),
     MimeType( "application/x-shar",                                                        null,                            Seq( "shar" ) ),
+    MimeType( "application/x-stuffit",                                                     "StuffIt Archive",               Seq( "sit" ) ),
     MimeType( "application/x-tar",                                                         "Tape Archive",                  Seq( "tar" ) ),
     MimeType( "application/x-tcl",                                                         "Tool Command Language",         Seq( "tcl" ) ),
     MimeType( "application/x-tex",                                                         "TeX",                           Seq( "tex" ) ),
@@ -124,6 +126,7 @@ object MimeType {
     MimeType( "image/x-xpixmap",                                                           "X PixMap",                      Seq( "xpm" ) ),
     MimeType( "image/x-xwindowdump",                                                       "X Windows Dump",                Seq( "xwd" ) ),
 
+    MimeType( "text/css",                                                                  "CSS",                           Seq( "css" ) ),
     MimeType( "text/html",                                                                 "HTML",                          Seq( "html", "htm" ) ),
     MimeType( "text/plain",                                                                "Text",                          Seq( "txt", "text" ) ),
     MimeType( "text/plain",                                                                "Markdown",                      Seq( "markdown", "md", "mkd" ) ),
@@ -156,6 +159,7 @@ object MimeType {
               ext <- mt.extensions )
           yield ext -> mt ):_* )
 
+  // TODO:  remove once the new way is tested
   val oldByExtension = Map( 
     "ai"       -> "application/illustrator",
     "aif"      -> "audio/x-aiff",
