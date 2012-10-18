@@ -77,10 +77,10 @@ class Indexer extends Actor {
 
     try {
       if ( json != "{}" ) {
-        //sp am( "posting index=" + index + "  type=" + typ )
-        //sp am( "url=" + Es.host + "/" + index + "/" + typ + "/" + id )
-        //sp am( "json=" + json )
-        ( Es.host + "/" + index + "/" + typ + "/" + id ).POST( content = json )
+spam( "posting index=" + index + "  type=" + typ )
+spam( "url=" + Es.host + "/" + index + "/" + typ + "/" + id )
+spam( "json=" + json )
+        spam( ( Es.host + "/" + index + "/" + typ + "/" + id ).POST( content = json ) )
       }
     } catch {
     case e:org.apache.http.conn.HttpHostConnectException =>
@@ -125,7 +125,7 @@ object Es {
           )
         )
       ).toJsonStr
-    //sp am( "query=" + query )
+    spam( "query=" + query )
     ( Es.host + "/_search" ).POST( content = query ).s
   }
 
@@ -249,8 +249,10 @@ object Es {
     )
   }
 
-  def index( rec:Record ) =
+  def index( rec:Record ) = {
+spam( "indexing " + rec.tid )
     Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
+  }
 
   def indexAll {
     for ( index <- Entity.all.filter( e => e.isSearchable && !e.embedded ).map( _.searchIndex ).toSeq.distinct ) {
