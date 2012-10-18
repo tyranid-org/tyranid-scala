@@ -159,15 +159,11 @@ object File {
   val tempBucket = new S3Bucket( "temp" )
 
   
-  def getExtension( mimetype:String ) = {
-    MimeType.byExtension.entrySet().find( _.getValue() == mimetype ).flatten( _.getKey(), null )
-  }
-  
   def mimeTypeFor( filename:String ) = {
     val fsave = filename.safeString.toLowerCase
     val ext = fsave.suffix( '.' )
     
-    MimeType.byExtension.get( ext ).getOrElse( null )
+    MimeType.byExtension.get( ext ).flatten( _.extension, null )
   }
   
   def safeExtension( filename:String ) = {
