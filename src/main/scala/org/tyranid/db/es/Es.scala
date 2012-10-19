@@ -30,6 +30,7 @@ import akka.actor.Actor.actorOf
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbArray, DbDateLike, DbLink, DbNumber, DbTextLike, Domain, Entity, Record, View, ViewAttribute }
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.json.Json
 import org.tyranid.profile.User
 
 
@@ -77,10 +78,19 @@ class Indexer extends Actor {
 
     try {
       if ( json != "{}" ) {
-spam( "posting index=" + index + "  type=" + typ )
-spam( "url=" + Es.host + "/" + index + "/" + typ + "/" + id )
-spam( "json=" + json )
-        spam( ( Es.host + "/" + index + "/" + typ + "/" + id ).POST( content = json ) )
+//spam( "posting index=" + index + "  type=" + typ )
+//spam( "url=" + Es.host + "/" + index + "/" + typ + "/" + id )
+//spam( "json=" + json )
+
+        val response  = ( Es.host + "/" + index + "/" + typ + "/" + id ).POST( content = json )
+        val responseJson = Json.parse( response._s )
+        
+        val error = responseJson.s( 'error )
+        
+        if ( error.notBlank ) {
+          println( "Failed search on ID " + id + ", json=" + response._s )
+          Log.log( Event.Search, "m" -> ( "Failed to index id " + id + ", type=" + typ + ", err=" + error ) ) 
+        }
       }
     } catch {
     case e:org.apache.http.conn.HttpHostConnectException =>
@@ -125,7 +135,7 @@ object Es {
           )
         )
       ).toJsonStr
-    spam( "query=" + query )
+    //spam( "query=" + query )
     ( Es.host + "/_search" ).POST( content = query ).s
   }
 
@@ -252,7 +262,7 @@ object Es {
   }
 
   def index( rec:Record ) = {
-spam( "indexing " + rec.tid )
+//spam( "indexing " + rec.tid )
     Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
   }
 

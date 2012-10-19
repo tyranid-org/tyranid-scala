@@ -89,11 +89,15 @@ class StringImp( s:String ) {
   def stripTags( tagName:String ) =
     ( "(?s)<" + tagName + ".*?(/>|</" + tagName + ">)" ).toPatternI.matcher( s ).replaceAll( "" )
 	
+  def noUtf8Pattern = Pattern.compile("[^\\x00-\\x7F]", Pattern.UNICODE_CASE | Pattern.CANON_EQ | Pattern.CASE_INSENSITIVE)
+  
+  def stripNonUtf8 = ( s == null ) ? s | noUtf8Pattern.matcher( s ).replaceAll( " " )
+      
   def encJson = {
     if ( s != null ) {
       val sb = new StringBuilder
       val len = s.length
-  
+      
       for ( i <- 0 until len ) {
         s.charAt( i ) match {
         case '\b' => sb ++= "\\b"

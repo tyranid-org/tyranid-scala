@@ -69,6 +69,7 @@ object Event extends RamEntity( tid = "a0It" ) {
   val Scribd     = add( 19, "Scribd" )
   val Issuu      = add( 20, "Issuu" )
   val License    = add( 21, "License" )
+  val Search     = add( 22, "Search" )
 }
 
 case class Event( override val view:TupleView ) extends Tuple( view ) {

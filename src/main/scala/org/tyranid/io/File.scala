@@ -23,20 +23,18 @@ import org.apache.tika.metadata.Metadata
 import org.apache.tika.parser.{ AutoDetectParser, Parser, ParseContext }
 import org.apache.tika.parser.html.HtmlParser
 import org.apache.tika.sax.BodyContentHandler
-
 import java.io.{ IOException, FileOutputStream, FileInputStream, InputStream, OutputStream, File => SysFile, ByteArrayOutputStream }
 import java.net.URL
-
 import scala.collection.mutable
 import scala.collection.JavaConversions._
 import scala.xml.{ NodeSeq, Unparsed }
-
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.{ Domain, Record, Scope }
 import org.tyranid.document.OpenOfficeParser
 import org.tyranid.ui.PathField
 import org.tyranid.web.WebContext
+import org.apache.tika.parser.txt.UniversalEncodingDetector
 
 
 trait HasText {
@@ -71,17 +69,18 @@ class TikaExtractor extends TextExtractor {
   
   override def extract( file:SysFile ) = {
     val parser = new AutoDetectParser( new DefaultDetector() )
-    val context =  new ParseContext()
+    val context = new ParseContext()
     
     context.set( classOf[Parser], parser )
   
     val out = new ByteArrayOutputStream()
+    
     var is:TikaInputStream = null
     
     try {
       is = TikaInputStream.get( file )
-      parser.parse( is, new BodyContentHandler( out ), new Metadata(), context ) 
-      out.toString
+      parser.parse( is, new BodyContentHandler( out ), new Metadata, context ) 
+      out.toString( "UTF-8" ).stripNonUtf8
     } finally {
       is.close()
     } 
@@ -94,12 +93,13 @@ class HtmlTextExtractor extends TextExtractor {
   
   override def extract( file:SysFile ) = {
     var is:InputStream = null
-   
+    val out = new ByteArrayOutputStream()
+    
     try {
       is = new FileInputStream( file )
       val handler = new BodyContentHandler()
-      new HtmlParser().parse( is, handler, new Metadata(), new ParseContext() )
-      handler.toString()    
+      new HtmlParser().parse( is, handler, new Metadata, new ParseContext() )
+      handler.toString().stripNonUtf8
     } finally {
       is.close
     }
