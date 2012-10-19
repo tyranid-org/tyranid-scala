@@ -205,6 +205,7 @@ case class JsonString( root:Any ) {
     case oid:ObjectId        => sb += '"' ++= oid.toString += '"'
     case ws:WebResponse      => sb ++= ws.toJsonStr
     case note:Notification   => sb += '"' ++= note.msg += '"'
+    case null => println( "Warning, turning NULL into JSON (empty string)" ); sb ++= "\"\""
     case u => println( "Don't know how to turn " + u + " (" + u.getClass() + ") into JSON" ); sb ++= "\"\"" 
     }
 }

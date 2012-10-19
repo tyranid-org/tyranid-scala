@@ -170,7 +170,9 @@ class WebFilter extends Filter {
       case e:Exception =>
         println( "GOT EXCEPTION: " + e.getMessage() )
         e.log
-        web.template( <tyr:errorPage/> )
+        
+        T.session.error( "Sorry, there seems to be some difficulties with this page.  Our technical staff have been notified that you have encountered this issue. Please visit <a href='http://rbsupport.volerro.com/' target='_blank'>http://rbsupport.volerro.com</a> if this is an urgent issue." )
+        web.b( 'xhr ) ? web.jsRes() | web.template( <tyr:errorPage/> )
       }
 
       return true
