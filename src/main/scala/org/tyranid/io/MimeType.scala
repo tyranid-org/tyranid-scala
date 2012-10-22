@@ -128,6 +128,7 @@ object MimeType {
 
     MimeType( "text/css",                                                                  "CSS",                           Seq( "css" ) ),
     MimeType( "text/html",                                                                 "HTML",                          Seq( "html", "htm" ) ),
+    MimeType( "text/javascript",                                                           "Javascript",                    Seq( "js" ) ),
     MimeType( "text/plain",                                                                "Text",                          Seq( "txt", "text" ) ),
     MimeType( "text/plain",                                                                "Markdown",                      Seq( "markdown", "md", "mkd" ) ),
     MimeType( "text/richtext",                                                             "Rich Text",                     Seq( "rtx" ) ),
@@ -195,6 +196,7 @@ object MimeType {
     "jpe"      -> "image/jpeg",
     "jpeg"     -> "image/jpeg",
     "jpg"      -> "image/jpeg",
+    "js"       -> "text/javascript",
     
     "latex"    -> "application/x-latex",
 
