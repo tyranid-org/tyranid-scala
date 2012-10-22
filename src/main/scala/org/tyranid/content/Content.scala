@@ -236,7 +236,7 @@ object Repositioning {
       fromContainer = moving.container
 
       toContainer = to.container
-      toContents = toContainer.contents
+      toContents = ContentOrder.Manual.sort( toContainer.contents )
 
       before = to
 
@@ -244,7 +244,7 @@ object Repositioning {
       fromContainer = moving.container
 
       toContainer = to
-      toContents = toContainer.contents
+      toContents = ContentOrder.Manual.sort( toContainer.contents )
 
       before =
         if ( toContents.nonEmpty ) toContents.head
@@ -254,7 +254,7 @@ object Repositioning {
       fromContainer = moving.container
 
       toContainer = if ( to != null ) to else fromContainer
-      toContents = toContainer.contents
+      toContents = ContentOrder.Manual.sort( toContainer.contents )
 
       beforeEnd = true
     }
@@ -284,9 +284,11 @@ case class Repositioning( var moving:Content,
                           var fromContents:Seq[Content] ) {
 
   def reposition {
+//sp am( "BEFORE: " + toContents.map( _.label ).mkString( ", " ) )
+
     if ( toContainer.id != fromContainer.id ) {
 
-      fromContents = fromContainer.contents.filter( _.id != moving.id )
+      fromContents = ContentOrder.Manual.sort( fromContainer.contents ).filter( _.id != moving.id )
 
       for ( i <- 0 until fromContents.size )
         Repositioning.updatePos( fromContents( i ), i )
@@ -304,6 +306,7 @@ case class Repositioning( var moving:Content,
       toContents = moving +: toContents
     }
 
+//sp am( " AFTER: " + toContents.map( _.label ).mkString( ", " ) )
     for ( i <- 0 until toContents.size )
       Repositioning.updatePos( toContents( i ), i )
   }
