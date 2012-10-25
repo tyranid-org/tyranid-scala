@@ -83,7 +83,7 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   
 //    <iframe style={ "width:100%;height:" + height + "px;" } src={ previewUrlFor( extDocId ) }/>    
   def docPreviewContainer( extDocId:String, height:String="100%" ): NodeSeq =
-    <div class="doc-view doc crocodoc" id={ "dv_" + extDocId }/>
+    <div class="doc-view doc crocodoc annotatableObject" id={ "dv_" + extDocId }/>
   
   override def previewJsFor( extDocId:String ) = {
     val sessionJson = Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s
