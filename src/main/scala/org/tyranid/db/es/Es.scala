@@ -117,8 +117,8 @@ object Es {
   val UTF8_CHARSET = java.nio.charset.Charset.forName("UTF-8")
   val host = "http://localhost:9200"
 
-  def search( text:String, user:User ) = {
-    val query =
+  def search( text:String, user:User ):String =
+    search(
       Map(
         "query" -> Map(
           "filtered" -> Map(
@@ -134,9 +134,13 @@ object Es {
             )
           )
         )
-      ).toJsonStr
-    //spam( "query=" + query )
-    ( Es.host + "/_search" ).POST( content = query ).s
+      ),
+      user
+    )
+
+  def search( query:Map[String,Any], user:User ):String = {
+    //spam( "query=" + query.toJsonStr )
+    ( Es.host + "/_search" ).POST( content = query.toJsonStr ).s
   }
 
   def jsonFor( rec:Record ) = {
