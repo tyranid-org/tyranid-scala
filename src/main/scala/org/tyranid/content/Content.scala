@@ -454,7 +454,7 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
 
   def comments = Comment.asComments( a_?( 'r ) )
 
-  def hasAnnotation = has( 'pn ) || has( 'x ) || has ('y )
+  def hasAnnotation = has( 'x ) || has ('y )
 
   def annotationType:String = has( 'pn ) ? "page" | ( ( has( 'x ) ? "xy" ) | null )
 
