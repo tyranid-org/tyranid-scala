@@ -661,6 +661,8 @@ abstract class Content( override val view:MongoView,
 
   def hasVideo = MimeType.isVideo( fileMimeType )
 
+  def isPrivate = b( 'private )
+  
   def imageUrl( editing:ContentEdit = null ) = s( 'img )
 
   def imageDimensions = {

@@ -317,6 +317,9 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     */
   }
 
+  private val newOverlay = <div class="new-overlay"><div class="text">NEW</div></div>
+  private val privateOverlay = <div class="private-overlay"><span class="icon-minus"/><div class="text">PRIVATE</div></div>
+
   override def thumbHtml( size:String ) = {
     val imageUrl = s( 'img )
     val style:String = imageUrl.isBlank ? {
@@ -332,14 +335,19 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     } | null
 
     val projectSettings = this.settingsFor( T.user )
-    val newBox = size == "l" && !projectSettings.hasVisited // Only care about this if it is a large thumb
+    val isNew = size == "l" && !projectSettings.hasVisited // Only care about this if it is a large thumb
     
     val inner = 
       <div class={ thumbClass( size ) } style={ style }>
        { imageUrl.notBlank ? <img src={ "/io/thumb/" + tid + "/" + size }/> | <div class="text">{ s( 'name ) }</div> }
       </div>
 
-    newBox ? <div class="newBox">{ inner }<div class="newOverlay"><div class="text">NEW</div></div></div> | inner
+    if ( isNew || isPrivate ) {
+      val overlays = ( isPrivate && isNew ) ? ( newOverlay ++ privateOverlay ) | ( isNew ? newOverlay | privateOverlay )
+      <div class={ ( isNew |* "new-box" ) + ( isPrivate |* ( " private-box sz-" + size ) ) }>{ inner }{ overlays }</div>
+    } else {
+      inner 
+    }  
   }
   
   def settingsFor( user:User )      = GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> user.id, "g" -> this.id ) ) )
