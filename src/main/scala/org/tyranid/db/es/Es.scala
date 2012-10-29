@@ -171,7 +171,7 @@ object Es {
         case arr:BasicDBList => array( va, arr )
         case dbo:DBObject    => enter( rec.rec( va ) )
         case v:Number        => sb ++= v.toString
-        case t:Date          => sb ++= t.getTime.toString
+        case t:Date          => sb += '"' ++= t.toIso8601 += '"'
         //case v               => sb += '"' ++= new String( v.toString.getBytes(UTF8_CHARSET), UTF8_CHARSET ).encJson += '"'
         case v               => sb += '"' ++= v.toString.encJson += '"'
         }
@@ -266,20 +266,22 @@ object Es {
   }
 
   def index( rec:Record ) = {
-//spam( "indexing " + rec.tid )
+spam( "indexing " + rec.tid )
     Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
   }
 
-  def indexAll {
-    for ( index <- Entity.all.filter( e => e.isSearchable && !e.embedded ).map( _.searchIndex ).toSeq.distinct ) {
+  def deleteAll =
+    for ( index <- Entity.all.filter( e => e.isSearchable && !e.embedded ).map( _.searchIndex ).toSeq.distinct )
       ( Es.host + "/" + index ).DELETE()
 
+  def mapAll {
+    for ( index <- Entity.all.filter( e => e.isSearchable && !e.embedded ).map( _.searchIndex ).toSeq.distinct ) {
       val mappings = mutable.Map[String,Any]()
 
       for ( e <- Entity.all;
-            if e.searchIndex == index && !e.embedded && e.isSearchable ) {
+            if e.searchIndex == index && !e.embedded && e.isSearchable )
         mappings( e.dbName ) = mappingFor( e )
-      }
+
       ( Es.host + "/" + index + "/" ).PUT(
         content = Map(
           "settings" -> Map(
@@ -292,6 +294,11 @@ object Es {
         ).toJsonStr
       )
     }
+  }
+
+  def indexAll {
+    deleteAll
+    mapAll
 
     for ( e <- Entity.all;
           if !e.embedded && e.isSearchable;

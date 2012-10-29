@@ -66,11 +66,19 @@ class CalendarImp( c:Calendar ) {
     c.setTimeZone(                other.getTimeZone )
   }
 
+  def setBeginningOfYear = {
+    c.set( Calendar.MONTH,        0 )
+    c.set( Calendar.DAY_OF_MONTH, 1 )
+    setMidnight
+    this
+  }
+
   def setMidnight = {
     c.set( Calendar.HOUR_OF_DAY, 0 )
     c.set( Calendar.MINUTE,      0 )
     c.set( Calendar.SECOND,      0 )
     c.set( Calendar.MILLISECOND, 0 )
+    this
   }
 
   def rollToNearestDayOfWeek( c:Calendar, dayOfWeek:Int, direction:Int ) {

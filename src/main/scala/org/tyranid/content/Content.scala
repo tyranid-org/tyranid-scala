@@ -507,7 +507,7 @@ trait ContentMeta extends PrivateKeyEntity {
 
   "shown"             is DbArray(DbTid(B.User))             as "Shown To" ; // list of tids of users who have "read" this content; only maintained for some content types, like messages
 
-  "lastModified"      is DbDateTime           is 'required;
+  "lastModified"      is DbDateTime           is 'required is SearchText;
   "lastModifiedBy"    is DbLink(B.User)       is 'required;
   "lastModifiedByOrg" is DbLink(B.Org)        is 'required;
 

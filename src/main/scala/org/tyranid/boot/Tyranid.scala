@@ -63,6 +63,7 @@ object TyranidConfiglet extends Weblet {
     
     val user = T.user
 
+    <a href={ wpath + "/remap" } class="btn-danger btn">Re-Map Search</a>
     <a href={ wpath + "/reindex" } class="btn-danger btn">Re-Index Search</a>
     <a href={ wpath + "/eye" } class={ user.b( 'eye ) ? "go btn" | "stop btn" }>Debug: { user.b( 'eye ) ? "ON" | "OFF" }</a>
     <a href={ wpath + "/sms" } class={ SMS.enabled ? "go btn" | "stop btn" }>SMS: { SMS.enabled ? "ON" | "OFF" }</a>
@@ -81,6 +82,11 @@ object TyranidConfiglet extends Weblet {
     val sess = t.session
 
     rpath match {
+    case "/remap" =>
+      org.tyranid.db.es.Es.mapAll
+      sess.warn( "Re-Map initiated." )
+      web.redirect( parent.wpath )
+
     case "/reindex" =>
       org.tyranid.db.es.Es.indexAll
       sess.warn( "Re-Index initiated." )
