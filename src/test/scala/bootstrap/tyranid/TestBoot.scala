@@ -52,5 +52,8 @@ class Boot extends org.tyranid.boot.Bootable {
     newUser    = () => new User
     newSession = () => new Session
   }
+  
+  override def welcomeUserEvent = null
+
 }
 
