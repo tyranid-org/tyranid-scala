@@ -112,6 +112,7 @@ object MimeType {
     MimeType( "audio/basic",                                                               "Basic Audio",                   Seq( "au", "snd" ) ),
     MimeType( "audio/x-wav",                                                               "WAV Audio",                     Seq( "wav" ) ),
 
+    MimeType( "image/bmp",                                                                 "BMP Image",                     Seq( "bmp" ) ),
     MimeType( "image/gif",                                                                 "GIF Image",                     Seq( "gif" ) ),
     MimeType( "image/jpeg",                                                                "JPEG Image",                    Seq( "jpeg", "jpg", "jpe" ) ),
     MimeType( "image/png",                                                                 "Portable Network Graphics",     Seq( "png" ) ),
@@ -171,6 +172,7 @@ object MimeType {
       
     "bcpio"    -> "application/x-bcpio",
     "bin"      -> "application/octet-stream",
+    "bmp"      -> "image/bmp",
 
     "cdf"      -> "application/x-netcdf",
     "cpio"     -> "application/x-cpio",
