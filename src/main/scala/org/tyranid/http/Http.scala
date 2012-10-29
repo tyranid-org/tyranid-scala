@@ -470,9 +470,9 @@ object Http {
         val formparams = new java.util.ArrayList[NameValuePair]()
 
         form foreach { p => formparams.add( new BasicNameValuePair( p._1, p._2 ) ) }
-        new UrlEncodedFormEntity(formparams, "UTF-8")
+        new UrlEncodedFormEntity( formparams, "UTF-8" )
       } else {
-        val se = new StringEntity( content )
+        val se = new StringEntity( content, "UTF-8" )
         if ( contentType != null )
           se.setContentType( contentType )
         se

@@ -88,7 +88,7 @@ class Indexer extends Actor {
         val error = responseJson.s( 'error )
         
         if ( error.notBlank ) {
-          println( "Failed search on ID " + id + ", json=" + response._s )
+          println( "ES Indexing Failure on ID " + id + ", error=" + responseJson + "\n\nIndex JSON:\n\n" + json )
           Log.log( Event.Search, "m" -> ( "Failed to index id " + id + ", type=" + typ + ", err=" + error ) ) 
         }
       }

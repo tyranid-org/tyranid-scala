@@ -96,9 +96,8 @@ class StringImp( s:String ) {
   def encJson = {
     if ( s != null ) {
       val sb = new StringBuilder
-      val len = s.length
       
-      for ( i <- 0 until len ) {
+      for ( i <- 0 until s.length ) {
         s.charAt( i ) match {
         case '\b' => sb ++= "\\b"
         case '\f' => sb ++= "\\f"
