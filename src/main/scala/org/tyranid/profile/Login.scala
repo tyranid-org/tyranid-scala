@@ -618,7 +618,6 @@ $( function() {
 
     val registerView = "register" + ( betaSignup ? "beta" | ( "rb" + ( B.BETA ? "beta" | "" ) ) )
     
-    println( registerView )
     val ui = user.view.ui( registerView )
 
     user.isAdding = true
