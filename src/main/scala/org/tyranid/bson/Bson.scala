@@ -99,8 +99,17 @@ trait BsonObject extends Deep {
     }
   def o( key:String )   = apply( key ).asInstanceOf[BsonObject]
 
-  def oid( key:String ) = apply( key ).asInstanceOf[ObjectId]
+  def oid( key:String ):ObjectId =
+    apply( key ) match {
+    case id:ObjectId =>
+      id
 
+    case obj:BasicDBObject =>
+      obj.oid( "_id" )
+
+    case null =>
+      null
+    }
 
 
   /*

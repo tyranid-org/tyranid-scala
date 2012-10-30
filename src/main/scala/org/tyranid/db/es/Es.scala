@@ -139,7 +139,7 @@ object Es {
     )
 
   def search( query:Map[String,Any], user:User ):String = {
-    //sp am( "query=" + query.toJsonStr )
+    spam( "query=" + query.toJsonStr )
     ( Es.host + "/_search" ).POST( content = query.toJsonStr ).s
   }
 
