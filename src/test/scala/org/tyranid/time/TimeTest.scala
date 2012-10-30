@@ -170,6 +170,11 @@ class TimeSuite extends FunSuite {
     //assert( re.base36  === Base36.toString( re.decimal ) )
   }
 
+  test( "userTz" ) {
+    assert( "6/2/2012".toLaxDate.toUserDateStr === "06/02/2012" )
+
+  }
+
   test( "durationText" ) {
     val data = Array[String](
       "2008-01-02 CST",                   "Wednesday, January 2, 2008 at 12:00am",
