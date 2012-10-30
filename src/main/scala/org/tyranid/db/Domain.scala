@@ -544,6 +544,8 @@ case class DbLink( toEntity:Entity ) extends Domain {
   override def idToRecordTid( v:Any )                = toEntity.idAtt.flatten( _.domain.idToRecordTid( v ),         toEntity.problem( "embedded entities don't have IDs" ) )
   override def recordTidToId( recordTid:String ):Any = toEntity.idAtt.flatten( _.domain.recordTidToId( recordTid ), toEntity.problem( "embedded entities don't have IDs" ) )
 
+  def idToTid( v:Any ) = toEntity.idToTid( v )
+
   override def ui( s:Scope, f:PathField ) = {
     if ( f.scopeOpts( s ).exists( _._1 == "readonly" ) ) {
       Text( see( get( s, f ) ) )

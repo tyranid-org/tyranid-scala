@@ -78,9 +78,9 @@ class Indexer extends Actor {
 
     try {
       if ( json != "{}" ) {
-//spam( "posting index=" + index + "  type=" + typ )
-//spam( "url=" + Es.host + "/" + index + "/" + typ + "/" + id )
-//spam( "json=" + json )
+//sp am( "posting index=" + index + "  type=" + typ )
+//sp am( "url=" + Es.host + "/" + index + "/" + typ + "/" + id )
+//sp am( "json=" + json )
 
         val response  = ( Es.host + "/" + index + "/" + typ + "/" + id ).POST( content = json )
         val responseJson = Json.parse( response._s )
@@ -139,7 +139,7 @@ object Es {
     )
 
   def search( query:Map[String,Any], user:User ):String = {
-    //spam( "query=" + query.toJsonStr )
+    //sp am( "query=" + query.toJsonStr )
     ( Es.host + "/_search" ).POST( content = query.toJsonStr ).s
   }
 
@@ -166,14 +166,20 @@ object Es {
         else         sb += ','
 
         sb ++= va.att.dbName += ':'
-        v match {
-        case crec:Record     => enter( crec )
-        case arr:BasicDBList => array( va, arr )
-        case dbo:DBObject    => enter( rec.rec( va ) )
-        case v:Number        => sb ++= v.toString
-        case t:Date          => sb += '"' ++= t.toIso8601 += '"'
-        //case v               => sb += '"' ++= new String( v.toString.getBytes(UTF8_CHARSET), UTF8_CHARSET ).encJson += '"'
-        case v               => sb += '"' ++= v.toString.encJson += '"'
+        va.domain match {
+        case link:DbLink =>
+          sb += '"' ++= link.idToTid( v ) += '"'
+
+        case _ =>
+          v match {
+          case crec:Record     => enter( crec )
+          case arr:BasicDBList => array( va, arr )
+          case dbo:DBObject    => enter( rec.rec( va ) )
+          case v:Number        => sb ++= v.toString
+          case t:Date          => sb += '"' ++= t.toIso8601 += '"'
+          //case v               => sb += '"' ++= new String( v.toString.getBytes(UTF8_CHARSET), UTF8_CHARSET ).encJson += '"'
+          case v               => sb += '"' ++= v.toString.encJson += '"'
+          }
         }
       }
 
@@ -205,6 +211,7 @@ object Es {
 
     enter( rec, root = true )
 
+    //sp am( "index json=\n\n" + sb.toString + "\n\n" )
     sb.toString
   }
 
@@ -217,10 +224,10 @@ object Es {
 
         def domain( dom:Domain ) {
           dom match {
-          case text:DbTextLike =>
-            props( att.dbName ) = Map( "type" -> "string" )
-
           case link:DbLink =>
+            props( att.dbName ) = Map( "type" -> "string", "index" -> "not_analyzed" )
+
+          case text:DbTextLike =>
             props( att.dbName ) = Map( "type" -> "string" )
 
           case number:DbNumber =>
