@@ -171,6 +171,10 @@ class StringImp( s:String ) {
       null
     }
 
+  // I want just the name of the file: https://a.b.c/d/e?f=g, I want e
+  def getFilenameFromUrl:String =
+    ( s == null ) ? null | ( ( s.suffix( '/' ) or s ).prefix( '?' ) or s )
+
   def encHtml = s.replace( "<", "&lt;" ).replace( ">", "&gt;" )
 
   def toHtmlPreserveWhitespace:NodeSeq =

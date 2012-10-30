@@ -566,7 +566,7 @@ trait ContentMeta extends PrivateKeyEntity {
 
   override def searchText = true
   
-  private def deleteThumbs( tid:String ) {
+  def deleteThumbs( tid:String ) {
     val pathParts = tid.splitAt( 4 )
     val urlPath = pathParts._1 + "/" + pathParts._2 + "/"
     
