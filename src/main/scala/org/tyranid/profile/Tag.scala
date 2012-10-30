@@ -20,7 +20,7 @@ package org.tyranid.profile
 import scala.collection.mutable
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbIntSerial }
+import org.tyranid.db.{ DbChar, DbIntSerial, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.db.meta.AutoIncrement
@@ -44,6 +44,16 @@ object Tag extends MongoEntity( tid = "a0Ct" ) {
         to.i( "_id" )
       }
     } )
+  }
+
+  def html( id:String, r:Record ) = {
+    <li class="tag">
+     <span>
+      { r.label }
+      <a class="closeTag">x</a>
+      <input type="hidden" style="display:none;" value={ r.tid } id={ id } name={ id + "[]" }/>
+     </span>
+    </li>
   }
 }
 

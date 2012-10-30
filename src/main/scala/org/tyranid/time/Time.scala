@@ -30,15 +30,18 @@ class CalendarImp( c:Calendar ) {
   def weekDayName   = Time.WeekDayNames( c.get( Calendar.DAY_OF_WEEK ) - 1 ).capitalize
   def monthName     = Time.MonthNames( c.get( Calendar.MONTH ) ).capitalize
 
-  def year   = c.get( Calendar.YEAR )
-  def hour12 = c.get( Calendar.HOUR )
-  def hour24 = c.get( Calendar.HOUR_OF_DAY )
-  def ampm   = c.get( Calendar.AM_PM ) match {
-               case Calendar.AM => "am"
-               case Calendar.PM => "pm"
-               }
-  def minute = c.get( Calendar.MINUTE )
-  def second = c.get( Calendar.SECOND )
+  def year        = c.get( Calendar.YEAR )
+  def month       = c.get( Calendar.MONTH )
+  def dayOfMonth  = c.get( Calendar.DAY_OF_MONTH )
+  def hour12      = c.get( Calendar.HOUR )
+  def hour24      = c.get( Calendar.HOUR_OF_DAY )
+  def ampm        = c.get( Calendar.AM_PM ) match {
+                    case Calendar.AM => "am"
+                    case Calendar.PM => "pm"
+                    }
+  def minute      = c.get( Calendar.MINUTE )
+  def second      = c.get( Calendar.SECOND )
+
 
   def isSameYearAs( other:Calendar ) =
     c.get( Calendar.YEAR )         == other.get( Calendar.YEAR )
@@ -66,11 +69,19 @@ class CalendarImp( c:Calendar ) {
     c.setTimeZone(                other.getTimeZone )
   }
 
+  def setBeginningOfYear = {
+    c.set( Calendar.MONTH,        0 )
+    c.set( Calendar.DAY_OF_MONTH, 1 )
+    setMidnight
+    this
+  }
+
   def setMidnight = {
     c.set( Calendar.HOUR_OF_DAY, 0 )
     c.set( Calendar.MINUTE,      0 )
     c.set( Calendar.SECOND,      0 )
     c.set( Calendar.MILLISECOND, 0 )
+    this
   }
 
   def rollToNearestDayOfWeek( c:Calendar, dayOfWeek:Int, direction:Int ) {
@@ -188,6 +199,16 @@ class DateImp( d:Date ) {
     if ( d == null ) null
     else             Time.DateTimeFormat.format( d )
 
+  def toUserDateStr =
+    if ( d == null ) {
+      null
+    } else {
+      val f = Time.makeDateFormat
+      f.setCalendar( toUtcCalendar )
+      f.format( d )
+    }
+
+
   def toDisplay = {
 
     // TODO:  this should be configurable by Bootable based on the application's user interface and the user's local time conventions
@@ -263,7 +284,9 @@ class DateImp( d:Date ) {
 object Time {
   val currentYear = Calendar.getInstance.get( Calendar.YEAR )
   
-  val DateFormat     = new SimpleDateFormat( "MM/dd/yyyy" )
+  def makeDateFormat = new SimpleDateFormat( "MM/dd/yyyy" )
+
+  val DateFormat     = makeDateFormat
   val DateTimeFormat = new SimpleDateFormat( "MM/dd/yyyy HH:mm:ss" )
   val TimeFormat24   = new SimpleDateFormat( "HH:mm" )
   val TimeFormat12   = new SimpleDateFormat( "hh:mma" )
@@ -366,7 +389,7 @@ object Time {
         days += 1
       }
 
-      "%s%s %d:%02d%s".format(
+      "%s%s%d:%02d%s".format(
         if ( days == 0 ) {
           ""
         } else if ( days == 1 ) {
