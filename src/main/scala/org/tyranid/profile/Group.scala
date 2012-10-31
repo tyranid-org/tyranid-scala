@@ -195,7 +195,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
 
     myGroups ++ memberGroups 
   }
-  
+
   def ensureVisibility( groupTid:String, tid:String ) {
     val group = Group.getByTid( groupTid )
     val visibleTids = group.a_!( 'v )
