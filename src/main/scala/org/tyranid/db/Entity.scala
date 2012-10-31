@@ -290,7 +290,7 @@ trait Entity extends Domain with DbItem {
 
   def save( r:Record ) {
     if ( r.searchIndex && isSearchable && searchIndexable( r ) )
-      Es.index( r )
+      background { Es.index( r ) }
   }
 
   def delete( id:Any ) {
