@@ -27,7 +27,7 @@ import com.mongodb.{ BasicDBList, DBObject }
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3Bucket, S3 }
 import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDateTime, DbDouble, DbInt, DbLink, DbLong, DbTid, DbText, DbUrl, Entity, Record }
-import org.tyranid.db.es.{ SearchAuth, SearchText }
+import org.tyranid.db.es.{ SearchAuth, SearchText, SearchToken }
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord, MongoView }
@@ -523,7 +523,7 @@ trait ContentMeta extends PrivateKeyEntity {
   "logId"             is DbMongoId            ; // TODO:  this is a link to the "*_log" table for the above entity, model it better
 
   "file"              is DbUrl                ; // TODO: change to DbFile ... if s3 this is a S3 path, otherwise it is an absolute URL
-  "fileMimeType"      is DbChar(64)           ;
+  "fileMimeType"      is DbChar(64)           is SearchToken;
 
   "video"             is DbBoolean            ;
 

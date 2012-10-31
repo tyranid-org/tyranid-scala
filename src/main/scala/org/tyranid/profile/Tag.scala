@@ -18,6 +18,7 @@
 package org.tyranid.profile
 
 import scala.collection.mutable
+import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbChar, DbIntSerial, Record }
@@ -46,14 +47,15 @@ object Tag extends MongoEntity( tid = "a0Ct" ) {
     } )
   }
 
-  def html( id:String, r:Record ) = {
+  def html( setId:String, r:Record ):NodeSeq = html( setId, r.tid, r.label )
+
+  def html( setId:String, id:String, label:String ):NodeSeq =
     <li class="tag">
      <span>
-      { r.label }
+      { label }
       <a class="closeTag">x</a>
-      <input type="hidden" style="display:none;" value={ r.tid } id={ id } name={ id + "[]" }/>
+      <input type="hidden" style="display:none;" value={ id } id={ setId } name={ setId + "[]" }/>
      </span>
     </li>
-  }
 }
 

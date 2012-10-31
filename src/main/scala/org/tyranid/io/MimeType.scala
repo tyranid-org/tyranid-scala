@@ -22,7 +22,47 @@ import scala.collection.mutable
 import org.tyranid.Imp._
 
 
-case class MimeType( mimeType:String, name:String, extensions:Seq[String] ) {
+case class MetaMimeType( id:String, baseLabel:String ) {
+
+  def types = MimeType.types.filter( _.meta == this )
+
+  lazy val mimeTypes = types.map( _.mimeType ).sorted.distinct
+
+  lazy val label = baseLabel + " (" + types.flatMap( _.extensions ).sorted.map( "." + _ ).mkString( ", " ) + ")"
+}
+
+object MetaMimeType {
+
+  val values = mutable.Buffer[MetaMimeType]()
+
+  def add( id:String, label:String ) = {
+    val v = MetaMimeType( id, label )
+    values += v
+    v
+  }
+
+  def byId( id:String ) = values.find( _.id == id ) getOrElse null
+
+
+  //val customIcons = List( "aep","ai","aiff","avi","bmp","dmg","doc","docm","docx","dot","dotx","eps","fla","htm","html","indd","mov","mp3","mp4","mpeg","pdf","pps","ppsm","ppsx","ppt","pptm","pptx","psd","qt","rar","rtf","tiff","txt","wav","xla","xlam","xls","xlsb","xlsm","xlsx","xlt","xltm","xltx","zip" ) // "gif","jpg","png" 
+
+  val AdobeIllustrator    = add( "illustrator",  "Adobe Illustrator" )
+  val BMP                 = add( "bmp",          "Bitmapped Image" )
+  val GIF                 = add( "gif",          "Graphics Interchange Format" )
+  val HTML                = add( "html",         "HTML" )
+  val JPEG                = add( "jpeg",         "JPEG" )
+  val MicrosoftExcel      = add( "msexcel",      "Microsoft Excel" )
+  val MicrosoftPowerPoint = add( "mspowerpoint", "Microsoft PowerPoint" )
+  val MicrosoftWord       = add( "msword",       "Microsoft Word" )
+  val PDF                 = add( "pdf",          "Portable Document Format" )
+  val PNG                 = add( "png",          "Portable Network Graphics" )
+  val TIFF                = add( "tiff",         "Tagged Image File Format" )
+  val XML                 = add( "xml",          "XML - Extensible Markup Language" )
+  val ZIP                 = add( "zip",          "ZIP Archive" )
+}
+
+
+case class MimeType( mimeType:String, meta:MetaMimeType, name:String, extensions:Seq[String] ) {
 
   // this is the primary/default extension
   def extension = extensions( 0 )
@@ -34,115 +74,117 @@ case class MimeType( mimeType:String, name:String, extensions:Seq[String] ) {
 
 object MimeType {
 
+  import MetaMimeType._
+
   val types = Seq(
-    MimeType( "application/illustrator",                                                   "Adobe Illustrator",             Seq( "ai" ) ),
-    MimeType( "application/msword",                                                        "Microsoft Word",                Seq( "doc", "dot" ) ),
-    MimeType( "application/octet-stream",                                                  null,                            Seq( "bin", "exe" ) ),
-    MimeType( "application/oda",                                                           null,                            Seq( "oda" ) ),
-    MimeType( "application/postscript",                                                    "PostScript",                    Seq( "ps", "eps" ) ),
-    MimeType( "application/pdf",                                                           "Portable Document Format",      Seq( "pdf" ) ),
-    MimeType( "application/rtf",                                                           "Rich Text",                     Seq( "rtf" ) ),
+    MimeType( "application/illustrator",                                                   AdobeIllustrator,    "Adobe Illustrator",             Seq( "ai" ) ),
+    MimeType( "application/msword",                                                        MicrosoftWord,       "Microsoft Word",                Seq( "doc", "dot" ) ),
+    MimeType( "application/octet-stream",                                                  null,                null,                            Seq( "bin", "exe" ) ),
+    MimeType( "application/oda",                                                           null,                null,                            Seq( "oda" ) ),
+    MimeType( "application/postscript",                                                    null,                "PostScript",                    Seq( "ps", "eps" ) ),
+    MimeType( "application/pdf",                                                           PDF,                 "Portable Document Format",      Seq( "pdf" ) ),
+    MimeType( "application/rtf",                                                           null,                "Rich Text",                     Seq( "rtf" ) ),
 
-    MimeType( "application/vnd.ms-excel",                                                  "Microsoft Excel",               Seq( "xls" ) ),
-    MimeType( "application/vnd.ms-excel",                                                  "Microsoft Excel Application",   Seq( "xla" ) ),
-    MimeType( "application/vnd.ms-excel",                                                  "Microsoft Excel",               Seq( "xlt" ) ),
-    MimeType( "application/vnd.ms-excel.addin.macroEnabled.12",                            "Microsoft Excel",               Seq( "xlam" ) ),
-    MimeType( "application/vnd.ms-excel.sheet.binary.macroEnabled.12",                     "Microsoft Excel",               Seq( "xlsb" ) ),
-    MimeType( "application/vnd.ms-excel.sheet.macroEnabled.12",                            "Microsoft Excel",               Seq( "xlsm" ) ),
-    MimeType( "application/vnd.ms-excel.template.macroEnabled.12",                         "Microsoft Excel",               Seq( "xltm" ) ),
-    MimeType( "application/vnd.ms-powerpoint",                                             "Microsoft Powerpoint",          Seq( "ppt" ) ),
-    MimeType( "application/vnd.ms-powerpoint",                                             "Microsoft Powerpoint",          Seq( "pot" ) ),
-    MimeType( "application/vnd.ms-powerpoint",                                             "Microsoft Powerpoint",          Seq( "ppa" ) ),
-    MimeType( "application/vnd.ms-powerpoint",                                             "Microsoft Powerpoint",          Seq( "pps" ) ),
-    MimeType( "application/vnd.ms-powerpoint.addin.macroEnabled.12",                       "Microsoft Powerpoint",          Seq( "ppam" ) ),
-    MimeType( "application/vnd.ms-powerpoint.presentation.macroEnabled.12",                "Microsoft Powerpoint",          Seq( "pptm" ) ),
-    MimeType( "application/vnd.ms-powerpoint.slideshow.macroEnabled.12",                   "Microsoft Powerpoint",          Seq( "ppsm" ) ),
-    MimeType( "application/vnd.ms-powerpoint.template.macroEnabled.12",                    "Microsoft Powerpoint",          Seq( "potm" ) ),
-    MimeType( "application/vnd.ms-project",                                                "Microsoft Project",             Seq( "mpp" ) ),
-    MimeType( "application/vnd.ms-word.document.macroEnabled.12",                          "Microsoft Word",                Seq( "docm" ) ),
-    MimeType( "application/vnd.ms-word.template.macroEnabled.12",                          "Microsoft Word",                Seq( "dotm" ) ),
-    MimeType( "application/vnd.oasis.opendocument.presentation",                           null,                            Seq( "odp" ) ),
-    MimeType( "application/vnd.oasis.opendocument.spreadsheet",                            null,                            Seq( "ods" ) ),
-    MimeType( "application/vnd.oasis.opendocument.text",                                   null,                            Seq( "odt" ) ), 
-    MimeType( "application/vnd.oasis.opendocument.graphics-template",                      null,                            Seq( "otg" ) ),   
-    MimeType( "application/vnd.oasis.opendocument.database",                               null,                            Seq( "odb" ) ),
-    MimeType( "application/vnd.oasis.opendocument.image",                                  null,                            Seq( "odi" ) ),
-    MimeType( "application/vnd.oasis.opendocument.chart",                                  null,                            Seq( "odc" ) ),  
-    MimeType( "application/vnd.oasis.opendocument.text-web",                               null,                            Seq( "oth" ) ),
-    MimeType( "application/vnd.oasis.opendocument.formula",                                null,                            Seq( "odf" ) ),  
-    MimeType( "application/vnd.oasis.opendocument.graphics",                               null,                            Seq( "odg" ) ),
-    MimeType( "application/vnd.oasis.opendocument.text-master",                            null,                            Seq( "odm" ) ),  
-    MimeType( "application/vnd.oasis.opendocument.text-template",                          null,                            Seq( "ott" ) ),   
-    MimeType( "application/vnd.oasis.opendocument.presentation-template",                  null,                            Seq( "otp" ) ),
-    MimeType( "application/vnd.oasis.opendocument.spreadsheet-template",                   null,                            Seq( "ots" ) ), 
-    MimeType( "application/vnd.openofficeorg.extension",                                   null,                            Seq( "oxt" ) ),
-    MimeType( "application/vnd.openxmlformats-officedocument.presentationml.presentation", null,                            Seq( "pptx" ) ),
-    MimeType( "application/vnd.openxmlformats-officedocument.presentationml.slideshow",    null,                            Seq( "ppsx" ) ),
-    MimeType( "application/vnd.openxmlformats-officedocument.presentationml.template",     null,                            Seq( "potx" ) ),
-    MimeType( "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",         null,                            Seq( "xlsx" ) ),
-    MimeType( "application/vnd.openxmlformats-officedocument.spreadsheetml.template",      null,                            Seq( "xltx" ) ),
-    MimeType( "application/vnd.openxmlformats-officedocument.wordprocessingml.document",   null,                            Seq( "docx" ) ),
-    MimeType( "application/vnd.openxmlformats-officedocument.wordprocessingml.template",   null,                            Seq( "dotx" ) ),
+    MimeType( "application/vnd.ms-excel",                                                  MicrosoftExcel,      "Microsoft Excel",               Seq( "xls" ) ),
+    MimeType( "application/vnd.ms-excel",                                                  MicrosoftExcel,      "Microsoft Excel Application",   Seq( "xla" ) ),
+    MimeType( "application/vnd.ms-excel",                                                  MicrosoftExcel,      "Microsoft Excel",               Seq( "xlt" ) ),
+    MimeType( "application/vnd.ms-excel.addin.macroEnabled.12",                            MicrosoftExcel,      "Microsoft Excel",               Seq( "xlam" ) ),
+    MimeType( "application/vnd.ms-excel.sheet.binary.macroEnabled.12",                     MicrosoftExcel,      "Microsoft Excel",               Seq( "xlsb" ) ),
+    MimeType( "application/vnd.ms-excel.sheet.macroEnabled.12",                            MicrosoftExcel,      "Microsoft Excel",               Seq( "xlsm" ) ),
+    MimeType( "application/vnd.ms-excel.template.macroEnabled.12",                         MicrosoftExcel,      "Microsoft Excel",               Seq( "xltm" ) ),
+    MimeType( "application/vnd.ms-powerpoint",                                             MicrosoftPowerPoint, "Microsoft Powerpoint",          Seq( "ppt" ) ),
+    MimeType( "application/vnd.ms-powerpoint",                                             MicrosoftPowerPoint, "Microsoft Powerpoint",          Seq( "pot" ) ),
+    MimeType( "application/vnd.ms-powerpoint",                                             MicrosoftPowerPoint, "Microsoft Powerpoint",          Seq( "ppa" ) ),
+    MimeType( "application/vnd.ms-powerpoint",                                             MicrosoftPowerPoint, "Microsoft Powerpoint",          Seq( "pps" ) ),
+    MimeType( "application/vnd.ms-powerpoint.addin.macroEnabled.12",                       MicrosoftPowerPoint, "Microsoft Powerpoint",          Seq( "ppam" ) ),
+    MimeType( "application/vnd.ms-powerpoint.presentation.macroEnabled.12",                MicrosoftPowerPoint, "Microsoft Powerpoint",          Seq( "pptm" ) ),
+    MimeType( "application/vnd.ms-powerpoint.slideshow.macroEnabled.12",                   MicrosoftPowerPoint, "Microsoft Powerpoint",          Seq( "ppsm" ) ),
+    MimeType( "application/vnd.ms-powerpoint.template.macroEnabled.12",                    MicrosoftPowerPoint, "Microsoft Powerpoint",          Seq( "potm" ) ),
+    MimeType( "application/vnd.ms-project",                                                MicrosoftPowerPoint, "Microsoft Project",             Seq( "mpp" ) ),
+    MimeType( "application/vnd.ms-word.document.macroEnabled.12",                          MicrosoftWord,       "Microsoft Word",                Seq( "docm" ) ),
+    MimeType( "application/vnd.ms-word.template.macroEnabled.12",                          MicrosoftWord,       "Microsoft Word",                Seq( "dotm" ) ),
+    MimeType( "application/vnd.oasis.opendocument.presentation",                           null,                null,                            Seq( "odp" ) ),
+    MimeType( "application/vnd.oasis.opendocument.spreadsheet",                            null,                null,                            Seq( "ods" ) ),
+    MimeType( "application/vnd.oasis.opendocument.text",                                   null,                null,                            Seq( "odt" ) ), 
+    MimeType( "application/vnd.oasis.opendocument.graphics-template",                      null,                null,                            Seq( "otg" ) ),   
+    MimeType( "application/vnd.oasis.opendocument.database",                               null,                null,                            Seq( "odb" ) ),
+    MimeType( "application/vnd.oasis.opendocument.image",                                  null,                null,                            Seq( "odi" ) ),
+    MimeType( "application/vnd.oasis.opendocument.chart",                                  null,                null,                            Seq( "odc" ) ),  
+    MimeType( "application/vnd.oasis.opendocument.text-web",                               null,                null,                            Seq( "oth" ) ),
+    MimeType( "application/vnd.oasis.opendocument.formula",                                null,                null,                            Seq( "odf" ) ),  
+    MimeType( "application/vnd.oasis.opendocument.graphics",                               null,                null,                            Seq( "odg" ) ),
+    MimeType( "application/vnd.oasis.opendocument.text-master",                            null,                null,                            Seq( "odm" ) ),  
+    MimeType( "application/vnd.oasis.opendocument.text-template",                          null,                null,                            Seq( "ott" ) ),   
+    MimeType( "application/vnd.oasis.opendocument.presentation-template",                  null,                null,                            Seq( "otp" ) ),
+    MimeType( "application/vnd.oasis.opendocument.spreadsheet-template",                   null,                null,                            Seq( "ots" ) ), 
+    MimeType( "application/vnd.openofficeorg.extension",                                   null,                null,                            Seq( "oxt" ) ),
+    MimeType( "application/vnd.openxmlformats-officedocument.presentationml.presentation", null,                null,                            Seq( "pptx" ) ),
+    MimeType( "application/vnd.openxmlformats-officedocument.presentationml.slideshow",    null,                null,                            Seq( "ppsx" ) ),
+    MimeType( "application/vnd.openxmlformats-officedocument.presentationml.template",     null,                null,                            Seq( "potx" ) ),
+    MimeType( "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",         null,                null,                            Seq( "xlsx" ) ),
+    MimeType( "application/vnd.openxmlformats-officedocument.spreadsheetml.template",      null,                null,                            Seq( "xltx" ) ),
+    MimeType( "application/vnd.openxmlformats-officedocument.wordprocessingml.document",   null,                null,                            Seq( "docx" ) ),
+    MimeType( "application/vnd.openxmlformats-officedocument.wordprocessingml.template",   null,                null,                            Seq( "dotx" ) ),
 
-    MimeType( "application/x-bcpio",                                                       null,                            Seq( "bcpio" ) ),
-    MimeType( "application/x-cpio",                                                        null,                            Seq( "cpio" ) ),
-    MimeType( "application/x-csh",                                                         null,                            Seq( "csh" ) ),
-    MimeType( "application/x-dvi",                                                         "Digital Video Interface",       Seq( "dvi" ) ),
-    MimeType( "application/x-gtar",                                                        "GNU Tape Archive",              Seq( "gtar" ) ),
-    MimeType( "application/x-hdf",                                                         null,                            Seq( "hdf" ) ),
-    MimeType( "application/x-latex",                                                       "LaTeX",                         Seq( "latex" ) ),
-    MimeType( "application/x-mif",                                                         "MIF",                           Seq( "mif" ) ),
-    MimeType( "application/x-netcdf",                                                      null,                            Seq( "cdf", "nc" ) ),
-    MimeType( "application/x-perl",                                                        "Perl",                          Seq( "pl" ) ),
-    MimeType( "application/x-sh",                                                          null,                            Seq( "sh" ) ),
-    MimeType( "application/x-shar",                                                        null,                            Seq( "shar" ) ),
-    MimeType( "application/x-stuffit",                                                     "StuffIt Archive",               Seq( "sit" ) ),
-    MimeType( "application/x-tar",                                                         "Tape Archive",                  Seq( "tar" ) ),
-    MimeType( "application/x-tcl",                                                         "Tool Command Language",         Seq( "tcl" ) ),
-    MimeType( "application/x-tex",                                                         "TeX",                           Seq( "tex" ) ),
-    MimeType( "application/x-texinfo",                                                     "TeX Info",                      Seq( "texinfo", "texi" ) ),
-    MimeType( "application/x-troff",                                                       "troff",                         Seq( "tr", "roff", "t" ) ),
-    MimeType( "application/x-troff-man",                                                   "troff man",                     Seq( "man" ) ),
-    MimeType( "application/x-troff-me",                                                    "troff me",                      Seq( "me" ) ),
-    MimeType( "application/x-troff-ms",                                                    "troff ms",                      Seq( "ms" ) ),
-    MimeType( "application/x-wais-source",                                                 "WAIS",                          Seq( "src" ) ),
-    MimeType( "application/x-zip-compressed",                                              "ZIP",                           Seq( "zip" ) ),
+    MimeType( "application/x-bcpio",                                                       null,                null,                            Seq( "bcpio" ) ),
+    MimeType( "application/x-cpio",                                                        null,                null,                            Seq( "cpio" ) ),
+    MimeType( "application/x-csh",                                                         null,                null,                            Seq( "csh" ) ),
+    MimeType( "application/x-dvi",                                                         null,                "Digital Video Interface",       Seq( "dvi" ) ),
+    MimeType( "application/x-gtar",                                                        null,                "GNU Tape Archive",              Seq( "gtar" ) ),
+    MimeType( "application/x-hdf",                                                         null,                null,                            Seq( "hdf" ) ),
+    MimeType( "application/x-latex",                                                       null,                "LaTeX",                         Seq( "latex" ) ),
+    MimeType( "application/x-mif",                                                         null,                "MIF",                           Seq( "mif" ) ),
+    MimeType( "application/x-netcdf",                                                      null,                null,                            Seq( "cdf", "nc" ) ),
+    MimeType( "application/x-perl",                                                        null,                "Perl",                          Seq( "pl" ) ),
+    MimeType( "application/x-sh",                                                          null,                null,                            Seq( "sh" ) ),
+    MimeType( "application/x-shar",                                                        null,                null,                            Seq( "shar" ) ),
+    MimeType( "application/x-stuffit",                                                     null,                "StuffIt Archive",               Seq( "sit" ) ),
+    MimeType( "application/x-tar",                                                         null,                "Tape Archive",                  Seq( "tar" ) ),
+    MimeType( "application/x-tcl",                                                         null,                "Tool Command Language",         Seq( "tcl" ) ),
+    MimeType( "application/x-tex",                                                         null,                "TeX",                           Seq( "tex" ) ),
+    MimeType( "application/x-texinfo",                                                     null,                "TeX Info",                      Seq( "texinfo", "texi" ) ),
+    MimeType( "application/x-troff",                                                       null,                "troff",                         Seq( "tr", "roff", "t" ) ),
+    MimeType( "application/x-troff-man",                                                   null,                "troff man",                     Seq( "man" ) ),
+    MimeType( "application/x-troff-me",                                                    null,                "troff me",                      Seq( "me" ) ),
+    MimeType( "application/x-troff-ms",                                                    null,                "troff ms",                      Seq( "ms" ) ),
+    MimeType( "application/x-wais-source",                                                 null,                "WAIS",                          Seq( "src" ) ),
+    MimeType( "application/x-zip-compressed",                                              ZIP,                 "ZIP",                           Seq( "zip" ) ),
 
-    MimeType( "audio/x-aiff",                                                              "Audio Interchange File Format", Seq( "aif", "aifc", "aiff" ) ),
-    MimeType( "audio/basic",                                                               "Basic Audio",                   Seq( "au", "snd" ) ),
-    MimeType( "audio/x-wav",                                                               "WAV Audio",                     Seq( "wav" ) ),
+    MimeType( "audio/x-aiff",                                                              null,                "Audio Interchange File Format", Seq( "aif", "aifc", "aiff" ) ),
+    MimeType( "audio/basic",                                                               null,                "Basic Audio",                   Seq( "au", "snd" ) ),
+    MimeType( "audio/x-wav",                                                               null,                "WAV Audio",                     Seq( "wav" ) ),
 
-    MimeType( "image/bmp",                                                                 "BMP Image",                     Seq( "bmp" ) ),
-    MimeType( "image/gif",                                                                 "GIF Image",                     Seq( "gif" ) ),
-    MimeType( "image/jpeg",                                                                "JPEG Image",                    Seq( "jpeg", "jpg", "jpe" ) ),
-    MimeType( "image/png",                                                                 "Portable Network Graphics",     Seq( "png" ) ),
-    MimeType( "image/tiff",                                                                "Tagged Image File Format",      Seq( "tiff", "tif" ) ),
-    MimeType( "image/x-cmu-raster",                                                        "CMU Raster",                    Seq( "ras" ) ),
-    MimeType( "image/x-portable-bitmap",                                                   "Portable Bitmap",               Seq( "pbm" ) ),
-    MimeType( "image/x-portable-graymap",                                                  "Portable Grey Map",             Seq( "pgm" ) ),
-    MimeType( "image/x-portable-anymap",                                                   "Portable Any Map",              Seq( "pnm" ) ),
-    MimeType( "image/x-portable-pixmap",                                                   "Portable PixMap",               Seq( "ppm" ) ),
-    MimeType( "image/x-rgb",                                                               "RGB Image",                     Seq( "rgb" ) ),
-    MimeType( "image/x-xbitmap",                                                           "X Windows Bitmap",              Seq( "xbm" ) ),
-    MimeType( "image/x-xpixmap",                                                           "X PixMap",                      Seq( "xpm" ) ),
-    MimeType( "image/x-xwindowdump",                                                       "X Windows Dump",                Seq( "xwd" ) ),
+    MimeType( "image/bmp",                                                                 BMP,                 "BMP Image",                     Seq( "bmp" ) ),
+    MimeType( "image/gif",                                                                 GIF,                 "GIF Image",                     Seq( "gif" ) ),
+    MimeType( "image/jpeg",                                                                JPEG,                "JPEG Image",                    Seq( "jpeg", "jpg", "jpe" ) ),
+    MimeType( "image/png",                                                                 PNG,                 "Portable Network Graphics",     Seq( "png" ) ),
+    MimeType( "image/tiff",                                                                TIFF,                "Tagged Image File Format",      Seq( "tiff", "tif" ) ),
+    MimeType( "image/x-cmu-raster",                                                        null,                "CMU Raster",                    Seq( "ras" ) ),
+    MimeType( "image/x-portable-bitmap",                                                   null,                "Portable Bitmap",               Seq( "pbm" ) ),
+    MimeType( "image/x-portable-graymap",                                                  null,                "Portable Grey Map",             Seq( "pgm" ) ),
+    MimeType( "image/x-portable-anymap",                                                   null,                "Portable Any Map",              Seq( "pnm" ) ),
+    MimeType( "image/x-portable-pixmap",                                                   null,                "Portable PixMap",               Seq( "ppm" ) ),
+    MimeType( "image/x-rgb",                                                               null,                "RGB Image",                     Seq( "rgb" ) ),
+    MimeType( "image/x-xbitmap",                                                           null,                "X Windows Bitmap",              Seq( "xbm" ) ),
+    MimeType( "image/x-xpixmap",                                                           null,                "X PixMap",                      Seq( "xpm" ) ),
+    MimeType( "image/x-xwindowdump",                                                       null,                "X Windows Dump",                Seq( "xwd" ) ),
 
-    MimeType( "text/css",                                                                  "CSS",                           Seq( "css" ) ),
-    MimeType( "text/html",                                                                 "HTML",                          Seq( "html", "htm" ) ),
-    MimeType( "text/javascript",                                                           "Javascript",                    Seq( "js" ) ),
-    MimeType( "text/plain",                                                                "Text",                          Seq( "txt", "text" ) ),
-    MimeType( "text/plain",                                                                "Markdown",                      Seq( "markdown", "md", "mkd" ) ),
-    MimeType( "text/richtext",                                                             "Rich Text",                     Seq( "rtx" ) ),
-    MimeType( "text/tab-separated-values",                                                 "Tab Separated Values",          Seq( "tsv" ) ),
-    MimeType( "text/x-sgml",                                                               "SGML",                          Seq( "sgml", "sgm" ) ),
-    MimeType( "text/xml",                                                                  "XML",                           Seq( "xml" ) ),
-    MimeType( "text/xml",                                                                  "XSL",                           Seq( "xsl" ) ),
+    MimeType( "text/css",                                                                  null,                "CSS",                           Seq( "css" ) ),
+    MimeType( "text/html",                                                                 HTML,                "HTML",                          Seq( "html", "htm" ) ),
+    MimeType( "text/javascript",                                                           null,                "Javascript",                    Seq( "js" ) ),
+    MimeType( "text/plain",                                                                null,                "Text",                          Seq( "txt", "text" ) ),
+    MimeType( "text/plain",                                                                null,                "Markdown",                      Seq( "markdown", "md", "mkd" ) ),
+    MimeType( "text/richtext",                                                             null,                "Rich Text",                     Seq( "rtx" ) ),
+    MimeType( "text/tab-separated-values",                                                 null,                "Tab Separated Values",          Seq( "tsv" ) ),
+    MimeType( "text/x-sgml",                                                               null,                "SGML",                          Seq( "sgml", "sgm" ) ),
+    MimeType( "text/xml",                                                                  XML,                 "XML",                           Seq( "xml" ) ),
+    MimeType( "text/xml",                                                                  XML,                 "XSL",                           Seq( "xsl" ) ),
 
-    MimeType( "video/mp4",                                                                 "MP4",                           Seq( "mp4" ) ),
-    MimeType( "video/mpeg",                                                                "MPEG Movie",                    Seq( "mpg", "mpe", "mpeg" ) ),
-    MimeType( "video/quicktime",                                                           "QuickTime",                     Seq( "mov", "qt" ) ),
-    MimeType( "video/x-sgi-movie",                                                         "SGI Movie",                     Seq( "movie" ) ),
-    MimeType( "video/x-msvideo",                                                           "Microsoft AVI",                 Seq( "avi" ) )
+    MimeType( "video/mp4",                                                                 null,                "MP4",                           Seq( "mp4" ) ),
+    MimeType( "video/mpeg",                                                                null,                "MPEG Movie",                    Seq( "mpg", "mpe", "mpeg" ) ),
+    MimeType( "video/quicktime",                                                           null,                "QuickTime",                     Seq( "mov", "qt" ) ),
+    MimeType( "video/x-sgi-movie",                                                         null,                "SGI Movie",                     Seq( "movie" ) ),
+    MimeType( "video/x-msvideo",                                                           null,                "Microsoft AVI",                 Seq( "avi" ) )
   )
 
   lazy val byMimeType:collection.Map[String,MimeType] = {

@@ -41,21 +41,31 @@ import org.tyranid.profile.User
 sealed trait Searchable {
   val auth:Boolean
   val text:Boolean
+  val analyze:Boolean
 }
 
 case object SearchText extends Searchable {
+  val auth    = false
+  val text    = true
+  val analyze = true
+}
+
+case object SearchToken extends Searchable {
   val auth = false
   val text = true
+  val analyze = false
 }
 
 case object SearchAuth extends Searchable {
-  val auth = true
-  val text = false
+  val auth    = true
+  val text    = false
+  val analyze = false
 }
 
 case object NoSearch extends Searchable {
-  val auth = false
-  val text = false
+  val auth    = false
+  val text    = false
+  val analyze = false
 }
 
 
@@ -139,7 +149,7 @@ object Es {
     )
 
   def search( query:Map[String,Any], user:User ):String = {
-    //sp am( "query=" + query.toJsonStr )
+spam( "query=" + query.toJsonStr )
     ( Es.host + "/_search" ).POST( content = query.toJsonStr ).s
   }
 
@@ -228,7 +238,8 @@ object Es {
             props( att.dbName ) = Map( "type" -> "string", "index" -> "not_analyzed" )
 
           case text:DbTextLike =>
-            props( att.dbName ) = Map( "type" -> "string" )
+            props( att.dbName ) = if ( att.search.analyze ) Map( "type" -> "string" )
+                                  else                      Map( "type" -> "string", "index" -> "not_analyzed" )
 
           case number:DbNumber =>
             props( att.dbName ) = Map( "type" -> "number" )
