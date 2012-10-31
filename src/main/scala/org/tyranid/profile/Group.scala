@@ -432,7 +432,6 @@ case class GroupField( baseName:String, l:String = null,
 
 
   override def drawPreamble:NodeSeq =
-    <head id="tag.js"><script src={ B.buildPrefix + "/js/tag.js" } charset="utf-8"></script></head>
     <div id={ "grpDlg" + id } class="grpDlg" style="padding:0; display:none;"/>;
 
   override def drawFilter( run:Run ) = {
