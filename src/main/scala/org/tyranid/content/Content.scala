@@ -645,7 +645,7 @@ abstract class Content( override val view:MongoView,
     else if ( has( 'title ) )    s( 'title )
     else if ( has( 'name ) )     s( 'name )
     else if ( has( 'fileName ) ) s( 'fileName )
-    else                         "n/a"
+    else                         "Change Log"
 
   def titleInDesc( title:String, desc:String ):Boolean = {
     var t = title

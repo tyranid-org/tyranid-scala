@@ -18,6 +18,7 @@
 package org.tyranid.web
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable
 
 import org.cometd.bayeux.server.{ BayeuxServer, ServerSession }
 import org.cometd.server.AbstractService
@@ -49,14 +50,20 @@ object Comet {
 
   def visit( visitor: ( Comet ) => Unit ) = {
     val serverSession = B.comets.find( _.name == "volee" ).get.service.getServerSession
+    val seen = mutable.Set[String]()
 
     for ( session <- B.bayeux.getSessions ) {
       val httpSessionId = session.getAttribute( WebSession.CometHttpSessionIdKey )
 
       if ( httpSessionId != null ) {
-        val tyrSession = Session.byHttpSessionId( httpSessionId.as[String] ).as[Session] // as a Volerro session
-
-        visitor( Comet( serverSession, session, tyrSession ) )
+        val httpSessionIdStr = httpSessionId.as[String]
+        
+        if ( !seen( httpSessionIdStr ) ) {
+          seen += httpSessionIdStr
+          
+          val tyrSession = Session.byHttpSessionId( httpSessionIdStr ).as[Session] // as a Volerro session
+          visitor( Comet( serverSession, session, tyrSession ) )
+        }
       }
     }
   }
