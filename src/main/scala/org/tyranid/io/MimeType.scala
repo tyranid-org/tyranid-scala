@@ -22,9 +22,9 @@ import scala.collection.mutable
 import org.tyranid.Imp._
 
 
-case class MetaMimeType( id:String, baseLabel:String ) {
+case class MetaMimeType( id:String, baseLabel:String, includes:Seq[MetaMimeType] ) {
 
-  def types = MimeType.types.filter( _.meta == this )
+  def types = MimeType.types.filter( mt => mt.meta == this || includes.contains( mt.meta ) )
 
   lazy val mimeTypes = types.map( _.mimeType ).sorted.distinct
 
@@ -35,8 +35,8 @@ object MetaMimeType {
 
   val values = mutable.Buffer[MetaMimeType]()
 
-  def add( id:String, label:String ) = {
-    val v = MetaMimeType( id, label )
+  def add( id:String, label:String, includes:Seq[MetaMimeType] = Nil ) = {
+    val v = MetaMimeType( id, label, includes )
     values += v
     v
   }
@@ -56,9 +56,13 @@ object MetaMimeType {
   val MicrosoftWord       = add( "msword",       "Microsoft Word" )
   val PDF                 = add( "pdf",          "Portable Document Format" )
   val PNG                 = add( "png",          "Portable Network Graphics" )
-  val TIFF                = add( "tiff",         "Tagged Image File Format" )
+  val Text                = add( "text",         "Text" )
+  val TIFF                = add( "tiff",         "Tagged Image Format" )
+  val Video               = add( "video",        "Video / Movie" )
   val XML                 = add( "xml",          "XML - Extensible Markup Language" )
   val ZIP                 = add( "zip",          "ZIP Archive" )
+
+  val Image               = add( "image",        "Image", includes = Seq( BMP, GIF, HTML, JPEG, PNG, TIFF ) )
 }
 
 
@@ -172,7 +176,7 @@ object MimeType {
     MimeType( "text/css",                                                                  null,                "CSS",                           Seq( "css" ) ),
     MimeType( "text/html",                                                                 HTML,                "HTML",                          Seq( "html", "htm" ) ),
     MimeType( "text/javascript",                                                           null,                "Javascript",                    Seq( "js" ) ),
-    MimeType( "text/plain",                                                                null,                "Text",                          Seq( "txt", "text" ) ),
+    MimeType( "text/plain",                                                                Text,                "Text",                          Seq( "txt", "text" ) ),
     MimeType( "text/plain",                                                                null,                "Markdown",                      Seq( "markdown", "md", "mkd" ) ),
     MimeType( "text/richtext",                                                             null,                "Rich Text",                     Seq( "rtx" ) ),
     MimeType( "text/tab-separated-values",                                                 null,                "Tab Separated Values",          Seq( "tsv" ) ),
@@ -181,10 +185,10 @@ object MimeType {
     MimeType( "text/xml",                                                                  XML,                 "XSL",                           Seq( "xsl" ) ),
 
     MimeType( "video/mp4",                                                                 null,                "MP4",                           Seq( "mp4" ) ),
-    MimeType( "video/mpeg",                                                                null,                "MPEG Movie",                    Seq( "mpg", "mpe", "mpeg" ) ),
-    MimeType( "video/quicktime",                                                           null,                "QuickTime",                     Seq( "mov", "qt" ) ),
+    MimeType( "video/mpeg",                                                                Video,               "MPEG Movie",                    Seq( "mpg", "mpe", "mpeg" ) ),
+    MimeType( "video/quicktime",                                                           Video,               "QuickTime",                     Seq( "mov", "qt" ) ),
     MimeType( "video/x-sgi-movie",                                                         null,                "SGI Movie",                     Seq( "movie" ) ),
-    MimeType( "video/x-msvideo",                                                           null,                "Microsoft AVI",                 Seq( "avi" ) )
+    MimeType( "video/x-msvideo",                                                           Video,               "Microsoft AVI",                 Seq( "avi" ) )
   )
 
   lazy val byMimeType:collection.Map[String,MimeType] = {
