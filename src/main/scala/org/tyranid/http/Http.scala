@@ -58,22 +58,38 @@ case class Http403Exception( response:HttpResponse ) extends Exception
 
 
 case class HttpServletRequestOps( req:HttpServletRequest ) {
+  
+  def getParameterValues( name:String ) = {
+    val values = req.getParameterValues( name )
 
-  def s( param:String ):String = req.getParameter( param )
+    if ( values == null ) {
+      null
+    } else {
+      val count = values.length
+      val encodedValues = new Array[String](count)
+      
+      for ( i <- 0 until count )
+        encodedValues(i) = values(i).stripXss
+
+      encodedValues
+    }
+  }
+  
+  def s( param:String ):String = req.getParameter( param ).stripXss
   def i( param:String ):Int = {
-    val s = req.getParameter( param )
+    val s = req.getParameter( param ).stripXss
     s != null |* s.toLaxInt
   }
   def d( param:String ):Double = {
-    val s = req.getParameter( param )
+    val s = req.getParameter( param ).stripXss
     s != null |* s.toLaxDouble
   }
   def l( param:String ):Long = {
-    val s = req.getParameter( param )
+    val s = req.getParameter( param ).stripXss
     s != null |* s.toLaxLong
   }
   def b( param:String ):Boolean = {
-    val s = req.getParameter( param )
+    val s = req.getParameter( param ).stripXss
     s != null && s.toLaxBoolean
   }
 
@@ -84,10 +100,11 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
 
   def a( param:String ):Seq[String] =
     // jQuery appends a [] to all arrays, check to see if that exists
-    req.getParameterValues( param + "[]" ) match {
-    case null => req.getParameterValues( param )
+    getParameterValues( param + "[]" ) match {
+    case null => getParameterValues( param )
     case arr  => arr
     }
+  
   def a_?( param:String ):Seq[String] = {
     val arr = a( param )
     if ( arr != null ) arr else Nil
@@ -103,7 +120,7 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
   }
 
   def sReq( param:String ) = {
-    val s = req.getParameter( param )
+    val s = req.getParameter( param ).stripXss
 
     if ( s.isBlank )
       throw new RestException( code = "missing-" + param, message = "The '" + param + "' parameter is required." )
@@ -124,7 +141,7 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
 
     println( "** parameters" )
     for ( n <- req.getParameterNames )
-      println( "  " + n + " = " + req.getParameter( n.as[String] ) )
+      println( "  " + n + " = " + req.getParameter( n.as[String] ).stripXss )
 
     println( "** headers" )
     for ( n <- req.getHeaderNames )

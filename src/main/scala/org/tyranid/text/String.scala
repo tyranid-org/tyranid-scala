@@ -39,6 +39,16 @@ object StringImp {
 
   val UnicodeLeftQuote  = 8220
   val UnicodeRightQuote = 8221
+  
+  val scriptPattern = Pattern.compile("<script>(.*?)</script>", Pattern.CASE_INSENSITIVE)  
+  val srcPattern = Pattern.compile("src[\r\n]*=[\r\n]*\\\'(.*?)\\\'", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL)
+  val lonesomePattern = Pattern.compile("</script>", Pattern.CASE_INSENSITIVE)
+  val lonesome2Pattern = Pattern.compile("<script(.*?)>", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL)
+  val evalPattern = Pattern.compile("eval\\((.*?)\\)", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL)
+  val expressionPattern = Pattern.compile("expression\\((.*?)\\)", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL)
+  val javascriptPattern = Pattern.compile("javascript:", Pattern.CASE_INSENSITIVE)
+  val vbscriptPattern = Pattern.compile("vbscript:", Pattern.CASE_INSENSITIVE)
+  val onloadPattern = Pattern.compile("onload(.*?)=", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL)
 }
 
 class StringImp( s:String ) {
@@ -92,7 +102,48 @@ class StringImp( s:String ) {
   def noUtf8Pattern = Pattern.compile("[^\\x00-\\x7F]", Pattern.UNICODE_CASE | Pattern.CANON_EQ | Pattern.CASE_INSENSITIVE)
   
   def stripNonUtf8 = ( s == null ) ? s | noUtf8Pattern.matcher( s ).replaceAll( " " )
+  
+  def stripXss:String = {
+    if ( s == null )
+      return s
       
+    // NOTE: It's highly recommended to use the ESAPI library and uncomment the following line to
+    // avoid encoded attacks.
+    // value = ESAPI.encoder().canonicalize(value);
+
+    // Avoid null characters
+    var value = s.replaceAll("", "")
+
+    // Avoid anything between script tags
+    value = StringImp.scriptPattern.matcher(value).replaceAll("")
+
+    // Avoid anything in a src='...' type of expression
+    value = StringImp.srcPattern.matcher(value).replaceAll("")
+
+    // Remove any lonesome </script> tag
+    value = StringImp.lonesomePattern.matcher(value).replaceAll("")
+
+    // Remove any lonesome <script ...> tag
+    value = StringImp.lonesome2Pattern.matcher(value).replaceAll("")
+
+    // Avoid eval(...) expressions
+    value = StringImp.evalPattern.matcher(value).replaceAll("")
+
+    // Avoid expression(...) expressions
+    value = StringImp.expressionPattern.matcher(value).replaceAll("")
+
+    // Avoid javascript:... expressions
+    value = StringImp.javascriptPattern.matcher(value).replaceAll("")
+
+    // Avoid vbscript:... expressions
+    value = StringImp.vbscriptPattern.matcher(value).replaceAll("")
+
+    // Avoid onload= expressions
+    value = StringImp.onloadPattern.matcher(value).replaceAll("")
+    
+    value
+  }
+    
   def encJson = {
     if ( s != null ) {
       val sb = new StringBuilder
