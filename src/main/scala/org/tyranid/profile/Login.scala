@@ -709,12 +709,15 @@ $( function() {
        <div class="row-fluid">
          <div class="container-fluid span12" style="padding:0;">
           { !keep && ( B.BETA && !betaSignup ) |*
+            { user.s( 'activationCode ).isBlank ?
           <div class="row-fluid">
            <div class="span6">
             <input type="text" name="activationCode" id="activationCode" value={ user.s( 'activationCode ) } placeholder="Invite Code" data-update="blur" data-val="req"/>
            </div>
            <div class="span6 val-display"/>
-          </div>
+          </div> |
+          <input type="hidden" name="activationCode" id="activationCode" value={ user.s( 'activationCode ) }/>
+            }
           }
           { ( !keep && ( B.BETA && !betaSignup ) ) ?
           <div class="row-fluid">
