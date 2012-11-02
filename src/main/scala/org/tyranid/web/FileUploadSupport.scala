@@ -53,14 +53,31 @@ object FileUploadSupport {
       
       val newWeb = web.copy( req =
         new HttpServletRequestWrapper( req ) {
-          override def getParameter( name:String )         = mergedParams.get(name) map { _.head } getOrElse null
-          override def getParameterNames                   = mergedParams.keysIterator
-          override def getParameterValues( name:String )   = mergedParams.get(name) map { _.toArray } getOrElse null
+          override def getParameter( name:String ) = ( mergedParams.get(name) map { _.head } getOrElse null ).stripXss
+          override def getParameterNames           = mergedParams.keysIterator
           override def getParameterMap = {
             val map = new JHashMap[String,Array[String]]()
             for ( ( k, v ) <- mergedParams )
               map( k ) = v.toArray
             map
+          }
+          
+          override def getHeader( name:String ) = req.getHeader( name ).stripXss
+          
+          override def getParameterValues( name:String ) = {
+            val values = mergedParams.get( name ) map { _.toArray } getOrElse null
+
+            if ( values == null ) {
+              null
+            } else {
+              val count = values.length
+              val encodedValues = new Array[String](count)
+              
+              for ( i <- 0 until count )
+                encodedValues(i) = values(i).stripXss
+  
+              encodedValues
+            }
           }
         }
       )

@@ -30,6 +30,7 @@ import org.tyranid.session.Session
 import org.tyranid.social.Social
 import org.tyranid.ui.{ Button, Grid, Row, Focus, LnF, Form }
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate, WebResponse }
+import org.tyranid.web.WebHandledException
 
 /*
      new Form( "/user/register", "register" )
@@ -274,7 +275,6 @@ $( function() {
 
     rpath match {
     case "/in" | "/" =>
-      //web.req.dump
       val saving = web.b( "xhrSbt" )
       
       if ( web.b( "xhr" ) && !saving ) {
@@ -299,9 +299,9 @@ $( function() {
             getUserByEmailPassword( email, password )
   
         if ( user == null || user.s( "activationCode" ).notBlank ) {
-          if (user != null)
+          if (user != null) {
             notActivatedYet( user )
-          else if ( email.isBlank ) 
+          } else if ( email.isBlank ) 
             sess.warn( "Please log in." )
   
           // check look and feel, and if rb, do json, otherwise this.
@@ -561,7 +561,9 @@ $( function() {
             web.jsRes()
           }
         case "email" =>
-          val exists = B.User.db.exists( Mobj( "email" -> ("^" + web.s( 'email ).encRegex + "$").toPatternI ) )
+          val email = web.s( 'email )
+          
+          val exists = B.User.db.exists( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) )
 
           if ( exists ) {
             sess.error( "Email is already in use." )
@@ -650,6 +652,7 @@ $( function() {
           if ( keep && org != null ) {
             user( 'org ) = org.id
             sess.login( user )
+            user.remove( 'activationCode )
             user.save
             
             B.welcomeUserEvent
@@ -709,12 +712,15 @@ $( function() {
        <div class="row-fluid">
          <div class="container-fluid span12" style="padding:0;">
           { !keep && ( B.BETA && !betaSignup ) |*
+            { user.s( 'activationCode ).isBlank ?
           <div class="row-fluid">
            <div class="span6">
             <input type="text" name="activationCode" id="activationCode" value={ user.s( 'activationCode ) } placeholder="Invite Code" data-update="blur" data-val="req"/>
            </div>
            <div class="span6 val-display"/>
-          </div>
+          </div> |
+          <input type="hidden" name="activationCode" id="activationCode" value={ user.s( 'activationCode ) }/>
+            }
           }
           { ( !keep && ( B.BETA && !betaSignup ) ) ?
           <div class="row-fluid">
@@ -735,7 +741,7 @@ $( function() {
           }
           <div class="row-fluid">
            <div class="span6">
-            { ( B.BETA && !betaSignup ) ?
+            { ( ( B.BETA && !betaSignup ) || !user.isNew ) ?
               <input type="text" name="email" id="email" value={ user.s( 'email ) } readonly="readonly" placeholder="Email address"/> |
               <input type="text" name="email" id="email" value={ user.s( 'email ) } placeholder="Email address" data-update="blur" data-val="req,email"/>
             }
@@ -1029,7 +1035,12 @@ $( function() {
     T.session.warn( 
         "This account has not been activated yet!  Please check your email for the activation link.",
         <a href={ "/log/resendActivation?id=" + user.id }>Send Again</a> )
-    T.web.redirect( "/?na=1" ) // na = need activation
+        
+    if ( T.LnF == LnF.RetailBrand ) {
+      T.web.jsRes()
+      throw new WebHandledException
+    } else
+      T.web.redirect( "/?na=1" ) // na = need activation
   }
 }
 
