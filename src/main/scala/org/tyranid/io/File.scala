@@ -18,6 +18,7 @@
 package org.tyranid.io
 
 import org.apache.tika.detect.{ DefaultDetector, Detector }
+import org.apache.tika.exception.TikaException
 import org.apache.tika.io.TikaInputStream
 import org.apache.tika.metadata.Metadata
 import org.apache.tika.parser.{ AutoDetectParser, Parser, ParseContext }
@@ -81,6 +82,10 @@ class TikaExtractor extends TextExtractor {
       is = TikaInputStream.get( file )
       parser.parse( is, new BodyContentHandler( out ), new Metadata, context ) 
       out.toString( "UTF-8" ).stripNonUtf8
+    } catch {
+      case te:TikaException =>
+        log( Event.StackTrace, "m" -> ( "Tika Exception:" + te.getMessage() ), "ex" -> te )
+      null
     } finally {
       is.close()
     } 
