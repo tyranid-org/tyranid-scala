@@ -124,10 +124,12 @@ class Indexer extends Actor {
  *       *** going with REST/JSON for now ***
  */
 object Es {
+  val ElasticSearchDefaultPageSize = 10 // this needs to map to elasticsearch's actual default page size
+
   val UTF8_CHARSET = java.nio.charset.Charset.forName("UTF-8")
   val host = "http://localhost:9200"
 
-  def search( text:String, user:User ):String =
+  def search( text:String, user:User, offset:Int = 0, pageSize:Int = ElasticSearchDefaultPageSize ):String =
     search(
       Map(
         "query" -> Map(
@@ -145,12 +147,25 @@ object Es {
           )
         )
       ),
-      user
+      user,
+      offset = offset,
+      pageSize = pageSize
     )
 
-  def search( query:Map[String,Any], user:User ):String = {
+  def search( query:Map[String,Any], user:User, offset:Int, pageSize:Int ):String = {
 //sp am( "query=" + query.toJsonStr )
-    ( Es.host + "/_search" ).POST( content = query.toJsonStr ).s
+
+    var params =
+      if ( offset != 0 && pageSize != ElasticSearchDefaultPageSize )
+        "?from=" + offset + "&size=" + pageSize
+      else if ( offset != 0 )
+        "?from=" + offset
+      else if ( pageSize != ElasticSearchDefaultPageSize )
+        "?size=" + pageSize
+      else
+        ""
+
+    ( Es.host + "/_search" + params ).POST( content = query.toJsonStr ).s
   }
 
   def jsonFor( rec:Record ) = {

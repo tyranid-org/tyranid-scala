@@ -28,7 +28,11 @@ case class MetaMimeType( id:String, baseLabel:String, includes:Seq[MetaMimeType]
 
   lazy val mimeTypes = types.map( _.mimeType ).sorted.distinct
 
-  lazy val label = baseLabel + " (" + types.flatMap( _.extensions ).sorted.map( "." + _ ).mkString( ", " ) + ")"
+  lazy val extensions = types.flatMap( _.extensions )
+
+  lazy val label = baseLabel + " (" + extensions.sorted.map( "." + _ ).mkString( ", " ) + ")"
+
+  def matchesExtension( ext:String ) = extensions.contains( ext )
 }
 
 object MetaMimeType {
