@@ -279,4 +279,7 @@ trait Bootable {
 
     org.tyranid.db.Entity.init
   }
+  
+  // Security
+  java.security.Security.addProvider( new org.bouncycastle.jce.provider.BouncyCastleProvider() )
 }

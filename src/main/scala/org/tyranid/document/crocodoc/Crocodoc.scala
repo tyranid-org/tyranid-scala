@@ -81,7 +81,6 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
     statusJson.s( 'status )
   }
   
-//    <iframe style={ "width:100%;height:" + height + "px;" } src={ previewUrlFor( extDocId ) }/>    
   def docPreviewContainer( extDocId:String, height:String="100%" ): NodeSeq =
     <div class="doc-view doc crocodoc annotatableObject" id={ "dv_" + extDocId }/>
   

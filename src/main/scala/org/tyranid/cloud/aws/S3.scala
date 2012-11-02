@@ -17,21 +17,27 @@
 
 package org.tyranid.cloud.aws
 
+import java.util.Date
 import java.io.{ ByteArrayInputStream, FileOutputStream, FileInputStream, InputStream, File }
 
+import org.jets3t.service.CloudFrontService
+import org.jets3t.service.utils.ServiceUtils
+
 import com.amazonaws.services.s3.AmazonS3Client
-import com.amazonaws.services.s3.model.{ AmazonS3Exception, GroupGrantee, ObjectMetadata, Permission, S3Object, GetObjectRequest }
+import com.amazonaws.services.s3.model.{ AmazonS3Exception, GeneratePresignedUrlRequest, GroupGrantee, ObjectMetadata, Permission, S3Object, GetObjectRequest }
 
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
 import org.tyranid.net.Uri
 
+import org.apache.commons.io.IOUtils
+
 
 
 case class S3StoreResult( url:String, mimeType:String )
 
-case class S3Bucket( prefix:String, cfDistributionId:String = "", cfDomain:String = "" ) {
+case class S3Bucket( prefix:String, cfDistributionId:String = "", cfDomain:String = "", keyPairId:String= "" ) {
   val name = prefix + B.envSuffix + B.bucketSuffix
 
   def url( path:String ) =
@@ -44,9 +50,35 @@ case class S3Bucket( prefix:String, cfDistributionId:String = "", cfDomain:Strin
 }
 
 object S3 {
+  private val derPrivateKey = {
+    val derFile = new File( "/etc/cf-default.der" )
+    
+    if ( !derFile.exists ) 
+      throw new RuntimeException( derFile.getAbsolutePath() + " does not exist!" );
+    
+    ServiceUtils.readInputStreamToBytes( new FileInputStream( derFile ) )
+  }
+  
   private val s3 = new AmazonS3Client( B.awsCredentials )
 
-  def write( bucket:S3Bucket, key:String, file:java.io.File ) = {
+  def signedUrl( bucket:S3Bucket, key:String, expireHours:Int = 1 ) = {
+    val expiration = new Date().add( java.util.Calendar.HOUR_OF_DAY, expireHours )
+      
+    if ( bucket.cfDomain != null ) {
+      CloudFrontService.signUrlCanned(
+          "https://" + bucket.cfDomain + ".cloudfront.net/" + key,
+          bucket.keyPairId,
+          derPrivateKey,
+          expiration
+      )
+    } else {
+      val req = new GeneratePresignedUrlRequest( bucket.name, key )
+      req.setExpiration( expiration )
+      s3.generatePresignedUrl( req )._s
+    }
+  }
+  
+  def write( bucket:S3Bucket, key:String, file:java.io.File, public:Boolean = false, authorized:Boolean = false ) = {
     val mimeType = new FileInputStream( file ).detectMimeType( file.getName )
     
     if ( mimeType.notBlank ) {
@@ -59,6 +91,9 @@ object S3 {
       
       try {
         s3.putObject( bucket.name, key, in, md )
+        
+        if ( public || authorized )
+          access( bucket, key, public, authorized )
       } finally {
         in.close
       }
@@ -110,7 +145,7 @@ object S3 {
     delete( bucketFrom, fromPath )
   }
 
-  def access( bucket:S3Bucket, key:String, public:Boolean ) = {
+  def access( bucket:S3Bucket, key:String, public:Boolean = false, authenticated:Boolean = false ) = {
     try {
       val acl = s3.getObjectAcl( bucket.name, key )
 
@@ -118,6 +153,9 @@ object S3 {
       
       if ( public )
         acl.grantPermission( GroupGrantee.AllUsers, Permission.Read )
+        
+      if ( authenticated )
+        acl.grantPermission( GroupGrantee.AuthenticatedUsers, Permission.Read )
 
       s3.setObjectAcl( bucket.name, key, acl )
     } catch {
