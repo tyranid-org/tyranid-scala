@@ -647,7 +647,7 @@ class StringImp( s:String ) {
    */
 
   def GET( query:collection.Map[String,String] = null, headers:collection.Map[String,String] = null ) =
-    Http.GET( s, query = query, headers )
+    Http.GET( Uri.completeUri( s ), query = query, headers )
 
   def POST( form:collection.Map[String,String] = null, content:String = null, contentType:String = null, headers:collection.Map[String,String] = null ) =
     Http.POST( s, content, form, contentType, headers )
