@@ -19,21 +19,17 @@ package org.tyranid.cloud.aws
 
 import java.util.Date
 import java.io.{ ByteArrayInputStream, FileOutputStream, FileInputStream, InputStream, File }
-
+import scala.collection.mutable
+import scala.collection.mutable.Buffer
 import org.jets3t.service.CloudFrontService
 import org.jets3t.service.utils.ServiceUtils
-
 import com.amazonaws.services.s3.AmazonS3Client
-import com.amazonaws.services.s3.model.{ AmazonS3Exception, GeneratePresignedUrlRequest, GroupGrantee, ObjectMetadata, Permission, S3Object, GetObjectRequest }
-
+import com.amazonaws.services.s3.model.{ AmazonS3Exception, GeneratePresignedUrlRequest, GroupGrantee, ObjectMetadata, Permission, S3Object, GetObjectRequest, ListObjectsRequest, DeleteObjectsRequest }
 import com.mongodb.DBObject
-
 import org.tyranid.Imp._
 import org.tyranid.net.Uri
-
 import org.apache.commons.io.IOUtils
-
-
+import com.amazonaws.services.s3.model.DeleteObjectRequest
 
 case class S3StoreResult( url:String, mimeType:String )
 
@@ -138,6 +134,11 @@ object S3 {
 
   def delete( bucket:S3Bucket, key:String ) = s3.deleteObject( bucket.name, key )
   
+  def deleteAll( bucket:S3Bucket, keys:Seq[String], keyPrefix:String = null ) = {
+    for ( key <- keys )
+      delete( bucket, keyPrefix.isBlank ? key | ( keyPrefix + key ) )
+  }
+  
   def copy( bucket:S3Bucket, key:String, bucket2:S3Bucket, key2:String ) = s3.copyObject( bucket.name, key, bucket2.name, key2 )
 
   def move( bucketFrom:S3Bucket, fromPath:String, bucketTo:S3Bucket, toPath:String ) = {
@@ -187,7 +188,24 @@ object S3 {
      
      tmpFile
   }
-  
+
+  def getFilenames( bucket:S3Bucket, prefix:String = null, suffix:String = null, olderThan:Date = null ) = {
+    val listing = s3.listObjects( new ListObjectsRequest().withBucketName( bucket.name ).withPrefix( prefix ) )
+    val summaries = listing.getObjectSummaries
+    val iterator = summaries.iterator
+    val filenames = mutable.ArrayBuffer[String]()
+    
+    while ( iterator.hasNext ) {
+      val o = iterator.next
+      val s = o.getKey
+      
+      if ( ( suffix.isBlank || s.endsWith( suffix ) ) && ( olderThan == null || o.getLastModified.getTime < olderThan.getTime ) )
+        filenames += s
+    }
+    
+    filenames
+  }
+
   def exists( bucket:S3Bucket, key:String ) = {
     try {
       s3.getObject( bucket.name, key ) != null

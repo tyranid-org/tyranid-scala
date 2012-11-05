@@ -23,19 +23,24 @@ import org.apache.tika.io.TikaInputStream
 import org.apache.tika.metadata.Metadata
 import org.apache.tika.parser.{ AutoDetectParser, Parser, ParseContext }
 import org.apache.tika.parser.html.HtmlParser
+import org.apache.tika.parser.txt.UniversalEncodingDetector
 import org.apache.tika.sax.BodyContentHandler
+
 import java.io.{ IOException, FileOutputStream, FileInputStream, InputStream, OutputStream, File => SysFile, ByteArrayOutputStream }
 import java.net.URL
+import java.util.{ Calendar, Date }
+
 import scala.collection.mutable
 import scala.collection.JavaConversions._
 import scala.xml.{ NodeSeq, Unparsed }
+
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.{ Domain, Record, Scope }
 import org.tyranid.document.OpenOfficeParser
 import org.tyranid.ui.PathField
+import org.tyranid.time.Time
 import org.tyranid.web.WebContext
-import org.apache.tika.parser.txt.UniversalEncodingDetector
 
 
 trait HasText {
@@ -108,6 +113,15 @@ class HtmlTextExtractor extends TextExtractor {
     } finally {
       is.close
     }
+  }
+}
+
+
+object FileCleaner { 
+  def clean {
+    val filesBucket = B.getS3Bucket( "files" )
+    val zips = S3.getFilenames( filesBucket, ".zip", olderThan = new Date().add( Calendar.DAY_OF_MONTH, -1 ) )
+    S3.deleteAll( filesBucket, zips, keyPrefix = "zips/" )
   }
 }
 

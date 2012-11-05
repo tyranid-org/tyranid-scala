@@ -207,7 +207,7 @@ class StringImp( s:String ) {
     s != null && v.notBlank && s.toLowerCase.endsWith( v.toLowerCase )
 
     
-  def safeFilename = s.replaceAll( "/", "" ).replaceAll( "\\", "" ).replaceAll( "?", "" ).replaceAll( "*", "" )
+  def safeFilename = s.replaceAll( "/", "" ).replaceAll( "\\\\", "" ).replaceAll( "\\?", "" ).replaceAll( "\\*", "" )
   
   /*
    * This should not throw any exceptions.  If the URL is invalid in any way, returns null.
