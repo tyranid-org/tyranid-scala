@@ -158,8 +158,9 @@ object MimeType {
     MimeType( "application/x-wais-source",                                                 null,                "WAIS",                          Seq( "src" ) ),
     MimeType( "application/x-zip-compressed",                                              ZIP,                 "ZIP",                           Seq( "zip" ) ),
 
-    MimeType( "audio/x-aiff",                                                              null,                "Audio Interchange File Format", Seq( "aif", "aifc", "aiff" ) ),
     MimeType( "audio/basic",                                                               null,                "Basic Audio",                   Seq( "au", "snd" ) ),
+    MimeType( "audio/ogg",                                                                 null,                "OGG Audio",                     Seq( "oga", "ogg" ) ),
+    MimeType( "audio/x-aiff",                                                              null,                "Audio Interchange File Format", Seq( "aif", "aifc", "aiff" ) ),
     MimeType( "audio/x-wav",                                                               null,                "WAV Audio",                     Seq( "wav" ) ),
 
     MimeType( "image/bmp",                                                                 BMP,                 "BMP Image",                     Seq( "bmp" ) ),
@@ -190,6 +191,8 @@ object MimeType {
 
     MimeType( "video/mp4",                                                                 null,                "MP4",                           Seq( "mp4" ) ),
     MimeType( "video/mpeg",                                                                Video,               "MPEG Movie",                    Seq( "mpg", "mpe", "mpeg" ) ),
+    MimeType( "video/ogg",                                                                 Video,               "OGG Movie",                     Seq( "ogv" ) ),
+    MimeType( "video/webm",                                                                Video,               "WebM Movie",                    Seq( "webm" ) ),
     MimeType( "video/quicktime",                                                           Video,               "QuickTime",                     Seq( "mov", "qt" ) ),
     MimeType( "video/x-sgi-movie",                                                         null,                "SGI Movie",                     Seq( "movie" ) ),
     MimeType( "video/x-msvideo",                                                           Video,               "Microsoft AVI",                 Seq( "avi" ) )
@@ -280,6 +283,9 @@ object MimeType {
     "odp"      -> "application/vnd.oasis.opendocument.presentation",
     "ods"      -> "application/vnd.oasis.opendocument.spreadsheet",
     "odt"      -> "application/vnd.oasis.opendocument.text", 
+    "oga"      -> "audio/ogg",
+    "ogg"      -> "audio/ogg",
+    "ogv"      -> "video/ogg",
     "otg"      -> "application/vnd.oasis.opendocument.graphics-template",   
     "oth"      -> "application/vnd.oasis.opendocument.text-web",
     "ott"      -> "application/vnd.oasis.opendocument.text-template",   
@@ -335,7 +341,8 @@ object MimeType {
     "txt"      -> "text/plain",
     
     "wav"      -> "audio/x-wav",
-    
+    "webm"     -> "video/webm",
+
     "xbm"      -> "image/x-xbitmap",
     "xla"      -> "application/vnd.ms-excel",
     "xlam"     -> "application/vnd.ms-excel.addin.macroEnabled.12",
