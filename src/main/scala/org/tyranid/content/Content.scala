@@ -273,6 +273,12 @@ object Repositioning {
     }
   }
 
+  def nextTopPositionFor( folder:Content ):Int = {
+    for ( rec <- folder.db.find( Mobj( $and -> Mlist( Mobj( "parentFolder" -> folder.id ), Mobj( "pos" -> Mobj( $exists -> true ) ) ) ), Mobj( "pos" -> 1 ) ).sort( Mobj( "pos" -> 1 ) ).limit( 1 ) )
+      return rec.i( 'pos ) - 1
+
+    0
+  }
 }
 
 case class Repositioning( var moving:Content,
