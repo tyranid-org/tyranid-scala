@@ -87,7 +87,7 @@ class WebFilter extends Filter {
     ctx.res.sendRedirect( sb.toString )
   }
 
-  val assetPattern = java.util.regex.Pattern.compile( "([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|woff|svg|html))$)" )
+  val assetPattern = java.util.regex.Pattern.compile( "([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|htc))$)" )
   
   def notAsset( path:String ) = !assetPattern.matcher( path ).matches
   
@@ -198,7 +198,6 @@ class WebFilter extends Filter {
         //println( T.LnF == LnF.RetailBrand )
         //println( notComet )
         
-        //if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && T.LnF == LnF.RetailBrand ) && notComet ) {
         if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) && T.LnF == LnF.RetailBrand ) && notComet ) {
           //println( "full shell page!" )
           web.template( B.appShellPage( web ) )

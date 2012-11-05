@@ -25,19 +25,20 @@ import org.tyranid.ui.Button
 
 
 object ChromeFrame {
-
+// href="javascript:CFInstall.require()"
+  
   val sniffBox = Unparsed( """
 <!--[if lt IE 8 ]>
-<div class="error"><a href="/chrome/install">Welcome to """ + B.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
+<div class="chrome error"><a href="/chrome/install">Welcome to """ + B.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
 <![endif]-->
 <!--[if IE 8 ]>
-<div class="warning"><a href="/chrome/install">Welcome to """ + B.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
+<div class="chrome warning"><a href="/chrome/install">Welcome to """ + B.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
 <![endif]-->
 """ )
 
   val installScript = Unparsed( """
 <!--[if IE]>
- <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js"></script>
+ <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js"></script>
  <style>
   .chromeFrameInstallDefaultStyle {
      width: 800px;
