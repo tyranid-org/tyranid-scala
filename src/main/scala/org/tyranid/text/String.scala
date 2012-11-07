@@ -167,6 +167,8 @@ class StringImp( s:String ) {
     }
   }
   
+  def encBase64 = ( s == null ) ? null | new String( org.tyranid.math.Base64.toBytes( s ) )
+  
   def encUnicode:String = {
 
     for ( i <- 0 until s.length ) {

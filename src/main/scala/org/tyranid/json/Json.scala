@@ -146,7 +146,7 @@ case class JsonString( root:Any ) {
 
     // This will probably have to be parsed better to replace all inner quotes
     case xml:NodeSeq         => 
-      sb += '"' ++= xml.toString.replaceAll( "\"", "\\\\\"" ).replaceAll( "\t", "" ).replaceAll( "\n", "{--TY_NL--}" ).replaceAll( "\r", "{--TY_LF--}" ) += '"'
+      sb += '"' ++= xml.toString.replaceAll( "\\\\", "{--TY_DS--}" ).replaceAll( "\"", "\\\\\"" ).replaceAll( "\t", "" ).replaceAll( "\n", "{--TY_NL--}" ).replaceAll( "\r", "{--TY_LF--}" ) += '"'
 
     case a:Array[_]          =>
       sb += '['
