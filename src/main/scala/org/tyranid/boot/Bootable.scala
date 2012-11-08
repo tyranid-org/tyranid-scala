@@ -69,8 +69,8 @@ object Boot {
 
         instance.boot
 
+        println( "Temp dir: " + System.getProperty( "java.io.tmpdir" ) )
         println( "*** " + instance.applicationName + " booted ... mode: " + instance.mode.toUpperCase + ", build: " + instance.build + " ***" )
-
       } catch {
       case e:ClassCastException =>
         throw new RuntimeException( "bootstrap.tyranid.Boot does not extend org.tyranid.boot.Boot" )

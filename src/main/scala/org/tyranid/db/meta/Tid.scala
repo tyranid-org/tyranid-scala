@@ -374,7 +374,7 @@ object Tidlet extends Weblet {
     val ( entity, id ) = Tid.parse( tid )
     val rec = id != null |* Record.byTid( tid )
 
-    <div class="tiditor">
+    <div class="tiditor" style="padding-bottom: 50px;">
      <div class="plainbox">
       <div class="content">
        <form method="post" action={ wpath } style="margin-top:8px;">
