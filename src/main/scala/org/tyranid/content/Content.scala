@@ -22,7 +22,8 @@ import java.util.Date
 
 import scala.xml.Text
 
-import com.mongodb.{ BasicDBList, DBObject }
+import org.bson.types.ObjectId
+import com.mongodb.{ BasicDBList, DBCollection, DBObject }
 
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3Bucket, S3 }
@@ -131,9 +132,9 @@ case class ContentMoveMode( override val view:TupleView ) extends Tuple( view )
 /**
  * This code manages the 'pos property in Content.
  */
-object Repositioning {
+object Positioning {
 
-  def apply( container:Content, newOrderTids:Seq[String] ):Repositioning = {
+  def apply( container:Content, newOrderTids:Seq[String] ):Positioning = {
 
     val contents = ContentOrder.Manual.sort( container.contents )
 
@@ -209,13 +210,13 @@ object Repositioning {
     if ( moving == null ) {
       null
     } else {
-      val repos = Repositioning( moving = moving, before = before, beforeEnd = ( before == null ), toContainer = container, toContents = contents, fromContainer = container, fromContents = null )
+      val repos = Positioning( moving = moving, before = before, beforeEnd = ( before == null ), toContainer = container, toContents = contents, fromContainer = container, fromContents = null )
       repos.reposition
       repos
     }
   }
 
-  def apply( moving:Content, to:Content, mode:ContentMoveMode ):Repositioning = {
+  def apply( moving:Content, to:Content, mode:ContentMoveMode ):Positioning = {
 
     // PERFORMANCE-TODO:  instead of using contents, add a query method that just returns a Seq[DBObject] just containing '_id and 'pos ...
 
@@ -259,7 +260,7 @@ object Repositioning {
       beforeEnd = true
     }
 
-    val repos = Repositioning( moving = moving, before = before, beforeEnd = beforeEnd, toContainer = toContainer, toContents = toContents, fromContainer = fromContainer, fromContents = fromContents )
+    val repos = Positioning( moving = moving, before = before, beforeEnd = beforeEnd, toContainer = toContainer, toContents = toContents, fromContainer = fromContainer, fromContents = fromContents )
     repos.reposition
     repos
   }
@@ -273,21 +274,23 @@ object Repositioning {
     }
   }
 
-  def nextTopPositionFor( folder:Content ):Int = {
-    for ( rec <- folder.db.find( Mobj( $and -> Mlist( Mobj( "parentFolder" -> folder.id ), Mobj( "pos" -> Mobj( $exists -> true ) ) ) ), Mobj( "pos" -> 1 ) ).sort( Mobj( "pos" -> 1 ) ).limit( 1 ) )
+  def nextTopPositionFor( folder:Content ):Int = nextTopPositionFor( folder.db, folder.oid )
+
+  def nextTopPositionFor( db:DBCollection, folderId:ObjectId ):Int = {
+    for ( rec <- db.find( Mobj( $and -> Mlist( Mobj( "parentFolder" -> folderId ), Mobj( "pos" -> Mobj( $exists -> true ) ) ) ), Mobj( "pos" -> 1 ) ).sort( Mobj( "pos" -> 1 ) ).limit( 1 ) )
       return rec.i( 'pos ) - 1
 
     0
   }
 }
 
-case class Repositioning( var moving:Content,
-                          var before:Content,
-                          var beforeEnd:Boolean,
-                          var toContainer:Content,
-                          var toContents:Seq[Content],
-                          var fromContainer:Content,
-                          var fromContents:Seq[Content] ) {
+case class Positioning( var moving:Content,
+                        var before:Content,
+                        var beforeEnd:Boolean,
+                        var toContainer:Content,
+                        var toContents:Seq[Content],
+                        var fromContainer:Content,
+                        var fromContents:Seq[Content] ) {
 
   def reposition {
 //sp am( "BEFORE: " + toContents.map( _.label ).mkString( ", " ) )
@@ -297,7 +300,7 @@ case class Repositioning( var moving:Content,
       fromContents = ContentOrder.Manual.sort( fromContainer.contents ).filter( _.id != moving.id )
 
       for ( i <- 0 until fromContents.size )
-        Repositioning.updatePos( fromContents( i ), i )
+        Positioning.updatePos( fromContents( i ), i )
     }
 
     toContents = toContents.filter( _.id != moving.id )
@@ -314,7 +317,7 @@ case class Repositioning( var moving:Content,
 
 //sp am( " AFTER: " + toContents.map( _.label ).mkString( ", " ) )
     for ( i <- 0 until toContents.size )
-      Repositioning.updatePos( toContents( i ), i )
+      Positioning.updatePos( toContents( i ), i )
   }
 }
 
@@ -505,7 +508,7 @@ trait ContentMeta extends PrivateKeyEntity {
   "tags"              is DbArray(DbLink(Tag)) is SearchText;
   "name"              is DbChar(50)           is 'label is 'required is SearchText;
 
-  "pos"               is DbInt                ; // the position of this content within its parent (group, folder, board, etc.) ... see the class "Repositioning"
+  "pos"               is DbInt                ; // the position of this content within its parent (group, folder, board, etc.) ... see the class "Positioning"
 
   "o"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Owners" is 'owner;
   "v"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Viewers" is SearchAuth;
@@ -1052,7 +1055,7 @@ abstract class Content( override val view:MongoView,
   def container:Content = null
   def contents:Seq[Content] = Nil
 
-  def reposition( to:Content, mode:ContentMoveMode ) = Repositioning( moving = this, to = to, mode = mode )
+  def reposition( to:Content, mode:ContentMoveMode ) = Positioning( moving = this, to = to, mode = mode )
 
 
   /*
