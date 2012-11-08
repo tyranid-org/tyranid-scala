@@ -28,10 +28,10 @@ object ChromeFrame {
 // href="javascript:CFInstall.require()"
   
   val sniffBox = Unparsed( """
-<!--[if lt IE 8 ]>
+<!--[if lt IE 9 ]>
 <div class="chrome error"><a href="/chrome/install">Welcome to """ + B.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
 <![endif]-->
-<!--[if IE 8 ]>
+<!--[if IE 9 ]>
 <div class="chrome warning"><a href="/chrome/install">Welcome to """ + B.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
 <![endif]-->
 """ )

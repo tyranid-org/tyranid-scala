@@ -119,9 +119,18 @@ class HtmlTextExtractor extends TextExtractor {
 
 object FileCleaner { 
   def clean {
-    val filesBucket = B.getS3Bucket( "files" )
-    val zips = S3.getFilenames( filesBucket, ".zip", olderThan = new Date().add( Calendar.DAY_OF_MONTH, -1 ) )
-    S3.deleteAll( filesBucket, zips, keyPrefix = "zips/" )
+    // Clean up S3 zipped up boards in PRODUCTION
+    if ( B.PRODUCTION ) {
+      val filesBucket = B.getS3Bucket( "files" )
+      val zips = S3.getFilenames( filesBucket, ".zip", olderThan = new Date().add( Calendar.DAY_OF_MONTH, -1 ) )
+      S3.deleteAll( filesBucket, zips, keyPrefix = "zips/" )
+    }
+
+    // Clean up all the temp files used in uploads
+    val moreThan2HoursOld = System.currentTimeMillis - ( Time.OneHourMs * 2 )
+    val tempDir = new SysFile( System.getProperty( "java.io.tmpdir" ) )
+
+    tempDir.listFiles.filter( _.lastModified < moreThan2HoursOld ).foreach( _.delete )
   }
 }
 
