@@ -747,7 +747,7 @@ abstract class Content( override val view:MongoView,
   
   def generateThumbs {
     val imgFile = imageForThumbs
-
+    
     if ( imgFile != null ) {
       val pathParts = tid.splitAt( 4 )
       val urlPath = pathParts._1 + "/" + pathParts._2 + "/"
