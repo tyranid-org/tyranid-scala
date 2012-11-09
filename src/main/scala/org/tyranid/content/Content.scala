@@ -274,11 +274,42 @@ object Positioning {
     }
   }
 
-  def nextTopPositionFor( folder:Content ):Int = nextTopPositionFor( folder.db, folder.oid )
+  def nextFirstPositionFor( content:Content ):Int =
+    content match {
+    case group:Group => throw new UnsupportedOperationException() // we don't have access to FileSystem.db, projects are in Group, their contents are in FileSystem // nextFirstPositionForGroup ( null,          content.oid )
+    case _           => nextFirstPositionForFolder( content.db,    content.oid )
+    }
 
-  def nextTopPositionFor( db:DBCollection, folderId:ObjectId ):Int = {
+  def nextLastPositionFor( content:Content ):Int =
+    content match {
+    case group:Group => throw new UnsupportedOperationException() // we don't have access to FileSystem.db, projects are in Group, their contents are in FileSystem // nextFirstPositionForGroup ( null,          content.oid )
+    case _           => nextLastPositionForFolder( content.db,    content.oid )
+    }
+
+  def nextFirstPositionForGroup( db:DBCollection, groupId:ObjectId ):Int = {
+    for ( rec <- db.find( Mobj( $and -> Mlist( Mobj( "parentGroup" -> groupId, "parentFolder" -> null ), Mobj( "pos" -> Mobj( $exists -> true ) ) ) ), Mobj( "pos" -> 1 ) ).sort( Mobj( "pos" -> 1 ) ).limit( 1 ) )
+      return rec.i( 'pos ) - 1
+
+    0
+  }
+
+  def nextLastPositionForGroup( db:DBCollection, groupId:ObjectId ):Int = {
+    for ( rec <- db.find( Mobj( $and -> Mlist( Mobj( "parentGroup" -> groupId, "parentFolder" -> null ), Mobj( "pos" -> Mobj( $exists -> true ) ) ) ), Mobj( "pos" -> 1 ) ).sort( Mobj( "pos" -> -1 ) ).limit( 1 ) )
+      return rec.i( 'pos ) + 1
+
+    0
+  }
+
+  def nextFirstPositionForFolder( db:DBCollection, folderId:ObjectId ):Int = {
     for ( rec <- db.find( Mobj( $and -> Mlist( Mobj( "parentFolder" -> folderId ), Mobj( "pos" -> Mobj( $exists -> true ) ) ) ), Mobj( "pos" -> 1 ) ).sort( Mobj( "pos" -> 1 ) ).limit( 1 ) )
       return rec.i( 'pos ) - 1
+
+    0
+  }
+
+  def nextLastPositionForFolder( db:DBCollection, folderId:ObjectId ):Int = {
+    for ( rec <- db.find( Mobj( $and -> Mlist( Mobj( "parentFolder" -> folderId ), Mobj( "pos" -> Mobj( $exists -> true ) ) ) ), Mobj( "pos" -> 1 ) ).sort( Mobj( "pos" -> -1 ) ).limit( 1 ) )
+      return rec.i( 'pos ) + 1
 
     0
   }
