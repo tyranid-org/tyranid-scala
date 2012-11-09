@@ -130,7 +130,7 @@ object FileCleaner {
     val moreThan2HoursOld = System.currentTimeMillis - ( Time.OneHourMs * 2 )
     val tempDir = new SysFile( System.getProperty( "java.io.tmpdir" ) )
 
-    tempDir.listFiles.filter( _.lastModified < moreThan2HoursOld ).foreach( _.delete )
+    tempDir.listFiles.filter( f => !f.isDirectory && f.lastModified < moreThan2HoursOld ).foreach( _.delete )
   }
 }
 
