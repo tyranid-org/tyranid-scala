@@ -545,6 +545,8 @@ trait ContentMeta extends PrivateKeyEntity {
   "v"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Viewers" is SearchAuth;
   "subV"              is DbArray(DbTid(B.Org,B.User))       ; // for showing content inside a group, subviewers -- when this is a board, then is subscribers
 
+  "subscr"            is DbArray(DbTid(B.Org,B.User))       as "Subscribers"; // 
+
   "shown"             is DbArray(DbTid(B.User))             as "Shown To" ; // list of tids of users who have "read" this content; only maintained for some content types, like messages
 
   "lastModified"      is DbDateTime           is 'required is SearchText;
@@ -1022,6 +1024,9 @@ abstract class Content( override val view:MongoView,
 
   def isSubViewer( user: org.tyranid.profile.User ):Boolean = isSubViewer( user.tid ) || ( ( user.org != null ) ? isSubViewer( user.org.tid ) | false )
   def isSubViewer( tid: String ): Boolean = tid.isBlank ? false | ( a_?( 'subV ).find( t => t._s == tid ) != None )
+  
+  def isSubscriber( user: org.tyranid.profile.User ):Boolean = isSubscriber( user.tid ) || ( ( user.org != null ) ? isSubscriber( user.org.tid ) | false )
+  def isSubscriber( tid: String ): Boolean = tid.isBlank ? false | ( a_?( 'subscr ).find( t => t._s == tid ) != None )
   
 
   /*
