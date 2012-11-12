@@ -468,6 +468,8 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
     else
       comments.sortBy( _.on )
   }
+
+  def count( comments:Seq[Comment] ):Int = comments.size + comments.map( _.count ).sum
 }
 
 class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.makeView, obj, parent ) {
@@ -518,6 +520,8 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
     else
       this
   }
+
+  def count = 1 + Comment.count( comments )
 }
 
 
@@ -543,9 +547,9 @@ trait ContentMeta extends PrivateKeyEntity {
 
   "o"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Owners" is 'owner;
   "v"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Viewers" is SearchAuth;
-  "subV"              is DbArray(DbTid(B.Org,B.User))       ; // for showing content inside a group, subviewers -- when this is a board, then is subscribers
+  "subV"              is DbArray(DbTid(B.Org,B.User))       ; // for showing content inside a group, subviewers
 
-  "subscr"            is DbArray(DbTid(B.Org,B.User))       as "Subscribers"; // 
+  "subscr"            is DbArray(DbTid(B.User))             as "Subscribers";
 
   "shown"             is DbArray(DbTid(B.User))             as "Shown To" ; // list of tids of users who have "read" this content; only maintained for some content types, like messages
 
@@ -841,6 +845,10 @@ abstract class Content( override val view:MongoView,
    * * *   Comments
    */
 
+  def comments = Comment.asComments( a_?( 'r ) )
+
+  def commentCount = Comment.count( comments )
+
   def canComment = !isLocked
 
   def commentTid( comment:Comment ) = tid + "_" + comment.id
@@ -883,8 +891,6 @@ abstract class Content( override val view:MongoView,
     Comment.remove( a_!( 'r ), id )
     save
   }
-
-  def comments = Comment.asComments( a_?( 'r ) )
 
   def annotatedPages = comments.map( _.i( 'pn ) ).distinct
 
