@@ -469,7 +469,7 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
       comments.sortBy( _.on )
   }
 
-  def count( comments:Seq[Comment] ):Int = comments.size + comments.map( _.count ).sum
+  def count( comments:Seq[Comment] ):Int = comments.map( _.count ).sum
 }
 
 class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.makeView, obj, parent ) {
