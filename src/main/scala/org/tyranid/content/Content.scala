@@ -655,6 +655,7 @@ abstract class Content( override val view:MongoView,
   def isLocked = b( 'locked )
 
   def contentType = ContentType.getById( i( 'type ) )
+  def isFolder = contentType == ContentType.Folder
 
   def hasAnnotatedPages:Boolean = false
   
@@ -837,6 +838,8 @@ abstract class Content( override val view:MongoView,
   /*
    * * *   Comments
    */
+
+  def canComment = !isLocked
 
   def commentTid( comment:Comment ) = tid + "_" + comment.id
 
