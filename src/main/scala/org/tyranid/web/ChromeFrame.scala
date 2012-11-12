@@ -28,11 +28,14 @@ import org.tyranid.ui.Button
 object ChromeFrame {
 // href="javascript:CFInstall.require()"
   
-  val sniffBox = Unparsed( """
+  val scripts = Unparsed( """
 <!--[if IE]>
  <script src="//google.com/tools/dlpage/res/chromeframe/script/CFInstall.min.js"> </script>
- <script src="/js/chrome.js"> </script>
+ <!--script src="/js/chrome.js"> </script-->
 <![endif]-->
+""" )
+      
+  val sniffBox = Unparsed( """
 <!--[if lt IE 9 ]>
 <div class="chrome error"><a href="javascript:CFInstall.require()">Welcome to """ + B.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
 <![endif]-->

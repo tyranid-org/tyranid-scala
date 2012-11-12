@@ -188,6 +188,8 @@ $( function() {
     formHandler.topEl().empty();
     tyr.navTo( '""" + wpath + """/forgot?xhr=1&un=' + encodeURIComponent( fldVal ) );
   });
+    
+  tyr.initFormPlaceholders( "f" );
 });
 """ ) }
     </script> ++
@@ -285,7 +287,8 @@ $( function() {
               "target" -> "#main",
               "transition" -> "fadeOutIn",
               "duration" -> 500 )
-              
+
+        jsonRes.extraJS = "tyr.initFormPlaceholders( 'f' );"
         web.json( jsonRes )              
       } else {
         val email    = web.s( 'un )
@@ -309,10 +312,10 @@ $( function() {
              case LnF.RetailBrand =>
                val jsonRes = web.jsonRes( sess )
                
-               if ( !sess.hasErrors ) {
+               if ( !sess.hasErrors )
                  jsonRes.redirect = redirect.isBlank ? T.website | ( T.website + "/?l=" + redirect.encUrl )
-               }
                  
+               jsonRes.extraJS = "tyr.initFormPlaceholders( 'f' );"
                web.json( jsonRes )
              case _ =>
                web.redirect( redirect.isBlank ? T.website | ( T.website + "/?l=" + redirect.encUrl ) )
@@ -683,6 +686,7 @@ $( function() {
           jsonRes.extraJS = "Recaptcha.reload();"
       }
       
+      jsonRes.extraJS = "tyr.initFormPlaceholders( 'f' );"      
       web.json( jsonRes )
       return
     }
@@ -795,8 +799,8 @@ $( function() {
         "transition" -> "fadeOutIn",
         "duration" -> 500 )
     
-    if ( doRecaptcha )
-      jsonRes.extraJS = "tyr.callWhen( function() { return window.Recaptcha !== undefined && window.showRecapcha !== null; }, function() {" + DbReCaptcha.callShowFunction + "}, 100 );"
+    jsonRes.extraJS = "tyr.callWhenHtmlDone( function() { tyr.initFormPlaceholders( 'f' ); }, 600 );" + ( doRecaptcha ?
+                        ( "tyr.callWhen( function() { return window.Recaptcha !== undefined && window.showRecapcha !== null; }, function() {" + DbReCaptcha.callShowFunction + "}, 100 );" ) | "" )
       
     web.json( jsonRes )
   }
