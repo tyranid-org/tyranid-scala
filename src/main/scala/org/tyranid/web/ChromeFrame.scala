@@ -36,10 +36,10 @@ object ChromeFrame {
       
   val sniffBox = Unparsed( """
 <!--[if lt IE 8 ]>
-<div class="chrome error"><a href="http://www.google.com/chromeframe/eula.html?user=true">Welcome to """ + B.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
+<div class="chrome error"><a href="http://www.google.com/chromeframe/eula.html?user=true" target="_blank">Welcome to """ + B.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
 <![endif]-->
 <!--[if IE 8 ]>
-<div class="chrome warning"><a href="http://www.google.com/chromeframe/eula.html?user=true">Welcome to """ + B.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
+<div class="chrome warning"><a href="http://www.google.com/chromeframe/eula.html?user=true" target="_blank">Welcome to """ + B.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
 <![endif]-->
 """ )
 
