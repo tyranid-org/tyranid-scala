@@ -652,6 +652,10 @@ object Content {
   lazy val emailTag     = Tag.idFor( "email" )
   lazy val messageTag   = Tag.idFor( "message" )
   lazy val fileshareTag = Tag.idFor( "fileshare" )
+  
+  val defaultColors = Array( "5f89a2", "597b7c", "93278f", "e72967", "f47b20", "ef5033", "009591", "9fd5b5", "1bb7ea", "73d0f9" )
+  val defaultNoteColor = "FAF082"
+  val noteColors = Array( defaultNoteColor,  "5f89a2", "597b7c", "93278f", "e72967", "f47b20", "ef5033", "009591", "9fd5b5", "1bb7ea", "73d0f9" )
 }
 
 abstract class Content( override val view:MongoView,
@@ -748,10 +752,11 @@ abstract class Content( override val view:MongoView,
     case "t" => "thumbTiny"
     }
 
+  def thumbStyle( size:String ):String = null
   def thumbUrl( size:String ) = "/io/thumb/" + tid + "/" + size
 
   def thumbHtml( size:String ) =
-    <div class={ thumbClass( size ) }>
+    <div class={ thumbClass( size ) } style={ thumbStyle( size ) }>
      <img src={ thumbUrl( size ) }/>
     </div>
   
