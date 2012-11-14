@@ -373,6 +373,7 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
 
   "r"              is DbArray(Comment)       as "Replies";
 
+  "pri"            is DbBoolean              as "Priority"; // a.k.a. "important" or "urgent"
 
   override def init = {
     super.init
@@ -475,6 +476,8 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
 class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.makeView, obj, parent ) {
 
   def m = s( 'm )
+
+  def isPriority = b( 'pri )
 
   def fromUser = {
     val uid = oid( 'u )
@@ -868,7 +871,7 @@ abstract class Content( override val view:MongoView,
 
   def commentById( id:Int ) = Comment.find( a_?( 'r ), id )
 
-  def comment( msg:String, user:User, replyTo:Comment = null, pageNumber:Int = 0, x:Double = 0.0, y:Double = 0.0 ) = {
+  def comment( msg:String, user:User, replyTo:Comment = null, pageNumber:Int = 0, x:Double = 0.0, y:Double = 0.0, priority:Boolean = false ) = {
 
     val comments = a_!( 'r )
 
@@ -881,6 +884,9 @@ abstract class Content( override val view:MongoView,
       comment( 'x ) = x
       comment( 'y ) = y
     }
+
+    if ( priority )
+      comment( 'pri ) = true
       
     if ( replyTo != null )
       replyTo.a_!( 'r ).add( comment )
