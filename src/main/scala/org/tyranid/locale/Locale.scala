@@ -44,6 +44,8 @@ object Region extends RamEntity( tid = "a01t" ) {
     staticRecords.filter( _( countryIdx ).asInstanceOf[Int] == cid )
   }  
 
+  lazy val US_STATES = regionsForCountry( Country.US )
+
 	static { s =>
   s( "_id",  "name",				                               "fips",   "country", "abbr" )
 
@@ -4321,7 +4323,7 @@ object Country extends RamEntity( tid = "a02t" ) {
   "code"   is DbChar(2)           ;
   "code3"  is DbChar(3)           ;
 
-  def US = 4306
+  val US = 4306
 
   def idByIso3166_2( code:String ) = idForCode( code )
     
