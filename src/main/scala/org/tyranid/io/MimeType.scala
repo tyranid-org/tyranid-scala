@@ -66,7 +66,7 @@ object MetaMimeType {
   val XML                 = add( "xml",          "XML - Extensible Markup Language" )
   val ZIP                 = add( "zip",          "ZIP Archive" )
 
-  val Image               = add( "image",        "Image", includes = Seq( BMP, GIF, HTML, JPEG, PNG, TIFF ) )
+  val Image               = add( "image",        "Image", includes = Seq( BMP, GIF, JPEG, PNG, TIFF ) )
 }
 
 
