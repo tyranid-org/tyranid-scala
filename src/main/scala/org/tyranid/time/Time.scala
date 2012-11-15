@@ -73,7 +73,7 @@ class CalendarImp( c:Calendar ) {
     c.set( Calendar.MONTH,        0 )
     c.set( Calendar.DAY_OF_MONTH, 1 )
     setMidnight
-    this
+    c
   }
 
   def setMidnight = {
@@ -81,7 +81,7 @@ class CalendarImp( c:Calendar ) {
     c.set( Calendar.MINUTE,      0 )
     c.set( Calendar.SECOND,      0 )
     c.set( Calendar.MILLISECOND, 0 )
-    this
+    c
   }
 
   def rollToNearestDayOfWeek( c:Calendar, dayOfWeek:Int, direction:Int ) {
