@@ -189,7 +189,7 @@ object MimeType {
     MimeType( "text/xml",                                                                  XML,                 "XML",                           Seq( "xml" ) ),
     MimeType( "text/xml",                                                                  XML,                 "XSL",                           Seq( "xsl" ) ),
 
-    MimeType( "video/mp4",                                                                 null,                "MP4",                           Seq( "mp4" ) ),
+    MimeType( "video/mp4",                                                                 Video,               "MP4",                           Seq( "mp4" ) ),
     MimeType( "video/mpeg",                                                                Video,               "MPEG Movie",                    Seq( "mpg", "mpe", "mpeg" ) ),
     MimeType( "video/ogg",                                                                 Video,               "OGG Movie",                     Seq( "ogv" ) ),
     MimeType( "video/webm",                                                                Video,               "WebM Movie",                    Seq( "webm" ) ),
