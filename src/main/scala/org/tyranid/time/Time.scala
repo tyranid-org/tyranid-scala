@@ -30,6 +30,14 @@ class CalendarImp( c:Calendar ) {
   def weekDayName   = Time.WeekDayNames( c.get( Calendar.DAY_OF_WEEK ) - 1 ).capitalize
   def monthName     = Time.MonthNames( c.get( Calendar.MONTH ) ).capitalize
 
+  def isSunday    = c.get( Calendar.DAY_OF_WEEK ) == Calendar.SUNDAY
+  def isMonday    = c.get( Calendar.DAY_OF_WEEK ) == Calendar.MONDAY
+  def isTuesday   = c.get( Calendar.DAY_OF_WEEK ) == Calendar.TUESDAY
+  def isWednesday = c.get( Calendar.DAY_OF_WEEK ) == Calendar.WEDNESDAY
+  def isThursday  = c.get( Calendar.DAY_OF_WEEK ) == Calendar.THURSDAY
+  def isFriday    = c.get( Calendar.DAY_OF_WEEK ) == Calendar.FRIDAY
+  def isSaturday  = c.get( Calendar.DAY_OF_WEEK ) == Calendar.SATURDAY
+
   def year        = c.get( Calendar.YEAR )
   def month       = c.get( Calendar.MONTH )
   def dayOfMonth  = c.get( Calendar.DAY_OF_MONTH )
@@ -336,6 +344,7 @@ object Time {
   }
 
   def createUserNowCalendar:Calendar = Calendar.getInstance( Session().user.timeZone )
+  def createUtcNowCalendar:Calendar  = Calendar.getInstance
 
   val Utc = TimeZone.getTimeZone( "UTC" )
 
