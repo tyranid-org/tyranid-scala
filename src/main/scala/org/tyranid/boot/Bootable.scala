@@ -104,9 +104,9 @@ trait Bootable {
   def fullDomain = { 
     val lnf = T.LnF
     
-    if ( DEV )        "dev." + domain
-    else if ( STAGE ) "stage." + domain
-    else if ( BETA )  "beta." + domain
+    if ( DEV )        ( ( lnf == org.tyranid.ui.LnF.RetailBrand ) ? "rb-" | "" ) + "dev." + domain
+    else if ( STAGE ) ( ( lnf == org.tyranid.ui.LnF.RetailBrand ) ? "rb-" | "" ) + "stage." + domain
+    else if ( BETA )  ( ( lnf == org.tyranid.ui.LnF.RetailBrand ) ? "rb-" | "" ) + "beta." + domain
     else              ( ( lnf == org.tyranid.ui.LnF.RetailBrand ) ? "rb." | "app." ) + domain
   }
     
