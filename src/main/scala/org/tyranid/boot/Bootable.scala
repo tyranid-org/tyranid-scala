@@ -101,19 +101,22 @@ trait Bootable {
 
   // DEV assumes the DNS is in your hosts file
   
-  lazy val fullDomain = 
+  def fullDomain = { 
+    val lnf = T.LnF
+    
     if ( DEV )        "dev." + domain
     else if ( STAGE ) "stage." + domain
     else if ( BETA )  "beta." + domain
-    else              "app." + domain
+    else              ( ( lnf == org.tyranid.ui.LnF.RetailBrand ) ? "rb." | "app." ) + domain
+  }
     
-  lazy val domainPort = 
+  def domainPort = 
     if ( DEV )        fullDomain + ":8443"
     else              fullDomain
     
 
-  lazy val nonsecureWebsite = "http://" + domainPort
-  
+  def nonsecureWebsite = "http://" + domainPort
+    
   val bounceEmail = "support@" + domain 
   val alertEmail:String
 

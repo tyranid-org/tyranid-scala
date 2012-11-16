@@ -106,11 +106,7 @@ class ThreadData {
 
   def LnF = Session().LnF
 
-  def website = {
-    val lnf = LnF
-
-    "https://" + lnf.domainPrefix + ( lnf.domainPrefix.isBlank ? "" | "-" ) + B.domainPort
-  }
+  def website = "https://" + B.domainPort
 
   // --- HTTP Session
 
