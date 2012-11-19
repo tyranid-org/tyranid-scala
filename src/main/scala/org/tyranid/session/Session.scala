@@ -320,12 +320,13 @@ trait Session {
   def popErrors = popNotes( Notification.ERROR )
    
   def popNotes( level:Int = 0 ) = {
+    val webPath = T.web.path or ""
     if ( level == 0 ) {
-      val ( n, n2 ) = notes.partition( no => no.deferred.isBlank || T.web.path.endsWith( no.deferred ) )
+      val ( n, n2 ) = notes.partition( no => no.deferred.isBlank || webPath.endsWith( no.deferred ) )
       notes = ( n2 == null || n2.length == 0 ) ? Nil | n2
       n
     } else {
-      var ( n, n2 ) = notes.partition( no => ( no.level == level && no.deferred.isBlank || T.web.path.endsWith( no.deferred ) ) )
+      var ( n, n2 ) = notes.partition( no => ( no.level == level && ( no.deferred.isBlank || webPath.endsWith( no.deferred ) ) ) )
       notes = n2
       n
     }
