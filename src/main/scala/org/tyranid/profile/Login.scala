@@ -23,6 +23,7 @@ import org.tyranid.Imp._
 import org.tyranid.db.Scope
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.email.Email
+import org.tyranid.json.Js
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
 import org.tyranid.secure.DbReCaptcha
@@ -349,7 +350,6 @@ $( function() {
       web.redirect( website + "/?lo=1" + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
     case s if s.startsWith( "/in" ) =>
       socialLogin( s.substring( 3 ) )
-
     case s if s.startsWith( "/register" ) =>
       if ( T.LnF == LnF.RetailBrand ) {
         registerRetail( web, sess )
@@ -485,10 +485,10 @@ $( function() {
       
       T.web.redirect( "/?na=1" ) // na = need activation
     case "/forgot" =>
-      val forgotCode = web.req.s("a")
+      val forgotCode = web.req.s( 'a )
 
       if ( forgotCode.isBlank ) {
-        val email = web.req.s( "un" ) or sess.user.s( 'email )
+        val email = web.req.s( 'un ) or sess.user.s( 'email )
 
         if ( email.isBlank ) {
           sess.warn( "Please enter in an email address." )
@@ -536,8 +536,14 @@ $( function() {
           user.remove('resetCode)
           sess.login( user )
           user.save
-          sess.notice( "You can now change your password." )
-          web.redirect( "/user/edit?id=" + user.tid )
+          
+          if ( T.LnF == LnF.RetailBrand ) {
+            sess.notice( "You can now change your password in <em>My Profile</em>.", deferred = "/dashboard" )
+            web.jsRes( Js( "tyr.app.loadMenubar( '/user/menubar' ); tyr.app.loadMain( '/dashboard' )" ) )
+          } else {
+            sess.notice( "You can now change your password." )
+            web.redirect( "/user/edit?id=" + user.tid )
+          }
         }
       }
       

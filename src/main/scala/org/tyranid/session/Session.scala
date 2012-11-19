@@ -311,9 +311,9 @@ trait Session {
 
   @volatile private var notes:List[Notification] = Nil
   
-  def notice( msg:AnyRef, extra:NodeSeq = null ) = notes ::= Notification( Notification.NOTICE, msg.toString, cssClass = "alert-success", extra )
-  def warn( msg:AnyRef, extra:NodeSeq = null )   = notes ::= Notification( Notification.WARN, msg.toString, cssClass= "alert", extra )
-  def error( msg:AnyRef, extra:NodeSeq = null )  = notes ::= Notification( Notification.ERROR, msg.toString, cssClass= "alert-error", extra )
+  def notice( msg:AnyRef, extra:NodeSeq = null, deferred:String = null ) = notes ::= Notification( Notification.NOTICE, msg.toString, cssClass = "alert-success", extra, deferred )
+  def warn( msg:AnyRef, extra:NodeSeq = null, deferred:String = null )   = notes ::= Notification( Notification.WARN, msg.toString, cssClass= "alert", extra, deferred )
+  def error( msg:AnyRef, extra:NodeSeq = null, deferred:String = null )  = notes ::= Notification( Notification.ERROR, msg.toString, cssClass= "alert-error", extra, deferred )
 
   def popNotices = popNotes( Notification.NOTICE )
   def popWarnings = popNotes( Notification.WARN )
@@ -321,11 +321,11 @@ trait Session {
    
   def popNotes( level:Int = 0 ) = {
     if ( level == 0 ) {
-      val n = notes
-      notes = Nil
+      val ( n, n2 ) = notes.partition( no => no.deferred.isBlank || T.web.path.endsWith( no.deferred ) )
+      notes = ( n2 == null || n2.length == 0 ) ? Nil | n2
       n
     } else {
-      var ( n, n2 ) = notes.partition( _.level == level )
+      var ( n, n2 ) = notes.partition( no => ( no.level == level && no.deferred.isBlank || T.web.path.endsWith( no.deferred ) ) )
       notes = n2
       n
     }
@@ -376,6 +376,6 @@ object Notification {
   }
 }
 
-case class Notification( level:Int, msg:String, cssClass:String = "", extra:NodeSeq = null )
+case class Notification( level:Int, msg:String, cssClass:String = "", extra:NodeSeq = null, deferred:String = null )
 
 

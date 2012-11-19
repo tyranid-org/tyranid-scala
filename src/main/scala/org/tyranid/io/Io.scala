@@ -147,11 +147,15 @@ object Iolet extends Weblet {
             }
            
             rec.as[Content].generateThumbs
-          case e2 =>
+          case e2 if e2.getClass.getSimpleName == "EofException" =>
+            // Happens with IE a lot
+            web.res.setStatus( 200 )
+            return
+          case e3 =>
             web.res.setStatus( 302 )
             web.res.setHeader( "Location", notFoundUrl )
             web.res.setHeader( "Connection", "close" )
-            throw e2
+            throw e3
         }
       }
       
