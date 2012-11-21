@@ -303,13 +303,13 @@ object Time {
   val Rfc1123Format  = new SimpleDateFormat( "EEE, dd MMM yyyyy HH:mm:ss z" )
   val AttrFormat     = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mmZ" )
 
-  val OneMinuteMs    =                 60 * 1000
-  val FiveMinutesMs  =             5 * 60 * 1000
-  val HalfHourMs     =            30 * 60 * 1000
-  val OneHourMs      =            60 * 60 * 1000
-  val OneDayMs       =       24 * 60 * 60 * 1000
-  val OneWeekMs      =   7 * 24 * 60 * 60 * 1000
-  val OneYearMs      = 365 * 24 * 60 * 60 * 1000
+  val OneMinuteMs:Long    =                 60 * 1000
+  val FiveMinutesMs:Long  =             5 * 60 * 1000
+  val HalfHourMs:Long     =            30 * 60 * 1000
+  val OneHourMs:Long      =            60 * 60 * 1000
+  val OneDayMs:Long       =       24 * 60 * 60 * 1000
+  val OneWeekMs:Long      =   7 * 24 * 60 * 60 * 1000
+  val OneYearMs:Long      = 365 * 24 * 60 * 60 * 1000
   
   val MonthNames     = Array( "january", "february", "march", "april", "may", "june",
                               "july", "august", "september", "october", "november", "december" )
