@@ -87,7 +87,7 @@ class WebFilter extends Filter {
     ctx.res.sendRedirect( sb.toString )
   }
 
-  val assetPattern = java.util.regex.Pattern.compile( "([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|htc))$)" )
+  val assetPattern = java.util.regex.Pattern.compile( "([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|htc|vtt))$)" )
   
   def notAsset( path:String ) = !assetPattern.matcher( path ).matches
   
@@ -130,11 +130,16 @@ class WebFilter extends Filter {
     
     if ( path.matches( WebFilter.versionPattern ) ) {
       val slash = path.indexOf( '/', 1 )
+      
       if ( slash != -1 ) {
         web.ctx.getRequestDispatcher( path.substring( slash ) ).forward( web.req, web.res )
         return
       }
-    }
+    } else if ( web.path == "/null" ) {
+      // handle errant requests (the swf from video.js does this)
+      web.res.setStatus( HttpServletResponse.SC_OK )
+      return
+    }      
 
     def handle( webloc:Webloc ):Boolean = {
       for ( cwebloc <- webloc.children if web.matches( cwebloc.weblet.wpath ) && cwebloc.weblet.matches( web ) )
@@ -200,6 +205,7 @@ class WebFilter extends Filter {
         
         if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) && T.LnF == LnF.RetailBrand ) && notComet ) {
           //println( "full shell page!" )
+          
           web.template( B.appShellPage( web ) )
           return
         }
