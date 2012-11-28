@@ -238,7 +238,6 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
       val md = S3.getObjectMetadata( bucket, path )
       val mimeType = md.getContentType
       res.setContentType( ( if ( mimeType.notBlank ) mimeType else "application/octet-stream" ) )
-      res.setContentLength( md.getContentLength.toInt )
       
       val lastModified = md.getLastModified()
       var headOnly = false
@@ -256,6 +255,7 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
       }
       
       if ( !headOnly ) {
+        res.setContentLength( md.getContentLength.toInt )
         out = res.getOutputStream
         S3.getObject( bucket, path ).getObjectContent.transferTo( out, true )
       }
