@@ -181,12 +181,17 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
   def agentName = s( 'agentName )
   def agent = agentName + " " + s( 'agentVersion )
   def os    = s( 'osName ) + " " + s( 'osVersionName ) + " " + s( 'osVersionNumber )
+
+  private def betterThanIE8 = s( 'agentName ) != "Internet Explorer" || s( 'agentVersion )._i >= 9
+  private def betterThanIE9 = s( 'agentName ) != "Internet Explorer" || s( 'agentVersion )._i >= 10
   
   def html5FileSupport = {
     updateIfNeeded
-    
-    s( 'agentName ) != "Internet Explorer" || s( 'agentVersion )._i >= 10
+    betterThanIE9
+  }
+  
+  def htmlUnicodeSupport = {
+    updateIfNeeded
+    betterThanIE8
   }
 }
-
-

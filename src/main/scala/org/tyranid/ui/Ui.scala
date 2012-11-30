@@ -52,9 +52,9 @@ object Tags {
 
 object Dialog {
 
-  def closeBtn =
+  def closeBtn( unicodeSupport:Boolean = true ) =
     <div class="closeBtn">
-     <button type="button" class="close" data-dismiss="modal">{ Unparsed( """&#x2715;""" ) }</button>
+     <button type="button" class="close" data-dismiss="modal">{ Unparsed( unicodeSupport ? """&#x2715;""" | """&times;""" ) }</button>
     </div>
 }
 
