@@ -186,12 +186,11 @@ object DbLocalFile extends CommonFile {
 object File {  
   val tempBucket = new S3Bucket( "temp" )
 
-  
   def mimeTypeFor( filename:String ) = {
     val fsave = filename.safeString.toLowerCase
     val ext = fsave.suffix( '.' )
     
-    MimeType.byExtension.get( ext ).flatten( _.extension, null )
+    MimeType.byExtension.get( ext ).flatten( _.mimeType, null )
   }
   
   def safeExtension( filename:String ) = {

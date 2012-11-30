@@ -28,6 +28,7 @@ import org.bson.types.ObjectId
 
 import org.tyranid.db.meta.TidCache
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.http.UserAgent
 import org.tyranid.Imp._
 import org.tyranid.math.Base62
 import org.tyranid.profile.User
@@ -160,8 +161,7 @@ class ThreadData {
    */
 
   @volatile var web:WebContext = _
-
-
+  
   /*
    * * *  Security
    */
@@ -193,6 +193,7 @@ class ThreadData {
 
 trait SessionMeta {
   val LnF_KEY = "LnF"
+  val UA_KEY = "UA"
     
   def apply():Session = ThreadData().session
 
@@ -228,6 +229,18 @@ trait Session {
   var passedCaptcha = !B.requireReCaptcha
 
   def LnF = get( Session.LnF_KEY ).as[LnF] ?| org.tyranid.ui.LnF.SupplyChain
+  
+  def ua( web: WebContext ) = {
+    var tUa:UserAgent = get( Session.UA_KEY ).as[UserAgent]
+    
+    if ( tUa == null ) {
+      tUa = UserAgent.getById( web.userAgentId )
+      tUa.updateIfNeeded
+      put( Session.UA_KEY, tUa )
+    } 
+      
+    tUa
+  } 
   
   def clear {
     reports.clear

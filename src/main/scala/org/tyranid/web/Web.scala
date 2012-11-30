@@ -27,6 +27,7 @@ import scala.xml.{ Elem, Node, NodeSeq, Text, TopScope }
 import org.cometd.bayeux.server.BayeuxServer
 
 import org.tyranid.Imp._
+import org.tyranid.http.UserAgent
 import org.tyranid.json.{ JsCmd, Js, JqHide, JqShow, JqHtml }
 import org.tyranid.profile.{ LoginCookie, User }
 import org.tyranid.session.{ AccessLog, Session, ThreadData }
@@ -87,7 +88,7 @@ class WebFilter extends Filter {
     ctx.res.sendRedirect( sb.toString )
   }
 
-  val assetPattern = java.util.regex.Pattern.compile( "([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|htc|vtt))$)" )
+  val assetPattern = java.util.regex.Pattern.compile( "([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|htc|vtt|odt))$)" )
   
   def notAsset( path:String ) = !assetPattern.matcher( path ).matches
   
@@ -356,6 +357,9 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
 
   def html( xml:NodeSeq, status:Int = 200, headers:Map[String,String] = null, noCache:Boolean = false ) = res.html( xml, status, headers, req, noCache )
   def rss ( xml:NodeSeq, status:Int = 200, headers:Map[String,String] = null, noCache:Boolean = false ) = res.rss ( xml, status, headers, req, noCache )
+  
+  def userAgentStr = req.getHeader( "User-Agent" )
+  def userAgentId = UserAgent.idFor( userAgentStr )
 }
 
 case class Webloc( path:String, weblet:Weblet, children:Webloc* ) {

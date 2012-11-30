@@ -184,7 +184,7 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
       
       if ( ua.isBlank ) {
         try {
-          ua = T.web.req.getHeader( "User-Agent" )
+          ua = T.web.userAgentStr
         } catch {
         case e =>
           e.printStackTrace
