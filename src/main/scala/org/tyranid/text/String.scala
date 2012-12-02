@@ -404,6 +404,16 @@ class StringImp( s:String ) {
     return "(" + s.slice( offset,3+offset ) + ") " + s.slice( 3+offset, 6+offset ) + "-" + s.slice( 6+offset, 10+offset ) 
   }
 
+  def toWebsite:String = {
+    if ( s == null || s.isBlank )
+      return s
+     
+    if ( s.toLowerCase.startsWith( "http" ) )
+      return s
+      
+    return "http://" + s
+  }
+  
   // Gets the first character, null, or an empty string
   def toLaxChar() = {
     if ( s == null )
@@ -649,7 +659,7 @@ class StringImp( s:String ) {
    */
 
   def GET( query:collection.Map[String,String] = null, headers:collection.Map[String,String] = null ) =
-    Http.GET( Uri.completeUri( s ), query = query, headers )
+    Http.GET( Uri.completeUri( s ), query = query, headers = headers )
 
   def POST( form:collection.Map[String,String] = null, content:String = null, contentType:String = null, headers:collection.Map[String,String] = null ) =
     Http.POST( s, content, form, contentType, headers )

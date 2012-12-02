@@ -27,7 +27,7 @@ import com.mongodb.{ BasicDBList, DBCollection, DBObject }
 
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3Bucket, S3 }
-import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDateTime, DbDouble, DbInt, DbLink, DbLong, DbTid, DbText, DbUrl, Entity, Record }
+import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDate, DbDateTime, DbDouble, DbInt, DbLink, DbLong, DbTid, DbText, DbUrl, Entity, Record }
 import org.tyranid.db.es.{ SearchAuth, SearchText, SearchToken }
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
@@ -555,7 +555,10 @@ trait ContentMeta extends PrivateKeyEntity {
   "subscr"            is DbArray(DbTid(B.User))             as "Subscribers";
 
   "shown"             is DbArray(DbTid(B.User))             as "Shown To" ; // list of tids of users who have "read" this content; only maintained for some content types, like messages
-
+ 
+  "complianceCode"    is DbChar(15)           is SearchText;
+  "expDate"           is DbDate               as "Expiration Date" is SearchText; 
+  
   "lastModified"      is DbDateTime           is 'required is SearchText;
   "lastModifiedBy"    is DbLink(B.User)       is 'required;
   "lastModifiedByOrg" is DbLink(B.Org)        is 'required;

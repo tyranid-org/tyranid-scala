@@ -34,6 +34,8 @@ import org.bson.types.ObjectId
 import org.apache.commons.httpclient.util.DateUtil
 
 import org.apache.http.{ Header, NameValuePair, HttpHost, HttpResponse }
+import org.apache.http.auth.AuthScope
+import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{ HttpRequestBase, HttpDelete, HttpGet, HttpPost, HttpPut, HttpUriRequest, HttpEntityEnclosingRequestBase }
 import org.apache.http.entity.{ StringEntity, InputStreamEntity }
@@ -427,11 +429,17 @@ object Http {
       url
     }
 
-  private def execute( request:HttpRequestBase, withParams:Boolean = true ) = {
+  //new AuthScope( uri.getHost(), uri.getPort(), AuthScope.ANY_SCHEME ),
+  //new AuthScope( uri.getHost(), AuthScope.ANY_PORT )
+  private def execute( request:HttpRequestBase, withParams:Boolean = true, authScope:AuthScope = null, username:String = null, password:String = null ) = {
     val httpParams = new BasicHttpParams
     HttpConnectionParams.setConnectionTimeout( httpParams, 30000 ) // 30s
     HttpConnectionParams.setSoTimeout( httpParams, 30000 ) // 30s
     val client = withParams ? new DefaultHttpClient( httpParams ) | new DefaultHttpClient( httpParams ) 
+    
+    if ( authScope != null && username.notBlank && password.notBlank )
+      client.getCredentialsProvider().setCredentials( authScope, new UsernamePasswordCredentials( username, password ) )
+
     val context = new BasicHttpContext() 
     val response = client.execute( request, context )
 
@@ -462,12 +470,13 @@ object Http {
     }
   }
   
-  def GET( url:String, query:collection.Map[String,String] = null, headers:collection.Map[String,String] = null ):HttpResult = {
+  def GET( url:String, query:collection.Map[String,String] = null, headers:collection.Map[String,String] = null, authScope:AuthScope = null, username:String = null, password:String = null ):HttpResult = {
     val get = new HttpGet( makeUrl( url, query ) )
+    
     if ( headers != null )
       get.setHeaders( convertHeaders( headers ) )
 
-    execute( get )
+    execute( get, authScope = authScope, username = username, password = password )
   }
 
   def POST( url:String, content:String, form:collection.Map[String,String], contentType:String = null, headers:collection.Map[String,String] = null ):HttpResult =

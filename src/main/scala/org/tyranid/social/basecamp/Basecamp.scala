@@ -17,12 +17,17 @@
 
 package org.tyranid.social.basecamp
 
+import org.apache.http.auth.AuthScope
+
 import scala.xml.{ Unparsed, NodeSeq }
+
+import java.net.URI
 
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.json.Json
 import org.tyranid.http.Http
 import org.tyranid.locale.{ Country, Language }
 import org.tyranid.math.Base64
@@ -33,6 +38,35 @@ import org.tyranid.time.Time
 import org.tyranid.ui.Form
 import org.tyranid.web.{ Weblet, WebContext }
 
+object Basecamp {
+  def getProjects( user:DBObject ) = {
+    val bcUsername = user.s( 'bcUsername )
+    val bcPassword = user.s( 'bcPassword )
+    val bcAccount = user.s( 'bcAccount )
+    
+    if ( bcUsername.isBlank || bcPassword.isBlank || bcAccount.isBlank ) {
+      null
+    } else {
+      //1901937
+      val res = Http.GET( 
+                  "https://basecamp.com/" + bcAccount + "/api/v1/projects.json",
+                  headers = Map( "User-Agent" -> "TestApp (mrkcbradley@gmail.com)" ),
+                  authScope = new AuthScope( "basecamp.com", AuthScope.ANY_PORT ), 
+                  username = bcUsername, password = bcPassword )
+                  
+      val entity = res.response.getEntity
+    
+      if ( entity != null ) {
+        if ( "application/json" == entity.getContentType.getValue ) {
+          val json = Json.parse( res._s )
+          println( json.toJsonStr )
+        }
+      }
+    }
+      
+    null
+  }  
+}
 
 case class BcApp( apiKey:String, secret:String ) extends SoApp {
 
