@@ -313,7 +313,6 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
     json( res )
   }
 
-
   def matches( path:String ) = {
     // TODO:  check for path separators ... i.e. "/foo" should not match "/foobar" but should match "/foo/bar"
     req.getServletPath.startsWith( path )
