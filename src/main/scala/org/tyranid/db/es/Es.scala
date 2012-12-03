@@ -129,7 +129,7 @@ object Es {
   val UTF8_CHARSET = java.nio.charset.Charset.forName("UTF-8")
   val host = "http://localhost:9200"
 
-  def search( text:String, user:User, offset:Int = 0, pageSize:Int = ElasticSearchDefaultPageSize ):String =
+  def search( text:String, user:User, offset:Int = 0, pageSize:Int = ElasticSearchDefaultPageSize ):ObjectMap =
     search(
       Map(
         "query" -> Map(
@@ -152,8 +152,8 @@ object Es {
       pageSize = pageSize
     )
 
-  def search( query:Map[String,Any], user:User, offset:Int, pageSize:Int ):String = {
-spam( "query=" + query.toJsonStr )
+  def search( query:Map[String,Any], user:User, offset:Int, pageSize:Int ):ObjectMap = {
+//sp am( "query=" + query.toJsonStr )
 
     var params =
       if ( offset != 0 && pageSize != ElasticSearchDefaultPageSize )
@@ -165,7 +165,19 @@ spam( "query=" + query.toJsonStr )
       else
         ""
 
-    ( Es.host + "/_search" + params ).POST( content = query.toJsonStr ).s
+    val s = ( Es.host + "/_search" + params ).POST( content = query.toJsonStr ).s
+//sp_am( "results=[\n\n" + results + "\n\n]" )
+
+    val json = s.parseJsonObject
+
+    val error = json.s( 'error )
+    
+    if ( error.notBlank ) {
+      println( "ES Search Failure.  Query=\n\n" + query.toJsonStr + "\n\nError:\n\n" + error )
+      Log.log( Event.Search, "m" -> ( "ElasticSearch search failure=" + error ) ) 
+    }
+
+    json
   }
 
   def jsonFor( rec:Record ) = {
