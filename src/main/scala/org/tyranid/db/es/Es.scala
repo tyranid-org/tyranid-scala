@@ -300,7 +300,12 @@ object Es {
 
   def index( rec:Record ) = {
 //sp am( "indexing " + rec.tid )
-    Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
+    try {
+      Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
+    } catch {
+      case e:Exception =>
+        Log.log( Event.Search, "m" -> ( "Failed to index id " + rec.id + ", err=" + e ), "ex" -> e )
+    }
   }
 
   def deleteAll =
