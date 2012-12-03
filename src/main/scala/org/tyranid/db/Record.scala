@@ -34,6 +34,7 @@ import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.logic.{ Invalid, Valid }
 import org.tyranid.profile.User
 import org.tyranid.report.Run
+import org.tyranid.QuickCache
 import org.tyranid.ui.{ PathField, Search, UiObj, LnF }
 
 
@@ -157,7 +158,7 @@ object Record {
   def byTid( tid:String, only:Entity = null ):Option[Record] = Option( getByTid( tid, only ) )
 }
 
-trait Record extends Valid with BsonObject {
+trait Record extends Valid with BsonObject with QuickCache {
   val view:View
 
   def flatten = Path.flatten( this )

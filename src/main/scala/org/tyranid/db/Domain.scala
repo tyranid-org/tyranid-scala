@@ -308,7 +308,7 @@ object DbPassword extends DbVarChar( 80 ) {
       val v = vs.notBlank ? fromString( vs )._s | null
 
       if ( v.notBlank ) {
-        val salt = T.session.cache.getOrElseUpdate( "pw.salt", org.mindrot.jbcrypt.BCrypt.gensalt )._s
+        val salt = T.session.getVOrElseUpdate( "pw.salt", org.mindrot.jbcrypt.BCrypt.gensalt )._s
         val hashed = v.shash( salt )
         
         // Only set the value if it has changed.

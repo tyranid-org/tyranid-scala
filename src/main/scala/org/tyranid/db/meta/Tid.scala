@@ -338,10 +338,11 @@ object Tidlet extends Weblet {
       _404
 
     var tid = web.req.s( 'tid )
+    
     if ( tid.isBlank )
-      tid = t.session.cache.s( 'lastTid )
+      tid = t.session.qcache.s( 'lastTid )
     else
-      t.session.cache( 'lastTid ) = tid
+      t.session.put( "lastTid", tid )
 
     rpath match {
     case "/delete" =>

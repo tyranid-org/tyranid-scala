@@ -132,4 +132,3 @@ object Imp {
 
   def eye( tid:String ) = org.tyranid.db.meta.Tid.eye( tid )
 }
-

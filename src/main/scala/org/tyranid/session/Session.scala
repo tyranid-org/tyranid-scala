@@ -36,6 +36,7 @@ import org.tyranid.report.Query
 import org.tyranid.social.Social
 import org.tyranid.time.Time
 import org.tyranid.ui.LnF
+import org.tyranid.QuickCache
 import org.tyranid.web.WebContext
 
 
@@ -213,7 +214,7 @@ trait SessionMeta {
 
 object Session extends SessionMeta
 
-trait Session {
+trait Session extends QuickCache {
   lazy val id = Base62.make( 10 )
 
   private var userVar = B.newUser()
@@ -230,6 +231,12 @@ trait Session {
 
   def LnF = get( Session.LnF_KEY ).as[LnF] ?| org.tyranid.ui.LnF.SupplyChain
   
+  def get( key:String ) = getV( key )
+  def getOrElse( key:String, any:AnyRef ) = getVOrElse( key, any )
+  def getOrElseUpdate( key:String, any:AnyRef ) = getVOrElseUpdate( key, any )
+  def put( key:String, value:AnyRef ) = putV( key, value )
+  def clear( key:String ) = clearCache( key )
+  
   def ua( web: WebContext ) = {
     var tUa:UserAgent = get( Session.UA_KEY ).as[UserAgent]
     
@@ -245,7 +252,7 @@ trait Session {
   def clear {
     reports.clear
     editings.clear
-    cache.clear
+    clear( null )
     
     loggedEntry = false
     loggedUser = false
@@ -306,17 +313,6 @@ trait Session {
   def doneEditing[ T: Manifest ] = editings.remove( manifest[T].erasure )
 
   def clearAllEditing = editings.clear
-
-
-  /*
-   * * *   Cache
-   */
-
-  val cache = mutable.Map[String,AnyRef]()
-  def get( key:String ) = cache.getOrElse( key, null )
-  def put( key:String, value:AnyRef ) = cache.put( key, value )
-  def clear( key:String = null ) = key.isBlank ? cache.clear | cache.remove( key )
-
 
   /*
    * * *   Notifications

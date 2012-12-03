@@ -1130,7 +1130,7 @@ object Grouplet extends Weblet {
       val fld = web.s( 'fld )
 
       if ( fld == B.commonGroupField.id ) {
-        val groupRec = sess.cache.getOrElseUpdate(
+        val groupRec = sess.getVOrElseUpdate(
           "groupRec", {
             val rec = org.tyranid.db.AdHoc.make
             rec( B.commonGroupField.name ) = GroupValue( B.commonGroupField )
