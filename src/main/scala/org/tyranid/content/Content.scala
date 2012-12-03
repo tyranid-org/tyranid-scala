@@ -558,6 +558,7 @@ trait ContentMeta extends PrivateKeyEntity {
  
   "complianceCode"    is DbChar(15)           is SearchText;
   "expDate"           is DbDate               as "Expiration Date" is SearchText; 
+  "approvalDate"      is DbDate               as "Approval Date" is SearchText; 
   
   "lastModified"      is DbDateTime           is 'required is SearchText;
   "lastModifiedBy"    is DbLink(B.User)       is 'required;
