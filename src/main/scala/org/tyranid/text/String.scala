@@ -200,14 +200,19 @@ class StringImp( s:String ) {
 
   def encRegex = s.replace( ".", "\\." ).replace( "@", "\\@" ).replace( "+", "\\+" )
 
-  def toUrl = new java.net.URL( Uri.completeUri( s ) )
+  def toUrl = try {
+    new java.net.URL( Uri.completeUri( s ) )
+  } catch {
+    case e:Exception =>
+      e.printStackTrace
+      null
+  }
   
   def containsIgnoreCase( v:String ) = 
     s != null && v.notBlank && s.toLowerCase.contains( v.toLowerCase )
 
   def endsWithIgnoreCase( v:String ) = 
     s != null && v.notBlank && s.toLowerCase.endsWith( v.toLowerCase )
-
     
   def safeFilename = s.replaceAll( " ", "_" ).replaceAll( "/", "" ).replaceAll( "\\\\", "" ).replaceAll( "\\?", "" ).replaceAll( "\\*", "" )
   
