@@ -527,10 +527,16 @@ $( function() {
         val dbUser = B.User.db.findOne(Mobj("resetCode" -> forgotCode))
 
         if (dbUser == null) {
+          if ( T.LnF == LnF.RetailBrand ) {
+            sess.notice( "Account access code not found!", deferred = "/dashboard" )
+            web.jsRes( Js( "tyr.app.loadMenubar( '/user/menubar' ); tyr.app.loadMain( '/dashboard' )" ) )
+          } else {
           web.template(
             <tyr:shell>
               <p>Account access code not found!</p>
             </tyr:shell>)
+          }
+          
         } else {
           val user = B.User(dbUser)
           user.remove('resetCode)

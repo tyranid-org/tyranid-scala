@@ -194,4 +194,9 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
     updateIfNeeded
     betterThanIE8
   }
+  
+  def htmlCss3Rotate = {
+    updateIfNeeded
+    betterThanIE8
+  }  
 }
