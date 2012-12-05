@@ -266,7 +266,7 @@ object Es {
 
           case text:DbTextLike =>
             props( att.dbName ) = if ( att.search.analyze ) Map( "type" -> "string" )
-                                  else                      Map( "type" -> "string", "index" -> "not_analyzed" )
+                                  else                      Map( "type" -> "string", "analyzer" -> "string_lowercase" /* "index" -> "not_analyzed" */ )
 
           case number:DbNumber =>
             props( att.dbName ) = Map( "type" -> "number" )
@@ -337,7 +337,15 @@ object Es {
           "settings" -> Map(
             "index" -> Map(
               "number_of_shards" -> 3,
-              "number_of_replicas" -> 1
+              "number_of_replicas" -> 1,
+              "analysis" -> Map(
+                "analyzer" -> Map(
+                  "string_lowercase" -> Map(
+                    "tokenizer" -> "keyword",
+                    "filter" -> "lowercase"
+                  )
+                )
+              )
             )
           ),
           "mappings" -> mappings

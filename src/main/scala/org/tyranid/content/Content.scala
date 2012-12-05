@@ -556,7 +556,7 @@ trait ContentMeta extends PrivateKeyEntity {
 
   "shown"             is DbArray(DbTid(B.User))             as "Shown To" ; // list of tids of users who have "read" this content; only maintained for some content types, like messages
  
-  "complianceCode"    is DbChar(15)           is SearchText;
+  "complianceCode"    is DbChar(15)           is SearchToken;
   "expDate"           is DbDate               as "Expiration Date" is SearchText; 
   "approvalDate"      is DbDate               as "Approval Date" is SearchText; 
   
