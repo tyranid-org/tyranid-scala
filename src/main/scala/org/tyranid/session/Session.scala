@@ -37,8 +37,7 @@ import org.tyranid.social.Social
 import org.tyranid.time.Time
 import org.tyranid.ui.LnF
 import org.tyranid.QuickCache
-import org.tyranid.web.WebContext
-
+import org.tyranid.web.{ Comet, WebContext }
 
 object SessionCleaner { 
   def clean {
@@ -252,6 +251,7 @@ trait Session extends QuickCache {
   def clear {
     reports.clear
     editings.clear
+    
     clear( null )
     
     loggedEntry = false
@@ -274,8 +274,27 @@ trait Session extends QuickCache {
     B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "lastLogin" -> new Date ) ) )
 
     val onLogin = B.onLogin
+    
     if ( onLogin != null )
       onLogin( this )
+      
+    /*
+    Comet.visit { comet =>      
+      val sess = comet.session
+      
+      if ( sess != null ) {
+        val u = sess.user
+        
+        println( u.s( 'email ))
+        //if ( u.s( 'email ) == loginEmail ) {
+        //  val output = mutable.Map[String,AnyRef]()
+        //  output( "act" ) = "forceLogout"
+        //  comet.send( output )
+        //  comet.serviceSession.disconnect()
+        //}
+      }
+    }
+    */
   }
 
   def logout = {
