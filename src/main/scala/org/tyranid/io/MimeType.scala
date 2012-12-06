@@ -204,7 +204,6 @@ object MimeType {
     for ( mt <- types )
       if ( !map.contains( mt.mimeType ) )
         map( mt.mimeType ) = mt
-
     map
   }
 
