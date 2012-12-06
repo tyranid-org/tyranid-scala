@@ -207,7 +207,7 @@ $( function() {
       <div class="top-form-messages"/>
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
-        <input type="text" id="un" name="un" placeholder="Email" autocapitalize="off" data-val="req,email"/>
+        <input type="email" id="un" name="un" placeholder="Email" autocapitalize="off" data-val="req,email"/>
         { Focus("#un") }
        </div>
        <div class="row-fluid">
