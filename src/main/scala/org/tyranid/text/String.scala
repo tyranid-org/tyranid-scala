@@ -200,13 +200,18 @@ class StringImp( s:String ) {
 
   def encRegex = s.replace( ".", "\\." ).replace( "@", "\\@" ).replace( "+", "\\+" )
 
-  def toUrl = try {
-    new java.net.URL( Uri.completeUri( s ) )
-  } catch {
-    case e:Exception =>
-      e.printStackTrace
+  def toUrl =
+    if ( s != null && s.notBlank ) {
+      try {
+        new java.net.URL( Uri.completeUri( s ) )
+      } catch {
+        case e:Exception =>
+          e.printStackTrace
+          null
+      }
+    } else { 
       null
-  }
+    }
   
   def containsIgnoreCase( v:String ) = 
     s != null && v.notBlank && s.toLowerCase.contains( v.toLowerCase )

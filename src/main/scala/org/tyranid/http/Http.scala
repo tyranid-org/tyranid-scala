@@ -132,8 +132,35 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
   
   def serializeParams( filter:Option[ ( String ) => Boolean ] = None ) =
     req.getParameterNames.toSeq.filter( name => filter.flatten( _( name.as[String] ), true ) ).map( n => ( n + "=" + s( n.as[String] ).encUrl ) ).mkString( "&" )
+
+  def dumpUserAgent {
+    def ua = T.session.ua( T.web )
+    
+    ua.updateIfNeeded
+    
+    println( "----- User Agent Dump ----" )
+    
+    println( "_id: " + ua.s( '_id ) )
+    println( "ua: "  + ua.s( 'ua ) )
+    println( "bot: " + ua.b( 'bot ) )
   
-  def dump = {
+    println( "agentType: "         + ua.s( 'agentType ) )
+    println( "agentName: "         + ua.s( 'agentName ) )
+    println( "agentVersion: "      + ua.s( 'agentVersion ) )
+    println( "osType: "            + ua.s( 'osType ) )
+    println( "osName: "            + ua.s( 'osName ) )
+    println( "osVersionName: "     + ua.s( 'osVersionName ) )
+    println( "osVersionNumber: "   + ua.s( 'osVersionNumber ) )
+    println( "osProducer: "        + ua.s( 'osProducer ) )
+    println( "osProducerUrl: "     + ua.s( 'osProducerUrl ) )
+    println( "linuxDistribution: " + ua.s( 'linuxDistribution ) )
+    println( "agentLanguage: "     + ua.s( 'agentLanguage ) )
+    println( "agentLanguageTag: "  + ua.s( 'agentLanguageTag ) )
+
+    println( "----- User Agent Dump ----" )    
+  }
+  
+  def dump {
 
     println( "** requestURI=" + T.web.req.getRequestURL )
 
