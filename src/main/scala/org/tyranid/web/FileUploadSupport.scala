@@ -94,16 +94,22 @@ object FileUploadSupport {
     if ( bodyParams == null ) {
       val sfu = new ServletFileUpload( new DiskFileItemFactory )
       sfu.setSizeMax( maxFileSize )
-      val items = sfu.parseRequest(req).asInstanceOf[JList[FileItem]]
-
       var fileParams = mutable.Map[String, Seq[FileItem]]()
       var formParams = mutable.Map[String, Seq[String]]()
-
-      for ( item <- items )
-        if ( item.isFormField )
-          formParams( item.getFieldName ) = fileItemToString(item) +: formParams.getOrElse(item.getFieldName, Nil )
-        else
-          fileParams( item.getFieldName ) = item +: fileParams.getOrElse(item.getFieldName, Nil )
+     
+      try {
+        val items = sfu.parseRequest(req).asInstanceOf[JList[FileItem]]
+  
+        for ( item <- items )
+          if ( item.isFormField )
+            formParams( item.getFieldName ) = fileItemToString(item) +: formParams.getOrElse(item.getFieldName, Nil )
+          else
+            fileParams( item.getFieldName ) = item +: fileParams.getOrElse(item.getFieldName, Nil )
+      } catch {
+        case e => 
+          e.printStackTrace
+          // nop
+      }
 
       bodyParams = BodyParams( fileParams, formParams )
       req.setAttribute( BodyParamsKey, bodyParams )
