@@ -365,10 +365,16 @@ object Time {
     if ( date == null )
       return "n/a"
 
-    val rawSince = now.getTime - date.getTime
+    var effNow = now
+
+    // if now is not specified, always use a non-relative date
+    if ( effNow == null )
+      effNow = new Date + OneYearMs
+
+    val rawSince = effNow.getTime - date.getTime
 
     val tz = Session().user.timeZone
-    val nc = now.toCalendar( tz )
+    val nc = effNow.toCalendar( tz )
     val c = date.toCalendar( tz ) 
 
     val ( since, future ) =

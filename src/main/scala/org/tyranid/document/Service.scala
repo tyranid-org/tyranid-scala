@@ -66,18 +66,18 @@ object Service {
       null
   }
   
-  def docPreviewContainer( extDocId:String, height:String="100%" ) =  
+  def docPreviewContainer( extDocId:String, height:String="100%", print:Boolean = false ) =  
     if ( extDocId.notBlank ) {
       val parts = extDocId.split( "," )
-      appFor( parts(0 ) ).docPreviewContainer( parts.drop(1).mkString( "," ), height )
+      appFor( parts(0 ) ).docPreviewContainer( parts.drop(1).mkString( "," ), height, print )
     } else {
       null
     }
     
-  def previewJsFor( extDocId:String ) = 
+  def previewJsFor( extDocId:String, print:Boolean = false ) = 
     if ( extDocId.notBlank ) {
       val parts = extDocId.split( "," )
-      appFor( parts(0 ) ).previewJsFor( parts.drop(1).mkString( "," ) )
+      appFor( parts(0 ) ).previewJsFor( parts.drop(1).mkString( "," ), print )
     } else {
       null
     }
@@ -129,9 +129,9 @@ trait DocApp {
   def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ):File
   def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef]
   def previewUrlFor( extDocId:String ):String
-  def previewJsFor( extDocId:String ):String = null
+  def previewJsFor( extDocId:String, print:Boolean = false ):String = null
   
-  def docPreviewContainer( extDocId:String, height:String="100%" ):NodeSeq
+  def docPreviewContainer( extDocId:String, height:String="100%", print:Boolean = false ):NodeSeq
   def delete( extDocId:String ): Boolean
   
   protected def externalDocId( extDocId:String ) =
