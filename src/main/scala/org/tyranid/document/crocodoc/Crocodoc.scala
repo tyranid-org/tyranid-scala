@@ -105,7 +105,7 @@ _doc = {"status": 3, "socketioHost": "//socket.crocodoc.com:5555/", "objects": [
 
     Http.GET( "https://crocodoc.com/webservice/document.js?session=" + session )._s + ";" +
     ( if ( print )
-        """var docViewer = new DocViewer({ "id": "dv_""" + extDocId + """" });"""
+        "var docViewer = new DocViewer({ id:'dv_" + extDocId + "', zoom:'fitWidth' });"
       else
         """if ( proj ) { proj.initViewer('""" + extDocId + """'); } else { var docViewer = new DocViewer({ "id": "dv_""" + extDocId + """" }); }""" )
   }
