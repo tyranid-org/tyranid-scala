@@ -240,10 +240,15 @@ trait Session extends QuickCache {
     var tUa:UserAgent = get( Session.UA_KEY ).as[UserAgent]
     
     if ( tUa == null ) {
-      tUa = UserAgent.getById( web.userAgentId )
+      if ( web == null )
+        tUa = UserAgent.getById( web.userAgentId ) // TODO Fix this!
+      else {
+        tUa = UserAgent.getById( web.userAgentId )
+      }
+      
       tUa.updateIfNeeded
       put( Session.UA_KEY, tUa )
-    } 
+    }
       
     tUa
   } 

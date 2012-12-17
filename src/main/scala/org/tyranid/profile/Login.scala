@@ -86,11 +86,11 @@ object Register {
          <input type="hidden" name="regStep" value="2"/>
          { T.web.b( 'keep ) |* <input type="hidden" name="keep" value="1"/> }
          <div class="row-fluid">
-          <div style="padding-top:1em;">One last step.  Please enter the name of your company below.  This helps other identify you within Volerro.</div>
+          <div style="padding-top:1em;">One last step.  Please enter the name of <b style='color:#cc4418;'>your</b> company below.  This helps other identify you within Volerro.</div>
          </div>
          <hr/>
          <div class="row-fluid">
-          <div class="span6"><input type="text" id="companyName" name="companyName" placeholder="Company Name" data-update="blur" data-val="req"/></div>
+          <div class="span6"><input type="text" id="companyName" name="companyName" placeholder="Your Company Name" data-update="blur" data-val="req"/></div>
           { Focus( "#companyName" ) }
           <div class="span6 hints">
            <div class="fldHint">
