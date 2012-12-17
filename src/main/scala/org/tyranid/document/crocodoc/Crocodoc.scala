@@ -81,15 +81,33 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
     statusJson.s( 'status )
   }
   
-  def docPreviewContainer( extDocId:String, height:String="100%" ): NodeSeq =
+  def docPreviewContainer( extDocId:String, height:String="100%", print:Boolean = false ): NodeSeq =
+    { print |*
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script> ++
+        <script src='//static-v2.crocodoc.com/core/docviewer.js'></script>
+    } ++
     <div class="doc-view doc crocodoc annotatableObject" id={ "dv_" + extDocId }/>
-  
-  override def previewJsFor( extDocId:String ) = {
+
+    /* ---
+
+_doc = {"status": 3, "socketioHost": "//socket.crocodoc.com:5555/", "objects": [], "pageStatuses": "", "demo": false, "editable": false, "webserviceUrl": "//crocodoc.com/webservice/", "step": "DONE", "session": "8TkzK5jhqzMVqinRejpBwRPld2ZrZ3AAzwhrv9w9WnScgvpZSUp-H7b9WaMj9K11jSv950vHA9P6HwByZMjqfd-rSddPpq2e49_eCQ", "assetsLocation": "//proxy-v2.crocodoc.com/ehdLsgyVIIbgTCAXV5WnT3UCQYZBCjwgTqzVhbjWZE8d_nSgJMk1QNjaunsVUKjxySR-kGG8DuGhNa6qyRejRgIJNUj5vmKjQNtNvSPz1bPrz8gHOZQ81XfcPKv6aa7mUCCstyg-tExqkWTnP0a8LN-26KKLpC9lQ_tDNrZgJToXvCgkz13NIaq30TgDv2LX8JoBBrP1hNtgnso_QfkIV8R6DPvf9mR-ow8CY8il1fv_/8TkzK5jhqzMVqinRejpBwRPld2ZrZ3AAzwhrv9w9WnScgvpZSUp-H7b9WaMj9K11jSv950vHA9P6HwByZMjqfd-rSddPpq2e49_eCQ/", "metadata": {"numpages": 2, "fonts": [{"last": 2, "id": 94, "first": 1}, {"last": 2, "id": 98, "first": 1}, {"last": 2, "id": 111, "first": 1}, {"last": 1, "id": 121, "first": 1}, {"last": 1, "id": 125, "first": 1}, {"last": 1, "id": 129, "first": 1}, {"last": 2, "id": 4, "first": 2}], "pages": {}, "defaults": {"width": 648.0, "height": 792.0}}};
+  if ( proj ) {
+    proj.initViewer('a9b32759-98d3-45ce-8ce3-23090684b10f');
+  } else {
+    var docViewer = new DocViewer({ "id": "dv_a9b32759-98d3-45ce-8ce3-23090684b10f" });
+  }
+
+      --- */
+
+  override def previewJsFor( extDocId:String, print:Boolean = false ) = {
     val sessionJson = Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s
     val session = Json.parse( sessionJson ).s( 'session )
 
-    Http.GET( "https://crocodoc.com/webservice/document.js?session=" + session )._s +
-    """; if ( proj ) { proj.initViewer('""" + extDocId + """'); } else { var docViewer = new DocViewer({ "id": "dv_""" + extDocId + """" }); }"""
+    Http.GET( "https://crocodoc.com/webservice/document.js?session=" + session )._s + ";" +
+    ( if ( print )
+        "var docViewer = new DocViewer({ id:'dv_" + extDocId + "', zoom:'fitWidth' });"
+      else
+        """if ( proj ) { proj.initViewer('""" + extDocId + """'); } else { var docViewer = new DocViewer({ "id": "dv_""" + extDocId + """" }); }""" )
   }
   
   def previewUrlFor( extDocId:String ):String = null

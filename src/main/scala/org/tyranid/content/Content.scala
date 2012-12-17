@@ -462,10 +462,27 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
         remove( c.a_?( 'r ), id )
   }
 
-  def sort( comments:Seq[Comment], newestFirst:Boolean ) = {
+  def sort( comments:Seq[Comment], newestFirst:Boolean = false, byPageXy:Boolean = false ) = {
 
     if ( newestFirst )
       comments.sortBy( _.mostRecentOn ).reverse
+    else if ( byPageXy )
+      comments.sortWith { ( a:Comment, b:Comment ) =>
+        val apn = a.pn
+        val bpn = b.pn
+
+        if ( apn != bpn ) {
+          apn < bpn
+        } else {
+          val ay = a.y
+          val by = b.y
+
+          if ( ay != by )
+            ay < by
+          else
+            a.x < b.x
+        }
+      }
     else
       comments.sortBy( _.on )
   }
@@ -476,6 +493,11 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
 class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.makeView, obj, parent ) {
 
   def m = s( 'm )
+
+  def pn = i( 'pn )
+  def x  = d( 'x )
+  def y  = d( 'y )
+
 
   def isPriority = b( 'pri )
 
@@ -499,7 +521,7 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
 
   def comments = Comment.asComments( a_?( 'r ) )
 
-  def hasAnnotation = has( 'x ) || has ('y )
+  def hasAnnotation = has( 'x ) || has ( 'y )
 
   def annotationType:String = has( 'pn ) ? "page" | ( ( has( 'x ) ? "xy" ) | null )
 
