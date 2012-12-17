@@ -36,6 +36,7 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.document.crocodoc.CrocApp
 import org.tyranid.document.issuu.IssuuApp
 import org.tyranid.document.scribd.ScribdApp
+import org.tyranid.document.zencoder.ZencoderApp
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.email.EmailTemplate
 import org.tyranid.profile.{ Group, OrgMeta, User, UserMeta }
@@ -226,6 +227,7 @@ trait Bootable {
   val basecamp:BcApp      = null
   
   // Document services
+  val zencoder:ZencoderApp = null
   val crocodoc:CrocApp = null
   val scribd:ScribdApp = null
   val issuu:IssuuApp = null

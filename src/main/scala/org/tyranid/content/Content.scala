@@ -881,6 +881,7 @@ abstract class Content( override val view:MongoView,
   def comments = Comment.asComments( a_?( 'r ) )
 
   def commentCount = Comment.count( comments )
+  
 
   def canComment = !isLocked
 
