@@ -674,6 +674,7 @@ $( function() {
             val jsonRes = web.jsonRes( sess )
             jsonRes.extraJS = "tyr.app.loadMenubar( '/user/menubar' ); tyr.app.loadMain( '/dashboard' );"
             web.json( jsonRes )
+            Group.ensureInCompanyGroup( user )
             
             return
           } else {

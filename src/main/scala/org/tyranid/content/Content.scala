@@ -80,6 +80,7 @@ object ContentType extends RamEntity( tid = "a10v" ) {
   val Document           = add( 5, "Document" )
   val Group              = add( 6, "Group" )
   val Project            = add( 7, "Project" )
+  val Company            = add( 8, "Company" )
 }
 
 case class ContentType( override val view:TupleView ) extends Tuple( view )

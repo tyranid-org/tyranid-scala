@@ -205,6 +205,24 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
       group.save
     }
   }
+  
+  def ensureInCompanyGroup( user:User ) {
+    assert( user.org != null )
+    val grp = Group( Group.db.findOrMake( Mobj( "o" -> Mlist( user.org.tid ), "name" -> "Company Team", "type" -> ContentType.Company.id ) ) )
+    
+    if ( grp.isNew ) { 
+      grp.a_!( 'o ).add( user.tid )
+      grp.a_!( 'v ).add( user.tid )
+      grp.save
+    } else {
+      val viewers = grp.a_!( 'v )
+      
+      if ( !viewers.contains( user.tid ) ) {
+        viewers.add( user.tid )
+        grp.save
+      }
+    }
+  }
 }
 
 class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView, obj, parent ) {
