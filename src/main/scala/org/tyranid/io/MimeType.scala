@@ -162,6 +162,8 @@ object MimeType {
     MimeType( "audio/ogg",                                                                 null,                "OGG Audio",                     Seq( "oga", "ogg" ) ),
     MimeType( "audio/x-aiff",                                                              null,                "Audio Interchange File Format", Seq( "aif", "aifc", "aiff" ) ),
     MimeType( "audio/x-wav",                                                               null,                "WAV Audio",                     Seq( "wav" ) ),
+    MimeType( "audio/mp4a-latm",                                                           null,                "M4A Audio",                     Seq( "m4a" ) ),
+
 
     MimeType( "image/bmp",                                                                 BMP,                 "BMP Image",                     Seq( "bmp" ) ),
     MimeType( "image/gif",                                                                 GIF,                 "GIF Image",                     Seq( "gif" ) ),

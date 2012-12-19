@@ -146,7 +146,12 @@ object Iolet extends Weblet {
               return
             }
            
-            rec.as[Content].generateThumbs
+            if ( !rec.as[Content].generateThumbs ) {
+              web.res.setStatus( 302 )
+              web.res.setHeader( "Location", B.getS3Bucket( "public" ).url( "icons/na.png" ) )
+              web.res.setHeader( "Connection", "close" )
+              return
+            }
           case e2 if e2.getClass.getSimpleName == "EofException" =>
             // Happens with IE a lot
             web.res.setStatus( 200 )

@@ -43,7 +43,7 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
     
   val supportedFormats = List( "DOC", "DOCX", "XLS", "XLSX", "PPT", "PPTX", "PDF" )
   
-  def upload( file:File, fileSize:Long, filename:String ):String = {
+  def upload( file:File, fileSize:Long, filename:String, obj:DBObject ): Boolean = {
     val suffix = filename.suffix( '.' )
     
     if ( supports( suffix ) ) {
@@ -61,19 +61,20 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
         val res = Json.parse( result )
         error = res.s( 'error )
         
-        if ( error.isBlank )
-          return externalDocId( res.s( 'uuid ) )
-          
-        if ( error.containsIgnoreCase( "rate limit exceeded" ) ) {
+        if ( error.isBlank ) {
+          obj( 'externalId ) = externalDocId( res.s( 'uuid ) )
+        } else if ( error.containsIgnoreCase( "rate limit exceeded" ) ) {
           Thread.sleep( 2000 )
           error = null
         } else {
           log( Event.Crocodoc, "m" -> ( "Failed to upload document: " + filename + ", error=" + error ) )
         }
       }
+      
+      return true
     }
     
-    null
+    false
   }
   
   def statusFor( extDocId:String ) = {

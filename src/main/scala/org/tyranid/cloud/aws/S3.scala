@@ -17,6 +17,8 @@
 
 package org.tyranid.cloud.aws
 
+import scala.collection.JavaConversions._
+
 import java.util.Date
 import java.io.{ ByteArrayInputStream, FileOutputStream, FileInputStream, InputStream, File }
 import scala.collection.mutable
@@ -36,8 +38,8 @@ case class S3StoreResult( url:String, mimeType:String )
 case class S3Bucket( prefix:String, cfDistributionId:String = "", cfDomain:String = "", keyPairId:String= "" ) {
   val name = prefix + B.envSuffix + B.bucketSuffix
 
-  def url( path:String ) =
-    if ( cfDomain.isBlank || B.envSuffix.notBlank )
+  def url( path:String, forceS3:Boolean = false ) =
+    if ( forceS3 || ( cfDomain.isBlank || B.envSuffix.notBlank ) )
       "https://s3.amazonaws.com/" + name + "/" + path
     else
       "https://" + cfDomain + ".cloudfront.net/" + path
@@ -238,6 +240,8 @@ object S3 {
     else
       urlStr
   }
+  
+  def listObjects( bucket:S3Bucket, path:String ):Seq[String] = s3.listObjects( bucket.name, path ).getObjectSummaries.map( _.getKey )
 }
 
 

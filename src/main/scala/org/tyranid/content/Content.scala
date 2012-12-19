@@ -787,7 +787,7 @@ abstract class Content( override val view:MongoView,
      <img src={ thumbUrl( size ) }/>
     </div>
   
-  def generateThumbs {
+  def generateThumbs:Boolean = {
     val imgFile = imageForThumbs
     
     if ( imgFile != null ) {
@@ -816,7 +816,11 @@ abstract class Content( override val view:MongoView,
       } finally {
         imgFile.delete
       }
+      
+      return true
     }
+    
+    false
   }
 
 

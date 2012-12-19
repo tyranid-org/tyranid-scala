@@ -17,9 +17,14 @@
 
 package org.tyranid.document.zencoder
 
+import scala.collection.mutable
+import scala.collection.mutable.Buffer
 import scala.xml.{ Unparsed, NodeSeq }
-import java.io.{ File, FileOutputStream }
+
+import java.io.{ File, FileOutputStream, FileInputStream }
+
 import com.mongodb.DBObject
+
 import org.tyranid.Imp._
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.json.Json
@@ -30,75 +35,119 @@ import org.tyranid.document.DocApp
 import org.tyranid.time.Time
 import org.tyranid.ui.Form
 import org.tyranid.web.{ Weblet, WebContext }
-import java.io.FileInputStream
 
-case class ZencoderApp( apiKey:String ) {
-  val websiteUrl = "http://www.zencoder.com"
-    
-  val supportedFormats = List( "MOV", "AVI", "MP4", "OGG", "OGV" )
-  
-  val mp4Vid = Seq( Seq( "mp4", "h264", "aac" ) )
-  val oggVid = Seq( Seq( "ogg", "theora", "vorbis" ) )
+object Zencoder {
+  val mp4Vid = Seq( "mp4", "h264", "aac" )
+  val oggVid = Seq( "ogg", "theora", "vorbis" )
   val allVids = Seq( oggVid, mp4Vid )
   
-  val otherFormats = Map(
-        "mp4" -> oggVid,
-        "ogg" -> mp4Vid,
+  val otherVidFormats = Map(   
+        "mp4" -> Seq( oggVid ),
+        "ogg" -> Seq( mp4Vid ),
+        "ogv" -> Seq( mp4Vid ),
         "mov" -> allVids,
         "flv" -> allVids,
         "3gp" -> allVids,
         "mov" -> allVids,
         "wmv" -> allVids
       )
+
+  val mp4Aud = Seq( "m4a", "aac" )
+  val oggAud = Seq( "oga", "vorbis" )
   
-  def supports( filename:String ) = otherFormats.getOrElse( filename.suffix( '.' ).toLowerCase, null ) != null
+  val allAudio = Seq( oggAud, mp4Aud )
   
-  def mapForFormat( url:String, format:Seq[String] ) = {
-    Map( "url" -> ( url + "." + format(0) ),
+  val otherAudioFormats = Map(   
+        "m4a" -> Seq( oggAud ),
+        "oga" -> Seq( mp4Aud ),
+        "mp3" -> allAudio,
+        "wav" -> allAudio
+      )
+      
+  def supportsVideo( filename:String ) = otherVidFormats.getOrElse( filename.suffix( '.' ).toLowerCase, null ) != null
+  def supportsAudio( filename:String ) = otherAudioFormats.getOrElse( filename.suffix( '.' ).toLowerCase, null ) != null
+  
+  private def mapForFormat( url:String, format:Seq[String], audio:Boolean = false ) = {
+    if ( audio )
+      Map( "url" -> ( url + "." + format(0) ),
+         "audio_codec" -> format(1) )
+    else 
+      Map( "url" -> ( url + "." + format(0) ),
          "video_codec" -> format(1),
          "audio_codec" -> format(2) )
   }
   
-  /*
-  def upload( inputUrl:String, filename:String, contentType:String ):String = {
-    val formats = otherFormats.getOrElse( filename.suffix( '.' ).toLowerCase, null )
+  def outputFormats( url:String, formats:Seq[Seq[String]], forAudio:Boolean = false ) = {
+    var maps = new mutable.ArrayBuffer[Map[String,String]]()
     
+    for ( format <- formats )
+      maps += mapForFormat( url, format )
+    
+    maps.toSeq
+  }
+}
+
+case class ZencoderApp( apiKey:String ) {
+ // val websiteUrl = "http://www.zencoder.com"
+    
+  def upload( inputUrl:String, filename:String, doc:DBObject ): Boolean = {
+    var ext = filename.suffix( '.' ).toLowerCase
+    
+    var formats = Zencoder.otherVidFormats.getOrElse( ext, null )
+    var isAudio = false
+    
+    if ( formats == null ) {
+      isAudio = true
+      formats = Zencoder.otherAudioFormats.getOrElse( ext, null )
+    }
+      
     if ( formats != null ) {
-      var error:String = null
-        
-      while ( error.isBlank ) {
-        val jsonReq = Map( 
-            "test" -> true,
-            "input" -> inputUrl,
-            "output" -> formats 
-            
-            Seq(
-                Map(
-                 "url" -> ( inputUrl + ".ogg" ) ) ) )
-                 
-        val result = Http.POST( "https://zencoder.com/api/v2/jobs", jsonReq.toJsonStr, null, "application/json", Map( "Zencoder-Api-Key" -> apiKey ) ).s
-      
-        println( "zencoder: " + result )
-      
-        val res = Json.parse( result )
-        error = res.s( 'error )
-        
-        if ( error.isBlank )
-          return externalDocId( res.s( 'uuid ) )
+      val outputFormats =  Zencoder.outputFormats( inputUrl, formats, isAudio )
+      val jsonReq = Map( 
+          "test" -> true, // 
+          "input" -> inputUrl,
+          "output" -> outputFormats )
           
-        if ( error.containsIgnoreCase( "rate limit exceeded" ) ) {
-          Thread.sleep( 2000 )
-          error = null
-        } else {
-          log( Event.Zencoder, "m" -> ( "Failed to upload document: " + filename + ", error=" + error ) )
+      println( "request: " + jsonReq.toJsonStr )
+      val req = Http.POST( "https://app.zencoder.com/api/v2/jobs", jsonReq.toJsonStr, null, "application/json", Map( "Zencoder-Api-Key" -> apiKey ) )
+      val result = req.s            
+      
+      println( "zc res: " + result )
+      if ( req.response.getStatusLine().getStatusCode() != 201 ) {
+        log( Event.Zencoder, "m" -> ( "Failed to upload video: " + filename + ", error=" + result ) )
+      } else {
+        //{"outputs":[{"label":null,"url":"https://s3.amazonaws.com/files.volerro.com/5069a80ad748dff278930a82/50d2180fd748c9c33a8e8b0f.ogg","id":66443523},{"label":null,"url":"https://s3.amazonaws.com/files.volerro.com/5069a80ad748dff278930a82/50d2180fd748c9c33a8e8b0f.mp4","id":66443525}],"test":true,"id":34152199}
+        val res = Json.parse( result )
+        doc( 'zid ) = res.i( 'id )
+  
+        val outputs = res.a( "outputs" )
+        val outputlen = outputs.size
+        val zoids = doc.a_!( 'zoids )
+        
+        for ( i <- 0 until outputlen ) {
+          val output = outputs.get( i )
+          zoids.add( i, output.i( 'id ).as[AnyRef] )
         }
       }
+      
+      return true
     }
     
-    null
+    false
   }
-
-  //https://app.zencoder.com/api/v2/jobs
+  
+  def status( doc:DBObject ) = {
+    val zid = doc.i( 'zid )
+    
+    if ( zid > 0 ) {
+      //GET https://app.zencoder.com/api/v2/jobs/1234.xml?api_key=asdf1234
+      val statusJson = Json.parse( Http.GET( "https://app.zencoder.com/api/v2/jobs/" + zid + ".json?api_key=" + apiKey ).s )
+      statusJson.s( 'state )
+    } else {
+      null
+    }
+  }
+  /*
   /*  mp4 to ogg
 POST /api/v2/jobs HTTP/1.1
 Accept: application/json

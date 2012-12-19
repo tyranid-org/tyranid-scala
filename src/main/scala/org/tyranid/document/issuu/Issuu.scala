@@ -47,8 +47,7 @@ case class IssuuApp( apiKey:String, secret:String = null ) extends DocApp {
     
   val supportedFormats = List( "DOC", "DOCX", "XLS", "XLSX", "PPT", "PPTX", "PDF", "ODT", "ODP", "WPD", "RTF", "SXI" )
   
-  def upload( file:File, fileSize:Long, filename:String ):String = {
-    var externalId:String = null
+  def upload( file:File, fileSize:Long, filename:String, obj:DBObject ): Boolean = {
     
     if ( supports( filename.suffix( '.' ) ) ) {
       println( "filename " + filename )
@@ -70,13 +69,15 @@ case class IssuuApp( apiKey:String, secret:String = null ) extends DocApp {
       
       if ( stat == "ok" ) {
         val doc = res.get( '_content ).get( 'document )
-        externalId = externalDocId( res.s( 'documentId ) )
+        obj( 'externalId ) = externalDocId( res.s( 'documentId ) )
       } else { 
         log( Event.Issuu, "m" -> ( "Failed to upload document: " + filename ) )
       }
+      
+      return true
     }
     
-    externalId
+    return false
   }
   
   def getText( extDocId:String ):String = {

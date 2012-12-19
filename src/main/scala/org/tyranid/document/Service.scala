@@ -123,7 +123,7 @@ trait DocApp {
   val supportedFormats:List[String] 
   val active = true
     
-  def upload( file:File, fileSize:Long, filename:String ):String
+  def upload( file:File, fileSize:Long, filename:String, obj:DBObject ): Boolean
   def statusFor( extDocId:String ):String
   def getText( extDocId:String ):String
   def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ):File

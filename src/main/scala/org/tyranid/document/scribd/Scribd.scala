@@ -50,7 +50,7 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
   </rsp>
   */
     
-  def upload( file:File, fileSize:Long, filename:String ):String = {
+  def upload( file:File, fileSize:Long, filename:String, obj:DBObject ): Boolean = {
     if ( supports( filename.suffix( '.' ) ) ) {
       val resultStr = Http.POST_FILE( "http://api.scribd.com/api?", file, fileSize, filename, params = Map( "method" -> "docs.upload", "access" -> "private", "api_key" -> apiKey, "secure" -> "1" ) )._s
 
@@ -64,14 +64,15 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
         val accessKey = ( response \\ "access_key" ).text
         val secretPassword = ( response \\ "secret_password" ).text
       
-        externalDocId( docId + "," + accessKey + ( secretPassword.isBlank ? "" | ( "," + secretPassword ) ) )
+        obj( 'externalId ) = externalDocId( docId + "," + accessKey + ( secretPassword.isBlank ? "" | ( "," + secretPassword ) ) )
       } else {
         log( Event.Scribd, "m" -> ( "Failed to upload document: " + filename + ", error=" + ( response \\ "error" \ "@message" ).text ) )
-        null
       }
-    } else {
-      null
+      
+      return true
     }
+    
+    false
   }
   
   def statusFor( extDocId:String ) = {
