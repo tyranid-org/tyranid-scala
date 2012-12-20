@@ -64,15 +64,16 @@ object Zencoder {
         "wav" -> allAudio
       )
       
+  def supports( filename:String ) = supportsVideo( filename ) || supportsAudio( filename )
   def supportsVideo( filename:String ) = otherVidFormats.getOrElse( filename.suffix( '.' ).toLowerCase, null ) != null
   def supportsAudio( filename:String ) = otherAudioFormats.getOrElse( filename.suffix( '.' ).toLowerCase, null ) != null
   
-  private def mapForFormat( url:String, format:Seq[String], audio:Boolean = false ) = {
-    if ( audio )
-      Map( "url" -> ( url + "." + format(0) ),
+  private def mapForFormat( url:String, format:Seq[String], forAudio:Boolean = false ) = {
+    if ( forAudio )
+      Map( "url" -> ( url + ".TMP." + format(0) ),
          "audio_codec" -> format(1) )
     else 
-      Map( "url" -> ( url + "." + format(0) ),
+      Map( "url" -> ( url + ".TMP." + format(0) ),
          "video_codec" -> format(1),
          "audio_codec" -> format(2) )
   }
@@ -81,7 +82,7 @@ object Zencoder {
     var maps = new mutable.ArrayBuffer[Map[String,String]]()
     
     for ( format <- formats )
-      maps += mapForFormat( url, format )
+      maps += mapForFormat( url, format, forAudio )
     
     maps.toSeq
   }
@@ -104,7 +105,7 @@ case class ZencoderApp( apiKey:String ) {
     if ( formats != null ) {
       val outputFormats =  Zencoder.outputFormats( inputUrl, formats, isAudio )
       val jsonReq = Map( 
-          "test" -> true, // 
+          "test" -> B.DEV,  
           "input" -> inputUrl,
           "output" -> outputFormats )
           
@@ -123,10 +124,12 @@ case class ZencoderApp( apiKey:String ) {
         val outputs = res.a( "outputs" )
         val outputlen = outputs.size
         val zoids = doc.a_!( 'zoids )
+        val zformats = doc.a_!( 'zfmts )
         
         for ( i <- 0 until outputlen ) {
           val output = outputs.get( i )
           zoids.add( i, output.i( 'id ).as[AnyRef] )
+          zformats.add( output.s( 'url ).suffix( '.' ) )
         }
       }
       
