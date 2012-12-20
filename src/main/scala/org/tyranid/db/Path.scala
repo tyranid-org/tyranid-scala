@@ -218,8 +218,8 @@ trait Path extends Pathable {
 
     pathAt( pathSize - 1 ) match {
     case va:ViewAttribute => cur match {
-                             case o:BsonObject    => o.remove( va.name )
-                             case o:BasicDBObject => o.remove( va.name )
+                             case o:BsonObject    => o.removeKey( va.name )
+                             case o:BasicDBObject => o.removeKey( va.name )
                              case _               => problem( "couldn't remove from path ... " + name )
                              }
     case ai:ArrayIndex    => cur.asInstanceOf[BasicDBList].set( ai.idx, null )

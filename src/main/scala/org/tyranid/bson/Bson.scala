@@ -50,7 +50,17 @@ trait BsonObject extends Deep {
   def id = apply( "_id" )
   def oid = id.as[ObjectId]
 
+  @deprecated(
+    message = "Use removeKey()/removeValue() instead since remove() has a conflict:  DbListImp extends from both BsonObject ( remove( Any ) means removing a KEY ) and java.util.ArrayList ( remove( Any ) means removing a VALUE",
+    since = "2012.12.18" )
   def remove( key:String )
+
+  def removeKey( key:String )
+
+  def removeValue( value:Any ) =
+    for ( key <- keys;
+          if apply( key ) == value )
+      removeKey( key )
 
   def tidFor( key:String,  en:org.tyranid.db.Entity ) = {
     a_?( key ).find( t => en.hasTid( t._s ) ).getOrElse( "" )._s
@@ -283,7 +293,7 @@ trait BsonList extends BsonObject with mutable.Seq[Any] {
 
   def truncate( newSize:Int ) =
     for ( i <- newSize until this.size )
-      remove( i.toString )
+      removeKey( i.toString )
 
   def a( idx:Int )         = apply( idx ).asInstanceOf[BasicDBList]
   def b( idx:Int )         = apply( idx ).asInstanceOf[Boolean]

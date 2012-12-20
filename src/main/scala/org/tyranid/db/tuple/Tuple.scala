@@ -54,6 +54,8 @@ class Tuple( val view:TupleView ) extends Record {
 	def update( index:Int, v:Any ) = values( index ) = v.asInstanceOf[AnyRef]
   def remove( index:Int )        = values( index ) = null
 
+  def removeKey( key:String ) = update( key, null )
+
   def apply( va:ViewAttribute )         = apply( va.index )
   def update( va:ViewAttribute, v:Any ) = values( va.index ) = v.asInstanceOf[AnyRef]
   def remove( va:ViewAttribute )        = values( va.index ) = null
