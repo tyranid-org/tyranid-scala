@@ -182,7 +182,6 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
   val obj:DBObject
 
   override def has( key:String )    = obj.containsField( key )
-  override def remove( key:String ) = obj.removeField( key )
 
   def rename( from:String, to:String ) =
     if ( obj.has( from ) )
@@ -196,6 +195,10 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
    */
 
   def keys = obj.keySet.toSeq
+
+  override def remove( key:String ) = obj.removeField( key )
+
+  override def removeKey( key:String ) = obj.removeField( key )
 
   override def o( key:String ):DBObjectWrap =
     apply( key ) match {
@@ -318,6 +321,15 @@ trait DBListWrap extends DBObjectWrap with BsonList {
   def hasOnly( v:Any ) = obj.size == 1 && obj( 0 ) == v
 
 
+  /*
+   * * *   BsonList
+   */
+
+  override def removeKey( key:String ) =
+    obj.remove( key._i )
+
+
+  
   /*
    * * *   Seq[Any] delegation
    */

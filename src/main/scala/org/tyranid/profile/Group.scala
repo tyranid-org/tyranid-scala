@@ -120,8 +120,11 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   
   override def convert( obj:DBObject, parent:MongoRecord ) = new Group( obj, parent )
 
+  "org"       is DbLink(B.Org)                      as "Organization";
+
   "members"   is DbArray(DbTid(B.Org,B.User,Group)) as "Members";
   "private"   is DbBoolean;
+
 
   //"color"          // future ... colored labels
   //"search"         { search criteria } // future ... list search for a group, rather than each id explicitly
@@ -206,9 +209,9 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
     }
   }
   
-  def ensureInCompanyGroup( user:User ) {
+  def ensureInOrgGroup( user:User ) {
     assert( user.org != null )
-    val grp = Group( Group.db.findOrMake( Mobj( "o" -> Mlist( user.org.tid ), "name" -> "Company Team", "type" -> ContentType.Company.id ) ) )
+    val grp = Group( Group.db.findOrMake( Mobj( "org" -> user.org.id, "name" -> "Company Team", "type" -> ContentType.Organization.id ) ) )
     
     if ( grp.isNew ) { 
       grp.a_!( 'o ).add( user.tid )
