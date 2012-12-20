@@ -63,15 +63,15 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
         
         if ( error.isBlank ) {
           obj( 'externalId ) = externalDocId( res.s( 'uuid ) )
+          return true
         } else if ( error.containsIgnoreCase( "rate limit exceeded" ) ) {
           Thread.sleep( 2000 )
           error = null
         } else {
           log( Event.Crocodoc, "m" -> ( "Failed to upload document: " + filename + ", error=" + error ) )
+          return false
         }
       }
-      
-      return true
     }
     
     false
