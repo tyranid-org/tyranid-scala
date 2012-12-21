@@ -350,6 +350,8 @@ $( function() {
       web.redirect( website + "/?lo=1" + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
     case s if s.startsWith( "/in" ) =>
       socialLogin( s.substring( 3 ) )
+    case "/register2" =>
+      registerRetail( web, sess )
     case s if s.startsWith( "/register" ) =>
       if ( T.LnF == LnF.RetailBrand ) {
         registerRetail( web, sess )
@@ -714,7 +716,7 @@ $( function() {
     <a href="/"><img src="/volerro_logo.png"/></a>
    </div> ++
    <div class={ "offset2 span8" + ( betaSignup |* " beta" ) }>
-    <form method="post" action={ wpath + "/register" } id="f" class="register" style="margin-bottom:12px;" data-val="1">
+    <form method="post" action={ wpath + "/register2" } id="f" class="register" style="margin-bottom:12px;" data-val="1">
      { keep |* <input type="hidden" name="keep" value="1"/> }
      { betaSignup |* <input type="hidden" name="beta" value="1"/> }
      <fieldset class="registerBox">
@@ -760,7 +762,7 @@ $( function() {
            <div class="span6">
             { ( ( B.BETA && !betaSignup ) || !user.isNew ) ?
               <input type="text" name="email" id="email" value={ user.s( 'email ) } readonly="readonly" placeholder="Email address"/> |
-              <input type="text" name="email" id="email" value={ user.s( 'email ) } placeholder="Email address" data-update="blur" data-val="req,email"/>
+              <input type="text" name="email" id="email" value={ user.s( 'email ) } placeholder="Email address" data-update="blur" data-update-url={ wpath + "/register" } data-val="req,email"/>
             }
            </div>
            <div class="span6 val-display"/>
