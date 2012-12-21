@@ -139,6 +139,7 @@ case class ZencoderApp( apiKey:String ) {
     false
   }
   
+  // Output states include waiting, queued, assigning, ready, processing, finished, failed, cancelled and no input.
   def status( doc:DBObject ) = {
     val zid = doc.i( 'zid )
     
@@ -150,6 +151,7 @@ case class ZencoderApp( apiKey:String ) {
       null
     }
   }
+  
   /*
   /*  mp4 to ogg
 POST /api/v2/jobs HTTP/1.1
