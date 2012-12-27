@@ -155,6 +155,9 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
     false
   }
   
+  // Need to copy these over because they are not solely owned by us:
+  // See: https://forums.aws.amazon.com/message.jspa?messageID=371475
+        
   def checkStatus( doc:DBObject, db:DBCollection, bkt:S3Bucket, key:String ) = {
     val zformats = doc.a( 'zfmts )
     
