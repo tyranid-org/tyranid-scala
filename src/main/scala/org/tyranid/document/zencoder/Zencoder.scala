@@ -155,6 +155,9 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
     false
   }
   
+  // Need to copy these over because they are not solely owned by us:
+  // See: https://forums.aws.amazon.com/message.jspa?messageID=371475
+        
   def checkStatus( doc:DBObject, db:DBCollection, bkt:S3Bucket, key:String ) = {
     val zformats = doc.a( 'zfmts )
     
@@ -208,7 +211,10 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
     if ( zid > 0 ) {
       //GET https://app.zencoder.com/api/v2/jobs/1234.xml?api_key=asdf1234
       val statusJson = Json.parse( Http.GET( "https://app.zencoder.com/api/v2/jobs/" + zid + ".json?api_key=" + apiKey ).s )
-      statusJson.s( 'state )
+      
+      val job = statusJson.get( "job" )
+      val state = job.s( 'state )
+      state
     } else {
       null
     }

@@ -371,6 +371,7 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
   "pn"             is DbInt                  as "Page Number";
   "x"              is DbDouble               as "X";
   "y"              is DbDouble               as "Y";
+  "w"              is DbDouble               as "When"; // Used for timeline (video annotation)
 
   "r"              is DbArray(Comment)       as "Replies";
 
@@ -463,10 +464,31 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
         remove( c.a_?( 'r ), id )
   }
 
-  def sort( comments:Seq[Comment], newestFirst:Boolean = false, byPageXy:Boolean = false ) = {
+  def sort( comments:Seq[Comment], newestFirst:Boolean = false, byPageXy:Boolean = false, byWhen:Boolean = false ) = {
 
     if ( newestFirst )
       comments.sortBy( _.mostRecentOn ).reverse
+    else if ( byWhen )
+      comments.sortWith { ( a:Comment, b:Comment ) =>
+        val aw = a.d( 'w )
+        val bw = b.d( 'w )
+        
+        if ( !a.hasAnnotation && !b.hasAnnotation )
+          a.mostRecentOn < b.mostRecentOn 
+        else if ( !a.hasAnnotation )
+          false
+        else if ( aw != bw ) {
+          aw < bw
+        } else {
+          val ay = a.y
+          val by = b.y
+
+          if ( ay != by )
+            ay < by
+          else
+            a.x < b.x
+        }
+      }
     else if ( byPageXy )
       comments.sortWith { ( a:Comment, b:Comment ) =>
         val apn = a.pn
@@ -498,7 +520,7 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
   def pn = i( 'pn )
   def x  = d( 'x )
   def y  = d( 'y )
-
+  def w  = d( 'w )
 
   def isPriority = b( 'pri )
 
@@ -522,9 +544,9 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
 
   def comments = Comment.asComments( a_?( 'r ) )
 
-  def hasAnnotation = has( 'x ) || has ( 'y )
+  def hasAnnotation = ( has( 'w ) && d( 'w ) > -1 ) || has( 'x ) || has ( 'y )
 
-  def annotationType:String = has( 'pn ) ? "page" | ( ( has( 'x ) ? "xy" ) | null )
+  def annotationType:String = has( 'pn ) ? "page" | ( has( 'w ) ? "timeline" | ( ( has( 'x ) ? "xy" ) | null ) )
 
   def on = t( 'on )
   def displayDate = t( 'on )
@@ -906,7 +928,7 @@ abstract class Content( override val view:MongoView,
 
   def commentById( id:Int ) = Comment.find( a_?( 'r ), id )
 
-  def comment( msg:String, user:User, replyTo:Comment = null, pageNumber:Int = 0, x:Double = 0.0, y:Double = 0.0, priority:Boolean = false ) = {
+  def comment( msg:String, user:User, replyTo:Comment = null, pageNumber:Int = 0, x:Double = 0.0, y:Double = 0.0, w:Double = -1, priority:Boolean = false ) = {
 
     val comments = a_!( 'r )
 
@@ -919,6 +941,8 @@ abstract class Content( override val view:MongoView,
       comment( 'x ) = x
       comment( 'y ) = y
     }
+    
+    comment( 'w ) = w
 
     if ( priority )
       comment( 'pri ) = true
