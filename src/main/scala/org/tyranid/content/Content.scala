@@ -464,10 +464,31 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
         remove( c.a_?( 'r ), id )
   }
 
-  def sort( comments:Seq[Comment], newestFirst:Boolean = false, byPageXy:Boolean = false ) = {
+  def sort( comments:Seq[Comment], newestFirst:Boolean = false, byPageXy:Boolean = false, byWhen:Boolean = false ) = {
 
     if ( newestFirst )
       comments.sortBy( _.mostRecentOn ).reverse
+    else if ( byWhen )
+      comments.sortWith { ( a:Comment, b:Comment ) =>
+        val aw = a.i( 'w )
+        val bw = b.i( 'w )
+        
+        if ( !a.hasAnnotation && !b.hasAnnotation )
+          a.mostRecentOn < b.mostRecentOn 
+        else if ( !a.hasAnnotation )
+          false
+        else if ( aw != bw ) {
+          aw < bw
+        } else {
+          val ay = a.y
+          val by = b.y
+
+          if ( ay != by )
+            ay < by
+          else
+            a.x < b.x
+        }
+      }
     else if ( byPageXy )
       comments.sortWith { ( a:Comment, b:Comment ) =>
         val apn = a.pn
@@ -524,7 +545,7 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
 
   def comments = Comment.asComments( a_?( 'r ) )
 
-  def hasAnnotation = has( 'w ) || has( 'x ) || has ( 'y )
+  def hasAnnotation = ( has( 'w ) && i( 'w ) > -1 ) || has( 'x ) || has ( 'y )
 
   def annotationType:String = has( 'pn ) ? "page" | ( has( 'w ) ? "timeline" | ( ( has( 'x ) ? "xy" ) | null ) )
 
@@ -918,8 +939,7 @@ abstract class Content( override val view:MongoView,
       comment( 'y ) = y
     }
     
-    if ( w != -1 )
-      comment( 'w ) = w
+    comment( 'w ) = w
 
     if ( priority )
       comment( 'pri ) = true
