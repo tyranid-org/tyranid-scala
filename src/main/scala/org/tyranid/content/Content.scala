@@ -371,7 +371,7 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
   "pn"             is DbInt                  as "Page Number";
   "x"              is DbDouble               as "X";
   "y"              is DbDouble               as "Y";
-  "w"              is DbInt                  as "When"; // Used for timeline (video annotation)
+  "w"              is DbDouble               as "When"; // Used for timeline (video annotation)
 
   "r"              is DbArray(Comment)       as "Replies";
 
@@ -470,8 +470,8 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
       comments.sortBy( _.mostRecentOn ).reverse
     else if ( byWhen )
       comments.sortWith { ( a:Comment, b:Comment ) =>
-        val aw = a.i( 'w )
-        val bw = b.i( 'w )
+        val aw = a.d( 'w )
+        val bw = b.d( 'w )
         
         if ( !a.hasAnnotation && !b.hasAnnotation )
           a.mostRecentOn < b.mostRecentOn 
@@ -520,8 +520,7 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
   def pn = i( 'pn )
   def x  = d( 'x )
   def y  = d( 'y )
-  def w  = i( 'w )
-
+  def w  = d( 'w )
 
   def isPriority = b( 'pri )
 
@@ -545,7 +544,7 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
 
   def comments = Comment.asComments( a_?( 'r ) )
 
-  def hasAnnotation = ( has( 'w ) && i( 'w ) > -1 ) || has( 'x ) || has ( 'y )
+  def hasAnnotation = ( has( 'w ) && d( 'w ) > -1 ) || has( 'x ) || has ( 'y )
 
   def annotationType:String = has( 'pn ) ? "page" | ( has( 'w ) ? "timeline" | ( ( has( 'x ) ? "xy" ) | null ) )
 
@@ -925,7 +924,7 @@ abstract class Content( override val view:MongoView,
 
   def commentById( id:Int ) = Comment.find( a_?( 'r ), id )
 
-  def comment( msg:String, user:User, replyTo:Comment = null, pageNumber:Int = 0, x:Double = 0.0, y:Double = 0.0, w:Int = -1, priority:Boolean = false ) = {
+  def comment( msg:String, user:User, replyTo:Comment = null, pageNumber:Int = 0, x:Double = 0.0, y:Double = 0.0, w:Double = -1, priority:Boolean = false ) = {
 
     val comments = a_!( 'r )
 
