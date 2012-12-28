@@ -866,12 +866,16 @@ abstract class Content( override val view:MongoView,
 
   def fromUser = {
     val utid = firstOwnerTid()
-    val user = B.User.getByTid( utid )
-
-    if ( user == null )
+    if ( utid.isBlank ) {
       B.systemUser
-    else
-      user
+    } else {
+      val user = B.User.getByTid( utid )
+
+      if ( user == null )
+        B.systemUser
+      else
+        user
+    }
   }
 
   def fromIcon =
@@ -948,25 +952,25 @@ abstract class Content( override val view:MongoView,
   }
 
   def owners = {
-   val tids = ownerTids
+    val tids = ownerTids
 
-   for ( e <- ownerEntities;
-         en = e.as[MongoEntity];
-         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> tids.filter( en.hasTid ).map( tid => en.tidToId( tid ) ).toSeq.toMlist ) ) );
-         rec = en( r ) )
+    for ( e <- ownerEntities;
+          en = e.as[MongoEntity];
+          r <- en.db.find( Mobj( "_id" -> Mobj( $in -> tids.filter( en.hasTid ).map( tid => en.tidToId( tid ) ).toSeq.toMlist ) ) );
+          rec = en( r ) )
       yield rec
   }
 
   def writers = owners
   
   def viewers = {
-   val tids = viewerTids
+    val tids = viewerTids
 
-   for ( e <- viewerEntities;
-         en = e.as[MongoEntity];
-         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> tids.filter( en.hasTid ).map( tid => en.tidToId( tid ) ).toSeq.toMlist ) ) );
-         rec = en( r ) )
-     yield rec
+    for ( e <- viewerEntities;
+          en = e.as[MongoEntity];
+          r <- en.db.find( Mobj( "_id" -> Mobj( $in -> tids.filter( en.hasTid ).map( tid => en.tidToId( tid ) ).toSeq.toMlist ) ) );
+          rec = en( r ) )
+      yield rec
   }
 
   def ownerNames = a_?( 'o ).map( tid => TidItem.by( tid.as[String] ).name ).mkString( ", " )
@@ -1045,7 +1049,7 @@ abstract class Content( override val view:MongoView,
     !groupPresent && u.inNetwork( tid )
   }
 
-  def isOwner( user: org.tyranid.profile.User ): Boolean = isOwner( user.tid ) || ( ( user.org != null ) ? isOwner( user.org.tid ) | false )
+  def isOwner( user: org.tyranid.profile.User ): Boolean = isOwner( user.tid ) || ( user.hasOrg && isOwner( user.org.tid ) )
 
   def isOwner( tid: String ): Boolean = {
     if ( tid.isBlank )
@@ -1070,10 +1074,10 @@ abstract class Content( override val view:MongoView,
     return false
   }
 
-  def isSubViewer( user: org.tyranid.profile.User ):Boolean = isSubViewer( user.tid ) || ( ( user.org != null ) ? isSubViewer( user.org.tid ) | false )
+  def isSubViewer( user: org.tyranid.profile.User ):Boolean = isSubViewer( user.tid ) || ( user.hasOrg && isSubViewer( user.org.tid ) )
   def isSubViewer( tid: String ): Boolean = tid.isBlank ? false | ( a_?( 'subV ).find( t => t._s == tid ) != None )
   
-  def isSubscriber( user: org.tyranid.profile.User ):Boolean = isSubscriber( user.tid ) || ( ( user.org != null ) ? isSubscriber( user.org.tid ) | false )
+  def isSubscriber( user: org.tyranid.profile.User ):Boolean = isSubscriber( user.tid ) || ( user.hasOrg && isSubscriber( user.org.tid ) )
   def isSubscriber( tid: String ): Boolean = tid.isBlank ? false | ( a_?( 'subscr ).find( t => t._s == tid ) != None )
   
 
@@ -1086,7 +1090,7 @@ abstract class Content( override val view:MongoView,
   def isWriter( tid: String ):Boolean            = isOwner( tid )
 
 
-  def isReader( user: org.tyranid.profile.User ): Boolean = isReader( user.tid ) || ( ( user.org != null ) ? isReader( user.org.tid ) | false )
+  def isReader( user: org.tyranid.profile.User ): Boolean = isReader( user.tid ) || ( user.hasOrg && isReader( user.org.tid ) )
 
   def isMember( user:org.tyranid.profile.User ) = isWriter( user ) || isReader( user )
 

@@ -320,6 +320,8 @@ trait DBListWrap extends DBObjectWrap with BsonList {
 
   def hasOnly( v:Any ) = obj.size == 1 && obj( 0 ) == v
 
+  def addToSet( v:AnyRef )
+
 
   /*
    * * *   BsonList
@@ -348,6 +350,11 @@ case class DBListImp( obj:BasicDBList ) extends DBListWrap with Seq[Any] {
   def update( key:String, v:Any ) = obj.put( key, v )
 
   override def has( key:String )  = obj.contains( key )
+
+  def addToSet( v:AnyRef ) =
+    if ( !obj.contains( v ) )
+      obj.add( v )
+
 
   /*
    * * *  ArrayIDs (aid) ... the list must be a list of DBObjects for this to work.

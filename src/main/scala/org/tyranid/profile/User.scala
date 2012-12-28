@@ -182,14 +182,20 @@ trait User extends MongoRecord {
 
   def isGod = false
 
+  def hasOrg = false
   def org:Org = null
+
   def orgId   = if ( org != null ) org.oid else null
   def orgTid  = if ( org != null ) org.tid else null
 
   // TODO:  cache this better somehow
-  def groups    = T.requestCached( "groups" ) { Group.visibleTo( this, contentType = null ) }
+  def groups    = T.requestCached( "groups" ) { Group.visibleTo( this, contentType = ContentType.Group ) }
   def groupIds  = groups.map( _.id )
   def groupTids = groups.map( _.tid )
+
+  def nonBuiltinGroups    = T.requestCached( "nonBuiltinGroups" ) { Group.visibleTo( this, contentType = ContentType.Group, allowBuiltins = false ) }
+  def nonBuiltinGroupIds  = nonBuiltinGroups.map( _.id )
+  def nonBuiltinGroupTids = nonBuiltinGroups.map( _.tid )
 
   // TODO:  cache this better somehow
   def projects = T.requestCached( "projects" ) { Group.visibleTo( this, contentType = ContentType.Project ) }
