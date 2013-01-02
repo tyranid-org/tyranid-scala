@@ -330,10 +330,10 @@ case class Thumbnail( name:String, code:String, dimensions:Dimensions ) {
 }
 
 object Thumbnail {
-  val Large  = Thumbnail( "large",  "l", Dimensions( 260, 169 ) ) // Dashboard
-  val Medium = Thumbnail( "medium", "m", Dimensions( 140,  91 ) ) // Timeline
-  val Small  = Thumbnail( "small",  "s", Dimensions( 100,  65 ) ) // Project header
-  val Tiny   = Thumbnail( "tiny",   "t", Dimensions(  40,  40 ) ) // Dashboard drop-down
+  val Large  = Thumbnail( "large",  "l", Dimensions( width = 260, height =169 ) ) // Dashboard
+  val Medium = Thumbnail( "medium", "m", Dimensions( width = 140, height = 91 ) ) // Timeline
+  val Small  = Thumbnail( "small",  "s", Dimensions( width = 100, height = 65 ) ) // Project header
+  val Tiny   = Thumbnail( "tiny",   "t", Dimensions( width =  40, height = 40 ) ) // Dashboard drop-down
 
   /*
   // This requires Sanselan (apache)

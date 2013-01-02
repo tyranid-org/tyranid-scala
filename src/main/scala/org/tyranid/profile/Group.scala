@@ -30,7 +30,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.content.{ ContentMeta, Content, ContentType }
+import org.tyranid.content.{ ContentMeta, Content, ContentEdit, ContentType }
 import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbInt, DbLong, DbLink, DbTid, DbUrl, Entity, Record, Scope }
 import org.tyranid.db.meta.{ Tid, TidItem }
 import org.tyranid.db.mongo.Imp._
@@ -172,11 +172,14 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   
   def canSeeOther( orgTid:String ) = ownedBy( orgTid ).filter( g => Group( g ).canSee( T.user ) )
   
-  def visibleTo( user:User, contentType:ContentType = ContentType.Group ) = {
+  def visibleTo( user:User, contentType:ContentType = ContentType.Group, allowBuiltins:Boolean = true ) = {
 
     def query( obj:DBObject ) = {
       if ( contentType != null )
         obj( "type" ) = contentType.id
+
+      if ( !allowBuiltins )
+        obj( "builtin" ) = Mobj( $ne -> true )
 
       obj
     }
@@ -211,7 +214,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   
   def ensureInOrgGroup( user:User ) {
     assert( user.org != null )
-    val grp = Group( Group.db.findOrMake( Mobj( "org" -> user.org.id, "name" -> "Company Team", "type" -> ContentType.Organization.id ) ) )
+    val grp = Group( Group.db.findOrMake( Mobj( "org" -> user.org.id, "name" -> user.org.name, "type" -> ContentType.Organization.id ) ) )
     
     if ( grp.isNew ) { 
       grp.a_!( 'o ).add( user.tid )
@@ -255,13 +258,17 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
 
   def groupType = GroupType.byId( i( 'groupType ) ).getOrElse( GroupType.Org ).as[GroupType]
 
-  def memberEntities = a_?( 'members ).toSeq.of[String].map( _.substring( 0, 4 ) ).distinct.map( tid => Entity.byTid( tid ).get )
-  def memberTids = obj.a_?( 'members ).toSeq.of[String]
+  def defaultMemberEntities = a_?( 'members ).toSeq.of[String].map( _.substring( 0, 4 ) ).distinct.map( tid => Entity.byTid( tid ).get )
+  def defaultMemberTids = obj.a_?( 'members ).toSeq.of[String]
 
-  def members = {
-   val tids = memberTids
+  /* Default members are really only used in projects.  Default members are the "official members" of the project.  For example, users that
+   * get added to folders inside the project that might not get added to the "default members" list but they would still be in the "v"/members
+   * list.
+   */
+  def defaultMembers = {
+   val tids = defaultMemberTids
 
-   for ( e <- memberEntities;
+   for ( e <- defaultMemberEntities;
          en = e.as[MongoEntity];
          r <- en.db.find( Mobj( "_id" -> Mobj( $in -> tids.filter( en.hasTid ).map( tid => en.tidToId( tid ) ).toSeq.toMlist ) ) );
          rec = en( r ) )
@@ -298,6 +305,14 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     }
   }
   
+  override def imageUrl( editing:ContentEdit = null ) =
+    if ( contentType == ContentType.Organization ) {
+      val org = B.Org.getById( oid( 'org ) )
+      org.s( 'thumbnail )
+    } else {
+      super.imageUrl( editing )
+    }
+
   def about = {
     val sb = new StringBuilder
 
@@ -341,8 +356,9 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   val privateOverlay = <div class="private-overlay"><span class="icon-minus"/><div class="text">PRIVATE</div></div>
 
   override def thumbHtml( size:String ) = {
-    val imageUrl = s( 'img )
-    val style:String = imageUrl.isBlank ? {
+    val url = imageUrl( null )
+
+    val style:String = url.isBlank ? {
       var color = s( 'color )
       
       if ( color.isBlank ) {
@@ -359,7 +375,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     
     val inner = 
       <div class={ thumbClass( size ) } style={ style }>
-       { imageUrl.notBlank ? <img src={ "/io/thumb/" + tid + "/" + size }/> | <div class="text">{ s( 'name ) }</div> }
+       { url.notBlank ? <img src={ "/io/thumb/" + tid + "/" + size }/> | <div class="text">{ s( 'name ) }</div> }
       </div>
 
     if ( isNew || isPrivate ) {
@@ -367,7 +383,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
       <div class={ ( isNew |* "new-box" ) + ( isPrivate |* ( " private-box sz-" + size ) ) }>{ inner }{ overlays }</div>
     } else {
       inner 
-    }  
+    }
   }
   
   def settingsFor( user:User )      = GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> user.id, "g" -> this.id ) ) )
