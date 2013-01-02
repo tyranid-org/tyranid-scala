@@ -169,6 +169,9 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
         status( doc ) match {
           case "finished" | "ready" =>
             db.update( Mobj( "_id" -> doc.id ), Mobj( $unset -> Mobj( "zfmts" -> 1, "zid" -> 1, "zoids" -> 1 ) ) )
+            doc.removeField( "zfmts" )
+            doc.removeField( "zid" )
+            doc.removeField( "zoids" )
             
             for ( fmt <- zformats ) {
               var ok = false

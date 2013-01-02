@@ -34,6 +34,7 @@ import org.tyranid.content.Content
 import org.tyranid.db.Entity
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.document.crocodoc.CrocApp
+import org.tyranid.document.dropbox.DropboxApp
 import org.tyranid.document.issuu.IssuuApp
 import org.tyranid.document.scribd.ScribdApp
 import org.tyranid.document.zencoder.ZencoderApp
@@ -227,6 +228,7 @@ trait Bootable {
   val basecamp:BcApp      = null
   
   // Document services
+  val dropbox:DropboxApp = null
   val zencoder:ZencoderApp = null
   val crocodoc:CrocApp = null
   val scribd:ScribdApp = null
