@@ -370,8 +370,8 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
       "background-color:#" + color 
     } | null
 
-    val projectSettings = this.settingsFor( T.user )
-    val isNew = size == "l" && !projectSettings.hasVisited // Only care about this if it is a large thumb
+    val groupSettings = this.settingsFor( T.user )
+    val isNew = size == "l" && !groupSettings.hasVisited // Only care about this if it is a large thumb
     
     val inner = 
       <div class={ thumbClass( size ) } style={ style }>
@@ -388,6 +388,15 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   
   def settingsFor( user:User )      = GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> user.id, "g" -> this.id ) ) )
   def settingsFor( userTid:String ) = GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> B.User.tidToId( userTid ), "g" -> this.id ) ) )
+
+  def markVisited = {
+    val settings = settingsFor( T.user )
+          
+    if ( !settings.hasVisited ) {
+      settings.setVisited
+      settings.save
+    }
+  }
 
   override def contents = B.groupContents( this )
 }
