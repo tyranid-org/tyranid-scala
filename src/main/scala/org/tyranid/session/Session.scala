@@ -241,7 +241,7 @@ trait Session extends QuickCache {
     
     if ( tUa == null ) {
       if ( web == null )
-        tUa = UserAgent.getById( web.userAgentId ) // TODO Fix this!
+        tUa = UserAgent.getById( 1 )
       else {
         tUa = UserAgent.getById( web.userAgentId )
       }
@@ -282,6 +282,9 @@ trait Session extends QuickCache {
     
     if ( onLogin != null )
       onLogin( this )
+      
+    if ( T.web != null )
+      ua( T.web )
       
     /*
     Comet.visit { comet =>      
