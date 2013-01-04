@@ -211,7 +211,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
       group.save
     }
   }
-  
+
   def ensureInOrgGroup( user:User ) {
     assert( user.org != null )
     val grp = Group( Group.db.findOrMake( Mobj( "org" -> user.org.id, "name" -> user.org.name, "type" -> ContentType.Organization.id ) ) )
@@ -399,6 +399,8 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   }
 
   override def contents = B.groupContents( this )
+
+  def org = B.Org.getById( oid( 'org ) )
 }
 
 /*
