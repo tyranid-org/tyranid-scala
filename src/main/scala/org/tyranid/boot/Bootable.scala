@@ -207,7 +207,7 @@ trait Bootable {
   // DB
   val profileDbName:String
 
-  @volatile var mongoHost:String = null
+  def mongoHost:String = null
 
   // SQL
   @volatile var dbUrl:String  = ""
