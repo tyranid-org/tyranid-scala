@@ -542,7 +542,10 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
     else
       Comment.find( a_?( 'r ), id )
 
-  def comments = Comment.asComments( a_?( 'r ) )
+  def comments = {
+    val ea = Mongo.EmptyArray 
+    Comment.asComments( a_?( 'r ) )
+    }
 
   def hasAnnotation = ( has( 'w ) && d( 'w ) > -1 ) || has( 'x ) || has ( 'y )
 
