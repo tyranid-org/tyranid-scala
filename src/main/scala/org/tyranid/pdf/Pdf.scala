@@ -43,6 +43,7 @@ object Pdf {
   	    // convert a web page and save the PDF to a file
         client.setPageHeight( -1 );
         client.enableHyperlinks( enableHyperlinks )
+        //client.enableJavaScript( false )
   	    client.convertURI( url, fileStream )
   	  } catch {
   	    case why:PdfcrowdError =>
