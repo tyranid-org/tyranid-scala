@@ -33,6 +33,13 @@ object Tag extends MongoEntity( tid = "a0Ct" ) {
 
   private val tags = mutable.HashMap[String,Int]()
 
+
+  private val newPrefix = "$+$"
+
+  def isNew( value:String ) = value.startsWith( newPrefix )
+
+  def extractNew( value:String ) = value.substring( newPrefix.length )
+
   def idFor( tag:String ) = synchronized {
     tags.getOrElseUpdate( tag, {
       db.findOne( Mobj( "name" -> tag ) ) match {

@@ -170,7 +170,7 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
 
     println( "** parameters" )
     for ( n <- req.getParameterNames )
-      println( "  " + n + " = " + req.getParameter( n.as[String] ).stripXss )
+      println( "  " + n + " = " + req.getParameterValues( n.as[String] ).map( _.stripXss ).mkString( "," ) )
 
     println( "** headers" )
     for ( n <- req.getHeaderNames )
