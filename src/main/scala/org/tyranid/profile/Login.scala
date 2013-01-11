@@ -499,13 +499,13 @@ $( function() {
            <div class="span6 val-display"/>
           </div>
           { !betaSignup |*
-            <div class="row-fluid">
+          <div class="row-fluid">
            <div class="span6">
             <input type="password" name="password" id="password" placeholder="Password" data-val="req,min=7"/>
            </div>
            <div class="span6 val-display"/> 
           </div>
-            <div class="row-fluid">
+          <div class="row-fluid">
            <div class="span6">
             <input type="hidden" name="keep" value={ web.s( 'keep ) }/>
             <input type="password" name="password2" id="password2" placeholder="Re-type password" data-val="req,same=password,min=7"/>
@@ -514,24 +514,29 @@ $( function() {
           </div>
             }
           { doRecaptcha |*
-            <div class="row-fluid">
+          <div class="row-fluid">
            <div class="span6">
             <script>{ Unparsed( "jQuery.getScript( \"" + DbReCaptcha.scriptSrc + "\" );" + DbReCaptcha.showFunction( "white" ) ) }</script>
             { DbReCaptcha.div }
            </div>
            <div class="span6 val-display"/> 
           </div>
-            }
+          }
+          <div class="row-fluid">
+           <div class="span6">
+            <input type="checkbox" name="agreement" id="agreement" style="height:20px;width:20px;" onChange="$( '#regBtn' ).attr( 'disabled', $( this ).is(':checked' ) ? false : true );"/> <label style="display:inline;padding-left:0;vertical-align:text-bottom;" class="extra" for="agreement">I agree to Volerro <a href="http://www.volerro.com/site/policies.html" style="text-decoration:none;border-bottom:1px dotted;" target="_terms">terms of use</a> policy.</label>
+           </div>
+          </div>
          </div>
        </div>
-       <hr style="margin:20px 0 12px;"/>
+       <hr style="margin:10px 0 12px;"/>
        <div class="row-fluid">
          { !betaSignup |* 
            <div class="span6">
           <div style="height:40px;line-height:40px;position:relative;top:10px;">Already registered? <a tabindex="-1" data-sbt={ Form.attrJson( Map( "href" -> ( wpath + "/in" ), "top" -> 1 ) ) }>Sign in here</a></div>
          </div> 
            } 
-         <div class={ "span6" + ( betaSignup |* " offset6" ) } style="height:40px;padding-top:8px;"><button type="submit" class="btn-success btn pull-right">{ betaSignup ? "Sign-up" | "Register" } <i class="icon-caret-right"></i></button></div>
+         <div class={ "span6" + ( betaSignup |* " offset6" ) } style="height:40px;padding-top:8px;"><button id='regBtn' disabled='disabled' type="submit" class="btn-success btn pull-right">{ betaSignup ? "Sign-up" | "Register" } <i class="icon-caret-right"></i></button></div>
        </div>
       </div>
      </fieldset>
