@@ -107,13 +107,35 @@ object Imp {
 
   object Mongo {
     lazy val connect = new com.mongodb.Mongo( B.mongoHost )
+    
+    trait ImmutableObject extends DBObject {
+      import java.util.Map
+ 
+      def check = if ( this.as[java.util.AbstractCollection[Object]].size != 0 ) throw new RuntimeException( "immutable object is corrupt!" )
+      def fail = throw new RuntimeException( "modifying immutable empty object" )
+      
+      abstract override def get( key:String ) = { check; super.get( key ); }
 
-    object EmptyObject extends BasicDBObject {
-      override def put( key:String, obj:AnyRef ) = throw new RuntimeException( "modifying immutable empty object" )
+      abstract override def put( key:String, obj:Object ) = fail
+      abstract override def putAll( obj:BSONObject ):Unit = fail
+      //abstract override def putAll( m:Map[Object,Object] ):Unit  = fail
+      abstract override def removeField( key:String )  = fail
     }
 
-    object EmptyArray extends BasicDBList {
-      override def put( idx:Int, obj:AnyRef ) = throw new RuntimeException( "modifying immutable empty array" )
+    object EmptyObject extends BasicDBObject with ImmutableObject {
+      override def put( key:String, obj:Object ) = fail
+    }
+
+    object EmptyArray extends BasicDBList with ImmutableObject {
+      override def put( idx:Int, obj:AnyRef ) = fail
+      override def add( obj:Object )          = fail
+      override def add( idx:Int, obj:Object ) = fail
+      //override def addAll( c:java.util.Collection[Object] ) = fail
+      //override def addAll( idx:Int, c:java.util.Collection[Object] ) = fail
+      override def clear                       = fail
+      override def remove( idx:Int )           = fail
+      override def remove( o:Object )          = fail
+      override def set( idx:Int, o:Object )    = fail
     }
   }
 }
