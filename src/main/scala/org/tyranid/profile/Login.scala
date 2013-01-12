@@ -875,7 +875,7 @@ $( function() {
   }
 
   def notActivatedYet( user:User ) = {
-    T.session.warn( 
+    T.session.error( 
         "This account has not been activated yet!  Please check your email for the activation link.",
         <a href={ "/log/resendActivation?id=" + user.id }>Send Again</a> )
         

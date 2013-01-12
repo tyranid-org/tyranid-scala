@@ -158,7 +158,7 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
   // Need to copy these over because they are not solely owned by us:
   // See: https://forums.aws.amazon.com/message.jspa?messageID=371475
         
-  def checkStatus( doc:DBObject, db:DBCollection, bkt:S3Bucket, key:String ) = {
+  def checkStatus( doc:DBObject, db:DBCollection, bkt:S3Bucket, key:String, s3Url:String ) = {
     val zformats = doc.a( 'zfmts )
     
     if ( zformats != null ) {
@@ -168,10 +168,11 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
       while ( outerTries < 3 && !complete ) {
         status( doc ) match {
           case "finished" | "ready" =>
-            db.update( Mobj( "_id" -> doc.id ), Mobj( $unset -> Mobj( "zfmts" -> 1, "zid" -> 1, "zoids" -> 1 ) ) )
+            db.update( Mobj( "_id" -> doc.id ), Mobj( $unset -> Mobj( "zfmts" -> 1, "zid" -> 1, "zoids" -> 1, "ztries" -> 1 ) ) )
             doc.removeField( "zfmts" )
             doc.removeField( "zid" )
             doc.removeField( "zoids" )
+            doc.removeField( "ztries" )
             
             for ( fmt <- zformats ) {
               var ok = false
@@ -191,9 +192,11 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
             
             complete = true
           case "failed" =>
-            val zid = doc.i( 'zid )
-            log( Event.Zencoder, "m" -> ( "Status came back as failed for job id " + zid + " on doc " + doc.s( '_id ) ) )
-            complete = true
+            if ( !retryUpload( db, doc, s3Url ) ) {
+              val zid = doc.i( 'zid )
+              log( Event.Zencoder, "m" -> ( "Status came back as failed for job id " + zid + " on doc " + doc.s( '_id ) ) )
+              complete = true
+            }
           case "waiting" | "queued" | "assigning" | "processing" =>
             Thread.sleep( 5000 )
           case status =>
@@ -205,6 +208,19 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
         outerTries += 1
       }
     }
+  }
+  
+  private def retryUpload( db:DBCollection, doc:DBObject, s3Url:String ):Boolean = {
+    var numTries = doc.i( 'ztries )
+    
+    if ( numTries < 3 ) {
+      numTries += 1
+      doc( 'ztries ) = numTries
+      db.update( Mobj( "_id" -> doc.id ), Mobj( $set -> Mobj( "ztries" -> numTries ) ) )
+      return upload( s3Url, doc.s( 'filename ), doc )
+    }
+    
+    false
   }
   
   // Output states include waiting, queued, assigning, ready, processing, finished, failed, cancelled and no input.
