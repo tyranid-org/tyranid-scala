@@ -1101,6 +1101,13 @@ abstract class Content( override val view:MongoView,
     return false
   }
 
+  def addOwner( tid:String ) = {
+    val owners = a_!( 'o )
+
+    if ( !owners.contains( tid ) )
+      owners.add( tid )
+  }
+
   def isSubViewer( user: org.tyranid.profile.User ):Boolean = isSubViewer( user.tid ) || ( user.hasOrg && isSubViewer( user.org.tid ) )
   def isSubViewer( tid: String ): Boolean = tid.isBlank ? false | ( a_?( 'subV ).find( t => t._s == tid ) != None )
   
