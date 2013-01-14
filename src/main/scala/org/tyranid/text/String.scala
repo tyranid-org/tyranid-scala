@@ -84,7 +84,7 @@ class StringImp( s:String ) {
 
   def asUrl =
     if ( s.isBlank || s.startsWith( "https://" ) || s.startsWith( "http://" ) ) s
-    else                                                                        "http://" + s
+    else                                                            "http://" + s
 
 	def encUrl = java.net.URLEncoder.encode( s, "UTF-8" ) 
 	def decUrl = java.net.URLDecoder.decode( s, "UTF-8" )
@@ -103,6 +103,36 @@ class StringImp( s:String ) {
   
   def stripNonUtf8 = ( s == null ) ? s | noUtf8Pattern.matcher( s ).replaceAll( " " )
   
+  def urlPattern = Pattern.compile( "(https?:\\/\\/[^\\s]+)", Pattern.CASE_INSENSITIVE)
+  
+  def urlify = {
+    val nodes = scala.collection.mutable.Buffer[NodeSeq]()
+    val matcher = urlPattern.matcher( s )
+    
+    var i = 0
+    
+    while ( matcher.find ) {
+      val grp = matcher.group
+      
+      val mi = matcher.start
+      if ( mi > i )
+        nodes += Text( s.substring( i, mi ) )
+        
+      nodes += <a target="_blank" class="urlify" href={ grp }>{ grp }</a> // wrap this grp with the <a>
+      
+      i = matcher.end
+    }
+    
+    if ( i < s.length )
+      nodes += Text( s.substring( i ) )
+      
+    nodes.flatten
+  }  
+      
+   // }Unparsed( urlPattern.matcher( s ).replaceAll( "<a target='_blank' class='urlify' href='$1'>$1</a>" ) )
+//    [ Text( 'ksd' ), Unparsed( "<a ....>" + baseText + "</a>" ) ]
+  
+	
   def stripXss:String = {
     if ( s == null )
       return s
