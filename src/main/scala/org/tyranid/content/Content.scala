@@ -515,8 +515,6 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
 
 class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.makeView, obj, parent ) {
 
-  def m = s( 'm )
-
   def pn = i( 'pn )
   def x  = d( 'x )
   def y  = d( 'y )
