@@ -1124,7 +1124,8 @@ abstract class Content( override val view:MongoView,
   def isWriter( tid: String ):Boolean            = isOwner( tid )
 
 
-  def isReader( user: org.tyranid.profile.User ): Boolean = isReader( user.tid ) || ( user.hasOrg && isReader( user.org.tid ) )
+  def isReader( user: org.tyranid.profile.User ):Boolean =
+    isReader( user.tid ) || ( user.hasOrg && isReader( user.org.tid ) )
 
   def isMember( user:org.tyranid.profile.User ) = isWriter( user ) || isReader( user )
 

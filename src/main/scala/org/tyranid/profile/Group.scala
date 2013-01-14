@@ -184,7 +184,6 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
       obj
     }
 
-
     val tids =
       if ( user.org != null ) Mobj( $in -> Array( user.tid, user.org.tid ) )
       else                    user.tid
