@@ -115,7 +115,8 @@ class StringImp( s:String ) {
       val grp = matcher.group
       
       val mi = matcher.start
-      if ( mi > i )
+      
+      if ( mi > i ) 
         nodes += Text( s.substring( i, mi ) )
         
       nodes += <a target="_blank" class="urlify" href={ grp }>{ grp }</a> // wrap this grp with the <a>
