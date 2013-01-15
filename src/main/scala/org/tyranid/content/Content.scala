@@ -1107,10 +1107,10 @@ abstract class Content( override val view:MongoView,
   }
 
   def isSubViewer( user: org.tyranid.profile.User ):Boolean = isSubViewer( user.tid ) || ( user.hasOrg && isSubViewer( user.org.tid ) )
-  def isSubViewer( tid: String ): Boolean = tid.isBlank ? false | ( a_?( 'subV ).find( t => t._s == tid ) != None )
+  def isSubViewer( tid: String ): Boolean = tid.isBlank ? false | ( a_?( 'subV ).exists( _._s == tid ) )
   
   def isSubscriber( user: org.tyranid.profile.User ):Boolean = isSubscriber( user.tid ) || ( user.hasOrg && isSubscriber( user.org.tid ) )
-  def isSubscriber( tid: String ): Boolean = tid.isBlank ? false | ( a_?( 'subscr ).find( t => t._s == tid ) != None )
+  def isSubscriber( tid: String ): Boolean = tid.isBlank ? false | ( a_?( 'subscr ).exists( _._s == tid ) )
   
 
   /*
