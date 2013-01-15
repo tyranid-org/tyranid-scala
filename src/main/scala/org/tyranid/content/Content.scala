@@ -1099,12 +1099,7 @@ abstract class Content( override val view:MongoView,
     return false
   }
 
-  def addOwner( tid:String ) = {
-    val owners = a_!( 'o )
-
-    if ( !owners.contains( tid ) )
-      owners.add( tid )
-  }
+  def addOwner( tid:String ) = a_!( 'o ).addToSet( tid )
 
   def isSubViewer( user: org.tyranid.profile.User ):Boolean = isSubViewer( user.tid ) || ( user.hasOrg && isSubViewer( user.org.tid ) )
   def isSubViewer( tid: String ): Boolean = tid.isBlank ? false | ( a_?( 'subV ).exists( _._s == tid ) )
@@ -1127,28 +1122,16 @@ abstract class Content( override val view:MongoView,
 
   def isMember( user:org.tyranid.profile.User ) = isWriter( user ) || isReader( user )
 
-  def isReader( tid: String ): Boolean = {
-    if ( tid.isBlank )
-      return false
-
-    val viewers = a_?( 'v )
-
-    viewers.foreach( t => {
-      if ( t == tid )
-        return true
-
-      val ot = t._s
+  def isReader( tid:String ):Boolean =
+    tid.nonBlank &&
+    a_?( 'v ).exists( t =>
+      t == tid || {
+        val ot = t._s
       
-      if ( Group.hasTid( ot ) ) {
-        val group = Group.getByTid( ot )
-
-        if (group.isReader(tid))
-          return true
+        Group.hasTid( ot ) &&
+        Group.getByTid( ot ).isReader( tid )
       }
-    })
-
-    return false
-  }
+    )
 
 
   /*
@@ -1156,10 +1139,10 @@ abstract class Content( override val view:MongoView,
    */
 
   lazy val groupTid: String = {
-    val gTid: String = a_?('o).map(_._s).find(Group.hasTid).getOrElse(null)
+    val gTid:String = a_?( 'o ).map( _._s ).find( Group.hasTid ).getOrElse( null )
 
     if (gTid.isBlank) {
-      val gOid = oid('parentGroup)
+      val gOid = oid( 'parentGroup )
 
       if (gOid == null)
         null
