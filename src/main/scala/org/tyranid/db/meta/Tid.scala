@@ -561,8 +561,10 @@ object Tidlet extends Weblet {
       <h3>Updates:  { results.updates.size }</h3> ++ displayTable( results.updates ) }
      </div>
     </div> ++
-    { results.success && !deleting |* <a href={ wpath + "/delete?tid=" + tid + "&deleting=true" } class="btn-danger btn">Actually Delete</a> } ++
-    <a href={ wpath + "?tid=" + tid } class="btn">Cancel</a>
+    <div style="margin-bottom:50px;">
+      { results.success && !deleting |* <a href={ wpath + "/delete?tid=" + tid + "&deleting=true" } class="btn-danger btn">Actually Delete</a> }
+      <a href={ wpath + "?tid=" + tid } class="btn">Cancel</a>
+    </div>
   }
 
   private def displayTable( recs:Seq[Record] ) =
