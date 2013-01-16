@@ -30,6 +30,53 @@ import org.bson.types.ObjectId
 import org.tyranid.session.Notification
 import org.tyranid.web.WebResponse
 
+
+// Sbt is abbrev for Submit
+object Sbt {
+
+  def apply( href:String = null, top:Boolean = false, modal:String = null, js:String = null, opts:Map[String,Any] = null ) = {
+    val sb = new StringBuilder
+    var first = true
+
+    def comma =
+      if ( first ) first = false
+      else         sb += ','
+
+    sb += '{'
+
+    if ( href.notBlank ) {
+      comma
+      sb ++= "\"href\":\"" ++= href.encJson += '"'
+    }
+
+    if ( top ) {
+      comma
+      sb ++= "\"top\":1"
+    }
+
+    if ( modal.notBlank ) {
+      comma
+      sb ++= "\"modal\":\"" ++= modal += '"'
+    }
+
+    if ( js.notBlank ) {
+      comma
+      sb ++= "\"extraJS\":\"" ++= js.encJson += '"'
+    }
+
+    if ( opts != null ) {
+      comma
+      sb ++= "\"opts\":" ++= opts.toJsonStr
+    }
+
+
+    sb += '}'
+
+    scala.xml.Unparsed( sb.toString )
+  }
+}
+
+
 sealed trait JsCmd {
   def toJson:String
 }
@@ -59,7 +106,6 @@ case class JqHide( target:String ) extends JsCmd {
 case class JqShow( target:String ) extends JsCmd {
   def toJson = "{\"" + target + "\":\"show\"}"
 }
-
 
 object Jobj {
   def apply = JsonNodeFactory.instance.objectNode

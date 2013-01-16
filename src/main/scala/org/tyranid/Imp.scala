@@ -131,4 +131,6 @@ object Imp {
   def problem( desc:String ) = throw new org.tyranid.db.ModelException( desc )
 
   def eye( tid:String ) = org.tyranid.db.meta.Tid.eye( tid )
+
+  val Sbt = org.tyranid.json.Sbt
 }

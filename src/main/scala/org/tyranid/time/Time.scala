@@ -219,22 +219,25 @@ class DateImp( d:Date ) {
 
   def toDisplay = {
 
-    // TODO:  this should be configurable by Bootable based on the application's user interface and the user's local time conventions
+    if ( d == null ) ""
+    else {
+      // TODO:  this should be configurable by Bootable based on the application's user interface and the user's local time conventions
 
-    val cal = toUserCalendar
-    val now = Time.createUserNowCalendar
+      val cal = toUserCalendar
+      val now = Time.createUserNowCalendar
 
-    val sb = new StringBuilder
+      val sb = new StringBuilder
 
-    sb ++= toMonthDayStr
+      sb ++= toMonthDayStr
 
-    if ( now.year != cal.year )
-      sb ++= ", " ++= cal.year.toString
+      if ( now.year != cal.year )
+        sb ++= ", " ++= cal.year.toString
 
-    val hour = ( cal.hour12 == 0 ) ? 12 | cal.hour12
-    sb ++= ", %d:%02d%s".format( hour, cal.minute, cal.ampm )
+      val hour = ( cal.hour12 == 0 ) ? 12 | cal.hour12
+      sb ++= ", %d:%02d%s".format( hour, cal.minute, cal.ampm )
 
-    sb.toString
+      sb.toString
+    }
   }
 
   def toTime12Str =
