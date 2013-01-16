@@ -273,10 +273,13 @@ trait Session extends QuickCache {
    * * *   Login
    */
 
-  def login( user:User ) = {
+  def login( user:User, setLastLogin:Boolean = true ) = {
     this.user = user
     user.loggedIn = true
-    B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "lastLogin" -> new Date ) ) )
+    put( "lastLogin", user.t( 'lastLogin ) )
+    
+    if ( setLastLogin )
+      B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "lastLogin" -> new Date ) ) )
 
     val onLogin = B.onLogin
     
