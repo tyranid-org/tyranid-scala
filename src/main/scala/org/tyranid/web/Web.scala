@@ -121,6 +121,7 @@ class WebFilter extends Filter {
       
       if ( session != null && !isAsset ) {
         session.put( "lastPath", web.path )
+        session.put( "lastPathTime", new java.util.Date() )
         session.put( Session.LnF_KEY, LnF.byDomain( web.req.getServerName ) )
       }
     }
