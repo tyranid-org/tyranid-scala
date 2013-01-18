@@ -69,7 +69,6 @@ object Sbt {
       sb ++= "\"opts\":" ++= opts.toJsonStr
     }
 
-
     sb += '}'
 
     scala.xml.Unparsed( sb.toString )
