@@ -188,6 +188,7 @@ class StringImp( s:String ) {
         case '\t' => sb ++= "\\t"
         case '\\' => sb ++= "\\\\"
         case '"'  => sb ++= "\\\""
+        case '\'' => sb ++= "\\u0027"
         case ch   => sb += ch
         }
       }

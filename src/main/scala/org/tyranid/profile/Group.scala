@@ -174,6 +174,12 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   
   def visibleTo( user:User, contentType:ContentType = ContentType.Group, allowBuiltins:Boolean = true ) = {
 
+    def in( tids:Seq[String] ) =
+      if ( tids.size == 1 )
+        tids
+      else
+        Mobj( $in -> tids.toArray )
+
     def query( obj:DBObject ) = {
       if ( contentType != null )
         obj( "type" ) = contentType.id
@@ -184,21 +190,50 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
       obj
     }
 
-    val tids =
-      if ( user.org != null ) Mobj( $in -> Array( user.tid, user.org.tid ) )
-      else                    user.tid
+    var tids =
+      if ( user.org != null ) Seq( user.tid, user.org.tid )
+      else                    Seq( user.tid )
+
+    if ( contentType != ContentType.Group )
+      tids ++= user.groups.map( _.tid )
 
     val myGroups =
       db.find(
-        query( Mobj( "o" -> tids ) )
+        query( Mobj( "o" -> in( tids ) ) )
       ).map( apply ).toSeq
 
     val memberGroups =
       db.find( 
-        query( Mobj( "v" -> tids, "groupMode" -> Mobj( $ne -> GroupMode.Monitor.id ) ) )
+        query( Mobj( "v" -> in( tids ), "groupMode" -> Mobj( $ne -> GroupMode.Monitor.id ) ) )
       ).map( apply ).toSeq.filter( memberGroup => !myGroups.exists( _.id == memberGroup.id ) )
 
-    myGroups ++ memberGroups 
+    var newGroups = myGroups ++ memberGroups
+
+
+    /*
+     * Currently, groups of type Group are the only type of group allowed to contain other groups.
+     *
+     * This means the query needs to be a recursive query since each new query can find new groups
+     * that we, in turn, need to check.
+     *
+     *
+     */
+    if ( contentType == ContentType.Group ) {
+      var visitedGroups = Buffer[Group]()
+
+      while ( newGroups.nonEmpty ) {
+        visitedGroups ++= newGroups
+
+        newGroups =
+          db.find( 
+            query( Mobj( "v" -> in( newGroups.map( _.tid ) ) ) )
+          ).map( apply ).filter( grp => !visitedGroups.exists( _.id == grp.id ) ).toSeq
+      }
+
+      visitedGroups
+    } else {
+      newGroups
+    }
   }
 
   def ensureVisibility( groupTid:String, tid:String ) {
