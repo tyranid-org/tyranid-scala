@@ -60,6 +60,7 @@ object LoginCookie {
     val cookie = new javax.servlet.http.Cookie( name, user.tid + "|" + loginToken )
     cookie.setMaxAge(60 * 60 * 24 * 14) // two weeks
     cookie.setPath("/")
+    cookie.setSecure( true )
 
     if ( domain != null )
       cookie.setDomain( domain )

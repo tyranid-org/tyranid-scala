@@ -61,6 +61,16 @@ case class Http403Exception( response:HttpResponse ) extends Exception
 
 case class HttpServletRequestOps( req:HttpServletRequest ) {
   
+  def getParameter( param:String):String = {
+    try {
+      req.getParameter( param )
+    } catch {
+      case e =>
+        e.printStackTrace()
+        return null
+    }
+  }
+  
   def getParameterValues( name:String ) = {
     val values = req.getParameterValues( name )
 
@@ -77,21 +87,21 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
     }
   }
   
-  def s( param:String ):String = req.getParameter( param ).stripXss
+  def s( param:String ):String = getParameter( param ).stripXss
   def i( param:String ):Int = {
-    val s = req.getParameter( param ).stripXss
+    val s = getParameter( param ).stripXss
     s != null |* s.toLaxInt
   }
   def d( param:String ):Double = {
-    val s = req.getParameter( param ).stripXss
+    val s = getParameter( param ).stripXss
     s != null |* s.toLaxDouble
   }
   def l( param:String ):Long = {
-    val s = req.getParameter( param ).stripXss
+    val s = getParameter( param ).stripXss
     s != null |* s.toLaxLong
   }
   def b( param:String ):Boolean = {
-    val s = req.getParameter( param ).stripXss
+    val s = getParameter( param ).stripXss
     s != null && s.toLaxBoolean
   }
 
@@ -122,7 +132,7 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
   }
 
   def sReq( param:String ) = {
-    val s = req.getParameter( param ).stripXss
+    val s = getParameter( param ).stripXss
 
     if ( s.isBlank )
       throw new RestException( code = "missing-" + param, message = "The '" + param + "' parameter is required." )
@@ -384,6 +394,7 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
 
   def deleteCookie( name:String, path:String = "/", domain:String = null ) = {
     val cookie = new Cookie( name, "" )
+    cookie.setSecure( true )
     cookie.setMaxAge( 0 )
     cookie.setPath( path )
     if ( domain.notBlank )
