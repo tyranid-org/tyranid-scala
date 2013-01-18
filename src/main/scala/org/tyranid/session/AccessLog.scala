@@ -34,7 +34,7 @@ import org.tyranid.net.DnsDomain
 import org.tyranid.profile.User
 import org.tyranid.report.{ Query, Report }
 import org.tyranid.ui.{ Checkbox, CustomField, PathField, Search }
-import org.tyranid.web.{ Weblet, WebContext }
+import org.tyranid.web.{ Weblet, WebContext, WebFilter }
 
 
 object Milestone {
@@ -55,14 +55,14 @@ object AccessLog {
     if ( B.accessLogs ) {
       web.path match {
       case "/cometd" => // ignore
-      case p if p.endsWith( ".png" ) || p.endsWith( ".js" ) || p.endsWith( ".gif" ) || p.endsWith( ".jpg" ) || p.endsWith( ".css" ) || p.endsWith( ".ico" ) || p.endsWith( ".html" ) => // ignore
+      case p if !WebFilter.notAsset( p ) => // ignore
       case p         =>
         Log.log( Event.Access,
                  "p"   -> p, 
                  "bid" -> TrackingCookie.get,
                  "ua"  -> web.req.getHeader( "User-Agent" ),
                  "du"  -> durationMs,
-                 "d"   -> DnsDomain.idFor( web.req.getServerName.stripPrefix( "www." ) )
+                 "d"   -> DnsDomain.idFor( web.req.getServerName.stripPrefix( "www." ).stripXss )
                )
       }
 
@@ -99,6 +99,7 @@ object TrackingCookie {
       val cookie = new javax.servlet.http.Cookie( B.trackingCookieName, token )
       cookie.setMaxAge(60 * 60 * 24 * 365) // one year
       cookie.setPath("/")
+      cookie.setSecure( true )
       t.web.res.addCookie( cookie )
     }
 

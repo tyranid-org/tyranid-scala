@@ -641,6 +641,7 @@ $( function() {
       
     case "/null" =>
       log( Event.RefInt, "m" -> ( "null, Referer: " + web.req.getHeader( "referer" ) ) ) 
+    case _ =>
     }
   }
   

@@ -184,12 +184,13 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
       var ua = l.s( 'ua )
       
       if ( ua.isBlank ) {
-        try {
-          ua = T.web.userAgentStr
-        } catch {
-        case e =>
-          e.printStackTrace
-        }
+        if ( T.web != null )
+          try {
+            ua = T.web.userAgentStr
+          } catch {
+          case e =>
+            e.printStackTrace
+          }
       }
 
       if ( ua.notBlank )

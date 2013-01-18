@@ -384,6 +384,7 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
 
   def deleteCookie( name:String, path:String = "/", domain:String = null ) = {
     val cookie = new Cookie( name, "" )
+    cookie.setSecure( true )
     cookie.setMaxAge( 0 )
     cookie.setPath( path )
     if ( domain.notBlank )

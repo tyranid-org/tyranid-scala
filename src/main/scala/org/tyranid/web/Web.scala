@@ -53,8 +53,11 @@ case class Web404Exception()                       extends ControlThrowable
 
 
 object WebFilter {
-
   val versionPattern = "^/v[0-9]+/.*".r
+  
+  val assetPattern = java.util.regex.Pattern.compile( "([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|htc|vtt|odt))$)" )
+  
+  def notAsset( path:String ) = !assetPattern.matcher( path ).matches
 }
 
 class WebFilter extends Filter {
@@ -88,10 +91,6 @@ class WebFilter extends Filter {
     ctx.res.sendRedirect( sb.toString )
   }
 
-  val assetPattern = java.util.regex.Pattern.compile( "([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|htc|vtt|odt))$)" )
-  
-  def notAsset( path:String ) = !assetPattern.matcher( path ).matches
-  
   def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ):Unit = try {
     val boot = B
 
@@ -114,7 +113,7 @@ class WebFilter extends Filter {
     val thread = T
     thread.http = web.req.getSession( false )
     thread.web = web
-    var isAsset = notComet && !notAsset( web.path )
+    var isAsset = notComet && !WebFilter.notAsset( web.path )
 
     if ( notComet && thread.http != null ) {
       val session = T.session
