@@ -31,9 +31,10 @@ object ChromeFrame {
 <![endif]-->
 """ )
 
+//<div class="chrome error"><a href="javascript:tyr.chromeFrame()">Welcome to """ + B.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
   val sniffBox_rb = Unparsed( """
 <!--[if lt IE 9 ]>
-<div class="chrome error"><a href="javascript:tyr.chromeFrame()">Welcome to """ + B.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
+<div class="chrome error"><a href="http://www.google.com/chromeframe/eula.html?user=true" target="_blank">Welcome to """ + B.applicationName + """!  Please click here for a better web browsing experience with this website.</a></div>
 <![endif]-->
 """ )
 
