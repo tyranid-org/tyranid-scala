@@ -204,7 +204,7 @@ class WebFilter extends Filter {
         //println( T.LnF == LnF.RetailBrand )
         //println( notComet )
         
-        if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) && T.LnF == LnF.RetailBrand ) && notComet ) {
+        if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) ) && T.LnF == LnF.RetailBrand && notComet ) {
           //println( "full shell page!" )
           
           web.template( B.appShellPage( web ) )
