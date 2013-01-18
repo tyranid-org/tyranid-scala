@@ -169,7 +169,7 @@ trait User extends MongoRecord {
 
   def fullName = s( 'firstName ) + " " + s( 'lastName )
 
-  val hasName = s( 'firstName ) != "unknown"
+  def hasName = s( 'firstName ) != "unknown"
 
   override def label =
     if ( hasName ) super.label
