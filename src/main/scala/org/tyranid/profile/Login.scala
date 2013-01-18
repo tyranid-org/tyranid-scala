@@ -51,8 +51,8 @@ object Register {
     user( 'lnf ) = lnf.id
 
     if ( T.LnF == LnF.SupplyChain ) 
-      T.session.notice( "Thank you!  You should be receiving an email shortly to verify your account." )
-      
+      T.session.notice( "Thank you!  You should be receiving an email shortly to verify your account." )        
+    
     background { B.emailTemplates.welcome( lnf, user, activationCode ) }
   }
 
@@ -510,15 +510,22 @@ $( function() {
             
           web.redirect("/")
         }
+
+        val activationCode = dbUser.s( 'activationCode )
         
-        val user = B.User(dbUser)
-        val resetCode = Base62.make(8)
-        user('resetCode) = resetCode
-        user.save
-
-        sess.notice( "Instructions for changing your password have been sent to " + email + "." )
-
-        B.emailTemplates.forgotPassword( T.LnF, user )
+        if ( activationCode.notBlank ) {
+          sess.notice( "Your account has not been activated yet.  Your activation link has been sent to " + email + "." )
+          background { B.emailTemplates.welcome( LnF.RetailBrand, B.User( dbUser ), activationCode ) }
+        } else {
+          val user = B.User(dbUser)
+          val resetCode = Base62.make(8)
+          user('resetCode) = resetCode
+          user.save
+  
+          sess.notice( "Instructions for changing your password have been sent to " + email + "." )
+  
+          B.emailTemplates.forgotPassword( T.LnF, user )          
+        }
         
         if ( T.LnF == LnF.RetailBrand )
           return web.json( web.jsonRes( sess ) )
