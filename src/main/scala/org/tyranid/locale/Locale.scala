@@ -38,10 +38,15 @@ object Region extends RamEntity( tid = "a01t" ) {
 
   def codeForId( id:Int ) = staticIdIndex.get( id ).flatten( _.s( 'abbr ), "" )
   
+  def regionsForCountryCode3( code3:String ):Seq[Record] = {
+    val countryId = Country.idForCode3( code3 ) 
+    return regionsForCountry( countryId )
+  }
+  
   def regionsForCountry( cid:Int ):Seq[Record] = {
     val countryIdx = staticView( 'country ).index
     
-    staticRecords.filter( _( countryIdx ).asInstanceOf[Int] == cid )
+    staticRecords.filter( _( countryIdx ).as[Int] == cid )
   }  
 
   lazy val US_STATES = regionsForCountry( Country.US )
@@ -4327,6 +4332,13 @@ object Country extends RamEntity( tid = "a02t" ) {
 
   def idByIso3166_2( code:String ) = idForCode( code )
     
+  def idForCode3( code3:String ):Int = {
+    val s = code3.toUpperCase
+    val codeIdx = staticView( 'code3 ).index
+    
+    staticRecords.find( _( codeIdx ) == s ).flatten( _.id.asInstanceOf[Int], 0 )
+  }
+  
   def idForCode( code:String ):Int = {
     val s = code.toUpperCase
     val codeIdx = staticView( 'code ).index
