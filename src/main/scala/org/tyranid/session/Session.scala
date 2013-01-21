@@ -273,14 +273,16 @@ trait Session extends QuickCache {
    * * *   Login
    */
 
-  def login( user:User, setLastLogin:Boolean = true ) = {
+  def login( user:User, incognito:Boolean = false ) = {
     this.user = user
     user.loggedIn = true
     put( "lastLogin", user.t( 'lastLogin ) )
     
-    if ( setLastLogin )
+    if ( !incognito )
       B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "lastLogin" -> new Date ) ) )
-
+    else
+      put( "incognito", Boolean.box( true ) )
+      
     val onLogin = B.onLogin
     
     if ( onLogin != null )
@@ -307,6 +309,8 @@ trait Session extends QuickCache {
     }
     */
   }
+  
+  def isIncognito = get( "incognito" ).as[Boolean] ? true | false
 
   def logout = {
     clear
