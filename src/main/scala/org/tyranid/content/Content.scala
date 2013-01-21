@@ -1129,7 +1129,7 @@ abstract class Content( override val view:MongoView,
         val ot = t._s
       
         Group.hasTid( ot ) &&
-        Group.getByTid( ot ).isReader( tid )
+        Group.byTid( ot ).flatten( _.isReader( tid ), false )
       }
     )
 
