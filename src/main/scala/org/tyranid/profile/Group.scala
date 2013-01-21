@@ -176,7 +176,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
 
     def in( tids:Seq[String] ) =
       if ( tids.size == 1 )
-        tids
+        tids( 0 )
       else
         Mobj( $in -> tids.toArray )
 
