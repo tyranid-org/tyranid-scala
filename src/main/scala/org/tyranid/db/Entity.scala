@@ -194,7 +194,7 @@ trait Entity extends Domain with DbItem {
 
   lazy val iconAtt = attribs.find( _.name == "icon" ) orElse attribs.find( _.name == "thumbnail" )
 
-  val defaultIcon = "/images/default_icon.png"
+  def defaultIcon = "/images/default_icon.png"
 
   def itemByTid( tid:String ) = TidItem.by( tid )
   def itemById( id:Any ) = TidItem.by( idToTid( id ) )
