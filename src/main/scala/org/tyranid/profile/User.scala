@@ -117,6 +117,12 @@ class UserMeta extends MongoEntity( "a01v" ) {
   
   "lnf"            is DbLink(LnF)         ;
 
+  override def init = {
+    super.init
+    "invitedBy"    is DbLink(B.User)      ;
+  }
+
+  
   def isLoggedIn = Session().user.loggedIn
   
   def isAdmin    = Session().user.admin
@@ -124,17 +130,17 @@ class UserMeta extends MongoEntity( "a01v" ) {
   // TODO:  Make this more sophisticated, allow the entire user to be retrieved instead of just the name, and/or maybe something like ProfileItem
   def nameFor( userId:ObjectId ) = "TODO"
 
-  def ensureUser( email:String ) = {
+  def ensureUser( email:String, invitedBy:ObjectId ) = {
 
     var u = db.findOne( Mobj( "email" -> ( "^" + email.encRegex + "$" ).toPatternI ) )
 
     if ( u != null )
       apply( u )
     else
-      createUser( email )
+      createUser( email, invitedBy = invitedBy )
   }
 
-  def createUser( email:String, possibleNames:String = null ) = {
+  def createUser( email:String, possibleNames:String = null, invitedBy:ObjectId = null ) = {
     val user = make
     user( 'email ) = email
     user( 'activationCode ) = org.tyranid.math.Base62.make(8)
@@ -154,6 +160,9 @@ class UserMeta extends MongoEntity( "a01v" ) {
       user( 'firstName ) = "unknown"
       user( 'lastName ) = "unknown"
     }
+    
+    if ( invitedBy != null )
+      user( 'invitedBy ) = invitedBy
     
     user.save
     user
