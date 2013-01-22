@@ -205,11 +205,11 @@ trait User extends MongoRecord {
   def orgTid  = if ( org != null ) org.tid else null
 
   // TODO:  cache this better somehow
-  def groups:Seq[Group] = T.requestCached( "groups" ) { Group.visibleTo( this, contentType = ContentType.Group ) }
+  def groups:Seq[Group] = T.requestCached( tid + "groups" ) { Group.visibleTo( this, contentType = ContentType.Group ) }
   def groupIds          = groups.map( _.id )
   def groupTids         = groups.map( _.tid )
 
-  def nonBuiltinGroups    = T.requestCached( "nonBuiltinGroups" ) { Group.visibleTo( this, contentType = ContentType.Group, allowBuiltins = false ) }
+  def nonBuiltinGroups    = T.requestCached( tid + "nonBuiltinGroups" ) { Group.visibleTo( this, contentType = ContentType.Group, allowBuiltins = false ) }
   def nonBuiltinGroupIds  = nonBuiltinGroups.map( _.id )
   def nonBuiltinGroupTids = nonBuiltinGroups.map( _.tid )
 
