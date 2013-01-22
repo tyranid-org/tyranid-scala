@@ -30,7 +30,7 @@ import org.tyranid.Imp._
 import org.tyranid.http.UserAgent
 import org.tyranid.json.{ JsCmd, Js, JqHide, JqShow, JqHtml }
 import org.tyranid.profile.{ LoginCookie, User }
-import org.tyranid.session.{ AccessLog, Session, ThreadData }
+import org.tyranid.session.{ AccessLog, Session, ThreadData, Notification }
 import org.tyranid.ui.LnF
 
 
@@ -239,15 +239,18 @@ class WebFilter extends Filter {
 
 class WebResponse( web:WebContext, sess:Session ) {
   var redirect:String = null
+  val EMPTY_LIST = List[Notification]()
   
-  lazy val notices = sess.popNotices
-  lazy val warnings = sess.popWarnings
-  lazy val errors = sess.popErrors
+  lazy val notices = ( notifications ? sess.popNotices | EMPTY_LIST )
+  lazy val warnings = ( notifications ? sess.popWarnings | EMPTY_LIST )
+  lazy val errors = ( notifications ? sess.popErrors | EMPTY_LIST )
   
   def hasWarnings = warnings.length > 0 
   def hasErrors = errors.length > 1 
 
   val cmds = mutable.Buffer[JsCmd]()
+  
+  var notifications = true
   
   var extraJS:String = null
   
@@ -309,6 +312,13 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   // TODO:  eliminate "def js" and "tyr.js" since it is redundant with this way of doing it, then rename this to "js"
   def jsRes( js:JsCmd* ) = {
     val res = jsonRes( T.session )
+    res.cmds ++= js
+    json( res )
+  }
+
+  def jsResNoNotifications( js:JsCmd* ) = {
+    val res = jsonRes( T.session )
+    res.notifications = false
     res.cmds ++= js
     json( res )
   }
