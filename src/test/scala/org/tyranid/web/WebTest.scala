@@ -75,5 +75,11 @@ class WebSuite extends FunSuite {
         <tyr:shell><tail><div>foo</div></tail><div><p>Epsilon</p></div><top><p>top</p></top></tyr:shell> ).toString ===
       <html><body><p>top</p><h1>hi there</h1><div><p>Epsilon</p></div><div>foo</div></body></html>.toString )
   }
+
+  test( "thumbUrl" ) {
+
+
+    assert( !WebFilter.notAsset( "https://delta.foo.com/io/thumb/a0YvUPgCkCqIOx4r2C8nv/m" ) )
+  }
 }
 
