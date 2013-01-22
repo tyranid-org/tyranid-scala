@@ -249,7 +249,7 @@ case class JsonString( root:Any ) {
     case f:java.lang.Float   => sb ++= f.toString
     case oid:ObjectId        => sb += '"' ++= oid.toString += '"'
     case ws:WebResponse      => sb ++= ws.toJsonStr
-    case note:Notification   => sb += '"' ++= note.msg += '"'
+    case note:Notification   => write( note.msg )
     case null => println( "Warning, turning NULL into JSON (empty string)" ); sb ++= "\"\""
     case u => println( "Don't know how to turn " + u + " (" + u.getClass() + ") into JSON" ); sb ++= "\"\"" 
     }
