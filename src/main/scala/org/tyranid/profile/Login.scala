@@ -18,7 +18,9 @@
 package org.tyranid.profile
 
 import java.util.Date
+
 import scala.xml.{ NodeSeq, Unparsed }
+
 import org.tyranid.Imp._
 import org.tyranid.db.Scope
 import org.tyranid.db.mongo.Imp._
@@ -56,12 +58,12 @@ object Register {
     background { B.emailTemplates.welcome( lnf, user, activationCode ) }
   }
 
-  def page( user:User, org:com.mongodb.DBObject, jsonRes:WebResponse ) = {
+  def page( user:User, org:Org, jsonRes:WebResponse ) = {
     val inner:NodeSeq =
       if ( org != null ) {
         // if the org domain is the same as MY domain then add them.
         if ( org.s( 'domain ).toLowerCase == Email.domainFor( user.s( 'email ) ).toLowerCase ) {
-          user( 'org ) = org.id
+          user.join( org )
         } else {
           // Must be approved, so send a join request AFTER they activate the account.
         }
@@ -666,14 +668,14 @@ $( function() {
         if ( !betaSignup ) {
           val org = Email.isWellKnownProvider( email ) ? null | {
             val emailDomain = Email.domainFor( email )
-            B.Org.db.findOne( Mobj( "domain" -> emailDomain.toPatternI ), Mobj( "name" -> 1, "domain" -> 1 ) )
+            B.Org( B.Org.db.findOne( Mobj( "domain" -> emailDomain.toPatternI ), Mobj( "name" -> 1, "domain" -> 1 ) ) )
           }
           
           if ( org != null )
             user.save
             
           if ( keep && org != null ) {
-            user( 'org ) = org.id
+            user.join( org )
             sess.login( user )
             user.remove( 'activationCode )
             user.save

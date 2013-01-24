@@ -198,11 +198,24 @@ trait User extends MongoRecord {
 
   def isGod = false
 
+
+
+  /*
+   * * *   Organizations
+   */
+
   def hasOrg = false
-  def org:Org = null
+  def org:Org = null // TODO:  this property is deprecated, use org.group as much as possible because eventually users will be able to be in multiple orgs
 
   def orgId   = if ( org != null ) org.oid else null
   def orgTid  = if ( org != null ) org.tid else null
+
+  // note that the user must still be .save()'d
+  def join( org:Org ) {
+    obj( 'org ) = org.id
+  }
+
+
 
   // TODO:  cache this better somehow
   def groups:Seq[Group] = T.requestCached( tid + "groups" ) { Group.visibleTo( this, contentType = ContentType.Group ) }
