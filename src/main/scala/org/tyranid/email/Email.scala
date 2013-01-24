@@ -219,6 +219,8 @@ case class JavaEmail( subject:String, text:String, html:String=null ) extends Em
 
   @throws(classOf[MessagingException])
   def send:Email = {
+    if ( T.session != null && T.session.isIncognito ) return this
+    
     compose
     
     if ( Email.enabled ) {

@@ -137,6 +137,8 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
   
   @throws(classOf[MessagingException])
   override def send():Email = {
+    if ( T.session != null && T.session.isIncognito ) return this
+    
     compose
     
     AWSEmail.throttle
