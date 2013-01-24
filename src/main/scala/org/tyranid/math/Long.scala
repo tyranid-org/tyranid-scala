@@ -24,35 +24,35 @@ import scala.math
 
 object LongImp {
   
-  val kb:Double = math.pow( 2.toDouble, 10.toDouble )
-  val mb:Double = math.pow( 2.toDouble, 20.toDouble )
-  val gb:Double = math.pow( 2.toDouble, 30.toDouble )
-  val tb:Double = math.pow( 2.toDouble, 40.toDouble )
+  val KB:Double = 1000
+  val MB:Double = math.pow( KB, 2 )
+  val GB:Double = math.pow( KB, 3 )
+  val TB:Double = math.pow( KB, 4 )
 }
 
 case class LongImp( l:Long ) {
   def toBytesString = {
-    if ( l >= LongImp.tb )
-      String.format( "%2.2f terabytes", double2Double( ( l / LongImp.tb ).asInstanceOf[Double] ) )
-    else if ( l >= LongImp.gb ) 
-      String.format( "%1.2f gigabytes", double2Double( ( l / LongImp.gb ).asInstanceOf[Double] ) )
-    else if ( l >= LongImp.mb ) 
-      String.format( "%1.2f megabytes", double2Double( ( l / LongImp.mb ).asInstanceOf[Double] ) )
-    else if ( l >= LongImp.kb )
-      String.format( "%1.2f kilobytes", double2Double( ( l / LongImp.kb ).asInstanceOf[Double] ) )
+    if ( l >= LongImp.TB )
+      String.format( "%2.2f terabytes", double2Double( ( l / LongImp.TB ).asInstanceOf[Double] ) )
+    else if ( l >= LongImp.GB ) 
+      String.format( "%1.2f gigabytes", double2Double( ( l / LongImp.GB ).asInstanceOf[Double] ) )
+    else if ( l >= LongImp.MB ) 
+      String.format( "%1.2f megabytes", double2Double( ( l / LongImp.MB ).asInstanceOf[Double] ) )
+    else if ( l >= LongImp.KB )
+      String.format( "%1.2f kilobytes", double2Double( ( l / LongImp.KB ).asInstanceOf[Double] ) )
     else 
       l + " bytes"
   }
   
   def toBytesAbbrString = {
-    if ( l >= LongImp.tb )
-      String.format( "%2.2f TB", double2Double( ( l / LongImp.tb ).asInstanceOf[Double] ) )
-    else if ( l >= LongImp.gb ) 
-      String.format( "%1.2f GB", double2Double( ( l / LongImp.gb ).asInstanceOf[Double] ) )
-    else if ( l >= LongImp.mb ) 
-      String.format( "%1.2f MB", double2Double( ( l / LongImp.mb ).asInstanceOf[Double] ) )
-    else if ( l >= LongImp.kb )
-      String.format( "%1.2f KB", double2Double( ( l / LongImp.kb ).asInstanceOf[Double] ) )
+    if ( l >= LongImp.TB )
+      String.format( "%2.2f TB", double2Double( ( l / LongImp.TB ).asInstanceOf[Double] ) )
+    else if ( l >= LongImp.GB ) 
+      String.format( "%1.2f GB", double2Double( ( l / LongImp.GB ).asInstanceOf[Double] ) )
+    else if ( l >= LongImp.MB ) 
+      String.format( "%1.2f MB", double2Double( ( l / LongImp.MB ).asInstanceOf[Double] ) )
+    else if ( l >= LongImp.KB )
+      String.format( "%1.2f KB", double2Double( ( l / LongImp.KB ).asInstanceOf[Double] ) )
     else 
       l + " B"
   }

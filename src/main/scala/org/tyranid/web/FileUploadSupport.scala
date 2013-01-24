@@ -32,7 +32,7 @@ import org.tyranid.session.Session
 
 object FileUploadSupport {
 
-  val maxFileSize = 1024 * 1000 * 1000 * 20 // 20GB
+  val maxFileSize = ( org.tyranid.math.LongImp.GB * 20 )._l // 20GB
 
   case class BodyParams( fileParams:collection.Map[String,Seq[FileItem]], formParams:collection.Map[String,Seq[String]] ) {
     def getFileItems( key:String, fallback:Seq[FileItem] = null ):Seq[FileItem] = ( fileParams.get( key ) orElse fileParams.get( key + "[]" ) ).getOrElse( ( fallback == null ) ? Nil | fallback ) 
