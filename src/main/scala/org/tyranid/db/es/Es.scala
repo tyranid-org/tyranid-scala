@@ -42,13 +42,17 @@ sealed trait Searchable {
   val auth:Boolean
   val text:Boolean
   val analyze:Boolean
+
+  def extract( rec:Record, va:ViewAttribute ) = rec( va )
 }
 
-case object SearchText extends Searchable {
+trait SearchTextLike extends Searchable {
   val auth    = false
   val text    = true
   val analyze = true
 }
+
+case object SearchText extends SearchTextLike
 
 case object SearchToken extends Searchable {
   val auth = false
@@ -195,8 +199,9 @@ object Es {
       var first = true
 
       for ( va <- view.vas;
-            if va.att.search.text;
-            v = rec( va );
+            search = va.att.search;
+            if search.text;
+            v = search.extract( rec, va );
             if v != null ) {
 
         if ( first ) first = false

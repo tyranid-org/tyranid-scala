@@ -27,8 +27,8 @@ import com.mongodb.{ BasicDBList, DBCollection, DBObject }
 
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3Bucket, S3 }
-import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDate, DbDateTime, DbDouble, DbInt, DbLink, DbLong, DbTid, DbText, DbUrl, Entity, Record }
-import org.tyranid.db.es.{ SearchAuth, SearchText, SearchToken }
+import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDate, DbDateTime, DbDouble, DbInt, DbLink, DbLong, DbTid, DbText, DbUrl, Entity, Record, ViewAttribute }
+import org.tyranid.db.es.{ SearchAuth, SearchText, SearchTextLike, SearchToken }
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord, MongoView }
@@ -589,7 +589,10 @@ trait ContentMeta extends PrivateKeyEntity {
 
   "on"                is DbDateTime           is 'required;
   "type"              is DbLink(ContentType)  is 'required;
-  "tags"              is DbArray(DbLink(Tag)) is SearchText;
+
+  "tags"              is DbArray(DbLink(Tag)) is ( new SearchTextLike() { override def extract( rec:Record, va:ViewAttribute ) = rec.as[Content].netTags } );
+  "ctags"             is DbArray(DbLink(Tag)) help Text( "Child Tags -- these tags are inherited by child content." );
+
   "name"              is DbChar(50)           is 'label is 'required is SearchText;
 
   "pos"               is DbInt                ; // the position of this content within its parent (group, folder, board, etc.) ... see the class "Positioning"
@@ -665,7 +668,7 @@ trait ContentMeta extends PrivateKeyEntity {
   }
 
   override def searchText = true
-  
+
   def deleteThumbs( tid:String ) {
     val pathParts = tid.splitAt( 4 )
     val urlPath = pathParts._1 + "/" + pathParts._2 + "/"
@@ -740,6 +743,8 @@ abstract class Content( override val view:MongoView,
     else              null
   }
 
+  def netTags = a_?( 'tags )
+  
 
   /*
    * * *  Label and Icons
