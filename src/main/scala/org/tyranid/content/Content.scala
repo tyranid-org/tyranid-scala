@@ -601,6 +601,7 @@ trait ContentMeta extends PrivateKeyEntity {
   "subscr"            is DbArray(DbTid(B.User))             as "Subscribers";
 
   "shown"             is DbArray(DbTid(B.User))             as "Shown To" ; // list of tids of users who have "read" this content; only maintained for some content types, like messages
+  "hide"              is DbArray(DbTid(B.User))             as "Hidden From" ; // list of tids of users who have "read" this content; only maintained for some content types, like messages
  
   "complianceCode"    is DbChar(15)           is SearchToken;
   "expDate"           is DbDate               as "Expiration Date" is SearchText; 
@@ -877,8 +878,10 @@ abstract class Content( override val view:MongoView,
   }
 
   def wasShownTo( user:User ) = a_?( 'shown ).has( user.tid )
+  def markShownTo( user:User ) = db.update( Mobj( "_id" -> id ), $addToSet( "shown", user.tid ) )
 
-  def markShownTo( user:User ) = db.update( Mobj( "_id" -> id ), $push( "shown", user.tid ) )
+  def isHiddenFrom( user:User ) = a_?( 'hide ).has( user.tid )
+  def markHiddenFrom( user:User ) = db.update( Mobj( "_id" -> id ), $addToSet( "hide", user.tid ) )
 
 
   /*
