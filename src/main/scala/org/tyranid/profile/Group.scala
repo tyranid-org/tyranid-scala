@@ -716,7 +716,7 @@ case class GroupField( baseName:String, l:String = null,
             ofEntity.db.find( where, Mobj( "_id" -> 1 ) ).map( of => dg.groupType.ofEntity.idToTid( of( '_id ) ) ).toSeq
           }
 
-        // DRAGON-MIXED-TID:  this is a hack because we've got mixed tids inside groups (both Org and ExtendedOrg tids) ... there should only be Org tids!
+        // DRAGON-MIXED-TID:  this is a hack because we've got mixed tids inside groups (Org) ... there should only be Org tids!
         //                    TODO:  remove all references to DRAGON-MIXED-TID once this problem is cleared up
         assert( addTids.forall( _.startsWith( dg.groupType.ofEntity.tid ) ) )
 

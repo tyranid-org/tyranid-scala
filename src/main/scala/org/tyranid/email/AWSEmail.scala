@@ -101,21 +101,21 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
     request.setDestination( new Destination().withToAddresses( toAddresses ) )
 
     if ( ccRecipients != null ) {
-        toAddresses.clear()
-    
-        for ( recipient <- ccRecipients )
-          toAddresses.add( recipient.getAddress() )
-    
-        request.setDestination( new Destination().withCcAddresses( toAddresses ) )
+      toAddresses.clear()
+  
+      for ( recipient <- ccRecipients )
+        toAddresses.add( recipient.getAddress() )
+  
+      request.setDestination( new Destination().withCcAddresses( toAddresses ) )
     }
 
     if ( bccRecipients != null ) {
-        toAddresses.clear()
-    
-        for ( recipient <- bccRecipients )
-          toAddresses.add( recipient.getAddress() )
-    
-        request.setDestination( new Destination().withBccAddresses( toAddresses ) )
+      toAddresses.clear()
+  
+      for ( recipient <- bccRecipients )
+        toAddresses.add( recipient.getAddress() )
+  
+      request.setDestination( new Destination().withBccAddresses( toAddresses ) )
     }
     
     val subjContent = new Content().withData( subject.isBlank ? "" | subject )
@@ -137,31 +137,71 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
   
   @throws(classOf[MessagingException])
   override def send():Email = {
-    if ( T.session != null && T.session.isIncognito ) return this
-    
-    compose
-    
-    AWSEmail.throttle
-    
     if ( Email.enabled ) {
+      if ( T.session != null && T.session.isIncognito ) return this
+      
+      compose
+      
+      AWSEmail.throttle
+    
       try {
         AWSEmail.client.sendEmail( request )
       } catch {
         case e:MessageRejectedException =>
+          val sess = T.session
+          val msg = e.getMessage
+          val fromAddress = from.getAddress
+          val recipients = primaryRecipients.mkString( "," )
+          val user = ( sess == null ) ? null | sess.user
+
+          // Only send these if one of the real users is sending email
+          val userEmail = ( user == null || user == B.systemUser ) ? null | user.s( 'email )
+          
+          if ( userEmail.notBlank && !Email.isBlacklisted( userEmail ) )
+            sendRejectionNotice( msg, userEmail )
+          
           e.logWith( "m" -> (
-              "| MessageRejectedException: " + e.getMessage() + "\n" +
-              "|  From: " + from.getAddress() + "\n" +
-              "|  Sent to: " + primaryRecipients.mkString( "," ) + "\n" +
+              "| MessageRejectedException: " + msg + "\n" +
+              "|  From: " + fromAddress + "\n" +
+              ( userEmail.notBlank ? ( "|  From User Email: " + userEmail + ( ( Email.isBlacklisted( userEmail ) ) |* " (BLACKLISTED)" ) + "\n" ) | "" ) +
+              "|  Sent to: " + recipients + "\n" +
               "|  Reply to: " + ( if ( replyTo != null && replyTo != from ) replyTo.getAddress() else "" ) + "\n" +
               "|  Subject: " + subject + "\n" +
               "|  Text: " + text + "\n" +
               "|  HTML: " + html )
-          )
+              )
           
-        throw e
+          throw e
       }
     }
     
     this
+  }
+  
+  private def sendRejectionNotice( msg:String, userEmail:String ) {
+    if ( primaryRecipients.length == 1 ) Email.blacklist( primaryRecipients.head.getAddress )
+    val recipients = primaryRecipients.mkString( "," )
+    
+    AWSEmail( subject = "Failed to send email: " + subject,
+              text = """
+Hi,
+                            
+Sorry, but Volerro failed to send the following mail because one of the recipients rejected it as: """ + msg + """
+
+Email To: """ + recipients + """
+----
+                  
+""" + text,
+              html = """
+<p style="font-family: 'Helvetica Neue', Arial, Helvetica, sans-serif;font-size: 18px;font-weight: bold;color: #333333;">
+  <p>Hi,</p>
+  <p>Sorry, but Volerro failed to send the following mail because one of the recipients rejected it as: <b>""" + msg + """</b></p>
+  <p>Email To: """ + recipients + """</p>
+  <p>----</p>
+</p>
+""" + html )
+              .addTo( userEmail )
+              .from( "no-reply@" + B.domain )
+              .send    
   }
 }
