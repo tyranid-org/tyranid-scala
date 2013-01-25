@@ -55,7 +55,7 @@ case class Web404Exception()                       extends ControlThrowable
 object WebFilter {
   val versionPattern = "^/v[0-9]+/.*".r
   
-  val assetPattern = java.util.regex.Pattern.compile( "([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|htc|vtt|odt))$)|.*io/thumb.*" )
+  val assetPattern = java.util.regex.Pattern.compile( "((([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|htc|vtt|odt)))|.*robots\\.txt)$)|.*io/thumb.*" )
   
   def notAsset( path:String ) = !assetPattern.matcher( path ).matches
 }
@@ -160,6 +160,7 @@ class WebFilter extends Filter {
       case fe:WebForwardException =>
         web.ctx.getRequestDispatcher( fe.forward ).forward( web.req, web.res )
       case fe:Web404Exception =>
+        println( "404: " + webloc.path )
         // "" means multiple weblets can handle this path
         if ( webloc.path == "" )
           return false
@@ -187,7 +188,6 @@ class WebFilter extends Filter {
     val start = System.currentTimeMillis
 
     try {
-
       for ( webloc <- boot.weblocs;
             if web.matches( webloc.weblet.wpath ) && webloc.weblet.matches( web ) ) {
 
