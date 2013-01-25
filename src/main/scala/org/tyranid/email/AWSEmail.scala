@@ -155,14 +155,15 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
           val user = ( sess == null ) ? null | sess.user
 
           // Only send these if one of the real users is sending email
-          val fromBlacklisted = Email.isBlacklisted( fromAddress )
+          val userEmail = ( user == null || user == B.systemUser ) ? null | user.s( 'email )
           
-          if ( user != null && user != B.systemUser && !fromBlacklisted )
-            sendRejectionNotice( primaryRecipients, fromAddress, msg )
+          if ( userEmail.notBlank && !Email.isBlacklisted( userEmail ) )
+            sendRejectionNotice( msg, userEmail )
           
           e.logWith( "m" -> (
               "| MessageRejectedException: " + msg + "\n" +
-              "|  From: " + fromAddress + ( fromBlacklisted |* " (BLACKLISTED)" ) + "\n" +
+              "|  From: " + fromAddress + "\n" +
+              ( userEmail.notBlank ? ( "|  From User Email: " + userEmail + ( ( Email.isBlacklisted( userEmail ) ) |* " (BLACKLISTED)" ) + "\n" ) | "" ) +
               "|  Sent to: " + recipients + "\n" +
               "|  Reply to: " + ( if ( replyTo != null && replyTo != from ) replyTo.getAddress() else "" ) + "\n" +
               "|  Subject: " + subject + "\n" +
@@ -177,9 +178,10 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
     this
   }
   
-  private def sendRejectionNotice( recipients:ArrayBuffer[InternetAddress], fromAddress:String, msg:String ) {
+  private def sendRejectionNotice( msg:String, userEmail:String ) {
     if ( primaryRecipients.length == 1 ) Email.blacklist( primaryRecipients.head.getAddress )
-            
+    val recipients = primaryRecipients.mkString( "," )
+    
     AWSEmail( subject = "Failed to send email: " + subject,
               text = """
 Hi,
@@ -198,7 +200,7 @@ Email To: """ + recipients + """
   <p>----</p>
 </p>
 """ + html )
-              .addTo( fromAddress )
+              .addTo( userEmail )
               .from( "no-reply@" + B.domain )
               .send    
   }
