@@ -155,7 +155,7 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
           val user = ( sess == null ) ? null | sess.user
 
           // Only send these if one of the real users is sending email
-          val fromBlacklisted = !Email.isBlacklisted( fromAddress )
+          val fromBlacklisted = Email.isBlacklisted( fromAddress )
           
           if ( user != null && user != B.systemUser && !fromBlacklisted )
             sendRejectionNotice( primaryRecipients, fromAddress, msg )
@@ -199,7 +199,7 @@ Email To: """ + recipients + """
 </p>
 """ + html )
               .addTo( fromAddress )
-              .from( "no-reply@ " + B.domain )
+              .from( "no-reply@" + B.domain )
               .send    
   }
 }
