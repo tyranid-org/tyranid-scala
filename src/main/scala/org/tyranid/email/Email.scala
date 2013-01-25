@@ -71,6 +71,16 @@ object Email {
     "@yahoo.com",
     ".net" )
 
+  def isBlacklisted( email:String ) = {
+    val u = B.User.db.findOne( Mobj( "email" -> email.toPatternI ), Mobj( "noEmail" -> 1 ) )
+    
+    ( u == null ) ? false | u.b( 'noEmail )
+  }
+
+  def blacklist( email:String ) {
+    B.User.db.update( Mobj( "email" -> email.toPatternI ), Mobj( $set -> Mobj( "noEmail" -> true ) ) )  
+  }
+  
   def isWellKnownProvider( email:String ) =
     wellKnownProviders exists email.toLowerCase.endsWith
   
@@ -127,7 +137,6 @@ trait Email {
   var sendDate:Date = null
   var attachments:ArrayBuffer[File] = null
   var defaultFrom:Boolean = false;
-
 
   def addTo( emailAddress:String )  = {
     if ( emailAddress.notBlank ) 
