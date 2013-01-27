@@ -30,6 +30,9 @@ import org.apache.sanselan.Sanselan
 
 import org.tyranid.Imp._
 
+object JpegReader {
+}
+
 class JpegReader {
   val COLOR_TYPE_RGB = 1
   val COLOR_TYPE_CMYK = 2
@@ -148,7 +151,7 @@ class JpegReader {
   }
 
   def convertCmykToRgb( cmykRaster:Raster, acmykProfile:ICC_Profile ): BufferedImage = {
-    val cmykProfile = ( acmykProfile == null ) ? ICC_Profile.getInstance( classOf[JpegReader].getResourceAsStream( "/ISOcoated_v2_300_eci.icc" ) ) |
+    val cmykProfile = ( acmykProfile == null ) ? ICC_Profile.getInstance( T.web.ctx.getResourceAsStream( "/ISOcoated_v2_300_eci.icc" ) ) |
                                                  acmykProfile
         
     val cmykCS = new ICC_ColorSpace(cmykProfile);
