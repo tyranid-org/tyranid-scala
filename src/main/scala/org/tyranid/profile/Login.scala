@@ -762,7 +762,7 @@ $( function() {
            { Focus("#firstName") }
            <div class="span6 val-display"/>
            <div class="span6 hints" style="position:relative;">
-            <div>Hint: Use your company or organization email address to easier connect with co-workers.</div> 
+            <div>Hint: <b>This will be the email address we send your account activation link to</b>.  Use your company or organization email address to easier connect with co-workers.</div> 
            </div>  
           </div>
           }
