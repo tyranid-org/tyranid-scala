@@ -794,10 +794,16 @@ abstract class Content( override val view:MongoView,
   // see Thumbnail for sizes
   def imageForThumbs:File = {
     val imgUrl = imageUrl( editing = null )
-    val dlUrl:String = ( imgUrl.notBlank ) ?
+    var dlUrl:String = ( imgUrl.notBlank ) ?
       ( imgUrl.toLowerCase.startsWith( "http" ) ? imgUrl | T.website + imgUrl ) | null
     
-    ( dlUrl.notBlank ) ? Http.GET_File( dlUrl ) | null
+    if ( dlUrl.notBlank ) {
+      dlUrl = dlUrl.prefix( '?' )
+      val ext = dlUrl.suffix( '.' )
+      Http.GET_File( dlUrl, ext = ( "." + ext ) )
+    } else {
+      null
+    }
   }
 
   def thumbClass( size:String ) =
