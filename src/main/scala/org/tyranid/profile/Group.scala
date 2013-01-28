@@ -409,7 +409,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     
     val inner = 
       <div class={ thumbClass( size ) } style={ style }>
-       { url.notBlank ? <img src={ "/io/thumb/" + tid + "/" + size }/> | <div class="text">{ s( 'name ) }</div> }
+       { url.notBlank ? <img src={ thumbUrl( size ) }/> | <div class="text">{ s( 'name ) }</div> }
       </div>
 
     if ( isNew || isPrivate ) {

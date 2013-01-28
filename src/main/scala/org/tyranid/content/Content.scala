@@ -815,7 +815,7 @@ abstract class Content( override val view:MongoView,
     }
 
   def thumbStyle( size:String ):String = null
-  def thumbUrl( size:String ) = "/io/thumb/" + tid + "/" + size
+  def thumbUrl( size:String ) = "/io/thumb/" + tid + "/" + size + "?cb=" + s( 'img ).denull.hashCode
 
   def thumbHtml( size:String ) =
     <div class={ thumbClass( size ) } style={ thumbStyle( size ) }>
