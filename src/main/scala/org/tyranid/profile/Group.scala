@@ -342,6 +342,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   override def imageUrl( editing:ContentEdit = null ) =
     if ( contentType == ContentType.Organization ) {
       val org = B.Org.getById( oid( 'org ) )
+spam( "$$$ org=" + org.s( 'thumbnail ) )
       org.s( 'thumbnail )
     } else {
       super.imageUrl( editing )
