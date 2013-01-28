@@ -206,6 +206,7 @@ trait Bootable {
 
   // DB
   val profileDbName:String
+  val productName:String
   
   def mongoHost:String = null
 

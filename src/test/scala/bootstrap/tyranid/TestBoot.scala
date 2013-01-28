@@ -14,6 +14,7 @@ class Boot extends org.tyranid.boot.Bootable {
   val applicationName = "Tyranid Test Suite"
   val domain          = "localhost"
   val profileDbName   = "test"
+  val productName     = "TEST"
   val systemEmail     = "info@tyranid.org"
   val systemUser = null
 
