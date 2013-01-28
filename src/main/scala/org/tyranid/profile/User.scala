@@ -177,9 +177,18 @@ trait User extends MongoRecord {
   var admin        = false
 
 
-  def fullName = s( 'firstName ) + " " + s( 'lastName )
-
   def hasName = s( 'firstName ) != "unknown"
+
+  def fullName =
+    s( 'firstName ) + " " + s( 'lastName )
+
+  def fullNameOrEmail =
+    if ( hasName ) s( 'firstName ) + " " + s( 'lastName )
+    else           s( 'email )
+
+  def firstNameOrEmail =
+    if ( hasName ) s( 'firstName )
+    else           s( 'email )
 
   override def label =
     if ( hasName ) super.label

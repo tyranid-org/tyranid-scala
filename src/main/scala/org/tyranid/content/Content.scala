@@ -917,7 +917,7 @@ abstract class Content( override val view:MongoView,
 
   def fromIcon =
     if ( this.obj.has( 'feed ) ) "/images/rssLarge.png"
-    else                         fromUser.s( 'thumbnail )
+    else                         fromUser.icon
 
 
   /*
