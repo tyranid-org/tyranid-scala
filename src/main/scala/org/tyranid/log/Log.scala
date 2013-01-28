@@ -193,7 +193,7 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
           }
       }
 
-      sb ++ "Product: " ++= B.productName += '\n'
+      sb ++= "Product: " ++= B.productName += '\n'
         
       if ( ua.notBlank )
         sb ++= "User-Agent: " ++= ua += '\n'
