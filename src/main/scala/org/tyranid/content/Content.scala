@@ -79,7 +79,14 @@ object Orientation extends RamEntity( tid = "a14v" ) {
   val Vertical   = add( 2, "Vertical"   )
 }
 
-case class Orientation( override val view:TupleView ) extends Tuple( view )
+case class Orientation( override val view:TupleView ) extends Tuple( view ) {
+
+  def cycle =
+    this match {
+    case Orientation.Vertical   => Orientation.Horizontal
+    case Orientation.Horizontal => Orientation.Vertical
+    }
+}
 
 
 object ContentType extends RamEntity( tid = "a10v" ) {
