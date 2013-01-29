@@ -230,7 +230,7 @@ class StringImp( s:String ) {
     s
   }
 
-  def encRegex = s.replace( ".", "\\." ).replace( "@", "\\@" ).replace( "+", "\\+" )
+  def encRegex = s.replace( ".", "\\." ).replace( "@", "\\@" ).replace( "+", "\\+" ).replace( "{", "\\{" )
 
   def toUrl =
     if ( s != null && s.notBlank ) {
