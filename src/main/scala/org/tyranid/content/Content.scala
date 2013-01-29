@@ -43,6 +43,8 @@ import org.tyranid.secure.{ PrivateKeyEntity, PrivateKeyRecord }
 // TODO:  should this be in ui ?
 
 
+
+
 object ViewType extends RamEntity( tid = "a13v" ) {
   type RecType = ViewType
   override def convert( view:TupleView ) = new ViewType( view )
@@ -61,6 +63,23 @@ object ViewType extends RamEntity( tid = "a13v" ) {
 }
 
 case class ViewType( override val view:TupleView ) extends Tuple( view )
+
+
+object Orientation extends RamEntity( tid = "a14v" ) {
+  type RecType = Orientation
+  override def convert( view:TupleView ) = new Orientation( view )
+
+  "_id"    is DbInt      is 'id;
+  "name"   is DbChar(64) is 'label;
+
+
+  override val addNames = Seq( "_id", "name" )
+
+  val Horizontal = add( 1, "Horizontal" )
+  val Vertical   = add( 2, "Vertical"   )
+}
+
+case class Orientation( override val view:TupleView ) extends Tuple( view )
 
 
 object ContentType extends RamEntity( tid = "a10v" ) {
