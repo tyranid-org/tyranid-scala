@@ -475,12 +475,13 @@ object Http {
     HttpConnectionParams.setSoTimeout( httpParams, 30000 ) // 30s
     val client = withParams ? new DefaultHttpClient( httpParams ) | new DefaultHttpClient( httpParams ) 
     
+    //if ( interceptor != null )
+    //  client.getParams().setAuthenticationPreemptive(true)
+      //client.addRequestInterceptor( interceptor, 0 )
+        
     if ( authScope != null && username.notBlank && password.notBlank )
       client.getCredentialsProvider().setCredentials( authScope, new UsernamePasswordCredentials( username, password ) )
 
-    if ( interceptor != null )
-      client.addRequestInterceptor( interceptor, 0 )
-        
     val context = new BasicHttpContext() 
     val response = client.execute( request, context )
 
