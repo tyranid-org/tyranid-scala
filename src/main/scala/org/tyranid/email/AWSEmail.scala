@@ -138,7 +138,7 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
   @throws(classOf[MessagingException])
   override def send():Email = {
     if ( Email.enabled ) {
-      if ( T.session != null && T.session.isIncognito ) return this
+      if ( T.session != null && T.session.isAllowingEmail ) return this
       
       compose
       

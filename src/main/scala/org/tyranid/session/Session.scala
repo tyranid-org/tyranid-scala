@@ -317,9 +317,9 @@ trait Session extends QuickCache {
   
   def isIncognito = get( "incognito" ).as[Boolean] ? true | false
 
-  def isSendingEmail = !isIncognito || get( "allowEmail" ).as[Boolean]
+  def isAllowingEmail = !isIncognito || get( "allowEmail" ).as[Boolean]
 
-  def allowEmail = put( "allowEmail", Boolean.box( true ) )
+  def setAllowEmail = put( "allowEmail", Boolean.box( true ) )
 
   def logout = {
     clear
