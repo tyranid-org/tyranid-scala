@@ -74,6 +74,7 @@ object Imp {
   }
   */
 
+  def $pull( field:String, value:Any ) = Mobj( "$pull" -> Mobj( field -> value ) )
   def $push( field:String, value:Any ) = Mobj( "$push" -> Mobj( field -> value ) )
   def $addToSet( field:String, value:Any ) = Mobj( "$addToSet" -> Mobj( field -> value ) )
 

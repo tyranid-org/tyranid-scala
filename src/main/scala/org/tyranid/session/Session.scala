@@ -288,8 +288,13 @@ trait Session extends QuickCache {
     if ( onLogin != null )
       onLogin( this )
       
-    if ( T.web != null )
-      ua( T.web )
+    val web = T.web
+    
+    if ( web != null ) {
+      ua( web )
+      put( "remoteHost", web.req.getRemoteHost )
+      put( "remoteAddr", web.req.getRemoteAddr )
+    }
       
     /*
     Comet.visit { comet =>      

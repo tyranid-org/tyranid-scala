@@ -79,6 +79,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "password2"      is DbPassword          is 'required is 'temporary as "Repeat Password";
   "thumbnail"      is DbThumbnail( "public" ) as "Profile Image";
   "noEmail"        is DbBoolean           ;// No sent to this user";
+  "inactive"         is DbBoolean         ;
 
   "tzOff"          is DbDouble            ; // timezone offset in hours ... i.e. -6
   "gender"         is DbLink(Gender)      ;
@@ -194,6 +195,16 @@ trait User extends MongoRecord {
     if ( hasName ) super.label
     else           s( 'email )
 
+  def isActive:Boolean = {
+    if ( b( 'inactive ) )
+      return false
+      
+    // TODO:  check for SSO here 
+    if ( s( 'password ).isBlank ) // && s( 'ssoToken ).isBlank
+      return false
+      
+    return true
+  }
 
   /**
    * This is a list of tags that the user is interested in.

@@ -326,9 +326,6 @@ $( function() {
           copySocialLogins( sessionUser = sess.user, existingUser = user )
           sess.login( user )
   
-          sess.put( "remoteHost", web.req.getRemoteHost() )
-          sess.put( "remoteAddr", web.req.getRemoteAddr() )
-          
           if ( web.b( 'save ) )
             LoginCookie.set(user)
   
