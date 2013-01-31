@@ -482,7 +482,9 @@ object Http {
     val response = client.execute( request, context )
 
     response.getStatusLine.getStatusCode match {
-    case 403 => throw new Http403Exception( response )
+    case 403 =>
+      println( request.getURI()._s )
+      throw new Http403Exception( response )
     case _   => HttpResult( response, context )
     }
   }

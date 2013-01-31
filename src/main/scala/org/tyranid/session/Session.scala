@@ -228,7 +228,7 @@ trait Session extends QuickCache {
 
   var passedCaptcha = !B.requireReCaptcha
 
-  def LnF = get( Session.LnF_KEY ).as[LnF] ?| org.tyranid.ui.LnF.SupplyChain
+  def LnF = get( Session.LnF_KEY ).as[LnF] ?| org.tyranid.ui.LnF.RetailBrand
   
   def get( key:String ) = getV( key )
   def getOrElse( key:String, any:AnyRef ) = getVOrElse( key, any )

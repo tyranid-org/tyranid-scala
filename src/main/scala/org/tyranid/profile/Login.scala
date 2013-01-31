@@ -55,7 +55,7 @@ object Register {
     if ( T.LnF == LnF.SupplyChain ) 
       T.session.notice( "Thank you!  You should be receiving an email shortly to verify your account." )        
     
-    background { B.emailTemplates.welcome( lnf, user, activationCode ) }
+    background { B.emailTemplates.welcome( user, activationCode ) }
   }
 
   def page( user:User, org:Org, jsonRes:WebResponse ) = {
@@ -326,7 +326,7 @@ $( function() {
           copySocialLogins( sessionUser = sess.user, existingUser = user )
           sess.login( user )
   
-          sess.put( "remoteHost", web.req.getRemoteAddr() )
+          sess.put( "remoteHost", web.req.getRemoteHost() )
           sess.put( "remoteAddr", web.req.getRemoteAddr() )
           
           if ( web.b( 'save ) )
@@ -480,7 +480,7 @@ $( function() {
         
         if ( user != null ) {
           T.session.notice( "Your activation code has been sent to your email and should be there shortly." )
-          background { B.emailTemplates.welcome( T.LnF, user ) }
+          background { B.emailTemplates.welcome( user ) }
         } else {
           T.session.notice( "Your user was not found." )
         }
@@ -517,7 +517,7 @@ $( function() {
         
         if ( activationCode.notBlank ) {
           sess.notice( "Your account has not been activated yet.  Your activation link has been sent to " + email + "." )
-          background { B.emailTemplates.welcome( LnF.RetailBrand, B.User( dbUser ), activationCode ) }
+          background { B.emailTemplates.welcome( B.User( dbUser ), activationCode ) }
         } else {
           val user = B.User(dbUser)
           val resetCode = Base62.make(8)
@@ -526,7 +526,7 @@ $( function() {
   
           sess.notice( "Instructions for changing your password have been sent to " + email + "." )
   
-          B.emailTemplates.forgotPassword( T.LnF, user )          
+          B.emailTemplates.forgotPassword( user )          
         }
         
         if ( T.LnF == LnF.RetailBrand )

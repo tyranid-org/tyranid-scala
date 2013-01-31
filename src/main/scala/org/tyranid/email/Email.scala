@@ -115,10 +115,10 @@ object Email {
 }
 
 trait EmailTemplate {
-  def welcome( lnf:LnF, user:User, activationCode:String = null, subjectPrefix:String = "", footerText:String = "" )
-  def rejectUnknownFromEmail( lnf:LnF, unknownFromEmail:String, subject:String )
-  def rejectUnknownTo( lnf:LnF, from:String, unknownTo:String, subject:String )
-  def forgotPassword( lnf:LnF, user:User )
+  def welcome( user:User, activationCode:String = null, subjectPrefix:String = "", footerText:String = "" )
+  def rejectUnknownFromEmail( unknownFromEmail:String, subject:String )
+  def rejectUnknownTo( from:String, unknownTo:String, subject:String )
+  def forgotPassword( user:User )
 }
 
 trait Email {

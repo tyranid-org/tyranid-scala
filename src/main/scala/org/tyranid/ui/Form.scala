@@ -109,7 +109,7 @@ object Form {
          if ( valueHref.notBlank )
           <a href={ valueHref } target={ valueHrefTarget }>{ value }</a>
          else if ( link ) 
-          <a href={ value.toUrl.toString() } target="_blank">{ value }</a> 
+          <a href={ value.toUrl._s } target="_blank">{ value }</a> 
          else
            value
        }</div>
