@@ -33,7 +33,7 @@ import org.bson.types.ObjectId
 
 import org.apache.commons.httpclient.util.DateUtil
 
-import org.apache.http.{ Header, NameValuePair, HttpHost, HttpResponse }
+import org.apache.http.{ Header, NameValuePair, HttpHost, HttpResponse, HttpRequestInterceptor }
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.entity.UrlEncodedFormEntity
@@ -469,7 +469,7 @@ object Http {
 
   //new AuthScope( uri.getHost(), uri.getPort(), AuthScope.ANY_SCHEME ),
   //new AuthScope( uri.getHost(), AuthScope.ANY_PORT )
-  private def execute( request:HttpRequestBase, withParams:Boolean = true, authScope:AuthScope = null, username:String = null, password:String = null ) = {
+  private def execute( request:HttpRequestBase, withParams:Boolean = true, authScope:AuthScope = null, username:String = null, password:String = null, interceptor:HttpRequestInterceptor = null ) = {
     val httpParams = new BasicHttpParams
     HttpConnectionParams.setConnectionTimeout( httpParams, 30000 ) // 30s
     HttpConnectionParams.setSoTimeout( httpParams, 30000 ) // 30s
@@ -478,6 +478,9 @@ object Http {
     if ( authScope != null && username.notBlank && password.notBlank )
       client.getCredentialsProvider().setCredentials( authScope, new UsernamePasswordCredentials( username, password ) )
 
+    if ( interceptor != null )
+      client.addRequestInterceptor( interceptor, 0 )
+        
     val context = new BasicHttpContext() 
     val response = client.execute( request, context )
 
@@ -510,13 +513,13 @@ object Http {
     }
   }
   
-  def GET( url:String, query:collection.Map[String,String] = null, headers:collection.Map[String,String] = null, authScope:AuthScope = null, username:String = null, password:String = null ):HttpResult = {
+  def GET( url:String, query:collection.Map[String,String] = null, headers:collection.Map[String,String] = null, authScope:AuthScope = null, username:String = null, password:String = null, interceptor:HttpRequestInterceptor = null ):HttpResult = {
     val get = new HttpGet( makeUrl( url, query ) )
     
     if ( headers != null )
       get.setHeaders( convertHeaders( headers ) )
 
-    execute( get, authScope = authScope, username = username, password = password )
+    execute( get, authScope = authScope, username = username, password = password, interceptor = interceptor )
   }
 
   def POST( url:String, content:String, form:collection.Map[String,String], contentType:String = null, headers:collection.Map[String,String] = null ):HttpResult =

@@ -219,6 +219,9 @@ trait Bootable {
   // SMS
   val sms:NexmoApp = null
 
+  // SSO stuff
+  val saasId:String = null
+  
   // Social
   val facebook:FbApp      = null
   val linkedIn:LiApp      = null
