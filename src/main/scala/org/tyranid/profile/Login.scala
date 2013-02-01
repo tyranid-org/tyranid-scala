@@ -863,7 +863,11 @@ $( function() {
         return null
       }
   
-      val users = B.User.db.find( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) ).toSeq
+      val users = B.User.db.find( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI,
+                      $or -> Array(
+                        Mobj( "inactive" -> Mobj( $exists -> false ) ),
+                        Mobj( "inactive" -> false ) )
+                      ) ).toSeq
       
       for ( u <- users; dbPw = u.s( 'password ) )
         if ( dbPw.notBlank && pw.checkShash( dbPw ) )

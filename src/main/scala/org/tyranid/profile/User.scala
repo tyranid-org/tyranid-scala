@@ -79,7 +79,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "password2"      is DbPassword          is 'required is 'temporary as "Repeat Password";
   "thumbnail"      is DbThumbnail( "public" ) as "Profile Image";
   "noEmail"        is DbBoolean           ;// No sent to this user";
-  "inactive"         is DbBoolean         ;
+  "inactive"       is DbBoolean           ;
 
   "tzOff"          is DbDouble            ; // timezone offset in hours ... i.e. -6
   "gender"         is DbLink(Gender)      ;

@@ -21,38 +21,35 @@ import java.io.{ InputStream, File, FileInputStream, FileOutputStream, IOExcepti
 import java.net.URL
 import java.text.DateFormat
 import java.util.Date
-
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.xml.NodeSeq
-
 import javax.servlet.{ Filter, FilterChain, FilterConfig, ServletRequest, ServletResponse }
 import javax.servlet.http.{ Cookie, HttpServlet, HttpServletRequest, HttpServletResponse }
-
 import org.bson.types.ObjectId
-
 import org.apache.commons.httpclient.util.DateUtil
-
 import org.apache.http.{ Header, NameValuePair, HttpHost, HttpResponse, HttpRequestInterceptor }
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{ HttpRequestBase, HttpDelete, HttpGet, HttpPost, HttpPut, HttpUriRequest, HttpEntityEnclosingRequestBase }
+import org.apache.http.client.protocol.{ ClientContext }
 import org.apache.http.entity.{ StringEntity, InputStreamEntity }
-import org.apache.http.impl.client.DefaultHttpClient
-import org.apache.http.entity.mime.MultipartEntity 
-import org.apache.http.entity.mime.content.{ InputStreamBody, StringBody, FileBody } 
+import org.apache.http.impl.auth.BasicScheme
+import org.apache.http.impl.client.{ DefaultHttpClient, BasicAuthCache }
+import org.apache.http.entity.mime.MultipartEntity
+import org.apache.http.entity.mime.content.{ InputStreamBody, StringBody, FileBody }
 import org.apache.http.message.{ BasicHeader, BasicNameValuePair }
 import org.apache.http.params.{ BasicHttpParams, HttpConnectionParams }
 import org.apache.http.protocol.{ ExecutionContext, HttpContext, BasicHttpContext }
 import org.apache.http.util.EntityUtils
-
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.Imp._
 import org.tyranid.math.Base36
 import org.tyranid.pdf.Pdf
 import org.tyranid.time.Time
 import org.tyranid.web.{ FileUploadSupport, WebHandledException }
+import org.apache.http.client.params.HttpClientParams
 
 case class RestException( code:String, message:String ) extends Exception
 
@@ -467,24 +464,39 @@ object Http {
       url
     }
 
-  //new AuthScope( uri.getHost(), uri.getPort(), AuthScope.ANY_SCHEME ),
-  //new AuthScope( uri.getHost(), AuthScope.ANY_PORT )
-  private def execute( request:HttpRequestBase, withParams:Boolean = true, authScope:AuthScope = null, username:String = null, password:String = null, interceptor:HttpRequestInterceptor = null ) = {
+  private def execute( request:HttpRequestBase, withParams:Boolean = true, authScope:AuthScope = null, username:String = null, password:String = null, preemptive:Boolean = false ) = {
     val httpParams = new BasicHttpParams
     HttpConnectionParams.setConnectionTimeout( httpParams, 30000 ) // 30s
     HttpConnectionParams.setSoTimeout( httpParams, 30000 ) // 30s
-    val client = withParams ? new DefaultHttpClient( httpParams ) | new DefaultHttpClient( httpParams ) 
     
-    //if ( interceptor != null )
-    //  client.getParams().setAuthenticationPreemptive(true)
-      //client.addRequestInterceptor( interceptor, 0 )
-        
-    if ( authScope != null && username.notBlank && password.notBlank )
-      client.getCredentialsProvider().setCredentials( authScope, new UsernamePasswordCredentials( username, password ) )
-
-    val context = new BasicHttpContext() 
-    val response = client.execute( request, context )
-
+    val client = withParams ? new DefaultHttpClient( httpParams ) | new DefaultHttpClient( httpParams )
+    
+    val ( response, context )  = ( preemptive ) ? {
+      val uri = request.getURI
+      val port = ( uri.getScheme.toLowerCase == "https" ) ? 443 | 80
+      val targetHost = new HttpHost( uri.getHost, port, uri.getScheme )
+      
+      if ( username.notBlank && password.notBlank ) 
+        client.getCredentialsProvider().setCredentials( new AuthScope( uri.getHost, port ), new UsernamePasswordCredentials( username, password ) )
+      
+      val authCache = new BasicAuthCache()
+      
+      // Generate BASIC scheme object and add it to the local auth cache
+      val basicAuth = new BasicScheme()
+      authCache.put( targetHost, basicAuth )
+  
+      // Add AuthCache to the execution context
+      val localcontext = new BasicHttpContext()
+      localcontext.setAttribute(ClientContext.AUTH_CACHE, authCache)
+      ( client.execute( targetHost, request, localcontext ), localcontext )
+    } | { 
+      if ( authScope != null && username.notBlank && password.notBlank )
+        client.getCredentialsProvider().setCredentials( authScope, new UsernamePasswordCredentials( username, password ) )
+      
+      val context = new BasicHttpContext() 
+      ( client.execute( request, context ), context )
+    }
+    
     response.getStatusLine.getStatusCode match {
     case 403 =>
       println( request.getURI()._s )
@@ -514,13 +526,13 @@ object Http {
     }
   }
   
-  def GET( url:String, query:collection.Map[String,String] = null, headers:collection.Map[String,String] = null, authScope:AuthScope = null, username:String = null, password:String = null, interceptor:HttpRequestInterceptor = null ):HttpResult = {
+  def GET( url:String, query:collection.Map[String,String] = null, headers:collection.Map[String,String] = null, authScope:AuthScope = null, username:String = null, password:String = null, preemptive:Boolean = false ):HttpResult = {
     val get = new HttpGet( makeUrl( url, query ) )
     
     if ( headers != null )
       get.setHeaders( convertHeaders( headers ) )
 
-    execute( get, authScope = authScope, username = username, password = password, interceptor = interceptor )
+    execute( get, authScope = authScope, username = username, password = password, preemptive = preemptive )
   }
 
   def POST( url:String, content:String, form:collection.Map[String,String], contentType:String = null, headers:collection.Map[String,String] = null ):HttpResult =

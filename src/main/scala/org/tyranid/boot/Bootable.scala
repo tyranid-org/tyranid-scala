@@ -221,6 +221,8 @@ trait Bootable {
 
   // SSO stuff
   val saasId:String = null
+  val pingIdentityUsername:String = null
+  val pingIdentityPassword:String = null
   
   // Social
   val facebook:FbApp      = null

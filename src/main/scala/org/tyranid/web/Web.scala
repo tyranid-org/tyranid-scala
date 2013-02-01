@@ -55,7 +55,7 @@ case class Web404Exception()                       extends ControlThrowable
 object WebFilter {
   val versionPattern = "^/v[0-9]+/.*".r
   
-  val assetPattern = java.util.regex.Pattern.compile( "((([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|htc|vtt|odt)))|.*robots\\.txt)$)|.*io/thumb.*|.*/sso.*" )
+  val assetPattern = java.util.regex.Pattern.compile( "((([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|htc|vtt|odt)))|.*robots\\.txt)$)|.*io/thumb.*|.*/sso/.*" )
   
   def notAsset( path:String ) = !assetPattern.matcher( path ).matches
 }
