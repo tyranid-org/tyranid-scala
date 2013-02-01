@@ -145,6 +145,9 @@ class StringImp( s:String ) {
     // Avoid null characters
     var value = s.replaceAll("", "")
 
+    // Avoid anything between iframe tags
+    value = value.stripTags( "iframe" )
+    
     // Avoid anything between script tags
     value = StringImp.scriptPattern.matcher(value).replaceAll("")
 

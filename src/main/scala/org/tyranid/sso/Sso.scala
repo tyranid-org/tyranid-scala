@@ -17,19 +17,19 @@ package org.tyranid.sso
  *
  */
 
-import com.mongodb.DBObject
-
 import java.net.URLEncoder
 import java.util.Date
+
+import scala.xml.NodeSeq
 
 import org.apache.http.auth.{ AuthScope }
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbLink }
+import org.tyranid.db.{ DbChar, DbLink, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
 import org.tyranid.http.Http
-import org.tyranid.json.{ Js, Json }
+import org.tyranid.json.{ Js, Json, JqHtml }
 import org.tyranid.profile.{ Org, User, Group }
 import org.tyranid.ui.Focus
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
@@ -58,31 +58,23 @@ object Ssolet extends Weblet {
   // PingOne Documentation for this
   // https://connect.pingidentity.com/web-portal/appintegration?x=tyGMaRMgiMSYAHNoa21b84ce4ZKmtJ88
   
+  def pageWrapper( inner:NodeSeq ) =
+   <div class="container">
+    <div class="offset3 span6" style="margin-top:100px;text-align:center;">
+     <a href="/"><img src="/volerro_logo.png"/></a>
+    </div>
+    <div class="offset3 span6">{ inner }</div>
+   </div>
+        
   def handle(web: WebContext) {
     val sess = T.session
-    
+
     rpath match {
     case "/" =>
       val sbt = web.b( 'xhrSbt )
+      
       if ( web.b( "xhr" ) && !sbt ) {
-        val jsonRes = web.jsonRes( sess )
-        
-        jsonRes.htmlMap = Map( 
-              "html" -> 
-               <div class="container">
-                <div class="offset3 span6" style="margin-top:100px;text-align:center;">
-                 <a href="/"><img src="/volerro_logo.png"/></a>
-                </div>
-                <div class="offset3 span6">
-                 { signupBox }
-                </div>
-               </div> ,
-              "target" -> "#main",
-              "transition" -> "fadeOutIn",
-              "duration" -> 500 )
-
-        jsonRes.extraJS = "tyr.initFormPlaceholders( 'f' );"
-        web.json( jsonRes )
+        web.jsRes( JqHtml( "#main", pageWrapper( signupBox ), transition="fadeOutIn", duration = 500 ), Js( "tyr.initFormPlaceholders( 'f' );" ) )
       } else {
         val code = web.s( 'code )
         
@@ -99,7 +91,7 @@ object Ssolet extends Weblet {
           } else {
             val orgId = mapping.oid( 'org )
             val org = B.Org.getById( orgId )
-            sess.notice( "Welcome " + org.name + "!  Please complete the form below to complete your SSO registration." )
+            sess.notice( "Welcome " + org.name + "!  Please complete the form below to complete your SSO setup." )
             sess.put( "sso", mapping )
             web.jsRes( Js( """
 $( '.step2' ).fadeIn(); 
@@ -109,12 +101,24 @@ $( $('#idp').focus() );
 """ ) ) 
           }
         } else {
-          val mapping = sess.get( "sso" ).as[DBObject]
+          val mapping = sess.get( "sso" ).as[Record]
           mapping( "idpId" ) = web.s( 'idp )
-          mapping( "email" ) = web.s( 'email )
-          mapping( "fname" ) = web.s( 'fname )
-          mapping( "lname" ) = web.s( 'lname )
-         // SsoMapping.save( mapping )
+          mapping( "emailAttrib" ) = web.s( 'email )
+          mapping( "firstNameAttrib" ) = web.s( 'fname )
+          mapping( "lastNameAttrib" ) = web.s( 'lname )
+          mapping.save
+          
+          web.jsRes( JqHtml( "#main", pageWrapper( 
+            <div class="container-fluid" style="padding:0;">
+             <div class="row-fluid">
+              <h1 class="span12" style="text-align:center">Single Sign-On Setup Complete!</h1>
+             </div>
+             <div class="row-fluid">
+              <h3 class="span12" style="text-align:center">Your single-sign URL for { B.applicationName } is:</h3>
+              <h3 class="span12" style="text-align:center"><a href={ T.website + "/sso/auth/" + mapping.id }>{ T.website + "/sso/auth/" + mapping.id }</a></h3>
+             </div>
+            </div>
+          ), transition="fadeOutIn", duration = 500 ), Js( "tyr.initFormPlaceholders( 'f' );" ) )
         }
       }
     case s if s.startsWith( "/auth/" ) =>
@@ -132,9 +136,8 @@ $( $('#idp').focus() );
     case "/token" =>
       val token = web.s( 'tokenid )
       //println( "Token: " + token )
-      
       val str = Http.GET( "https://sso.connect.pingidentity.com/sso/TXS/2.0/1/" + token, authScope = AuthScope.ANY, username = B.pingIdentityUsername, password = B.pingIdentityPassword, preemptive = true ).s
-      //println( str )
+      println( str )
  
 /*      
 {
@@ -149,10 +152,9 @@ $( $('#idp').focus() );
    "pingone.authninstant":"1359661588000"
 }      
 */
-      val json = Json.parse( str ) // .get(0)
-      
-      val mapping = sess.get( "sso" ).as[DBObject]
-      val email = json.s( mapping.s( 'emailAttrib ) )
+      val json = Json.parse( str )
+      val mapping = sess.get( "sso" ).as[Record]
+      val email = "mbradley@volerro.com" // json.s( mapping.s( 'emailAttrib ) )
       
       val user = B.User.db.findOne( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) )
       
@@ -183,7 +185,7 @@ $( $('#idp').focus() );
         return
       }
    
-      web.jsRes( Js( "tyr.app.loadMenubar( '/user/menubar' ); tyr.app.loadMain( '/dashboard' );" ) )
+      web.redirect( "/dashboard" )
     case "/error" =>
     }  
   }
@@ -201,7 +203,7 @@ $( $('#idp').focus() );
      <fieldset class="ssoBox">
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
-        <h1 class="span12" style="text-align:center">Single Sign-On Registration</h1>
+        <h1 class="span12" style="text-align:center">Single Sign-On Setup</h1>
        </div>
       </div>
       <hr style="margin:4px 0 30px;"/>
