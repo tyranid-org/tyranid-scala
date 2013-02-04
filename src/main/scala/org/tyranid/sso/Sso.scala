@@ -70,11 +70,14 @@ object Ssolet extends Weblet {
     val sess = T.session
 
     rpath match {
-    case "/" =>
+    case "/" =>      
       val sbt = web.b( 'xhrSbt )
       
-      if ( web.b( "xhr" ) && !sbt ) {
-        web.jsRes( JqHtml( "#main", pageWrapper( signupBox ), transition="fadeOutIn", duration = 500 ), Js( "tyr.initFormPlaceholders( 'f' );" ) )
+      if ( !sbt ) {
+        if ( web.b( 'xhr ) ) 
+          web.jsRes( JqHtml( "#main", pageWrapper( signupBox ), transition="fadeOutIn", duration = 500 ), Js( "tyr.initFormPlaceholders( 'f' );" ) )
+        else
+          web.template( <tyr:shell>{ pageWrapper( signupBox ) }</tyr:shell> )
       } else {
         val code = web.s( 'code )
         
@@ -86,7 +89,7 @@ object Ssolet extends Weblet {
             web.jsRes()
           } else if ( mapping.s( 'idpId ).notBlank ) {
             //sess.error( "That code has been registered.  Please contact " + B.applicationName + " support if this information needs to be changed." )
-            web.jsRes( Js( "tyr.app.loadMain( '/sso/auth/'" + code + " );" ) )
+            web.jsRes( Js( "tyr.app.loadMain( '/sso/auth/" + code + "' );" ) )
             //web.jsRes()
           } else {
             val orgId = mapping.oid( 'org )
@@ -108,7 +111,7 @@ $( $('#idp').focus() );
           mapping( "lastNameAttrib" ) = web.s( 'lname )
           mapping.save
           
-          web.jsRes( JqHtml( "#main", pageWrapper( 
+          web.jsRes( JqHtml( "#main", pageWrapper(
             <div class="container-fluid" style="padding:0;">
              <div class="row-fluid">
               <h1 class="span12" style="text-align:center">Single Sign-On Setup Complete!</h1>
@@ -117,17 +120,20 @@ $( $('#idp').focus() );
               <h3 class="span12" style="text-align:center">Your single-sign URL for { B.applicationName } is:</h3>
               <h3 class="span12" style="text-align:center"><a href={ T.website + "/sso/auth/" + mapping.id }>{ T.website + "/sso/auth/" + mapping.id }</a></h3>
              </div>
-            </div>
-          ), transition="fadeOutIn", duration = 500 ), Js( "tyr.initFormPlaceholders( 'f' );" ) )
+            </div> ) ) )
         }
       }
     case s if s.startsWith( "/auth/" ) =>
       val id = s.split( "/" )(2)
       val mapping = ( id == "test" ) ? SsoMapping.testMapping | SsoMapping.getById( id )
       
-      if ( mapping == null ) {
+      if ( mapping == null || mapping.s( 'idpId ).isBlank ) {
         sess.error( "SSO Mapping for code " + id + " not found." )
-        web.jsRes( Js( "tyr.app.loadMain( '/sso' );" ) )
+        
+        if ( web.b( 'xhr ) ) 
+          web.jsRes( JqHtml( "#main", pageWrapper( signupBox ), transition="fadeOutIn", duration = 500 ), Js( "tyr.initFormPlaceholders( 'f' );" ) )
+        else
+          web.template( <tyr:shell>{ pageWrapper( signupBox ) }</tyr:shell> )
       } else {
         sess.put( "sso", mapping )
         val idpId = URLEncoder.encode( mapping.s( 'idpId ), "UTF-8" ) 
@@ -135,7 +141,6 @@ $( $('#idp').focus() );
       }
     case "/token" =>
       val token = web.s( 'tokenid )
-      //println( "Token: " + token )
       val str = Http.GET( "https://sso.connect.pingidentity.com/sso/TXS/2.0/1/" + token, authScope = AuthScope.ANY, username = B.pingIdentityUsername, password = B.pingIdentityPassword, preemptive = true ).s
       println( str )
  
@@ -154,7 +159,7 @@ $( $('#idp').focus() );
 */
       val json = Json.parse( str )
       val mapping = sess.get( "sso" ).as[Record]
-      val email = "mbradley@volerro.com" // json.s( mapping.s( 'emailAttrib ) )
+      val email = json.s( mapping.s( 'emailAttrib ) )
       
       val user = B.User.db.findOne( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) )
       
@@ -164,9 +169,18 @@ $( $('#idp').focus() );
         
         if ( orgId != null ) {
           val org = B.Org.getById( orgId )
-          val newUser = B.newUser()          
-          //newUser( 'firstName ) = contact.s( 'name ).split( ' ' )(0)
-          //newUser( 'lastName ) = contact.s( 'name ).split( ' ' )(1)
+          val newUser = B.newUser()       
+          
+          val fnameAttrib = mapping.s( 'firstNameAttrib )
+          
+          if ( fnameAttrib.notBlank )
+            newUser( 'firstName ) = json.s( fnameAttrib )
+            
+          val lnameAttrib = mapping.s( 'lastNameAttrib )
+          
+          if ( lnameAttrib.notBlank )
+            newUser( 'lastName ) = json.s( lnameAttrib )
+            
           newUser( 'email ) = email
           newUser( 'createdOn ) = new Date
           newUser.join( org )
@@ -204,6 +218,7 @@ $( $('#idp').focus() );
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
         <h1 class="span12" style="text-align:center">Single Sign-On Setup</h1>
+        <h4 class="span12" style="text-align:center">SSO Services for <a href="https://wwww.pingidentity.com" target="_blank">PingIdentity &reg;</a></h4>
        </div>
       </div>
       <hr style="margin:4px 0 30px;"/>
@@ -216,7 +231,7 @@ $( $('#idp').focus() );
        </div>
        <div class="row-fluid step2">
         <label for="idp" class="span4">Identity Provider Id:</label>
-        <input type="text" class="span8" name="idp" id="idp" placeholder="company.connect.pingidentity.com" data-val="req" data-val-label="Identity Provider Id"/>
+        <input type="text" class="span8" name="idp" id="idp" placeholder="company.connect.pingidentity.com" data-val="req" data-val-label="PingIdentity Provider Id"/>
        </div>
        <div class="row-fluid step2">
         <label for="email" class="span4">Email Attribute:</label>

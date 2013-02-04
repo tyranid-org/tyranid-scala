@@ -113,8 +113,10 @@ class WebFilter extends Filter {
     val thread = T
     thread.http = web.req.getSession( false )
     thread.web = web
-    var isAsset = notComet && !WebFilter.notAsset( web.path )
+    val isAsset = notComet && !WebFilter.notAsset( web.path )
 
+    println( isAsset )
+    
     if ( notComet && thread.http != null ) {
       val session = T.session
       
