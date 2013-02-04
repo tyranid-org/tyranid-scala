@@ -125,7 +125,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
 
   def getById( id:Any ) =
     try {
-      //if ( T.tidCache.has( idToTid( id ) ) ) spam( "CACHE: HIT  (size=" + T.tidCache.size + ")" )
+      //if ( T.tidCache.has( idToTid( id ) ) ) sp am( "CACHE: HIT  (size=" + T.tidCache.size + ")" )
       T.tidCache.byTid.getOrElseUpdate( idToTid( id ), queryById( id ) ).as[RecType]
       // TODO:  if we already had it here should we clone it ?
     } catch {
@@ -141,7 +141,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
       null
     } else {
       try {
-        //if ( T.tidCache.has( tid ) ) spam( "CACHE: HIT  (size=" + T.tidCache.size + ")" )
+        //if ( T.tidCache.has( tid ) ) sp am( "CACHE: HIT  (size=" + T.tidCache.size + ")" )
         T.tidCache.byTid.getOrElseUpdate( tid, queryById( recordTidToId( tid.substring( 4 ) ) ) ).as[RecType]
         // TODO:  if we already had it here should we clone it ?
       } catch {

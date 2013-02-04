@@ -106,9 +106,9 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
       localValidations ++ domain.validations
     } else {
       if ( entity == null )
-        spam( "ERROR:  attribute has no entity" )
+        println( "ERROR:  attribute has no entity" )
       else
-        spam( "ERROR:  attribute.name=" + name + " has no domain on entity " + entity.name )
+        println( "ERROR:  attribute.name=" + name + " has no domain on entity " + entity.name )
       localValidations
     }
 }
