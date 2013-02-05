@@ -479,7 +479,6 @@ class WebTemplate {
       if ( node.label == "content" ) {
         process( content )
       } else {
-spam( "TEMPLATE LABEL=" + node.label )
         val template = B.templates.find( p => p._1 == node.label ).map( _._2 ) getOrElse ( throw new WebException( "Missing template " + node.label ) )
         process( template( node ), e.child )
       }
