@@ -17,7 +17,7 @@
 
 package org.tyranid.session
 
-import java.util.Date
+import java.util.{ Date, TimeZone }
 
 import javax.servlet.http.{ HttpSession, HttpSessionEvent, HttpSessionListener }
 
@@ -266,6 +266,8 @@ trait Session extends QuickCache {
     u.loggedIn = false
     u.isLoggingOut = true
     user = u
+
+    tz = null
   }
 
 
@@ -278,10 +280,19 @@ trait Session extends QuickCache {
     user.loggedIn = true
     put( "lastLogin", user.t( 'lastLogin ) )
     
-    if ( !incognito )
-      B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "lastLogin" -> new Date ) ) )
-    else
+    if ( !incognito ) {
+      var updates = Mobj( "lastLogin" -> new Date )
+
+      if ( tz != null && tz != user.timeZone ) {
+        var id = tz.getID
+        updates( 'tz ) = id
+        user( 'tz ) = id
+      }
+
+      B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> updates ) )
+    } else {
       put( "incognito", Boolean.box( true ) )
+    }
       
     val onLogin = B.onLogin
     
@@ -327,6 +338,50 @@ trait Session extends QuickCache {
     org.tyranid.profile.LoginCookie.remove
     Social.removeCookies
   }
+
+
+  /*
+   * * *   Time Zones
+   */
+
+  private var tz:TimeZone = null
+
+  def setTimeZoneFromClient( olsonCode:String ) {
+
+    val tz = TimeZone.getTimeZone( olsonCode )
+
+    val u = user
+
+    if ( u != null ) {
+      u( 'tz ) = olsonCode
+
+      if ( !u.isNew )
+        B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "tz" -> olsonCode ) ) )
+    }
+  } 
+
+  /*
+   * This returns the definitive timeZone for the user or null if the timeZone is not known
+   */
+  def timeZone:TimeZone = {
+
+    if ( tz != null )
+      return tz
+
+    val u = user
+    if ( u != null && u.loggedIn )
+      tz = u.timeZone
+
+    tz
+  }
+
+  def netTimeZone:TimeZone = {
+    val tz = timeZone
+
+    if ( tz != null ) tz
+    else              TimeZone.getDefault
+  }
+
 
 
   /*

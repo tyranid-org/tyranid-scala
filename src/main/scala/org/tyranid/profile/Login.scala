@@ -558,7 +558,10 @@ $( function() {
           }
         }
       }
-      
+
+    case "/tz" =>
+      T.session.setTimeZoneFromClient( web.s( 'v ) )
+
     case "/null" =>
       log( Event.RefInt, "m" -> ( "null, Referer: " + web.req.getHeader( "referer" ) ) ) 
     case _ =>

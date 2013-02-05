@@ -479,6 +479,7 @@ class WebTemplate {
       if ( node.label == "content" ) {
         process( content )
       } else {
+spam( "TEMPLATE LABEL=" + node.label )
         val template = B.templates.find( p => p._1 == node.label ).map( _._2 ) getOrElse ( throw new WebException( "Missing template " + node.label ) )
         process( template( node ), e.child )
       }
@@ -486,7 +487,8 @@ class WebTemplate {
     case e:Elem if node.label == "head" =>
       val id = node.\( "@id" ).text
       if ( id.isBlank || !heads.exists( _.\( "@id" ).text == id ) )
-        heads ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
+        heads ++= node.child.flatMap( node => bindNode( node, content ) )
+        //heads ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
       NodeSeq.Empty
 
     case e:Elem if node.label == "top" =>

@@ -166,7 +166,7 @@ class DateImp( d:Date ) {
 
   def toServerCalendar = toCalendar( B.serverTimeZone )
 
-  def toUserCalendar = toCalendar( Session().user.timeZone )
+  def toUserCalendar = toCalendar( T.session.netTimeZone )
   def toUtcCalendar  = toCalendar( Time.Utc )
 
   def weekday = toUserCalendar.weekday
@@ -346,7 +346,7 @@ object Time {
     cal.getTime
   }
 
-  def createUserNowCalendar:Calendar = Calendar.getInstance( Session().user.timeZone )
+  def createUserNowCalendar:Calendar = Calendar.getInstance( T.session.netTimeZone )
   def createUtcNowCalendar:Calendar  = Calendar.getInstance
 
   val Utc = TimeZone.getTimeZone( "UTC" )
@@ -376,7 +376,7 @@ object Time {
 
     val rawSince = effNow.getTime - date.getTime
 
-    val tz = Session().user.timeZone
+    val tz = T.session.netTimeZone
     val nc = effNow.toCalendar( tz )
     val c = date.toCalendar( tz ) 
 
