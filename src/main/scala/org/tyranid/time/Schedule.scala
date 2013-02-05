@@ -123,10 +123,10 @@ object Schedulelet extends Weblet {
            }</td>
            <td>{ task.subject }</td>
            <td>{ task.runs }</td>
-           <td>{ task.lastRun != null |* task.lastRun.toDateTimeStr }</td>
+           <td>{ task.lastRun != null |* task.lastRun.toUserDateTimeStr }</td>
            <td>{
              if ( task.active )
-               new Date( task.nextMs ).toDateTimeStr
+               new Date( task.nextMs ).toUserDateTimeStr
              else
                "---"
            }</td>

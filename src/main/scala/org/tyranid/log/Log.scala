@@ -179,7 +179,7 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
       if ( user != null )
         sb ++= "User: " ++= user.fullName += '\n'
           
-      sb ++= "On: " ++= l.t( 'on ).toDateTimeStr += '\n'
+      sb ++= "On: " ++= l.t( 'on ).toUserDateTimeStr += '\n'
         
       var ua = l.s( 'ua )
       

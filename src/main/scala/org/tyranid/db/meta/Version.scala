@@ -127,7 +127,7 @@ object Versioning {
          var first = true
          values.map { change =>
            <tr>
-            { first |* <td rowspan={ values.size.toString }>{ ver.t( 'on ).toDateTimeStr }</td> }
+            { first |* <td rowspan={ values.size.toString }>{ ver.t( 'on ).toUserDateTimeStr }</td> }
             { first |* <td rowspan={ values.size.toString }><a href={ weblet.wpath + "?tid=" + B.User.idToTid( user ) }>{ B.User.labelFor( user ) }</a></td> }
             <td>{ first = false; change.path }</td>
             <td>{ change.a }</td>
