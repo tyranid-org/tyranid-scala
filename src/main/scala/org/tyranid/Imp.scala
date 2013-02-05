@@ -18,6 +18,7 @@
 package org.tyranid
 
 import java.io.InputStream
+import java.text.DateFormat
 import java.util.{ Calendar, Date }
 
 import scala.collection.mutable.Buffer
@@ -46,6 +47,7 @@ object Imp {
 	implicit def calendarImp( v:Calendar )                          = new org.tyranid.time.CalendarImp( v )
 	implicit def charImp( v:Char )                                  = new org.tyranid.text.CharImp( v )
 	implicit def dateImp( v:Date )                                  = new org.tyranid.time.DateImp( v )
+	implicit def dateFormatImp( v:DateFormat )                      = new org.tyranid.time.DateFormatImp( v )
 	implicit def option[A]( v:Option[A] )                           = new org.tyranid.collection.OptionImp( v )
   implicit def intImp( v:Int )                                    = new org.tyranid.math.IntImp( v )
   implicit def longImp( v:Long )                                  = new org.tyranid.math.LongImp( v )
@@ -97,7 +99,7 @@ object Imp {
 	@volatile private var depth = 1
 	def time[ T ]( title:String )( block: => T ): T = {
 		val startTime = System.currentTimeMillis
-		println( ( ">" * depth ) + " " * 13 + title + " START: " + ( new Date ).toDateTimeStr )
+		println( ( ">" * depth ) + " " * 13 + title + " START: " + ( new Date ).toServerDateTimeStr )
 		depth += 1
 
 		try {

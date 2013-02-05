@@ -17,12 +17,27 @@
 
 package org.tyranid.time
 
-import java.text.DateFormatSymbols
-import java.text.SimpleDateFormat
+import java.text.{ DateFormat, DateFormatSymbols, SimpleDateFormat }
 import java.util.{ Calendar, Date, TimeZone }
 
 import org.tyranid.Imp._
 import org.tyranid.session.Session
+
+
+class DateFormatImp( df:DateFormat ) {
+
+  def inUser = in( T.session.netTimeZone )
+  def inUtc  = in( Time.Utc )
+
+  def in( tz:TimeZone ) = {
+    // maybe set up some simple DateFormat cache here ...
+
+    val tzdf = df.clone.as[DateFormat]
+    tzdf.setTimeZone( tz )
+    tzdf
+  }
+}
+
 
 class CalendarImp( c:Calendar ) {
   lazy val weekdays = new DateFormatSymbols().getWeekdays()
@@ -166,7 +181,7 @@ class DateImp( d:Date ) {
 
   def toServerCalendar = toCalendar( B.serverTimeZone )
 
-  def toUserCalendar = toCalendar( Session().user.timeZone )
+  def toUserCalendar = toCalendar( T.session.netTimeZone )
   def toUtcCalendar  = toCalendar( Time.Utc )
 
   def weekday = toUserCalendar.weekday
@@ -199,25 +214,23 @@ class DateImp( d:Date ) {
     ( firstOfLastWeek.getTime, firstOfWeek.getTime )
   }
 
-  def toDateStr =
+  def toServerDateStr =
     if ( d == null ) null
     else             Time.DateFormat.format( d )
   
-  def toDateTimeStr =
+  def toUserDateStr =
+    if ( d == null ) null
+    else             Time.DateFormat.inUser.format( d )
+  
+  def toServerDateTimeStr =
     if ( d == null ) null
     else             Time.DateTimeFormat.format( d )
 
-  def toUserDateStr =
-    if ( d == null ) {
-      null
-    } else {
-      val f = Time.makeDateFormat
-      f.setCalendar( toUtcCalendar )
-      f.format( d )
-    }
+  def toUserDateTimeStr =
+    if ( d == null ) null
+    else             Time.DateTimeFormat.inUser.format( d )
 
-
-  def toDisplay = {
+  def toUserDisplay = {
 
     if ( d == null ) ""
     else {
@@ -228,7 +241,7 @@ class DateImp( d:Date ) {
 
       val sb = new StringBuilder
 
-      sb ++= toMonthDayStr
+      sb ++= toUserMonthDayStr
 
       if ( now.year != cal.year )
         sb ++= ", " ++= cal.year.toString
@@ -240,21 +253,37 @@ class DateImp( d:Date ) {
     }
   }
 
-  def toTime12Str =
+  def toServerTime12Str =
     if ( d == null ) null
     else             Time.TimeFormat12.format( d )
 
-  def toMonthDayStr =
+  def toUserTime12Str =
+    if ( d == null ) null
+    else             Time.TimeFormat12.inUser.format( d )
+
+  def toServerMonthDayStr =
     if ( d == null ) null
     else             Time.MonthDay.format( d )
 
-  def toMonthDayTimeStr =
+  def toUserMonthDayStr =
+    if ( d == null ) null
+    else             Time.MonthDay.inUser.format( d )
+
+  def toServerMonthDayTimeStr =
     if ( d == null ) null
     else             Time.MonthDay.format( d ) + ", " + Time.TimeFormat12.format( d ).toLowerCase 
 
-  def toTime24Str =
+  def toUserMonthDayTimeStr =
+    if ( d == null ) null
+    else             Time.MonthDay.inUser.format( d ) + ", " + Time.TimeFormat12.inUser.format( d ).toLowerCase 
+
+  def toServerTime24Str =
     if ( d == null ) null
     else             Time.TimeFormat24.format( d )
+
+  def toUserTime24Str =
+    if ( d == null ) null
+    else             Time.TimeFormat24.inUser.format( d )
 
   def toIso8601 = toUtcCalendar.format( iso8601 = true )
 
@@ -306,10 +335,9 @@ class DateImp( d:Date ) {
 
 object Time {
   val currentYear = Calendar.getInstance.get( Calendar.YEAR )
-  
-  def makeDateFormat = new SimpleDateFormat( "MM/dd/yyyy" )
 
-  val DateFormat     = makeDateFormat
+
+  val DateFormat     = new SimpleDateFormat( "MM/dd/yyyy" )
   val DateTimeFormat = new SimpleDateFormat( "MM/dd/yyyy HH:mm:ss" )
   val TimeFormat24   = new SimpleDateFormat( "HH:mm" )
   val TimeFormat12   = new SimpleDateFormat( "hh:mma" )
@@ -376,7 +404,7 @@ object Time {
     cal.getTime
   }
 
-  def createUserNowCalendar:Calendar = Calendar.getInstance( Session().user.timeZone )
+  def createUserNowCalendar:Calendar = Calendar.getInstance( T.session.netTimeZone )
   def createUtcNowCalendar:Calendar  = Calendar.getInstance
 
   val Utc = TimeZone.getTimeZone( "UTC" )
@@ -406,7 +434,7 @@ object Time {
 
     val rawSince = effNow.getTime - date.getTime
 
-    val tz = Session().user.timeZone
+    val tz = T.session.netTimeZone
     val nc = effNow.toCalendar( tz )
     val c = date.toCalendar( tz ) 
 

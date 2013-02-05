@@ -22,7 +22,6 @@ import java.text.ParseException
 import java.util.{ Calendar, Date, TimeZone }
 
 import org.tyranid.Imp._
-import org.tyranid.session.Session
 
 
 
@@ -851,7 +850,7 @@ class TimeParser {
 			fail( "no date could be found." )
 
     if ( !dateOnly && timeZones == 0 && userTime )
-      tz = Session().user.timeZone
+      tz = T.session.netTimeZone
 
     dv.setTimeZone( tz )
     dv.set( year, month, dayOfMonth, hour, minute, second )

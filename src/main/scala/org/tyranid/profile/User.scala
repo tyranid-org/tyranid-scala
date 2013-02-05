@@ -81,7 +81,9 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "noEmail"        is DbBoolean           ;// No sent to this user";
   "inactive"       is DbBoolean           ;
 
-  "tzOff"          is DbDouble            ; // timezone offset in hours ... i.e. -6
+  "tz"             is DbChar(64)          ; // Olson timezone code ... i.e. "America/Chicago"
+  "tzOff"          is DbDouble            ; // timezone offset in hours ... i.e. -6 ... maybe deprecated ? ... use an Olson code instead?
+
   "gender"         is DbLink(Gender)      ;
   "country"        is DbLink(Country)     ;
   "lang"           is DbLink(Language)    ;
@@ -212,10 +214,14 @@ trait User extends MongoRecord {
   def allowTags:Seq[Int] = Nil
 
 
-  @volatile var timeZone:TimeZone =
-    // TODO:  persist time zone in user record, edit it in UI, etc.
-    TimeZone.getDefault
+  def timeZone:TimeZone = {
+    val tz = s( 'tz )
 
+    if ( tz.notBlank )
+      TimeZone.getTimeZone( tz )
+    else
+      null
+  }
 
   def isGod = false
 

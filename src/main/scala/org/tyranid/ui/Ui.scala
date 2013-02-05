@@ -41,7 +41,7 @@ object Ui {
   def lastLoginBox = {
     val lastLogin = T.session.get( 'lastLogin ).as[Date]
     
-    <div class="lastLogin" style={ "display:" + ( ( lastLogin == null ) ? "none" | "block" ) }>Last Login: <span class="lastLoginDate">{ lastLogin.toDateTimeStr }</span></div>
+    <div class="lastLogin" style={ "display:" + ( ( lastLogin == null ) ? "none" | "block" ) }>Last Login: <span class="lastLoginDate">{ lastLogin.toUserDateTimeStr }</span></div>
   }
 }
 

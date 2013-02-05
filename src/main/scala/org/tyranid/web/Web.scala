@@ -484,7 +484,8 @@ class WebTemplate {
     case e:Elem if node.label == "head" =>
       val id = node.\( "@id" ).text
       if ( id.isBlank || !heads.exists( _.\( "@id" ).text == id ) )
-        heads ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
+        heads ++= node.child.flatMap( node => bindNode( node, content ) )
+        //heads ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
       NodeSeq.Empty
 
     case e:Elem if node.label == "top" =>

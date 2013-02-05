@@ -419,7 +419,7 @@ trait DbDateLike extends Domain {
     super.validations
 
   override def ui( s:Scope, f:PathField ) = {
-    val input = Input( f.id, get( s, f )._t.toDateStr, f.effOpts:_*  )
+    val input = Input( f.id, get( s, f )._t.toUserDateStr, f.effOpts:_*  )
 
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -431,7 +431,7 @@ trait DbDateLike extends Domain {
 
   override def cell( s:Scope, f:PathField ):NodeSeq = {
     val date = get( s, f )._t
-    Text( if ( date != null ) date.toDateStr else "" )
+    Text( if ( date != null ) date.toUserDateStr else "" )
   }
 }
 
@@ -443,7 +443,7 @@ object DbDateTime extends DbDateLike {
   override def dateOnly = false
 
   override def ui( s:Scope, f:PathField ) = {
-    val input = Input( f.id, get( s, f )._t.toDateTimeStr, f.effOpts:_*  )
+    val input = Input( f.id, get( s, f )._t.toUserDateTimeStr, f.effOpts:_*  )
 
     if ( f.focus )
       throw new RuntimeException( "TODO:  handle focus on load" )
@@ -455,7 +455,7 @@ object DbDateTime extends DbDateLike {
 
   override def cell( s:Scope, f:PathField ):NodeSeq = {
     val date = get( s, f )._t
-    Unparsed( "<nobr>" + ( if ( date != null ) date.toDateTimeStr else "" ) + "</nobr>" )
+    Unparsed( "<nobr>" + ( if ( date != null ) date.toUserDateTimeStr else "" ) + "</nobr>" )
   }
 }
 
