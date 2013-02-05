@@ -262,10 +262,22 @@ class DateImp( d:Date ) {
     if ( d == null ) null
     else             Time.AttrFormat.format( d )
     
+  def toAttrGMT =
+    if ( d == null ) null
+    else             Time.AttrFormatGMT.format( d )
+    
   def toRfc1123 =
     if ( d == null ) null
     else             Time.Rfc1123Format.format( d )
     
+  def toRfc1123GMT =
+    if ( d == null ) null
+    else             Time.Rfc1123FormatGMT.format( d )
+    
+  def toAmzFormat = 
+    if ( d == null ) null
+    else             Time.AmzFormatGMT.format( d )
+  
   def toRfc822 =
     toRfc1123 // RFC 1123 is an update for RFC 822, might need to support RFC 822 explicitly though
     
@@ -303,8 +315,26 @@ object Time {
   val TimeFormat12   = new SimpleDateFormat( "hh:mma" )
   val MonthDay       = new SimpleDateFormat( "MMM dd" )
   
-  val Rfc1123Format  = new SimpleDateFormat( "EEE, dd MMM yyyyy HH:mm:ss z" )
+  val Rfc1123Format  = new SimpleDateFormat( "EEE, dd MMM yyyy HH:mm:ss z" )
+  val Rfc1123FormatGMT  = {
+    val f = new SimpleDateFormat( "EEE, dd MMM yyyy HH:mm:ss z" )
+    f.setTimeZone( TimeZone.getTimeZone( "GMT" ) )
+    f
+  }
+  
   val AttrFormat     = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mmZ" )
+  
+  val AttrFormatGMT     = {
+    val f   = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mmZ" )
+    f.setTimeZone( TimeZone.getTimeZone( "GMT" ) )
+    f
+  }
+  
+  val AmzFormatGMT   = {
+    val f = new SimpleDateFormat( "yyyyMMdd'T'HHmmss'Z'" )
+    f.setTimeZone( TimeZone.getTimeZone( "GMT" ) )
+    f
+  }
 
   val OneMinuteMs:Long    =                 60 * 1000
   val FiveMinutesMs:Long  =             5 * 60 * 1000
