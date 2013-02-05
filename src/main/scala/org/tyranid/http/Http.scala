@@ -500,6 +500,7 @@ object Http {
     response.getStatusLine.getStatusCode match {
     case 403 =>
       println( request.getURI()._s )
+      println( scala.io.Source.fromInputStream( response.getEntity().getContent() ).getLines().mkString("\n") )
       throw new Http403Exception( response )
     case _   => HttpResult( response, context )
     }
@@ -555,7 +556,8 @@ object Http {
         new UrlEncodedFormEntity( formparams, "UTF-8" )
       } else {
         val se = new StringEntity( content, "UTF-8" )
-        if ( contentType != null )
+        
+        if ( contentType.notBlank )
           se.setContentType( contentType )
         se
       }

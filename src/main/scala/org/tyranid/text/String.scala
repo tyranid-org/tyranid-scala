@@ -360,7 +360,6 @@ class StringImp( s:String ) {
    */
   def |*( v: ( String ) => String ):String = v( s )
 
-
   def count( ch:Char ) = s.foldLeft(0)( ( sum, c ) => sum + ( ( c == ch ) ? 1 | 0 ) )
   
 	def toXml = scala.xml.XML.loadString( s )

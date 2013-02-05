@@ -72,6 +72,7 @@ object Event extends RamEntity( tid = "a0It" ) {
   val Search     = add( 22, "Search" )
   val Payment    = add( 23, "Payment" )
   val Zencoder   = add( 24, "Zencoder" )
+  val Transcoder = add( 25, "Transcoder" )
 }
 
 case class Event( override val view:TupleView ) extends Tuple( view ) {

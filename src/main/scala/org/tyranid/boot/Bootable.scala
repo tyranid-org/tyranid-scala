@@ -52,6 +52,7 @@ import org.tyranid.social.linkedin.LiApp
 import org.tyranid.web.{ Weblet, Webloc, CometService, WebContext }
 
 object Boot {
+  var TEST = false
 
   @volatile var instance:Bootable = _
 
