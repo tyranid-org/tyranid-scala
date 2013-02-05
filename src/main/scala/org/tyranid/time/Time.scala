@@ -218,6 +218,10 @@ class DateImp( d:Date ) {
     if ( d == null ) null
     else             Time.DateFormat.format( d )
   
+  def toUtcDateStr =
+    if ( d == null ) null
+    else             Time.DateFormat.inUtc.format( d )
+  
   def toUserDateStr =
     if ( d == null ) null
     else             Time.DateFormat.inUser.format( d )

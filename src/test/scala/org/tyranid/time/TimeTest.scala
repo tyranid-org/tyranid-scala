@@ -171,7 +171,7 @@ class TimeSuite extends FunSuite {
   }
 
   test( "userTz" ) {
-    assert( "6/2/2012".toLaxDate.toUserDateStr === "06/02/2012" )
+    assert( "6/2/2012".toLaxDate.toUtcDateStr === "06/02/2012" )
 
   }
 
@@ -242,8 +242,8 @@ class TimeSuite extends FunSuite {
     val now = "2012-3-1 3:25a".parseDate()
     val ( firstOfLastWeek, firstOfWeek ) = now.localLastWeekRange
 
-    assert( firstOfWeek.toDateTimeStr     === "02/26/2012 00:00:00" )
-    assert( firstOfLastWeek.toDateTimeStr === "02/19/2012 00:00:00" )
+    assert( firstOfWeek.toServerDateTimeStr     === "02/26/2012 00:00:00" )
+    assert( firstOfLastWeek.toServerDateTimeStr === "02/19/2012 00:00:00" )
   }
 }
 

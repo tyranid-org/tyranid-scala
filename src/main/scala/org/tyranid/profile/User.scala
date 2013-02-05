@@ -213,6 +213,9 @@ trait User extends MongoRecord {
    */
   def allowTags:Seq[Int] = Nil
 
+  def timeZone_=( tz:TimeZone ) =
+    if ( tz != null ) obj( 'tz ) = tz.getID
+    else              obj.remove( 'tz )
 
   def timeZone:TimeZone = {
     val tz = s( 'tz )
