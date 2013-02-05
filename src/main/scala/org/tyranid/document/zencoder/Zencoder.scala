@@ -75,12 +75,22 @@ object Zencoder {
   }
   
   def outputFormats( url:String, formats:Seq[Seq[String]], forAudio:Boolean = false ) = {
-    var maps = new mutable.ArrayBuffer[Map[String,String]]()
+    var maps = new mutable.ArrayBuffer[Map[String,Any]]()
     
     for ( format <- formats )
       maps += mapForFormat( url, format, forAudio )
     
-    maps.toSeq
+    if ( !forAudio )
+      maps += Map( 
+        "url" -> ( url + ".TMP.mobile_mp4" ),
+        "size" -> "1280x720",
+        "audio_bitrate" -> 160,
+        "max_video_bitrate" -> 5000,
+        "h264_profile" -> "main",
+        "h264_level" -> "3.1",
+        "max_frame_rate" -> 30 )
+        
+    maps
   }
 }
 
@@ -119,7 +129,8 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
     }
       
     if ( formats != null ) {
-      val outputFormats =  Zencoder.outputFormats( inputUrl, formats, isAudio )
+      val outputFormats = Zencoder.outputFormats( inputUrl, formats, isAudio ).toSeq
+      
       val jsonReq = Map( 
           "test" -> B.DEV,  
           "input" -> inputUrl,

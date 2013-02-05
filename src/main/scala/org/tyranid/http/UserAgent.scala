@@ -54,7 +54,6 @@ object UserAgent extends MongoEntity( tid = "a0Dt" ) {
   "_id"               is DbIntSerial   is 'id;
   "ua"                is DbChar(256)   is 'label as "User Agent";
   "bot"               is DbBoolean     ;
-
   "agentType"         is DbChar(64)    ;
   "agentName"         is DbChar(64)    ;
   "agentVersion"      is DbChar(64)    ;
@@ -206,5 +205,10 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
   def html5VideoSupport = {
     updateIfNeeded
     betterThanIE9
+  }
+  
+  def isMobile = {
+    updateIfNeeded
+    agentName.containsIgnoreCase( "andriod" ) || agentName.containsIgnoreCase( "iPhone" )  
   }
 }
