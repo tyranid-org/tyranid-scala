@@ -209,6 +209,6 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
   
   def isMobile = {
     updateIfNeeded
-    agentName.containsIgnoreCase( "andriod" ) || agentName.containsIgnoreCase( "iPhone" )  
+    s( 'agentType ).containsIgnoreCase( "mobile" )  
   }
 }
