@@ -198,11 +198,7 @@ trait User extends MongoRecord {
     else           s( 'email )
 
   def isActive:Boolean = {
-    if ( b( 'inactive ) )
-      return false
-      
-    // TODO:  check for SSO here 
-    if ( s( 'password ).isBlank ) // && s( 'ssoToken ).isBlank
+    if ( ( obj.has( 'inactive ) && b( 'inactive ) ) || s( 'activationCode ).notBlank )
       return false
       
     return true

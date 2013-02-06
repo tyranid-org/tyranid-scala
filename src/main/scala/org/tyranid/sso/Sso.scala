@@ -183,6 +183,8 @@ $( $('#idp').focus() );
             
           newUser( 'email ) = email
           newUser( 'createdOn ) = new Date
+          newUser( 'password ) = ""
+            
           newUser.join( org )
           sess.login( newUser )
           newUser.save
