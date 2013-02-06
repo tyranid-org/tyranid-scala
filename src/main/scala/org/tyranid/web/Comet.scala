@@ -43,7 +43,6 @@ case class Comet( serviceSession:ServerSession, fromSession:ServerSession, sessi
     val jOutput:java.util.Map[String,Object] = output
     fromSession.deliver( serviceSession, "/volee", jOutput, null )
   }
-
 }
 
 object Comet {
