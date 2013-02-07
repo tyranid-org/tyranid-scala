@@ -140,6 +140,9 @@ object View {
 object Record {
 
   def getByTid( tid:String, only:Entity = null ):Record = {
+    if ( tid.isBlank )
+      return null
+
     val ( entityTid, recordTid ) = tid.splitAt( 4 )
 
     try {
