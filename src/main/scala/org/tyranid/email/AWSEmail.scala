@@ -172,6 +172,26 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
               )
           
           throw e
+        case e2 =>
+          val sess = T.session
+          val msg = e2.getMessage
+          val fromAddress = from.getAddress
+          val recipients = primaryRecipients.mkString( "," )
+          val user = ( sess == null ) ? null | sess.user
+          val userEmail:String = ( user == null || user == B.systemUser ) ? null | user.s( 'email )
+          
+          e2.logWith( "m" -> (
+              "| AWS Mail Exception: " + msg + "\n" +
+              "|  From: " + fromAddress + "\n" +
+              "|  From User Email: " + userEmail + "\n" +
+              "|  Sent to: " + recipients + "\n" +
+              "|  Reply to: " + ( if ( replyTo != null && replyTo != from ) replyTo.getAddress() else "" ) + "\n" +
+              "|  Subject: " + subject + "\n" +
+              "|  Text: " + text + "\n" +
+              "|  HTML: " + html )
+              )
+              
+          throw e2
       }
     }
     
