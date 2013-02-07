@@ -691,6 +691,8 @@ trait ContentMeta extends PrivateKeyEntity {
   "color"             is DbChar(6)            ;
   
   "locked"            is DbBoolean;
+  
+  "archived"          is DbBoolean;
   }
 
   override def searchText = true
@@ -1113,6 +1115,8 @@ abstract class Content( override val view:MongoView,
     // Note:  this u.inNetwork() is also handling the case where they are from the same org ... so if we remove u.inNetwork() will need to add in an org check
     !groupPresent && u.inNetwork( tid )
   }
+
+  def isArchived = b( 'archived )
 
   def isOwner( user: org.tyranid.profile.User ): Boolean = isOwner( user.tid ) || ( user.hasOrg && isOwner( user.org.tid ) )
 
