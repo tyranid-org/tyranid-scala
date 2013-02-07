@@ -26,7 +26,7 @@ import com.mongodb.DBObject
 
 import org.tyranid.Imp._
 import org.tyranid.content.ContentType
-import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDouble, DbEmail, DbLink, DbLong, DbPassword, Record, DbDate, DbDateTime }
+import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDouble, DbEmail, DbLink, DbLong, DbPassword, Record, DbDate, DbInt, DbDateTime }
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
@@ -88,6 +88,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "country"        is DbLink(Country)     ;
   "lang"           is DbLink(Language)    ;
 
+  "numLogins"      is DbInt          ;
   "lastLogin"      is DbDateTime          ;
   "createdOn"      is DbDate              ;
   

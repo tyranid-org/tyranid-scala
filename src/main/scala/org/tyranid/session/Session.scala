@@ -289,7 +289,7 @@ trait Session extends QuickCache {
         user( 'tz ) = id
       }
 
-      B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> updates ) )
+      B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> updates, $inc -> Mobj( "numLogins" -> 1 ) ) )
     } else {
       put( "incognito", Boolean.box( true ) )
     }
