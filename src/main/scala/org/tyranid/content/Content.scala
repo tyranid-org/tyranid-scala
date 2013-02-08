@@ -392,7 +392,7 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
   "_id"            is DbInt                  is 'id;
 
   "on"             is DbDateTime             ;
-  "m"              is DbChar(1024)           is 'label;
+  "m"              is DbChar(1024)           as "message" is 'label;
 
   "pn"             is DbInt                  as "Page Number";
   "x"              is DbDouble               as "X";
@@ -672,7 +672,7 @@ trait ContentMeta extends PrivateKeyEntity {
   "desc"              is DbText               as "description" is SearchText;
 
   // Messages
-  "m"                 is DbChar(1024)         is 'label is SearchText;
+  "m"                 is DbChar(1024)         as "message" is 'label is SearchText;
   "r"                 is DbArray(Comment)     as "Replies";
 
   // Image / Thumbnail
