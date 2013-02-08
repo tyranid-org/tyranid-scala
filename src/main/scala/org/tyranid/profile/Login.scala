@@ -78,7 +78,7 @@ object Register {
          </div>
          <hr/>
          <div class="row-fluid">
-          <!--div class="span12" style="height:40px;padding-top:8px;text-align:right;">Or activate later and <button type="submit" class="btn-success btn">Continue To Volerro <i class="icon-caret-right"></i></button></div-->
+          <!--div class="span12" style="height:40px;padding-top:8px;text-align:right;">Or activate later and <button type="submit" class="btn-success btn">Continue To { B.applicationName } <i class="icon-caret-right"></i></button></div-->
          </div>
         </div>
       } else {
@@ -88,7 +88,7 @@ object Register {
          <input type="hidden" name="regStep" value="2"/>
          { T.web.b( 'keep ) |* <input type="hidden" name="keep" value="1"/> }
          <div class="row-fluid">
-          <div style="padding-top:1em;">One last step.  Please enter the name of <b style='color:#cc4418;'>your</b> company below.  This helps other identify you within Volerro.</div>
+          <div style="padding-top:1em;">One last step.  Please enter the name of <b style='color:#cc4418;'>your</b> company below.  This helps other identify you within { B.applicationName }.</div>
          </div>
          <hr/>
          <div class="row-fluid">
@@ -405,7 +405,7 @@ $( function() {
 
       val inner = 
        <div class="container">
-        { ( entryApp == 0 ) |* <div style="margin-top:16px; font-size:24px;">Creating an account with Volerro is Free!</div> }
+        { ( entryApp == 0 ) |* <div style="margin-top:16px; font-size:24px;">Creating an account with { B.applicationName } is Free!</div> }
         { !noSocial |*
          <div class="plainBox">
           <div class="title">Use Social Login to Automatically Register</div>
@@ -436,7 +436,7 @@ $( function() {
              <source src="https://d33lorp9dhlilu.cloudfront.net/videos/Volerro_Sign_Up.mp4" type="video/mp4"/>
             </video>
             """ ) }
-            <div class="title">Volerro Sign Up</div>
+            <div class="title">{ B.applicationName } Sign Up</div>
            </div>
           </div>
          </div>
