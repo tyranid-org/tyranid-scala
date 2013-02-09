@@ -58,11 +58,11 @@ object Register {
     background { B.emailTemplates.welcome( user, activationCode ) }
   }
 
-  def page( user:User, org:Org, jsonRes:WebResponse ) = {
+  def page( user:User, org:Org, jsonRes:WebResponse, afterOrg:Boolean = false ) = {
     val inner:NodeSeq =
-      if ( org != null ) {
+      if ( org != null || afterOrg ) {
         // if the org domain is the same as MY domain then add them.
-        if ( org.s( 'domain ).toLowerCase == Email.domainFor( user.s( 'email ) ).toLowerCase ) {
+        if ( org!= null && org.s( 'domain ).toLowerCase == Email.domainFor( user.s( 'email ) ).toLowerCase ) {
           user.join( org )
         } else {
           // Must be approved, so send a join request AFTER they activate the account.
@@ -74,12 +74,9 @@ object Register {
         <div class="container-fluid" style="padding:0;padding-top:1em;">
          <div class="row-fluid">
           <div class="span12">A verification email was sent to <b>{ user.s( 'email ) }</b>.</div>
-          <div>Click the activation link in your email to gain access to { org.s( 'name ).possessive } network and projects.</div>
+          { ( org != null ) |* <div>Click the activation link in your email to gain access to { org.s( 'name ).possessive } network and projects.</div> }
          </div>
          <hr/>
-         <div class="row-fluid">
-          <!--div class="span12" style="height:40px;padding-top:8px;text-align:right;">Or activate later and <button type="submit" class="btn-success btn">Continue To { B.applicationName } <i class="icon-caret-right"></i></button></div-->
-         </div>
         </div>
       } else {
         //jsonRes.extraJS = "$(function(){ tyr.callWhenHtmlDone( function() { tyr.autocomplete( 'companyName', '/log/company' ); $('#companyName').focus(); }, 1000 ) } );"
@@ -88,18 +85,18 @@ object Register {
          <input type="hidden" name="regStep" value="2"/>
          { T.web.b( 'keep ) |* <input type="hidden" name="keep" value="1"/> }
          <div class="row-fluid">
-          <div style="padding-top:1em;">One last step.  Please enter the name of <b style='color:#cc4418;'>your</b> company below.  This helps other identify you within { B.applicationName }.</div>
+          <div class="span10 offset2" style="padding-top:1em;">One last step.  Please enter the name of <b style='color:#cc4418;'>your</b> company<span>*</span> below.  This helps others identify you within { B.applicationName }.</div>
          </div>
          <hr/>
          <div class="row-fluid">
-          <div class="span6"><input type="text" id="companyName" name="companyName" placeholder="Your Company Name" data-update="blur" data-val="req"/></div>
+          <div class="span6 offset2"><input type="text" id="companyName" name="companyName" placeholder="Your Company Name" data-update="blur"/></div>
           { Focus( "#companyName" ) }
-          <div class="span6 hints">
+          <div class="span4 hints">
            <div class="fldHint">
-            Hint: Use your own name (ex: BobSmith Co) if you are not in a company.
+            * Company name not required.
            </div>
           </div> 
-          <div class="span6 val-display"/>
+          <div class="span4 val-display"/>
          </div> 
          <div class="row-fluid">
           <div class="span12" style="height:40px;padding-top:8px;text-align:right;"><button type="submit" class="btn-success btn">Next <i class="icon-caret-right"></i></button></div>
