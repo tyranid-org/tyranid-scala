@@ -121,20 +121,19 @@ class ThreadData {
   }
 
   def clear {
-    tyrData = null
+    tyrSession = null
   }
 
 
   // --- Tyranid Session
 
-  private var tyrData:Session = _
+  private var tyrSession:Session = _
   
-  def becomeSession( s:Session ) = tyrData = s
+  def becomeSession( s:Session ) = tyrSession = s
 
-  // rename tyr to session once lift is removed
   def session:Session = {
-    if ( tyrData == null ) {
-      tyrData =
+    if ( tyrSession == null ) {
+      tyrSession =
         if ( http != null ) {
           http.getAttribute( WebSession.HttpSessionKey ) match {
           case s:Session => s
@@ -148,7 +147,7 @@ class ThreadData {
         }
     }
 
-    tyrData
+    tyrSession
   }
 
   def user:User =
@@ -188,6 +187,14 @@ class ThreadData {
   val requestCache = mutable.Map[String,Any]()
 
 	def requestCached[ T ]( key:String )( block: => T ):T = requestCache.getOrElseUpdate( key, block ).as[T]
+
+
+
+  /*
+   * * *  PegDown
+   */
+
+  lazy val pegdown = new org.pegdown.PegDownProcessor( org.pegdown.Extensions.ALL )
 }
 
 

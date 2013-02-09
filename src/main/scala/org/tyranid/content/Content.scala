@@ -392,7 +392,7 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
   "_id"            is DbInt                  is 'id;
 
   "on"             is DbDateTime             ;
-  "m"              is DbChar(1024)           is 'label;
+  "m"              is DbChar(1024)           as "message" is 'label;
 
   "pn"             is DbInt                  as "Page Number";
   "x"              is DbDouble               as "X";
@@ -662,13 +662,17 @@ trait ContentMeta extends PrivateKeyEntity {
   "groupMode"         is DbLink(GroupMode)    ;
 
   // Attachment / File
+  "link"              is DbUrl                ;
+  "icon"              is DbUrl                ; // ( TODO:  should be DbImage? ) for links, this is the favicon
   "sourceUrl"         is DbUrl                ;
   "fileName"          is DbChar(128)          is 'required;
   "size"              is DbLong               ;
-  "desc"              is DbText               is SearchText;
+  "title"             is DbChar(128)          is SearchText;
+
+  "desc"              is DbText               as "description" is SearchText;
 
   // Messages
-  "m"                 is DbChar(1024)         is 'label is SearchText;
+  "m"                 is DbChar(1024)         as "message" is 'label is SearchText;
   "r"                 is DbArray(Comment)     as "Replies";
 
   // Image / Thumbnail
@@ -676,11 +680,6 @@ trait ContentMeta extends PrivateKeyEntity {
   "imgH"              is DbInt                help Text( "The actual height of the image." );
   "imgW"              is DbInt                help Text( "The actual width of the image." );
   
-  
-  // Attachment
-  "title"             is DbChar(128)          is SearchText;
-  "link"              is DbUrl                ;
-  "icon"              is DbUrl                ; // ( TODO:  should be DbImage? ) for links, this is the favicon
   
   // RSS & Atom Feeds
   "feedOut"           is DbBoolean            help <span>If this is enabled, outgoing <b>public</b> RSS and Atom feeds are generated.</span>;
