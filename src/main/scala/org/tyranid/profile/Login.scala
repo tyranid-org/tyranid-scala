@@ -716,8 +716,8 @@ $( function() {
           <div class="row-fluid">
            <div class="span6">
             { orgName.notBlank ?
-            <input type="text" name="company" id="company" value={ orgName } placeholder="Company Name" readonly="readonly" data-update="blur" data-update-url={ wpath + "/register" }/> |
-            <input type="text" name="company" id="company" value={ orgName } placeholder="Company Name" data-update="blur" data-update-url={ wpath + "/register" }/>
+            <input type="text" name="company" id="company" value={ orgName } placeholder="Company Name (not required)" readonly="readonly" data-update="blur" data-update-url={ wpath + "/register" }/> |
+            <input type="text" name="company" id="company" value={ orgName } placeholder="Company Name (not required)" data-update="blur" data-update-url={ wpath + "/register" }/>
             }
            </div>
            <div class="span6 val-display"/>
