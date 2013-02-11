@@ -23,9 +23,10 @@ import scala.xml.{ NodeSeq, Unparsed }
 
 import org.tyranid.Imp._
 import org.tyranid.db.Scope
+import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.email.Email
-import org.tyranid.json.Js
+import org.tyranid.json.{ Js, JqHtml }
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
 import org.tyranid.secure.DbReCaptcha
@@ -58,96 +59,31 @@ object Register {
     background { B.emailTemplates.welcome( user, activationCode ) }
   }
 
-  def page( user:User, org:Org, jsonRes:WebResponse, afterOrg:Boolean = false ) = {
-    val inner:NodeSeq =
-      if ( org != null || afterOrg ) {
-        // if the org domain is the same as MY domain then add them.
-        if ( org!= null && org.s( 'domain ).toLowerCase == Email.domainFor( user.s( 'email ) ).toLowerCase ) {
-          user.join( org )
-        } else {
-          // Must be approved, so send a join request AFTER they activate the account.
-        }
-        
-        sendActivation( user )
-        user.save
-        
+  def finishPage( user:User, companyName:String = null ) = 
+    <div class="container">
+     <div class="offset3 span6" style="margin-top:100px;text-align:center;">
+      <a href="/"><img src="/volerro_logo.png"/></a>
+     </div>
+     <div class="offset2 span8">
+      <form method="post" action="/user/register" id="f" class="register" style="margin-bottom:12px;" data-val="1">
+       <fieldset class="registerBox">
+        <div class="top-form-messages"/>
+        <div class="container-fluid" style="padding:0;">
+         <div class="row-fluid">
+          <h1 class="span12">Thanks, { user.s( 'firstName ) }!</h1>
+         </div>
+        </div>
         <div class="container-fluid" style="padding:0;padding-top:1em;">
          <div class="row-fluid">
           <div class="span12">A verification email was sent to <b>{ user.s( 'email ) }</b>.</div>
-          { ( org != null ) |* <div>Click the activation link in your email to gain access to { org.s( 'name ).possessive } network and projects.</div> }
+          { companyName.notBlank |* <div>Click the activation link in your email to gain access to { companyName.possessive } network and projects.</div> }
          </div>
          <hr/>
-        </div>
-      } else {
-        //jsonRes.extraJS = "$(function(){ tyr.callWhenHtmlDone( function() { tyr.autocomplete( 'companyName', '/log/company' ); $('#companyName').focus(); }, 1000 ) } );"
-        
-        <div class="container-fluid" style="padding:0;">
-         <input type="hidden" name="regStep" value="2"/>
-         { T.web.b( 'keep ) |* <input type="hidden" name="keep" value="1"/> }
-         <div class="row-fluid">
-          <div class="span10 offset2" style="padding-top:1em;">One last step.  Please enter the name of <b style='color:#cc4418;'>your</b> company<span>*</span> below.  This helps others identify you within { B.applicationName }.</div>
-         </div>
-         <hr/>
-         <div class="row-fluid">
-          <div class="span6 offset2"><input type="text" id="companyName" name="companyName" placeholder="Your Company Name" data-update="blur"/></div>
-          { Focus( "#companyName" ) }
-          <div class="span4 hints">
-           <div class="fldHint">
-            * Company name not required.
-           </div>
-          </div> 
-          <div class="span4 val-display"/>
-         </div> 
-         <div class="row-fluid">
-          <div class="span12" style="height:40px;padding-top:8px;text-align:right;"><button type="submit" class="btn-success btn">Next <i class="icon-caret-right"></i></button></div>
-         </div>
-        </div>
-      }       
-        
-    <div class="container">
-     <div class="offset3 span6" style="margin-top:100px;text-align:center;">
-      <a href="/"><img src="/volerro_logo.png"/></a>
-     </div>
-     <div class="offset2 span8">
-      <form method="post" action="/user/register" id="f" class="register" style="margin-bottom:12px;" data-val="1">
-       <fieldset class="registerBox">
-        <div class="top-form-messages"/>
-        <div class="container-fluid" style="padding:0;">
-         <div class="row-fluid">
-          <h1 class="span12">Thanks, { user.s( 'firstName ) }!</h1>
-         </div>
-        </div>
-        { inner }
+        </div> 
        </fieldset>
       </form>
      </div>
     </div>
-  }
-  
-  def beta( user:User, jsonRes:WebResponse ) = {
-    <div class="container">
-     <div class="offset3 span6" style="margin-top:100px;text-align:center;">
-      <a href="/"><img src="/volerro_logo.png"/></a>
-     </div>
-     <div class="offset2 span8">
-      <form method="post" action="/user/register" id="f" class="register" style="margin-bottom:12px;" data-val="1">
-       <fieldset class="registerBox">
-        <div class="top-form-messages"/>
-        <div class="container-fluid" style="padding:0;">
-         <div class="row-fluid">
-          <h1 class="span12">Thanks, { user.s( 'firstName ) }!</h1>
-         </div>
-        </div>
-        <div class="container-fluid" style="padding:0;padding-top:1em;">
-         <div class="row-fluid">
-          <div class="span12">We will be sending you an invitation to our private beta very soon!</div>
-         </div>
-        </div>
-       </fieldset>
-      </form>
-     </div>
-    </div>
-  }
 }
 
 object Loginlet extends Weblet {
@@ -345,8 +281,6 @@ $( function() {
       web.redirect( website + "/?lo=1" + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
     case s if s.startsWith( "/in" ) =>
       socialLogin( s.substring( 3 ) )
-    case "/register2" =>
-      registerRetail( web, sess )
     case s if s.startsWith( "/register" ) =>
       if ( T.LnF == LnF.RetailBrand ) {
         registerRetail( web, sess )
@@ -574,7 +508,7 @@ $( function() {
           val contact = ContactInfo.db.findOne( Mobj( "inviteCode" -> web.s( 'activationCode ) ) )
               
           if ( contact != null ) {
-            web.jsRes( org.tyranid.json.Js( """ 
+            web.jsRes( Js( """ 
   $('#email').val( '""" + contact.s( 'email ) + """' );
   $('#firstName').val( '""" + contact.s( 'name ).split( ' ' )(0) + """' );
   $('#lastName').val( '""" + contact.s( 'name ).split( ' ' )(1) + """' );""" ) ) 
@@ -591,6 +525,24 @@ $( function() {
             sess.error( "Email is already in use." )
             web.jsRes()
           }
+          
+          val domain = Email.domainFor( email )
+          val org = B.Org.db.findOne( Mobj( "domain" -> domain.toPatternI ) )
+          
+          if ( org != null ) {
+            T.user( 'org ) = org.id
+            web.jsRes( Js( "$('#company').val( '" + org.s( 'name ) + "' ).attr( 'readonly', 'readonly' );" ) )
+          } else {
+            T.user( 'org ) = null
+            web.jsRes( Js( "$('#company').val( '' ).removeAttr( 'readonly' );" ) )
+          }
+        case "company" =>
+          val exists = B.Org.db.exists( Mobj( "name" -> ("^" + web.s( 'company ).encRegex + "$").toPatternI ) )
+
+          if ( exists ) {
+            sess.error( "Company name is already in use." )
+            web.jsRes()
+          }
         case _ => 
            web.jsRes()
       }
@@ -598,7 +550,6 @@ $( function() {
       return
     }
     
-    val betaSignup = web.b( 'beta )
     val keep = web.b( 'keep )
     
     val user =
@@ -640,15 +591,15 @@ $( function() {
       }
     }
 
-    val registerView = "register" + ( betaSignup ? "beta" | ( "rb" + ( B.BETA ? "beta" | "" ) ) )
-    
-    val ui = user.view.ui( registerView )
+    val ui = user.view.ui( "registerrb" )
 
     user.isAdding = true
     
+    val doRecaptcha = B.requireReCaptcha
+
     if ( web.b( 'xhrSbt ) ) {
       val jsonRes = web.jsonRes( sess )
-      val invalids = Scope( user, initialDraw = false, captcha = !betaSignup ).submit( user, ui )
+      val invalids = Scope( user, initialDraw = false, captcha = doRecaptcha ).submit( user, ui )
 
       if ( invalids.isEmpty ) {
         user( 'createdOn ) = new Date
@@ -658,51 +609,39 @@ $( function() {
         if ( entryAppVal != null )
           user( "entryApp" ) = entryAppVal._i
           
-        //user.save
-        
         val email = user.s( 'email )
+        val companyName = web.s( 'company ).trim 
         
-        if ( !betaSignup ) {
-          val org = Email.isWellKnownProvider( email ) ? null | {
-            val emailDomain = Email.domainFor( email )
-            B.Org( B.Org.db.findOne( Mobj( "domain" -> emailDomain.toPatternI ), Mobj( "name" -> 1, "domain" -> 1 ) ) )
-          }
-          
-          if ( org != null )
-            user.save
-            
-          if ( keep && org != null ) {
-            user.join( org )
-            sess.login( user )
-            user.remove( 'activationCode )
-            user.save
-            
-            B.welcomeUserEvent
-            val jsonRes = web.jsonRes( sess )
-            jsonRes.extraJS = "tyr.app.loadMenubar( '/user/menubar' ); tyr.app.loadMain( '/dashboard' );"
-            web.json( jsonRes )
-            Group.ensureInOrgGroup( user )
-            
+        if ( user.oid( 'org ) == null && companyName.notBlank ) {
+          val exists = B.Org.db.exists( Mobj( "name" -> ("^" + companyName.encRegex + "$").toPatternI ) )
+
+          if ( exists ) {
+            sess.error( "Company name is already in use." )
+            web.jsRes()
             return
-          } else {
-            jsonRes.htmlMap = Map( 
-                "html" -> WebTemplate( Register.page( user, org, jsonRes ) ),
-                "transition" -> "slideLeft",
-                "duration" -> 500 )
           }
-        } else {
-          ContactInfo.ensure( user.s( 'email ), user.fullName, beta = true )
+        }
           
-          jsonRes.htmlMap = Map( 
-              "html" -> WebTemplate( Register.beta( user, jsonRes ) ),
-              "transition" -> "slideLeft",
-              "duration" -> 500 )
+        if ( user.s( 'activationCode ).isBlank ) {
+          Register.sendActivation( user )
+          B.registerUser( user, companyName )
+          web.jsRes( JqHtml( "#main", Register.finishPage( user, companyName ) ) )
+          return
+        } else {          
+          sess.login( user )
+          user.remove( 'activationCode )
+          
+          B.registerUser( user, companyName )
+          B.welcomeUserEvent
+            
+          web.jsRes( Js( "tyr.app.loadMenubar( '/user/menubar' ); tyr.app.loadMain( '/dashboard' );" ) )            
+          return
         }
       } else {
         for ( i <- invalids )
           sess.error( i.message )
           
-        if ( B.requireReCaptcha && !betaSignup )
+        if ( doRecaptcha )
           jsonRes.extraJS = "Recaptcha.reload();"
       }
       
@@ -714,20 +653,41 @@ $( function() {
     val entryApp = web.i( 'app ) or 0
     sess.put( "entryApp", new java.lang.Integer( entryApp._i ) )
 
-    val doRecaptcha = B.requireReCaptcha && !betaSignup
+    val orgName:String = {
+      val userEmail = user.s( 'email )
     
+      if ( !user.isNew && userEmail.notBlank ) {
+        val orgId = user.oid( 'org )
+        
+        if ( orgId != null ) {
+          TidItem.by( B.Org.idToTid( orgId ) ).label
+        } else {
+          val domain = Email.domainFor( userEmail )
+          val org = B.Org.db.findOne( Mobj( "domain" -> domain.toPatternI ) )
+            
+          if ( org != null ) {
+            T.user( 'org ) = org.id
+            org.s( 'name )
+          } else {
+            ""
+          }
+        }
+      } else {
+        ""
+      }
+    }
+        
     val inner =
    <div class="offset3 span6" style={ "margin-top:" + ( doRecaptcha ? ( B.BETA ? "25" | "50" )  | "100" ) + "px;text-align:center;" }>
     <a href="/"><img src="/volerro_logo.png"/></a>
    </div> ++
-   <div class={ "offset2 span8" + ( betaSignup |* " beta" ) }>
-    <form method="post" action={ wpath + "/register2" } id="f" class="register" style="margin-bottom:12px;" data-val="1">
+   <div class="offset2 span8">
+    <form method="post" action={ wpath + "/register" } id="f" class="register" style="margin-bottom:12px;" data-val="1">
      { keep |* <input type="hidden" name="keep" value="1"/> }
-     { betaSignup |* <input type="hidden" name="beta" value="1"/> }
      <fieldset class="registerBox">
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
-        <h1 class="span12">{ betaSignup ? "Join our private beta!" | ( "Register" + ( B.BETA ? " for Beta access." | "" ) ) }</h1>
+        <h1 class="span12">Register</h1>
        </div>
       </div>
       <hr style="margin:4px 0 30px;"/>
@@ -735,24 +695,6 @@ $( function() {
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
          <div class="container-fluid span12" style="padding:0;">
-          { !keep && ( B.BETA && !betaSignup ) |*
-            { user.s( 'activationCode ).isBlank ?
-          <div class="row-fluid">
-           <div class="span6">
-            <input type="text" name="activationCode" id="activationCode" value={ user.s( 'activationCode ) } placeholder="Invite Code" data-update="blur" data-val="req"/>
-           </div>
-           <div class="span6 val-display"/>
-          </div> |
-          <input type="hidden" name="activationCode" id="activationCode" value={ user.s( 'activationCode ) }/>
-            }
-          }
-          { ( !keep && ( B.BETA && !betaSignup ) ) ?
-          <div class="row-fluid">
-           <div class="span3"><input type="text" id="firstName" name="firstName" readonly="readonly" placeholder="First Name" value={ user.s( 'firstName ) }/></div>
-           <div class="span3"><input type="text" id="lastName" name="lastName" readonly="readonly" placeholder="Last Name" value={ user.s( 'lastName ) }/></div>
-           { Focus("#activationCode") }
-           <div class="span6 val-display"/>
-          </div> |
           <div class="row-fluid">
            <div class="span3"><input type="text" id="firstName" name="firstName" value={ user.s( 'firstName ) } placeholder="First Name" data-val="req" data-val-with="lastName"/></div>
            <div class="span3"><input type="text" id="lastName" name="lastName" value={ user.s( 'lastName ) } placeholder="Last Name" data-val="req" data-val-with="firstName"/></div>
@@ -762,31 +704,37 @@ $( function() {
             <div>Hint: <b>This will be the email address we send your account activation link to</b>.  Use your company or organization email address to easier connect with co-workers.</div> 
            </div>  
           </div>
-          }
           <div class="row-fluid">
            <div class="span6">
-            { ( ( B.BETA && !betaSignup ) || !user.isNew ) ?
-              <input type="text" name="email" id="email" value={ user.s( 'email ) } readonly="readonly" placeholder="Email address"/> |
-              <input type="text" name="email" id="email" value={ user.s( 'email ) } placeholder="Email address" data-update="blur" data-update-url={ wpath + "/register" } data-val="req,email"/>
+            { user.isNew ?
+              <input type="text" name="email" id="email" value={ user.s( 'email ) } placeholder="Email address" data-update="blur" data-update-url={ wpath + "/register" } data-val="req,email"/> |
+              <input type="text" name="email" id="email" value={ user.s( 'email ) } readonly="readonly" placeholder="Email address"/>
             }
            </div>
            <div class="span6 val-display"/>
           </div>
-          { !betaSignup |*
-        <div class="row-fluid">
+          <div class="row-fluid">
+           <div class="span6">
+            { orgName.notBlank ?
+            <input type="text" name="company" id="company" value={ orgName } placeholder="Company Name" readonly="readonly" data-update="blur" data-update-url={ wpath + "/register" }/> |
+            <input type="text" name="company" id="company" value={ orgName } placeholder="Company Name" data-update="blur" data-update-url={ wpath + "/register" }/>
+            }
+           </div>
+           <div class="span6 val-display"/>
+          </div>
+          <div class="row-fluid">
            <div class="span6">
             <input type="password" name="password" id="password" placeholder="Password" data-val="req,min=7"/>
            </div>
            <div class="span6 val-display"/> 
           </div>
-        <div class="row-fluid">
+          <div class="row-fluid">
            <div class="span6">
             <input type="hidden" name="keep" value={ web.s( 'keep ) }/>
             <input type="password" name="password2" id="password2" placeholder="Re-type password" data-val="req,same=password,min=7"/>
            </div>
            <div class="span6 val-display"/>
           </div>
-          }
           { doRecaptcha |*
         <div class="row-fluid">
            <div class="span6">
@@ -805,12 +753,10 @@ $( function() {
        </div>
        <hr style="margin:10px 0 12px;"/>
        <div class="row-fluid">
-         { !betaSignup |* 
          <div class="span6">
           <div style="height:40px;line-height:40px;position:relative;top:10px;">Already registered? <a tabindex="-1" data-sbt={ Form.attrJson( Map( "href" -> ( wpath + "/in" ), "top" -> 1 ) ) }>Sign in here</a></div>
          </div> 
-         } 
-         <div class={ "span6" + ( betaSignup |* " offset6" ) } style="height:40px;padding-top:8px;"><button id='regBtn' disabled='disabled' type="submit" class="btn-success btn pull-right">{ betaSignup ? "Sign-up" | "Register" } <i class="icon-caret-right"></i></button></div>
+         <div class="span6" style="height:40px;padding-top:8px;"><button id='regBtn' disabled='disabled' type="submit" class="btn-success btn pull-right">Register <i class="icon-caret-right"></i></button></div>
        </div>
       </div>
      </fieldset>

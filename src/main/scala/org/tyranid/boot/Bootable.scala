@@ -31,7 +31,7 @@ import org.bson.types.ObjectId
 
 import org.tyranid.Imp._
 import org.tyranid.content.Content
-import org.tyranid.db.Entity
+import org.tyranid.db.{ Entity }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.document.crocodoc.CrocApp
 import org.tyranid.document.dropbox.DropboxApp
@@ -160,6 +160,7 @@ trait Bootable {
 
   @volatile var newUser:() => User = null
   val userMeta:UserMeta
+  val orgMeta:OrgMeta
   @volatile var User:UserMeta = null
   @volatile var Org:OrgMeta = null
   @volatile var Location:MongoEntity = null
@@ -171,6 +172,7 @@ trait Bootable {
 
   @volatile var loginPage:() => NodeSeq = null
   
+  def registerUser( user:User, companyName:String ) 
   def appShellPage( web:WebContext ): NodeSeq = NodeSeq.Empty
 
   lazy val appOrgId = Org.db.findOne( Mobj( "name" -> applicationName ) ).oid

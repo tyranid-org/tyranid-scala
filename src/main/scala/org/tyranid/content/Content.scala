@@ -825,7 +825,7 @@ abstract class Content( override val view:MongoView,
       ( imgUrl.toLowerCase.startsWith( "http" ) ? imgUrl | T.website + imgUrl ) | null
     
     if ( dlUrl.notBlank ) {
-      dlUrl = dlUrl.prefix( '?' )
+      dlUrl = dlUrl.prefix( '?' ) or dlUrl
       val ext = dlUrl.suffix( '.' )
       Http.GET_File( dlUrl, ext = ( "." + ext ) )
     } else {

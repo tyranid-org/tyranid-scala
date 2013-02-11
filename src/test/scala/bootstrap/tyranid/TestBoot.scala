@@ -40,7 +40,10 @@ class Boot extends org.tyranid.boot.Bootable {
   val comets = Nil
 
   lazy val userMeta = User
+  lazy val orgMeta = Org
 
+  override def registerUser( user:org.tyranid.profile.User, companyName:String ) { }
+    
   val build = 1
 
   def access( thread:ThreadData, accessType:AccessType, ref:AnyRef ) {}
