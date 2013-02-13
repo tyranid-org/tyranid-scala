@@ -81,7 +81,7 @@ object Email {
   }
   
   def isWellKnownProvider( email:String ) =
-    wellKnownProviders exists email.toLowerCase.endsWith
+    wellKnownProviders exists email.toLowerCase.contains
   
   def domainFor( email:String ) =
     email.indexOf( '@' ) match {
