@@ -166,39 +166,34 @@ $( $('#idp').focus() );
       if ( user == null ) {
         // Create a new one
         val orgId = mapping.oid( 'org )
+        val org = B.Org.getById( orgId )
+        val newUser = B.newUser()       
         
-        if ( orgId != null ) {
-          val org = B.Org.getById( orgId )
-          val newUser = B.newUser()       
+        val fnameAttrib = mapping.s( 'firstNameAttrib )
+        
+        if ( fnameAttrib.notBlank )
+          newUser( 'firstName ) = json.s( fnameAttrib )
           
-          val fnameAttrib = mapping.s( 'firstNameAttrib )
+        val lnameAttrib = mapping.s( 'lastNameAttrib )
+        
+        if ( lnameAttrib.notBlank )
+          newUser( 'lastName ) = json.s( lnameAttrib )
           
-          if ( fnameAttrib.notBlank )
-            newUser( 'firstName ) = json.s( fnameAttrib )
-            
-          val lnameAttrib = mapping.s( 'lastNameAttrib )
+        newUser( 'email ) = email
+        newUser( 'createdOn ) = new Date
+        newUser( 'password ) = ""
           
-          if ( lnameAttrib.notBlank )
-            newUser( 'lastName ) = json.s( lnameAttrib )
-            
-          newUser( 'email ) = email
-          newUser( 'createdOn ) = new Date
-          newUser( 'password ) = ""
-            
-          newUser.join( org )
-          sess.login( newUser )
-          newUser.save
-          B.welcomeUserEvent
-          Group.ensureInOrgGroup( newUser )        
-        } else {
-          
-        }
-      } else if ( !user.b( 'inactive ) ) {
-        sess.login( B.User( user ) )
-      } else {
-        sess.error( "Sorry, this account has been deactivated" )
+        newUser.join( org )
+        sess.login( newUser )
+        newUser.save
+        B.welcomeUserEvent
+        Group.ensureInOrgGroup( newUser )        
+      } else if ( user.b( 'inactive ) ) {
+        sess.error( "Sorry, this account has been deactivated." )
         web.jsRes()
         return
+      } else {
+        sess.login( B.User( user ) )
       }
    
       web.redirect( "/dashboard" )
