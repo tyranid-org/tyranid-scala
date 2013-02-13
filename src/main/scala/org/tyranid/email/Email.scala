@@ -68,8 +68,7 @@ object Email {
     "@mediacomcc.com",
     "@msn.com",
     "@netamumail.com",
-    "@yahoo.com",
-    ".net" )
+    "@yahoo.com" )
 
   def isBlacklisted( email:String ) = {
     val u = B.User.db.findOne( Mobj( "email" -> email.toPatternI ), Mobj( "noEmail" -> 1 ) )
