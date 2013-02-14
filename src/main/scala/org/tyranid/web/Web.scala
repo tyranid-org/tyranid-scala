@@ -60,6 +60,70 @@ object WebFilter {
   def notAsset( path:String ) = !assetPattern.matcher( path ).matches
 }
 
+/*
+class BasicAuthFilter extends Filter {
+  var filterConfig:FilterConfig = _
+
+  def init( filterConfig:FilterConfig ) {
+    this.filterConfig = filterConfig
+    org.tyranid.boot.Boot.boot
+  }
+
+  def secureRedirect( req:HttpServletRequest, res:HttpServletResponse ) {
+    val qs = req.getQueryString
+
+    val sb = new StringBuilder
+
+    sb ++= "https://"
+    sb ++= req.getServerName
+    if ( req.getServerPort == 8080 )
+      sb ++= ":8443"
+    sb ++= req.getServletPath
+    if ( qs.notBlank )
+      sb += '?' ++= qs
+
+    res.sendRedirect( sb.toString )
+  }
+
+  def destroy {
+    this.filterConfig = null
+  }
+    
+  def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ):Unit = try {
+    import java.io.IOException
+    import org.tyranid.math.Base64
+  
+    val boot = B
+    
+    val req = request.asInstanceOf[HttpServletRequest]
+    val res = request.asInstanceOf[HttpServletResponse]
+    
+    if ( boot.requireSsl )
+      req.getServerPort match {
+      case 80 | 8080 => 
+        if ( req.getServerName.contains( B.domain ) ) 
+          return secureRedirect( req, res )
+      case _ =>
+      }
+
+    val header = req.getHeader( "Authorization" )
+    
+    if ( header.substring(0, 6) != "Basic " )
+      throw new IOException( "Basic Authentication is the only authentication supported.  Found: " + header.substring( 0, 6 ) )
+      
+    val basicAuthEncoded = header.substring(6)
+    val basicAuthAsString = Base64.toString( basicAuthEncoded.getBytes() ) // user:pass
+
+    
+  } catch {
+  case t:ControlThrowable =>
+    throw t
+  case t =>
+    t.log
+  }
+}
+*/
+
 class WebFilter extends Filter {
 
   var filterConfig:FilterConfig = _
