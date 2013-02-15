@@ -27,6 +27,8 @@ import scala.xml.{ Elem, Node, NodeSeq, Text, TopScope }
 import org.cometd.bayeux.server.BayeuxServer
 
 import org.tyranid.Imp._
+import org.tyranid.boot.Bootable
+import org.tyranid.db.mongo.Imp._
 import org.tyranid.http.UserAgent
 import org.tyranid.json.{ JsCmd, Js, JqHide, JqShow, JqHtml }
 import org.tyranid.profile.{ LoginCookie, User }
@@ -60,8 +62,7 @@ object WebFilter {
   def notAsset( path:String ) = !assetPattern.matcher( path ).matches
 }
 
-/*
-class BasicAuthFilter extends Filter {
+trait TyrFilter extends Filter {
   var filterConfig:FilterConfig = _
 
   def init( filterConfig:FilterConfig ) {
@@ -69,103 +70,43 @@ class BasicAuthFilter extends Filter {
     org.tyranid.boot.Boot.boot
   }
 
-  def secureRedirect( req:HttpServletRequest, res:HttpServletResponse ) {
-    val qs = req.getQueryString
+  def secureRedirect( web:WebContext ) {
+    val qs = web.req.getQueryString
 
     val sb = new StringBuilder
 
     sb ++= "https://"
-    sb ++= req.getServerName
-    if ( req.getServerPort == 8080 )
+    sb ++= web.req.getServerName
+    if ( web.req.getServerPort == 8080 )
       sb ++= ":8443"
-    sb ++= req.getServletPath
+    sb ++= web.req.getServletPath
     if ( qs.notBlank )
       sb += '?' ++= qs
 
-    res.sendRedirect( sb.toString )
+    web.res.sendRedirect( sb.toString )
   }
 
   def destroy {
     this.filterConfig = null
   }
-    
-  def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ):Unit = try {
-    import java.io.IOException
-    import org.tyranid.math.Base64
   
-    val boot = B
-    
-    val req = request.asInstanceOf[HttpServletRequest]
-    val res = request.asInstanceOf[HttpServletResponse]
-    
-    if ( boot.requireSsl )
-      req.getServerPort match {
-      case 80 | 8080 => 
-        if ( req.getServerName.contains( B.domain ) ) 
-          return secureRedirect( req, res )
-      case _ =>
-      }
-
-    val header = req.getHeader( "Authorization" )
-    
-    if ( header.substring(0, 6) != "Basic " )
-      throw new IOException( "Basic Authentication is the only authentication supported.  Found: " + header.substring( 0, 6 ) )
-      
-    val basicAuthEncoded = header.substring(6)
-    val basicAuthAsString = Base64.toString( basicAuthEncoded.getBytes() ) // user:pass
-
-    
-  } catch {
-  case t:ControlThrowable =>
-    throw t
-  case t =>
-    t.log
+  def ensureSession( thread:ThreadData, web:WebContext ) {
+    if ( thread.http == null ) {
+      val lnf = LnF.byDomain( web.req.getServerName )
+      thread.http = web.req.getSession( true )
+      T.session.put( Session.LnF_KEY, lnf )
+      LoginCookie.autoLogin          
+    }
   }
-}
-*/
-
-class WebFilter extends Filter {
-
-  var filterConfig:FilterConfig = _
-
-
-  def init( filterConfig:FilterConfig ) {
-    this.filterConfig = filterConfig
-    org.tyranid.boot.Boot.boot
-  }
-
-  def destroy {
-    this.filterConfig = null
-  }
-
-  def secureRedirect( ctx:WebContext ) {
-    val req = ctx.req
-    val qs = req.getQueryString
-
-    val sb = new StringBuilder
-
-    sb ++= "https://"
-    sb ++= req.getServerName
-    if ( ctx.req.getServerPort == 8080 )
-      sb ++= ":8443"
-    sb ++= req.getServletPath
-    if ( qs.notBlank )
-      sb += '?' ++= qs
-
-    ctx.res.sendRedirect( sb.toString )
-  }
-
+  
+  def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData ): Unit
+  
   def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ):Unit = try {
     val boot = B
 
     var web = new WebContext( request.asInstanceOf[HttpServletRequest],
                               response.asInstanceOf[HttpServletResponse], filterConfig.getServletContext() )
     
-    val notComet = !web.path.endsWith( "/cometd" )
-    
-    if ( notComet )
-      println( "  | " + web.path + ( !B.DEV |* ", referer: " + web.req.getHeader( "referer" ) ) )
-
     if ( boot.requireSsl )
       web.req.getServerPort match {
       case 80 | 8080 => 
@@ -174,9 +115,87 @@ class WebFilter extends Filter {
       case _ =>
       }
 
+    val notComet = !web.path.endsWith( "/cometd" )
+    
+    if ( notComet )
+      println( "  | " + web.path + ( !B.DEV |* ", referer: " + web.req.getHeader( "referer" ) ) )
+
     val thread = T
     thread.http = web.req.getSession( false )
     thread.web = web
+
+    completeFilter( boot, web, chain, thread )
+  } catch {
+  case t:ControlThrowable =>
+    throw t
+  case t =>
+    t.log
+  }
+}
+
+class BasicAuthFilter extends TyrFilter {
+  
+  def getUser( email:String, pw:String ): User = {
+    val users = B.User.db.find( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI,
+                   $or -> Array(
+                     Mobj( "inactive" -> Mobj( $exists -> false ) ),
+                     Mobj( "inactive" -> false ) )
+                   ) ).toSeq
+      
+    for ( u <- users; dbPw = u.s( 'password ) )
+      if ( dbPw.notBlank && pw.checkShash( dbPw ) )
+        return B.User( u )
+        
+    return null
+  }
+
+  override def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData ):Unit = {
+    import java.io.IOException
+    import org.tyranid.math.Base64
+  
+    if ( thread.http == null ) {
+      val header = web.req.getHeader( "Authorization" )
+      
+      web.req.dump
+      
+      if ( header.isBlank ) {
+        web.res.setHeader("WWW-Authenticate","Basic realm=\"" + B.applicationName + " Authorization\"")
+        web.res.sendError( HttpServletResponse.SC_UNAUTHORIZED )
+        return
+      }
+      
+      if ( header.substring(0, 6) != "Basic " )
+        throw new IOException( "Basic Authentication is the only authentication supported.  Found: " + header.substring( 0, 6 ) )
+      
+      val basicAuthEncoded = header.substring(6)
+      val basicAuthAsString = Base64.decode( basicAuthEncoded.getBytes() ) // user:pass
+      val email = basicAuthAsString.prefix( ':' )
+      val password = basicAuthAsString.substring( basicAuthAsString.indexOf( ':' ) + 1 ) 
+      val user = getUser( email, password )
+      
+      if ( user == null ) {
+        web.res.setStatus( HttpServletResponse.SC_UNAUTHORIZED )
+        return
+      }
+      
+      ensureSession( thread, web )
+      T.session.login( user )
+    }
+    
+    chain.doFilter( web.req, web.res )
+    
+    if ( T.session != null ) T.session.logout
+  }
+}
+
+class WebFilter extends TyrFilter {
+  override def completeFilter( boot:Bootable, webr:WebContext, chain:FilterChain, thread:ThreadData ):Unit = {
+    var web = webr
+    val notComet = !web.path.endsWith( "/cometd" )
+    
+    if ( notComet )
+      println( "  | " + web.path + ( !B.DEV |* ", referer: " + web.req.getHeader( "referer" ) ) )
+
     val isAsset = notComet && !WebFilter.notAsset( web.path )
 
     if ( notComet && thread.http != null ) {
@@ -255,12 +274,7 @@ class WebFilter extends Filter {
       for ( webloc <- boot.weblocs;
             if web.matches( webloc.weblet.wpath ) && webloc.weblet.matches( web ) ) {
 
-        if ( thread.http == null ) {
-          val lnf = LnF.byDomain( web.req.getServerName )
-          thread.http = web.req.getSession( true )
-          T.session.put( Session.LnF_KEY, lnf )
-          LoginCookie.autoLogin          
-        }
+        ensureSession( thread, web )
         
         //println( !web.b( 'xhr ) ) 
         //println( !isAsset )
@@ -292,12 +306,7 @@ class WebFilter extends Filter {
       AccessLog.log( web, thread, System.currentTimeMillis - start )
     }
 
-    chain.doFilter( request, response )
-  } catch {
-  case t:ControlThrowable =>
-    throw t
-  case t =>
-    t.log
+    chain.doFilter( web.req, web.res )
   }
 }
 

@@ -298,6 +298,9 @@ object Base64 {
   /**
    * Uses URL-safe encoding characters (i.e., "-" and "_").
    */
+  def decode( bytes:Array[Byte] ):String =
+    new String( toBytes( new String( bytes ) ) )
+    
   def toString( bytes:Array[Byte] ):String =
     org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString( bytes )
 
