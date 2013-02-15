@@ -125,11 +125,11 @@ $( $('#idp').focus() );
       }
     case s if s.startsWith( "/auth/" ) =>
       val id = s.split( "/" )(2)
-      println( "Trying to use SSO AUTH: " + id )
+      //println( "Trying to use SSO AUTH: " + id )
       val mapping = ( id == "test" ) ? SsoMapping.testMapping | SsoMapping.getById( id )
       
       if ( mapping == null || mapping.s( 'idpId ).isBlank ) {
-        println( "Mapping is null for id: " + id )
+        //println( "Mapping is null for id: " + id )
         sess.error( "SSO Mapping for code " + id + " not found." )
         
         if ( web.b( 'xhr ) ) 
@@ -137,16 +137,16 @@ $( $('#idp').focus() );
         else
           web.template( <tyr:shell>{ pageWrapper( signupBox ) }</tyr:shell> )
       } else {
-        println( "Found mapping, redirect to ping identity for token: " + id )
+        //println( "Found mapping, redirect to ping identity for token: " + id )
         sess.put( "sso", mapping )
         val idpId = URLEncoder.encode( mapping.s( 'idpId ), "UTF-8" ) 
         web.res.sendRedirect( "https://sso.connect.pingidentity.com/sso/sp/initsso?saasid=" + SAAS_ID + "&idpid=" + idpId + "&appurl=" + TOKEN_URL + "&appurl=" + ERROR_URL )
       }
     case "/token" =>
-      println( "Got token, connecting to pingidentity." )
+      //println( "Got token, connecting to pingidentity." )
       val token = web.s( 'tokenid )
       val str = Http.GET( "https://sso.connect.pingidentity.com/sso/TXS/2.0/1/" + token, authScope = AuthScope.ANY, username = B.pingIdentityUsername, password = B.pingIdentityPassword, preemptive = true ).s
-      println( "Got back: " + str )
+      //println( "Got back: " + str )
  
 /*      
 {
@@ -165,10 +165,16 @@ $( $('#idp').focus() );
       val mapping = sess.get( "sso" ).as[Record]
       val email = json.s( mapping.s( 'emailAttrib ) )
       
+      if ( email.isBlank ) {
+        sess.error( "There is no email field with the attribute name " + mapping.s( 'emailAttrib ) + " in the response:" + str )
+        web.jsRes()
+        return
+      }
+      
       val user = B.User.db.findOne( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) )
       
       if ( user == null ) {
-        println( "User: " + email  + " not found, creating a new user." )
+        //println( "User: " + email  + " not found, creating a new user." )
         // Create a new one
         val orgId = mapping.oid( 'org )
         val org = B.Org.getById( orgId )
@@ -194,12 +200,12 @@ $( $('#idp').focus() );
         B.welcomeUserEvent
         Group.ensureInOrgGroup( newUser )        
       } else if ( user.b( 'inactive ) ) {
-        println( "User is inactive:" + email )
+        //println( "User is inactive:" + email )
         sess.error( "Sorry, this account has been deactivated." )
         web.jsRes()
         return
       } else {
-        println( "Log in via SSO:" + email )
+        //println( "Log in via SSO:" + email )
         sess.login( B.User( user ) )
       }
    

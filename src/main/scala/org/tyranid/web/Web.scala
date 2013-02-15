@@ -17,6 +17,9 @@
 
 package org.tyranid.web
 
+
+
+import java.io.IOException
 import javax.servlet.{ Filter, FilterChain, FilterConfig, GenericServlet, ServletException, ServletRequest, ServletResponse, ServletContext }
 import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
 
@@ -31,6 +34,7 @@ import org.tyranid.boot.Bootable
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.http.UserAgent
 import org.tyranid.json.{ JsCmd, Js, JqHide, JqShow, JqHtml }
+import org.tyranid.math.Base64
 import org.tyranid.profile.{ LoginCookie, User }
 import org.tyranid.session.{ AccessLog, Session, ThreadData, Notification }
 import org.tyranid.ui.LnF
@@ -149,10 +153,7 @@ class BasicAuthFilter extends TyrFilter {
     return null
   }
 
-  override def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData, comet:Boolean ):Unit = {
-    import java.io.IOException
-    import org.tyranid.math.Base64
-  
+  override def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData, comet:Boolean ):Unit = {  
     if ( !comet && thread.http == null ) {
       val header = web.req.getHeader( "Authorization" )
       
