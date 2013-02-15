@@ -75,7 +75,7 @@ object Ssolet extends Weblet {
       
       if ( !sbt ) {
         if ( web.b( 'xhr ) ) 
-          web.jsRes( JqHtml( "#main", pageWrapper( signupBox ), transition="fadeOutIn", duration = 500 ), Js( "tyr.initFormPlaceholders( 'f' );" ) )
+          web.jsRes( JqHtml( "#main", pageWrapper( signupBox ), transition="fadeOutIn", duration = 500 ), Js( "tyr.initFormPlaceholders( '#f' );" ) )
         else
           web.template( <tyr:shell>{ pageWrapper( signupBox ) }</tyr:shell> )
       } else {
@@ -133,7 +133,7 @@ $( $('#idp').focus() );
         sess.error( "SSO Mapping for code " + id + " not found." )
         
         if ( web.b( 'xhr ) ) 
-          web.jsRes( JqHtml( "#main", pageWrapper( signupBox ), transition="fadeOutIn", duration = 500 ), Js( "tyr.initFormPlaceholders( 'f' );" ) )
+          web.jsRes( JqHtml( "#main", pageWrapper( signupBox ), transition="fadeOutIn", duration = 500 ), Js( "tyr.initFormPlaceholders( '#f' );" ) )
         else
           web.template( <tyr:shell>{ pageWrapper( signupBox ) }</tyr:shell> )
       } else {
