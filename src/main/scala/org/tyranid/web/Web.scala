@@ -99,7 +99,7 @@ trait TyrFilter extends Filter {
     }
   }
   
-  def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData ): Unit
+  def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData, comet:Boolean ): Unit
   
   def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ):Unit = try {
     val boot = B
@@ -115,16 +115,16 @@ trait TyrFilter extends Filter {
       case _ =>
       }
 
-    val notComet = !web.path.endsWith( "/cometd" )
+    val comet = web.path.endsWith( "/cometd" )
     
-    if ( notComet )
+    if ( !comet )
       println( "  | " + web.path + ( !B.DEV |* ", referer: " + web.req.getHeader( "referer" ) ) )
 
     val thread = T
     thread.http = web.req.getSession( false )
     thread.web = web
 
-    completeFilter( boot, web, chain, thread )
+    completeFilter( boot, web, chain, thread, comet )
   } catch {
   case t:ControlThrowable =>
     throw t
@@ -149,14 +149,12 @@ class BasicAuthFilter extends TyrFilter {
     return null
   }
 
-  override def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData ):Unit = {
+  override def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData, comet:Boolean ):Unit = {
     import java.io.IOException
     import org.tyranid.math.Base64
   
-    if ( thread.http == null ) {
+    if ( !comet && thread.http == null ) {
       val header = web.req.getHeader( "Authorization" )
-      
-      web.req.dump
       
       if ( header.isBlank ) {
         web.res.setHeader("WWW-Authenticate","Basic realm=\"" + B.applicationName + " Authorization\"")
@@ -189,16 +187,11 @@ class BasicAuthFilter extends TyrFilter {
 }
 
 class WebFilter extends TyrFilter {
-  override def completeFilter( boot:Bootable, webr:WebContext, chain:FilterChain, thread:ThreadData ):Unit = {
+  override def completeFilter( boot:Bootable, webr:WebContext, chain:FilterChain, thread:ThreadData, comet:Boolean ):Unit = {
     var web = webr
-    val notComet = !web.path.endsWith( "/cometd" )
-    
-    if ( notComet )
-      println( "  | " + web.path + ( !B.DEV |* ", referer: " + web.req.getHeader( "referer" ) ) )
+    val isAsset = !comet && !WebFilter.notAsset( web.path )
 
-    val isAsset = notComet && !WebFilter.notAsset( web.path )
-
-    if ( notComet && thread.http != null ) {
+    if ( !comet && thread.http != null ) {
       val session = T.session
       
       if ( session != null && !isAsset ) {
@@ -280,9 +273,9 @@ class WebFilter extends TyrFilter {
         //println( !isAsset )
         //println( T.user == null || !T.user.loggedIn )
         //println( T.LnF == LnF.RetailBrand )
-        //println( notComet )
+        //println( comet )
         
-        if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) ) && T.LnF == LnF.RetailBrand && notComet ) {
+        if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) ) && T.LnF == LnF.RetailBrand && !comet ) {
           //println( "full shell page!" )
           
           web.template( B.appShellPage( web ) )
