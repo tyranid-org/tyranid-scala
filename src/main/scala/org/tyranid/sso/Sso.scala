@@ -26,6 +26,7 @@ import org.apache.http.auth.{ AuthScope }
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbChar, DbLink, Record }
+import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
 import org.tyranid.http.Http
@@ -93,7 +94,7 @@ object Ssolet extends Weblet {
             //web.jsRes()
           } else {
             val orgId = mapping.oid( 'org )
-            val org = B.Org.getById( orgId )
+            val org = TidItem.by( B.Org.idToTid( orgId ) )
             sess.notice( "Welcome " + org.name + "!  Please complete the form below to complete your SSO setup." )
             sess.put( "sso", mapping )
             web.jsRes( Js( """

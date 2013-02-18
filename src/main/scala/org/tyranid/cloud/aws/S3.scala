@@ -59,8 +59,8 @@ object S3 {
   
   private val s3 = new AmazonS3Client( B.awsCredentials )
 
-  def signedUrl( bucket:S3Bucket, key:String, expireHours:Int = 1 ) = {
-    val expiration = new Date().add( java.util.Calendar.HOUR_OF_DAY, expireHours )
+  def signedUrl( bucket:S3Bucket, key:String, expireMinutes:Int = 60 ) = {
+    val expiration = new Date().add( java.util.Calendar.MINUTE, expireMinutes )
       
     if ( bucket.cfDomain != null ) {
       CloudFrontService.signUrlCanned(
