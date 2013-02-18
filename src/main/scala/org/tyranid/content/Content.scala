@@ -1152,27 +1152,27 @@ abstract class Content( override val view:MongoView,
   
 
   /*
-   * NOTE:  isWriter() currently is the same as isOwner() but this might change in the future
+   * NOTE:  canEdit() currently is the same as isOwner() but this might change in the future
    */
 
   
-  def isWriter( user: org.tyranid.profile.User ) = isOwner( user )
-  def isWriter( tid: String ):Boolean            = isOwner( tid )
+  def canEdit( user: org.tyranid.profile.User ) = isOwner( user )
+  def canEdit( tid: String ):Boolean            = isOwner( tid )
 
 
-  def isReader( user: org.tyranid.profile.User ):Boolean =
-    isReader( user.tid ) || ( user.hasOrg && isReader( user.org.tid ) )
+  override def canView( user: org.tyranid.profile.User ):Boolean =
+    canView( user.tid ) || ( user.hasOrg && canView( user.org.tid ) )
 
-  def isMember( user:org.tyranid.profile.User ) = isWriter( user ) || isReader( user )
+  def isMember( user:org.tyranid.profile.User ) = canEdit( user ) || canView( user )
 
-  def isReader( tid:String ):Boolean =
+  def canView( tid:String ):Boolean =
     tid.nonBlank &&
     a_?( 'v ).exists( t =>
       t == tid || {
         val ot = t._s
       
         Group.hasTid( ot ) &&
-        Group.byTid( ot ).flatten( _.isReader( tid ), false )
+        Group.byTid( ot ).flatten( _.canView( tid ), false )
       }
     )
 
