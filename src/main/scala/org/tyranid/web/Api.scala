@@ -1,0 +1,45 @@
+/**
+ * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+package org.tyranid.web
+      
+import scala.collection.JavaConversions._
+
+import scala.collection.mutable
+import scala.collection.mutable.Buffer
+import scala.xml.{ NodeSeq, Text, Unparsed }
+
+import org.bson.types.ObjectId
+
+import com.mongodb.DBObject
+
+import org.tyranid.Imp._
+import org.tyranid.db.mongo.MongoRecord
+import org.tyranid.profile.{ Group, User }
+
+object Api {
+  def membersMap( members:Seq[MongoRecord] ): Seq[Any] = {
+     members.map( m => m match {
+       case g:Group => Api.groupMap( g )
+       case u:User  => Api.userMap( u )
+     } ).toSeq
+  }
+        
+  def userMap( u:MongoRecord ) = Map( "user" -> Map( "name" -> u.s( 'fullName ), "email" -> u.s( 'email ) ) )
+  
+  def groupMap( g:MongoRecord ) = Map( "group" -> Map( "name" -> g.s( 'name ), "members" -> membersMap( Group( g ).defaultMembers ) ) )  
+}
