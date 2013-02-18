@@ -391,6 +391,8 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
     json( res )
   }
 
+  def isApi = req.getAttribute( "api" ) != null
+  
   def jsResNoNotifications( js:JsCmd* ) = {
     val res = jsonRes( T.session )
     res.notifications = false
