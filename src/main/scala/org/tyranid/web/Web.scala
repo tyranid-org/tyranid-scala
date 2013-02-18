@@ -17,6 +17,9 @@
 
 package org.tyranid.web
 
+
+
+import java.io.IOException
 import javax.servlet.{ Filter, FilterChain, FilterConfig, GenericServlet, ServletException, ServletRequest, ServletResponse, ServletContext }
 import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
 
@@ -31,6 +34,7 @@ import org.tyranid.boot.Bootable
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.http.UserAgent
 import org.tyranid.json.{ JsCmd, Js, JqHide, JqShow, JqHtml }
+import org.tyranid.math.Base64
 import org.tyranid.profile.{ LoginCookie, User }
 import org.tyranid.session.{ AccessLog, Session, ThreadData, Notification }
 import org.tyranid.ui.LnF
@@ -79,7 +83,7 @@ trait TyrFilter extends Filter {
     sb ++= web.req.getServerName
     if ( web.req.getServerPort == 8080 )
       sb ++= ":8443"
-    sb ++= web.req.getServletPath
+    sb ++= web.path
     if ( qs.notBlank )
       sb += '?' ++= qs
 
@@ -103,10 +107,15 @@ trait TyrFilter extends Filter {
   
   def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ):Unit = try {
     val boot = B
-
+    
     var web = new WebContext( request.asInstanceOf[HttpServletRequest],
                               response.asInstanceOf[HttpServletResponse], filterConfig.getServletContext() )
     
+    val removeFromPath = web.req.getAttribute( "removeFromPath" )._s
+    
+    if ( removeFromPath.notBlank )
+      web.setPath( web.path.replaceAll( removeFromPath, "" ) )
+      
     if ( boot.requireSsl )
       web.req.getServerPort match {
       case 80 | 8080 => 
@@ -149,10 +158,7 @@ class BasicAuthFilter extends TyrFilter {
     return null
   }
 
-  override def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData, comet:Boolean ):Unit = {
-    import java.io.IOException
-    import org.tyranid.math.Base64
-  
+  override def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData, comet:Boolean ):Unit = {  
     if ( !comet && thread.http == null ) {
       val header = web.req.getHeader( "Authorization" )
       
@@ -180,6 +186,9 @@ class BasicAuthFilter extends TyrFilter {
       T.session.login( user )
     }
     
+    web.req.setAttribute( "removeFromPath", "/api" )
+    web.req.setAttribute( "api", true )
+    
     chain.doFilter( web.req, web.res )
     
     if ( T.session != null ) T.session.logout
@@ -203,7 +212,7 @@ class WebFilter extends TyrFilter {
     
     var first = true
 
-    val path = web.req.getServletPath
+    val path = web.path
     
     if ( path.matches( WebFilter.versionPattern ) ) {
       val slash = path.indexOf( '/', 1 )
@@ -275,7 +284,7 @@ class WebFilter extends TyrFilter {
         //println( T.LnF == LnF.RetailBrand )
         //println( comet )
         
-        if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) ) && T.LnF == LnF.RetailBrand && !comet ) {
+        if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) ) && T.LnF == LnF.RetailBrand && !comet && web.req.getAttribute( "api" )._s.isBlank ) {
           //println( "full shell page!" )
           
           web.template( B.appShellPage( web ) )
@@ -389,14 +398,26 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
     json( res )
   }
 
-  def matches( path:String ) = {
+  def matches( p:String ) = {
     // TODO:  check for path separators ... i.e. "/foo" should not match "/foobar" but should match "/foo/bar"
-    req.getServletPath.startsWith( path )
+    path.startsWith( p )
   }
 
   def ip = req.getRemoteAddr
 
-  def path = req.getServletPath
+  var _path:String = null
+  
+  def setPath( p:String ) {
+    _path = p
+  }
+  
+  def path = {
+    if ( _path.isBlank )
+      _path = req.getServletPath
+    
+    _path
+  }
+  
   def fullPath = path + ( req.getQueryString != null |* "?" + req.getQueryString )
 
   def forward( url:String )  = throw WebForwardException( url )
