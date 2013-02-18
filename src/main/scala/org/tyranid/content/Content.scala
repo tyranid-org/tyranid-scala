@@ -1212,8 +1212,6 @@ abstract class Content( override val view:MongoView,
    * * *   File Attachment
    */
 
-  def isNote = !hasFile && !hasImage && s( 'link ).isBlank && contentType != ContentType.Folder   
-
   def isDocument = false
   def docId:String = isDocument ? s( 'file ).split( "/" )(1) | null 
   
