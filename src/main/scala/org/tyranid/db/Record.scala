@@ -242,7 +242,7 @@ trait Record extends Valid with BsonObject with QuickCache {
    * * *   Security
    */
 
-  final def canView( user:User ) = entity.canView( this, user )
+  def canView( user:User ) = entity.canView( this, user )
 
 
   /*

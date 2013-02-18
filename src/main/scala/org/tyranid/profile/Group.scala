@@ -325,16 +325,16 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
         false
 
       case GroupMode.Moderated =>
-        isReader( viewer ) &&
+        canView( viewer ) &&
         ( groupType match {
           case GroupType.Org  => member.tid == viewer.tid || isOwner( member.tid ) || owner || member.tid == viewer.orgTid || B.Org.orgIdFor( member ) == viewer.orgId
           case GroupType.User => member.tid == viewer.tid || isOwner( member.tid ) || owner
           } )
 
       case GroupMode.Collaborative =>
-        isReader( viewer )
+        canView( viewer )
       case _ =>
-        isReader( viewer )
+        canView( viewer )
       }
     }
   }
