@@ -48,7 +48,7 @@ object SsoMapping extends MongoEntity( tid = "a0Ut" ) {
     ts( 'idpId ) = "testidp.connect.pingidentity.com"
     ts( 'emailAttrib ) = "pingone.subject"
     ts
-  }
+  }  
 }
 
 object Ssolet extends Weblet {
@@ -207,7 +207,25 @@ $( $('#idp').focus() );
         return
       } else {
         //println( "Log in via SSO:" + email )
-        sess.login( B.User( user ) )
+        val u = B.User( user )
+        var save = false
+        
+        if ( u.s( 'firstName ).isBlank ) {
+          val fnameAttrib = mapping.s( 'firstNameAttrib )
+          u( 'firstName ) = json.s( fnameAttrib )
+          save = true
+        }
+        
+        if ( u.s( 'lastName ).isBlank ) {
+          val lnameAttrib = mapping.s( 'lastNameAttrib )
+          u( 'lastName ) = json.s( lnameAttrib )
+          save = true
+        }
+
+        if ( save )
+          u.save
+          
+        sess.login( u )
       }
    
       web.redirect( "/dashboard" )

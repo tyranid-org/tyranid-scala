@@ -186,7 +186,7 @@ class BasicAuthFilter extends TyrFilter {
       T.session.login( user )
     }
     
-    web.req.setAttribute( "removeFromPath", "/api" )
+    //web.req.setAttribute( "removeFromPath", "/api" )
     web.req.setAttribute( "api", true )
     
     chain.doFilter( web.req, web.res )
@@ -529,6 +529,18 @@ trait Weblet {
       )
 
   def _404 = throw new Web404Exception
+  
+  def getFormParam( formParams: collection.Map[String, Seq[String]], n: String, default: String = null ) = {
+    val list = formParams.get(n)
+
+    if ( list == null || list.size == 0 ) {
+      default
+    } else {
+      val v = list.get( 0 )
+
+      if ( v.notBlank ) v else default
+    }
+  }
 }
 
 

@@ -126,17 +126,6 @@ object Imp {
     test ? background { block } | block
   }
 
-  def tryapi( block: => Map[Any,Any] ) {
-    try {
-      T.web.json( block + ( "status" -> "ok" ) )
-    } catch {
-      case e:Exception =>
-        e.printStackTrace
-        log( Event.StackTrace, "m" -> "Error in API call.", "ex" -> e )
-        T.web.json( Map( "status" -> "error", "message" -> e.getMessage ) )
-    }
-  }
- 
   val Event = org.tyranid.log.Event
   val Log   = org.tyranid.log.Log
   def log( event:org.tyranid.log.Event, opts:(String,Any)* ) = org.tyranid.log.Log.log( event, opts:_* )

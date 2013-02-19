@@ -123,7 +123,8 @@ $( function() {
     formHandler.topEl().empty();
     tyr.navTo( '""" + wpath + """/forgot?xhr=1&un=' + encodeURIComponent( fldVal ) );
   });
-    
+  
+  $( ".modal" ).modal( "hide" );
   tyr.initFormPlaceholders( "#f" );
 });
 """ ) }
