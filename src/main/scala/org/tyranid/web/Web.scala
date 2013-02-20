@@ -460,6 +460,9 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   def userAgentId = UserAgent.idFor( userAgentStr )
 }
 
+
+case class WebPath( path:String, logParams:Seq[String] )
+
 case class Webloc( path:String, weblet:Weblet, children:Webloc* ) {
 
   weblet.init( path )

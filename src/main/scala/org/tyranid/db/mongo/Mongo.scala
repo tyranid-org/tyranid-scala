@@ -205,6 +205,7 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
   val obj:DBObject
 
   override def has( key:String )    = obj.containsField( key )
+  def hasAny( keys:String* ) = keys exists { obj.containsField }
 
   def rename( from:String, to:String ) =
     if ( obj.has( from ) )

@@ -49,7 +49,7 @@ import org.tyranid.social.basecamp.BcApp
 import org.tyranid.social.facebook.FbApp
 import org.tyranid.social.google.GoApp
 import org.tyranid.social.linkedin.LiApp
-import org.tyranid.web.{ Weblet, Webloc, CometService, WebContext }
+import org.tyranid.web.{ Weblet, Webloc, WebPath, CometService, WebContext }
 
 object Boot {
   var TEST = false
@@ -131,6 +131,7 @@ trait Bootable {
   val applicationWebloc:Webloc
   lazy val loginWebloc = weblocs.find( _.path == "/log" ).get
 
+  val paths:Seq[WebPath]
   val milestones:Seq[Milestone]
 
   val templates:List[(String, ( NodeSeq ) => NodeSeq )]
