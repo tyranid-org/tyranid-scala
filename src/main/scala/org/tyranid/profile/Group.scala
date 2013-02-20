@@ -399,10 +399,10 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
         color = getRandomColor
         this( 'color ) = color
         save
-      } 
+      }
       
       "background-color:#" + color 
-    } | null
+    } | "background-color:#181818"
 
     val groupSettings = this.settingsFor( T.user )
     val isNew = size == "l" && !groupSettings.hasVisited // Only care about this if it is a large thumb
