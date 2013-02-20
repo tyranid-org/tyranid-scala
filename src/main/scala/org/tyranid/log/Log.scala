@@ -156,6 +156,10 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
       case ( "ua", ua:String ) =>
         l( 'ua ) = UserAgent.idFor( ua )
 
+      case ( "qs", null ) =>
+      case ( "qs", qs:DBObject ) =>
+        l( 'qs ) = qs
+
       case ( n:String, v:Any ) =>
         l( n ) = v
       }

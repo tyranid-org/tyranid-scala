@@ -22,6 +22,8 @@ import javax.servlet.http.HttpSession
 import scala.collection.mutable
 import scala.xml.NodeSeq
 
+import com.mongodb.DBObject
+
 import org.tyranid.Imp._
 import org.tyranid.db.Scope
 import org.tyranid.db.meta.TidItem
@@ -34,7 +36,7 @@ import org.tyranid.net.DnsDomain
 import org.tyranid.profile.User
 import org.tyranid.report.{ Query, Report }
 import org.tyranid.ui.{ Checkbox, CustomField, PathField, Search }
-import org.tyranid.web.{ Weblet, WebContext, WebFilter }
+import org.tyranid.web.{ Weblet, WebContext, WebFilter, WebPath }
 
 
 object Milestone {
@@ -47,7 +49,34 @@ case class Milestone( name:String, satisfies:( Log ) => Boolean ) {
   lazy val id = Base62.make( 4 )
 }
 
+
+
 object AccessLog {
+
+  lazy val paths = {
+    val map = mutable.Map[String,WebPath]()
+
+    for ( path <- B.paths )
+      map( path.path ) = path
+
+    map
+  }
+
+  def qsMobjFor( web:WebContext ):DBObject = {
+
+    paths.get( web.path ) foreach { path =>
+      val params = Mobj()
+
+      for ( param <- path.logParams ) {
+        // TODO:  handle arrays ?
+        params( param ) = web.s( param )
+      }
+
+      return params
+    }
+
+    null
+  }
 
   def log( web:WebContext, thread:ThreadData, durationMs:Long ) {
     val session = thread.session
@@ -62,7 +91,8 @@ object AccessLog {
                  "bid" -> TrackingCookie.get,
                  "ua"  -> web.req.getHeader( "User-Agent" ),
                  "du"  -> durationMs,
-                 "d"   -> DnsDomain.idFor( web.req.getServerName.stripPrefix( "www." ).stripXss )
+                 "d"   -> DnsDomain.idFor( web.req.getServerName.stripPrefix( "www." ).stripXss ),
+                 "qs"  -> qsMobjFor( web )
                )
       }
 
