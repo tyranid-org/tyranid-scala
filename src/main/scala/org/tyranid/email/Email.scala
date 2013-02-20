@@ -80,6 +80,20 @@ object Email {
     B.User.db.update( Mobj( "email" -> email.toPatternI ), Mobj( $set -> Mobj( "noEmail" -> true ) ) )  
   }
   
+  def isValid( email:String ) = {
+    var result = true
+   
+    try {
+      val emailAddr = new InternetAddress( email )
+      emailAddr.validate()
+    } catch {
+      case e =>
+        result = false
+    }
+    
+    result  
+  }
+  
   def isWellKnownProvider( email:String ) =
     wellKnownProviders exists email.toLowerCase.contains
   
