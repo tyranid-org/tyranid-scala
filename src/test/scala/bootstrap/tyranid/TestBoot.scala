@@ -23,6 +23,8 @@ class Boot extends org.tyranid.boot.Bootable {
   val applicationWebloc = null
   val weblocs = Nil
 
+  val paths = Seq()
+  
   val templates =
     "shell"  -> ( ( xml:NodeSeq ) => <html><head></head><body><tyr:header/><tyr:content/></body></html> ) ::
     "header" -> ( ( xml:NodeSeq ) => <h1>hi there</h1> ) ::
