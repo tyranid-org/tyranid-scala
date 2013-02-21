@@ -21,16 +21,21 @@ import java.io.{ InputStream, File, FileInputStream, FileOutputStream, IOExcepti
 import java.net.URL
 import java.text.DateFormat
 import java.util.Date
+
+import javax.servlet.{ Filter, FilterChain, FilterConfig, ServletRequest, ServletResponse }
+import javax.servlet.http.{ Cookie, HttpServlet, HttpServletRequest, HttpServletResponse, HttpSession }
+
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.xml.NodeSeq
-import javax.servlet.{ Filter, FilterChain, FilterConfig, ServletRequest, ServletResponse }
-import javax.servlet.http.{ Cookie, HttpServlet, HttpServletRequest, HttpServletResponse }
+
 import org.bson.types.ObjectId
+
 import org.apache.commons.httpclient.util.DateUtil
 import org.apache.http.{ Header, NameValuePair, HttpHost, HttpResponse, HttpRequestInterceptor }
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.UsernamePasswordCredentials
+import org.apache.http.client.params.HttpClientParams
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{ HttpRequestBase, HttpDelete, HttpGet, HttpPost, HttpPut, HttpUriRequest, HttpEntityEnclosingRequestBase }
 import org.apache.http.client.protocol.{ ClientContext }
@@ -43,18 +48,25 @@ import org.apache.http.message.{ BasicHeader, BasicNameValuePair }
 import org.apache.http.params.{ BasicHttpParams, HttpConnectionParams }
 import org.apache.http.protocol.{ ExecutionContext, HttpContext, BasicHttpContext }
 import org.apache.http.util.EntityUtils
+
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.Imp._
 import org.tyranid.math.Base36
 import org.tyranid.pdf.Pdf
 import org.tyranid.time.Time
 import org.tyranid.web.{ FileUploadSupport, WebHandledException }
-import org.apache.http.client.params.HttpClientParams
 
 case class RestException( code:String, message:String ) extends Exception
 
 case class Http403Exception( response:HttpResponse ) extends Exception
 
+
+case class HttpSessionImp( sess:HttpSession ) {
+  
+  def isLoggingOut = sess.getAttribute( "isLoggingOut" )._b
+  def isLoggingOut_=( v:Boolean ) = sess.setAttribute( "isLoggingOut", v )
+  
+}
 
 case class HttpServletRequestOps( req:HttpServletRequest ) {
   

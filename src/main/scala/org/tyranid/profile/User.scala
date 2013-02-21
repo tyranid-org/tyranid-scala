@@ -175,11 +175,8 @@ class UserMeta extends MongoEntity( "a01v" ) {
 }
 
 trait User extends MongoRecord {
-
   var loggedIn     = false
-  var isLoggingOut = false
   var admin        = false
-
 
   def hasName = s( 'firstName ) != "unknown"
 

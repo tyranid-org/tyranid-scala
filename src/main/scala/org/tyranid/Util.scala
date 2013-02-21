@@ -24,6 +24,8 @@ import org.tyranid.Imp._
 
 trait QuickCache {
   val qcache = mutable.Map[String,AnyRef]()
+  def incV( key:String ) = putV( key, qcache.getOrElse( key, 0 )._i + 1 )
+  def decV( key:String ) = putV( key, qcache.getOrElse( key, 0 )._i - 1 )
   def getV( key:String ) = qcache.getOrElse( key, null )
   def getVOrElse( key:String, any:Any ) = qcache.getOrElse( key, any.as[AnyRef] )
   def getVOrElseUpdate(  key:String, any:Any ) = qcache.getOrElseUpdate( key, any.as[AnyRef] )
