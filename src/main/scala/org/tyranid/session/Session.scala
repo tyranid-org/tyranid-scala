@@ -149,6 +149,12 @@ class ThreadData {
 
     tyrSession
   }
+  
+  def unlinkSession = {
+    http.setAttribute( WebSession.HttpSessionKey, null )
+    http.isLoggingOut = true
+    tyrSession = null
+  }
 
   def user:User =
     if ( session != null ) session.user
@@ -260,24 +266,6 @@ trait Session extends QuickCache {
     tUa
   } 
   
-  def clear {
-    reports.clear
-    editings.clear
-    
-    clear( null )
-    
-    loggedEntry = false
-    loggedUser = false
-
-    val u = B.newUser()
-    u.loggedIn = false
-    u.isLoggingOut = true
-    user = u
-
-    tz = null
-  }
-
-
   /*
    * * *   Login
    */
@@ -341,11 +329,10 @@ trait Session extends QuickCache {
   def clearAllowEmail = clear( "allowEmail" )
 
   def logout = {
-    clear
     org.tyranid.profile.LoginCookie.remove
     Social.removeCookies
+    T.unlinkSession
   }
-
 
   /*
    * * *   Time Zones

@@ -61,9 +61,10 @@ object Imp {
 	implicit def jackson( v:org.codehaus.jackson.JsonNode )         = new org.tyranid.json.JsonNodeImp( v )
 	implicit def inputStreamImp( v:InputStream )                    = new org.tyranid.io.InputStreamImp( v )
 
-  import javax.servlet.http.{ HttpServletRequest, HttpServletResponse }
+  import javax.servlet.http.{ HttpServletRequest, HttpServletResponse, HttpSession }
   implicit def servletRequest ( v:HttpServletRequest  )           = new org.tyranid.http.HttpServletRequestOps ( v )
   implicit def servletResponse( v:HttpServletResponse )           = new org.tyranid.http.HttpServletResponseOps( v )
+  implicit def httpSession( v:HttpSession )                       = new org.tyranid.http.HttpSessionImp( v )
 
 
   /**
