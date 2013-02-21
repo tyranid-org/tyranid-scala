@@ -239,14 +239,21 @@ object ActivityQuery extends Query {
 
 case class Browser( bid:String,
                     ua:UserAgent,
-                    milestones:mutable.Set[Milestone] = mutable.Set[Milestone](),
-                    users:mutable.Set[TidItem] = mutable.Set[TidItem](),
-                    var skip:Boolean = false,
-                    var domainFound:Boolean = false )
+                    milestones:mutable.Map[Milestone,Int] = mutable.Map[Milestone,Int](),
+                    users:mutable.Set[TidItem]            = mutable.Set[TidItem](),
+                    var skip:Boolean                      = false,
+                    var domainFound:Boolean               = false ) {
+
+  def hasMilestone( milestone:Milestone )   = milestoneCount( milestone ) > 0
+  def milestoneCount( milestone:Milestone ) = milestones.getOrElse( milestone, 0 )
+  def addMilestone( milestone:Milestone )   = milestones( milestone ) = milestoneCount( milestone ) + 1
+}
 
 case class Path( path:String,
                  var requests:Int = 0,
                  var ms:Long      = 0 )
+
+case class MilestoneCounts( var distinct:Int = 0, var total:Int = 0 )
 
 object Accesslet extends Weblet {
 
@@ -266,24 +273,25 @@ object Accesslet extends Weblet {
 
     val browsers        = mutable.Map[String,Browser]()
     val paths           = mutable.Map[String,Path]()
-    val milestoneCounts = mutable.Map[Milestone,Int]( B.milestones.map( _ -> 0 ):_* )
+    val milestoneCounts = mutable.Map[Milestone,MilestoneCounts]( B.milestones.map( _ -> MilestoneCounts() ):_* )
 
     val onlyMilestone = web.sOpt( "milestone" ).flatMap( Milestone.apply )
     val milestones    = onlyMilestone.flatten( Seq(_), B.milestones )
 
 
     def skipLog( l:Log ) =
-      (   l.ua.orNull == null
+      (   (   l.ua.orNull == null
+           && l.e != Event.NewInvite )
        || (   hideOperators
            && B.operatorIps.contains( l.s( 'ip ) ) ) )
 
     def skipBrowser( b:Browser ) =
       b.skip ||
       ( domain != null && !b.domainFound ) ||
-      ( onlyMilestone.isDefined && !b.milestones( onlyMilestone.get ) )
+      ( onlyMilestone.isDefined && !b.hasMilestone( onlyMilestone.get ) )
 
 
-    val query =  Mobj( "e" -> Event.Access.id, "bid" -> Mobj( $exists -> true ) )
+    val query = Mobj( "e" -> Mobj( $in -> Mlist( Event.Access.id, Event.NewInvite.id ) ) )
     if ( dateGte != null || dateLte != null ) {
       val q = Mobj()
       if ( dateGte != null )
@@ -296,10 +304,12 @@ object Accesslet extends Weblet {
     for ( al <- Log.db.find( query ).sort( Mobj( "on" -> -1 ) ).map( Log.apply );
           if !skipLog( al ) ) {
 
-      val bid = al.s( 'bid )
+      var bid = al.s( 'bid )
+      if ( bid.isBlank )
+        bid = B.User.idToTid( al.s( 'uid ) )
 
-
-      val browser = browsers.getOrElseUpdate( bid, Browser( bid, al.ua.get ) )
+      val ua = al.ua.getOrElse( UserAgent.system )
+      val browser = browsers.getOrElseUpdate( bid, Browser( bid, ua ) )
 
       val uid = al.oid( 'uid )
       val user = if ( uid != null ) TidItem.by( B.User.idToTid( uid ) ) else null
@@ -308,8 +318,8 @@ object Accesslet extends Weblet {
         browser.skip = true
       } else {
         for ( milestone <- B.milestones )
-          if ( !browser.ua.bot && !browser.milestones( milestone ) && milestone.satisfies( al ) )
-            browser.milestones += milestone
+          if ( !browser.ua.bot && milestone.satisfies( al ) )
+            browser.addMilestone( milestone )
 
         if ( user != null )
           browser.users += user
@@ -327,8 +337,12 @@ object Accesslet extends Weblet {
     val userAgents = mutable.Map[UserAgent,Int]()
 
     for ( b <- browsers.values if !skipBrowser( b ) ) {
-      for ( milestone <- b.milestones )
-        milestoneCounts( milestone ) += 1
+
+      for ( milestonePair <- b.milestones;
+            mc = milestoneCounts( milestonePair._1 ) ) {
+        mc.distinct += 1
+        mc.total += milestonePair._2
+      }
 
       val ua = b.ua
       
@@ -342,8 +356,9 @@ object Accesslet extends Weblet {
       }
     }
 
-    val totalUsers = milestoneCounts( B.milestones( 0 ) )
-    val totalBots  = browsers.values.count( _.ua.bot )
+    val totalUsers  = milestoneCounts( B.milestones( 0 ) ).distinct
+    val totalTotals = milestoneCounts.map( _._2.total ).sum
+    val totalBots   = browsers.values.count( _.ua.bot )
 
 
     { ActivityQuery.searchForm( report ) } ++
@@ -376,7 +391,11 @@ object Accesslet extends Weblet {
     <table class="dtable">
      <thead>
       <tr>
-       <th>Milestone</th><th style="width:110px;"># Distinct Users</th><th style="width:50px;">%</th>
+       <th>Milestone</th>
+       <th style="width:110px;"># Distinct Users</th>
+       <th style="width:90px;">% Distinct</th>
+       <th style="width:80px;">Total</th>
+       <th style="width:60px;">% Total</th>
       </tr>
      </thead>
      { for ( milestone <- milestones ) yield {
@@ -384,8 +403,10 @@ object Accesslet extends Weblet {
 
         <tr>
          <td><a href={ "?milestone=" + milestone.id }>{ milestone.name }</a></td>
-         <td>{ count }</td>
-         <td>{ "%.0f%%".format( count._d * 100 / totalUsers ) }</td>
+         <td>{ count.distinct }</td>
+         <td>{ "%.0f%%".format( count.distinct._d * 100 / totalUsers ) }</td>
+         <td>{ count.total }</td>
+         <td>{ "%.0f%%".format( count.total._d * 100 / totalTotals ) }</td>
         </tr>
       }
      }
@@ -397,7 +418,7 @@ object Accesslet extends Weblet {
     <table class="dtable">
      <thead>
       <tr>
-       <th style="width:26px; padding-left:0;"/><th>Agent</th><th>OS</th><th style="width:110px;"># Distinct Users</th><th style="width:50px;">%</th>
+       <th style="width:26px; padding-left:0;"/><th>Agent</th><th>OS</th><th style="width:110px;"># Distinct Users</th><th style="width:90px;">% Distinct</th>
       </tr>
      </thead>
      { for ( ua <- userAgents.keys.filter( !_.bot ).toSeq.sortBy( _.s( 'agentName ) ) ) yield {

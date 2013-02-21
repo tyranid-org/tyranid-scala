@@ -70,7 +70,7 @@ object UserAgent extends MongoEntity( tid = "a0Dt" ) {
   private val idByUa = mutable.HashMap[String,Int]()
   private val uaById = mutable.HashMap[Int,String]()
 
-  def uaFor( id:Int ) = synchronized {
+  def uaFor( id:Int ):String = synchronized {
     uaById.getOrElseUpdate( id, {
       db.findOne( Mobj( "_id" -> id ) ) match {
       case null => "unknown"
@@ -79,7 +79,7 @@ object UserAgent extends MongoEntity( tid = "a0Dt" ) {
     } )
   }
 
-  def idFor( ua:String ) = synchronized {
+  def idFor( ua:String ):Int = synchronized {
     idByUa.getOrElseUpdate( ua, {
       db.findOne( Mobj( "ua" -> ua ) ) match {
       case null =>
@@ -92,6 +92,8 @@ object UserAgent extends MongoEntity( tid = "a0Dt" ) {
       }
     } )
   }
+
+  lazy val system = UserAgent.getById( idFor( "Volerro System" ) )
 }
 
 class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAgent.makeView, obj, parent ) {

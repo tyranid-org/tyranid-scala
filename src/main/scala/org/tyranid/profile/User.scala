@@ -205,6 +205,8 @@ trait User extends MongoRecord {
     return true
   }
 
+  def email = s( 'email )
+
   /**
    * This is a list of tags that the user is interested in.
    */

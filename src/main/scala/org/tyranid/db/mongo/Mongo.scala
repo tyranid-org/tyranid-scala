@@ -112,7 +112,13 @@ object Imp {
     trait ImmutableObject extends DBObject {
       import java.util.Map
  
-      def check = if ( this.as[java.util.AbstractCollection[Object]].size != 0 ) throw new RuntimeException( "immutable object is corrupt!" )
+      def check =
+        this match {
+        case ac:java.util.AbstractCollection[_] if ac.size != 0       => throw new RuntimeException( "immutable object is corrupt!" )
+        case db:DBObject                        if db.keySet.nonEmpty => throw new RuntimeException( "immutable object is corrupt!" )
+        case _                                                        =>
+        }
+
       def fail = throw new RuntimeException( "modifying immutable empty object" )
       
       abstract override def get( key:String ) = { check; super.get( key ); }
