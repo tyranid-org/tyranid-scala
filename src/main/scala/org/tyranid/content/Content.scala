@@ -398,6 +398,8 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
   "x"              is DbDouble               as "X";
   "y"              is DbDouble               as "Y";
   "w"              is DbDouble               as "When"; // Used for timeline (video annotation)
+  "wi"             is DbDouble               as "Width"; // Used for boxed annotations
+  "hi"             is DbDouble               as "Height"; // Used for boxed annotations
 
   "r"              is DbArray(Comment)       as "Replies";
 
@@ -545,6 +547,8 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
   def x  = d( 'x )
   def y  = d( 'y )
   def w  = d( 'w )
+  def wi = d( 'wi )
+  def hi = d( 'hi )
 
   def isPriority = b( 'pri )
 
@@ -573,7 +577,7 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
 
   def hasAnnotation = ( has( 'w ) && d( 'w ) > -1 ) || has( 'x ) || has ( 'y )
 
-  def annotationType:String = has( 'pn ) ? "page" | ( has( 'w ) ? "timeline" | ( ( has( 'x ) ? "xy" ) | null ) )
+  //def annotationType:String = has( 'pn ) ? "page" | ( has( 'w ) ? "timeline" | ( ( has( 'x ) ? "xy" ) | null ) )
 
   def on = t( 'on )
   def displayDate = t( 'on )
@@ -970,7 +974,7 @@ abstract class Content( override val view:MongoView,
 
   def commentById( id:Int ) = Comment.find( a_?( 'r ), id )
 
-  def comment( msg:String, user:User, replyTo:Comment = null, pageNumber:Int = 0, x:Double = 0.0, y:Double = 0.0, w:Double = -1, priority:Boolean = false ) = {
+  def comment( msg:String, user:User, replyTo:Comment = null, pageNumber:Int = 0, x:Double = 0.0, y:Double = 0.0, w:Double = -1, wi:Double = 0.0, hi:Double = 0.0, priority:Boolean = false ) = {
 
     val comments = a_!( 'r )
 
@@ -982,6 +986,8 @@ abstract class Content( override val view:MongoView,
     if ( x != 0.0 && y != 0.0 ) {
       comment( 'x ) = x
       comment( 'y ) = y
+      comment( 'wi ) = wi
+      comment( 'hi ) = hi
     }
     
     comment( 'w ) = w
