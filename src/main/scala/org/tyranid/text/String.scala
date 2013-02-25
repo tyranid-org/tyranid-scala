@@ -49,6 +49,8 @@ object StringImp {
   val javascriptPattern = Pattern.compile("javascript:", Pattern.CASE_INSENSITIVE)
   val vbscriptPattern = Pattern.compile("vbscript:", Pattern.CASE_INSENSITIVE)
   val onloadPattern = Pattern.compile("onload(.*?)=", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL)
+
+  val urlPattern = Pattern.compile( "(https?:\\/\\/[^\\s]+)", Pattern.CASE_INSENSITIVE)
 }
 
 class StringImp( s:String ) {
@@ -103,11 +105,9 @@ class StringImp( s:String ) {
   
   def stripNonUtf8 = ( s == null ) ? s | noUtf8Pattern.matcher( s ).replaceAll( " " )
   
-  def urlPattern = Pattern.compile( "(https?:\\/\\/[^\\s]+)", Pattern.CASE_INSENSITIVE)
-  
   def urlify = {
     val nodes = scala.collection.mutable.Buffer[NodeSeq]()
-    val matcher = urlPattern.matcher( s )
+    val matcher = StringImp.urlPattern.matcher( s )
     
     var i = 0
     
@@ -421,6 +421,9 @@ class StringImp( s:String ) {
       s.substring( 0, maxLength - 3 ) + "..."
     else
       s
+
+
+  def isUrl:Boolean = StringImp.urlPattern.matcher( s ).matches
 
   /**
    * Does this string represent a valid email address?
