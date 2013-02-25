@@ -180,7 +180,7 @@ object MimeType {
     MimeType( "image/x-xpixmap",                                                           null,                "X PixMap",                      Seq( "xpm" ) ),
     MimeType( "image/x-xwindowdump",                                                       null,                "X Windows Dump",                Seq( "xwd" ) ),
 
-    MimeType( "text/css",                                                                  null,                "CSS",                           Seq( "css" ) ),
+    MimeType( "text/css",                                                                  null,                "CSS",                           Seq( "css", "less" ) ),
     MimeType( "text/html",                                                                 HTML,                "HTML",                          Seq( "html", "htm" ) ),
     MimeType( "text/javascript",                                                           null,                "Javascript",                    Seq( "js" ) ),
     MimeType( "text/plain",                                                                Text,                "Text",                          Seq( "txt", "text" ) ),
