@@ -66,5 +66,22 @@ class StringSuite extends FunSuite {
     
     assert( password.checkShash( password.shash() ) )
   }
+  
+  test( "isUrl" ) {
+    val data = Seq(
+      ( "http://",         false ),
+      ( "https://",        false ),
+      ( "http://foo.bar",  true ),
+      ( "https://foo.bar", true ),
+      ( "cat",             false ),
+      ( "",                false )
+    )
+
+    for ( d <- data;
+          url = d._1;
+          expected = d._2 ) {
+      assert( url.isUrl === expected )
+    }
+  }
 }
 
