@@ -521,8 +521,8 @@ object Http {
   private def convertHeaders( headers:collection.Map[String,String] ) =
     headers.toSeq.map( p => new BasicHeader( p._1, p._2 ) ).toArray[Header]
 
-  def GET_File( url:String, ext:String = ".tmp", prefix:String = "tmp" ) = {
-    val res = GET( url )
+  def GET_File( url:String, ext:String = ".tmp", prefix:String = "tmp", authScope:AuthScope = null, username:String = null, password:String = null, preemptive:Boolean = false ) = {
+    val res = GET( url, null, null, authScope, username, password, preemptive )
     val entity = res.response.getEntity
     
     if ( entity != null ) {

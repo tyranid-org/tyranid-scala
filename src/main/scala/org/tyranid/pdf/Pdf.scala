@@ -44,7 +44,7 @@ object Pdf {
         client.setPageHeight( -1 );
         client.enableHyperlinks( enableHyperlinks )
         //client.enableJavaScript( false )
-  	    client.convertURI( url, fileStream )
+  	    client.convertURI( url, fileStream )  	    
   	  } catch {
   	    case why:PdfcrowdError =>
           //503 - Simultaneous API calls from a single IP are not allowed.
