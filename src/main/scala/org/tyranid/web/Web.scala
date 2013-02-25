@@ -191,7 +191,7 @@ class BasicAuthFilter extends TyrFilter {
     
     chain.doFilter( web.req, web.res )
     
-    if ( T.session != null ) T.session.logout
+    if ( T.session != null ) T.session.logout()
   }
 }
 

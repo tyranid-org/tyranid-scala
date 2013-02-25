@@ -32,6 +32,7 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
+import org.tyranid.profile.User
 import org.tyranid.report.{ Report, Run }
 import org.tyranid.web.{ Weblet, WebContext }
 
@@ -207,7 +208,7 @@ trait Field {
 
   def effCell( s:Scope ) = cell( s )
 
-  def ui( s:Scope ):NodeSeq   = throw new UnsupportedOperationException( "name=" + name )
+  def ui( user:User, s:Scope ):NodeSeq   = throw new UnsupportedOperationException( "name=" + name )
   def extract( s:Scope ):Unit = throw new UnsupportedOperationException( "name=" + name )
 
   def topActions( run:Run ) = NodeSeq.Empty
@@ -254,7 +255,7 @@ trait Field {
 
   def drawPreamble:NodeSeq = NodeSeq.Empty
 
-  def drawFilter( run:Run ):NodeSeq = {
+  def drawFilter( user: User, run:Run ):NodeSeq = {
     val s = Scope( run.report.searchRec, filtering = true )
 
     <table id={ id } class="tile" style="width:344px; height:54px;">
@@ -264,7 +265,7 @@ trait Field {
      </tr>
      <tr>
       <td id="grpChooser">
-       { ui( s ) }
+       { ui( user, s ) }
        { bottomActions( run ) }
       </td>
      </tr>
@@ -387,7 +388,7 @@ case class PathField( baseName:String,
     this // TODO:  return an immutable version
   }
 
-  override def ui( s:Scope ) = path.leaf.domain.ui( s, this )
+  override def ui( user:User, s:Scope ) = path.leaf.domain.ui( s, this )
 
   override def fromString( s:String ) = va.att.domain.fromString( s )
 
@@ -466,7 +467,7 @@ case class CustomTextSearchField( baseName:String, l:String = null, opts:Seq[(St
 
   override lazy val label = if ( l.notBlank ) l else baseName.camelCaseToSpaceUpper
 
-  override def ui( s:Scope ) = Input( id, s.rec.s( name ), opts:_* )
+  override def ui( user:User, s:Scope ) = Input( id, s.rec.s( name ), opts:_* )
 
   override def extract( s:Scope ) = {
     val v = T.web.req.s( id )
@@ -480,7 +481,7 @@ case class CustomBooleanSearchField( baseName:String, l:String = null, opts:Seq[
 
   override lazy val label = if ( l.notBlank ) l else baseName.camelCaseToSpaceUpper
 
-  override def ui( s:Scope ) = Checkbox( id, s.rec.b( name ), opts:_* )
+  override def ui( user:User, s:Scope ) = Checkbox( id, s.rec.b( name ), opts:_* )
 
   override def extract( s:Scope ) =
     if ( T.web.b( id ) ) s.rec( name ) = true

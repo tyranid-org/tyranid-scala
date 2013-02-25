@@ -205,7 +205,7 @@ object ActivityQuery extends Query {
       val name = "hideOperators$cst"
       override val search = Search.Custom
       override lazy val label = "Hide " + B.applicationName + " Users"
-      override def ui( s:Scope ) = Checkbox( id, s.rec.b( name ) )
+      override def ui( user:User, s:Scope ) = Checkbox( id, s.rec.b( name ) )
       override def extract( s:Scope ) = s.rec( name ) = T.web.b( id )
     },
     PathField( "d",                                 search = Search.Equals ),
@@ -215,8 +215,7 @@ object ActivityQuery extends Query {
 
   val defaultFields = dataFields.take( 5 )
 
-  override val searchForm =
-    ( r:Report ) => {
+  override def searchForm( user:User, r:Report ) = {
       val s = Scope( r.searchRec )
 
       <form method="post" action={ T.web.path } id="rSearchForm" style="padding-top:8px;">
@@ -225,7 +224,7 @@ object ActivityQuery extends Query {
         { searchFields.map { f =>
             <div class="fieldc">
              <div class="labelc">{ f.labelUi }</div>
-             <div class="inputc">{ f.ui( s ) }</div>
+             <div class="inputc">{ f.ui( user, s ) }</div>
             </div>
           }
         }
@@ -259,6 +258,7 @@ object Accesslet extends Weblet {
 
   def report:NodeSeq = {
     val web = T.web
+    val user = T.user
 
     ActivityQuery.init
     val report = T.session.reportFor( ActivityQuery.name )
@@ -361,7 +361,7 @@ object Accesslet extends Weblet {
     val totalBots   = browsers.values.count( _.ua.bot )
 
 
-    { ActivityQuery.searchForm( report ) } ++
+    { ActivityQuery.searchForm( user, report ) } ++
     { if ( onlyMilestone.isDefined )
     <div class="fieldhc">
      Milestone: { onlyMilestone.get.name }

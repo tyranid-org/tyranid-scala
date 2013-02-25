@@ -170,7 +170,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
     db.find( Mobj( "o" -> tids ) ).map( apply ).toSeq
   }
   
-  def canSeeOther( orgTid:String ) = ownedBy( orgTid ).filter( g => Group( g ).canSee( T.user ) )
+  def canSeeOther( orgTid:String, user:User ) = ownedBy( orgTid ).filter( g => Group( g ).canSee( user ) )
   
   def visibleTo( user:User, contentType:ContentType = ContentType.Group, allowBuiltins:Boolean = true ) = {
 
@@ -268,7 +268,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
 class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView, obj, parent ) {
 
   def name     = s( 'name )
-  def fullName = name + " (" + ( isOwner( T.user ) ? "me" | ownerNames ) + ")"
+  def fullName( user:User ) = name + " (" + ( isOwner( user ) ? "me" | ownerNames ) + ")"
 
   override def id:ObjectId = super.apply( "_id" ).as[ObjectId]
   
@@ -488,7 +488,7 @@ case class GroupField( baseName:String, l:String = null,
     rec( name ) = gv
   }
 
-  override def ui( s:Scope ) = groupValueFor( s.rec ).selectUi( "" )
+  override def ui( user:User, s:Scope ) = groupValueFor( s.rec ).selectUi( user, "" )
 
   override def extract( s:Scope ) = groupValueFor( s.rec ).selectedGroupTid = T.web.s( id )
 
@@ -515,7 +515,7 @@ case class GroupField( baseName:String, l:String = null,
   override def drawPreamble:NodeSeq =
     <div id={ "grpDlg" + id } class="grpDlg" style="padding:0; display:none;"/>;
 
-  override def drawFilter( run:Run ) = {
+  override def drawFilter( user:User, run:Run ) = {
     val groupValue = groupValueFor( run.report.searchRec )
     
     <table class="tile" style="width:180px; height:54px;">
@@ -529,7 +529,7 @@ case class GroupField( baseName:String, l:String = null,
       </td>
      </tr>
      <tr>
-      <td id="grpChooser">{ groupValue.selectUi() }</td>
+      <td id="grpChooser">{ groupValue.selectUi( user ) }</td>
      </tr>
     </table>
   }
@@ -553,6 +553,7 @@ case class GroupField( baseName:String, l:String = null,
 
     val web = T.web
     val dg = gv.dialogGroup
+    val user = T.user
 
     weblet.rpath match {
     case "/fld" =>
@@ -564,19 +565,19 @@ case class GroupField( baseName:String, l:String = null,
 
       */
 
-      web.js( JqHtml( "#grpDlg" + id, gv.panelUi ) )
+      web.js( JqHtml( "#grpDlg" + id, gv.panelUi( user ) ) )
 
     case "/fld/editTab" =>
       gv.tab = "/edit"
-      web.js( JqHtml( "#grpDlg" + id, gv.panelUi ) )
+      web.js( JqHtml( "#grpDlg" + id, gv.panelUi( user ) ) )
 
     case "/fld/favTab" =>
       gv.tab = "/fav"
-      web.js( JqHtml( "#grpDlg" + id, gv.panelUi ) )
+      web.js( JqHtml( "#grpDlg" + id, gv.panelUi( user ) ) )
 
     case "/fld/availType" =>
       gv.availType = web.s( 'availType )
-      web.js( JqHtml( "#grpFavAvail", GroupFavorite.favAvailableUi( gv.availType ) ) )
+      web.js( JqHtml( "#grpFavAvail", GroupFavorite.favAvailableUi( gv.availType, user ) ) )
 
     case "/fld/favDrag" => 
       GroupFavorite.favDrag( gv, web )
@@ -597,7 +598,7 @@ case class GroupField( baseName:String, l:String = null,
       report.offset = 0
       
       gv.selectGroup( web.s( 'id ) )
-      web.res.html( report.innerDraw )
+      web.res.html( report.innerDraw( user ) )
 
     case "/fld/dlgSelect" =>
       gv.setDialogGroup( web.s( 'id ) )
@@ -641,8 +642,8 @@ case class GroupField( baseName:String, l:String = null,
       gv.setDialogGroup( Group( group ).tid )
 
       web.js(
-        JqHtml( "#grpDlg" + id, gv.panelUi ),
-        JqHtml( "#grpChooser", gv.selectUi() )
+        JqHtml( "#grpDlg" + id, gv.panelUi( user ) ),
+        JqHtml( "#grpChooser", gv.selectUi( user ) )
       )
 
     case "/fld/edit" =>
@@ -657,8 +658,8 @@ case class GroupField( baseName:String, l:String = null,
       }
 
       web.js(
-        JqHtml( "#grpDlg" + id, gv.panelUi ),
-        JqHtml( "#grpChooser", gv.selectUi() )
+        JqHtml( "#grpDlg" + id, gv.panelUi( user) ),
+        JqHtml( "#grpChooser", gv.selectUi( user ) )
       )
 
     case "/fld/deleteGroup" =>
@@ -669,8 +670,8 @@ case class GroupField( baseName:String, l:String = null,
       }
 
       web.js(
-        JqHtml( "#grpDlg" + id, gv.panelUi ),
-        JqHtml( "#grpChooser", gv.selectUi() )
+        JqHtml( "#grpDlg" + id, gv.panelUi( user ) ),
+        JqHtml( "#grpChooser", gv.selectUi( user ) )
       )
 
     case "/fld/addBy" =>
@@ -816,10 +817,10 @@ case class GroupValue( gf:GroupField ) extends Valuable {
   def dialogGroup = Group( groups.find( g => g.tid == dialogGroupTid ).getOrElse( null ) )
   def setDialogGroup( tid:String ) = dialogGroupTid = tid
 
-  def selectUi( cls:String = "grpChr" ) =
+  def selectUi( user:User, cls:String = "grpChr" ) =
     Select( gf.id, selectedGroupTid, ( "" -> "All" ) +: groups.map( g => g.tid -> g.s( 'name ) ), "class" -> cls, "style" -> "width:120px; max-width:120px;" )
 
-  def panelUi = {
+  def panelUi( user:User ) = {
     val stid = dialogGroupTid
 
     org.tyranid.session.Notification.box ++
@@ -846,7 +847,7 @@ case class GroupValue( gf:GroupField ) extends Valuable {
         </div>
 
       case "/fav" =>
-        GroupFavorite.favUi( this )
+        GroupFavorite.favUi( this, user )
       }
     }
   }
@@ -1043,20 +1044,20 @@ object GroupFavorite extends MongoEntity( tid = "a0Iv" ) {
   
   def clearFav = T.session.clear( FAV_SEL_KEY )
   
-  def favUi( gv:GroupValue ) = {
+  def favUi( gv:GroupValue, user:User ) = {
     val selectedType = T.web.s( 'grpAvailType ) or ""
     
     <div class="favDlg noSelect">
      <div class="favLeft">
       <h2>Current</h2>
       <div class="favSel" id="grpFavSel">
-       { favSelectedUi }
+       { favSelectedUi( user ) }
       </div>
      </div>
      <div class="favGroup">
       <h2>Available: { Select( "grpAvailType", selectedType, ( "" -> "- All Types -" ) +: availTypes.toSeq ) }</h2>
       <div class="favSel" id="grpFavAvail">
-      { favAvailableUi( gv.availType ) }
+      { favAvailableUi( gv.availType, user ) }
       </div>
      </div>
      <div style="display:inline-block; width:258px; padding-right:2px;">
@@ -1065,22 +1066,22 @@ object GroupFavorite extends MongoEntity( tid = "a0Iv" ) {
     </div>
   }
   
-  def favSelectedUi = {
+  def favSelectedUi( user:User ) = {
     val orgId = T.session.user.org.id.as[ObjectId]
 
     <ul class="noSelect">
-     { selections.map( Group.getByTid ).filter( g => g != null ).map( g => <li class='noSelect cgf' id={ g.tid }><span class={ g.iconClass16x16 } /><span class="vlabel"> { g.fullName } { Tid.eye( g.tid ) }</span></li> ) }
+     { selections.map( Group.getByTid ).filter( g => g != null ).map( g => <li class='noSelect cgf' id={ g.tid }><span class={ g.iconClass16x16 } /><span class="vlabel"> { g.fullName( user ) } { Tid.eye( g.tid ) }</span></li> ) }
     </ul>
   }
 
-  def favAvailableUi( availType:String ) =
+  def favAvailableUi( availType:String, user:User ) =
     <ul class="noSelect">
      { ( availType match {
          case at if at.isBlank => available
          case "g"              => available.filter( _.isOwner( T.user ) )
          case "m"              => available.filter( !_.isOwner( T.user ) )
          } ).
-         map( g => <li class='noSelect cgf' id={ g.tid }><span class={ g.iconClass16x16 } /> <span class="vlabel">{ g.fullName } { Tid.eye( g.tid ) }</span></li> ) 
+         map( g => <li class='noSelect cgf' id={ g.tid }><span class={ g.iconClass16x16 } /> <span class="vlabel">{ g.fullName( user ) } { Tid.eye( g.tid ) }</span></li> ) 
      }
     </ul>
 
@@ -1110,8 +1111,8 @@ object GroupFavorite extends MongoEntity( tid = "a0Iv" ) {
     GroupFavorite.saveSelected
 
     web.js(
-      JqHtml( "#grpFavSel",   GroupFavorite.favSelectedUi ),
-      JqHtml( "#grpFavAvail", GroupFavorite.favAvailableUi( availType = gv.availType ) ) )
+      JqHtml( "#grpFavSel",   GroupFavorite.favSelectedUi( T.user ) ),
+      JqHtml( "#grpFavAvail", GroupFavorite.favAvailableUi( availType = gv.availType, T.user ) ) )
   }
   
 
@@ -1266,8 +1267,8 @@ object GroupSettings extends MongoEntity( tid = "a0Rt" ) {
   val FLAG_VISITED         = 1
   val FLAG_HIDDEN_COMMENTS = 2
   
-  def forGroupTid( tid:String ) = 
-    GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> T.user.id , "g" -> Group.tidToId( tid ) ) ) )
+  def forGroupTid( tid:String, user:User ) = 
+    GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> user.id , "g" -> Group.tidToId( tid ) ) ) )
 }
 
 class GroupSettings( obj:DBObject, parent:MongoRecord ) extends MongoRecord( GroupSettings.makeView, obj, parent ) {

@@ -328,10 +328,11 @@ trait Session extends QuickCache {
   def setAllowEmail = put( "allowEmail", Boolean.box( true ) )
   def clearAllowEmail = clear( "allowEmail" )
 
-  def logout = {
+  def logout( unlink:Boolean = true ) = {
     org.tyranid.profile.LoginCookie.remove
     Social.removeCookies
-    T.unlinkSession
+    
+    if ( unlink ) T.unlinkSession
   }
 
   /*

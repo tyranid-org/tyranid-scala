@@ -31,6 +31,7 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.json.{ Js, JqHtml }
+import org.tyranid.profile.User
 import org.tyranid.session.Session
 import org.tyranid.time.Time
 import org.tyranid.ui.{ Button, Checkbox, CustomField, Field, Glyph, Input, PathField, Search, Select, Show, Valuable }
@@ -159,8 +160,7 @@ trait Query {
 
   val orderBy:Seq[Sort] = Nil
 
-  val searchForm =
-   ( r:Report ) => {
+  def searchForm( user:User, r:Report ) = {
      val s = Scope( r.searchRec )
 
    <form method="post" id="rSearchForm" style="padding-top:8px;">
@@ -170,7 +170,7 @@ trait Query {
       { searchFields.filter( _.show == Show.Editable ).map { f =>
           <div class="fieldc">
            <div class="labelc">{ f.labelUi }</div>
-           <div class="inputc">{ f.ui( s ) }</div>
+           <div class="inputc">{ f.ui( user, s ) }</div>
           </div>
         }
       }
@@ -309,7 +309,7 @@ case class Report( query:Query ) {
    */
 
   def label( name:String ) = query.allFieldsMap( name ).labelUi
-  def ui( name:String )    = query.allFieldsMap( name ).ui( Scope( searchRec ) )
+  def ui( user:User, name:String )    = query.allFieldsMap( name ).ui( user, Scope( searchRec ) )
 
   val sections = "Standard" +: query.dataFields.map( _.section ).filter( _ != "Standard" ).sorted.distinct
 
@@ -371,7 +371,7 @@ case class Report( query:Query ) {
    * * *  Rendering
    */
 
-  def innerDraw = {
+  def innerDraw( user:User ) = {
     val run = new Run( this )
     
     records = query.run( run ).toSeq
@@ -404,7 +404,7 @@ case class Report( query:Query ) {
         </tr>
        </table>
       </td>
-      { query.searchFields.filter( _.showFilter ).map( f => <td>{ f.drawFilter( run ) }</td> ) }
+      { query.searchFields.filter( _.showFilter ).map( f => <td>{ f.drawFilter( user, run ) }</td> ) }
       <td style="width:410px; padding:0;"></td>
       <td></td>
       <td>
@@ -441,18 +441,19 @@ case class Report( query:Query ) {
     </div>
   }
 
-  def innerDrawSearch =
+  def innerDrawSearch( user:User ) =
     ( if ( query.searchLabelNode != null ) {
       query.searchLabelNode
     } else {
       <div class="title">{ query.searchLabel }</div>
     } ) ++
     <div class="search">
-     { query.searchForm( this ) }
+     { query.searchForm( user, this ) }
     </div>
 
   def draw = {
     val web = T.web
+    val user = T.user
     for ( va <- searchRec.view.vas;
           v  <- web.sOpt( va.name ) )
       searchRec( va.name ) = v
@@ -464,7 +465,7 @@ case class Report( query:Query ) {
     { query.fields.map( _.drawPreamble ).flatten } ++
     <div class="report greyBox" id={ id }>
      { recalcFields }
-     { innerDraw }
+     { innerDraw( user ) }
     </div>
   }
 }
@@ -514,6 +515,7 @@ object Reportlet extends Weblet {
     val sess = Session()
     val report = sess.reportFor( web.s( 'q ) )
     val query = report.query
+    val user = T.user
 
     rpath match {
 
@@ -522,7 +524,7 @@ object Reportlet extends Weblet {
      */
 
     case "/editSearch" =>
-      web.res.html( report.innerDrawSearch )
+      web.res.html( report.innerDrawSearch( user ) )
 
     case "/search" =>
       query.init
@@ -534,7 +536,7 @@ object Reportlet extends Weblet {
         report.sort = query.orderBy.find( _.name == name ).get
       }
       report.offset = 0
-      web.res.html( report.innerDraw )
+      web.res.html( report.innerDraw( user ) )
 
     case "/filter" => 
       query.searchFields.find( _.id == web.s( 'f ) ).foreach { sf =>
@@ -545,16 +547,16 @@ object Reportlet extends Weblet {
           report.searchRec( sf.name ) = sf.fromString( v )
       }
 
-      web.res.html( report.innerDraw )
+      web.res.html( report.innerDraw( user ) )
 
     case "/prev" =>
       report.offset -= report.pageSize
       if ( report.offset < 0 ) report.offset = 0
-      web.res.html( report.innerDraw )
+      web.res.html( report.innerDraw( user ) )
 
     case "/next" =>
       report.offset += report.pageSize
-      web.res.html( report.innerDraw )
+      web.res.html( report.innerDraw( user ) )
 
     case "/select" =>
       val fp = query.by( web.s( 'f ) )
@@ -599,7 +601,7 @@ object Reportlet extends Weblet {
       }
 
       report.recalcFields
-      web.res.html( report.innerDraw )
+      web.res.html( report.innerDraw( user ) )
 
     case "/selectRow" =>
       // TODO:  make this generic based on query's entity id field
