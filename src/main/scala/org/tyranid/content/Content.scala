@@ -975,7 +975,6 @@ abstract class Content( override val view:MongoView,
   def commentById( id:Int ) = Comment.find( a_?( 'r ), id )
 
   def comment( msg:String, user:User, replyTo:Comment = null, pageNumber:Int = 0, x:Double = 0.0, y:Double = 0.0, w:Double = -1, wi:Double = 0.0, hi:Double = 0.0, priority:Boolean = false ) = {
-
     val comments = a_!( 'r )
 
     val comment = Comment( Mobj( "_id" -> ( Comment.maxId( comments ) + 1 ), "on" -> new Date, "m" -> msg, "u" -> user.id ) )
