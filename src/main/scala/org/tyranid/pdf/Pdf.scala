@@ -28,7 +28,7 @@ import org.tyranid.Imp._
 object Pdf {
   val lock = ""
     
-  def urlToFile( url:String, outFile:File, enableHyperlinks:Boolean = false ) = {
+  def urlToFile( url:String, outFile:File, enableHyperlinks:Boolean = false, username:String = null, password:String = null ) = {
     // PDF Crowd API only allows one at a time
     lock.synchronized {
       var fileStream:FileOutputStream = null
@@ -44,7 +44,19 @@ object Pdf {
         client.setPageHeight( -1 );
         client.enableHyperlinks( enableHyperlinks )
         //client.enableJavaScript( false )
-  	    client.convertURI( url, fileStream )  	    
+        
+        val finalUrl = ( username.notBlank && password.notBlank ) ? {
+          val idx = url.toLowerCase().indexOf( "://" )
+          
+          if ( idx > -1 ) {
+            url.substring( 0, idx + 3 ) + username + ":" + password +  "@" + url.substring( idx + 3  ) 
+          } else {
+            ( username + ":" + password +  "@" + url )
+          }
+        } | url
+        
+        println( finalUrl )
+  	    client.convertURI( finalUrl, fileStream )  	    
   	  } catch {
   	    case why:PdfcrowdError =>
           //503 - Simultaneous API calls from a single IP are not allowed.
