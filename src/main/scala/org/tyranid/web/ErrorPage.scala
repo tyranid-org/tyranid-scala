@@ -26,9 +26,13 @@ object Errorlet extends Weblet {
 
     rpath match {
     case "/404" =>
+      val originalUrl = web.req.getAttribute( "javax.servlet.forward.request_uri" )._s
 
-      val originalUrl = web.req.getAttribute( "javax.servlet.forward.request_uri" )
-
+      if ( T.session.ua( web ).isIE && ( originalUrl.startsWith( "/\"" ) || originalUrl.startsWith( "/%22/" ) ) ) {
+        web.res
+        return
+      }
+      
       println( originalUrl )
       
       if ( originalUrl != null )
