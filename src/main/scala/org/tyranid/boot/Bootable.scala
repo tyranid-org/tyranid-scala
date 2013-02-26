@@ -174,6 +174,7 @@ trait Bootable {
   @volatile var loginPage:() => NodeSeq = null
   
   def registerUser( user:User, companyName:String ) 
+  def sendMessage( msg:String, toUserTid:String, fromUserTid:String = null ) 
   def appShellPage( web:WebContext ): NodeSeq = NodeSeq.Empty
 
   lazy val appOrgId = Org.db.findOne( Mobj( "name" -> applicationName ) ).oid

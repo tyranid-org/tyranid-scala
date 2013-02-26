@@ -44,6 +44,8 @@ class Boot extends org.tyranid.boot.Bootable {
   lazy val userMeta = User
   lazy val orgMeta = Org
 
+  override def sendMessage( msg:String, toUserTid:String, fromUserTid:String = null ) { } 
+
   override def registerUser( user:org.tyranid.profile.User, companyName:String ) { }
     
   val build = 1

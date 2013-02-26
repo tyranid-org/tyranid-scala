@@ -31,45 +31,63 @@ object Pdf {
   def urlToFile( url:String, outFile:File, enableHyperlinks:Boolean = false, username:String = null, password:String = null ) = {
     // PDF Crowd API only allows one at a time
     lock.synchronized {
+      var useJavascript = true
+      var retry = true
       var fileStream:FileOutputStream = null
-      
-  	  try {
-  	    fileStream = new FileOutputStream( outFile )     
-  	 
-  	    // create an API client instance
-  	    val client:Client = new Client( B.pdfCrowdName, B.pdfCrowdKey )
-  	    client.useSSL( true )
-  	        
-  	    // convert a web page and save the PDF to a file
-        client.setPageHeight( -1 );
-        client.enableHyperlinks( enableHyperlinks )
-        //client.enableJavaScript( false )
         
-        val finalUrl = ( username.notBlank && password.notBlank ) ? {
-          val idx = url.toLowerCase().indexOf( "://" )
+      while ( retry ) {
+    	  try {
+    	    fileStream = new FileOutputStream( outFile )     
+    	 
+    	    // create an API client instance
+    	    val client:Client = new Client( B.pdfCrowdName, B.pdfCrowdKey )
+    	    client.useSSL( true )
+    	        
+    	    // convert a web page and save the PDF to a file
+          client.setPageHeight( -1 )
+          client.enableHyperlinks( enableHyperlinks )
           
-          if ( idx > -1 ) {
-            url.substring( 0, idx + 3 ) + username + ":" + password +  "@" + url.substring( idx + 3  ) 
-          } else {
-            ( username + ":" + password +  "@" + url )
-          }
-        } | url
-        
-        println( finalUrl )
-  	    client.convertURI( finalUrl, fileStream )  	    
-  	  } catch {
-  	    case why:PdfcrowdError =>
-          //503 - Simultaneous API calls from a single IP are not allowed.
-  	      val msg = why.getMessage
-          println( msg )
-          throw new RuntimeException( msg.firstSuffix( '-' ) or msg )
-  	    case e:IOException =>
-          println( e.getMessage )
-          throw new RuntimeException( e )
-  	  } finally {
-  	    if ( fileStream != null )
-  	      fileStream.close
-  	  }
+          if ( !useJavascript )
+            client.enableJavaScript( false )
+          
+          val finalUrl = ( username.notBlank && password.notBlank ) ? {
+            val idx = url.toLowerCase().indexOf( "://" )
+            
+            if ( idx > -1 ) {
+              url.substring( 0, idx + 3 ) + username + ":" + password +  "@" + url.substring( idx + 3  ) 
+            } else {
+              ( username + ":" + password +  "@" + url )
+            }
+          } | url
+          
+          //println( finalUrl )
+    	    client.convertURI( finalUrl, fileStream )
+    	    
+    	    if ( !useJavascript )
+            B.sendMessage( "When importing the URL [" + url + "], there was an error.  It was tried again with Javascript turned off on the page and it was successful.  The result may not exactly reflect what the page looked like.", T.user.tid )
+            
+    	    retry = false
+    	  } catch {
+    	    case why:PdfcrowdError =>
+    	      why.statusCode match {
+    	        case 510 if useJavascript => // 510 = 413 Timed out. Can't load the specified URL.
+    	          useJavascript = false
+    	        case sc =>
+    	          retry = false
+    	        //503 - Simultaneous API calls from a single IP are not allowed.
+                val msg = why.getMessage
+                println( "status code: " + sc )
+                throw new RuntimeException( "Status code: " + sc + ", " + msg.firstSuffix( '-' ) or msg )
+    	        }
+    	    case e:IOException =>
+    	      retry = false
+            println( e.getMessage )
+            throw new RuntimeException( e )
+    	  } finally {
+    	    if ( fileStream != null )
+    	      fileStream.close
+    	  }
+      }
   	  
   	  outFile
     }
