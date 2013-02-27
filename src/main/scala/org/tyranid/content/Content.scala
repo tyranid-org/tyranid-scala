@@ -759,13 +759,32 @@ abstract class Content( override val view:MongoView,
   
   def hasTag( tag:Int ) = a_?( 'tags ).exists( _ == tag )
 
-  override def text:String = {
-    // If I am/have a document (FileSystem):
-    //  1) Do I have an externalId ?  If so, look up the document service (crocodoc) and get the text from that
-    //  2) TextExtractors.extract( file )
-    //
-    ""
+  def copy( ownerTid:String ):Content = {
+    val content = this.clone().as[Content]
+    
+    content( '_id ) = null
+    content( 'on ) = new Date
+    
+    content( 'o ) = Seq( ownerTid )
+    content( 'v ) = Seq( ownerTid )
+    
+    if ( a_?( 'subV ).length > 0 )
+      content( 'v ) = Seq( ownerTid )
+      
+    if ( a_?( 'subscr ).length > 0 )
+      content( 'v ) = Seq( ownerTid )
+    
+    content( 'shown ) = null
+    content( 'hide ) = null
+
+    content.stampLastModified
+    content.stampLastAction
+    
+    //content.save
+    content
   }
+  
+  override def text:String = ""
 
   override def searchText = {
     val t = text
@@ -897,6 +916,13 @@ abstract class Content( override val view:MongoView,
   def displayDate = t( 'on )
   
   def stampLastModified = {
+    val u = T.user
+    this( 'lastModified )      = new Date
+    this( 'lastModifiedBy )    = u.id
+    this( 'lastModifiedByOrg ) = u.orgId
+  }
+  
+  def stampLastAction = {
     val u = T.user
     this( 'lastModified )      = new Date
     this( 'lastModifiedBy )    = u.id

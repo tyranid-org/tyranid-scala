@@ -435,6 +435,13 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   override def contents = B.groupContents( this )
 
   def org = B.Org.getById( oid( 'org ) )
+  
+  
+  override def copy( ownerTid:String ): Content = {
+    val group = super.copy( ownerTid ).as[Group]
+    group( 'org ) = T.user.org.id 
+    group
+  }  
 }
 
 /*
