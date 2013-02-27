@@ -446,6 +446,10 @@ class StringImp( s:String ) {
    */
   def isEmail:Boolean =
     try {
+      // for some reason this was occassionally getting past the InternetAddress check below, but not always
+      if ( s.endsWith( "." ) )
+        return false
+
       val addr = new javax.mail.internet.InternetAddress( s )
       val idx = s.indexOf( '@' )
 

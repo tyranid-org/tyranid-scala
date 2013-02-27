@@ -40,6 +40,20 @@ class EmailSuite extends FunSuite {
     }
   }
 
+  test( "isEmail" ) {
+
+    val data = Seq(
+      ( "bill@foo.com",   true  ),
+      ( "bill@foo.com.",  false ),
+      ( "foo@blah.com..", false )
+    )
+
+    for ( d <- data;
+          email = d._1;
+          expected = d._2 )
+      assert( email.isEmail === expected, "email = " + email )
+  }
+
   test( "extraction" ) {
 
     val data = Seq(
