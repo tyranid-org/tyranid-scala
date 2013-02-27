@@ -252,6 +252,22 @@ object File {
       throw new RuntimeException( "File not found." )
     }
   }
+
+  def isBinary( inFile:java.io.File ) = {
+    var in:FileInputStream = null
+    
+    try {
+      in = new FileInputStream( inFile )
+      var cnt = 0
+      scala.collection.immutable.Stream.continually(in.read).takeWhile( c => c != -1 && cnt < 2 ).filter( 0 == ).length == 2
+    } catch {
+      case e => 
+        e.printStackTrace
+        true // default to true if something bad happens
+    } finally {
+      in.close
+    }
+  }
 }
 
 trait CommonFile extends Domain {
