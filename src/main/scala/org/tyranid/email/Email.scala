@@ -125,6 +125,21 @@ object Email {
 
     return new InternetAddress( emailAddress )
   }
+
+  def extract( email:String ) = {
+
+    var e = email
+
+    val left = e.indexOf( '<' )
+    if ( left != -1 ) {
+      val right = e.indexOf( '>' )
+
+      if ( right != -1 )
+        e = e.substring( left + 1, right )
+    }
+
+    e.trim.unquote.trim
+  }
 }
 
 trait EmailTemplate {

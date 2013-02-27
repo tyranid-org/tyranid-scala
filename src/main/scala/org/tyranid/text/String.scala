@@ -177,6 +177,22 @@ class StringImp( s:String ) {
     
     value
   }
+
+  def unquote:String = {
+    val l = s.length
+
+    if ( l >= 2 ) {
+      val first = s.head
+      val last = s.last
+
+      if (   ( first == StringImp.UnicodeLeftQuote && last == StringImp.UnicodeRightQuote )
+          || ( first == '"'                        && last == '"'               )
+          || ( first == '\''                       && last == '\''              ) )
+        return s.substring( 1, l - 1 ).unquote
+    }
+
+    s
+  }
     
   def encJson = {
     if ( s != null ) {

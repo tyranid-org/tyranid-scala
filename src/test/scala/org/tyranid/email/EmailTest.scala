@@ -21,9 +21,11 @@ import org.scalatest.FunSuite
 
 import org.tyranid.Imp._
 
+
 case class EmailData( email:String, domain:String, domainPart:String )
 
 class EmailSuite extends FunSuite {
+  org.tyranid.boot.Boot.boot
 
   val addresses = Seq(
     EmailData( "yrc.officer@yahoo.com", "yahoo.com", "yahoo" )
@@ -35,6 +37,24 @@ class EmailSuite extends FunSuite {
 
       assert( Email.domainFor ( addr.email ) == addr.domain )
       assert( Email.domainPart( addr.email ) == addr.domainPart )
+    }
+  }
+
+  test( "extraction" ) {
+
+    val data = Seq(
+      ( "bill@foo.com",                  "bill@foo.com"    ),
+      ( "Info <info@ux.aol.com>",        "info@ux.aol.com" ),
+      ( "Jill Joy <\"jjoy@yahoo.com\">", "jjoy@yahoo.com"  ),
+      ( "Jill Joy <“jjoy@yahoo.com”>",   "jjoy@yahoo.com"  ),
+      ( "Jill Joy < jjoy@yahoo.com >",   "jjoy@yahoo.com"  )
+    )
+
+    for ( d <- data;
+          raw      = d._1;
+          expected = d._2 ) {
+
+      assert( Email.extract( raw ) === expected )
     }
   }
 }
