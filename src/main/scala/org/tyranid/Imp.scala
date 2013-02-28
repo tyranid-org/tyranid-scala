@@ -64,7 +64,7 @@ object Imp {
   import javax.servlet.http.{ HttpServletRequest, HttpServletResponse, HttpSession }
   implicit def servletRequest ( v:HttpServletRequest  )           = new org.tyranid.http.HttpServletRequestOps ( v )
   implicit def servletResponse( v:HttpServletResponse )           = new org.tyranid.http.HttpServletResponseOps( v )
-  implicit def httpSession( v:HttpSession )                       = new org.tyranid.http.HttpSessionImp( v )
+  implicit def httpSessionImp( v:HttpSession )                    = new org.tyranid.http.HttpSessionImp( v )
 
 
   /**
