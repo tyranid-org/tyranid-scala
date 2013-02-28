@@ -123,7 +123,7 @@ object S3 {
     md.setContentType( contentType )
 
     try {
-      /* val putObjectResult = */ s3.putObject( bucket.name, key, in, md )
+      s3.putObject( bucket.name, key, in, md )
     } finally {
       in.close
     }

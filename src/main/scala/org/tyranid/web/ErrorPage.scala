@@ -19,17 +19,17 @@ package org.tyranid.web
 
 import org.tyranid.Imp._
 
-
 object Errorlet extends Weblet {
 
   def handle( web:WebContext ) {
 
     rpath match {
     case "/404" =>
+      
       val originalUrl = web.req.getAttribute( "javax.servlet.forward.request_uri" )._s
 
       if ( T.session.ua( web ).isIE && ( originalUrl.startsWith( "/\"" ) || originalUrl.startsWith( "/%22/" ) ) ) {
-        web.res
+        web.res.ok
         return
       }
       
@@ -37,9 +37,8 @@ object Errorlet extends Weblet {
       
       if ( originalUrl != null )
         log( Event.Error404, "p" -> originalUrl )
-
+        
       web.template( <tyr:404/> )
-
     case "/throw" =>
       throw new RuntimeException( "test exception" )
 

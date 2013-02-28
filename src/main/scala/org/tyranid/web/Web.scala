@@ -248,6 +248,12 @@ class WebFilter extends TyrFilter {
         if ( webloc.path == "" )
           return false
         
+        // If it is an asset, then just return 404 
+        if ( isAsset ) {
+          web.res.sendError( HttpServletResponse.SC_NOT_FOUND )
+          return false
+        }
+        
         web.ctx.getRequestDispatcher( "/404" ).forward( web.req, web.res )
       case re:org.tyranid.secure.SecureException =>
         if ( !B.User.isLoggedIn ) {
@@ -273,7 +279,7 @@ class WebFilter extends TyrFilter {
     try {
       for ( webloc <- boot.weblocs;
             if web.matches( webloc.weblet.wpath ) && webloc.weblet.matches( web ) ) {
-
+        
         ensureSession( thread, web )
         
         //println( !web.b( 'xhr ) ) 
@@ -400,7 +406,10 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
 
   def matches( p:String ) = {
     // TODO:  check for path separators ... i.e. "/foo" should not match "/foobar" but should match "/foo/bar"
-    path.startsWith( p )
+    path.startsWith( p ) && {
+       val plen = p.length
+       ( path.length == plen || path.charAt( plen ) == '/' )
+    }
   }
 
   def ip = req.getRemoteAddr
@@ -469,7 +478,7 @@ case class Webloc( path:String, weblet:Weblet, children:Webloc* ) {
 
 trait Weblet {
   val rootPath = "/"
-    
+  
   def redirectIfNotLoggedIn( web:WebContext ) = 
     if ( !B.User.isLoggedIn )
       web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )

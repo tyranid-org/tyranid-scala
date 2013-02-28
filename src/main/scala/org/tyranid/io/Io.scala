@@ -98,7 +98,7 @@ class InputStreamImp( is:InputStream ) {
 
 object Iolet extends Weblet {
   lazy val notFoundUrl = B.getS3Bucket( "public" ).url( "icons/na.png" )
-  
+
   def handle( web:WebContext ) {
     rpath match {
      // <img src="/io/thumb/a09vUCwNUOSweddROKEl/l|m|s|t"/>
