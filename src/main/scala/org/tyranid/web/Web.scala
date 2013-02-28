@@ -280,7 +280,7 @@ class WebFilter extends TyrFilter {
       for ( webloc <- boot.weblocs;
             if web.matches( webloc.weblet.wpath ) && webloc.weblet.matches( web ) ) {
         
-        ensureSession( thread, web )
+        if ( !comet ) ensureSession( thread, web )
         
         //println( !web.b( 'xhr ) ) 
         //println( !isAsset )
