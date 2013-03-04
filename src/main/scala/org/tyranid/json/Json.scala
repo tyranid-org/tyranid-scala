@@ -106,6 +106,11 @@ case class JqShow( target:String ) extends JsCmd {
   def toJson = "{\"" + target + "\":\"show\"}"
 }
 
+case object JsNop extends JsCmd {
+  def toJson = null
+}
+
+
 object Jobj {
   def apply = JsonNodeFactory.instance.objectNode
 }

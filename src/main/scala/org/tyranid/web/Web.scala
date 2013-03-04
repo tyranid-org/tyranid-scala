@@ -31,7 +31,7 @@ import org.tyranid.Imp._
 import org.tyranid.boot.Bootable
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.http.UserAgent
-import org.tyranid.json.{ JsCmd, Js, JqHide, JqShow, JqHtml }
+import org.tyranid.json.{ JsCmd, Js, JqHide, JqShow, JqHtml, JsNop }
 import org.tyranid.math.Base64
 import org.tyranid.profile.{ LoginCookie, User }
 import org.tyranid.session.{ AccessLog, Session, ThreadData, Notification }
@@ -352,7 +352,7 @@ class WebResponse( web:WebContext, sess:Session ) {
         main
       else
         Array(
-          cmds.map( cmdToMap ) += main
+          cmds.map( cmdToMap ).filter( _ != null ) += main
         )
     ).toString
   }
@@ -381,6 +381,7 @@ class WebResponse( web:WebContext, sess:Session ) {
     case cmd:Js     => Map( "extraJS" -> cmd.js )
     case cmd:JqHide => throw new RuntimeException( "not yet implemented" )
     case cmd:JqShow => throw new RuntimeException( "not yet implemented" )
+    case JsNop      => null
     }
 }
 
