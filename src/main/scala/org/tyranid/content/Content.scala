@@ -754,6 +754,7 @@ abstract class Content( override val view:MongoView,
 
   def contentType = ContentType.getById( i( 'type ) )
   def isFolder = contentType == ContentType.Folder
+  def isProject = contentType == ContentType.Project
 
   def hasAnnotatedPages:Boolean = false
   
