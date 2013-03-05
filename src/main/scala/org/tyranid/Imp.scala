@@ -136,4 +136,5 @@ object Imp {
   def eye( tid:String ) = org.tyranid.db.meta.Tid.eye( tid )
 
   val Sbt = org.tyranid.json.Sbt
+  def TyrLoad( js:String ) = Unparsed( "tyrl( function() {" + js + "});" )
 }
