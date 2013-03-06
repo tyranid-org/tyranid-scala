@@ -239,6 +239,8 @@ trait Session extends QuickCache {
   var loggedEntry = false
   var loggedUser  = false
 
+  var debug       = B.DEV
+
   var passedCaptcha = !B.requireReCaptcha
 
   def LnF = get( Session.LnF_KEY ).as[LnF] ?| org.tyranid.ui.LnF.RetailBrand
