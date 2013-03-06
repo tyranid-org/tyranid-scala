@@ -47,7 +47,7 @@ class JsonSuite extends FunSuite {
     )
 
     for ( d <- 0 to data.size - 1 by 2 )
-      assert( data( d ).toJsonStr === data( d+1 ) )
+      assert( data( d ).toJsonStr( false ) === data( d+1 ) )
   }
 
   test( "parsing" ) {

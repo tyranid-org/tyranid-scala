@@ -263,8 +263,8 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     if ( headers != null )
       for ( h <- headers ) 
         res.setHeader( h._1, h._2 )
-    
-    val outputJson = if ( json == null ) "{}" else json.toJsonStr
+        
+    val outputJson = if ( json == null ) "{}" else json.toJsonStr( req.getAttribute( "json.pretty" )._b )
     
 //    res.setContentLength( if ( jsonpCallback != null ) ( jsonpCallback.length + 2 + outputJson.length ) else outputJson.length )
     

@@ -59,7 +59,7 @@ object Basecamp {
       if ( entity != null ) {
         if ( "application/json" == entity.getContentType.getValue ) {
           val json = Json.parse( res._s )
-          println( json.toJsonStr )
+          println( json.toJsonStr( true ) )
         }
       }
     }

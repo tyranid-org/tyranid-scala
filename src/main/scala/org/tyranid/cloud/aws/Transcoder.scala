@@ -104,7 +104,7 @@ object Transcoder {
          "PipelineId" -> pipeline_standardId
         )
         
-    val req = request( "POST", "/2012-09-25/jobs", null, payload.toJsonStr )
+    val req = request( "POST", "/2012-09-25/jobs", null, payload.toJsonStr( false ) )
     val result = req.s            
       
     if ( req.response.getStatusLine().getStatusCode() != 200 ) {

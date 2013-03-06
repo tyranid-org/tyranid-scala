@@ -169,7 +169,7 @@ object Es {
       else
         ""
 
-    val s = ( Es.host + "/_search" + params ).POST( content = query.toJsonStr ).s
+    val s = ( Es.host + "/_search" + params ).POST( content = query.toJsonStr( false ) ).s
 //sp_am( "results=[\n\n" + results + "\n\n]" )
 
     val json = s.parseJsonObject
@@ -177,7 +177,7 @@ object Es {
     val error = json.s( 'error )
     
     if ( error.notBlank ) {
-      println( "ES Search Failure.  Query=\n\n" + query.toJsonStr + "\n\nError:\n\n" + error )
+      println( "ES Search Failure.  Query=\n\n" + query.toJsonStr( false ) + "\n\nError:\n\n" + error )
       Log.log( Event.Search, "m" -> ( "ElasticSearch search failure=" + error ) ) 
     }
 
@@ -188,7 +188,7 @@ object Es {
     val sb = new StringBuilder
 
     def array( va:ViewAttribute, arr:BasicDBList ) {
-      sb += '[' ++= arr.toSeq.map( v => va.domain.as[DbArray].of.see( v ).toJsonStr ).mkString( "," ) += ']'
+      sb += '[' ++= arr.toSeq.map( v => va.domain.as[DbArray].of.see( v ).toJsonStr( false ) ).mkString( "," ) += ']'
     }
 
     def enter( rec:Record, root:Boolean = false ) {
@@ -231,8 +231,8 @@ object Es {
           ( view.vas.find( _.att.search.auth ) match {
             case Some( va ) =>
               rec( va ) match {
-              case tids:BasicDBList => tids.toJsonStr
-              case tid:String       => tid.toJsonStr
+              case tids:BasicDBList => tids.toJsonStr( false )
+              case tid:String       => tid.toJsonStr( false )
               case _                => "\"no\""
               }
 
@@ -354,7 +354,7 @@ object Es {
             )
           ),
           "mappings" -> mappings
-        ).toJsonStr
+        ).toJsonStr( false )
       )
     }
   }

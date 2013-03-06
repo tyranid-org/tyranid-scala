@@ -22,7 +22,8 @@ import scala.xml.NodeSeq
 
 import com.mongodb.BasicDBList
 
-import org.codehaus.jackson.JsonNode
+import org.codehaus.jackson.map.ObjectMapper
+import org.codehaus.jackson.{ JsonNode, JsonFactory, JsonParser }
 import org.codehaus.jackson.node.{ ArrayNode, JsonNodeFactory, MissingNode, ObjectNode }
 
 import org.tyranid.Imp._
@@ -66,7 +67,7 @@ object Sbt {
 
     if ( opts != null ) {
       comma
-      sb ++= "\"opts\":" ++= opts.toJsonStr
+      sb ++= "\"opts\":" ++= opts.toJsonStr( false )
     }
 
     sb += '}'
@@ -118,12 +119,12 @@ object Jobj {
 object Json {
 
   lazy val factory = {
-    val factory = new org.codehaus.jackson.JsonFactory()
+    val factory = new JsonFactory()
     
-    factory.configure( org.codehaus.jackson.JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true )
+    factory.configure( JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true )
   }
 
-  def parse( json:String ) = { new org.codehaus.jackson.map.ObjectMapper( factory ) }.readTree( json )
+  def parse( json:String ) = { new ObjectMapper( factory ) }.readTree( json )
 
   val EmptyArray  = JsonNodeFactory.instance.arrayNode
 }
@@ -180,13 +181,13 @@ class JsonNodeImp( node:JsonNode ) /*extends Dynamic*/ {
     }
 }
 
-case class JsonString( root:Any ) {
+case class JsonString( root:Any, pretty:Boolean = false ) {
 
   private val sb = new StringBuilder
 
   override def toString = {
     write( root )
-    sb.toString
+    pretty ? new ObjectMapper().defaultPrettyPrintingWriter().writeValueAsString( Json.parse( sb.toString ) ) | sb.toString
   }
 
   private def write( obj:Any ):Unit =

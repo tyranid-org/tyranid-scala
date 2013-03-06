@@ -137,7 +137,7 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
           "output" -> outputFormats )
           
       //println( "request: " + jsonReq.toJsonStr )
-      val req = Http.POST( "https://app.zencoder.com/api/v2/jobs", jsonReq.toJsonStr, null, "application/json", Map( "Zencoder-Api-Key" -> apiKey ) )
+      val req = Http.POST( "https://app.zencoder.com/api/v2/jobs", jsonReq.toJsonStr( false ), null, "application/json", Map( "Zencoder-Api-Key" -> apiKey ) )
       val result = req.s            
       
       //println( "zc res: " + result )

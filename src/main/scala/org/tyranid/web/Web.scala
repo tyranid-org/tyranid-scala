@@ -157,7 +157,7 @@ class BasicAuthFilter extends TyrFilter {
   }
 
   override def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData, comet:Boolean ):Unit = {  
-    if ( !comet && thread.http == null ) {
+    if ( !comet && ( thread.http == null || !B.User.isLoggedIn ) ) {
       val header = web.req.getHeader( "Authorization" )
       
       if ( header.isBlank ) {
@@ -337,7 +337,8 @@ class WebResponse( web:WebContext, sess:Session ) {
   
   var variables:Map[String,Any] = null
   
-  def toJsonStr = {
+  def toJsonStr = toPJsonStr( false )
+  def toPJsonStr( isPretty:Boolean ) = {
     val main =
       Map( "notices" -> notices,
            "warnings" -> warnings,
@@ -348,12 +349,7 @@ class WebResponse( web:WebContext, sess:Session ) {
            "vars" -> variables )
 
     new org.tyranid.json.JsonString(
-      if ( cmds.isEmpty )
-        main
-      else
-        Array(
-          cmds.map( cmdToMap ).filter( _ != null ) += main
-        )
+      ( cmds.isEmpty ? main | Array( cmds.map( cmdToMap ).filter( _ != null ) += main ) ), isPretty 
     ).toString
   }
 
