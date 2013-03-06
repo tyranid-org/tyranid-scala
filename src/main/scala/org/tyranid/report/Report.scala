@@ -458,11 +458,8 @@ case class Report( query:Query ) {
           v  <- web.sOpt( va.name ) )
       searchRec( va.name ) = v
 
-    <head>
-     <script src={ B.buildPrefix + "/js/tyr_report.js" } type="text/javascript"/>
-     <script>{ Unparsed( "window.reportObj = { qn:'" + query.name + "', id:'" + id + "' };" ) }</script>
-    </head> ++
     { query.fields.map( _.drawPreamble ).flatten } ++
+    <div style="display:none;" id="reportInfo" data-qn={ query.name } data-qid={ id }/> ++
     <div class="report greyBox" id={ id }>
      { recalcFields }
      { innerDraw( user ) }
