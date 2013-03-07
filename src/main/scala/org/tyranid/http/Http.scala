@@ -50,6 +50,7 @@ import org.apache.http.protocol.{ ExecutionContext, HttpContext, BasicHttpContex
 import org.apache.http.util.EntityUtils
 
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
+import org.tyranid.json.JsCmd
 import org.tyranid.Imp._
 import org.tyranid.math.Base36
 import org.tyranid.pdf.Pdf
@@ -148,6 +149,18 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
 
     s
   }
+  
+  def addJsCmd( cmd: org.tyranid.json.JsCmd ) {
+    var cmds = req.getAttribute( "jscmds" ).as[mutable.Buffer[org.tyranid.json.JsCmd]]
+    
+    if ( cmds == null ) {
+      cmds = mutable.Buffer[org.tyranid.json.JsCmd]()
+      req.setAttribute( "jscmds", cmds  )
+    }
+    
+    cmds += cmd
+  }
+  
   
   def serializeParams( filter:Option[ ( String ) => Boolean ] = None ) =
     req.getParameterNames.toSeq.filter( name => filter.flatten( _( name.as[String] ), true ) ).map( n => ( n + "=" + s( n.as[String] ).encUrl ) ).mkString( "&" )

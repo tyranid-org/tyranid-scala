@@ -336,9 +336,12 @@ class WebResponse( web:WebContext, sess:Session ) {
   var htmlMap:collection.Map[String,Any] = null
   
   var variables:Map[String,Any] = null
+
   
   def toJsonStr = toPJsonStr( false )
   def toPJsonStr( isPretty:Boolean ) = {
+    joinJsCmds
+      
     val main =
       Map( "notices" -> notices,
            "warnings" -> warnings,
@@ -353,7 +356,20 @@ class WebResponse( web:WebContext, sess:Session ) {
     ).toString
   }
 
-  def cmdToMap( cmd:JsCmd ) =
+  private def joinJsCmds {
+    val req = web.req
+    
+    if ( req != null ) {
+      val jsCmds = req.getAttribute( "jscmds" ).as[mutable.Buffer[JsCmd]]
+      
+      if ( jsCmds != null ) {
+        cmds ++= jsCmds
+        req.removeAttribute( "jscmds" )
+      }
+    }
+  }
+  
+  private def cmdToMap( cmd:JsCmd ) =
     cmd match {
     case cmd:JqHtml =>
       val htmlMap = mutable.Map[String,Any]()

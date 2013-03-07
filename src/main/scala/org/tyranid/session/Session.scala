@@ -29,6 +29,7 @@ import org.bson.types.ObjectId
 import org.tyranid.db.meta.TidCache
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.http.UserAgent
+import org.tyranid.json.{ Js, JsCmd }
 import org.tyranid.Imp._
 import org.tyranid.math.Base62
 import org.tyranid.profile.User
@@ -302,8 +303,9 @@ trait Session extends QuickCache {
       ua( web )
       put( "remoteHost", web.req.getRemoteHost )
       put( "remoteAddr", web.req.getRemoteAddr )
+      web.req.addJsCmd( Js( "window.cometConnect();" ) )
     }
-      
+    
     /*
     Comet.visit { comet =>      
       val sess = comet.session
