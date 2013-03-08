@@ -62,9 +62,11 @@ object LoginCookie {
     cookie.setPath("/")
     cookie.setSecure( true )
 
+    println( "trying to set login cookie!" )
     if ( domain != null )
       cookie.setDomain( domain )
 
+      println( "added login cookie!")
     T.web.res.addCookie(cookie)
             
     user( "loginToken" ) = loginToken

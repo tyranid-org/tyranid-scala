@@ -42,6 +42,7 @@ object SsoMapping extends MongoEntity( tid = "a0Ut" ) {
   "emailAttrib"     is DbChar(20)    is 'required;
   "firstNameAttrib" is DbChar(20);
   "lastNameAttrib"  is DbChar(20);
+  "groups"          is DbChar(20);
   
   lazy val testMapping = {
     val ts = SsoMapping.make
