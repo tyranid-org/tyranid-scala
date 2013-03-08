@@ -77,7 +77,7 @@ object Email {
   }
 
   def blacklist( email:String ) {
-    B.User.db.update( Mobj( "email" -> email.toPatternI ), Mobj( $set -> Mobj( "noEmail" -> true ) ) )  
+    B.User.db.update( Mobj( "email" -> email.toPatternI ), Mobj( $set -> Mobj( "noEmail" -> true ) ), false, true )  
   }
   
   def isValid( email:String ) = {

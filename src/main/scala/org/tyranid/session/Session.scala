@@ -303,7 +303,8 @@ trait Session extends QuickCache {
       ua( web )
       put( "remoteHost", web.req.getRemoteHost )
       put( "remoteAddr", web.req.getRemoteAddr )
-      web.req.addJsCmd( Js( "window.cometConnect();" ) )
+      
+      web.req.addJsCmd( Js( "tyrl( window.cometConnect );" ) )
     }
     
     /*

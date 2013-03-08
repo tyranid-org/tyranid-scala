@@ -402,7 +402,7 @@ object Tidlet extends Weblet {
     <div class="tiditor" style="padding-bottom: 50px;">
      <div class="plainbox">
       <div class="content">
-       <form method="post" action={ wpath } style="margin-top:8px;">
+       <form method="post" action={ wpath } style="margin-top:8px;" class="handling">
         <div style="padding:4px;">
          <label for="tid" style="float:left; width:40px; font-size:16px; line-height:28px; color:#888;">TID</label>
          <input type="text" id="tid" name="tid" value={ tid } style="font-size:20px; width:300px;"/>
