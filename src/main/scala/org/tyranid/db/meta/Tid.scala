@@ -93,6 +93,30 @@ object Tid {
     Entity.byTid( entityTid ).get.recordTidToId( recordTid )
   }
 
+  def entityTid( tid:String ):String =
+    if ( tid.notBlank ) {
+      val ( entityTid, recordTid ) = Tid.split( tid )
+      entityTid
+    } else {
+      null
+    }
+
+  def entity( tid:String ) = {
+    val enTid = entityTid( tid )
+    
+    if ( enTid != null ) Entity.byTid( enTid )
+    else                 null
+  }
+
+  def db( tid:String ) = {
+    spam( "entity for tid " + tid + " is " + entity( tid ) )
+
+    entity( tid ) match {
+    case mEn:MongoEntity => mEn.db
+    case _               => null
+    }
+  }
+
   def parse( tid:String ):(Entity,Any) =
     if ( tid.isBlank ) {
       ( null, null )
