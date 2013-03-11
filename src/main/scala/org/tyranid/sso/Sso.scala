@@ -170,19 +170,19 @@ $( $('#idp').focus() );
       }
       
       val mustHaveGroups = mapping.b( 'groupsAttribReq )
-      val groups = ( json.s( mapping.s( 'groupsAttrib ) ) or "" ).split( "," )
+      val groupNames = ( json.s( mapping.s( 'groupsAttrib ) ) or "" ).split( "," )
       
-      if ( mustHaveGroups && groups.length == 0 ) {
+      if ( mustHaveGroups && groupNames.length == 0 ) {
         sess.error( "Sorry, but you must be a member of a group to access " + B.applicationName + "." )
         web.jsRes()
         return
       }
       
+      val orgId = mapping.oid( 'org )
       val user = B.User.db.findOne( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) )
       
       if ( user == null ) {
         // Create a new one
-        val orgId = mapping.oid( 'org )
         val org = B.Org.getById( orgId )
         val newUser = B.newUser()       
         
@@ -206,7 +206,13 @@ $( $('#idp').focus() );
         B.welcomeUserEvent
         Group.ensureInOrgGroup( newUser )        
         
-        /// Add them to any groups specified
+        // Add them to any groups specified
+        if ( mustHaveGroups && groupNames.size > 0 ) {
+          val groups = Group.db.find( Mobj( "org" -> orgId, "ssoSynced" -> true ), Mobj( "name" -> 1 ) ).toSeq
+          
+          for ( group <- groups if ( groupNames.find( g => g.toLowerCase == group.s( 'name ).toLowerCase ) != None ) )
+            Group.db.update( Mobj( "_id" -> group.id ), $addToSet( "v", newUser.tid ) )          
+        }
       } else if ( user.b( 'inactive ) ) {
         //println( "User is inactive:" + email )
         sess.error( "Sorry, this account has been deactivated." )
@@ -232,6 +238,19 @@ $( $('#idp').focus() );
         if ( save )
           u.save
           
+        // Add them to any groups specified
+        if ( mustHaveGroups && groupNames.size > 0 ) {
+          val groups = Group.db.find( Mobj( "org" -> orgId, "ssoSynced" -> true ), Mobj( "name" -> 1 ) ).toSeq
+          
+          for ( group <- groups ) {
+            if ( groupNames.find( g => g.toLowerCase == group.s( 'name ).toLowerCase ) == None ) {
+              Group.db.update( Mobj( "_id" -> group.id ), $pull( "v", u.tid ) )
+            } else {
+              Group.db.update( Mobj( "_id" -> group.id ), $addToSet( "v", u.tid ) )
+            }
+          }
+        }
+        
         sess.login( u )
       }
    

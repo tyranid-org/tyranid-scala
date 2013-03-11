@@ -206,6 +206,8 @@ trait Entity extends Domain with DbItem {
 	 */
 
 	val attribs = new mutable.ArrayBuffer[Attribute]
+  
+  def has( name:String ) = attribs.exists( _.name == name )
 
 	def attrib( name:String ) =
     try {
