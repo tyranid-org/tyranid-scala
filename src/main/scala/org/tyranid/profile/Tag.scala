@@ -54,6 +54,13 @@ object Tag extends MongoEntity( tid = "a0Ct" ) {
     } )
   }
 
+  def strFor( tagId:Int ) = {
+    val tag = Tag.getById( tagId )
+      
+    if ( tag != null ) tag.label
+    else               null
+  }
+
   def html( setId:String, r:Record ):NodeSeq = html( setId, r.tid, r.label )
 
   def html( setId:String, id:String, label:String ):NodeSeq =
