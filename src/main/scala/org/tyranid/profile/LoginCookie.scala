@@ -35,7 +35,7 @@ object LoginCookie {
 
   def domain =
     if ( B.DEV ) null
-    else         Uri.rootDomain
+    else         B.domain
 
   def getUser:Option[User] = {
     val cv = T.web.req.cookieValue( name, domain = domain )
@@ -62,11 +62,9 @@ object LoginCookie {
     cookie.setPath("/")
     cookie.setSecure( true )
 
-    println( "trying to set login cookie!" )
     if ( domain != null )
       cookie.setDomain( domain )
 
-      println( "added login cookie!")
     T.web.res.addCookie(cookie)
             
     user( "loginToken" ) = loginToken

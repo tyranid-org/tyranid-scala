@@ -241,7 +241,7 @@ trait Bootable {
   // Document services
   val dropbox:DropboxApp = null
   val zencoder:ZencoderApp = null
-  val crocodoc:CrocApp = null
+  val crocodoc:CrocApp = null; val CROCODOC_SCRIPT:String = null; val CROC_JS_V2 = true 
   val scribd:ScribdApp = null
   val issuu:IssuuApp = null
   

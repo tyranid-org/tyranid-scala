@@ -83,7 +83,7 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   }
   
   def docPreviewContainer( extDocId:String, height:String="100%", print:Boolean = false ): NodeSeq =
-    { print |* <script src='//static-v2.crocodoc.com/core/docviewer.js'></script> } ++
+    { print |* ( B.CROC_JS_V2 ? <script src='//static-v2.crocodoc.com/core/docviewer.js'></script> | <script src="//static.crocodoc.com/api/3/crocodoc.js"></script> ) } ++
     <div class="doc-view doc crocodoc annotatableObject" id={ "dv_" + extDocId }/>
 
     /* ---
@@ -101,11 +101,28 @@ _doc = {"status": 3, "socketioHost": "//socket.crocodoc.com:5555/", "objects": [
     val sessionJson = Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s
     val session = Json.parse( sessionJson ).s( 'session )
 
-    Http.GET( "https://crocodoc.com/webservice/document.js?session=" + session )._s + ";" +
-    ( if ( print )
-        "var docViewer = new DocViewer({ id:'dv_" + extDocId + "', zoom:'fitWidth' });"
-      else
-        """if ( proj ) { proj.initViewer('""" + extDocId + """'); } else { var docViewer = new DocViewer({ "id": "dv_""" + extDocId + """" }); }""" )
+    val javascript = new StringBuilder()
+    
+    if ( B.CROC_JS_V2 ) {
+      javascript ++= Http.GET( "https://crocodoc.com/webservice/document.js?session=" + session )._s
+      javascript ++= ";"
+        
+      ( if ( print )
+          javascript ++= ( "var docViewer = new DocViewer({ id:'dv_" + extDocId + "', zoom:'fitWidth' });" )
+        else
+          javascript ++= ( """if ( proj ) { proj.initViewer('""" + extDocId + """'); } else { var docViewer = new DocViewer({ "id": "dv_""" + extDocId + """" }); }""" ) )
+    } else {
+      val docViewer = "var docViewer = new Crocodoc.Viewer({ el: '#dv_" + extDocId + "', uuid: '" + extDocId + "', session : '" + session + "', zoom:'fitWidth' });"
+      
+      ( if ( print )
+          javascript ++= docViewer
+        else
+          javascript ++= ( "if ( proj ) { proj.initViewer('" + extDocId + "',null,'" + session + "'); } else { " + docViewer + " }" ) )
+      
+    }
+    
+    println( javascript._s )
+    javascript._s
   }
   
   def previewUrlFor( extDocId:String ):String = null

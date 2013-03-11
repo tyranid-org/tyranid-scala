@@ -47,12 +47,6 @@ object Uri {
     "http://" + base
   }
 
-  def rootDomain =
-    if ( B.PRODUCTION ) B.domain
-    else if ( B.STAGE ) "stage." + B.domain
-    else if ( B.BETA )  "beta." + B.domain
-    else                "dev." + B.domain
-
   def nameForDomain( domain:String ):String =
     try {
       val s = ( "http://" + domain ).GET().s.toLowerCase
