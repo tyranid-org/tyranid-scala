@@ -127,7 +127,6 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   "private"   is DbBoolean;
   "ssoSynced" is DbBoolean;
 
-  //"color"          // future ... colored labels
   //"search"         { search criteria } // future ... list search for a group, rather than each id explicitly
 
 
