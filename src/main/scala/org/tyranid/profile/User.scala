@@ -236,7 +236,7 @@ trait User extends MongoRecord {
         ( B.STAGE ? " STAGE" |
           ( B.BETA ? " BETA" | " DEV" ) )
 
-     Map( "user" -> 
+     Map( "user" -> //this.toClientJson,
            Map( "fullName" -> fullName,
                 "iconUrl" -> icon ),
           "org" ->      

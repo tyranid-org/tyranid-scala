@@ -265,6 +265,9 @@ $( function() {
   
           T.LnF match {
              case LnF.RetailBrand =>
+               val str = user.toClientCommonMap.toJsonStr( true )
+               
+               println( str )
                web.jsRes( Js( "Common.set( " + user.toClientCommonMap.toJsonStr() + " ); tyr.app.loadMain( '" + ( redirect.isBlank ? "/dashboard" | redirect ) + "' );" ) )
              case _ =>
                web.redirect(redirect.isBlank ? T.website | redirect)
