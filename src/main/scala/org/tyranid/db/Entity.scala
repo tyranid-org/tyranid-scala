@@ -58,6 +58,11 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   var temporary:Boolean = false
 
   /**
+   * Indicates whether this property is passed by default down to the client.
+   */
+  var client:Boolean = false
+
+  /**
    *    DSL ... TODO:  move this out to a builder object
    */
 
@@ -81,6 +86,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
     case "inherit"   => if ( domain == null )
                           throw new IllegalArgumentException( "Cannot find inherited attribute '" + name + "' in the entity '" + entity.name + "'." )
     case "noVersion" => noVersion = true
+    case "client"    => client = true
     }
 
     this
