@@ -26,7 +26,7 @@ import org.tyranid.db.Scope
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.email.Email
-import org.tyranid.json.{ Js, JqHtml }
+import org.tyranid.json.{ Js, JqHtml, JsonString }
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
 import org.tyranid.secure.DbReCaptcha
@@ -265,9 +265,7 @@ $( function() {
   
           T.LnF match {
              case LnF.RetailBrand =>
-               val jsonRes = web.jsonRes( sess )
-               jsonRes.extraJS = "tyr.app.loadMenubar( '/user/menubar' ); tyr.app.loadMain( '" + ( redirect.isBlank ? "/dashboard" | redirect ) + "' );"
-               web.json( jsonRes )
+               web.jsRes( Js( "Common.set( " + user.toClientCommonMap.toJsonStr() + " ); tyr.app.loadMain( '" + ( redirect.isBlank ? "/dashboard" | redirect ) + "' );" ) )
              case _ =>
                web.redirect(redirect.isBlank ? T.website | redirect)
           }
@@ -467,8 +465,8 @@ $( function() {
 
         if (dbUser == null) {
           if ( T.LnF == LnF.RetailBrand ) {
-          sess.notice( "Account access code not found!", deferred = "/dashboard" )
-          web.jsRes( Js( "tyr.app.loadMenubar( '/user/menubar' ); tyr.app.loadMain( '/dashboard' )" ) )
+            sess.notice( "Account access code not found!", deferred = "/dashboard" )
+            web.jsRes( Js( "Common.clear().set(Common.defaults); tyr.app.loadMain( '/dashboard' )" ) )
           } else {
             web.template(
             <tyr:shell>
@@ -483,7 +481,7 @@ $( function() {
           
           if ( T.LnF == LnF.RetailBrand ) {
             sess.notice( "You can now change your password in <em>My Profile</em>.", deferred = "/dashboard" )
-            web.jsRes( Js( "tyr.app.loadMenubar( '/user/menubar' ); tyr.app.loadMain( '/dashboard' )" ) )
+            web.jsRes( Js( "Common.set( " + user.toClientCommonMap.toJsonStr() + " ); tyr.app.loadMain( '/dashboard' )" ) )
           } else {
             sess.notice( "You can now change your password." )
             web.redirect( "/user/edit?id=" + user.tid )
@@ -635,7 +633,7 @@ $( function() {
           B.registerUser( user, companyName )
           B.welcomeUserEvent
             
-          web.jsRes( Js( "tyr.app.loadMenubar( '/user/menubar' ); tyr.app.loadMain( '/dashboard' );" ) )            
+          web.jsRes( Js( "Common.set( " + user.toClientCommonMap.toJsonStr() + " ); tyr.app.loadMain( '/dashboard' );" ) )            
           return
         }
       } else {

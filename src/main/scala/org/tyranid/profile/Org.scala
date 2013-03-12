@@ -50,6 +50,8 @@ class OrgMeta extends MongoEntity( "a02v" ) {
 
 trait Org extends MongoRecord {
   def name:String
+  
+  def isOwner( user:User ):Boolean
 }
 
 

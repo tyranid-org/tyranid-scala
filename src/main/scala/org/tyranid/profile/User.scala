@@ -224,7 +224,32 @@ trait User extends MongoRecord {
 
   def isGod = false
 
+  def toClientCommonMap = {
+    val sess = T.session
+    val org = this.org
+    val hasOrg = !org.isNew
+    val orgLogo = org.s( 'thumbnail )
+    val orgWebsite = hasOrg ? org.s( 'website ) | ""
+     
+    val logoSubtitle = 
+      B.PRODUCTION ? "" |
+        ( B.STAGE ? " STAGE" |
+          ( B.BETA ? " BETA" | " DEV" ) )
 
+     Map( "user" -> 
+           Map( "fullName" -> fullName,
+                "iconUrl" -> icon ),
+          "org" ->      
+            Map( "websiteUrl" -> orgWebsite ),
+          "unshownPosts" -> sess.unshownPosts,
+          "dev"   -> B.DEV,
+          "isEye" -> isGod,
+          "orgLogo" -> orgLogo,
+          "hasOrg" -> hasOrg,
+          "isOrgOwner" -> ( hasOrg && org.isOwner( this ) ),  
+          "logoSubtitle" -> logoSubtitle
+   )
+}               
 
   /*
    * * *   Organizations
