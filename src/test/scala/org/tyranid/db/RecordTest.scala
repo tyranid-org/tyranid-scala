@@ -30,9 +30,12 @@ class RecordSuite extends FunSuite {
 
     val rec = Widget.make
     rec( 'name ) = "Widget A"
+    rec( 'level ) = 5
     rec( 'prices ) = Mlist( Mobj( "aid" -> 3, "price" -> 1.0 ), Mobj( "price" -> 2.0 ) )
 
-    assert( rec.toClientJson === """{"name":"Widget A","prices":[{"price":1.0},{"price":2.0}]}""" )
+    rec.compute
+
+    assert( rec.toJsonStr( client = true ) === """{"level":5,"name":"Widget A","prices":[{"price":1.0},{"price":2.0}],"level2":10}""" )
 
     //assert( rec.view.path( "prices.0.price" ).aidName_( rec ) === "prices_3a_price" )
 

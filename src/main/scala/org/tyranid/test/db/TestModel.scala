@@ -60,6 +60,8 @@ object Widget extends MongoEntity( tid = "ts0t" ) {
   "prices"     is DbArray(Pricing)          is 'client;
   "cert"       is DbLink(Certification)     ;
   "tids"       is DbTid(Category,PriceType) ;
+
+  "level2"     is DbInt                     is 'client is 'temporary computed( _.i( 'level ) * 2 )
 }
 
 object Dimensions extends MongoEntity( tid = "ts1t" ) {

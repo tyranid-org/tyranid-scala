@@ -370,13 +370,6 @@ trait Record extends Valid with BsonObject with QuickCache {
   }
 
   def eye = Tid.eye( tid )
-
-
-  /*
-   * * *   Client
-   */
-
-  def toClientJson = org.tyranid.json.JsonString( this, pretty = false, client = true ).toString
 }
 
 /*
