@@ -74,10 +74,10 @@ class UserMeta extends MongoEntity( "a01v" ) {
 
   "_id"            is DbMongoId           is 'id;
   "email"          is DbEmail             is 'required;
-  "fullName"       is DbChar(64)          is 'label;
+  "fullName"       is DbChar(64)          is 'client is 'label;
   "password"       is DbPassword          is 'required;
   "password2"      is DbPassword          is 'required is 'temporary as "Repeat Password";
-  "thumbnail"      is DbThumbnail( "public" ) as "Profile Image";
+  "thumbnail"      is DbThumbnail( "public" ) is 'client as "Profile Image";
   "noEmail"        is DbBoolean           ;// No sent to this user";
   "inactive"       is DbBoolean           ;
 

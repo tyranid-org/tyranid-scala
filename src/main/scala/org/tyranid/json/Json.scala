@@ -20,6 +20,7 @@ package org.tyranid.json
 import scala.collection.JavaConversions._
 import scala.xml.NodeSeq
 
+import org.bson.types.ObjectId
 import com.mongodb.BasicDBList
 
 import org.codehaus.jackson.map.ObjectMapper
@@ -27,7 +28,8 @@ import org.codehaus.jackson.{ JsonNode, JsonFactory, JsonParser }
 import org.codehaus.jackson.node.{ ArrayNode, JsonNodeFactory, MissingNode, ObjectNode }
 
 import org.tyranid.Imp._
-import org.bson.types.ObjectId
+import org.tyranid.db.{ DbArray, Record }
+import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.session.Notification
 import org.tyranid.web.WebResponse
 
@@ -181,7 +183,7 @@ class JsonNodeImp( node:JsonNode ) /*extends Dynamic*/ {
     }
 }
 
-case class JsonString( root:Any, pretty:Boolean = false ) {
+case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false ) {
 
   private val sb = new StringBuilder
 
@@ -245,6 +247,39 @@ case class JsonString( root:Any, pretty:Boolean = false ) {
       write( p._1 )
       sb += ':'
       write( p._2 )
+      sb += '}'
+
+    case rec:Record =>
+      sb += '{'
+      var first = true
+      for ( va <- rec.view.vas;
+            if !client || va.att.client;
+            if rec.has( va ) ) {
+        if ( first )
+          first = false
+        else
+          sb += ','
+        write( va.name )
+        sb += ':'
+
+        val v =
+          if ( va.domain.is[MongoEntity] ) {
+            rec.rec( va )
+          } else if ( va.domain.is[DbArray] && va.domain.as[DbArray].of.is[MongoEntity] ) {
+            val arr = rec( va ).as[BasicDBList]
+            val mEnt = va.domain.as[DbArray].of.as[MongoEntity]
+
+            for ( i <- 0 until arr.size() )
+              mEnt.recify( arr( i ), rec.as[MongoRecord], rec => arr( i ) = rec )
+
+            arr
+          } else {
+            rec( va )
+          }
+
+        write( rec( va ) )
+      }
+
       sb += '}'
 
     case jscmd:JsCmd => sb ++= jscmd.toJson
