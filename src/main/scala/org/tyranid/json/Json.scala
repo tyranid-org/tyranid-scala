@@ -227,21 +227,6 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
         write( v )
       }
       sb += ']'
-    case o:collection.Map[_,_]          =>
-      sb += '{'
-      var first = true
-      for ( e <- o ) {
-        if ( e._2 != null ) {
-          if ( first )
-            first = false
-          else
-            sb += ','
-          write( e._1 )
-          sb += ':'
-          write( e._2 )
-        }
-      }
-      sb += '}'
     case p:Pair[_,_] =>
       sb += '{'
       write( p._1 )
@@ -282,6 +267,22 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
 
       sb += '}'
 
+    case o:collection.Map[_,_]          =>
+      sb += '{'
+      var first = true
+      for ( e <- o ) {
+        if ( e._2 != null ) {
+          if ( first )
+            first = false
+          else
+            sb += ','
+          write( e._1 )
+          sb += ':'
+          write( e._2 )
+        }
+      }
+      sb += '}'
+        
     case jscmd:JsCmd => sb ++= jscmd.toJson
 
     case b:java.lang.Boolean => sb ++= b.toString

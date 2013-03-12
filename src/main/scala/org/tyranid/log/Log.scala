@@ -102,6 +102,8 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
   override def init = {
     super.init
     "uid"    is DbLink(B.User)    as "User";
+    
+    db.ensureIndex( Mobj( "on" -> 1  ) )
   }
 
   def log( event:Event, opts:(String,Any)* ) = {
@@ -230,6 +232,7 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
   }
 
   override lazy val defaultSort = Sort( "on", "On", "on" -> -1 )
+  
 }
 
 class Log( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Log.makeView, obj, parent ) {
