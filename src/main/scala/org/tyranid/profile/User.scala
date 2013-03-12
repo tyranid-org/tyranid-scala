@@ -230,15 +230,15 @@ trait User extends MongoRecord {
     val hasOrg = !org.isNew
     val orgLogo = org.s( 'thumbnail )
     val orgWebsite = hasOrg ? org.s( 'website ) | ""
-     
+
+    this.computeClient
+    
     val logoSubtitle = 
       B.PRODUCTION ? "" |
         ( B.STAGE ? " STAGE" |
           ( B.BETA ? " BETA" | " DEV" ) )
-
-     Map( "user" -> //this.toClientJson,
-           Map( "fullName" -> fullName,
-                "iconUrl" -> icon ),
+          
+     Map( "user" -> this,
           "org" ->      
             Map( "websiteUrl" -> orgWebsite ),
           "unshownPosts" -> sess.unshownPosts,

@@ -253,6 +253,10 @@ trait Record extends Valid with BsonObject with QuickCache {
     for ( c <- view.entity.computations )
       this( c.name ) = c.computation( this )
 
+  def computeClient =
+    for ( c <- view.entity.clientComputations )
+      this( c.name ) = c.computation( this )
+
 
 
   /**

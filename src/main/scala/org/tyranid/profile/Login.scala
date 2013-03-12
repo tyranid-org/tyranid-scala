@@ -265,10 +265,7 @@ $( function() {
   
           T.LnF match {
              case LnF.RetailBrand =>
-               val str = user.toClientCommonMap.toJsonStr( true )
-               
-               println( str )
-               web.jsRes( Js( "Common.set( " + user.toClientCommonMap.toJsonStr() + " ); tyr.app.loadMain( '" + ( redirect.isBlank ? "/dashboard" | redirect ) + "' );" ) )
+               web.jsRes( Js( "Common.set( " + user.toClientCommonMap.toJsonStr( client = true ) + " ); tyr.app.loadMain( '" + ( redirect.isBlank ? "/dashboard" | redirect ) + "' );" ) )
              case _ =>
                web.redirect(redirect.isBlank ? T.website | redirect)
           }
@@ -484,7 +481,7 @@ $( function() {
           
           if ( T.LnF == LnF.RetailBrand ) {
             sess.notice( "You can now change your password in <em>My Profile</em>.", deferred = "/dashboard" )
-            web.jsRes( Js( "Common.set( " + user.toClientCommonMap.toJsonStr() + " ); tyr.app.loadMain( '/dashboard' )" ) )
+            web.jsRes( Js( "Common.set( " + user.toClientCommonMap.toJsonStr( client = true ) + " ); tyr.app.loadMain( '/dashboard' )" ) )
           } else {
             sess.notice( "You can now change your password." )
             web.redirect( "/user/edit?id=" + user.tid )
@@ -636,7 +633,7 @@ $( function() {
           B.registerUser( user, companyName )
           B.welcomeUserEvent
             
-          web.jsRes( Js( "Common.set( " + user.toClientCommonMap.toJsonStr() + " ); tyr.app.loadMain( '/dashboard' );" ) )            
+          web.jsRes( Js( "Common.set( " + user.toClientCommonMap.toJsonStr( client = true ) + " ); tyr.app.loadMain( '/dashboard' );" ) )            
           return
         }
       } else {
