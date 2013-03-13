@@ -617,13 +617,13 @@ trait ContentMeta extends PrivateKeyEntity {
 
   "builtin"           is DbBoolean            help Text( "Builtin content is maintained by the system and is not editable by end users." );
 
-  "on"                is DbDateTime           is 'required;
-  "type"              is DbLink(ContentType)  is 'required;
+  "on"                is DbDateTime           is 'required is 'client;
+  "type"              is DbLink(ContentType)  is 'required is 'client;
 
-  "tags"              is DbArray(DbLink(Tag)) is ( new SearchTextLike() { override def extract( rec:Record, va:ViewAttribute ) = rec.as[Content].netTags } );
+  "tags"              is DbArray(DbLink(Tag)) is ( new SearchTextLike() { override def extract( rec:Record, va:ViewAttribute ) = rec.as[Content].netTags } ) is 'client;
   "ctags"             is DbArray(DbLink(Tag)) help Text( "Child Tags -- these tags are inherited by child content." );
 
-  "name"              is DbChar(50)           is 'label is 'required is SearchText;
+  "name"              is DbChar(50)           is 'label is 'required is SearchText is 'client;
 
   "pos"               is DbInt                ; // the position of this content within its parent (group, folder, board, etc.) ... see the class "Positioning"
 
@@ -680,7 +680,7 @@ trait ContentMeta extends PrivateKeyEntity {
   "r"                 is DbArray(Comment)     as "Replies";
 
   // Image / Thumbnail
-  "img"               is DbUrl                ; // TODO:  change to DbImage?
+  "img"               is DbUrl                is 'client; // TODO:  change to DbImage?
   "imgH"              is DbInt                help Text( "The actual height of the image." );
   "imgW"              is DbInt                help Text( "The actual width of the image." );
   
@@ -691,11 +691,13 @@ trait ContentMeta extends PrivateKeyEntity {
   "feedItemId"        is DbChar(128)          ;
   
   
-  "color"             is DbChar(6)            ;
+  "color"             is DbChar(6)            is 'client;
   
   "locked"            is DbBoolean;
   
-  "archived"          is DbBoolean;
+  "archived"          is DbBoolean            is 'client;
+  
+  "isOwner"           is DbBoolean            is 'temporary is 'client computed( _.as[Content].isOwner( T.user ) );
   }
 
   override def searchText = true
