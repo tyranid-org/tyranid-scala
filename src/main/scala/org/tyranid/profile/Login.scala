@@ -265,7 +265,7 @@ $( function() {
   
           T.LnF match {
              case LnF.RetailBrand =>
-               web.jsRes( Js( "common.set( " + user.toClientCommonMap.toJsonStr( client = true ) + " ); V.app.load( '" + ( redirect.isBlank ? "/dashboard" | redirect ) + "' );" ) )
+               web.jsRes( Js( "V.common.set( " + user.toClientCommonMap.toJsonStr( client = true ) + " ); V.app.load( '" + ( redirect.isBlank ? "/dashboard" | redirect ) + "' );" ) )
              case _ =>
                web.redirect(redirect.isBlank ? T.website | redirect)
           }
@@ -466,7 +466,7 @@ $( function() {
         if (dbUser == null) {
           if ( T.LnF == LnF.RetailBrand ) {
             sess.notice( "Account access code not found!", deferred = "/dashboard" )
-            web.jsRes( Js( "common.clear().set(common.defaults); V.app.load( '/dashboard' )" ) )
+            web.jsRes( Js( "V.common.clear().set(V.common.defaults); V.app.load( '/dashboard' )" ) )
           } else {
             web.template(
             <tyr:shell>
@@ -481,7 +481,7 @@ $( function() {
           
           if ( T.LnF == LnF.RetailBrand ) {
             sess.notice( "You can now change your password in <em>My Profile</em>.", deferred = "/dashboard" )
-            web.jsRes( Js( "common.set( " + user.toClientCommonMap.toJsonStr( client = true ) + " ); V.app.load( '/dashboard' )" ) )
+            web.jsRes( Js( "V.common.set( " + user.toClientCommonMap.toJsonStr( client = true ) + " ); V.app.load( '/dashboard' )" ) )
           } else {
             sess.notice( "You can now change your password." )
             web.redirect( "/user/edit?id=" + user.tid )
@@ -633,7 +633,7 @@ $( function() {
           B.registerUser( user, companyName )
           B.welcomeUserEvent
             
-          web.jsRes( Js( "common.set( " + user.toClientCommonMap.toJsonStr( client = true ) + " ); V.app.load( '/dashboard' );" ) )            
+          web.jsRes( Js( "V.common.set( " + user.toClientCommonMap.toJsonStr( client = true ) + " ); V.app.load( '/dashboard' );" ) )            
           return
         }
       } else {
