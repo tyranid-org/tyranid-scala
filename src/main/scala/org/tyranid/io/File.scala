@@ -278,7 +278,7 @@ trait CommonFile extends Domain {
         val url = s.s( f )
         
         if ( url notBlank )
-          <a href="#" onclick={ Unparsed( "downloadFile( '" + url + "', event, 'vFileWindow'); return false;")}>Download File</a>
+          <a href="#" onclick={ Unparsed( "tyr.downloadFile( '" + url + "', event, 'vFileWindow'); return false;")}>Download File</a>
       }
         
       <div><input id={ f.id } name={ f.id } type="file"/></div>
