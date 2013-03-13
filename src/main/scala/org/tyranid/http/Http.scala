@@ -282,7 +282,7 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
       ( prettyAttr == null ) ? false | prettyAttr._b
     }
     
-    val outputJson = if ( json == null ) "{}" else json.toJsonStr( pretty )
+    val outputJson = if ( json == null ) "{}" else json.toJsonStr( pretty = pretty, client = true )
     
 //    res.setContentLength( if ( jsonpCallback != null ) ( jsonpCallback.length + 2 + outputJson.length ) else outputJson.length )
     
