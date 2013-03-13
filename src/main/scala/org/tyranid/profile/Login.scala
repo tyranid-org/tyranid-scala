@@ -108,11 +108,11 @@ $( function() {
         
     if ( !fldVal ) {
       msg = "Please enter an email address";
-    } else if ( !tyr.Validator.validEmail( fldVal ) ) {
+    } else if ( !T.Validator.validEmail( fldVal ) ) {
       msg = "Please enter a valid email address";
     }
        
-    var formHandler = tyr.FormHandler.get( un.get() );
+    var formHandler = T.FormHandler.get( un.get() );
         
     if ( msg ) {
       formHandler.topEl().empty();
@@ -121,11 +121,11 @@ $( function() {
     }
 
     formHandler.topEl().empty();
-    tyr.navTo( '""" + wpath + """/forgot?xhr=1&un=' + encodeURIComponent( fldVal ) );
+    T.navTo( '""" + wpath + """/forgot?xhr=1&un=' + encodeURIComponent( fldVal ) );
   });
   
   $( ".modal" ).modal( "hide" );
-  tyr.initFormPlaceholders( "#f" );
+  T.initFormPlaceholders( "#f" );
 });
 """ ) }
     </script> ++
@@ -224,7 +224,7 @@ $( function() {
               "transition" -> "fadeOutIn",
               "duration" -> 500 )
 
-        jsonRes.extraJS = "tyr.initFormPlaceholders( '#f' );"
+        jsonRes.extraJS = "T.initFormPlaceholders( '#f' );"
         web.json( jsonRes )              
       } else {
         val email    = web.s( 'un )
@@ -251,7 +251,7 @@ $( function() {
                if ( !sess.hasErrors )
                  jsonRes.redirect = redirect.isBlank ? T.website | ( T.website + "/?l=" + redirect.encUrl )
                  
-               jsonRes.extraJS = "tyr.initFormPlaceholders( '#f' );"
+               jsonRes.extraJS = "T.initFormPlaceholders( '#f' );"
                web.json( jsonRes )
              case _ =>
                web.redirect( redirect.isBlank ? T.website | ( T.website + "/?l=" + redirect.encUrl ) )
@@ -644,7 +644,7 @@ $( function() {
           jsonRes.extraJS = "Recaptcha.reload();"
       }
       
-      jsonRes.extraJS = "tyr.initFormPlaceholders( '#f' );"      
+      jsonRes.extraJS = "T.initFormPlaceholders( '#f' );"      
       web.json( jsonRes )
       return
     }
@@ -769,8 +769,8 @@ $( function() {
         "transition" -> "fadeOutIn",
         "duration" -> 500 )
     
-    jsonRes.extraJS = "tyr.callWhenHtmlDone( function() { tyr.initFormPlaceholders( '#f' ); }, 600 );" + ( doRecaptcha ?
-                        ( "tyr.callWhen( function() { return window.Recaptcha !== undefined && window.showRecapcha !== null; }, function() {" + DbReCaptcha.callShowFunction + "}, 100 );" ) | "" )
+    jsonRes.extraJS = "T.callWhenHtmlDone( function() { T.initFormPlaceholders( '#f' ); }, 600 );" + ( doRecaptcha ?
+                        ( "T.callWhen( function() { return window.Recaptcha !== undefined && window.showRecapcha !== null; }, function() {" + DbReCaptcha.callShowFunction + "}, 100 );" ) | "" )
       
     web.json( jsonRes )
   }  
