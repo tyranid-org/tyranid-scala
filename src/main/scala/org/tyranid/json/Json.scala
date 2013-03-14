@@ -285,13 +285,15 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
         
     case jscmd:JsCmd => sb ++= jscmd.toJson
 
-    case b:java.lang.Boolean => sb ++= b.toString
-    case d:java.lang.Double  => sb ++= d.toString
-    case l:java.lang.Long    => sb ++= l.toString
-    case f:java.lang.Float   => sb ++= f.toString
-    case oid:ObjectId        => sb += '"' ++= oid.toString += '"'
-    case ws:WebResponse      => sb ++= ws.toJsonStr
-    case note:Notification   => write( note.msg )
+    case b:java.lang.Boolean  => sb ++= b.toString
+    case d:java.lang.Double   => sb ++= d.toString
+    case l:java.lang.Long     => sb ++= l.toString
+    case f:java.lang.Float    => sb ++= f.toString
+    case d:java.util.Date     => sb ++= d.getTime._s
+    case c:java.util.Calendar => sb ++= c.getTime.getTime._s
+    case oid:ObjectId         => sb += '"' ++= oid.toString += '"'
+    case ws:WebResponse       => sb ++= ws.toJsonStr
+    case note:Notification    => write( note.msg )
     case null => println( "Warning, turning NULL into JSON (empty string)" ); sb ++= "\"\""
     case u => println( "Don't know how to turn " + u + " (" + u.getClass() + ") into JSON" ); sb ++= "\"\"" 
     }
