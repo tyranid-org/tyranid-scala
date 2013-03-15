@@ -34,9 +34,9 @@ class User( override val obj:DBObject = Mobj() ) extends MongoRecord( User.makeV
       
     sb.toString
   }
+  
+  override def toClientCommonMap:Map[String,Any] = null
 }
-
-
 
 class Session extends org.tyranid.session.Session {
 

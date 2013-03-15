@@ -262,8 +262,13 @@ trait Session extends QuickCache {
         tUa = UserAgent.getById( web.userAgentId )
       }
       
-      tUa.updateIfNeeded
-      put( Session.UA_KEY, tUa )
+      try {
+        tUa.updateIfNeeded
+        put( Session.UA_KEY, tUa )
+      } catch {
+        case e =>
+          e.printStackTrace();
+      }
     }
       
     tUa
