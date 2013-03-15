@@ -610,7 +610,9 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
 
 trait ContentMeta extends PrivateKeyEntity {
 
-  "_id"               is DbMongoId            is 'id;// is 'client computed( _.tid );
+  "_id"               is DbMongoId            is 'id;
+
+  "id"                is DbChar(20)           is 'client computed( _.tid );
 
   override def init = {
     super.init
