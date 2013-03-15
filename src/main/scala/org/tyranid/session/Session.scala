@@ -247,9 +247,9 @@ trait Session extends QuickCache {
   def LnF = get( Session.LnF_KEY ).as[LnF] ?| org.tyranid.ui.LnF.RetailBrand
   
   def get( key:String ) = getV( key )
-  def getOrElse( key:String, any:AnyRef ) = getVOrElse( key, any )
-  def getOrElseUpdate( key:String, any:AnyRef ) = getVOrElseUpdate( key, any )
-  def put( key:String, value:AnyRef ) = putV( key, value )
+  def getOrElse( key:String, any:Any ) = getVOrElse( key, any.as[AnyRef] )
+  def getOrElseUpdate( key:String, any:Any ) = getVOrElseUpdate( key, any.as[AnyRef] )
+  def put( key:String, value:Any ) = putV( key, value.as[AnyRef] )
   def clear( key:String ) = clearCache( key )
   
   def ua( web: WebContext ) = {
@@ -264,11 +264,12 @@ trait Session extends QuickCache {
       
       try {
         tUa.updateIfNeeded
-        put( Session.UA_KEY, tUa )
       } catch {
         case e =>
           e.printStackTrace();
       }
+      
+      put( Session.UA_KEY, tUa )
     }
       
     tUa

@@ -94,86 +94,92 @@ object UserAgent extends MongoEntity( tid = "a0Dt" ) {
   }
 
   lazy val system = UserAgent.getById( idFor( "Volerro System" ) )
+  
+  @volatile var serviceFailure = false
 }
 
 class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAgent.makeView, obj, parent ) {
-
   def updateIfNeeded =
     if ( !has( 'agentName ) )
       update
 
   def update = {
-    val ua = s( 'ua )
+    if ( !UserAgent.serviceFailure ) {
+      val ua = s( 'ua )
+      
+      try {
+        val json = ( "http://useragentstring.com?uas=" + ua.encUrl + "&getJSON=all" ).GET().s.parseJsonObject
     
-    try {
-      val json = ( "http://useragentstring.com?uas=" + ua.encUrl + "&getJSON=all" ).GET().s.parseJsonObject
-  
-      var agentName = json.s( 'agent_name )
-  
-      if ( agentName == "unknown" ) {
-        if      ( ua startsWith "AdsBot-Google" )
-          agentName = "AdsBot-Google"
-        else if ( ua contains "AhrefsBot" )
-          agentName = "AhrefsBot"
-        else if ( ua startsWith "ClickTale bot" )
-          agentName = "ClickTale bot"
-        else if ( ua startsWith "LinkedInBot" )
-          agentName = "LinkedInBot"
-        else if ( ua startsWith "Jakarta Commons" )
-          agentName = "Jakarta Commons"
-        else if ( ua startsWith "Plesk" )
-          agentName = "Plesk"
-        else if ( ua startsWith "SkimBot" )
-          agentName = "SkimBot"
-        else if ( ua startsWith "ZmEu" )
-          agentName = "ZmEu"
-        else if ( ua startsWith "Morfeus Fucking Scanner" ) 
-          agentName = "Morfeus Fucking Scanner"
+        var agentName = json.s( 'agent_name )
+    
+        if ( agentName == "unknown" ) {
+          if      ( ua startsWith "AdsBot-Google" )
+            agentName = "AdsBot-Google"
+          else if ( ua contains "AhrefsBot" )
+            agentName = "AhrefsBot"
+          else if ( ua startsWith "ClickTale bot" )
+            agentName = "ClickTale bot"
+          else if ( ua startsWith "LinkedInBot" )
+            agentName = "LinkedInBot"
+          else if ( ua startsWith "Jakarta Commons" )
+            agentName = "Jakarta Commons"
+          else if ( ua startsWith "Plesk" )
+            agentName = "Plesk"
+          else if ( ua startsWith "SkimBot" )
+            agentName = "SkimBot"
+          else if ( ua startsWith "ZmEu" )
+            agentName = "ZmEu"
+          else if ( ua startsWith "Morfeus Fucking Scanner" ) 
+            agentName = "Morfeus Fucking Scanner"
+        }
+    
+        obj( 'agentType )         = json.s( 'agent_type )
+        obj( 'agentName )         = agentName
+        obj( 'agentVersion )      = json.s( 'agent_version )
+        obj( 'osType )            = json.s( 'os_type )
+        obj( 'osName )            = json.s( 'os_name )
+        obj( 'osVersionName )     = json.s( 'os_versionName )
+        obj( 'osVersionNumber )   = json.s( 'os_versionNumber )
+        obj( 'osProducer )        = json.s( 'os_producer )
+        obj( 'osProducerUrl )     = json.s( 'os_producerURL )
+        obj( 'linuxDistribution ) = json.s( 'linux_distribution )
+        obj( 'agentLanguage )     = json.s( 'agent_language )
+        obj( 'agentLanguageTag )  = json.s( 'agent_languageTag )
+    
+        obj.remove( 'bot )
+        if ( agentName match {
+             case "AdsBot-Google"
+                | "Baiduspider"
+                | "Bingbot"
+                | "ClickTale bot"
+                | "Exabot"
+                | "FeedFetcher-Google"
+                | "Googlebot"
+                | "Googlebot-Image"
+                | "Jakarta Commons"
+                | "Java"
+                | "ia_archiver"
+                | "libwww-perl"
+                | "LinkedInBot"
+                | "Morfeus Fucking Scanner"
+                | "msnbot"
+                | "Plesk"
+                | "Python-urllib"
+                | "SkimBot"
+                | "webcollage"
+                | "Yahoo! Slurp"
+                | "YandexBot"
+                | "ZmEu"               => true
+             case _                    => false } )
+          obj( 'bot ) = true
+    
+        save
+      } catch {
+        case j:org.tyranid.json.JsonDecoderException =>
+          UserAgent.serviceFailure = true
+          j.printStackTrace()
+        case e => e.printStackTrace
       }
-  
-      obj( 'agentType )         = json.s( 'agent_type )
-      obj( 'agentName )         = agentName
-      obj( 'agentVersion )      = json.s( 'agent_version )
-      obj( 'osType )            = json.s( 'os_type )
-      obj( 'osName )            = json.s( 'os_name )
-      obj( 'osVersionName )     = json.s( 'os_versionName )
-      obj( 'osVersionNumber )   = json.s( 'os_versionNumber )
-      obj( 'osProducer )        = json.s( 'os_producer )
-      obj( 'osProducerUrl )     = json.s( 'os_producerURL )
-      obj( 'linuxDistribution ) = json.s( 'linux_distribution )
-      obj( 'agentLanguage )     = json.s( 'agent_language )
-      obj( 'agentLanguageTag )  = json.s( 'agent_languageTag )
-  
-      obj.remove( 'bot )
-      if ( agentName match {
-           case "AdsBot-Google"
-              | "Baiduspider"
-              | "Bingbot"
-              | "ClickTale bot"
-              | "Exabot"
-              | "FeedFetcher-Google"
-              | "Googlebot"
-              | "Googlebot-Image"
-              | "Jakarta Commons"
-              | "Java"
-              | "ia_archiver"
-              | "libwww-perl"
-              | "LinkedInBot"
-              | "Morfeus Fucking Scanner"
-              | "msnbot"
-              | "Plesk"
-              | "Python-urllib"
-              | "SkimBot"
-              | "webcollage"
-              | "Yahoo! Slurp"
-              | "YandexBot"
-              | "ZmEu"               => true
-           case _                    => false } )
-        obj( 'bot ) = true
-  
-      save
-    } catch {
-      case e => e.printStackTrace
     }
   }
 
@@ -184,33 +190,36 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
   def os    = s( 'osName ) + " " + s( 'osVersionName ) + " " + s( 'osVersionNumber )
 
   def isFirefox = s( 'agentName ) == "Firefox"
-  def isIE = s( 'agentName ) == "Internet Explorer"
+  def isIE = T.session.getOrElse( "isIE", false )._b // s( 'agentName ) == "Internet Explorer"
     
-  private def betterThanIE8 = !isIE || s( 'agentVersion )._i >= 9
-  private def betterThanIE9 = !isIE || s( 'agentVersion )._i >= 10
+  def uaVersion = T.session.getOrElse( "uav", 0 )._i
+  
+  private def betterThanIE8 = !isIE || uaVersion >=9 // !isIE || s( 'agentVersion )._i >= 9
+ 
+  private def betterThanIE9 = !isIE || uaVersion >=10 // !isIE || s( 'agentVersion )._i >= 10
   
   def html5FileSupport = {
-    updateIfNeeded
+    //updateIfNeeded
     betterThanIE9
   }
   
   def htmlUnicodeSupport = {
-    updateIfNeeded
+    //updateIfNeeded
     betterThanIE8
   }
   
   def htmlCss3Rotate = {
-    updateIfNeeded
+    //updateIfNeeded
     betterThanIE8
   }  
   
   def html5VideoSupport = {
-    updateIfNeeded
+    //updateIfNeeded
     betterThanIE9
   }
   
   def isMobile = {
-    updateIfNeeded
+    //updateIfNeeded
     s( 'agentType ).containsIgnoreCase( "mobile" )  
   }
 }
