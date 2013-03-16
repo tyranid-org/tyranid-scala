@@ -612,7 +612,7 @@ trait ContentMeta extends PrivateKeyEntity {
 
   "_id"               is DbMongoId            is 'id;
 
-  "id"                is DbChar(20)           is 'client computed( _.tid );
+  "id"                is DbChar(20)           is 'temporary is 'client computed( _.tid );
 
   override def init = {
     super.init
