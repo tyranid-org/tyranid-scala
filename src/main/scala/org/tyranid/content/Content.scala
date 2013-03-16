@@ -40,11 +40,6 @@ import org.tyranid.io.{ HasText, MimeType }
 import org.tyranid.profile.{ Group, GroupType, GroupMode, Tag, User }
 import org.tyranid.secure.{ PrivateKeyEntity, PrivateKeyRecord }
 
-// TODO:  should this be in ui ?
-
-
-
-
 object ViewType extends RamEntity( tid = "a13v" ) {
   type RecType = ViewType
   override def convert( view:TupleView ) = new ViewType( view )
