@@ -330,13 +330,9 @@ class WebResponse( web:WebContext, sess:Session ) {
   val cmds = mutable.Buffer[JsCmd]()
   
   var notifications = true
-  
   var extraJS:String = null
-  
   var htmlMap:collection.Map[String,Any] = null
-  
   var variables:Map[String,Any] = null
-
   
   def toJsonStr = toPJsonStr( false )
   def toPJsonStr( isPretty:Boolean ) = {
