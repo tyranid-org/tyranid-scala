@@ -523,7 +523,7 @@ object Http {
       if ( authScope != null && username.notBlank && password.notBlank )
         client.getCredentialsProvider().setCredentials( authScope, new UsernamePasswordCredentials( username, password ) )
       
-      val context = new BasicHttpContext() 
+      val context = new BasicHttpContext()
       ( client.execute( request, context ), context )
     }
     
@@ -539,8 +539,8 @@ object Http {
   private def convertHeaders( headers:collection.Map[String,String] ) =
     headers.toSeq.map( p => new BasicHeader( p._1, p._2 ) ).toArray[Header]
 
-  def GET_File( url:String, ext:String = ".tmp", prefix:String = "tmp", authScope:AuthScope = null, username:String = null, password:String = null, preemptive:Boolean = false ) = {
-    val res = GET( url, null, null, authScope, username, password, preemptive )
+  def GET_File( url:String, ext:String = ".tmp", prefix:String = "tmp", authScope:AuthScope = null, username:String = null, password:String = null, preemptive:Boolean = false, headers:collection.Map[String,String] = null ) = {
+    val res = GET( url, null, headers, authScope, username, password, preemptive )
     val entity = res.response.getEntity
     
     if ( entity != null ) {

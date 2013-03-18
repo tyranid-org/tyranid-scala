@@ -376,7 +376,8 @@ object Thumbnail {
                  null
                }
            }
-         case _ =>
+         case e3 =>
+           e3.printStackTrace()
            println( "Cannot read image: " + originalFile.getName )
            null
        }

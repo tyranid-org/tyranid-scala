@@ -38,6 +38,7 @@ import org.tyranid.document.dropbox.DropboxApp
 import org.tyranid.document.issuu.IssuuApp
 import org.tyranid.document.scribd.ScribdApp
 import org.tyranid.document.zencoder.ZencoderApp
+import org.tyranid.document.saaspose.SaasposeApp
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.email.EmailTemplate
 import org.tyranid.profile.{ Group, OrgMeta, User, UserMeta }
@@ -244,6 +245,7 @@ trait Bootable {
   val crocodoc:CrocApp = null; val CROCODOC_SCRIPT:String = null; val CROC_JS_V2 = true 
   val scribd:ScribdApp = null
   val issuu:IssuuApp = null
+  val saaspose:SaasposeApp = null
   
   // ReCaptcha
   val reCaptchaPublicKey  = ""
