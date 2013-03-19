@@ -240,6 +240,8 @@ class Log( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Log.makeView,
   def ua = UserAgent.byId( get( 'ua ) )
 
   def e = Event.getById( i( 'e ) )
+  
+  def qs = obj.o_?( 'qs )
 }
 
 

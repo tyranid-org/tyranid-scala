@@ -218,7 +218,7 @@ object ActivityQuery extends Query {
   override def searchForm( user:User, r:Report ) = {
       val s = Scope( r.searchRec )
 
-      <form method="post" action={ T.web.path } id="rSearchForm" style="padding-top:8px;">
+      <form method="post" action={ T.web.path } id="rSearchForm" style="padding-top:8px;" class="handling">
        <div class="fieldsc" style="margin-top:8px; padding:4px;">
         <h3>Search By</h3>
         { searchFields.map { f =>

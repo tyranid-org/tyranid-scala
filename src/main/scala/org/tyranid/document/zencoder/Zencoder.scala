@@ -193,6 +193,9 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
                 try {
                   tries += 1
                   S3.move( bkt, key + ".TMP." + fmt, bkt, key + "." + fmt )
+                  
+                  val om = S3.getObjectMetadata( bkt, key + ".TMP." + fmt )
+                  //om.setHeader( "Accept-Range", "bytes" )
                   ok = true
                 } catch {
                   case e =>

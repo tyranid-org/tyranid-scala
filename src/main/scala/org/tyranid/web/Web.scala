@@ -31,7 +31,7 @@ import org.tyranid.Imp._
 import org.tyranid.boot.Bootable
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.http.UserAgent
-import org.tyranid.json.{ JsCmd, Js, JqHide, JqShow, JqHtml, JsNop }
+import org.tyranid.json.{ JsCmd, Js, JsData, JsMap, JqHtml, JsNop }
 import org.tyranid.math.Base64
 import org.tyranid.profile.{ LoginCookie, User }
 import org.tyranid.session.{ AccessLog, Session, ThreadData, Notification }
@@ -335,7 +335,7 @@ class WebResponse( web:WebContext, sess:Session ) {
   var variables:Map[String,Any] = null
   
   def toJsonStr = toPJsonStr( false )
-  def toPJsonStr( isPretty:Boolean ) = {
+  def toPJsonStr( pretty:Boolean ) = {
     joinJsCmds
       
     val main =
@@ -348,7 +348,7 @@ class WebResponse( web:WebContext, sess:Session ) {
            "vars" -> variables )
 
     new org.tyranid.json.JsonString(
-      ( cmds.isEmpty ? main | Array( cmds.map( cmdToMap ).filter( _ != null ) += main ) ), isPretty 
+      ( cmds.isEmpty ? main | Array( cmds.map( cmdToMap ).filter( _ != null ) += main ) ), pretty 
     ).toString
   }
 
@@ -387,8 +387,8 @@ class WebResponse( web:WebContext, sess:Session ) {
       Map( "html" -> htmlMap )
 
     case cmd:Js     => Map( "extraJS" -> cmd.js )
-    case cmd:JqHide => throw new RuntimeException( "not yet implemented" )
-    case cmd:JqShow => throw new RuntimeException( "not yet implemented" )
+    case cmd:JsData => Map( "data" -> cmd.data )
+    case cmd:JsMap  => Map( "common" -> cmd.map )
     case JsNop      => null
     }
 }

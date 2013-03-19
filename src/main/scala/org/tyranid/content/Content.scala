@@ -680,6 +680,8 @@ trait ContentMeta extends PrivateKeyEntity {
   "img"               is DbUrl                is 'client; // TODO:  change to DbImage?
   "imgH"              is DbInt                help Text( "The actual height of the image." );
   "imgW"              is DbInt                help Text( "The actual width of the image." );
+
+  "netImg"            is DbUrl                as "Image" is 'temporary is 'client computed { _.as[Content].imageUrl( null ) }
   
   
   // RSS & Atom Feeds

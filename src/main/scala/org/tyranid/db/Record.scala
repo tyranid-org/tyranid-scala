@@ -253,11 +253,32 @@ trait Record extends Valid with BsonObject with QuickCache {
     for ( c <- view.entity.computations )
       this( c.name ) = c.computation( this )
 
-  def computeClient =
-    for ( c <- view.entity.clientComputations )
-      this( c.name ) = c.computation( this )
-
-
+  var _computed = false
+  def recomputeClient = { _computed = false; computeClient }
+  
+  def computeClient {
+    if ( !_computed ) {
+      for ( c <- view.entity.clientComputations )
+        this( c.name ) = c.computation( this )
+  
+      for ( va <- view.vas;
+            if va.att.client && has( va ) ) {
+        this( va ) match {
+        case rec:Record =>
+          rec.computeClient
+        case arr:BasicDBList if va.domain.is[DbArray] && va.domain.as[DbArray].of.is[Entity] =>
+          val mEnt = va.domain.as[DbArray].of.as[MongoEntity]
+  
+          for ( i <- 0 until arr.size() )
+            mEnt.recify( arr( i ), this.as[MongoRecord], rec => arr( i ) = rec ).computeClient
+            
+        case _ =>
+        }
+      }
+      
+      _computed = true
+    }
+  }
 
   /**
    * Record/Object/Document/Tuple

@@ -122,13 +122,19 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   override def convert( obj:DBObject, parent:MongoRecord ) = new Group( obj, parent )
 
   "org"       is DbLink(B.Org)                      as "Organization";
+  "orgId"     is DbChar(20)                         is 'temporary is 'client computed{ rec => val orgId = rec.oid( 'org ); ( orgId == null ) ? null | B.Org.idToTid( orgId ) };
+
 
   "members"   is DbArray(DbTid(B.Org,B.User,Group)) as "Members";
   "private"   is DbBoolean;
   "ssoSynced" is DbBoolean;
 
+  "settings"  is GroupSettings                      is 'temporary is 'client computed { _.as[Group].settingsFor( T.user ) }
+  
+  "isPrivate" is DbBoolean                          is 'temporary is 'client computed { _.as[Group].isPrivate }
+  
   //"search"         { search criteria } // future ... list search for a group, rather than each id explicitly
-
+  
 
   db.ensureIndex( Mobj( "o" -> 1, "name" -> 1 ) )
   db.ensureIndex( Mobj( "members" -> 1 ) )
@@ -1298,6 +1304,8 @@ object GroupSettings extends MongoEntity( tid = "a0Rt" ) {
   "order"          is DbArray(DbTid( B.ContentEntities:_* )) as "Ordering";
   
   "flags"          is DbLong                                 as "Flags";
+  
+  "hasVisited"     is DbBoolean                              is 'temporary is 'client computed( _.as[GroupSettings].hasVisited )
   }
 
   db.ensureIndex( Mobj( "g" -> 1, "u" -> 1 ) )

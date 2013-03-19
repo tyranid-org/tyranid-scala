@@ -154,8 +154,7 @@ class DbFile( bucket:S3Bucket ) extends CommonFile {
       val pathName = s.fullPath.aidName_( rootRec )
 
       val path = File.pathFor( rootRec.entityTid, rootRec.recordTid, pathName, file.getName )
-      S3.write( bucket, path, file )
-      S3.access( bucket, path, public = true )
+      S3.write( bucket, path, file, true, false )
         
       embeddedRec( f.va ) = bucket.url( path )
     }

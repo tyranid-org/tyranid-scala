@@ -76,7 +76,7 @@ object S3 {
     }
   }
   
-  def write( bucket:S3Bucket, key:String, file:java.io.File, public:Boolean = false, authorized:Boolean = false ) = {
+  def write( bucket:S3Bucket, key:String, file:java.io.File, public:Boolean = false, authorized:Boolean = false, acceptRanges:Boolean = false ) = {
     val mimeType = new FileInputStream( file ).detectMimeType( file.getName )
     
     if ( mimeType.notBlank ) {
@@ -84,6 +84,9 @@ object S3 {
       md.setContentLength( file.length )
       md.setContentType( mimeType )
       md.setLastModified( new java.util.Date() )
+
+      if ( acceptRanges )
+        md.setHeader( "Accept-Ranges", "bytes" ) 
 
       val in = new FileInputStream( file )
       
@@ -114,16 +117,23 @@ object S3 {
     }
   }
   
-  def write( bucket:S3Bucket, key:String, contentLength:Long, contentType:String, in:InputStream ) = {
+  def write( bucket:S3Bucket, key:String, contentLength:Long, contentType:String, in:InputStream, public:Boolean, acceptRanges:Boolean ) = {
     val md = new ObjectMetadata
     
     if ( contentLength != -1 )
       md.setContentLength( contentLength )
       
     md.setContentType( contentType )
+    
+    if ( acceptRanges )
+      md.setHeader( "Accept-Ranges", "bytes" ) 
 
     try {
       s3.putObject( bucket.name, key, in, md )
+      
+        if ( public )
+          access( bucket, key, public, false )
+      
     } finally {
       in.close
     }
@@ -131,8 +141,8 @@ object S3 {
     md
   }
   
-  def write( bucket:S3Bucket, key:String, file:org.apache.commons.fileupload.FileItem ):Unit =
-    write( bucket, key, file.getSize, file.getContentType, file.getInputStream )
+  def write( bucket:S3Bucket, key:String, file:org.apache.commons.fileupload.FileItem, public:Boolean, acceptRanges:Boolean ):Unit =
+    write( bucket, key, file.getSize, file.getContentType, file.getInputStream, public, acceptRanges )
 
   def delete( bucket:S3Bucket, key:String ) = s3.deleteObject( bucket.name, key )
   
@@ -220,23 +230,21 @@ object S3 {
   def getObject( bucket:S3Bucket, key:String ) = s3.getObject( new GetObjectRequest( bucket.name, key ) )
   def getObjectMetadata( bucket:S3Bucket, key:String ) = s3.getObjectMetadata( bucket.name, key )
 
-  def storeUrl( bucket:S3Bucket, urlStr:String, path:String, isPublic:Boolean = true ):S3StoreResult = {
+  def storeUrl( bucket:S3Bucket, urlStr:String, path:String, isPublic:Boolean = true, acceptRanges:Boolean = false ):S3StoreResult = {
     val url = new java.net.URL( urlStr )
     val conn = url.openConnection
     val in = conn.getInputStream
     val mimeType = conn.getContentType
     
-    S3.write( bucket, path, conn.getContentLength, mimeType, in )
+    S3.write( bucket, path, conn.getContentLength, mimeType, in, isPublic, acceptRanges )
     in.close
       
-    S3.access( bucket, path, public = isPublic )
-    
     S3StoreResult( bucket.url( path ), mimeType )
   }
 
-  def storeUnsecureUrl( bucket:S3Bucket, urlStr:String, path:String, isPublic:Boolean = true ):String = {
+  def storeUnsecureUrl( bucket:S3Bucket, urlStr:String, path:String, isPublic:Boolean = true, acceptRanges:Boolean = false ):String = {
     if ( !Uri.isSecure( urlStr ) )
-      storeUrl( bucket, urlStr, path, isPublic ).url
+      storeUrl( bucket, urlStr, path, isPublic, acceptRanges ).url
     else
       urlStr
   }

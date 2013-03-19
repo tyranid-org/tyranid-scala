@@ -70,7 +70,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
   }
 
   lazy val makeView = MongoView( this )
-
+  
   def make = apply( Mobj() )
 
   def make( obj:DBObject, parent:MongoRecord = null ) = apply( obj, parent )

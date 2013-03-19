@@ -79,13 +79,9 @@ object Sbt {
 }
 
 
-sealed trait JsCmd {
-  def toJson:String
-}
+sealed trait JsCmd 
 
-case class Js( js:String ) extends JsCmd {
-  def toJson = '"' + js.encJson + '"'
-}
+case class Js( js:String ) extends JsCmd 
 
 case class JqHtml( // this is the target selector to place the html at
                    target:String,
@@ -96,23 +92,13 @@ case class JqHtml( // this is the target selector to place the html at
 
                    transition:String = null,
                    duration:Int = 250,
-                   handler:String = null ) extends JsCmd {
+                   handler:String = null ) extends JsCmd
 
-  def toJson = "{\"" + target + "\":\"" + html.toString.encJson + "\"}"
-}
+case class JsMap( name:String, map:Map[String,Any] ) extends JsCmd
 
-case class JqHide( target:String ) extends JsCmd {
-  def toJson = "{\"" + target + "\":\"hide\"}"
-}
+case class JsData( data:Seq[Record] ) extends JsCmd
 
-case class JqShow( target:String ) extends JsCmd {
-  def toJson = "{\"" + target + "\":\"show\"}"
-}
-
-case object JsNop extends JsCmd {
-  def toJson = null
-}
-
+case object JsNop extends JsCmd 
 
 object Jobj {
   def apply = JsonNodeFactory.instance.objectNode
@@ -235,6 +221,8 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
       sb += '}'
 
     case rec:Record =>
+      if ( client ) rec.computeClient
+      
       sb += '{'
       var first = true
       for ( va <- rec.view.vas;
@@ -283,8 +271,6 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
       }
       sb += '}'
         
-    case jscmd:JsCmd => sb ++= jscmd.toJson
-
     case b:java.lang.Boolean  => sb ++= b.toString
     case d:java.lang.Double   => sb ++= d.toString
     case l:java.lang.Long     => sb ++= l.toString
