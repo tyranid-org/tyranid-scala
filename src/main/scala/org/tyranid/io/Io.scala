@@ -173,7 +173,7 @@ object Iolet extends Weblet {
         val randName = math.random * Int.MaxValue + "_" + System.currentTimeMillis + "." + ext 
 
         S3.storeUrl( org.tyranid.io.File.tempBucket, url, randName, true )
-        web.res.json( Map( "thumbSrc" -> org.tyranid.io.File.tempBucket.url( randName ) ) )
+        web.json( Map( "thumbSrc" -> org.tyranid.io.File.tempBucket.url( randName ) ) )
       } else {      
         val bodyParams = web.req.getAttribute(FileUploadSupport.BodyParamsKey).as[BodyParams]
   
@@ -191,7 +191,7 @@ object Iolet extends Weblet {
           val randName = math.random * Int.MaxValue + "_" + System.currentTimeMillis + "_" + fileItem.getName 
           S3.write( org.tyranid.io.File.tempBucket, randName, imgFile )
           S3.access( org.tyranid.io.File.tempBucket, randName, true )
-          web.res.json( Map( "thumbSrc" -> org.tyranid.io.File.tempBucket.url( randName ) ) )
+          web.json( Map( "thumbSrc" -> org.tyranid.io.File.tempBucket.url( randName ) ) )
         }
       }
     case _ =>
