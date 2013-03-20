@@ -31,7 +31,7 @@ import org.tyranid.Imp._
 import org.tyranid.boot.Bootable
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.http.UserAgent
-import org.tyranid.json.{ JsCmd, Js, JsData, JsMap, JqHtml, JsNop }
+import org.tyranid.json.{ JsCmd, Js, JsData, JsModel, JqHtml, JsNop }
 import org.tyranid.math.Base64
 import org.tyranid.profile.{ LoginCookie, User }
 import org.tyranid.session.{ AccessLog, Session, ThreadData, Notification }
@@ -347,9 +347,15 @@ class WebResponse( web:WebContext, sess:Session ) {
            "extraJS" -> extraJS,
            "vars" -> variables )
 
-    new org.tyranid.json.JsonString(
-      ( cmds.isEmpty ? main | Array( cmds.map( cmdToMap ).filter( _ != null ) += main ) ), pretty 
-    ).toString
+    val printPretty = pretty || ( web.req != null && web.req.getAttribute( "json.pretty" )._b )
+    val jsonStr = (
+        cmds.isEmpty ? main | Array( cmds.map( cmdToMap ).filter( _ != null ) += main )
+      ).toJsonStr( pretty = printPretty, client = true )
+    
+    if ( printPretty )
+      println( jsonStr )
+      
+    jsonStr
   }
 
   private def joinJsCmds {
@@ -386,10 +392,11 @@ class WebResponse( web:WebContext, sess:Session ) {
 
       Map( "html" -> htmlMap )
 
-    case cmd:Js     => Map( "extraJS" -> cmd.js )
-    case cmd:JsData => Map( "data" -> cmd.data )
-    case cmd:JsMap  => Map( "common" -> cmd.map )
-    case JsNop      => null
+    case cmd:Js      => Map( "extraJS" -> cmd.js )
+    case cmd:JsData  => Map( "data" -> cmd.data )
+    case cmd:JsModel => if ( cmd.name.notBlank ) Map( "model" -> cmd.map, "modelName" -> cmd.name )
+                        else                     Map( "model" -> cmd.map )
+    case JsNop       => null
     }
 }
 

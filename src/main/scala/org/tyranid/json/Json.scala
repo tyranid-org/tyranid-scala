@@ -28,7 +28,7 @@ import org.codehaus.jackson.{ JsonNode, JsonFactory, JsonParser }
 import org.codehaus.jackson.node.{ ArrayNode, JsonNodeFactory, MissingNode, ObjectNode }
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbArray, Record }
+import org.tyranid.db.{ DbArray, DbLink, Record }
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.session.Notification
 import org.tyranid.web.WebResponse
@@ -94,7 +94,9 @@ case class JqHtml( // this is the target selector to place the html at
                    duration:Int = 250,
                    handler:String = null ) extends JsCmd
 
-case class JsMap( name:String, map:Map[String,Any] ) extends JsCmd
+                   
+// @name if the name is null, it is a local model, otherwise it is a global model
+case class JsModel( map:Map[String,Any], name:String = null ) extends JsCmd
 
 case class JsData( data:Seq[Record] ) extends JsCmd
 
@@ -246,6 +248,13 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
               mEnt.recify( arr( i ), rec.as[MongoRecord], rec => arr( i ) = rec )
 
             arr
+          } else if ( va.domain.is[DbLink] && client ) {
+            val id = rec( va )
+            
+            if ( id != null )
+              va.domain.as[DbLink].toEntity.idToTid( id )
+            else
+              null
           } else {
             rec( va )
           }
@@ -277,7 +286,9 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
     case f:java.lang.Float    => sb ++= f.toString
     case d:java.util.Date     => sb ++= d.getTime._s
     case c:java.util.Calendar => sb ++= c.getTime.getTime._s
+    
     case oid:ObjectId         => sb += '"' ++= oid.toString += '"'
+      
     case ws:WebResponse       => sb ++= ws.toJsonStr
     case note:Notification    => write( note.msg )
     case null => println( "Warning, turning NULL into JSON (empty string)" ); sb ++= "\"\""

@@ -625,6 +625,10 @@ trait ContentMeta extends PrivateKeyEntity {
   "pos"               is DbInt                ; // the position of this content within its parent (group, folder, board, etc.) ... see the class "Positioning"
 
   "o"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Owners" is 'owner;
+  "ownerTid"          is DbTid(B.User)        is 'temporary is 'client computed( _.as[Content].firstOwnerTid() )
+  //"isOwner"           is DbBoolean            is 'temporary is 'client computed( _.as[Content].isOwner( T.user ) );
+  //"ownerOrgTid"       is DbTid(B.Org)         is 'temporary is 'client computed( rec => B.Org.idToTid( B.User.byTid( rec.as[Content].firstOwnerTid() ).flatten( _.oid( 'org ), null ) )
+  
   "v"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Viewers" is SearchAuth;
   "subV"              is DbArray(DbTid(B.Org,B.User))       ; // for showing content inside a group, subviewers
 
@@ -695,8 +699,6 @@ trait ContentMeta extends PrivateKeyEntity {
   "locked"            is DbBoolean;
   
   "archived"          is DbBoolean            is 'client;
-  
-  "isOwner"           is DbBoolean            is 'temporary is 'client computed( _.as[Content].isOwner( T.user ) );
   }
 
   override def searchText = true

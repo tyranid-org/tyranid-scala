@@ -198,7 +198,7 @@ trait Entity extends Domain with DbItem {
 
   lazy val label = name.camelCaseToSpaceUpper
 
-  lazy val iconAtt = attribs.find( _.name == "icon" ) orElse attribs.find( _.name == "thumbnail" )
+  lazy val iconAtt = attribs.find( a => a.name == "icon" && !a.client ) orElse attribs.find( _.name == "thumbnail" )
 
   def defaultIcon = "/images/default_icon.png"
 
