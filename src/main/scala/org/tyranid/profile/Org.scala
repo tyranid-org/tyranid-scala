@@ -31,13 +31,13 @@ class OrgMeta extends MongoEntity( "a02v" ) {
   type RecType >: Null <: Org
   override def convert( obj:DBObject, parent:MongoRecord ):RecType = throw new UnsupportedOperationException()
 
-  "_id"                is DbMongoId               is 'id;
-  "id"                 is DbChar(20)           is 'temporary is 'client computed( _.tid );
-  "name"               is DbChar(120)             is 'label;
+  "_id"                is DbMongoId               is 'id is 'client;
+  "name"               is DbChar(120)             is 'label is 'client;
   "domain"             is DbLowerChar(128)        ;
   "createdOn"          is DbDate                  ;
   "thumbnail"          is DbThumbnail( "public" ) as "Logo";
   "website"            is DbUrl                   ;
+  "icon"               is DbUrl                   is 'client is 'temporary computed( _.icon );
 
   def orgIdFor( rec:Record ):ObjectId =
     if ( rec.entity == B.Org )

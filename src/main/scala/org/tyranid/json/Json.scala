@@ -29,7 +29,7 @@ import org.codehaus.jackson.node.{ ArrayNode, JsonNodeFactory, MissingNode, Obje
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbArray, DbLink, Record }
-import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
+import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.session.Notification
 import org.tyranid.web.WebResponse
 
@@ -234,32 +234,52 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
           first = false
         else
           sb += ','
-        write( va.name )
-        sb += ':'
 
-        val v =
-          if ( va.domain.is[MongoEntity] ) {
-            rec.rec( va )
-          } else if ( va.domain.is[DbArray] && va.domain.as[DbArray].of.is[MongoEntity] ) {
-            val arr = rec( va ).as[BasicDBList]
-            val mEnt = va.domain.as[DbArray].of.as[MongoEntity]
+        va.domain match {
+        case d:MongoEntity =>
+          write( va.name )
+          sb += ':'
+          write( rec.rec( va ) )
+        case d:DbArray if d.of.is[MongoEntity] =>
+          val arr = rec( va ).as[BasicDBList]
+          val mEnt = va.domain.as[DbArray].of.as[MongoEntity]
 
-            for ( i <- 0 until arr.size() )
-              mEnt.recify( arr( i ), rec.as[MongoRecord], rec => arr( i ) = rec )
+          for ( i <- 0 until arr.size() )
+            mEnt.recify( arr( i ), rec.as[MongoRecord], rec => arr( i ) = rec )
 
-            arr
-          } else if ( va.domain.is[DbLink] && client ) {
-            val id = rec( va )
-            
-            if ( id != null )
-              va.domain.as[DbLink].toEntity.idToTid( id )
-            else
-              null
+          write( va.name )
+          sb += ':'
+          write( arr )
+        case DbMongoId if va.name == "_id" && va.att.isId && client =>
+          write( "id" )
+          sb += ':'
+          write( va.att.entity.idToTid( rec( va ) ) )
+        case d:DbLink if client =>
+          val id = rec( va )
+          
+          if ( va.name == "_id" ) {
+            write( "id" )
+            sb += ':'
+            write(
+              if ( id != null )
+                va.att.entity.idToTid( id )
+              else
+                null )
           } else {
-            rec( va )
+            write( va.name )
+            sb += ':'
+            write(
+              if ( id != null )
+                d.toEntity.idToTid( id )
+              else
+                null )
           }
-
-        write( rec( va ) )
+              
+        case _ =>
+          write( va.name )
+          sb += ':'
+          write( rec( va ) )
+        }
       }
 
       sb += '}'

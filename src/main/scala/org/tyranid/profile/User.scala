@@ -72,8 +72,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   type RecType >: Null <: User
   override def convert( obj:DBObject, parent:MongoRecord ):RecType = throw new UnsupportedOperationException
 
-  "_id"            is DbMongoId           is 'id;
-  "id"             is DbChar(20)          is 'temporary is 'client computed( _.tid );
+  "_id"            is DbMongoId           is 'id is 'client;
 
   "email"          is DbEmail             is 'required;
   "fullName"       is DbChar(64)          is 'client is 'label;
