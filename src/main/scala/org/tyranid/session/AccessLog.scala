@@ -361,7 +361,7 @@ object Accesslet extends Weblet {
     // Query Raw Log Data, generating Browsers and performing basic counts
     //
 
-    val query = Mobj( "e" -> Mobj( $in -> Mlist( Event.Access.id, Event.NewInvite.id ) ) )
+    val query = Mobj( "e" -> Mobj( $in -> Mlist( Event.Access.id, Event.NewInvite.id, Event.Login.id ) ) )
     if ( dateGte != null || dateLte != null ) {
       val q = Mobj()
       if ( dateGte != null )
@@ -376,7 +376,7 @@ object Accesslet extends Weblet {
 
     def skipLog( l:Log ) =
       (   l.ua.orNull == null
-       && l.e != Event.NewInvite )
+       && l.e == Event.Access )
 
     for ( al <- Log.db.find( query ).sort( Mobj( "on" -> -1 ) ).map( Log.apply );
           if !skipLog( al ) ) {
@@ -480,8 +480,6 @@ object Accesslet extends Weblet {
 
     val totalUsers        = B.User.db.count()
 
-    // TODO active users ... # of users who do not have an activationCode && !inactive
-
     val totalActiveUsers  = milestoneCounts( B.milestones( 0 ) ).distinct
     val totalTotals       = milestoneCounts.map( _._2.total ).sum
     val totalBots         = browsers.values.count( _.ua.bot )
@@ -576,8 +574,7 @@ object Accesslet extends Weblet {
          <tr>
           <td>{ userData.user.label }</td>
           { for ( milestone <- milestones ) yield
-              <td>{ userData.milestoneCount( milestone ) }</td>
-          }
+              <td>{ userData.milestoneCount( milestone ) }</td> }
          </tr>
      }
     </table>
