@@ -291,7 +291,7 @@ trait CustomField extends Field {
   val showFilter:Boolean = false
 
   val show = Show.Editable
-  val default = None
+  val default:Option[ () => Any ] = None
 
   def cell( s:Scope ):NodeSeq = throw new UnsupportedOperationException
 

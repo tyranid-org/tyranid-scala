@@ -145,44 +145,114 @@ object TrackingCookie {
     //if ( tokens.size > 12 )
       //consolidate( u )
 
-    println( "Tracking Cookie: " + token )
     token
   }
 
   //def remove = T.web.res.deleteCookie( B.trackingCookieName )
 
-  def consolidate( user:User ) {
+  def mergeUser( user:User ) {
 
-    // this isn't right ... this will consolidate multiple real users into the same browser id if two different people ever log into the same account
-    // 
-    // taking IP into account would help a little, but still not solve it since people from the same location share the same IP
+    def isOperator( user:User ) = user.email.endsWith( B.domain )
 
-    val bids = user.a_?( 'bids )
-    if ( bids.size <= 1 )
-      return
+    val userOperator = isOperator( user )
 
-    val main = bids( 0 )
+    case class BidInfo( bid:String, users:Seq[User], operator:Boolean ) {
 
-    for ( bid <- bids if bid != main ) {
-
-      Log.db.update(
-        Mobj( "bid" -> bid ),
-        Mobj( "$set" -> Mobj( "bid" -> main ) ),
-        false,
-        true )
-
-      for ( u <- B.User.db.find( Mobj( "bids" -> bid ) ).map( B.User.apply );
-            if u.tid != user.tid ) {
-        val ubids = u.a_!( 'bids )
-        ubids.remove( bid )
-        if ( !ubids.contains( main ) )
-          ubids.add( main )
-        u.save
+      lazy val hasOperatorIpLog = {
+        val log = Log( Log.db.findOne( Mobj( "bid" -> bid ), null, Mobj( "on" -> -1 ) ) )
+        log != null && !B.operatorIps.contains( log.s( 'ip ) )
       }
+
+      lazy val canCollapse = users.size == 1 && ( userOperator || ( !operator && !hasOperatorIpLog ) )
     }
 
-    user( 'bids ) = Mlist( main )
-    user.save
+
+    val bids =  user.a_?( 'bids )
+    if ( bids.size < 2 )
+      return
+
+    val bis = user.a_?( 'bids ).map { rBid =>
+      val bid = rBid._s
+      val users = B.User.db.find( Mobj( "bids" -> bid ) ).map( B.User.apply ).toSeq
+
+      BidInfo( bid, users, operator = users.exists( isOperator ) )
+    }
+
+
+    /*
+
+        I.  try to collapse multi-user BIDs (might not be an issue)
+
+            issues when dealing with collapsing BIDs that have more than one user:
+
+              this will consolidate multiple real users into the same browser id if two different people ever log into the same account
+              taking IP into account would help a little, but still not solve it since people from the same location share the same IP
+              remove all browser ids that are also volerro users
+
+     */
+
+    println( "BID Merge:  Analyzing " + user.label + " (" + bis.size + " bids) ..." )
+    bis.find( _.canCollapse ) foreach { main =>
+      val collapsing = bis.filter( bi => ( bi ne main ) && bi.canCollapse )
+
+      if ( collapsing.nonEmpty ) {
+        print( "BID Merge:  Collapsing " + collapsing.size + " bids into " + main.bid + " for " + user.label + "..." )
+
+        Log.db.update(
+          Mobj( "bid" -> Mobj( $in -> collapsing.map( _.bid ).toMlist ) ),
+          Mobj( "$set" -> Mobj( "bid" -> main.bid ) ),
+          false,
+          true )
+
+        /*
+
+          We're only collapsing bids that are used by a single user, so this isn't needed yet
+
+        for ( u <- B.User.db.find( Mobj( "bids" -> bid ) ).map( B.User.apply );
+              if u.tid != user.tid ) {
+          val ubids = u.a_!( 'bids )
+          ubids.remove( bid )
+          if ( !ubids.contains( main ) )
+            ubids.add( main )
+          u.save
+        }
+         */
+
+
+        for ( bi <- collapsing )
+          user.a_?( 'bids ).remove( bi.bid )
+
+        B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "bids" -> user.a_?( 'bids ) ) ) )
+
+        println( "done." )
+      } else {
+      }
+    }
+  }
+
+  def merge {
+
+    //val user = B.User( B.User.db.findOne( Mobj( "firstName" -> "Katie" ) ) )
+
+    for ( user <- B.User.records )
+      TrackingCookie.mergeUser( user )
+
+    println( "BID Merge:  Completed." )
+
+    /*
+    val users = B.User.db.find()
+    
+    for ( user <- users ) {
+      val browsers = user.a_?( 'bids )
+      
+      if ( browsers.length > 5 ) {
+        //TrackingCookie.consolidate( user )
+        println( user.s( 'fullName ) + " = " + browsers.length )
+        user( 'bids ) = browsers.reverse.take(5).toMlist
+        B.User( user ).save
+      }
+    }
+    */
   }
 }
 
@@ -208,6 +278,7 @@ object ActivityQuery extends Query {
       override lazy val label = "Hide " + B.applicationName + " Users"
       override def ui( user:User, s:Scope ) = Checkbox( id, s.rec.b( name ) )
       override def extract( s:Scope ) = s.rec( name ) = T.web.b( id )
+      override val default = Some( () => true )
     },
     PathField( "d",                                 search = Search.Equals ),
     PathField( "on", l = "From Date", data = false, search = Search.Gte,   default = Some( () => "last week".toLaxUserDateTime ) ),
