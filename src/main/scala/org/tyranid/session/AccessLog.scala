@@ -20,7 +20,7 @@ package org.tyranid.session
 import javax.servlet.http.HttpSession
 
 import scala.collection.mutable
-import scala.xml.NodeSeq
+import scala.xml.{ NodeSeq, Unparsed }
 
 import com.mongodb.DBObject
 
@@ -43,10 +43,19 @@ object Milestone {
 
   def apply( id:String ) = B.milestones.find( _.id == id )
 
+  def size = nextIdx
+
+  @volatile private var nextIdx = 0
 }
 
 case class Milestone( name:String, satisfies:( Log ) => Boolean ) {
   lazy val id = Base62.make( 4 )
+
+  val idx = {
+    val i = Milestone.nextIdx
+    Milestone.nextIdx += 1
+    i
+  }
 }
 
 
@@ -68,8 +77,12 @@ object AccessLog {
       val params = Mobj()
 
       for ( param <- path.logParams ) {
+        val s = web.s( param )
+
         // TODO:  handle arrays ?
-        params( param ) = web.s( param )
+
+        if ( s.notBlank )
+          params( param ) = web.s( param )
       }
 
       return params
@@ -117,6 +130,9 @@ object AccessLog {
   }
 }
 
+/**
+ * This manages Browser IDs.
+ */
 object TrackingCookie {
 
   def get = {
@@ -225,34 +241,16 @@ object TrackingCookie {
         B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "bids" -> user.a_?( 'bids ) ) ) )
 
         println( "done." )
-      } else {
       }
     }
   }
 
   def merge {
 
-    //val user = B.User( B.User.db.findOne( Mobj( "firstName" -> "Katie" ) ) )
-
     for ( user <- B.User.records )
       TrackingCookie.mergeUser( user )
 
     println( "BID Merge:  Completed." )
-
-    /*
-    val users = B.User.db.find()
-    
-    for ( user <- users ) {
-      val browsers = user.a_?( 'bids )
-      
-      if ( browsers.length > 5 ) {
-        //TrackingCookie.consolidate( user )
-        println( user.s( 'fullName ) + " = " + browsers.length )
-        user( 'bids ) = browsers.reverse.take(5).toMlist
-        B.User( user ).save
-      }
-    }
-    */
   }
 }
 
@@ -280,7 +278,6 @@ object ActivityQuery extends Query {
       override def extract( s:Scope ) = s.rec( name ) = T.web.b( id )
       override val default = Some( () => true )
     },
-    PathField( "d",                                 search = Search.Equals ),
     PathField( "on", l = "From Date", data = false, search = Search.Gte,   default = Some( () => "last week".toLaxUserDateTime ) ),
     PathField( "on", l =   "To Date", data = false, search = Search.Lte    )
   )
@@ -308,17 +305,25 @@ object ActivityQuery extends Query {
     }
 }
 
+
+trait MilestoneCounter {
+  val milestoneCounts:Array[Int] = new Array( Milestone.size )
+
+  def hasMilestone( milestone:Milestone )   = milestoneCounts( milestone.idx ) > 0
+  def milestoneCount( milestone:Milestone ) = milestoneCounts( milestone.idx )
+  def addMilestone( milestone:Milestone )   = milestoneCounts( milestone.idx ) += 1
+
+  lazy val totalMilestones = milestoneCounts.sum
+}
+
 case class Browser( bid:String,
                     ua:UserAgent,
-                    milestones:mutable.Map[Milestone,Int] = mutable.Map[Milestone,Int](),
-                    users:mutable.Set[TidItem]            = mutable.Set[TidItem](),
-                    var skip:Boolean                      = false,
-                    var domainFound:Boolean               = false ) {
+                    users:mutable.Set[TidItem] = mutable.Set[TidItem](),
+                    var skip:Boolean           = false )
+  extends MilestoneCounter
 
-  def hasMilestone( milestone:Milestone )   = milestoneCount( milestone ) > 0
-  def milestoneCount( milestone:Milestone ) = milestones.getOrElse( milestone, 0 )
-  def addMilestone( milestone:Milestone )   = milestones( milestone ) = milestoneCount( milestone ) + 1
-}
+case class UserData( user:TidItem )
+  extends MilestoneCounter
 
 case class Path( path:String,
                  var requests:Int = 0,
@@ -339,11 +344,11 @@ object Accesslet extends Weblet {
       report.extractSearchRec
 
     val hideOperators = report.searchRec.b( 'hideOperators$cst )
-    val domain        = report.searchRec( 'd )
     val dateGte       = report.searchRec( 'on$gte )
     val dateLte       = report.searchRec( 'on$lte )
 
-    val browsers        = mutable.Map[String,Browser]()
+    var browsers        = mutable.Map[String,Browser]()
+    var users           = mutable.Map[String,UserData]() // the string is a user tid
     val paths           = mutable.Map[String,Path]()
     val milestoneCounts = mutable.Map[Milestone,MilestoneCounts]( B.milestones.map( _ -> MilestoneCounts() ):_* )
 
@@ -351,17 +356,10 @@ object Accesslet extends Weblet {
     val milestones    = onlyMilestone.flatten( Seq(_), B.milestones )
 
 
-    def skipLog( l:Log ) =
-      (   (   l.ua.orNull == null
-           && l.e != Event.NewInvite )
-       || (   hideOperators
-           && B.operatorIps.contains( l.s( 'ip ) ) ) )
 
-    def skipBrowser( b:Browser ) =
-      b.skip ||
-      ( domain != null && !b.domainFound ) ||
-      ( onlyMilestone.isDefined && !b.hasMilestone( onlyMilestone.get ) )
-
+    //
+    // Query Raw Log Data, generating Browsers and performing basic counts
+    //
 
     val query = Mobj( "e" -> Mobj( $in -> Mlist( Event.Access.id, Event.NewInvite.id ) ) )
     if ( dateGte != null || dateLte != null ) {
@@ -371,7 +369,14 @@ object Accesslet extends Weblet {
       if ( dateLte != null )
         q( $lte ) = dateLte
       query( "on" ) = q
+
+      if ( hideOperators )
+        query( "ip" ) = Mobj( $nin -> B.operatorIps.toMlist )
     }
+
+    def skipLog( l:Log ) =
+      (   l.ua.orNull == null
+       && l.e != Event.NewInvite )
 
     for ( al <- Log.db.find( query ).sort( Mobj( "on" -> -1 ) ).map( Log.apply );
           if !skipLog( al ) ) {
@@ -389,15 +394,17 @@ object Accesslet extends Weblet {
       if ( hideOperators && user != null && user.org == B.appOrgId ) {
         browser.skip = true
       } else {
-        for ( milestone <- B.milestones )
-          if ( !browser.ua.bot && milestone.satisfies( al ) )
+        for ( milestone <- B.milestones ) {
+          if ( !browser.ua.bot && milestone.satisfies( al ) ) {
             browser.addMilestone( milestone )
+
+            if ( user != null )
+              users.getOrElseUpdate( user.tid, UserData( user ) ).addMilestone( milestone )
+          }
+        }
 
         if ( user != null )
           browser.users += user
-
-        if ( domain != null && al( 'd ) == domain )
-          browser.domainFound = true
       }
 
       val p = al.s( 'p )
@@ -406,15 +413,53 @@ object Accesslet extends Weblet {
       path.ms += al.l( 'du )
     }
 
+
+    //
+    // Filter out Browsers we don't care about
+    //
+
+    browsers = browsers.filter { entry =>
+      val b = entry._2
+     
+      (   !b.skip
+       && ( !onlyMilestone.isDefined || b.hasMilestone( onlyMilestone.get ) ) )
+    }
+
+
+    //
+    // Calculate Milestone Counts
+    //
+
+    for ( m <- milestones ) {
+      val mc = milestoneCounts( m )
+
+      val users = mutable.Set[TidItem]()
+      var userlessBrowsers:Int = 0
+
+      for ( b <- browsers.values;
+            mCount = b.milestoneCount( m );
+            if mCount > 0 ) {
+        val bUsers = b.users
+
+        if ( bUsers.size > 0 )
+          users ++= bUsers
+        else
+          userlessBrowsers += 1
+
+        mc.total += mCount
+      }
+
+      mc.distinct = users.size + userlessBrowsers
+    }
+
+
+    //
+    // Calculate User Agent Counts
+    //
+
     val userAgents = mutable.Map[UserAgent,Int]()
 
-    for ( b <- browsers.values if !skipBrowser( b ) ) {
-
-      for ( milestonePair <- b.milestones;
-            mc = milestoneCounts( milestonePair._1 ) ) {
-        mc.distinct += 1
-        mc.total += milestonePair._2
-      }
+    for ( b <- browsers.values ) {
 
       val ua = b.ua
       
@@ -428,10 +473,23 @@ object Accesslet extends Weblet {
       }
     }
 
-    val totalUsers  = milestoneCounts( B.milestones( 0 ) ).distinct
-    val totalTotals = milestoneCounts.map( _._2.total ).sum
-    val totalBots   = browsers.values.count( _.ua.bot )
 
+    //
+    // Calculate Totals
+    //
+
+    val totalUsers        = B.User.db.count()
+
+    // TODO active users ... # of users who do not have an activationCode && !inactive
+
+    val totalActiveUsers  = milestoneCounts( B.milestones( 0 ) ).distinct
+    val totalTotals       = milestoneCounts.map( _._2.total ).sum
+    val totalBots         = browsers.values.count( _.ua.bot )
+
+
+    //
+    // Report the Data
+    //
 
     { ActivityQuery.searchForm( user, report ) } ++
     { if ( onlyMilestone.isDefined )
@@ -444,28 +502,45 @@ object Accesslet extends Weblet {
     <table class="dtable">
      <thead>
       <tr>
-       <th style="width:120px;">Browser ID</th><th>User</th>
+       <th style="width:120px;">User</th><th>Browsers / Sessions</th>
       </tr>
      </thead>
-     { for ( b <- browsers.values if !skipBrowser( b ) ) yield {
+     { 
+       val users = browsers.values.groupBy { b =>
+         val userDisplay = b.users.map( _.name ).toSeq.sortBy( _.toLowerCase ).mkString( ", " )
 
+         if ( userDisplay.isBlank )
+           "<i>none</i>"
+         else
+           userDisplay
+       }
+
+       for ( key <- users.keys.toSeq.sortBy( _.toLowerCase ) ) yield
         <tr>
-         <td><a href={ "/admin/log?bid=" + b.bid }>{ b.bid }</a></td>
-         <td>{ b.users.map( _.name ).toSeq.sorted.mkString( ", " ) }</td>
+         <td>{ Unparsed( key ) }</td>
+         <td>{ Unparsed( users( key ).map( b => "<a href=\"/admin/log?bid=" + b.bid + "\">" + b.bid + "</a>" ).mkString( ", " ) ) }</td>
         </tr>
-      }
      }
     </table>
       else
+    <div class="fieldhc">
+     Total { B.applicationName } Users: { totalUsers }
+    </div>
     <div class="fieldhc">
      Milestones
     </div>
     <table class="dtable">
      <thead>
       <tr>
+       <th/>
+       <th colspan="3">Distinct Users</th>
+       <th colspan="2">Events</th>
+      </tr>
+      <tr>
        <th>Milestone</th>
-       <th style="width:110px;"># Distinct Users</th>
-       <th style="width:90px;">% Distinct</th>
+       <th style="width:110px;">#</th>
+       <th style="width:90px;">% Active</th>
+       <th style="width:90px;">% Total</th>
        <th style="width:80px;">Total</th>
        <th style="width:60px;">% Total</th>
       </tr>
@@ -476,6 +551,7 @@ object Accesslet extends Weblet {
         <tr>
          <td><a href={ "?milestone=" + milestone.id }>{ milestone.name }</a></td>
          <td>{ count.distinct }</td>
+         <td>{ "%.0f%%".format( count.distinct._d * 100 / totalActiveUsers ) }</td>
          <td>{ "%.0f%%".format( count.distinct._d * 100 / totalUsers ) }</td>
          <td>{ count.total }</td>
          <td>{ "%.0f%%".format( count.total._d * 100 / totalTotals ) }</td>
@@ -484,6 +560,27 @@ object Accesslet extends Weblet {
      }
     </table>
     } ++
+    <div class="fieldhc">
+     Users
+    </div>
+    <table class="dtable">
+     <thead>
+      <tr>
+       <th style="width:26px; padding-left:0;">User</th>
+       { for ( m <- milestones ) yield
+         <th>{ m.name }</th> }
+      </tr>
+     </thead>
+     { 
+       for ( userData <- users.values.toSeq.sortBy( -_.totalMilestones ) ) yield
+         <tr>
+          <td>{ userData.user.label }</td>
+          { for ( milestone <- milestones ) yield
+              <td>{ userData.milestoneCount( milestone ) }</td>
+          }
+         </tr>
+     }
+    </table>
     <div class="fieldhc">
      Browsers
     </div>
@@ -501,7 +598,7 @@ object Accesslet extends Weblet {
          <td>{ ua.agent }</td>
          <td>{ ua.os }</td>
          <td>{ count }</td>
-         <td>{ "%.0f%%".format( count._d * 100 / totalUsers ) }</td>
+         <td>{ "%.0f%%".format( count._d * 100 / totalActiveUsers ) }</td>
         </tr>
       }
      }
