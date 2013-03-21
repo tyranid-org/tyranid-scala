@@ -122,7 +122,7 @@ object TrackingCookie {
   def get = {
     val t = T
 
-    var token = T.web.req.cookieValue( B.trackingCookieName )
+    var token = t.web.req.cookieValue( B.trackingCookieName )
     if ( token.isBlank ) {
       token = org.tyranid.math.Base62.make( 10 )
 
@@ -145,10 +145,11 @@ object TrackingCookie {
     //if ( tokens.size > 12 )
       //consolidate( u )
 
+    println( "Tracking Cookie: " + token )
     token
   }
 
-  def remove = T.web.res.deleteCookie( B.trackingCookieName )
+  //def remove = T.web.res.deleteCookie( B.trackingCookieName )
 
   def consolidate( user:User ) {
 
