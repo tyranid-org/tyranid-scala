@@ -64,6 +64,8 @@ case class TidItem( tid:String, id:Any, org:ObjectId, name:String, thumbnail:Str
 
   def orgTid     = B.Org.idToTid( org )
   def orgTidItem = TidItem.by( orgTid )
+
+  def orgLabel = org != null |* orgTidItem.label
 }
 
 object TidCache {}

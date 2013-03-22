@@ -500,24 +500,47 @@ object Accesslet extends Weblet {
     <table class="dtable">
      <thead>
       <tr>
-       <th style="width:120px;">User</th><th>Browsers / Sessions</th>
+       <th style="width:120px;">Company</th>
+       <th style="width:120px;">User</th>
+       <th>Browsers / Sessions</th>
       </tr>
      </thead>
-     { 
-       val users = browsers.values.groupBy { b =>
-         val userDisplay = b.users.map( _.name ).toSeq.sortBy( _.toLowerCase ).mkString( ", " )
+     {
+       val browsersByUsers = browsers.values.groupBy { b =>
 
-         if ( userDisplay.isBlank )
-           "<i>none</i>"
+         val users = b.users
+
+         val sb = new StringBuilder
+
+         val singleOrg = users.nonEmpty && users.head.org != null && users.forall( _.org == users.head.org )
+         if ( singleOrg )
+           sb ++= users.head.orgLabel
          else
-           userDisplay
+           sb ++= "aaaaa"
+
+         sb += '|'
+
+         sb ++= b.users.toSeq.sortBy( _.name.toLowerCase ).map( _.name ).mkString( ", " )
+
+         sb.toString
        }
 
-       for ( key <- users.keys.toSeq.sortBy( _.toLowerCase ) ) yield
-        <tr>
-         <td>{ Unparsed( key ) }</td>
-         <td>{ Unparsed( users( key ).map( b => "<a href=\"/admin/log?bid=" + b.bid + "\">" + b.bid + "</a>" ).mkString( ", " ) ) }</td>
-        </tr>
+       for ( key <- browsersByUsers.keys.toSeq.sortBy( _.toLowerCase ) ) yield {
+         val browsers = browsersByUsers( key )
+
+         val users = browsers.head.users.toSeq // they're all the same, so we can grab the first one
+
+         val singleOrg = users.nonEmpty && users.head.org != null && users.forall( _.org == users.head.org )
+
+
+         <tr>
+          <td>{
+            singleOrg |* <a href={ "/admin/tid?tid=" + users.head.orgTid }>{ users.head.orgLabel }</a>
+          }</td>
+          <td>{ Unparsed( users.sortBy( _.name.toLowerCase ).map( u => "<a href=\"/admin/tid?tid=" + u.tid + "\">" + u.name + "</a>" ).mkString( ", " ) ) }</td>
+          <td>{ Unparsed( browsers.map( b => "<a href=\"/admin/log?bid=" + b.bid + "\">" + b.bid + "</a>" ).mkString( ", " ) ) }</td>
+         </tr>
+       }
      }
     </table>
       else
@@ -564,15 +587,18 @@ object Accesslet extends Weblet {
     <table class="dtable">
      <thead>
       <tr>
+       <th style="width:26px; padding-left:0;">Org</th>
        <th style="width:26px; padding-left:0;">User</th>
        { for ( m <- milestones ) yield
          <th>{ m.name }</th> }
       </tr>
      </thead>
      { 
-       for ( userData <- users.values.toSeq.sortBy( -_.totalMilestones ) ) yield
+       for ( userData <- users.values.toSeq.sortBy( -_.totalMilestones );
+             u = userData.user ) yield
          <tr>
-          <td>{ userData.user.label }</td>
+          <td>{ u.org != null |* <a href={ "/admin/tid?tid=" + u.orgTid }>{ u.orgLabel }</a> }</td>
+          <td><a href={ "/admin/tid?tid=" + u.tid }>{ u.label }</a></td>
           { for ( milestone <- milestones ) yield
               <td>{ userData.milestoneCount( milestone ) }</td> }
          </tr>
@@ -590,14 +616,14 @@ object Accesslet extends Weblet {
      { for ( ua <- userAgents.keys.filter( !_.bot ).toSeq.sortBy( _.s( 'agentName ) ) ) yield {
          val count = userAgents( ua )
 
-        <tr>
-         <td style="padding-left:0;">{ ua.eye }</td>
-         <td>{ ua.agent }</td>
-         <td>{ ua.os }</td>
-         <td>{ count }</td>
-         <td>{ "%.0f%%".format( count._d * 100 / totalActiveUsers ) }</td>
-        </tr>
-      }
+         <tr>
+          <td style="padding-left:0;">{ ua.eye }</td>
+          <td>{ ua.agent }</td>
+          <td>{ ua.os }</td>
+          <td>{ count }</td>
+          <td>{ "%.0f%%".format( count._d * 100 / totalActiveUsers ) }</td>
+         </tr>
+       }
      }
     </table>
     <div class="fieldhc">
