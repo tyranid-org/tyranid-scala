@@ -25,7 +25,7 @@ import scala.xml.NodeSeq
 import org.apache.http.auth.{ AuthScope }
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbLink, DbBoolean, Record }
+import org.tyranid.db.{ DbChar, DbLink, DbBoolean, Record, DbText }
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
@@ -44,6 +44,7 @@ object SsoMapping extends MongoEntity( tid = "a0Ut" ) {
   "lastNameAttrib"  is DbChar(20);
   "groupsAttrib"    is DbChar(20);
   "groupsAttribReq" is DbBoolean;
+  "errorMessage"    is DbText;
   
   lazy val testMapping = {
     val ts = SsoMapping.make

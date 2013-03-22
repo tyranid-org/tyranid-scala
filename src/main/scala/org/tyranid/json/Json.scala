@@ -29,6 +29,7 @@ import org.codehaus.jackson.node.{ ArrayNode, JsonNodeFactory, MissingNode, Obje
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbArray, DbLink, Record }
+import org.tyranid.db.ram.{ RamEntity }
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.session.Notification
 import org.tyranid.web.WebResponse
@@ -254,7 +255,7 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
           write( "id" )
           sb += ':'
           write( va.att.entity.idToTid( rec( va ) ) )
-        case d:DbLink if client =>
+        case d:DbLink if client && !d.toEntity.is[RamEntity] =>
           val id = rec( va )
           
           if ( va.name == "_id" ) {
