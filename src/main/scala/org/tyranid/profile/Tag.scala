@@ -21,15 +21,17 @@ import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbIntSerial, Record }
+import org.tyranid.db.{ DbChar, DbInt, DbIntSerial, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.db.meta.AutoIncrement
 
 
 object Tag extends MongoEntity( tid = "a0Ct" ) {
-  "_id"         is DbIntSerial   is 'id;
-  "name"        is DbChar(64)    is 'label;
+  "_id"         is DbIntSerial   is 'id is 'client;
+  "name"        is DbChar(64)    is 'label is 'client;
+
+  "idInt"       is DbInt         is 'client is 'temporary computed( _.id )
 
   private val tags = mutable.HashMap[String,Int]()
 

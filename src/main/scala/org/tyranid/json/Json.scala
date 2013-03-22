@@ -28,7 +28,7 @@ import org.codehaus.jackson.{ JsonNode, JsonFactory, JsonParser }
 import org.codehaus.jackson.node.{ ArrayNode, JsonNodeFactory, MissingNode, ObjectNode }
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbArray, DbLink, Record }
+import org.tyranid.db.{ DbArray, DbInt, DbIntSerial, DbLink, Record }
 import org.tyranid.db.ram.{ RamEntity }
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.session.Notification
@@ -251,7 +251,7 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
           write( va.name )
           sb += ':'
           write( arr )
-        case DbMongoId if va.name == "_id" && va.att.isId && client =>
+        case DbMongoId | DbInt | DbIntSerial if /* va.name == "_id" && */ va.att.isId && client =>
           write( "id" )
           sb += ':'
           write( va.att.entity.idToTid( rec( va ) ) )

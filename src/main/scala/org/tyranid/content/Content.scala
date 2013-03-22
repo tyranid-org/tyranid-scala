@@ -386,7 +386,7 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
 
   "_id"            is DbInt                  is 'id;
 
-  "on"             is DbDateTime             ;
+  "on"             is DbDateTime             is 'client;
   "m"              is DbChar(1024)           as "message" is 'label;
 
   "pn"             is DbInt                  as "Page Number";
