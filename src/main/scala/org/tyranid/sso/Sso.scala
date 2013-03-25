@@ -255,7 +255,7 @@ $( $('#idp').focus() );
         sess.login( u )
       }
    
-      web.redirect( "/dashboard" )
+      web.redirect( "/#dashboard" )
     case "/error" =>
     }  
   }
