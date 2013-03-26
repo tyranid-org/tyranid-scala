@@ -55,6 +55,8 @@ object TidItem {
                         unknown( tid )
     }
   } )
+  
+  def invalidate( tid:String ) = itemFor.clear( tid )
 }
 
 case class TidItem( tid:String, id:Any, org:ObjectId, name:String, thumbnail:String ) {
