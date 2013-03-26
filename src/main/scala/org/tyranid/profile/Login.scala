@@ -677,10 +677,8 @@ $( function() {
     }
         
     val inner =
-   <div class="offset3 span6" style={ "margin-top:" + ( doRecaptcha ? ( B.BETA ? "25" | "50" )  | "100" ) + "px;text-align:center;" }>
-    <a href="/"><img src="/volerro_logo.png"/></a>
-   </div> ++
-   <div class="offset2 span8">
+   <div style="text-align:center;background: url(https://d33lorp9dhlilu.cloudfront.net/images/volerro_logo_notag_reversed.png) no-repeat 0px 0px;height: 50px;background-position-x: center;"/> ++
+   <div>
     <form method="post" action={ wpath + "/register" } id="f" class="register" style="margin-bottom:12px;" data-val="1">
      { keep |* <input type="hidden" name="keep" value="1"/> }
      <fieldset class="registerBox">
@@ -765,7 +763,7 @@ $( function() {
     val jsonRes = web.jsonRes( sess )
     
     jsonRes.htmlMap = Map( 
-        "html" -> <div class="container">{ inner }</div>,
+        "html" -> <div class="container" style="background: rgb(64,64,65);background: rgba(64,64,65,0.4);margin: 0 auto;width: 740px;border-radius: 8px;padding: 16px;">{ inner }</div>,
         "transition" -> "fadeOutIn",
         "duration" -> 500 )
     
