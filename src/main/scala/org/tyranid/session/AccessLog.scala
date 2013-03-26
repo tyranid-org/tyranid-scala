@@ -176,7 +176,7 @@ object TrackingCookie {
 
       lazy val hasOperatorIpLog = {
         val log = Log( Log.db.findOne( Mobj( "bid" -> bid ), null, Mobj( "on" -> -1 ) ) )
-        log != null && !B.operatorIps.contains( log.s( 'ip ) )
+        log != null && B.operatorIps.contains( log.s( 'ip ) )
       }
 
       lazy val canCollapse = users.size == 1 && ( userOperator || ( !operator && !hasOperatorIpLog ) )
