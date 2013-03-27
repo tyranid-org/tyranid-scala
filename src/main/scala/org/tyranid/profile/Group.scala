@@ -127,11 +127,13 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
 
   "members"   is DbArray(DbTid(B.Org,B.User,Group)) as "Members";
   "private"   is DbBoolean;
-  "ssoSynced" is DbBoolean;
+  "ssoSynced" is DbBoolean                          is 'client;
 
   "settings"  is GroupSettings                      is 'temporary is 'client computed { _.as[Group].settingsFor( T.user ) }
   
   "isPrivate" is DbBoolean                          is 'temporary is 'client computed { _.as[Group].isPrivate }
+
+  "canSso"    is DbBoolean                          is 'temporary is 'client computed { _.as[Group].canBeSsoSynced( T.user ); }
   
   //"search"         { search criteria } // future ... list search for a group, rather than each id explicitly
   
