@@ -125,6 +125,7 @@ $( function() {
   });
   
   $( ".modal" ).modal( "hide" );
+  $( "body" ).addClass( "front" );
   T.initFormPlaceholders( "#f" );
 });
 """ ) }
