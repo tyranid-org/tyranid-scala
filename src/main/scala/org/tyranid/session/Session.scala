@@ -294,7 +294,7 @@ trait Session extends QuickCache {
       }
 
       B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> updates, $inc -> Mobj( "numLogins" -> 1 ) ) )
-      log( Event.Login )
+      log( Event.Login, "bid" -> TrackingCookie.get )
     } else {
       put( "incognito", Boolean.box( true ) )
     }

@@ -378,12 +378,22 @@ object Accesslet extends Weblet {
       (   l.ua.orNull == null
        && l.e == Event.Access )
 
-    for ( al <- Log.db.find( query ).sort( Mobj( "on" -> -1 ) ).map( Log.apply );
-          if !skipLog( al ) ) {
+    def bidFor( l:Log ):String = {
+      val bid = l.s( 'bid )
+      if ( bid.notBlank )
+        return bid
 
-      var bid = al.s( 'bid )
-      if ( bid.isBlank )
-        bid = B.User.idToTid( al.s( 'uid ) )
+      val uid = l.s( 'uid )
+      if ( uid.notBlank )
+        return B.User.idToTid( uid )
+
+      null 
+    }
+
+    for ( al <- Log.db.find( query ).sort( Mobj( "on" -> -1 ) ).map( Log.apply );
+          if !skipLog( al );
+          bid = bidFor( al );
+          if bid != null ) {
 
       val ua = al.ua.getOrElse( UserAgent.system )
       val browser = browsers.getOrElseUpdate( bid, Browser( bid, ua ) )
