@@ -127,6 +127,21 @@ $( $('#idp').focus() );
             </div> ) ) )
         }
       }
+    case s if s.startsWith( "/errTest/" ) =>
+      val id = s.split( "/" )(2)
+      val mapping = ( id == "test" ) ? SsoMapping.testMapping | SsoMapping.getById( id )
+      
+      val errorMessage = mapping.s( 'errorMessage )
+      
+      if ( errorMessage.isBlank ) {
+        sess.error( "Sorry, this account has been deactivated." )
+        web.jsRes()
+      } else {
+        web.template( <tyr:shell>{ errorMessageBox( errorMessage ) }</tyr:shell> )
+      }
+      
+      return
+    
     case s if s.startsWith( "/auth/" ) =>
       val id = s.split( "/" )(2)
       val mapping = ( id == "test" ) ? SsoMapping.testMapping | SsoMapping.getById( id )
@@ -215,9 +230,15 @@ $( $('#idp').focus() );
             Group.db.update( Mobj( "_id" -> group.id ), $addToSet( "v", newUser.tid ) )          
         }
       } else if ( user.b( 'inactive ) ) {
-        //println( "User is inactive:" + email )
-        sess.error( "Sorry, this account has been deactivated." )
-        web.jsRes()
+        val errorMessage = mapping.s( 'errorMessage )
+        
+        if ( errorMessage.isBlank ) {
+          sess.error( "Sorry, this account has been deactivated." )
+          web.jsRes()
+        } else {
+          web.template( <tyr:shell>{ errorMessageBox( errorMessage ) }</tyr:shell> )
+        }
+        
         return
       } else {
         //println( "Log in via SSO:" + email )
@@ -260,6 +281,27 @@ $( $('#idp').focus() );
     }  
   }
     
+  def errorMessageBox( errorMessage:String ) = {
+   <div class="container">
+    <form method="post" id="f" class="sso offset2 span8" style="margin-bottom:12px;">
+     <fieldset class="ssoBox">
+      <div class="container-fluid" style="padding:0;">
+       <div class="row-fluid">
+        <h1 class="span12" style="text-align:center">Deactivated account</h1>
+       </div>
+      </div>
+      <hr style="margin:4px 0 30px;"/>
+      <div class="top-form-messages"/>
+      <div class="container-fluid" style="padding:0;">
+       <div class="row-fluid">
+        <div class="errorMessage" style="white-space:pre-wrap;font-family:'Courier New',monospace;">{ errorMessage }</div>
+       </div>
+      </div>
+     </fieldset>
+    </form>    
+   </div>
+  }
+  
   def signupBox = {
     val thread = T
     val user = thread.user
