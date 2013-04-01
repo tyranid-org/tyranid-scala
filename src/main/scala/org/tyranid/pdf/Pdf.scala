@@ -71,6 +71,7 @@ object Pdf {
     	    case why:PdfcrowdError =>
     	      why.statusCode match {
     	        case js if useJavascript => // 510 = 413 Timed out. Can't load the specified URL.
+    	          println( "PDF failure, status code: " + js )
     	          useJavascript = false
     	        case sc =>
     	          retry = false
