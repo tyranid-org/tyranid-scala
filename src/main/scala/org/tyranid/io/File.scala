@@ -183,7 +183,7 @@ object DbLocalFile extends CommonFile {
 }
 
 object File {  
-  val tempBucket = new S3Bucket( "temp" )
+  val tempBucket = B.getS3Bucket( "temp" )
 
   def mimeTypeFor( filename:String ) = {
     val fsave = filename.safeString.toLowerCase
