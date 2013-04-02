@@ -876,7 +876,11 @@ abstract class Content( override val view:MongoView,
     </div>
   
   def generateThumbs:Boolean = {
-    val imgFile = imageForThumbs
+    val imgFile = try {
+      imageForThumbs
+    } catch {
+      case _ => null
+    }  
     
     if ( imgFile != null ) {
       val pathParts = tid.splitAt( 4 )
