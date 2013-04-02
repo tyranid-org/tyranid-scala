@@ -476,7 +476,7 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   
   def json( json:Any, status:Int = 200, jsonpCallback:String = null, headers:Map[String,String] = null, cache:Boolean = false ) = 
     res.json( json, status, jsonpCallback, headers, req, cache )
-    
+
   def js( js:JsCmd* ) = res.json( js, req = req, cache = false )
 
   def html( xml:NodeSeq, status:Int = 200, headers:Map[String,String] = null, noCache:Boolean = false ) = res.html( xml, status, headers, req, noCache )
