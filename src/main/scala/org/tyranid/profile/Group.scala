@@ -125,7 +125,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   "orgId"     is DbChar(20)                         is 'temporary is 'client computed{ rec => val orgId = rec.oid( 'org ); ( orgId == null ) ? null | B.Org.idToTid( orgId ) };
 
 
-  "members"   is DbArray(DbTid(B.Org,B.User,Group)) as "Members";
+  "members"   is DbArray(DbTid(B.Org,B.User,Group)) as "Members" is 'client;
   "private"   is DbBoolean;
   "ssoSynced" is DbBoolean                          is 'client;
 
