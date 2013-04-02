@@ -226,7 +226,7 @@ object S3 {
         false
     }
   }
-  
+
   def getObject( bucket:S3Bucket, key:String ) = s3.getObject( new GetObjectRequest( bucket.name, key ) )
   def getObjectMetadata( bucket:S3Bucket, key:String ) = s3.getObjectMetadata( bucket.name, key )
 
