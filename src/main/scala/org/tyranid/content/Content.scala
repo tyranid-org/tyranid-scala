@@ -20,7 +20,7 @@ package org.tyranid.content
 import java.io.File
 import java.util.Date
 
-import scala.xml.Text
+import scala.xml.{ Text, NodeSeq }
 
 import org.bson.types.ObjectId
 import com.mongodb.{ BasicDBList, DBCollection, DBObject }
@@ -869,9 +869,10 @@ abstract class Content( override val view:MongoView,
   def thumbStyle( size:String ):String = null
   def thumbUrl( size:String ) = "/io/thumb/" + tid + "/" + size + "?cb=" + s( 'img ).denull.hashCode
 
-  def thumbHtml( size:String ) =
+  def thumbHtml( size:String, extraHtml:NodeSeq = null ) =
     <div class={ thumbClass( size ) } style={ thumbStyle( size ) }>
      <img src={ thumbUrl( size ) }/>
+     { ( extraHtml != null ) |* extraHtml }
     </div>
   
   def generateThumbs:Boolean = {

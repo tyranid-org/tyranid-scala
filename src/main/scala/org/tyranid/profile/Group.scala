@@ -422,7 +422,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   val newOverlay = <div class="new-overlay"><div class="text">NEW</div></div>
   val privateOverlay = <div class="private-overlay"><span class="icon-minus"/><div class="text">PRIVATE</div></div>
 
-  override def thumbHtml( size:String ) = {
+  override def thumbHtml( size:String, extraHtml:NodeSeq = null ) = {
     val url = imageUrl( null )
 
     val style:String = url.isBlank ? {
@@ -443,6 +443,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     val inner = 
       <div class={ thumbClass( size ) } style={ style }>
        { url.notBlank ? <img src={ thumbUrl( size ) }/> | <div class="text">{ s( 'name ) }</div> }
+       { ( extraHtml != null ) |* extraHtml } 
       </div>
 
     if ( isNew || isPrivate ) {
