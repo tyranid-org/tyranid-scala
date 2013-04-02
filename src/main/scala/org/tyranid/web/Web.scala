@@ -94,9 +94,12 @@ trait TyrFilter extends Filter {
   
   def ensureSession( thread:ThreadData, web:WebContext ) {
     if ( thread.http == null ) {
-      val lnf = LnF.byDomain( web.req.getServerName )
       thread.http = web.req.getSession( true )
-      T.session.put( Session.LnF_KEY, lnf )
+      val sess = T.session
+      sess.put( "remoteHost", web.req.getRemoteHost() )
+      sess.put( "remoteAddr", web.req.getRemoteAddr() )
+      sess.put( Session.LnF_KEY, LnF.byDomain( web.req.getServerName ) )
+      sess.ua( web )
       LoginCookie.autoLogin          
     }
   }

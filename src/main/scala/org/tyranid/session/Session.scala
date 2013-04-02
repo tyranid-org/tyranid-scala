@@ -306,13 +306,8 @@ trait Session extends QuickCache {
       
     val web = T.web
     
-    if ( web != null ) {
-      ua( web )
-      put( "remoteHost", web.req.getRemoteHost )
-      put( "remoteAddr", web.req.getRemoteAddr )
-      
+    if ( web != null )
       web.req.addJsCmd( Js( "tyrl( window.cometConnect );" ) )
-    }
     
     /*
     Comet.visit { comet =>      
