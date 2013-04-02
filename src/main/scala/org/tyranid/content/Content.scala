@@ -697,6 +697,8 @@ trait ContentMeta extends PrivateKeyEntity {
   "locked"            is DbBoolean;
   
   "archived"          is DbBoolean            is 'client;
+  
+  "dist"              is DbBoolean            is 'client; // If true, then if a group, it is a distribution group 
   }
 
   override def searchText = true
