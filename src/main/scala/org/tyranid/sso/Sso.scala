@@ -45,6 +45,9 @@ object SsoMapping extends MongoEntity( tid = "a0Ut" ) {
   "groupsAttrib"    is DbChar(20);
   "groupsAttribReq" is DbBoolean;
   "errorMessage"    is DbText;
+  "actOptOut"       is DbBoolean;
+  "featOptOut"      is DbBoolean;
+  "naOptOut"        is DbBoolean;
   
   lazy val testMapping = {
     val ts = SsoMapping.make
@@ -215,6 +218,15 @@ $( $('#idp').focus() );
         newUser( 'email ) = email
         newUser( 'createdOn ) = new Date
         newUser( 'password ) = ""
+        
+        if ( mapping.b( 'actOptOut ) )
+          newUser( 'actOptOut ) = true
+          
+        if ( mapping.b( 'featOptOut ) )
+          newUser( 'featOptOut ) = true
+        
+        if ( mapping.b( 'naOptOut ) )
+          newUser( 'naOptOut ) = true
           
         newUser.join( org )
         sess.login( newUser )
