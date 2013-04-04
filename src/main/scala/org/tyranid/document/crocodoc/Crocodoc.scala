@@ -82,9 +82,9 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
     statusJson.s( 'status )
   }
   
-  def docPreviewContainer( extDocId:String, height:String="100%", print:Boolean = false ): NodeSeq =
+  def docPreviewContainer( extDocId:String, height:String="100%", print:Boolean = false, annotatable:Boolean = true ): NodeSeq =
     { print |* <script src={ B.CROCODOC_SCRIPT }></script> } ++
-    <div class="doc-view doc crocodoc annotatableObject" id={ "dv_" + extDocId }/>
+    <div class={ "doc-view doc crocodoc" + ( annotatable |* " annotatableObject" ) } id={ "dv_" + extDocId }/>
 
     /* ---
 

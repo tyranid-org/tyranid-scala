@@ -278,6 +278,9 @@ $( $('#idp').focus() );
    
       web.redirect( "/#dashboard" )
     case "/error" =>
+      web.redirect( "/#dashboard" )
+    case _ =>
+      web.redirect( "/#dashboard" )
     }  
   }
     

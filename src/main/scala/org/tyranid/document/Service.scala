@@ -66,7 +66,7 @@ object Service {
       null
   }
   
-  def docPreviewContainer( extDocId:String, height:String="100%", print:Boolean = false ) =  
+  def docPreviewContainer( extDocId:String, height:String="100%", print:Boolean = false, annotatable:Boolean = true ) =  
     if ( extDocId.notBlank ) {
       val parts = extDocId.split( "," )
       appFor( parts(0 ) ).docPreviewContainer( parts.drop(1).mkString( "," ), height, print )
@@ -131,7 +131,7 @@ trait DocApp {
   def previewUrlFor( extDocId:String ):String
   def previewJsFor( extDocId:String, print:Boolean = false ):String = null
   
-  def docPreviewContainer( extDocId:String, height:String="100%", print:Boolean = false ):NodeSeq
+  def docPreviewContainer( extDocId:String, height:String="100%", print:Boolean = false, annotatable:Boolean = true ):NodeSeq
   def delete( extDocId:String ): Boolean
   
   protected def externalDocId( extDocId:String ) =
