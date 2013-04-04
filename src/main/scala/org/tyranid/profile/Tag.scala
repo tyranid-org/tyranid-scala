@@ -25,6 +25,7 @@ import org.tyranid.db.{ DbChar, DbInt, DbIntSerial, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.db.meta.AutoIncrement
+import org.tyranid.web.{ Weblet, WebContext }
 
 
 object Tag extends MongoEntity( tid = "a0Ct" ) {
@@ -73,5 +74,39 @@ object Tag extends MongoEntity( tid = "a0Ct" ) {
       <input type="hidden" style="display:none;" value={ id } id={ setId } name={ setId + "[]" }/>
      </span>
     </li>
+
+
+  def update( r:Record, key:String, tags:Seq[Any] ) = {
+
+    val tagList = Mlist()
+
+    for ( tag <- tags )
+      tagList.addToSet(
+        tag match {
+        case id:Int                       => id.as[AnyRef]
+        case name:String if isNew( name ) => idFor( extractNew( name ) ).as[AnyRef]
+        case name:String                  => idFor( name ).as[AnyRef]
+        }
+      )
+
+    if ( tagList.nonEmpty )
+      r( key ) = tagList
+    else
+      r.remove( key )
+  }
 }
+
+object Taglet extends Weblet {
+
+  def handle( web:WebContext ) {
+    rpath match {
+    //case "/search" =>
+      //web.res.json( json.take( 12 ) )
+
+    case _ =>
+      _404
+    }
+  }
+}
+
 
