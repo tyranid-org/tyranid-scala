@@ -159,6 +159,15 @@ object Record {
   }
 
   def byTid( tid:String, only:Entity = null ):Option[Record] = Option( getByTid( tid, only ) )
+
+  def getByTids( tids:Seq[String] ):Seq[Record] =
+    ( for ( entry <- tids.groupBy( Tid.entityTid );
+            rEntity <- Entity.byTid(entry._1 );
+            entity = rEntity.as[MongoEntity];
+            entityTids = entry._2 ) yield {
+        entity.db.find( Mobj( "_id" -> Mobj( $in -> entityTids.map( entity.tidToId ).toMlist ) ) ).map( entity.apply ).toSeq
+      }
+    ).toSeq.flatten
 }
 
 trait Record extends Valid with BsonObject with QuickCache {
