@@ -121,19 +121,22 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   
   override def convert( obj:DBObject, parent:MongoRecord ) = new Group( obj, parent )
 
-  "org"       is DbLink(B.Org)                      as "Organization";
-  "orgId"     is DbChar(20)                         is 'temporary is 'client computed{ rec => val orgId = rec.oid( 'org ); ( orgId == null ) ? null | B.Org.idToTid( orgId ) };
+  "org"          is DbLink(B.Org)                      as "Organization";
+  "orgId"        is DbChar(20)                         is 'temporary is 'client computed{ rec => val orgId = rec.oid( 'org ); ( orgId == null ) ? null | B.Org.idToTid( orgId ) };
 
 
-  "members"   is DbArray(DbTid(B.Org,B.User,Group)) as "Members" is 'client;
-  "private"   is DbBoolean;
-  "ssoSynced" is DbBoolean                          is 'client;
+  "members"      is DbArray(DbTid(B.Org,B.User,Group)) as "Members" is 'client;
+  "private"      is DbBoolean;
+  "ssoSynced"    is DbBoolean                          is 'client;
 
-  "settings"  is GroupSettings                      is 'temporary is 'client computed { _.as[Group].settingsFor( T.user ) }
+  "settings"     is GroupSettings                      is 'temporary is 'client computed { _.as[Group].settingsFor( T.user ) }
   
-  "isPrivate" is DbBoolean                          is 'temporary is 'client computed { _.as[Group].isPrivate }
+  "isPrivate"    is DbBoolean                          is 'temporary is 'client computed { _.as[Group].isPrivate }
 
-  "canSso"    is DbBoolean                          is 'temporary is 'client computed { _.as[Group].canBeSsoSynced( T.user ); }
+  "canSso"       is DbBoolean                          is 'temporary is 'client computed { _.as[Group].canBeSsoSynced( T.user ) }
+
+  "website"      is DbChar(80)                         is 'temporary is 'client computed { _.as[Group].website }
+  "userIdleDays" is DbInt                              is 'temporary is 'client computed { _.as[Group].userIdleDays }
   
   //"search"         { search criteria } // future ... list search for a group, rather than each id explicitly
   
@@ -468,9 +471,21 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
 
   override def contents = B.groupContents( this )
 
-  def org = B.Org.getById( oid( 'org ) )
-  
-  
+  def hasOrg = oid( 'org ) != null
+  def org    = B.Org.getById( oid( 'org ) )
+
+  def website =
+    if ( hasOrg )
+      org.s( 'website )
+    else
+      null
+
+  def userIdleDays =
+    if ( hasOrg )
+      org.i( 'userIdleDays )
+    else
+      0
+
   override def copy( ownerTid:String ): Content = {
     val group = super.copy( ownerTid ).as[Group]
     group( 'org ) = T.user.org.id 
