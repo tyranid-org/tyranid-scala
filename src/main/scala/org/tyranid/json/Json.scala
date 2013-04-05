@@ -97,7 +97,7 @@ case class JqHtml( // this is the target selector to place the html at
 
                    
 // @name if the name is null, it is a local model, otherwise it is a global model
-case class JsModel( map:Map[String,Any], name:String = null ) extends JsCmd
+case class JsModel( map:collection.Map[String,Any], name:String = null ) extends JsCmd
 
 object JsData {
   def apply( rec:Record ):JsData = JsData( Seq( rec ) )
