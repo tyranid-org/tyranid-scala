@@ -96,17 +96,3 @@ object Tag extends MongoEntity( tid = "a0Ct" ) {
   }
 }
 
-object Taglet extends Weblet {
-
-  def handle( web:WebContext ) {
-    rpath match {
-    //case "/search" =>
-      //web.res.json( json.take( 12 ) )
-
-    case _ =>
-      _404
-    }
-  }
-}
-
-
