@@ -121,8 +121,8 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   
   override def convert( obj:DBObject, parent:MongoRecord ) = new Group( obj, parent )
 
-  "org"          is DbLink(B.Org)                      as "Organization";
-  "orgId"        is DbChar(20)                         is 'temporary is 'client computed{ rec => val orgId = rec.oid( 'org ); ( orgId == null ) ? null | B.Org.idToTid( orgId ) };
+  "org"          is DbLink(B.Org)                      as "Organization" is 'client;
+  //"orgId"        is DbChar(20)                         is 'temporary is 'client computed{ rec => val orgId = rec.oid( 'org ); ( orgId == null ) ? null | B.Org.idToTid( orgId ) };
 
 
   "members"      is DbArray(DbTid(B.Org,B.User,Group)) as "Members" is 'client;
