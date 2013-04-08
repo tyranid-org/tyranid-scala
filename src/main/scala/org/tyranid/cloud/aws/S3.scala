@@ -202,7 +202,7 @@ object S3 {
   }
 
   def getFilenames( bucket:S3Bucket, prefix:String = null, suffix:String = null, olderThan:Date = null ) = {
-    val listing = s3.listObjects( new ListObjectsRequest().withBucketName( bucket.name ).withPrefix( prefix ) )
+    val listing = prefix.isBlank ? s3.listObjects( new ListObjectsRequest().withBucketName( bucket.name ) ) | s3.listObjects( new ListObjectsRequest().withBucketName( bucket.name ).withPrefix( prefix ) )
     val summaries = listing.getObjectSummaries
     val iterator = summaries.iterator
     val filenames = mutable.ArrayBuffer[String]()
