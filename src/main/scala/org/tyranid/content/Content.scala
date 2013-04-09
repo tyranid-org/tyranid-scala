@@ -1057,27 +1057,11 @@ abstract class Content( override val view:MongoView,
     v.size == 1 && v( 0 ) == user.tid
   }
 
-  def owners = {
-    val tids = ownerTids
-
-    for ( e <- ownerEntities;
-          en = e.as[MongoEntity];
-          r <- en.db.find( Mobj( "_id" -> Mobj( $in -> tids.filter( en.hasTid ).map( tid => en.tidToId( tid ) ).toSeq.toMlist ) ) );
-          rec = en( r ) )
-      yield rec
-  }
+  def owners = Record.getByTids( ownerTids )
 
   def writers = owners
   
-  def viewers = {
-    val tids = viewerTids
-
-    for ( e <- viewerEntities;
-          en = e.as[MongoEntity];
-          r <- en.db.find( Mobj( "_id" -> Mobj( $in -> tids.filter( en.hasTid ).map( tid => en.tidToId( tid ) ).toSeq.toMlist ) ) );
-          rec = en( r ) )
-      yield rec
-  }
+  def viewers = Record.getByTids( viewerTids )
 
   def ownerNames = a_?( 'o ).map( tid => TidItem.by( tid.as[String] ).name ).mkString( ", " )
 

@@ -301,22 +301,13 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
 
   def groupType = GroupType.byId( i( 'groupType ) ).getOrElse( GroupType.Org ).as[GroupType]
 
-  def defaultMemberEntities = a_?( 'members ).toSeq.of[String].map( _.substring( 0, 4 ) ).distinct.map( tid => Entity.byTid( tid ).get )
-  def defaultMemberTids = obj.a_?( 'members ).toSeq.of[String]
+  def memberTids = obj.a_?( 'members ).toSeq.of[String]
 
   /* Default members are really only used in projects.  Default members are the "official members" of the project.  For example, users that
    * get added to folders inside the project that might not get added to the "default members" list but they would still be in the "v"/members
    * list.
    */
-  def defaultMembers = {
-   val tids = defaultMemberTids
-
-   for ( e <- defaultMemberEntities;
-         en = e.as[MongoEntity];
-         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> tids.filter( en.hasTid ).map( tid => en.tidToId( tid ) ).toSeq.toMlist ) ) );
-         rec = en( r ) )
-     yield rec
-  }
+  def members = Record.getByTids( memberTids )
   
   def iconClass16x16 = groupType.iconClass16x16
   def iconClass32x32 = groupType.iconClass32x32

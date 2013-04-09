@@ -396,7 +396,7 @@ class WebResponse( web:WebContext, sess:Session ) {
       Map( "html" -> htmlMap )
 
     case cmd:Js      => Map( "extraJS" -> cmd.js )
-    case cmd:JsData  => Map( "data" -> cmd.data )
+    case cmd:JsData  => Map( "data" -> cmd )
     case cmd:JsModel => if ( cmd.name.notBlank ) Map( "model" -> cmd.map, "modelName" -> cmd.name )
                         else                     Map( "model" -> cmd.map )
     case JsNop | null => null

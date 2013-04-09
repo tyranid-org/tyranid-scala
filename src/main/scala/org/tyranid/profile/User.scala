@@ -74,7 +74,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
 
   "_id"            is DbMongoId           is 'id is 'client;
 
-  "email"          is DbEmail             is 'required;
+  "email"          is DbEmail             is 'required is 'client is 'auth;
   "fullName"       is DbChar(64)          is 'client is 'label;
   "password"       is DbPassword          is 'required;
   "password2"      is DbPassword          is 'required is 'temporary as "Repeat Password";
@@ -89,7 +89,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "country"        is DbLink(Country)     ;
   "lang"           is DbLink(Language)    ;
 
-  "numLogins"      is DbInt          ;
+  "numLogins"      is DbInt               ;
   "lastLogin"      is DbDateTime          ;
   "createdOn"      is DbDate              ;
   
@@ -113,7 +113,6 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "bcte"           is DbLong              ; // Basecamp token expiration
   "bcid"           is DbChar(90)          ; // Basecamp refresh token if linked
 
-  
   "twid"           is DbChar(90)          ; // Twitter member id if linked
   "twt"            is DbChar(90)          ; // Twitter OAuth 1.0a token
   "twts"           is DbChar(90)          ; // Twitter OAuth 1.0a token secret
