@@ -122,7 +122,7 @@ $( function() {
     T.navTo( '""" + wpath + """/forgot?xhr=1&un=' + encodeURIComponent( fldVal ) );
   });
   
-  $( ".modal" ).modal( "hide" );
+  T.closeModal( ".modal" );
   $( "body" ).addClass( "front" );
   T.initFormPlaceholders( "#f" );
 });
