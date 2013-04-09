@@ -196,7 +196,7 @@ object MimeType {
     MimeType( "video/ogg",                                                                 Video,               "OGG Movie",                     Seq( "ogv" ) ),
     MimeType( "video/webm",                                                                Video,               "WebM Movie",                    Seq( "webm" ) ),
     MimeType( "video/quicktime",                                                           Video,               "QuickTime",                     Seq( "mov", "qt" ) ),
-    MimeType( "video/x-mx-wmv",                                                            Video,               "Windows Medio Video",           Seq( "wmv" ) ),
+    MimeType( "video/x-mx-wmv",                                                            Video,               "Windows Media Video",           Seq( "wmv" ) ),
     MimeType( "video/x-sgi-movie",                                                         null,                "SGI Movie",                     Seq( "movie" ) ),
     MimeType( "video/x-msvideo",                                                           Video,               "Microsoft AVI",                 Seq( "avi" ) )
   )
