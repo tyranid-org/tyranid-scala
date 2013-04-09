@@ -87,7 +87,7 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
   
   def previewUrlFor( extDocId:String ):String = null
   
-  def docPreviewContainer( extDocId:String, height:String="100%", print:Boolean = false ): NodeSeq = {
+  def docPreviewContainer( extDocId:String, height:String="100%", print:Boolean = false, annotatable:Boolean ): NodeSeq = {
     <div class="scribd" id={ "scrib_doc_" + extDocId.split( "," )(0) }></div>    
   }
 
@@ -120,7 +120,7 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
          "height" -> height,
          "cssClass" -> "no-scroll",
          "extraJS" -> previewJs,
-         "html" -> docPreviewContainer( extDocId, print = false ) )
+         "html" -> docPreviewContainer( extDocId, print = false, annotatable = true ) )
   }
   
   def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ) = {

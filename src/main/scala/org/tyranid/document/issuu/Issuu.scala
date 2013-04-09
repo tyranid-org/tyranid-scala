@@ -94,7 +94,7 @@ case class IssuuApp( apiKey:String, secret:String = null ) extends DocApp {
     "DONE"
   }
   
-  def docPreviewContainer( extDocId:String, height:String="100%", print:Boolean = false ): NodeSeq = NodeSeq.Empty
+  def docPreviewContainer( extDocId:String, height:String="100%", print:Boolean = false, annotatable:Boolean = true ): NodeSeq = NodeSeq.Empty
     
 // TODO
   def previewUrlFor( extDocId:String ):String =  

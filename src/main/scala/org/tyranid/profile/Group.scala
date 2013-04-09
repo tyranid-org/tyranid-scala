@@ -121,19 +121,20 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   
   override def convert( obj:DBObject, parent:MongoRecord ) = new Group( obj, parent )
 
-  "org"       is DbLink(B.Org)                      as "Organization";
-  "orgId"     is DbChar(20)                         is 'temporary is 'client computed{ rec => val orgId = rec.oid( 'org ); ( orgId == null ) ? null | B.Org.idToTid( orgId ) };
+  "org"          is DbLink(B.Org)                      as "Organization" is 'client;
+  //"orgId"        is DbChar(20)                         is 'temporary is 'client computed{ rec => val orgId = rec.oid( 'org ); ( orgId == null ) ? null | B.Org.idToTid( orgId ) };
 
 
-  "members"   is DbArray(DbTid(B.Org,B.User,Group)) as "Members";
-  "private"   is DbBoolean;
-  "ssoSynced" is DbBoolean                          is 'client;
+  "members"      is DbArray(DbTid(B.Org,B.User,Group)) as "Members" is 'client;
+  "private"      is DbBoolean                          is 'client;
+  "ssoSynced"    is DbBoolean                          is 'client;
 
-  "settings"  is GroupSettings                      is 'temporary is 'client computed { _.as[Group].settingsFor( T.user ) }
+  "settings"     is GroupSettings                      is 'temporary is 'client computed { _.as[Group].settingsFor( T.user ) }
   
-  "isPrivate" is DbBoolean                          is 'temporary is 'client computed { _.as[Group].isPrivate }
+  "canSso"       is DbBoolean                          is 'temporary is 'client computed { _.as[Group].canBeSsoSynced( T.user ) }
 
-  "canSso"    is DbBoolean                          is 'temporary is 'client computed { _.as[Group].canBeSsoSynced( T.user ); }
+  "website"      is DbChar(80)                         is 'temporary is 'client computed { _.as[Group].website }
+  "userIdleDays" is DbInt                              is 'temporary is 'client computed { _.as[Group].userIdleDays }
   
   //"search"         { search criteria } // future ... list search for a group, rather than each id explicitly
   
@@ -300,22 +301,13 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
 
   def groupType = GroupType.byId( i( 'groupType ) ).getOrElse( GroupType.Org ).as[GroupType]
 
-  def defaultMemberEntities = a_?( 'members ).toSeq.of[String].map( _.substring( 0, 4 ) ).distinct.map( tid => Entity.byTid( tid ).get )
-  def defaultMemberTids = obj.a_?( 'members ).toSeq.of[String]
+  def memberTids = obj.a_?( 'members ).toSeq.of[String]
 
   /* Default members are really only used in projects.  Default members are the "official members" of the project.  For example, users that
    * get added to folders inside the project that might not get added to the "default members" list but they would still be in the "v"/members
    * list.
    */
-  def defaultMembers = {
-   val tids = defaultMemberTids
-
-   for ( e <- defaultMemberEntities;
-         en = e.as[MongoEntity];
-         r <- en.db.find( Mobj( "_id" -> Mobj( $in -> tids.filter( en.hasTid ).map( tid => en.tidToId( tid ) ).toSeq.toMlist ) ) );
-         rec = en( r ) )
-     yield rec
-  }
+  def members = Record.getByTids( memberTids )
   
   def iconClass16x16 = groupType.iconClass16x16
   def iconClass32x32 = groupType.iconClass32x32
@@ -422,7 +414,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   val newOverlay = <div class="new-overlay"><div class="text">NEW</div></div>
   val privateOverlay = <div class="private-overlay"><span class="icon-minus"/><div class="text">PRIVATE</div></div>
 
-  override def thumbHtml( size:String ) = {
+  override def thumbHtml( size:String, extraHtml:NodeSeq = null ) = {
     val url = imageUrl( null )
 
     val style:String = url.isBlank ? {
@@ -443,6 +435,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     val inner = 
       <div class={ thumbClass( size ) } style={ style }>
        { url.notBlank ? <img src={ thumbUrl( size ) }/> | <div class="text">{ s( 'name ) }</div> }
+       { ( extraHtml != null ) |* extraHtml } 
       </div>
 
     if ( isNew || isPrivate ) {
@@ -467,9 +460,21 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
 
   override def contents = B.groupContents( this )
 
-  def org = B.Org.getById( oid( 'org ) )
-  
-  
+  def hasOrg = oid( 'org ) != null
+  def org    = B.Org.getById( oid( 'org ) )
+
+  def website =
+    if ( hasOrg )
+      org.s( 'website )
+    else
+      null
+
+  def userIdleDays =
+    if ( hasOrg )
+      org.i( 'userIdleDays )
+    else
+      0
+
   override def copy( ownerTid:String ): Content = {
     val group = super.copy( ownerTid ).as[Group]
     group( 'org ) = T.user.org.id 

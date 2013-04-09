@@ -94,9 +94,12 @@ trait TyrFilter extends Filter {
   
   def ensureSession( thread:ThreadData, web:WebContext ) {
     if ( thread.http == null ) {
-      val lnf = LnF.byDomain( web.req.getServerName )
       thread.http = web.req.getSession( true )
-      T.session.put( Session.LnF_KEY, lnf )
+      val sess = T.session
+      sess.put( "remoteHost", web.req.getRemoteHost() )
+      sess.put( "remoteAddr", web.req.getRemoteAddr() )
+      sess.put( Session.LnF_KEY, LnF.byDomain( web.req.getServerName ) )
+      sess.ua( web )
       LoginCookie.autoLogin          
     }
   }
@@ -393,7 +396,7 @@ class WebResponse( web:WebContext, sess:Session ) {
       Map( "html" -> htmlMap )
 
     case cmd:Js      => Map( "extraJS" -> cmd.js )
-    case cmd:JsData  => Map( "data" -> cmd.data )
+    case cmd:JsData  => Map( "data" -> cmd )
     case cmd:JsModel => if ( cmd.name.notBlank ) Map( "model" -> cmd.map, "modelName" -> cmd.name )
                         else                     Map( "model" -> cmd.map )
     case JsNop | null => null
@@ -473,7 +476,7 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   
   def json( json:Any, status:Int = 200, jsonpCallback:String = null, headers:Map[String,String] = null, cache:Boolean = false ) = 
     res.json( json, status, jsonpCallback, headers, req, cache )
-    
+
   def js( js:JsCmd* ) = res.json( js, req = req, cache = false )
 
   def html( xml:NodeSeq, status:Int = 200, headers:Map[String,String] = null, noCache:Boolean = false ) = res.html( xml, status, headers, req, noCache )

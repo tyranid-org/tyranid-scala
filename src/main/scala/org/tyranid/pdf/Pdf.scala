@@ -44,7 +44,9 @@ object Pdf {
     	    client.useSSL( true )
     	        
     	    // convert a web page and save the PDF to a file
-          client.setPageHeight( -1 )
+          if ( B.onePagePdf )
+            client.setPageHeight( -1 )
+    	    
           client.enableHyperlinks( enableHyperlinks )
           
           if ( !useJavascript )

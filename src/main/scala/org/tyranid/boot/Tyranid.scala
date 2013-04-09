@@ -37,6 +37,7 @@ object TyranidConfig extends MongoEntity( tid = "a03t" ) {
   "_id"         is DbMongoId         is 'id;
   "recaptcha"   is DbBoolean         as "Enable ReCaptchas";
   "accessLogs"  is DbBoolean         as "Enable Access Logs";
+  "onePagePdf"  is DbBoolean         as "One Page PDF";
 
 
   def apply():TyranidConfig = singleton
@@ -67,6 +68,7 @@ object TyranidConfiglet extends Weblet {
     <a href={ wpath + "/reindex" } class="btn-danger btn">Re-Index Search</a>
     <a href={ wpath + "/eye" } class={ user.b( 'eye ) ? "go btn" | "stop btn" }>Debug: { user.b( 'eye ) ? "ON" | "OFF" }</a>
     <a href={ wpath + "/sms" } class={ SMS.enabled ? "go btn" | "stop btn" }>SMS: { SMS.enabled ? "ON" | "OFF" }</a>
+    <a href={ wpath + "/pdf" } class={ B.onePagePdf ? "go btn" | "stop btn" }>1Page PDF: { B.onePagePdf ? "ON" | "OFF" }</a>
     <a href={ wpath + "/email" } class={ Email.enabled ? "go btn" | "stop btn" }>Email: { Email.enabled ? "ON" | "OFF" }</a>
     <a href={ wpath + "/recaptcha" } class={ B.requireReCaptcha ? "go btn" | "stop btn" }>Recaptcha: { B.requireReCaptcha ? "ON" | "OFF" }</a>
     <a href={ wpath + "/accessLogs" } class={ B.accessLogs ? "go btn" | "stop btn" }>Access Logs: { B.accessLogs ? "ON" | "OFF" }</a>
@@ -108,6 +110,13 @@ object TyranidConfiglet extends Weblet {
       sess.notice( "Email has been turned " + ( Email.enabled ? "ON" | "OFF" ) + "." )
       web.redirect( parent.wpath )
     
+    case "/pdf" =>
+      val obj = TyranidConfig()
+      obj( 'onePagePdf ) = !B.onePagePdf
+      TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "onePagePdf" -> obj.b( 'onePagePdf ) ) ) )
+      sess.notice( "One Page PDF has been turned " + ( B.onePagePdf ? "ON" | "OFF" ) + "." )
+      web.redirect( parent.wpath )
+
     case "/recaptcha" =>
       val obj = TyranidConfig()
       obj( 'recaptcha ) = !B.requireReCaptcha

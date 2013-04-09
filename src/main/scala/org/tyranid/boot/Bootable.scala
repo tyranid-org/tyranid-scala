@@ -153,6 +153,7 @@ trait Bootable {
 
   def requireReCaptcha = TyranidConfig().b( 'recaptcha )
   def accessLogs       = TyranidConfig().b( 'accessLogs )
+  def onePagePdf       = TyranidConfig().b( 'onePagePdf )
 
   def access( thread:ThreadData, accessType:AccessType, ref:AnyRef )
 
@@ -271,6 +272,8 @@ trait Bootable {
   private val s3Buckets = scala.collection.mutable.Map[String,S3Bucket]()
 
   def getS3Bucket( prefix:String ): S3Bucket = s3Buckets( prefix + envSuffix ) 
+
+  def bucketByUrl( url:String ) = s3Buckets.values.find( bucket => url.startsWith( bucket.url( "" ) ) )
   
   def bucket( buckets:S3Bucket* ) =
     for ( bucket <- buckets )

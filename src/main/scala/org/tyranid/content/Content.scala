@@ -20,7 +20,7 @@ package org.tyranid.content
 import java.io.File
 import java.util.Date
 
-import scala.xml.Text
+import scala.xml.{ Text, NodeSeq }
 
 import org.bson.types.ObjectId
 import com.mongodb.{ BasicDBList, DBCollection, DBObject }
@@ -622,7 +622,7 @@ trait ContentMeta extends PrivateKeyEntity {
 
   "pos"               is DbInt                ; // the position of this content within its parent (group, folder, board, etc.) ... see the class "Positioning"
 
-  "o"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Owners" is 'owner;
+  "o"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Owners" is 'owner is 'client;
   "ownerTid"          is DbTid(B.User)        is 'temporary is 'client computed( _.as[Content].firstOwnerTid() )
   //"isOwner"           is DbBoolean            is 'temporary is 'client computed( _.as[Content].isOwner( T.user ) );
   //"ownerOrgTid"       is DbTid(B.Org)         is 'temporary is 'client computed( rec => B.Org.idToTid( B.User.byTid( rec.as[Content].firstOwnerTid() ).flatten( _.oid( 'org ), null ) )
@@ -697,6 +697,8 @@ trait ContentMeta extends PrivateKeyEntity {
   "locked"            is DbBoolean;
   
   "archived"          is DbBoolean            is 'client;
+  
+  "dist"              is DbBoolean            is 'client; // If true, then if a group, it is a distribution group 
   }
 
   override def searchText = true
@@ -869,13 +871,18 @@ abstract class Content( override val view:MongoView,
   def thumbStyle( size:String ):String = null
   def thumbUrl( size:String ) = "/io/thumb/" + tid + "/" + size + "?cb=" + s( 'img ).denull.hashCode
 
-  def thumbHtml( size:String ) =
+  def thumbHtml( size:String, extraHtml:NodeSeq = null ) =
     <div class={ thumbClass( size ) } style={ thumbStyle( size ) }>
      <img src={ thumbUrl( size ) }/>
+     { ( extraHtml != null ) |* extraHtml }
     </div>
   
   def generateThumbs:Boolean = {
-    val imgFile = imageForThumbs
+    val imgFile = try {
+      imageForThumbs
+    } catch {
+      case _ => null
+    }  
     
     if ( imgFile != null ) {
       val pathParts = tid.splitAt( 4 )
@@ -1050,27 +1057,11 @@ abstract class Content( override val view:MongoView,
     v.size == 1 && v( 0 ) == user.tid
   }
 
-  def owners = {
-    val tids = ownerTids
-
-    for ( e <- ownerEntities;
-          en = e.as[MongoEntity];
-          r <- en.db.find( Mobj( "_id" -> Mobj( $in -> tids.filter( en.hasTid ).map( tid => en.tidToId( tid ) ).toSeq.toMlist ) ) );
-          rec = en( r ) )
-      yield rec
-  }
+  def owners = Record.getByTids( ownerTids )
 
   def writers = owners
   
-  def viewers = {
-    val tids = viewerTids
-
-    for ( e <- viewerEntities;
-          en = e.as[MongoEntity];
-          r <- en.db.find( Mobj( "_id" -> Mobj( $in -> tids.filter( en.hasTid ).map( tid => en.tidToId( tid ) ).toSeq.toMlist ) ) );
-          rec = en( r ) )
-      yield rec
-  }
+  def viewers = Record.getByTids( viewerTids )
 
   def ownerNames = a_?( 'o ).map( tid => TidItem.by( tid.as[String] ).name ).mkString( ", " )
 

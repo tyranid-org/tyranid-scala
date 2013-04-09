@@ -122,7 +122,7 @@ $( function() {
     T.navTo( '""" + wpath + """/forgot?xhr=1&un=' + encodeURIComponent( fldVal ) );
   });
   
-  $( ".modal" ).modal( "hide" );
+  T.closeModal( ".modal" );
   $( "body" ).addClass( "front" );
   T.initFormPlaceholders( "#f" );
 });
@@ -675,6 +675,8 @@ $( function() {
       }
     }
         
+    // TODO:  When we get rid of IE8 support, then get rid of the onClick event on the agreement checkbox
+    
     val inner =
    <div style="text-align:center;background: url(https://d33lorp9dhlilu.cloudfront.net/images/volerro_logo_notag_reversed.png) no-repeat 0px 0px;height: 50px;background-position-x: center;"/> ++
    <div>
@@ -742,7 +744,7 @@ $( function() {
         }
           <div class="row-fluid">
            <div class="span6">
-            <input type="checkbox" name="agreement" id="agreement" style="height:20px;width:20px;" onChange="$( '#regBtn' ).attr( 'disabled', $( this ).is(':checked' ) ? false : true );"/> <label style="display:inline;padding-left:0;vertical-align:text-bottom;" class="extra" for="agreement">I agree to Volerro <a href="http://www.volerro.com/site/policies.html" style="text-decoration:none;border-bottom:1px dotted;" target="_terms">terms of use</a> policy.</label>
+            <input type="checkbox" name="agreement" id="agreement" style="height:20px;width:20px;" onClick="$( '#regBtn' ).attr( 'disabled', $( this ).is(':checked' ) ? false : true );" onChange="$( '#regBtn' ).attr( 'disabled', $( this ).is(':checked' ) ? false : true );"/> <label style="display:inline;padding-left:0;vertical-align:text-bottom;" class="extra" for="agreement">I agree to Volerro <a href="http://www.volerro.com/site/policies.html" style="text-decoration:none;border-bottom:1px dotted;" target="_terms">terms of use</a> policy.</label>
            </div>
           </div>
          </div>
