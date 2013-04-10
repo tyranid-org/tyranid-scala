@@ -97,13 +97,13 @@ case class JqHtml( // this is the target selector to place the html at
 
                    
 // @name if the name is null, it is a local model, otherwise it is a global model
-case class JsModel( map:Map[String,Any], name:String = null ) extends JsCmd
+case class JsModel( map:collection.Map[String,Any], name:String = null ) extends JsCmd
 
 object JsData {
   def apply( rec:Record ):JsData = JsData( Seq( rec ) )
 }
 
-case class JsData( data:Seq[Record] ) extends JsCmd
+case class JsData( data:Seq[Record], auth:Boolean = false ) extends JsCmd
 
 case object JsNop extends JsCmd 
 
@@ -185,7 +185,7 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
     pretty ? new ObjectMapper().defaultPrettyPrintingWriter().writeValueAsString( Json.parse( sb.toString ) ) | sb.toString
   }
 
-  private def write( obj:Any ):Unit =
+  private def write( obj:Any, auth:Boolean = false ):Unit =
     obj match {
     case s:String            => sb += '"' ++= s.encJson += '"'
     case i:java.lang.Integer => sb ++= i.toString
@@ -198,7 +198,7 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
       sb += '['
       for ( i <- 0 until a.length ) {
         if ( i > 0 ) sb += ','
-        write( a( i ) )
+        write( a( i ), auth )
       }
       sb += ']'
     case l:BasicDBList       =>
@@ -217,7 +217,7 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
           first = false
         else
           sb += ','
-        write( v )
+        write( v, auth )
       }
       sb += ']'
     case p:Pair[_,_] =>
@@ -227,6 +227,9 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
       write( p._2 )
       sb += '}'
 
+    case data:JsData =>
+      write( data.data, data.auth )
+
     case rec:Record =>
       if ( client ) rec.computeClient
       
@@ -234,6 +237,7 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
       var first = true
       for ( va <- rec.view.vas;
             if !client || va.att.client;
+            if auth || !va.att.auth;
             if rec.has( va ) ) {
         if ( first )
           first = false

@@ -44,7 +44,9 @@ object Pdf {
     	    client.useSSL( true )
     	        
     	    // convert a web page and save the PDF to a file
-          client.setPageHeight( -1 )
+          if ( B.onePagePdf )
+            client.setPageHeight( -1 )
+    	    
           client.enableHyperlinks( enableHyperlinks )
           
           if ( !useJavascript )
@@ -71,6 +73,7 @@ object Pdf {
     	    case why:PdfcrowdError =>
     	      why.statusCode match {
     	        case js if useJavascript => // 510 = 413 Timed out. Can't load the specified URL.
+    	          println( "PDF failure, status code: " + js )
     	          useJavascript = false
     	        case sc =>
     	          retry = false

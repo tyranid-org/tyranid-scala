@@ -190,13 +190,16 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
   def os    = s( 'osName ) + " " + s( 'osVersionName ) + " " + s( 'osVersionNumber )
 
   def isFirefox = s( 'agentName ) == "Firefox"
-  def isIE = T.session.getOrElse( "isIE", false )._b // s( 'agentName ) == "Internet Explorer"
+  //def isIE = T.session.getOrElse( "isIE", false )._b // s( 'agentName ) == "Internet Explorer"
+  def isIE = s( 'agentName ) == "Internet Explorer" || T.session.getOrElse( "isIE", false )._b
     
   def uaVersion = T.session.getOrElse( "uav", 0 )._i
   
-  private def betterThanIE8 = !isIE || uaVersion >=9 // !isIE || s( 'agentVersion )._i >= 9
+ // def betterThanIE8 = !isIE || uaVersion >=9 // !isIE || s( 'agentVersion )._i >= 9
+  def betterThanIE8 = !isIE || s( 'agentVersion )._i >= 9 || uaVersion >= 9
  
-  private def betterThanIE9 = !isIE || uaVersion >=10 // !isIE || s( 'agentVersion )._i >= 10
+  //def betterThanIE9 = !isIE || uaVersion >=10 // !isIE || s( 'agentVersion )._i >= 10
+  def betterThanIE9 = !isIE || s( 'agentVersion )._i >= 10 || uaVersion >= 10
   
   def html5FileSupport = {
     //updateIfNeeded

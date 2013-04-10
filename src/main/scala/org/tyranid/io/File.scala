@@ -121,9 +121,15 @@ object FileCleaner {
   def clean {
     // Clean up S3 zipped up boards in PRODUCTION
     if ( B.PRODUCTION ) {
+      val yesterday = new Date().add( Calendar.DAY_OF_MONTH, -1 )
+      
       val filesBucket = B.getS3Bucket( "files" )
-      val zips = S3.getFilenames( filesBucket, ".zip", olderThan = new Date().add( Calendar.DAY_OF_MONTH, -1 ) )
+      val zips = S3.getFilenames( filesBucket, suffix = ".zip", olderThan = yesterday )
       S3.deleteAll( filesBucket, zips, keyPrefix = "zips/" )
+      
+      val tempBucket = B.getS3Bucket( "temp" )
+      val tempFiles = S3.getFilenames( tempBucket, olderThan = yesterday )
+      S3.deleteAll( tempBucket, tempFiles )      
     }
 
     // Clean up all the temp files used in uploads
@@ -183,7 +189,7 @@ object DbLocalFile extends CommonFile {
 }
 
 object File {  
-  val tempBucket = new S3Bucket( "temp" )
+  val tempBucket = B.getS3Bucket( "temp" )
 
   def mimeTypeFor( filename:String ) = {
     val fsave = filename.safeString.toLowerCase

@@ -63,6 +63,11 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
   var client:Boolean = false
 
   /**
+   * Indicates whether this property requires authorization to be sent down.
+   */
+  var auth:Boolean = false
+
+  /**
    *    DSL ... TODO:  move this out to a builder object
    */
 
@@ -87,6 +92,7 @@ class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid 
                           throw new IllegalArgumentException( "Cannot find inherited attribute '" + name + "' in the entity '" + entity.name + "'." )
     case "noVersion" => noVersion = true
     case "client"    => client = true
+    case "auth"      => auth = true
     }
 
     this
