@@ -183,7 +183,7 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
           e2.logWith( "m" -> (
               "| AWS Mail Exception: " + msg + "\n" +
               "|  From: " + fromAddress + "\n" +
-              "|  From User Email: " + userEmail + "\n" +
+              ( userEmail.notBlank ? ( "|  From User Email: " + userEmail + ( ( Email.isBlacklisted( userEmail ) ) |* " (BLACKLISTED)" ) + "\n" ) | "" ) +
               "|  Sent to: " + recipients + "\n" +
               "|  Reply to: " + ( if ( replyTo != null && replyTo != from ) replyTo.getAddress() else "" ) + "\n" +
               "|  Subject: " + subject + "\n" +
