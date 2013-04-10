@@ -94,7 +94,7 @@ class Indexer extends Actor {
       if ( json != "{}" ) {
 //sp am( "posting index=" + index + "  type=" + typ )
 //sp am( "url=" + Es.host + "/" + index + "/" + typ + "/" + id )
-//sp am( "json=" + json )
+spam( "json=" + json )
 
         val response  = ( Es.host + "/" + index + "/" + typ + "/" + id ).POST( content = json )
         val responseJson = Json.parse( response._s )
