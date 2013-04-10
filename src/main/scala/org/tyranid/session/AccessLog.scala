@@ -135,8 +135,11 @@ object AccessLog {
  */
 object TrackingCookie {
 
-  def get = {
+  def get:String = {
     val t = T
+
+    if ( t.web == null )
+      return null;
 
     var token = t.web.req.cookieValue( B.trackingCookieName )
     if ( token.isBlank ) {
