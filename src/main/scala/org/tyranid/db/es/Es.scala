@@ -330,6 +330,8 @@ object Es {
       ( Es.host + "/" + index ).DELETE()
 
   def mapAll {
+    println( "ElasticSearch Mapping STARTED" )
+
     for ( index <- Entity.all.filter( e => e.isSearchable && !e.embedded ).map( _.searchIndex ).toSeq.distinct ) {
       val mappings = mutable.Map[String,Any]()
 
@@ -337,8 +339,7 @@ object Es {
             if e.searchIndex == index && !e.embedded && e.isSearchable )
         mappings( e.dbName ) = mappingFor( e )
 
-      ( Es.host + "/" + index + "/" ).PUT(
-        content = Map(
+        val content = Map(
           "settings" -> Map(
             "index" -> Map(
               "number_of_shards" -> 3,
@@ -346,8 +347,9 @@ object Es {
               "analysis" -> Map(
                 "analyzer" -> Map(
                   "string_lowercase" -> Map(
+                    "type"      -> "custom",
                     "tokenizer" -> "keyword",
-                    "filter" -> "lowercase"
+                    "filter"    -> Seq( "lowercase", "trim" )
                   )
                 )
               )
@@ -355,8 +357,14 @@ object Es {
           ),
           "mappings" -> mappings
         ).toJsonStr( false )
-      )
+
+      if ( true )
+        println( "Using Map:\n\n" + content )
+
+      ( Es.host + "/" + index + "/" ).PUT( content = content )
     }
+
+    println( "ElasticSearch Mapping COMPLETED" )
   }
 
   def indexAll {
