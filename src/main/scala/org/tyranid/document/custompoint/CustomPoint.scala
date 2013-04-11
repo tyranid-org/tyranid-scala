@@ -30,8 +30,8 @@ import org.tyranid.time.Time
 object CustomPoint {
   var TEST_SEED:Int = 0
   
-  private def cryptCustomPoint( s:String, cipherVal:Int ) = {
-    val refURLChar = "0123456789+/=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  def cryptCustomPoint( s:String, cipherVal:Int ) = {
+    val refURLChar = "0123456789abcdefghijklmnopqrstuvwxyz._~ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     val refLen = refURLChar.length 
    
     val temp = new StringBuilder()
@@ -49,6 +49,26 @@ object CustomPoint {
    
     temp
   }
+  
+  def crypt64CustomPoint( s:String, cipherVal:Int ) = {
+    val refURLChar = "0123456789+/=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    val refLen = refURLChar.length 
+   
+    val temp = new StringBuilder()
+ 
+    for ( count <- 0 until s.length ) {
+      val tempChar = s.charAt( count )
+      val conv = refURLChar.indexOf( tempChar )
+     
+      if ( conv != -1 ) {
+        val newCipher = ( conv + cipherVal ) % refLen 
+        val cipherChar = refURLChar.charAt( newCipher )  
+        temp += ( ( cipherChar == '+' ) ? '~' | cipherChar )
+      }
+    }
+   
+    temp
+  }
 
   private def getSeed( cal:Calendar ) = {
     val time = cal.get( Calendar.HOUR_OF_DAY ) + cal.get( Calendar.MINUTE ) + cal.get( Calendar.SECOND )
@@ -56,12 +76,12 @@ object CustomPoint {
     ( ( TEST_SEED == 0 ) ? ( date + time ) | TEST_SEED )
   }
   
-  private def queryStringBuild( cal:Calendar, qs:String ) = {
+  def queryStringBuild( cal:Calendar, qs:String ) = {
     val origseed = "0040" + getSeed( cal )
-    val seed = origseed.subSequence( origseed.length - 4, 4 )
+    val seed = origseed.substring( origseed.length - 4, origseed.length )
     
     val qs64 = Base64.toString( qs.getBytes() )
-    val queryStringB64URLE = cryptCustomPoint( qs64, seed._i )
+    val queryStringB64URLE = crypt64CustomPoint( qs64, seed._i )
     "" + seed + queryStringB64URLE
   }
   
