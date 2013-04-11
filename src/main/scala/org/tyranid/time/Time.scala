@@ -311,6 +311,10 @@ class DateImp( d:Date ) {
     if ( d == null ) null
     else             Time.AmzFormatGMT.format( d )
   
+  def toCustomPointFormat = 
+    if ( d == null ) null
+    else             Time.CustomPointFormat.format( d )
+    
   def toRfc822 =
     toRfc1123 // RFC 1123 is an update for RFC 822, might need to support RFC 822 explicitly though
     
@@ -367,6 +371,8 @@ object Time {
     f.setTimeZone( TimeZone.getTimeZone( "GMT" ) )
     f
   }
+  
+  val CustomPointFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mm:ss.'GMT'Z" )
 
   val OneMinuteMs:Long    =                 60 * 1000
   val FiveMinutesMs:Long  =             5 * 60 * 1000
