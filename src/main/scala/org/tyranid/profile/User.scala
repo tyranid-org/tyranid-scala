@@ -80,7 +80,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "password2"      is DbPassword          is 'required is 'temporary as "Repeat Password";
   "thumbnail"      is DbThumbnail( "public" ) ;//is 'client as "Profile Image";
   "noEmail"        is DbBoolean           ;// No sent to this user";
-  "inactive"       is DbBoolean           ;
+  "inactive"       is DbBoolean           is 'client is 'auth;
 
   "tz"             is DbChar(64)          ; // Olson timezone code ... i.e. "America/Chicago"
   "tzOff"          is DbDouble            ; // timezone offset in hours ... i.e. -6 ... maybe deprecated ? ... use an Olson code instead?
@@ -90,7 +90,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "lang"           is DbLink(Language)    ;
 
   "numLogins"      is DbInt               ;
-  "lastLogin"      is DbDateTime          ;
+  "lastLogin"      is DbDateTime          is 'client is 'auth;
   "createdOn"      is DbDate              ;
   
   "recaptcha"      is DbReCaptcha( "white" ) is 'temporary as "Verify you are human";
