@@ -318,6 +318,7 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
           UserAgent.serviceFailure = true
           k.printStackTrace()
         case e => 
+          UserAgent.serviceFailure = true
           e.printStackTrace
       }
     }
