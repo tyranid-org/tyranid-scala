@@ -137,7 +137,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
   def    byTid( tid:String ) = Option( getByTid( tid ) )
 
   def getByTid( tid:String ) =
-    if ( !tid.startsWith( this.tid ) ) {
+    if ( tid.isBlank || !tid.startsWith( this.tid ) ) {
       null
     } else {
       try {
