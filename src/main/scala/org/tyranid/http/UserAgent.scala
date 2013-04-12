@@ -340,7 +340,7 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
 
   def isFirefox = s( 'agentName ) == "Firefox"
   //def isIE = T.session.getOrElse( "isIE", false )._b // s( 'agentName ) == "Internet Explorer"
-  def isIE = s( 'agentName ) == "Internet Explorer" || T.session.getOrElse( "isIE", false )._b
+  def isIE = ( s( 'agentName ) == "Internet Explorer" || s( 'agentName ) == "MSIE" ) || T.session.getOrElse( "isIE", false )._b
     
   def uaVersion = T.session.getOrElse( "uav", 0 )._i
   
