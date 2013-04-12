@@ -100,7 +100,9 @@ case class JqHtml( // this is the target selector to place the html at
 case class JsModel( map:collection.Map[String,Any], name:String = null ) extends JsCmd
 
 object JsData {
-  def apply( rec:Record ):JsData = JsData( Seq( rec ) )
+  def apply( rec:Record ):JsData =
+    if ( rec != null ) JsData( Seq( rec ) )
+    else               null
 }
 
 case class JsData( data:Seq[Record], auth:Boolean = false ) extends JsCmd

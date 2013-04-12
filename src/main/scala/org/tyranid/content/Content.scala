@@ -616,7 +616,7 @@ trait ContentMeta extends PrivateKeyEntity {
   "type"              is DbLink(ContentType)  is 'required is 'client;
 
   "tags"              is DbArray(DbLink(Tag)) is ( new SearchTextLike() { override def extract( rec:Record, va:ViewAttribute ) = rec.as[Content].netTags } ) is 'client;
-  "ctags"             is DbArray(DbLink(Tag)) help Text( "Child Tags -- these tags are inherited by child content." );
+  "ctags"             is DbArray(DbLink(Tag)) help Text( "Child Tags -- these tags are inherited by child content." ) is 'client;
 
   "name"              is DbChar(50)           is 'label is 'required is SearchText is 'client;
 
