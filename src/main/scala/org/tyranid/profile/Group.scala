@@ -452,7 +452,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   def markVisited = {
     val settings = settingsFor( T.user )
           
-    if ( !settings.hasVisited ) {
+    if ( !T.session.isIncognito && !settings.hasVisited ) {
       settings.setVisited
       settings.save
     }

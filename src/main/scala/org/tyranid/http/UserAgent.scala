@@ -46,6 +46,131 @@ import org.tyranid.db.meta.AutoIncrement
 
 */
 
+// Converted from: https://code.google.com/p/user-agent-parser-java/
+class UserAgentParseException( message:String ) extends RuntimeException
+
+case class UserAgentDetails( browserName:String, browserVersion:String, browserComments:String ) {}
+
+class UserAgentParser( ua:String ) {
+  var userAgentString = ua
+  var browserName:String = null
+  var browserVersion:String = null
+  var browserOperatingSystem:String = null
+  
+  val parsedBrowsers = mutable.ArrayBuffer[UserAgentDetails]()
+  
+  val pattern = "([^/\\s]*)(/([^\\s]*))?(\\s*\\[[a-zA-Z][a-zA-Z]\\])?\\s*(\\((([^()]|(\\([^()]*\\)))*)\\))?\\s*".toPattern
+
+  val matcher = pattern.matcher( userAgentString )
+
+  while ( matcher.find() ) {
+    val nextBrowserName = matcher.group(1)
+    val nextBrowserVersion = matcher.group(3)
+    var nextBrowserComments:String = null
+    
+    if ( matcher.groupCount() >= 6 )
+      nextBrowserComments = matcher.group(6)
+    
+    parsedBrowsers += UserAgentDetails( nextBrowserName, nextBrowserVersion, nextBrowserComments )
+  }
+  
+  if ( parsedBrowsers.length > 0) {
+    processBrowserDetails()
+  } else {
+    throw new UserAgentParseException("Unable to parse user agent string: " + userAgentString)
+  }
+
+  def processBrowserDetails() {
+    val browserNameAndVersion = extractBrowserNameAndVersion()
+    browserName = browserNameAndVersion(0)
+    browserVersion = browserNameAndVersion(1)
+    browserOperatingSystem = extractOperatingSystem( parsedBrowsers(0).browserComments )
+  }
+
+  /**
+   * Iterates through all component browser details to try and find the
+   * canonical browser name and version.
+   *
+   * @return a string array with browser name in element 0 and browser
+   * version in element 1. Null can be present in either or both.
+   */
+  def extractBrowserNameAndVersion():Array[String] = {
+
+    val knownBrowsers = Array( "firefox", "netscape", "chrome", "safari", "camino", "mosaic", "opera", "galeon" )
+      
+
+    for ( nextBrowser <- parsedBrowsers )
+      for ( nextKnown <- knownBrowsers )
+        if ( nextBrowser.browserName.toLowerCase().startsWith(nextKnown ) )
+          return Array( nextBrowser.browserName, nextBrowser.browserVersion )
+      
+    val firstAgent = parsedBrowsers(0)
+    
+    if ( firstAgent.browserName.toLowerCase().startsWith("mozilla" ) ) {
+      if (firstAgent.browserComments.notBlank ) {
+        val comments = firstAgent.browserComments.split(";")
+        
+        if ( comments.length > 2 && comments(0).toLowerCase().startsWith("compatible") ) {
+          val realBrowserWithVersion = comments(1).trim()
+          val firstSpace = realBrowserWithVersion.indexOf(' ')
+          val firstSlash = realBrowserWithVersion.indexOf('/')
+          
+          if ( ( firstSlash > -1 && firstSpace > -1 ) || ( firstSlash > -1 && firstSpace == -1 ) ) {
+            // we have slash and space, or just a slash, so let's choose slash for the split
+            return Array( realBrowserWithVersion.substring( 0, firstSlash ), realBrowserWithVersion.substring( firstSlash + 1 ) )
+          } 
+          
+          if ( firstSpace > -1 )
+            return Array( realBrowserWithVersion.substring(0, firstSpace), realBrowserWithVersion.substring(firstSpace+1) )
+         
+          // out of ideas for version, or no version supplied
+          return Array( realBrowserWithVersion, null )          
+        }
+      }
+
+      // Looks like a *real* Mozilla :-)
+      if ( firstAgent.browserVersion._d < 5.0)
+        return Array( "Netscape", firstAgent.browserVersion )
+      
+      // TODO: get version from comment string
+      return Array( "Mozilla", firstAgent.browserComments.split(";")(0).trim() )
+    }
+    
+    return Array( firstAgent.browserName, firstAgent.browserVersion )
+  }
+
+  /**
+   * Extracts the operating system from the browser comments.
+   *
+   * @param comments the comment string afer the browser version
+   * @return a string representing the operating system
+   */
+  
+  def extractOperatingSystem( comments:String ):String = {
+    if ( comments.isBlank )
+      return null
+     
+    val knownOS = Array( "win", "linux", "mac", "freebsd", "netbsd", "openbsd", "sunos", "amiga", "beos", "irix", "os/2", "warp", "iphone" )
+    val osDetails = mutable.ArrayBuffer[String]()
+    
+    val parts = comments.split(";")
+    
+    for ( comment <- parts ) {
+      val lowerComment = comment.toLowerCase().trim()
+      
+      for ( os <- knownOS )
+        if ( lowerComment.startsWith( os ) )
+          osDetails += comment.trim()
+    }
+    
+    osDetails.length match {
+      case 0 => return null
+      case 1 => return osDetails(0)
+      case _ => return osDetails(0) // need to parse more stuff here
+    }
+  }
+}
+
 object UserAgent extends MongoEntity( tid = "a0Dt" ) {
   type RecType = UserAgent
   override def convert( obj:DBObject, parent:MongoRecord ) = new UserAgent( obj, parent )
@@ -102,37 +227,47 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
   def updateIfNeeded =
     if ( !has( 'agentName ) )
       update
-
-  def update = {
-    if ( !UserAgent.serviceFailure ) {
-      val ua = s( 'ua )
       
+  def getAgentName( ua:String, agentName:String ):String = {
+    if ( agentName == "unknown" ) {
+      if ( ua startsWith "AdsBot-Google" )
+        return "AdsBot-Google"
+      
+      if ( ua contains "AhrefsBot" )
+        return "AhrefsBot"
+      
+      if ( ua startsWith "ClickTale bot" )
+        return "ClickTale bot"
+        
+      if ( ua startsWith "LinkedInBot" )
+        return "LinkedInBot"
+        
+      if ( ua startsWith "Jakarta Commons" )
+        return "Jakarta Commons"
+        
+      if ( ua startsWith "Plesk" )
+        return "Plesk"
+        
+      if ( ua startsWith "SkimBot" )
+        return "SkimBot"
+      if ( ua startsWith "ZmEu" )
+        return "ZmEu"
+          
+      if ( ua startsWith "Morfeus Fucking Scanner" ) 
+        return "Morfeus Fucking Scanner"
+    }
+  
+    return agentName
+  }
+  
+  def update = {
+    val ua = s( 'ua )
+    
+    if ( !UserAgent.serviceFailure ) {
       try {
-        val json = ( "http://useragentstring.com?uas=" + ua.encUrl + "&getJSON=all" ).GET().s.parseJsonObject
-    
-        var agentName = json.s( 'agent_name )
-    
-        if ( agentName == "unknown" ) {
-          if      ( ua startsWith "AdsBot-Google" )
-            agentName = "AdsBot-Google"
-          else if ( ua contains "AhrefsBot" )
-            agentName = "AhrefsBot"
-          else if ( ua startsWith "ClickTale bot" )
-            agentName = "ClickTale bot"
-          else if ( ua startsWith "LinkedInBot" )
-            agentName = "LinkedInBot"
-          else if ( ua startsWith "Jakarta Commons" )
-            agentName = "Jakarta Commons"
-          else if ( ua startsWith "Plesk" )
-            agentName = "Plesk"
-          else if ( ua startsWith "SkimBot" )
-            agentName = "SkimBot"
-          else if ( ua startsWith "ZmEu" )
-            agentName = "ZmEu"
-          else if ( ua startsWith "Morfeus Fucking Scanner" ) 
-            agentName = "Morfeus Fucking Scanner"
-        }
-    
+        val json = ( "http://useragentstring.com?uas=" + ua.encUrl + "&getJSON=all" ).GET().s.parseJsonObject        
+        val agentName = getAgentName( ua, json.s( 'agent_name ) )
+        
         obj( 'agentType )         = json.s( 'agent_type )
         obj( 'agentName )         = agentName
         obj( 'agentVersion )      = json.s( 'agent_version )
@@ -147,6 +282,7 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
         obj( 'agentLanguageTag )  = json.s( 'agent_languageTag )
     
         obj.remove( 'bot )
+        
         if ( agentName match {
              case "AdsBot-Google"
                 | "Baiduspider"
@@ -178,8 +314,21 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
         case j:org.tyranid.json.JsonDecoderException =>
           UserAgent.serviceFailure = true
           j.printStackTrace()
-        case e => e.printStackTrace
+        case k:org.tyranid.http.Http403Exception =>
+          UserAgent.serviceFailure = true
+          k.printStackTrace()
+        case e => 
+          UserAgent.serviceFailure = true
+          e.printStackTrace
       }
+    }
+    
+    if ( UserAgent.serviceFailure ) {
+      val uap = new UserAgentParser( ua )
+      
+      obj( 'agentVersion ) = uap.browserVersion
+      obj( 'agentName ) = uap.browserName
+      obj( 'osName ) = uap.browserOperatingSystem
     }
   }
 
@@ -191,7 +340,7 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
 
   def isFirefox = s( 'agentName ) == "Firefox"
   //def isIE = T.session.getOrElse( "isIE", false )._b // s( 'agentName ) == "Internet Explorer"
-  def isIE = s( 'agentName ) == "Internet Explorer" || T.session.getOrElse( "isIE", false )._b
+  def isIE = ( s( 'agentName ) == "Internet Explorer" || s( 'agentName ) == "MSIE" ) || T.session.getOrElse( "isIE", false )._b
     
   def uaVersion = T.session.getOrElse( "uav", 0 )._i
   

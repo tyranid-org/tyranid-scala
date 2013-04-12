@@ -378,7 +378,11 @@ class StringImp( s:String ) {
 
   def count( ch:Char ) = s.foldLeft(0)( ( sum, c ) => sum + ( ( c == ch ) ? 1 | 0 ) )
   
-	def toXml = scala.xml.XML.loadString( s )
+	def toXml = {
+    val xmlInstructionEnd = s.indexOf( "?>" )
+    ( xmlInstructionEnd == -1 ) ? scala.xml.XML.loadString( s ) | scala.xml.XML.loadString( s.substring( xmlInstructionEnd + 2 ) ) 
+  }
+	
   def toNodeSeq = if ( s != null ) Text( s ) else NodeSeq.Empty
 
   def parseJson       = org.tyranid.json.JsonDecoder( s )
