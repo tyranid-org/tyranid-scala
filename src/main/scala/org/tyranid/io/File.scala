@@ -17,6 +17,8 @@
 
 package org.tyranid.io
 
+import org.apache.commons.io.{ IOUtils }
+
 import org.apache.tika.detect.{ DefaultDetector, Detector }
 import org.apache.tika.exception.TikaException
 import org.apache.tika.io.TikaInputStream
@@ -26,7 +28,7 @@ import org.apache.tika.parser.html.HtmlParser
 import org.apache.tika.parser.txt.UniversalEncodingDetector
 import org.apache.tika.sax.BodyContentHandler
 
-import java.io.{ IOException, FileOutputStream, FileInputStream, InputStream, OutputStream, File => SysFile, ByteArrayOutputStream }
+import java.io.{ IOException, FileOutputStream, FileInputStream, InputStream, OutputStream, File => SysFile, ByteArrayOutputStream, StringWriter }
 import java.net.URL
 import java.util.{ Calendar, Date }
 
@@ -112,6 +114,30 @@ class HtmlTextExtractor extends TextExtractor {
       handler.toString().stripNonUtf8
     } finally {
       is.close
+    }
+  }
+}
+
+class TxtExtractor extends TextExtractor {
+  override val mimeTypes = Seq( "text/plain" )
+  override val extTypes = Seq( "txt" )
+  
+  override def extract( file:SysFile ) = {
+    var in:InputStream = null
+    
+    try {
+      val out = new StringWriter()
+      in = new FileInputStream( file )
+      IOUtils.copy( in, out )
+
+      out.flush
+      out._s
+    } catch {
+      case e =>
+        log( Event.StackTrace, "m" -> ( "Txt Extract Exception:" + e.getMessage() ), "ex" -> e )
+      null
+    } finally {
+      if ( in != null ) in.close
     }
   }
 }
