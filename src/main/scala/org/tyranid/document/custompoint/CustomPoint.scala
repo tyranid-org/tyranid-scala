@@ -100,6 +100,9 @@ object CustomPoint {
     val queryString = "Option=6&username=" + username +
                "&password=" + cryptCustomPoint( password, seed ) +
                "&account=" + accountNumber +
+               "&email=" + user.s( 'email ) +
+               "&lname=" + user.s( 'lastName ) +
+               "&fname=" + user.s( 'firstName ) +
                "&Module=CSR&custItemNum=" + customPointVendorId +
                "&datetime=" + seed +
                "&tstamp=" + now.toCustomPointFormat
