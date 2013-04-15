@@ -616,7 +616,7 @@ trait ContentMeta extends PrivateKeyEntity {
   "type"              is DbLink(ContentType)  is 'required is 'client;
 
   "tags"              is DbArray(DbLink(Tag)) is ( new SearchTextLike() { override def extract( rec:Record, va:ViewAttribute ) = rec.as[Content].netTags } ) is 'client;
-  "ctags"             is DbArray(DbLink(Tag)) help Text( "Child Tags -- these tags are inherited by child content." );
+  "ctags"             is DbArray(DbLink(Tag)) help Text( "Child Tags -- these tags are inherited by child content." ) is 'client;
 
   "name"              is DbChar(50)           is 'label is 'required is SearchText is 'client;
 
@@ -627,7 +627,7 @@ trait ContentMeta extends PrivateKeyEntity {
   //"isOwner"           is DbBoolean            is 'temporary is 'client computed( _.as[Content].isOwner( T.user ) );
   //"ownerOrgTid"       is DbTid(B.Org)         is 'temporary is 'client computed( rec => B.Org.idToTid( B.User.byTid( rec.as[Content].firstOwnerTid() ).flatten( _.oid( 'org ), null ) )
   
-  "v"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Viewers" is SearchAuth;
+  "v"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Viewers" is SearchAuth is 'client is 'auth;
   "subV"              is DbArray(DbTid(B.Org,B.User))       ; // for showing content inside a group, subviewers
 
   "subscr"            is DbArray(DbTid(B.User))             as "Subscribers";

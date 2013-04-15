@@ -396,7 +396,8 @@ class WebResponse( web:WebContext, sess:Session ) {
       Map( "html" -> htmlMap )
 
     case cmd:Js      => Map( "extraJS" -> cmd.js )
-    case cmd:JsData  => Map( "data" -> cmd )
+    case cmd:JsData  => if ( cmd.data.nonEmpty ) Map( "data" -> cmd )
+                        else                     null
     case cmd:JsModel => if ( cmd.name.notBlank ) Map( "model" -> cmd.map, "modelName" -> cmd.name )
                         else                     Map( "model" -> cmd.map )
     case JsNop | null => null
@@ -466,6 +467,8 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   def oid( param:String )             = req.oid( param  )
   def a( param:String ):Seq[String]   = req.a( param )
   def a_?( param:String ):Seq[String] = req.a_?( param )
+
+  def jsobj( param:String )           = req.s( param ).parseJson.asJsonObject
 
   def sOpt( param:String ) = {
     val v = s( param )
