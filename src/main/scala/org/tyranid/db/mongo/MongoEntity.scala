@@ -323,15 +323,33 @@ case class MongoRecord( override val view:MongoView,
       obj.get( va.name )
     }
 
+  /**
+   * The default is to do a "truthy" set.  i.e. the value is only set if the value is "truthy" otherwise the field is removed.
+   *
+   * If you need to set a non-truthy value (like you want a blank string or a false value stored) use rec.set(...) instead of rec(...).
+   *
+   * TODO:  we might also want to add an option on attribute, something like "is 'falsey" or something to sidestep this before for a particular
+   *        attribute.
+   */
   def update( va:ViewAttribute, v:Any ) =
     if ( va.temporary ) {
       if ( temporaries == null )
         temporaries = mutable.HashMap()
       temporaries( va.name ) = v.asInstanceOf[AnyRef]
-    } else if ( v != null ) {
-      obj.put( va.name, v )
     } else {
-      obj.remove( va.name )
+      v match {
+      case b:Boolean =>
+        if ( b )          obj.put( va.name, true )
+        else              obj.remove( va.name )
+
+      case s:String =>
+        if ( s.notBlank ) obj.put( va.name, s )
+        else              obj.remove( va.name )
+
+      case _ =>
+        if ( v != null )  obj.put( va.name, v )
+        else              obj.remove( va.name )
+      }
     }
 
   override def remove( key:String ) = remove( view( key ) ) // override remove() in DBObjectWrap
