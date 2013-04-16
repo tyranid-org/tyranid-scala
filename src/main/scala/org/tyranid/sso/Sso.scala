@@ -25,6 +25,7 @@ import scala.xml.NodeSeq
 import org.apache.http.auth.{ AuthScope }
 
 import org.tyranid.Imp._
+import org.tyranid.content.ContentType
 import org.tyranid.db.{ DbChar, DbLink, DbBoolean, Record, DbText }
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
@@ -48,6 +49,7 @@ object SsoMapping extends MongoEntity( tid = "a0Ut" ) {
   "actOptOut"       is DbBoolean;
   "featOptOut"      is DbBoolean;
   "naOptOut"        is DbBoolean;
+  "newProjects"     is DbText;
   
   lazy val testMapping = {
     val ts = SsoMapping.make
@@ -241,6 +243,42 @@ $( $('#idp').focus() );
           for ( group <- groups if ( groupNames.find( g => g.toLowerCase == group.s( 'name ).toLowerCase ) != None ) )
             Group.db.update( Mobj( "_id" -> group.id ), $addToSet( "v", newUser.tid ) )          
         }
+        
+        val newProjectNames = mapping.s( 'newProjects )
+        
+        if ( newProjectNames.notBlank ) {
+          val now = new Date
+          val userList = Mlist( newUser.tid )
+          
+          newProjectNames.split( "," ).foreach( name => {
+            val project = Group.make
+            project( 'name    ) = name
+            project( 'on      ) = now
+            project( 'o       ) = userList
+            project( 'type    ) = ContentType.Project.id
+            project( 'color   ) = project.getRandomColor
+            project( 'v       ) = userList
+            project( 'members ) = userList
+            project.save
+            
+            val newBoard = B.DocEntity.make
+            newBoard( 'name        ) = "Files"
+            newBoard( 'on          ) = now
+            newBoard( 'o           ) = userList
+            newBoard( 'v           ) = userList
+            newBoard( 'type        ) = ContentType.Folder.id
+            newBoard( 'parentGroup ) = project.id
+            newBoard( 'lastModified )      = now
+            newBoard( 'lastModifiedBy )    = newUser.id
+            newBoard( 'lastModifiedByOrg ) = newUser.orgId
+            newBoard( 'lastAction ) = now
+            newBoard( 'lastActionBy ) = newUser.id
+            newBoard( 'lastActionByOrg ) = org.id
+            newBoard.save
+            
+          } )
+        }
+        
       } else if ( user.b( 'inactive ) ) {
         val errorMessage = mapping.s( 'errorMessage )
         

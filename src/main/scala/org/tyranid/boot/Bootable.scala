@@ -172,6 +172,7 @@ trait Bootable {
   def welcomeUserEvent
 
   def ContentEntities:Seq[MongoEntity] = Nil
+  def DocEntity:MongoEntity = null
 
   @volatile var loginPage:() => NodeSeq = null
   
