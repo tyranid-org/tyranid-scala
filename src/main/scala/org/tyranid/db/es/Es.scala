@@ -316,13 +316,11 @@ object Es {
   }
 
   def index( rec:Record ) = {
-spam( "indexing " + rec.tid )
+    println( "ES:  indexing " + rec.tid )
     try {
       Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
-spam( "done indexing " + rec.tid )
     } catch {
       case e:Exception =>
-        println( "failed on tid: " + rec.tid )
         Log.log( Event.Search, "m" -> ( "Failed to index id " + rec.id + ", err=" + e ), "ex" -> e )
     }
   }
@@ -373,11 +371,16 @@ spam( "done indexing " + rec.tid )
     deleteAll
     mapAll
 
+    var count = 0
     for ( e <- Entity.all;
           if !e.embedded && e.isSearchable;
           r <- e.records;
-          if e.searchIndexable( r ) )
+          if e.searchIndexable( r ) ) {
       index( r )
+      count += 1
+    }
+      
+    println( "ES: indexAll completed, " + count + " documents indexed." )
   }
 }
 
