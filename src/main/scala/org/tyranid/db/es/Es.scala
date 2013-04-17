@@ -316,7 +316,7 @@ object Es {
   }
 
   def index( rec:Record ) = {
-//sp am( "indexing " + rec.tid )
+spam( "indexing " + rec.tid )
     try {
       Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
     } catch {
