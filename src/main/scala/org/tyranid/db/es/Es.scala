@@ -319,8 +319,10 @@ object Es {
 spam( "indexing " + rec.tid )
     try {
       Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
+spam( "done indexing " + rec.tid )
     } catch {
       case e:Exception =>
+        println( "failed on tid: " + rec.tid )
         Log.log( Event.Search, "m" -> ( "Failed to index id " + rec.id + ", err=" + e ), "ex" -> e )
     }
   }
