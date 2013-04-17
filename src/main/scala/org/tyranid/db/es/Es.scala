@@ -316,12 +316,12 @@ object Es {
   }
 
   def index( rec:Record ) = {
-    println( "ES:  indexing " + rec.tid )
     try {
+      println( "ES:  indexing " + rec.tid )
       Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
     } catch {
       case e:Exception =>
-        Log.log( Event.Search, "m" -> ( "Failed to index id " + rec.id + ", err=" + e ), "ex" -> e )
+        Log.log( Event.Search, "m" -> ( "Failed to index, err=" + e ), "ex" -> e )
     }
   }
 
