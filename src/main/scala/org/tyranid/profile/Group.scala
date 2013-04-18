@@ -43,7 +43,7 @@ import org.tyranid.math.Base62
 import org.tyranid.report.{ Report, Run }
 import org.tyranid.sso.SsoMapping
 import org.tyranid.ui.{ Checkbox, Field, Help, Select, Search, Show, Valuable }
-import org.tyranid.web.{ WebContext, Weblet }
+import org.tyranid.web.{ Comet, WebContext, Weblet }
 
 
 object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
@@ -205,6 +205,38 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   def canSee( member:Record ):Boolean = canSee( T.user, member )
 
   def isSsoSynced = b( 'ssoSynced )
+  
+  def onlineMembers( members:mutable.ArrayBuffer[Record] ) = {
+    def isOnlineMember( userTid:String ) = members.find( _.tid == userTid ) != None
+    
+    def isOnline( userTid:String ):Boolean = {
+      Comet.visit { comet =>      
+        val sess = comet.session
+        
+        if ( sess != null && sess.user.tid == userTid )
+          return true
+      }
+      
+      return false
+    }
+    
+    members.foreach( m => {
+      val tid = m.tid
+      
+      tid match {
+        case userTid if B.User.hasTid( userTid ) && !isOnlineMember( userTid ) && isOnline( userTid ) =>
+          members += m
+        case groupTid if Group.hasTid( tid ) =>
+          val g = Group.getByTid( groupTid )
+          
+          g.members.foreach( gu => {
+            val groupUserTid = gu.tid
+            if ( B.User.hasTid( groupUserTid ) && !isOnlineMember( groupUserTid ) && isOnline( groupUserTid ) )
+              members += m
+          } )
+      }
+    } )
+  }
 
   def canSee( viewer:User, member:Record ) = {
     val owner = isOwner( viewer ) 
