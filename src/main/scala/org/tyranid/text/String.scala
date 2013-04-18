@@ -76,7 +76,7 @@ class StringImp( s:String ) {
 	  newS
 	}
 	
-	def volerroIdPart = ( s == null ) ? null | s.removeAllChars( "@'().&!#$%^*+={}|\\][:;\"<>/?~`" ).replace( ",", "_" ).replace( " ", "_" ).replace( "__", "_" ).toLowerCase
+	def safeIdPart = ( s == null ) ? null | s.removeAllChars( "@'().&!#$%^*+={}|\\][:;\"<>/?~`" ).replace( ",", "_" ).replace( " ", "_" ).replace( "__", "_" ).toLowerCase
 	
   /*
    * Faster than s.split( "&" )

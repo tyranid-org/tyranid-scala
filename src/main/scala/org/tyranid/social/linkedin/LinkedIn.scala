@@ -422,7 +422,7 @@ function onLinkedInLoad() {
 
       val org = Mobj()
       org( 'domain ) = domain
-      org( 'vname ) = Uri.domainPart( domain ).volerroIdPart
+      org( 'vname ) = Uri.domainPart( domain ).safeIdPart
       org( 'createdOn ) = new Date
 
       importCompany( company, org )
