@@ -208,7 +208,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   
   def onlineMembers = collectOnlineMembers( new mutable.ArrayBuffer[Record] )
   
-  def collectOnlineMembers( members:mutable.ArrayBuffer[Record] ) = {
+  private def collectOnlineMembers( members:mutable.ArrayBuffer[Record] ) = {
     def isOnlineMember( userTid:String ) = members.find( _.tid == userTid ) != None
     
     def isOnline( userTid:String ):Boolean = {
