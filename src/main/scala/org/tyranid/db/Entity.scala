@@ -289,7 +289,6 @@ trait Entity extends Domain with DbItem {
    */
 
   lazy val computations       = attribs.filter( _.isComputed )
-  lazy val clientComputations = attribs.filter( att => att.isComputed && att.client )
 
 
   /*

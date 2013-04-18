@@ -77,7 +77,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
 
   
   override def save( rec:Record ) = {
-    rec.compute
+    rec.compute( temporary = false )
 
     val mrec = rec.as[MongoRecord]
     

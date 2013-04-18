@@ -107,7 +107,8 @@ object JsData {
     else               null
 }
 
-case class JsData( data:Seq[Record], auth:Boolean = false ) extends JsCmd
+// extra is a list of fields that should be explicitly added
+case class JsData( data:Seq[Record], auth:Boolean = false, extra:Seq[String] = Nil ) extends JsCmd
 
 case object JsNop extends JsCmd 
 
@@ -189,7 +190,7 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
     pretty ? new ObjectMapper().defaultPrettyPrintingWriter().writeValueAsString( Json.parse( sb.toString ) ) | sb.toString
   }
 
-  private def write( obj:Any, auth:Boolean = false ):Unit =
+  private def write( obj:Any, data:JsData = null ):Unit =
     obj match {
     case s:String            => sb += '"' ++= s.encJson += '"'
     case i:java.lang.Integer => sb ++= i.toString
@@ -202,7 +203,7 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
       sb += '['
       for ( i <- 0 until a.length ) {
         if ( i > 0 ) sb += ','
-        write( a( i ), auth )
+        write( a( i ), data )
       }
       sb += ']'
     case l:BasicDBList       =>
@@ -221,7 +222,7 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
           first = false
         else
           sb += ','
-        write( v, auth )
+        write( v, data )
       }
       sb += ']'
     case p:Pair[_,_] =>
@@ -232,16 +233,19 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
       sb += '}'
 
     case data:JsData =>
-      write( data.data, data.auth )
+      if ( data.extra.nonEmpty )
+        data.data foreach { _.compute( client, data.extra ) }
+
+      write( data.data, data )
 
     case rec:Record =>
-      if ( client ) rec.computeClient
+      if ( client ) rec.compute( client )
       
       sb += '{'
       var first = true
       for ( va <- rec.view.vas;
-            if !client || va.att.client;
-            if auth || !va.att.auth;
+            if !client || va.att.client || ( data != null && data.extra.contains( va.att.name ) );
+            if ( data != null && data.auth ) || !va.att.auth;
             if rec.has( va ) ) {
         if ( first )
           first = false

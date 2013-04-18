@@ -65,6 +65,8 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
 
   "website"      is DbChar(80)                         is 'temporary is 'client computed { _.as[Group].website }
   "userIdleDays" is DbInt                              is 'temporary is 'client computed { _.as[Group].userIdleDays }
+
+  "onlineCount"  is DbInt                              is 'temporary computed { _.as[Group].onlineMembers.size }
   
   //"search"         { search criteria } // future ... list search for a group, rather than each id explicitly
   
