@@ -350,9 +350,9 @@ function onLinkedInLoad() {
     if ( org.s( 'name ).isBlank )
       string( 'name,          'name )
 
-    val numEmployees = c.o_?( 'employeeCountRange ).s( 'name )
-    if ( numEmployees.notBlank )
-      org( 'numEmployees ) = numEmployees
+    //val numEmployees = c.o_?( 'employeeCountRange ).s( 'name )
+    //if ( numEmployees.notBlank )
+    //  org( 'numEmployees ) = numEmployees
 
     string( 'description,    'desc )
     string( 'twitterId,      'twitter )

@@ -317,7 +317,7 @@ object Es {
 
   def index( rec:Record ) = {
     try {
-      println( "ES:  indexing " + rec.tid )
+      //println( "ES:  indexing " + rec.tid )
       Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
     } catch {
       case e:Exception =>

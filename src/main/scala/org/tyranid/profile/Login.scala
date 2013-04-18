@@ -119,7 +119,7 @@ $( function() {
     }
 
     formHandler.topEl().empty();
-    T.navTo( '""" + wpath + """/forgot?xhr=1&un=' + encodeURIComponent( fldVal ) );
+    T.navTo( '/log/forgot?xhr=1&un=' + encodeURIComponent( fldVal ) );
   });
   
   T.closeModal( ".modal" );
