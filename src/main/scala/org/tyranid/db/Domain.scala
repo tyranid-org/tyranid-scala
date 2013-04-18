@@ -486,32 +486,6 @@ case class DbArray( of:Domain ) extends Domain {
       Unparsed( arr.map( v => of.see( v ) ).sorted.mkString( ",<br/>" ) )
     }
   }
-
-
-      /*
-
-  lazy val sells:String = obj.a_?( 'sellingCategories ).flatMap( id => Industry.byId( id._i ) ).map( _ s 'name ).distinct.sorted.mkString( ",<br/>" )
-
-         issues
-
-         - too many categories to show in a dropdown
-
-         - we can't do a search below because a) Search.Custom is an object -and- b) Search is a sealed trait
-
-           + it's ugly to nest it in here anyway, we'd probably rather it be an overridden method on CustomField
-
-         ? should this be a PathField instead ?  "sells" is a DbArray property on Org.  we could add a:  def ui on DbArray that can deal with searching ?
-
-           ? would we need a Search.In ?
-
-
-        def search( run:Run, f:Field, searchObj:DBObject, value:Any ) = {
-
-          
-          searchObj( f.baseName ) = Mobj( $gt -> "" )
-        }
-      }
-      */
 }
 
 case class DbTid( of:Entity* ) extends LimitedText {

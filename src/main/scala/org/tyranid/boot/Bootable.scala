@@ -45,7 +45,7 @@ import org.tyranid.profile.{ Group, OrgMeta, User, UserMeta }
 import org.tyranid.secure.{ AccessType, Multipass }
 import org.tyranid.session.{ Milestone, Session, ThreadData }
 import org.tyranid.sms.NexmoApp
-import org.tyranid.social.{ TrackurApp, TwApp }
+import org.tyranid.social.{ TwApp }
 import org.tyranid.social.basecamp.BcApp
 import org.tyranid.social.facebook.FbApp
 import org.tyranid.social.google.GoApp
@@ -129,7 +129,6 @@ trait Bootable {
 
   val weblocs:Seq[Webloc]
 
-  val applicationWebloc:Webloc
   lazy val loginWebloc = weblocs.find( _.path == "/log" ).get
 
   val paths:Seq[WebPath]
@@ -237,7 +236,6 @@ trait Bootable {
   val linkedIn:LiApp      = null
   val google:GoApp        = null
   val twitter:TwApp       = null
-  val trackur:TrackurApp  = null
 
   val basecamp:BcApp      = null
   
@@ -280,16 +278,8 @@ trait Bootable {
     for ( bucket <- buckets )
       s3Buckets( bucket.prefix ) = bucket
 
-  // Groups
-  lazy val commonGroupField:org.tyranid.profile.GroupField = null
-  def defaultFavorites:Seq[ObjectId] = Seq()
-  def availableFavorites:Seq[Group]  = Seq()
-
-  def groupMemberAdded( group:Group, tid:String )   {}
-  def groupMemberRemoved( group:Group, tid:String ) {}
   def groupContents( group:Group ):Seq[Content] = Nil
  
-
   def initEntities {
     val cl = Thread.currentThread.getContextClassLoader
     val urls = cl.as[java.net.URLClassLoader].getURLs.map( _.getFile ).filter( !_.endsWith( ".jar" ) )

@@ -29,7 +29,6 @@ import com.mongodb.DBObject
 
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.S3
-import org.tyranid.company.Industry
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.email.Email
@@ -359,18 +358,12 @@ function onLinkedInLoad() {
     string( 'twitterId,      'twitter )
     string( 'blogRssUrl,     'blog )
 
+    /*
     val foundedYear = c.i( 'foundedYear )
     if ( foundedYear != 0 )
       org( 'foundedYear ) = foundedYear
-
-    val industryCode = Industry.lookupLinkedIn( c.s( 'industry ) )
-    if ( industryCode > 0 )
-      org.a_!( 'sellingCategories ).add( industryCode.box )
-
-    val spec = c.o_?( 'specialties ).a_?( 'values )
-    if ( spec.nonEmpty )
-      org( 'specialties ) = Mlist( spec:_* )
-
+    */
+    
     val isNew = org.isNew
     B.Org( org ).save
 

@@ -260,9 +260,6 @@ object TrackingCookie {
 
 object ActivityQuery extends Query {
 
-  //def connections( run:Run ) =
-    //run.cache.getOrElseUpdate( "connections", Connection.db.find( Mobj( "from" -> Session().user.org.id ) ).toSeq ).asInstanceOf[Seq[DBObject]]
-
   val entity = Log
   val name = "activity"
 

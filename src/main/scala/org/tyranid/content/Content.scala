@@ -37,7 +37,7 @@ import org.tyranid.db.tuple.{ Tuple, TupleView }
 import org.tyranid.image.{ Dimensions, Thumbnail }
 import org.tyranid.http.Http
 import org.tyranid.io.{ HasText, MimeType }
-import org.tyranid.profile.{ Group, GroupType, GroupMode, Tag, User }
+import org.tyranid.profile.{ Group, Tag, User }
 import org.tyranid.secure.{ PrivateKeyEntity, PrivateKeyRecord }
 
 object ViewType extends RamEntity( tid = "a13v" ) {
@@ -660,10 +660,6 @@ trait ContentMeta extends PrivateKeyEntity {
   "video"             is DbBoolean            ;
 
 
-  // Groups / Projects
-  "groupType"         is DbLink(GroupType)    ;
-  "groupMode"         is DbLink(GroupMode)    ;
-
   // Attachment / File
   "link"              is DbUrl                ;
   "icon"              is DbUrl                ; // ( TODO:  should be DbImage? ) for links, this is the favicon
@@ -1158,7 +1154,7 @@ abstract class Content( override val view:MongoView,
       if ( Group.hasTid( ot ) ) {
         val group = Group.getByTid( ot )
 
-        if ( group.collaborative || group.isOwner( tid ) )
+        if ( group.isOwner( tid ) )
           return true
       }
     })

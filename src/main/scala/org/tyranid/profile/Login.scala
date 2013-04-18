@@ -318,23 +318,15 @@ $( function() {
 
           Register.sendActivation( user )
           
-          val entryAppVal = sess.get( "entryApp" )
-          
-          if ( entryAppVal != null )
-            user( "entryApp" ) = entryAppVal._i
-            
           user.save
           
           web.redirect( "/" )
         }
       }
 
-      val entryApp = web.i( 'app ) or 0
-      sess.put( "entryApp", new java.lang.Integer( entryApp._i ) )
-
       val inner = 
        <div class="container">
-        { ( entryApp == 0 ) |* <div style="margin-top:16px; font-size:24px;">Creating an account with { B.applicationName } is Free!</div> }
+        <div style="margin-top:16px; font-size:24px;">Creating an account with { B.applicationName } is Free!</div>
         { !noSocial |*
          <div class="plainBox">
           <div class="title">Use Social Login to Automatically Register</div>
@@ -371,7 +363,7 @@ $( function() {
          </div>
         </div>
            
-      web.template( ( entryApp == 0 ) ? <tyr:shell>{ inner }</tyr:shell> | <tyr:shellApp>{ inner }</tyr:shellApp> )    
+      web.template( <tyr:shell>{ inner }</tyr:shell> )    
     case "/company" =>
       val term = web.req.s( 'term ).toLowerCase
 
@@ -602,11 +594,6 @@ $( function() {
       if ( invalids.isEmpty ) {
         user( 'createdOn ) = new Date
 
-        val entryAppVal = sess.get( "entryApp" )
-        
-        if ( entryAppVal != null )
-          user( "entryApp" ) = entryAppVal._i
-          
         val email = user.s( 'email )
         val companyName = web.s( 'company ).trim 
         
@@ -647,9 +634,6 @@ $( function() {
       web.json( jsonRes )
       return
     }
-
-    val entryApp = web.i( 'app ) or 0
-    sess.put( "entryApp", new java.lang.Integer( entryApp._i ) )
 
     val orgName:String = {
       val userEmail = user.s( 'email )
