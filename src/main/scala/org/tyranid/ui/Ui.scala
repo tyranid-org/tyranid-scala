@@ -37,12 +37,6 @@ object Ui {
     else NodeSeq.Empty
     
   def gridGuide( cols:Int = 12 ) = { B.DEV |* <div class="row"> { for ( i <- 0 until cols) yield {<div class="row-guide span1"/> } } </div> }
-  
-  def lastLoginBox = {
-    val lastLogin = T.session.get( 'lastLogin ).as[Date]
-    
-    <div class="lastLogin" style={ "display:" + ( ( lastLogin == null ) ? "none" | "block" ) }>Last Login: <span class="lastLoginDate">{ lastLogin.toUserDateTimeStr }</span></div>
-  }
 }
 
 object Help {
