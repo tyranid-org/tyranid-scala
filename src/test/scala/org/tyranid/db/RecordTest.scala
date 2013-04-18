@@ -33,7 +33,7 @@ class RecordSuite extends FunSuite {
     rec( 'level ) = 5
     rec( 'prices ) = Mlist( Mobj( "aid" -> 3, "price" -> 1.0 ), Mobj( "price" -> 2.0 ) )
 
-    rec.compute
+    rec.compute( client = true )
 
     assert( rec.toJsonStr( client = true ) === """{"level":5,"name":"Widget A","prices":[{"price":1.0},{"price":2.0}],"level2":10}""" )
 

@@ -26,7 +26,7 @@ import com.mongodb.DBObject
 
 import org.tyranid.Imp._
 import org.tyranid.content.ContentType
-import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDouble, DbEmail, DbLink, DbLong, DbPassword, Record, DbDate, DbInt, DbDateTime }
+import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDouble, DbEmail, DbLink, DbLong, DbPassword, Record, DbDate, DbInt, DbDateTime, DbUrl }
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
@@ -44,6 +44,7 @@ object ContactInfo extends MongoEntity( tid = "a0Ov" ) {
   "name"             is DbChar(40)       ;
   "email"            is DbEmail          ;
   "createdAt"        is DbDateTime       ;
+  "events"           is DbArray(DbChar(20));
   "company"          is DbChar(50)       ;
   "beta"             is DbBoolean        ;
   "inviteCode"       is DbBoolean        ;
@@ -51,18 +52,20 @@ object ContactInfo extends MongoEntity( tid = "a0Ov" ) {
   
   def ensure( email:String, name:String, company:String = null, beta:Boolean = false ) = {
     val contactInfo = ContactInfo.db.findOrMake( Mobj( "email" -> email.toPatternI ) )
-        
-    contactInfo( 'name ) = name
-    contactInfo( 'email ) =  email
-    contactInfo( 'company ) = company
-        
-    if ( contactInfo.isNew )
-      contactInfo( 'createdAt ) = new Date
-          
-    if ( beta )
-      contactInfo( 'beta ) = true
+    
+    if ( !contactInfo.isNew ) {
+      contactInfo( 'name ) = name
+      contactInfo( 'email ) =  email
+      contactInfo( 'company ) = company
       
-    ContactInfo.db.save( contactInfo )
+      if ( contactInfo.isNew )
+        contactInfo( 'createdAt ) = new Date
+            
+      if ( beta )
+        contactInfo( 'beta ) = true
+        
+      ContactInfo.db.save( contactInfo )
+    }
     
     contactInfo
   }
