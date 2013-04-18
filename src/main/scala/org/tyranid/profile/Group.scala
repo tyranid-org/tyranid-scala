@@ -206,7 +206,11 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
 
   def isSsoSynced = b( 'ssoSynced )
   
-  def onlineMembers = collectOnlineMembers( new mutable.ArrayBuffer[Record] )
+  def onlineMembers = { 
+    val members = new mutable.ArrayBuffer[Record]
+    collectOnlineMembers( members )
+    members
+  }
   
   private def collectOnlineMembers( members:mutable.ArrayBuffer[Record] ) = {
     val meTid = T.user.tid
