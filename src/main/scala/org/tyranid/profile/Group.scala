@@ -214,17 +214,17 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     members
   }
   
-  private def collectOnlineMembers( members:mutable.ArrayBuffer[Record] ) = {
+  private def collectOnlineMembers( omembers:mutable.ArrayBuffer[Record] ) = {
     val meTid = T.user.tid
     
-    def isOnlineMember( userTid:String ) = members.exists( _.tid == userTid )
+    def isOnlineMember( userTid:String ) = omembers.find( _.tid == userTid ) != None
     
     members.foreach( m => {
       val tid = m.tid
       
       tid match {
         case userTid if userTid != meTid && B.User.hasTid( userTid ) && !isOnlineMember( userTid ) && B.User.isOnline( userTid ) =>
-          members += m
+          omembers += m
         case groupTid if Group.hasTid( tid ) =>
           val g = Group.getByTid( groupTid )
           
@@ -232,8 +232,10 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
             val groupUserTid = gu.tid
             
             if ( groupUserTid != meTid && B.User.hasTid( groupUserTid ) && !isOnlineMember( groupUserTid ) && B.User.isOnline( groupUserTid ) )
-              members += m
+              omembers += m
           } )
+        case _ =>
+          // nop
       }
     } )
   }
