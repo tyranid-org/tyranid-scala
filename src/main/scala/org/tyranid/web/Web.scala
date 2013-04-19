@@ -305,7 +305,7 @@ class WebFilter extends TyrFilter {
         }
 
         if ( handle( webloc ) ) {
-          //spam( "CACHE: CLEARING" )
+          //sp am( "CACHE: CLEARING" )
           thread.tidCache.clear
           thread.requestCache.clear
           return

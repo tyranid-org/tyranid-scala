@@ -113,7 +113,7 @@ object Tid {
   }
 
   def db( tid:String ) = {
-    spam( "entity for tid " + tid + " is " + entity( tid ) )
+    //sp am( "entity for tid " + tid + " is " + entity( tid ) )
 
     entity( tid ) match {
     case mEn:MongoEntity => mEn.db

@@ -232,7 +232,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
             val groupUserTid = gu.tid
             
             if ( groupUserTid != meTid && B.User.hasTid( groupUserTid ) && !isOnlineMember( groupUserTid ) && B.User.isOnline( groupUserTid ) )
-              omembers += m
+              omembers += gu
           } )
         case _ =>
           // nop
