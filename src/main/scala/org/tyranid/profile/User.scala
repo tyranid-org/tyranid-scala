@@ -44,7 +44,7 @@ object ContactInfo extends MongoEntity( tid = "a0Ov" ) {
   "name"             is DbChar(40)       ;
   "email"            is DbEmail          ;
   "createdAt"        is DbDateTime       ;
-  "events"           is DbArray(DbChar(20));
+  "events"           is DbArray(DbChar(50));
   "company"          is DbChar(50)       ;
   "beta"             is DbBoolean        ;
   "inviteCode"       is DbBoolean        ;
