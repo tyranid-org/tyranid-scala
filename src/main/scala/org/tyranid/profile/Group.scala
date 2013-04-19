@@ -219,19 +219,17 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     
     def isOnlineMember( userTid:String ) = omembers.exists( _.tid == userTid )
     
+    def tidValid( tid:String ) = tid != meTid && B.User.hasTid( tid ) && !isOnlineMember( tid ) && B.User.isOnline( tid )
+
     members.foreach( m => {
-      val tid = m.tid
-      
-      tid match {
-        case userTid if userTid != meTid && B.User.hasTid( userTid ) && !isOnlineMember( userTid ) && B.User.isOnline( userTid ) =>
+      m.tid match {
+        case userTid if tidValid( userTid ) =>
           omembers += m
-        case groupTid if Group.hasTid( tid ) =>
+        case groupTid if Group.hasTid( groupTid ) =>
           val g = Group.getByTid( groupTid )
           
           g.members.foreach( gu => {
-            val groupUserTid = gu.tid
-            
-            if ( groupUserTid != meTid && B.User.hasTid( groupUserTid ) && !isOnlineMember( groupUserTid ) && B.User.isOnline( groupUserTid ) )
+            if ( tidValid( gu.tid ) )
               omembers += gu
           } )
         case _ =>
