@@ -295,6 +295,8 @@ trait Session extends QuickCache {
 
       B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> updates, $inc -> Mobj( "numLogins" -> 1 ) ) )
       log( Event.Login, "bid" -> TrackingCookie.get )
+
+      B.loginListeners.foreach( _( user ) )
     } else {
       put( "incognito", Boolean.box( true ) )
     }
@@ -340,6 +342,10 @@ trait Session extends QuickCache {
     Social.removeCookies
     
     if ( unlink ) T.unlinkSession
+
+    val u = user
+    if ( u != null )
+      B.logoutListeners.foreach( _( u ) )
   }
 
   /*

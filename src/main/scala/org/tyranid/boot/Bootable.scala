@@ -144,6 +144,10 @@ trait Bootable {
   def boot:Unit
 
 
+  def loginListeners:Seq[ User => Unit ] = Nil
+  def logoutListeners:Seq[ User => Unit ] = Nil
+
+
   /*
    * * *   S e c u r i t y
    */
