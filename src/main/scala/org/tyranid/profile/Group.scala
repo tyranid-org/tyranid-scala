@@ -196,7 +196,11 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
 
   def idsForEntity( en:Entity ) = a_?( 'v ).map( _._s ).filter( _.startsWith( en.tid ) ).map( en.tidToId )
 
-  def memberTids = obj.a_?( 'members ).toSeq.of[String]
+  def memberTids =
+    contentType match {
+    case ContentType.Project => obj.a_?( 'members ).toSeq.of[String]
+    case _                   => obj.a_?( 'v ).toSeq.of[String]
+    }
 
   /* Default members are really only used in projects.  Default members are the "official members" of the project.  For example, users that
    * get added to folders inside the project that might not get added to the "default members" list but they would still be in the "v"/members
@@ -221,32 +225,24 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     
     def tidValid( tid:String ) = tid != meTid && B.User.hasTid( tid ) && !isOnlineMember( tid ) && B.User.isOnline( tid )
 
-    members.foreach( m => {
+    members foreach { m =>
       m.tid match {
         case userTid if tidValid( userTid ) =>
           omembers += m
         case groupTid if Group.hasTid( groupTid ) =>
           val g = Group.getByTid( groupTid )
-          
-          g.members.foreach( gu => {
+
+          g.members foreach { gu =>
             if ( tidValid( gu.tid ) )
               omembers += gu
-          } )
+          }
         case _ =>
           // nop
       }
-    } )
-  }
-
-  def canSee( viewer:User, member:Record ) = {
-    val owner = isOwner( viewer ) 
-
-    if ( owner ) {
-      true
-    } else {
-      canView( viewer )
     }
   }
+
+  def canSee( viewer:User, member:Record ) = isOwner( viewer ) || canView( viewer )
   
   def canBeSsoSynced( user:User ):Boolean = {
     val userOrgId = user.orgId 
