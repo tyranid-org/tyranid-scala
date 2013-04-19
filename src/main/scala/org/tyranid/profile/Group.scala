@@ -43,7 +43,7 @@ import org.tyranid.math.Base62
 import org.tyranid.report.{ Report, Run }
 import org.tyranid.sso.SsoMapping
 import org.tyranid.ui.{ Checkbox, Field, Help, Select, Search, Show, Valuable }
-import org.tyranid.web.{ Comet, WebContext, Weblet }
+import org.tyranid.web.{ WebContext, Weblet }
 
 
 object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
@@ -217,24 +217,13 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   private def collectOnlineMembers( members:mutable.ArrayBuffer[Record] ) = {
     val meTid = T.user.tid
     
-    def isOnlineMember( userTid:String ) = members.find( _.tid == userTid ) != None
-    
-    def isOnline( userTid:String ):Boolean = {
-      Comet.visit { comet =>      
-        val sess = comet.session
-        
-        if ( sess != null && sess.user.tid == userTid )
-          return true
-      }
-      
-      return false
-    }
+    def isOnlineMember( userTid:String ) = members.exists( _.tid == userTid )
     
     members.foreach( m => {
       val tid = m.tid
       
       tid match {
-        case userTid if userTid != meTid && B.User.hasTid( userTid ) && !isOnlineMember( userTid ) && isOnline( userTid ) =>
+        case userTid if userTid != meTid && B.User.hasTid( userTid ) && !isOnlineMember( userTid ) && B.User.isOnline( userTid ) =>
           members += m
         case groupTid if Group.hasTid( tid ) =>
           val g = Group.getByTid( groupTid )
@@ -242,7 +231,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
           g.members.foreach( gu => {
             val groupUserTid = gu.tid
             
-            if ( groupUserTid != meTid && B.User.hasTid( groupUserTid ) && !isOnlineMember( groupUserTid ) && isOnline( groupUserTid ) )
+            if ( groupUserTid != meTid && B.User.hasTid( groupUserTid ) && !isOnlineMember( groupUserTid ) && B.User.isOnline( groupUserTid ) )
               members += m
           } )
       }

@@ -36,7 +36,7 @@ import org.tyranid.locale.{ Country, Language }
 import org.tyranid.secure.DbReCaptcha
 import org.tyranid.session.{ Session, ThreadData }
 import org.tyranid.ui.LnF
-import org.tyranid.web.WebContext
+import org.tyranid.web.{ Comet, WebContext }
 
 
 object ContactInfo extends MongoEntity( tid = "a0Ov" ) {
@@ -84,6 +84,8 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "thumbnail"      is DbThumbnail( "public" ) ;//is 'client as "Profile Image";
   "noEmail"        is DbBoolean           ; // Do not send to this user";
   "inactive"       is DbBoolean           is 'client is 'auth;
+
+  "online"         is DbBoolean           is 'temporary is 'auth computed { rec => B.User.isOnline( rec.tid ) };
 
   "tz"             is DbChar(64)          ; // Olson timezone code ... i.e. "America/Chicago"
   "tzOff"          is DbDouble            ; // timezone offset in hours ... i.e. -6 ... maybe deprecated ? ... use an Olson code instead?
@@ -174,6 +176,17 @@ class UserMeta extends MongoEntity( "a01v" ) {
     
     user.save
     user
+  }
+
+  def isOnline( userTid:String ):Boolean = {
+    Comet.visit { comet =>      
+      val sess = comet.session
+      
+      if ( sess != null && sess.user.tid == userTid )
+        return true
+    }
+    
+    return false
   }
 }
 
