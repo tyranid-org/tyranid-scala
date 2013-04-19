@@ -150,8 +150,8 @@ object FileCleaner {
       val yesterday = new Date().add( Calendar.DAY_OF_MONTH, -1 )
       
       val filesBucket = B.getS3Bucket( "files" )
-      val zips = S3.getFilenames( filesBucket, suffix = ".zip", olderThan = yesterday )
-      S3.deleteAll( filesBucket, zips, keyPrefix = "zips/" )
+      val zips = S3.getFilenames( filesBucket, prefix = "zips", suffix = ".zip", olderThan = yesterday )
+      S3.deleteAll( filesBucket, zips )
       
       val tempBucket = B.getS3Bucket( "temp" )
       val tempFiles = S3.getFilenames( tempBucket, olderThan = yesterday )
