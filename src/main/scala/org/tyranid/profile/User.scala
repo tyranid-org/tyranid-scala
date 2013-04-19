@@ -255,7 +255,7 @@ trait User extends MongoRecord {
     obj( 'org ) = org.id
   }
 
-  def toClientCommonMap:Map[String,Any]
+  def toClientCommonMap( force:Boolean = false ):Map[String,Any]
 
   // TODO:  cache this better somehow
   def groups:Seq[Group] = T.requestCached( tid + "groups" ) { Group.visibleTo( this, contentType = ContentType.Group ) }

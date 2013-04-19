@@ -259,10 +259,10 @@ trait Record extends Valid with BsonObject with QuickCache {
    */
 
   var _computed = false
-  def compute( client:Boolean = false, extra:Seq[String] = Nil, temporary:Boolean = true ) {
-    if ( !_computed ) {
+  def compute( client:Boolean = false, extra:Seq[String] = Nil, temporary:Boolean = true, force:Boolean = false ) {
+    if ( !_computed || force ) {
       for ( c <- view.entity.computations;
-            if !client || ( client && c.client ) || extra.contains( c.name );
+            if !client || c.client || extra.contains( c.name );
             if temporary || !c.temporary )
         this( c.name ) = c.computation( this )
   

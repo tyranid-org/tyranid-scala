@@ -264,7 +264,7 @@ $( function() {
   
           T.LnF match {
              case LnF.RetailBrand =>
-               web.jsRes( Js( "V.common.set( " + user.toClientCommonMap.toJsonStr( client = true ) + " ); V.app.load( '" + ( redirect.isBlank ? "/#dashboard" | redirect ) + "' );" ) )
+               web.jsRes( Js( "V.common.set( " + user.toClientCommonMap().toJsonStr( client = true ) + " ); V.app.load( '" + ( redirect.isBlank ? "/#dashboard" | redirect ) + "' );" ) )
              case _ =>
                web.redirect(redirect.isBlank ? T.website | redirect)
           }
@@ -472,7 +472,7 @@ $( function() {
           
           if ( T.LnF == LnF.RetailBrand ) {
             sess.notice( "You can now change your password in <em>My Profile</em>.", deferred = "/#dashboard" )
-            web.jsRes( Js( "V.common.set( " + user.toClientCommonMap.toJsonStr( client = true ) + " ); V.app.load( '/#dashboard' )" ) )
+            web.jsRes( Js( "V.common.set( " + user.toClientCommonMap().toJsonStr( client = true ) + " ); V.app.load( '/#dashboard' )" ) )
           } else {
             sess.notice( "You can now change your password." )
             web.redirect( "/user/edit?id=" + user.tid )
@@ -619,7 +619,7 @@ $( function() {
           B.registerUser( user, companyName )
           B.welcomeUserEvent
             
-          web.jsRes( Js( "V.common.set( " + user.toClientCommonMap.toJsonStr( client = true ) + " ); V.app.load( '/#dashboard' );" ) )            
+          web.jsRes( Js( "V.common.set( " + user.toClientCommonMap().toJsonStr( client = true ) + " ); V.app.load( '/#dashboard' );" ) )            
           return
         }
       } else {
