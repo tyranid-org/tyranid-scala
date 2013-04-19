@@ -17,6 +17,8 @@
 
 package org.tyranid.share
 
+import java.util.regex.Pattern
+
 import scala.xml.{ Unparsed, NodeSeq }
 import java.io.{ File, FileOutputStream }
 import com.mongodb.DBObject
@@ -78,9 +80,9 @@ The method was called more than three times in three minutes.
         err
       case s =>
         val authIdx = s.indexOf( "AUTHCODE:" )
-        
+       
         if ( authIdx > -1 )
-          s.indexOf( authIdx + 1 )
+          s.substring( authIdx + 10 )
         else 
           s
     }
@@ -103,14 +105,24 @@ ERROR: 6; Too often called
 The method was called more than three times in three minutes.
 */
   
+  val patternStr = """.*?code\: (\d+)\s+ticket\: (\d+)"""
+  val pattern = Pattern.compile( patternStr, Pattern.CASE_INSENSITIVE | Pattern.DOTALL | Pattern.MULTILINE);
+
   def meetingCode( authCode:String ) = {
     Http.GET( ApiUrl + "requestCode?authCode=" + authCode ).s match {
       case err if err.startsWith( "ERROR" ) =>
         (err,err)
+
       case s =>
-        val codeParser = """Code\: (\d+) Ticket\: (\d+)""".r
-        val codeParser( code, ticket ) = s
-        (code,ticket)
+        val matcher = pattern.matcher( s )
+        if ( matcher.matches() ) {
+          val code   = matcher.group( 1 )
+          val ticket = matcher.group( 2 )
+
+          (code,ticket)
+        } else {
+          ( "code not found", null )
+        }
     }
   }
   
