@@ -59,6 +59,7 @@ object Email {
     "@fastmail.fm",
     "@gmail.com",
     "@hotmail.com",
+    "@outlook.com",
     "@inbox.com",
     "@live.com",
     "@lycos.com",
