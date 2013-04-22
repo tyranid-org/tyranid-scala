@@ -85,7 +85,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "noEmail"        is DbBoolean           ; // Do not send to this user";
   "inactive"       is DbBoolean           is 'client is 'auth;
 
-  "online"         is DbBoolean           is 'temporary is 'auth computed { rec => B.User.isOnline( rec.tid ) };
+  "online"         is DbBoolean           is 'temporary is 'client is 'auth computed { rec => B.User.isOnline( rec.tid ) };
 
   "tz"             is DbChar(64)          ; // Olson timezone code ... i.e. "America/Chicago"
   "tzOff"          is DbDouble            ; // timezone offset in hours ... i.e. -6 ... maybe deprecated ? ... use an Olson code instead?
