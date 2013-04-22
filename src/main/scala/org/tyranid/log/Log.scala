@@ -205,6 +205,7 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
       }
 
       sb ++= "Product: " ++= B.productName += '\n'
+      sb ++= "Env: " ++= B.mode += '\n'
         
       if ( ua.notBlank )
         sb ++= "User-Agent: " ++= ua += '\n'
