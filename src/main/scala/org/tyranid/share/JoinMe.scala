@@ -55,7 +55,7 @@ The method was called more than three times in three minutes.
   def login( email:String, password:String ) = {
     Http.GET( ApiUrl + "login?email=" + email + "&password=" + password ).s match {
       case err if err.startsWith( "ERROR" ) =>
-        err
+        throw new RuntimeException( "Unable to login: " + err.substring(6) )
       case ok =>
         ok
     }
@@ -77,7 +77,7 @@ The method was called more than three times in three minutes.
   def authCode( email:String, password:String ) = {
     Http.GET( ApiUrl + "requestAuthCode?email=" + email + "&password=" + password ).s match {
       case err if err.startsWith( "ERROR" ) =>
-        err
+        throw new RuntimeException( "Unable to get an authorization code: " + err.substring(6) )
       case s =>
         val authIdx = s.indexOf( "AUTHCODE:" )
        
@@ -111,7 +111,8 @@ The method was called more than three times in three minutes.
   def meetingCode( authCode:String ) = {
     Http.GET( ApiUrl + "requestCode?authCode=" + authCode ).s match {
       case err if err.startsWith( "ERROR" ) =>
-        (err,err)
+        val errorStr = "Unable to retrieve meeting code: " + err.substring(6)
+        (errorStr,errorStr)
 
       case s =>
         val matcher = pattern.matcher( s )
