@@ -24,6 +24,7 @@ import org.cometd.bayeux.server.{ BayeuxServer, ServerSession }
 import org.cometd.server.AbstractService
 
 import org.tyranid.Imp._
+import org.tyranid.json.JsCmd
 import org.tyranid.session.{ Session, WebSession }
 
 
@@ -39,8 +40,16 @@ case class CometService( name:String, create: ( BayeuxServer ) => AbstractServic
 
 case class Comet( serviceSession:ServerSession, fromSession:ServerSession, session:Session ) {
 
-  def send( output:collection.Map[String,AnyRef] ) {
-    val jOutput:java.util.Map[String,Object] = output
+  def send( output:collection.Map[String,AnyRef], cmds:JsCmd* ) {
+
+    val data =
+      if ( cmds.nonEmpty )
+        output + ( "cmds" -> Seq( cmds.map( _.toMap ) ).toJsonStr( client = true ) )
+      else
+        output
+
+    val jOutput:java.util.Map[String,Object] = data
+
     fromSession.deliver( serviceSession, "/volee", jOutput, null )
   }
 }
