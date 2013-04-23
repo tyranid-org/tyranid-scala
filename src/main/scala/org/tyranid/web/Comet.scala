@@ -44,7 +44,7 @@ case class Comet( serviceSession:ServerSession, fromSession:ServerSession, sessi
 
     val data =
       if ( cmds.nonEmpty )
-        output + ( "cmds" -> Seq( cmds.map( _.toMap ) ).toJsonStr( client = true ) )
+        output + ( "cmds" -> cmds.map( _.toMap ).toJsonStr( client = true ) )
       else
         output
 
