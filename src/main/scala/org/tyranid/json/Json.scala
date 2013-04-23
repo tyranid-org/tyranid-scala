@@ -18,6 +18,7 @@
 package org.tyranid.json
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import org.bson.types.ObjectId
@@ -80,9 +81,18 @@ object Sbt {
 }
 
 
-sealed trait JsCmd 
 
-case class Js( js:String ) extends JsCmd 
+// JS Commands
+
+sealed trait JsCmd {
+  
+  def toMap:Map[String,Any]
+}
+
+case class Js( js:String ) extends JsCmd  {
+
+  def toMap = Map( "extraJS" -> js )
+}
 
 case class JqHtml( // this is the target selector to place the html at
                    target:String,
@@ -93,13 +103,38 @@ case class JqHtml( // this is the target selector to place the html at
 
                    transition:String = null,
                    duration:Int = 250,
-                   handler:String = null ) extends JsCmd
+                   handler:String = null ) extends JsCmd {
+
+  def toMap = {
+    val htmlMap = mutable.Map[String,Any]()
+
+    htmlMap( "html" )   = html
+    htmlMap( "target" ) = target
+
+    if ( modal.notBlank )
+      htmlMap( "modal" ) = modal
+
+    if ( transition.notBlank ) {
+      htmlMap( "transition" ) = transition
+      htmlMap( "duration" )   = duration.toString
+    }
+
+    if ( handler.notBlank )
+      htmlMap( "handler" ) = handler
+
+    Map( "html" -> htmlMap )
+  }
+}
 
                    
 // @name if the name is null, it is a local model, otherwise it is a global model
 //
 // model is either a collection.Map[String,Any] or a Record
-case class JsModel( map:AnyRef, name:String = null ) extends JsCmd
+case class JsModel( map:AnyRef, name:String = null ) extends JsCmd {
+
+  def toMap = if ( name.notBlank ) Map( "model" -> map, "modelName" -> name )
+              else                 Map( "model" -> map )
+}
 
 object JsData {
   def apply( rec:Record ):JsData =
@@ -108,9 +143,16 @@ object JsData {
 }
 
 // extra is a list of fields that should be explicitly added
-case class JsData( data:Seq[Record], auth:Boolean = false, extra:Seq[String] = Nil ) extends JsCmd
+case class JsData( data:Seq[Record], auth:Boolean = false, extra:Seq[String] = Nil ) extends JsCmd {
 
-case object JsNop extends JsCmd 
+  def toMap = if ( data.nonEmpty ) Map( "data" -> this )
+              else                 null
+}
+
+case object JsNop extends JsCmd {
+
+  def toMap = null
+}
 
 object Jobj {
   def apply = JsonNodeFactory.instance.objectNode

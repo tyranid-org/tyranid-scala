@@ -352,7 +352,7 @@ class WebResponse( web:WebContext, sess:Session ) {
 
     val printPretty = pretty || ( web.req != null && web.req.getAttribute( "json.pretty" )._b )
     val jsonStr = (
-        cmds.isEmpty ? main | Array( cmds.map( cmdToMap ).filter( _ != null ) += main )
+        cmds.isEmpty ? main | Array( cmds.filter( _ != null ).map( _.toMap ).filter( _ != null ) += main )
       ).toJsonStr( pretty = printPretty, client = true )
     
     if ( printPretty )
@@ -373,35 +373,6 @@ class WebResponse( web:WebContext, sess:Session ) {
       }
     }
   }
-  
-  private def cmdToMap( cmd:JsCmd ) =
-    cmd match {
-    case cmd:JqHtml =>
-      val htmlMap = mutable.Map[String,Any]()
-
-      htmlMap( "html" )   = cmd.html
-      htmlMap( "target" ) = cmd.target
-
-      if ( cmd.modal.notBlank )
-        htmlMap( "modal" ) = cmd.modal
-
-      if ( cmd.transition.notBlank ) {
-        htmlMap( "transition" ) = cmd.transition
-        htmlMap( "duration" )   = cmd.duration.toString
-      }
-
-      if ( cmd.handler.notBlank )
-        htmlMap( "handler" ) = cmd.handler
-
-      Map( "html" -> htmlMap )
-
-    case cmd:Js      => Map( "extraJS" -> cmd.js )
-    case cmd:JsData  => if ( cmd.data.nonEmpty ) Map( "data" -> cmd )
-                        else                     null
-    case cmd:JsModel => if ( cmd.name.notBlank ) Map( "model" -> cmd.map, "modelName" -> cmd.name )
-                        else                     Map( "model" -> cmd.map )
-    case JsNop | null => null
-    }
 }
 
 case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:ServletContext ) {
