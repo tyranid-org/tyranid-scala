@@ -52,6 +52,7 @@ object MetaMimeType {
 
   val AdobeIllustrator    = add( "illustrator",  "Adobe Illustrator" )
   val BMP                 = add( "bmp",          "Bitmapped Image" )
+  val DXF                 = add( "dxf",          "Drawing Interchange Format" )
   val GIF                 = add( "gif",          "Graphics Interchange Format" )
   val HTML                = add( "html",         "HTML" )
   val JPEG                = add( "jpeg",         "JPEG" )
@@ -60,6 +61,7 @@ object MetaMimeType {
   val MicrosoftWord       = add( "msword",       "Microsoft Word" )
   val PDF                 = add( "pdf",          "Portable Document Format" )
   val PNG                 = add( "png",          "Portable Network Graphics" )
+  val SVG                 = add( "svg",          "Scaled Vector Graphic" )
   val Text                = add( "text",         "Text" )
   val TIFF                = add( "tiff",         "Tagged Image Format" )
   val Video               = add( "video",        "Video / Movie" )
@@ -166,10 +168,12 @@ object MimeType {
 
 
     MimeType( "image/bmp",                                                                 BMP,                 "BMP Image",                     Seq( "bmp" ) ),
+    MimeType( "image/x-dxf",                                                               DXF,                 "Drawing Interchange Format",    Seq( "dxf" ) ),
     MimeType( "image/gif",                                                                 GIF,                 "GIF Image",                     Seq( "gif" ) ),
     MimeType( "image/jpeg",                                                                JPEG,                "JPEG Image",                    Seq( "jpeg", "jpg", "jpe" ) ),
     MimeType( "image/png",                                                                 PNG,                 "Portable Network Graphics",     Seq( "png" ) ),
     MimeType( "image/tiff",                                                                TIFF,                "Tagged Image File Format",      Seq( "tiff", "tif" ) ),
+    MimeType( "image/svg+xml",                                                             SVG,                 "Scaled Vector Graphic",         Seq( "svg" ) ),
     MimeType( "image/x-cmu-raster",                                                        null,                "CMU Raster",                    Seq( "ras" ) ),
     MimeType( "image/x-portable-bitmap",                                                   null,                "Portable Bitmap",               Seq( "pbm" ) ),
     MimeType( "image/x-portable-graymap",                                                  null,                "Portable Grey Map",             Seq( "pgm" ) ),
@@ -200,6 +204,12 @@ object MimeType {
     MimeType( "video/x-sgi-movie",                                                         null,                "SGI Movie",                     Seq( "movie" ) ),
     MimeType( "video/x-msvideo",                                                           Video,               "Microsoft AVI",                 Seq( "avi" ) )
   )
+  
+  
+  // DXF is all of these:
+  // application/dxf, application/x-autocad, application/x-dxf, drawing/x-dxf, image/vnd.dxf, image/x-autocad, image/x-dxf, zz-application/zz-winassoc-dxf
+   
+   
 
   lazy val byMimeType:collection.Map[String,MimeType] = {
     val map = mutable.Map[String,MimeType]()
@@ -328,6 +338,7 @@ object MimeType {
     "shar"     -> "application/x-shar",
     "snd"      -> "audio/basic",
     "src"      -> "application/x-wais-source",
+    "svg"      -> "image/svg+xml",
 
     "t"        -> "application/x-troff",
     "tar"      -> "application/x-tar",
