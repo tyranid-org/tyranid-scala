@@ -30,8 +30,8 @@ object AutoCad {
 
   def convertToSvg( dxfFile:File ) = {
     val xml = convertToSvgXml( dxfFile )
-    val svgStartIdx = xml.indexOf( "<svg" )
-    xml.substring( ( svgStartIdx > -1 ) ? svgStartIdx | 0 )    
+    val svgStartIdx = xml.isBlank ? -1 | xml.indexOf( "<svg" )
+    xml.denull.substring( ( svgStartIdx > -1 ) ? svgStartIdx | 0 )    
   }
   
   def convertToSvgXml( dxfFile:File ) = {
@@ -41,8 +41,8 @@ object AutoCad {
   
   def convertToSvg( dxfText:String ) = {
     val xml = convertToSvgXml( dxfText )
-    val svgStartIdx = xml.indexOf( "<svg" )
-    xml.substring( ( svgStartIdx > -1 ) ? svgStartIdx | 0 )    
+    val svgStartIdx = xml.isBlank ? -1 | xml.indexOf( "<svg" )
+    xml.denull.substring( ( svgStartIdx > -1 ) ? svgStartIdx | 0 )    
   }
   
   def convertToSvgXml( dxfText:String ) = {
@@ -78,7 +78,7 @@ object AutoCad {
       new String( baos.toByteArray() )
     } catch {
       case e:Exception =>
-        e.printStackTrace()
+        log( Event.Converter, "m" -> "Conversion of dxf to svg failed.", "ex" -> e )
         null
       case _ =>
         null
