@@ -311,6 +311,7 @@ trait Session extends QuickCache {
     if ( web != null )
       web.req.addJsCmd( Js( "tyrl( window.cometConnect );" ) )
     
+    /*
     Comet.visit { comet =>      
       val sess = comet.session
       
@@ -326,6 +327,8 @@ trait Session extends QuickCache {
         //}
       }
     }
+    */
+      
   }
   
   def isIncognito = get( "incognito" ).as[Boolean] ? true | false
