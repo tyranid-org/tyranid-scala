@@ -647,7 +647,7 @@ trait ContentMeta extends PrivateKeyEntity {
   "lastActionBy"      is DbLink(B.User)       is 'required;
   "lastActionByOrg"   is DbLink(B.Org)        is 'required;
 
-  // Volees
+  // Messages
   "fit"               is DbBoolean            as "From in To" help <div>Indicates that the posting user is in the to list.  This will normally be false unless a user explicitly addresses a message to themselves.</div>
   "s3"                is DbBoolean            help Text( "Indicates that the file or img is stored by us in S3." );
 
@@ -1080,7 +1080,7 @@ abstract class Content( override val view:MongoView,
   def ownerTids  = obj.a_?( 'o ).toSeq.of[String]
   def viewerTids = obj.a_?( 'v ).toSeq.of[String]
 
-  // TODO:  make this name more generic / less Volee-ish
+  // TODO:  make this name more generic / less Messages-ish
   def isTo( u:User ):Boolean = {
     val userTid    = u.tid
     val userOrgTid = u.orgTid

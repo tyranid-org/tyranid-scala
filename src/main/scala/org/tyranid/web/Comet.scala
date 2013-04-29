@@ -50,15 +50,15 @@ case class Comet( serviceSession:ServerSession, fromSession:ServerSession, sessi
 
     val jOutput:java.util.Map[String,Object] = data
 
-    fromSession.deliver( serviceSession, "/volee", jOutput, null )
+    fromSession.deliver( serviceSession, "/message", jOutput, null )
   }
 }
 
 object Comet {
 
   def visit( visitor: ( Comet ) => Unit ) = {
-    val serverSession = B.comets.find( _.name == "volee" ).get.service.getServerSession
-    val seen = mutable.Set[String]()
+    val serverSession = B.comets.find( _.name == "message" ).get.service.getServerSession
+    //val seen = mutable.Set[String]()
 
     for ( session <- B.bayeux.getSessions ) {
       val httpSessionId = session.getAttribute( WebSession.CometHttpSessionIdKey )
@@ -66,12 +66,12 @@ object Comet {
       if ( httpSessionId != null ) {
         val httpSessionIdStr = httpSessionId.as[String]
         
-        if ( !seen( httpSessionIdStr ) ) {
-          seen += httpSessionIdStr
+        //if ( !seen( httpSessionIdStr ) ) {
+          //seen += httpSessionIdStr
           
           val tyrSession = Session.byHttpSessionId( httpSessionIdStr ).as[Session] // as a Volerro session
           visitor( Comet( serverSession, session, tyrSession ) )
-        }
+       // }
       }
     }
   }

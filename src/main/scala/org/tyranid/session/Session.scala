@@ -307,28 +307,19 @@ trait Session extends QuickCache {
       onLogin( this )
       
     val web = T.web
+    var userAgent:UserAgent = null
     
-    if ( web != null )
-      web.req.addJsCmd( Js( "tyrl( window.cometConnect );" ) )
-    
-    /*
-    Comet.visit { comet =>      
-      val sess = comet.session
+    if ( web != null ) {
+      val req = web.req
       
-      if ( sess != null ) {
-        val u = sess.user
+      if ( req != null ) {
+        web.req.addJsCmd( Js( "tyrl( window.cometConnect );" ) )
         
-        println( u.s( 'email ))
-        //if ( u.s( 'email ) == loginEmail ) {
-        //  val output = mutable.Map[String,AnyRef]()
-        //  output( "act" ) = "forceLogout"
-        //  comet.send( output )
-        //  comet.serviceSession.disconnect()
-        //}
+        put( "remoteHost", web.req.getRemoteHost() )
+        put( "remoteAddr", web.req.getRemoteAddr() )
+        userAgent = ua( web )
       }
     }
-    */
-      
   }
   
   def isIncognito = get( "incognito" ).as[Boolean] ? true | false
