@@ -153,6 +153,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
 
   def queryById( id:Any ) = apply( db.findOne( id ) )
 
+  def getByIds( ids:Seq[Any] ) = db.find( Mobj( "_id" -> Mobj( $in -> ids.toMlist ) ) ).map( apply ).toSeq
     
   def remove( obj:DBObject ) = db.remove( obj )
 
