@@ -51,6 +51,7 @@ object SessionCleaner {
         val tyrsess = httpsess.getAttribute( WebSession.HttpSessionKey ).as[Session]
         
         if ( tyrsess != null ) { 
+          //val lastPathTime = tyrsess.get( "lastPathTime" ).as[Date]
           val idle = now - httpsess.getLastAccessedTime
           val user = tyrsess.user
           
