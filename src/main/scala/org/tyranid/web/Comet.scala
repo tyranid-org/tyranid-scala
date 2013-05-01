@@ -40,7 +40,7 @@ case class CometService( name:String, create: ( BayeuxServer ) => AbstractServic
 
 case class Comet( serviceSession:ServerSession, fromSession:ServerSession, session:Session ) {
 
-  def send( output:collection.Map[String,AnyRef], cmds:JsCmd* ) {
+  def send( output:collection.Map[String,Any], cmds:JsCmd* ) {
 
     val data =
       if ( cmds.nonEmpty )
@@ -48,9 +48,19 @@ case class Comet( serviceSession:ServerSession, fromSession:ServerSession, sessi
       else
         output
 
-    val jOutput:java.util.Map[String,Object] = data
+    val jOutput:java.util.Map[String,Object] = data.asInstanceOf[collection.Map[String,AnyRef]]
 
     fromSession.deliver( serviceSession, "/message", jOutput, null )
+  }
+
+  def send( act:String, data:collection.Map[String,Any], cmds:JsCmd* ) {
+    send(
+      Map(
+        "act"  -> act,
+        "data" -> data.toJsonStr( client = true )
+      ),
+      cmds:_*
+    )
   }
 }
 
