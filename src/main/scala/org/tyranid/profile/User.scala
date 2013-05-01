@@ -51,9 +51,12 @@ object ContactInfo extends MongoEntity( tid = "a0Ov" ) {
   "lastInviteDate"   is DbDateTime       ;
   
   def ensure( email:String, name:String, company:String = null, beta:Boolean = false ) = {
-    val contactInfo = ContactInfo.db.findOrMake( Mobj( "email" -> email.toPatternI ) )
+    var contactInfo = ContactInfo.db.findOne( Mobj( "email" -> email.toPatternI ) )
     
-    if ( !contactInfo.isNew ) {
+    if ( contactInfo == null )
+      contactInfo = ContactInfo.make
+    
+    if ( contactInfo.isNew ) {
       contactInfo( 'name ) = name
       contactInfo( 'email ) =  email
       contactInfo( 'company ) = company
