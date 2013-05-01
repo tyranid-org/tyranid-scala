@@ -182,7 +182,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
     Comet.visit { comet =>      
       val sess = comet.session
       
-      if ( sess != null && sess.user.tid == userTid )
+      if ( sess != null && !sess.isIncognito && sess.user.tid == userTid )
         return true
     }
     
