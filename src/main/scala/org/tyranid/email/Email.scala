@@ -69,6 +69,7 @@ object Email {
     "@mediacomcc.com",
     "@msn.com",
     "@netamumail.com",
+    "@yandex.com",
     "@yahoo.com" )
 
   def isBlacklisted( email:String ) = {
