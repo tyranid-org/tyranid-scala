@@ -337,7 +337,7 @@ trait Session extends QuickCache {
     if ( unlink ) T.unlinkSession
 
     val u = user
-    if ( u != null )
+    if ( u != null && !isIncognito )
       B.logoutListeners.foreach( _( u ) )
   }
 
