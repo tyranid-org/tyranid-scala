@@ -20,6 +20,8 @@ package org.tyranid.content
 import java.io.File
 import java.util.Date
 
+import scala.collection.mutable
+import scala.collection.mutable.Buffer
 import scala.xml.{ Text, NodeSeq }
 
 import org.bson.types.ObjectId
@@ -1056,6 +1058,30 @@ abstract class Content( override val view:MongoView,
   def owners = Record.getByTids( ownerTids )
 
   def writers = owners
+  
+  def viewerUsers = {
+    val userTids:mutable.ArrayBuffer[String] = new mutable.ArrayBuffer[String]
+    
+    viewerTids foreach { vTid =>
+      vTid match {
+        case userTid if B.User.hasTid( userTid ) && !userTids.contains( userTid ) =>
+          userTids += userTid
+        case groupTid if Group.hasTid( groupTid ) =>
+          val g = Group.getByTid( groupTid )
+
+          g.viewerTids foreach { guTid =>
+            if ( B.User.hasTid( guTid ) && !userTids.contains( guTid ) )
+              userTids += guTid
+          }
+        case _ =>
+          // nop
+      }
+    }
+
+    val users:mutable.ArrayBuffer[Record] = new mutable.ArrayBuffer[Record]
+    
+    userTids.map( userTid => B.User.getByTid( userTid ) )
+  }
   
   def viewers = Record.getByTids( viewerTids )
 

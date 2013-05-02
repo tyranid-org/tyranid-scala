@@ -20,11 +20,14 @@ package org.tyranid.time
 import java.util.{ Calendar, Date, TimeZone }
 
 import org.scalatest.FunSuite
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
 import org.tyranid.Imp._
 import org.tyranid.session.Session
 
 
+@RunWith(classOf[JUnitRunner])
 class TimeSuite extends FunSuite {
   org.tyranid.boot.Boot.boot
 
@@ -172,6 +175,16 @@ class TimeSuite extends FunSuite {
 
   test( "userTz" ) {
     assert( "6/2/2012".toLaxDate.toUtcDateStr === "06/02/2012" )
+    
+    val savedTz = Session().user.timeZone
+    Session().user.timeZone = TimeZone.getTimeZone( "CST" )
+
+    assert( "2013-05-07".toLaxUserDate == "Tue May 07 00:00:00 CDT 2013" )
+
+    assert( "2013-05-07".toLaxUserDateTime == "Tue May 07 00:00:00 CDT 2013" )
+
+
+    Session().user.timeZone = savedTz
 
   }
 
