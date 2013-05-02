@@ -55,8 +55,8 @@ trait SearchTextLike extends Searchable {
 case object SearchText extends SearchTextLike
 
 case object SearchToken extends Searchable {
-  val auth = false
-  val text = true
+  val auth    = false
+  val text    = true
   val analyze = false
 }
 
