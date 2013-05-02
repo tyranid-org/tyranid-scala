@@ -849,7 +849,7 @@ class TimeParser {
 		if ( dates == 0 )
 			fail( "no date could be found." )
 
-    if ( !dateOnly && timeZones == 0 && userTime )
+    if ( /*!dateOnly &&*/ timeZones == 0 && userTime )
       tz = T.session.netTimeZone
 
     dv.setTimeZone( tz )

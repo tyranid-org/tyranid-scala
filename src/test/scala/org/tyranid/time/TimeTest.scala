@@ -179,13 +179,10 @@ class TimeSuite extends FunSuite {
     val savedTz = Session().user.timeZone
     Session().user.timeZone = TimeZone.getTimeZone( "CST" )
 
-    assert( "2013-05-07".toLaxUserDate == "Tue May 07 00:00:00 CDT 2013" )
-
-    assert( "2013-05-07".toLaxUserDateTime == "Tue May 07 00:00:00 CDT 2013" )
-
+    assert( "2013-05-07".toLaxUserDate.toString     === "Tue May 07 00:00:00 CDT 2013" )
+    assert( "2013-05-07".toLaxUserDateTime.toString === "Tue May 07 00:00:00 CDT 2013" )
 
     Session().user.timeZone = savedTz
-
   }
 
   test( "durationText" ) {
