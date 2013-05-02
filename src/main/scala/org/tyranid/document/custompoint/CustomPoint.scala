@@ -103,7 +103,7 @@ object CustomPoint {
                "&email=" + user.s( 'email ) +
                "&lname=" + user.s( 'lastName ) +
                "&fname=" + user.s( 'firstName ) +
-               "&Module=CSR&custItemNum=" + customPointVendorId +
+               "&Module=VI&custItemNum=" + customPointVendorId +
                "&datetime=" + seed +
                "&tstamp=" + now.toCustomPointFormat
       
