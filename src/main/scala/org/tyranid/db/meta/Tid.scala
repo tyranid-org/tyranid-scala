@@ -38,11 +38,15 @@ import org.tyranid.web.{ Weblet, WebContext }
 
 object TidItem {
   def unknown( tid:String ) = {
-    val ( entityTid, recordTid ) = tid.splitAt( 4 )
-
-    Entity.byTid( entityTid ) match {
-    case Some( e ) => TidItem( tid = tid, id = e.tidToId( tid ), org = null, name = "Unknown " + e.label, thumbnail = e.defaultIcon )
-    case None      => TidItem( tid = tid, id = null, org = null, name = "Unknown", thumbnail = B.Org.defaultIcon )
+    if ( tid.isBlank )
+      TidItem( tid = tid, id = null, org = null, name = "Unknown", thumbnail = B.Org.defaultIcon )
+    else {
+      val ( entityTid, recordTid ) = tid.splitAt( 4 )
+  
+      Entity.byTid( entityTid ) match {
+      case Some( e ) => TidItem( tid = tid, id = e.tidToId( tid ), org = null, name = "Unknown " + e.label, thumbnail = e.defaultIcon )
+      case None      => TidItem( tid = tid, id = null, org = null, name = "Unknown", thumbnail = B.Org.defaultIcon )
+      }
     }
   }
 
