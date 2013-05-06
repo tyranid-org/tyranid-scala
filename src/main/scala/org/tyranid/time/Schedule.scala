@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
+\ * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,15 +125,14 @@ object Schedulelet extends Weblet {
     }
 
     rpath match {
-    case "/" =>
-      
-    web.jsRes( 
-      JsModel(
-         Map(
-           "tasks" -> jsonTasks
-         ),
-         name = "scheduler"
-     ) )
+    case "/" =>      
+      web.jsRes( 
+        JsModel(
+           Map(
+             "tasks" -> jsonTasks
+           ),
+           name = "scheduler"
+       ) )
     case "/run" =>
       task foreach { task =>
         background { task.run( manual = true ) }
@@ -144,11 +143,16 @@ object Schedulelet extends Weblet {
     case "/toggle" =>
       task foreach { task =>
         task.active = !task.active
-        T.session.notice( ( task.active ? "Activated" | "Deactivated" ) + ": " + task.subject )
+//        T.session.notice( ( task.active ? "Activated" | "Deactivated" ) + ": " + task.subject )
       }
 
-      web.jsRes()
-
+      web.jsRes( 
+        JsModel(
+           Map(
+             "tasks" -> jsonTasks
+           ),
+           name = "scheduler"
+       ) )
     case _ =>
       _404
     }
