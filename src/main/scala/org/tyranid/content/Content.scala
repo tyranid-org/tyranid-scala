@@ -692,7 +692,7 @@ trait ContentMeta extends PrivateKeyEntity {
   
   "color"             is DbChar(6)            is 'client;
   
-  "locked"            is DbBoolean;
+  "locked"            is DbBoolean            is 'client;
   
   "archived"          is DbBoolean            is 'client;
   
