@@ -33,11 +33,11 @@ import org.tyranid.db.ram.RamEntity
 import org.tyranid.db.tuple.{ Tuple, TupleView }
 import org.tyranid.email.AWSEmail
 import org.tyranid.http.UserAgent
+import org.tyranid.json.JqHtml
 import org.tyranid.net.DnsDomain
 import org.tyranid.report.{ Query, Run, Sort }
 import org.tyranid.ui.{ CustomField, PathField, Search }
 import org.tyranid.web.{ Weblet, WebContext }
-
 
 object Event extends RamEntity( tid = "a0It" ) {
   type RecType = Event
@@ -81,7 +81,6 @@ object Event extends RamEntity( tid = "a0It" ) {
 case class Event( override val view:TupleView ) extends Tuple( view ) {
   def name = s( 'name )
 }
-
 
 object Log extends MongoEntity( tid = "a0Ht" ) {
   type RecType = Log
@@ -248,9 +247,7 @@ class Log( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Log.makeView,
   def qs = obj.o_?( 'qs )
 }
 
-
 object LogQuery extends Query {
-
   //def connections( run:Run ) =
     //run.cache.getOrElseUpdate( "connections", Connection.db.find( Mobj( "from" -> Session().user.org.id ) ).toSeq ).asInstanceOf[Seq[DBObject]]
 
@@ -329,7 +326,6 @@ object LogQuery extends Query {
 }
 
 object Loglet extends Weblet {
-
   def handle( web:WebContext ) = {
 
     if ( !T.user.isGod )
@@ -337,12 +333,9 @@ object Loglet extends Weblet {
 
     rpath match {
     case "/" =>
-      shell( LogQuery.draw )
-
+      web.jsRes( JqHtml( "#adminContent", LogQuery.draw ) )
     case _ =>
       _404
     }
   }
 }
-
-

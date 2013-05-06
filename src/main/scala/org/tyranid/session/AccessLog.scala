@@ -31,6 +31,7 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoRecord
 import org.tyranid.http.UserAgent
 import org.tyranid.log.Log
+import org.tyranid.json.JqHtml
 import org.tyranid.math.Base62
 import org.tyranid.net.DnsDomain
 import org.tyranid.profile.User
@@ -285,24 +286,23 @@ object ActivityQuery extends Query {
   val defaultFields = dataFields.take( 5 )
 
   override def searchForm( user:User, r:Report ) = {
-      val s = Scope( r.searchRec )
+    val s = Scope( r.searchRec )
 
-      <form method="post" action={ T.web.path } id="rSearchForm" style="padding-top:8px;" class="handling">
-       <div class="fieldsc" style="margin-top:8px; padding:4px;">
-        <h3>Search By</h3>
-        { searchFields.map { f =>
-            <div class="fieldc">
-             <div class="labelc">{ f.labelUi }</div>
-             <div class="inputc">{ f.ui( user, s ) }</div>
-            </div>
-          }
-        }
-       </div>
-       <div class="btns">
-        <input type="submit" value="Search" class="btn-success btn" name="saving"/>
-       </div>
-      </form>
-    }
+    <form method="post" action="" id="rSearchForm" style="padding-top:8px;" class="handling">
+     <div class="fieldsc" style="margin-top:8px; padding:4px;">
+      <h3>Search By</h3>
+      { searchFields.map { f =>
+        <div class="fieldc">
+         <div class="labelc">{ f.labelUi }</div>
+         <div class="inputc">{ f.ui( user, s ) }</div>
+        </div>
+      } }
+     </div>
+     <div class="btns">
+      <input type="button" value="Search" class="btn-success btn" name="saving"/>
+     </div>
+    </form>
+  }
 }
 
 
@@ -354,7 +354,6 @@ object Accesslet extends Weblet {
 
     val onlyMilestone = web.sOpt( "milestone" ).flatMap( Milestone.apply )
     val milestones    = onlyMilestone.flatten( Seq(_), B.milestones )
-
 
 
     //
@@ -686,7 +685,7 @@ object Accesslet extends Weblet {
 
     rpath match {
     case "/" =>
-      shell( report )
+      web.jsRes( JqHtml( "#adminContent", report ) )
 
     case _ =>
       _404
