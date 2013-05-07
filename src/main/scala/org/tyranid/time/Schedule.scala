@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
+\ * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import java.util.Date
 import scala.collection.mutable
 
 import org.tyranid.Imp._
+import org.tyranid.json.JsModel
 import org.tyranid.web.{ Weblet, WebContext }
 
 
@@ -94,6 +95,25 @@ object Scheduler {
 
 object Schedulelet extends Weblet {
 
+  private def jsonTasks = {
+    val tasks = new mutable.ArrayBuffer[Map[String,Any]]
+    
+    for ( task <- Scheduler.tasks ) {
+      tasks += Map(
+           "id" -> task.subject,
+           "status" -> task.active,
+           "runs" -> task.runs,
+           "lastRun" -> ( task.lastRun != null |* task.lastRun.toUserDateTimeStr ),
+           "nextRun"  -> ( if ( task.active )
+               new Date( task.nextMs ).toUserDateTimeStr
+             else
+               "---" )
+      )
+    }
+    
+    tasks
+  }
+  
   def handle( web:WebContext ) {
 
     if ( !T.user.isGod )
@@ -105,57 +125,33 @@ object Schedulelet extends Weblet {
     }
 
     rpath match {
-    case "/" =>
-      shell(
-        <table class="dtable tablesort {sortlist: [[1,1],[2,0]]}">
-         <thead>
-          <tr><th class="{sorter: false}"></th><th>Status</th><th>Task</th><th>Runs</th><th>Last Run</th><th>Next Run</th></tr>
-         </thead>
-         <tbody>
-          { for ( task <- Scheduler.tasks ) yield
-          <tr>
-           <td><a class="btn-success btn" href={ wpath + "/run?task=" + task.subject }>Run</a></td>
-           <td>{
-             if ( task.active )
-               <a class="btn-success btn" href={ wpath + "/off?task=" + task.subject } style="width:50px;">On</a>
-             else
-               <a class="btn-danger btn" href={ wpath + "/on?task=" + task.subject } style="width:50px;">Off</a>
-           }</td>
-           <td>{ task.subject }</td>
-           <td>{ task.runs }</td>
-           <td>{ task.lastRun != null |* task.lastRun.toUserDateTimeStr }</td>
-           <td>{
-             if ( task.active )
-               new Date( task.nextMs ).toUserDateTimeStr
-             else
-               "---"
-           }</td>
-          </tr>
-         }</tbody>
-        </table> )
-
+    case "/" =>      
+      web.jsRes( 
+        JsModel(
+           Map(
+             "tasks" -> jsonTasks
+           ),
+           name = "scheduler"
+       ) )
     case "/run" =>
       task foreach { task =>
         background { task.run( manual = true ) }
         T.session.notice( "Running: " + task.subject )
       }
-      web.redirect( wpath )
-
-    case "/off" =>
+      
+      web.jsRes()
+    case "/toggle" =>
       task foreach { task =>
-        task.active = false
-        T.session.notice( "Deactivated: " + task.subject )
+        task.active = !task.active
       }
 
-      web.redirect( wpath )
-
-    case "/on" =>
-      task foreach { task =>
-        task.active = true
-        T.session.notice( "Activated: " + task.subject )
-      }
-      web.redirect( wpath )
-
+      web.jsRes( 
+        JsModel(
+           Map(
+             "tasks" -> jsonTasks
+           ),
+           name = "scheduler"
+       ) )
     case _ =>
       _404
     }

@@ -23,11 +23,10 @@ import org.tyranid.Imp._
 import org.tyranid.db.DbBoolean
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
+import org.tyranid.json.JsModel
 import org.tyranid.sms.SMS
 import org.tyranid.email.Email
 import org.tyranid.web.{ Weblet, WebContext }
-
-
 
 object TyranidConfig extends MongoEntity( tid = "a03t" ) {
   type RecType = TyranidConfig
@@ -58,22 +57,6 @@ class TyranidConfig( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Tyr
 
 
 object TyranidConfiglet extends Weblet {
-
-  def ui = {
-    import org.tyranid.document.Service
-    
-    val user = T.user
-
-    <a href={ wpath + "/remap" } class="btn-danger btn">Re-Map Search</a>
-    <a href={ wpath + "/reindex" } class="btn-danger btn">Re-Index Search</a>
-    <a href={ wpath + "/eye" } class={ user.b( 'eye ) ? "go btn" | "stop btn" }>Debug: { user.b( 'eye ) ? "ON" | "OFF" }</a>
-    <a href={ wpath + "/sms" } class={ SMS.enabled ? "go btn" | "stop btn" }>SMS: { SMS.enabled ? "ON" | "OFF" }</a>
-    <a href={ wpath + "/pdf" } class={ B.onePagePdf ? "go btn" | "stop btn" }>1Page PDF: { B.onePagePdf ? "ON" | "OFF" }</a>
-    <a href={ wpath + "/email" } class={ Email.enabled ? "go btn" | "stop btn" }>Email: { Email.enabled ? "ON" | "OFF" }</a>
-    <a href={ wpath + "/recaptcha" } class={ B.requireReCaptcha ? "go btn" | "stop btn" }>Recaptcha: { B.requireReCaptcha ? "ON" | "OFF" }</a>
-    <a href={ wpath + "/accessLogs" } class={ B.accessLogs ? "go btn" | "stop btn" }>Access Logs: { B.accessLogs ? "ON" | "OFF" }</a>
-  }
-
   def handle( web:WebContext ) = {
     val t = T
     val user = T.user
@@ -82,59 +65,75 @@ object TyranidConfiglet extends Weblet {
       _404
 
     val sess = t.session
+    var common:JsModel = null
 
     rpath match {
-    case "/remap" =>
-      org.tyranid.db.es.Es.mapAll
-      sess.warn( "Re-Map initiated." )
-      web.redirect( parent.wpath )
-
-    case "/reindex" =>
-      org.tyranid.db.es.Es.indexAll
-      sess.warn( "Re-Index initiated." )
-      web.redirect( parent.wpath )
-
-    case "/eye" =>
-      user( 'eye ) = !user.b( 'eye )
-      user.save
-      sess.notice( "Debug has been turned " + ( user.b( 'eye ) ? "ON" | "OFF" ) + "." )
-      web.redirect( parent.wpath )
-    
-    case "/sms" =>
-      SMS.enabled = !SMS.enabled
-      sess.notice( "SMS has been turned " + ( SMS.enabled ? "ON" | "OFF" ) + "." )
-      web.redirect( parent.wpath )
-    
-    case "/email" =>
-      Email.enabled = !Email.enabled
-      sess.notice( "Email has been turned " + ( Email.enabled ? "ON" | "OFF" ) + "." )
-      web.redirect( parent.wpath )
-    
-    case "/pdf" =>
-      val obj = TyranidConfig()
-      obj( 'onePagePdf ) = !B.onePagePdf
-      TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "onePagePdf" -> obj.b( 'onePagePdf ) ) ) )
-      sess.notice( "One Page PDF has been turned " + ( B.onePagePdf ? "ON" | "OFF" ) + "." )
-      web.redirect( parent.wpath )
-
-    case "/recaptcha" =>
-      val obj = TyranidConfig()
-      obj( 'recaptcha ) = !B.requireReCaptcha
-      TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "recaptcha" -> obj.b( 'recaptcha ) ) ) )
-      sess.notice( "Recaptcha has been turned " + ( B.requireReCaptcha ? "ON" | "OFF" ) + "." )
-      web.redirect( parent.wpath )
-
-    case "/accessLogs" =>
-      val obj = TyranidConfig()
-      obj( 'accessLogs ) = !B.accessLogs
-      TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "accessLogs" -> obj.b( 'accessLogs ) ) ) )
-      sess.notice( "Access Logs have been turned " + ( B.accessLogs ? "ON" | "OFF" ) + "." )
-      web.redirect( parent.wpath )
-
-    case _ =>
-      _404
+    case "/" =>
+      val cmd = web.s( 'cmd )
+      
+      cmd match {
+      case "remap" =>
+        org.tyranid.db.es.Es.mapAll
+        sess.warn( "Re-Map initiated." )
+  
+      case "reindex" =>
+        org.tyranid.db.es.Es.indexAll
+        sess.warn( "Re-Index initiated." )
+  
+      case "eye" =>
+        user( 'eye ) = !user.b( 'eye )
+        user.save
+        
+        // This should change if T eye icons are seen in the current session
+        //common = JsModel( sess.user.toClientCommonMap(), "common" )
+        sess.notice( "Debug has been turned " + ( user.b( 'eye ) ? "ON" | "OFF" ) + "." )
+      
+      case "sms" =>
+        SMS.enabled = !SMS.enabled
+        sess.notice( "SMS has been turned " + ( SMS.enabled ? "ON" | "OFF" ) + "." )
+      
+      case "email" =>
+        Email.enabled = !Email.enabled
+        sess.notice( "Email has been turned " + ( Email.enabled ? "ON" | "OFF" ) + "." )
+      
+      case "pdf" =>
+        val obj = TyranidConfig()
+        obj( 'onePagePdf ) = !B.onePagePdf
+        TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "onePagePdf" -> obj.b( 'onePagePdf ) ) ) )
+        sess.notice( "One Page PDF has been turned " + ( B.onePagePdf ? "ON" | "OFF" ) + "." )
+  
+      case "recaptcha" =>
+        val obj = TyranidConfig()
+        obj( 'recaptcha ) = !B.requireReCaptcha
+        TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "recaptcha" -> obj.b( 'recaptcha ) ) ) )
+        sess.notice( "Recaptcha has been turned " + ( B.requireReCaptcha ? "ON" | "OFF" ) + "." )
+  
+      case "logs" =>
+        val obj = TyranidConfig()
+        obj( 'accessLogs ) = !B.accessLogs
+        TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "accessLogs" -> obj.b( 'accessLogs ) ) ) )
+        sess.notice( "Access Logs have been turned " + ( B.accessLogs ? "ON" | "OFF" ) + "." )
+  
+      case _ =>
+        //_404
+      }
     }
+    
+    web.jsRes( 
+      common, 
+      JsModel(
+         Map(
+           "config" -> 
+             Map(
+              "eye"        -> user.b( 'eye ),
+              "sms"        -> SMS.enabled,
+              "onePagePdf" -> B.onePagePdf,
+              "email"      -> Email.enabled,
+              "recaptcha"  -> B.requireReCaptcha,
+              "accessLogs" -> B.accessLogs
+            )
+         ),
+         name = "main"
+     ) )
   }
 }
-
-

@@ -395,6 +395,7 @@ trait Record extends Valid with BsonObject with QuickCache {
 
     report.query.searchFields forall { sf =>
       val value = searchRec( sf.name )
+      println( sf.name + ": " + value )
       value == null || sf.matchesSearch( run, value, this )
     }
   }

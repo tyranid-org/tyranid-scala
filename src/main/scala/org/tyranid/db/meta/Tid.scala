@@ -30,6 +30,8 @@ import org.tyranid.db.{ Domain, DbArray, DbLink, DbTid, Entity, ArrayIndex, Mult
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.db.ram.RamEntity
+import org.tyranid.json.JqHtml
+import org.tyranid.collection.ConcurrentExpireAutoMap
 import org.tyranid.math.Base64
 import org.tyranid.report.AutoQuery
 import org.tyranid.ui.{ PathField, Tab, TabBar }
@@ -89,7 +91,7 @@ case class DeleteResults( ramReferences:Seq[Record], cascadeFailures:Seq[Record]
 }
 
 object Tid {
-  def eye( tid:String ) = T.isEye |* <a href={ "/admin/tid?tid=" + tid } class="eyeBtn">T</a>
+  def eye( tid:String ) = T.isEye |* <a href={ "#admin/tid/" + tid } class="eyeBtn">T</a>
 
   def isRecordTid( tid:String ) = tid.length > 4
 
@@ -361,7 +363,7 @@ object Tidlet extends Weblet {
     if ( tid.endsWith( "not-available" ) )
       Text( tid )
     else
-      <a href={ wpath + "/field?tid=" + tid }>{ if ( label.notBlank ) label else tid }</a>
+      <a href={ "#admin/tid/" + tid }>{ if ( label.notBlank ) label else tid }</a>
 
   def handle( web:WebContext ) = {
     val t = T
@@ -378,28 +380,28 @@ object Tidlet extends Weblet {
 
     rpath match {
     case "/delete" =>
-      shell( delete( tid ) )
+      web.jsRes( JqHtml( "#adminContent", delete( tid ) ) )
 
     case _ =>
       if ( "/" == rpath || entityTabBar.has( rpath ) || recordTabBar.has( rpath ) )
-        shell( ui( tid ) )
+        web.jsRes( JqHtml( "#adminContent", ui( tid ) ) )
       else
         _404
     }
   }
 
   val entityTabBar =
-    TabBar( this,
-      Tab( "/attrib", Text( "Attributes" ), default = true ),
-      Tab( "/record", Text( "Records" ) )
+    TabBar( this, 
+      Tab( "/attrib", Text( "Attributes" ), default = true, cls = "btn btn-inverse" ),
+      Tab( "/record", Text( "Records" ), cls = "btn btn-inverse" )
     )
 
   val recordTabBar =
     TabBar( this,
-      Tab( "/field",   Text( "Fields" ), default = true ),
-      Tab( "/json",    Text( "JSON" ) ),
-      Tab( "/ref",     Text( "Refs" ) ),
-      Tab( "/version", Text( "Versions" ) )
+      Tab( "/field",   Text( "Fields" ), default = true, cls = "btn btn-inverse" ),
+      Tab( "/json",    Text( "JSON" ), cls = "btn btn-inverse" ),
+      Tab( "/ref",     Text( "Refs" ), cls = "btn btn-inverse" ),
+      Tab( "/version", Text( "Versions" ), cls = "btn btn-inverse" )
     )
 
   def ui( tid:String ) = {
@@ -408,16 +410,10 @@ object Tidlet extends Weblet {
     val rec = id != null |* Record.byTid( tid )
 
     <div class="tiditor" style="padding-bottom: 50px;">
-     <div class="plainbox">
-      <div class="content">
-       <form method="post" action={ wpath } style="margin-top:8px;" class="handling">
-        <div style="padding:4px;">
-         <label for="tid" style="float:left; width:40px; font-size:16px; line-height:28px; color:#888;">TID</label>
-         <input type="text" id="tid" name="tid" value={ tid } style="font-size:20px; width:300px;"/>
-         <input type="submit" class="btn-success btn" value="Analyze" style="font-size:16px;"/>
-        </div>
-       </form>
-      </div>
+     <div style="padding:4px; padding-top: 10px">
+      <label for="tid" style="float:left; width:40px; font-size:16px; line-height:28px; color:#888;">TID: </label>
+      <input type="text" id="tid" name="tid" value={ tid } style="font-size:20px; width:300px;"/>
+      <input type="button" data-act="analyze" class="btn-success btn" value="Analyze" style="font-size:16px;vertical-align:top;"/>
      </div>
      { if ( rec.isDefined ) {
          val r = rec.get
@@ -425,9 +421,9 @@ object Tidlet extends Weblet {
          <div class="fieldHeader">
           <label>Type</label><span>Record</span>
           <label style="margin-left:16px;">Label</label><span>{ r.label.summarize().encUnicode }</span>
-          <label style="margin-left:16px;">Entity</label><span><a href={ wpath + "/field?tid=" + entity.tid }>{ entity.name }</a></span>
+          <label style="margin-left:16px;">Entity</label><span><a href={ "#admin/tid/" + entity.tid }>{ entity.name }</a></span>
           <label style="margin-left:16px;">Storage</label><span>{ entity.storageName + ( entity.embedded |* "-Embedded" ) }</span>
-          { entity.isInstanceOf[MongoEntity] |* <a href={ wpath + "/delete?tid=" + tid } class="btn-danger btn" style="float:right; margin:2px 4px;">Delete</a> }
+          { entity.isInstanceOf[MongoEntity] |* <a data-act="delete" data-tid={ tid } class="btn-danger btn" style="float:right;">Delete</a> }
          </div> ++
          { recordTabBar.draw(
              qs = "?tid=" + tid,
@@ -594,8 +590,8 @@ object Tidlet extends Weblet {
      </div>
     </div> ++
     <div style="margin-bottom:50px;">
-      { results.success && !deleting |* <a href={ wpath + "/delete?tid=" + tid + "&deleting=true" } class="btn-danger btn">Actually Delete</a> }
-      <a href={ wpath + "?tid=" + tid } class="btn">Cancel</a>
+      { results.success && !deleting |* <a data-tid={ tid } data-act="deleteConfirm" class="btn-danger btn">Actually Delete</a> }
+      <a data-tid={ tid } data-act="cancelDelete" class="btn btn-inverse">Cancel</a>
     </div>
   }
 

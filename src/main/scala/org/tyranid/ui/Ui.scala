@@ -264,7 +264,7 @@ case class TabBar( weblet:Weblet, tabs:Tab* ) {
   def has( rpath:String ) = tabs.exists( _.rpath == rpath )
 
   def draw( qs:String = "", except:Seq[String] = Nil ) = {
-    val isRb = false && T.LnF == LnF.RetailBrand 
+    val isRb = T.LnF == LnF.RetailBrand 
     val rpath = weblet.rpath
 
     val activeTabs = tabs filter { tab => !except.exists( _ == tab.rpath ) }
