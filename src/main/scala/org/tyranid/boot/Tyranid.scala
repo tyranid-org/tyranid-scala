@@ -83,7 +83,9 @@ object TyranidConfiglet extends Weblet {
       case "eye" =>
         user( 'eye ) = !user.b( 'eye )
         user.save
-        common = JsModel( sess.user.toClientCommonMap(), "common" )
+        
+        // This should change if T eye icons are seen in the current session
+        //common = JsModel( sess.user.toClientCommonMap(), "common" )
         sess.notice( "Debug has been turned " + ( user.b( 'eye ) ? "ON" | "OFF" ) + "." )
       
       case "sms" =>
