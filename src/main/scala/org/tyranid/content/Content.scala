@@ -670,10 +670,10 @@ trait ContentMeta extends PrivateKeyEntity {
   "size"              is DbLong               ;
   "title"             is DbChar(128)          is SearchText;
 
-  "desc"              is DbText               as "description" is SearchText;
+  "desc"              is DbText               as "description" is 'client is SearchText;
 
   // Messages
-  "m"                 is DbChar(1024)         as "message" is 'label is SearchText;
+  "m"                 is DbChar(1024)         as "message" is 'label is 'client is SearchText;
   "r"                 is DbArray(Comment)     as "Replies";
 
   // Image / Thumbnail
