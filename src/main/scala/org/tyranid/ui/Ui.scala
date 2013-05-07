@@ -307,7 +307,7 @@ case class Tab( rpath:String, label:NodeSeq, cls:String = null, default:Boolean 
       }
 
       <a class={ cls } href={ ( isRb ? "javascript:void(0);" | ( fpath + qs ) ) }
-         data-act={ isRb |* Some( Text( Form.attrJson( Map( "href" -> ( fpath + qs ) ) ) ) ) }>{ label }</a>
+         data-sbt={ isRb |* Some( Text( Form.attrJson( Map( "href" -> ( fpath + qs ) ) ) ) ) }>{ label }</a>
     }</li>
   }
 }

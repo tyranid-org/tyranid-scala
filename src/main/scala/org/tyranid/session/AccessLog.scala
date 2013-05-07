@@ -544,9 +544,9 @@ object Accesslet extends Weblet {
 
          <tr>
           <td>{
-            singleOrg |* <a href={ "/admin/tid?tid=" + users.head.orgTid }>{ users.head.orgLabel }</a>
+            singleOrg |* <a href={ "#admin/tid/" + users.head.orgTid }>{ users.head.orgLabel }</a>
           }</td>
-          <td>{ Unparsed( users.sortBy( _.name.toLowerCase ).map( u => "<a href=\"/admin/tid?tid=" + u.tid + "\">" + u.name + "</a>" ).mkString( ", " ) ) }</td>
+          <td>{ Unparsed( users.sortBy( _.name.toLowerCase ).map( u => "<a href=\"#admin/tid/" + u.tid + "\">" + u.name + "</a>" ).mkString( ", " ) ) }</td>
           <td>{ Unparsed( browsers.map( b => "<a href=\"/admin/log?bid=" + b.bid + "\">" + b.bid + "</a>" ).mkString( ", " ) ) }</td>
          </tr>
        }
@@ -606,8 +606,8 @@ object Accesslet extends Weblet {
        for ( userData <- users.values.toSeq.sortBy( -_.totalMilestones );
              u = userData.user ) yield
          <tr>
-          <td>{ u.org != null |* <a href={ "/admin/tid?tid=" + u.orgTid }>{ u.orgLabel }</a> }</td>
-          <td><a href={ "/admin/tid?tid=" + u.tid }>{ u.label }</a></td>
+          <td>{ u.org != null |* <a href={ "#admin/tid/" + u.orgTid }>{ u.orgLabel }</a> }</td>
+          <td><a href={ "#admin/tid/" + u.tid }>{ u.label }</a></td>
           { for ( milestone <- milestones ) yield
               <td>{ userData.milestoneCount( milestone ) }</td> }
          </tr>

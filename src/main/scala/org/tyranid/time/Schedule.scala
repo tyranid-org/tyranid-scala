@@ -143,7 +143,6 @@ object Schedulelet extends Weblet {
     case "/toggle" =>
       task foreach { task =>
         task.active = !task.active
-//        T.session.notice( ( task.active ? "Activated" | "Deactivated" ) + ": " + task.subject )
       }
 
       web.jsRes( 

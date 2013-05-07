@@ -93,7 +93,8 @@ object Search {
     Subst,
     Gte,
     Lte,
-    Custom
+    Custom,
+    OrgSubst
   )
 
   case object Equals extends Search {
@@ -116,6 +117,21 @@ object Search {
     def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) = f.basePath.s( rec ).notBlank
   }
 
+  case object OrgSubst extends Search {
+    val name = "orgsubst"
+
+    def mongoSearch( run:Run, f:Field, searchObj:DBObject, value:Any ) = {
+      if ( value._s.notBlank ) {
+        val orgs = B.Org.db.find( Mobj( "name" -> ( ".*" + value._s.encRegex + ".*" ).toPatternI ), Mobj( "_id" -> 1 ) ).toSeq
+        
+        if ( orgs.size > 0 )
+          searchObj( f.baseName ) = Mobj( $in -> orgs.map( o => o.oid( '_id ) ).toMlist )
+      }
+    }
+
+    def matchesSearch( run:Run, f:PathField, searchValue:Any, rec:Record ) = false
+  }
+  
   case object Subst  extends Search {
     val name = "subst"
 
@@ -295,7 +311,10 @@ trait CustomField extends Field {
 
   def cell( s:Scope ):NodeSeq = throw new UnsupportedOperationException
 
-  def matchesSearch( run:Run, value:Any, rec:Record ) = search == null
+  def matchesSearch( run:Run, value:Any, rec:Record ) = {
+    println( "WTF" )
+    search == null
+  }
 }
 
 

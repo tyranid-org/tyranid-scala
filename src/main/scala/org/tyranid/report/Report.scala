@@ -211,7 +211,7 @@ case class AutoQuery( entity:Entity ) extends Query {
     ( new CustomField {
       def name = "tid"
       override lazy val label = "TID"
-      override def cell( s:Scope ) = <a href={ "/admin/tid?tid=" + s.rec.tid } class="eyeBtn" style="margin:0 1px;">T</a>
+      override def cell( s:Scope ) = <a href={ "#admin/tid/" + s.rec.tid } class="eyeBtn" style="margin:0 1px;">T</a>
     } ) +:
     ( entity.makeView.vas.filter( _.att.isLabel ).map( fieldFor ).toSeq.sortBy( _.label ) ++
       entity.makeView.vas.filter( va => !va.att.isLabel && !va.domain.isInstanceOf[Entity] ).map( fieldFor ).toSeq.sortBy( _.label ) )
