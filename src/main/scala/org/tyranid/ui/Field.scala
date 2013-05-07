@@ -311,10 +311,7 @@ trait CustomField extends Field {
 
   def cell( s:Scope ):NodeSeq = throw new UnsupportedOperationException
 
-  def matchesSearch( run:Run, value:Any, rec:Record ) = {
-    println( "WTF" )
-    search == null
-  }
+  def matchesSearch( run:Run, value:Any, rec:Record ) = search == null
 }
 
 
