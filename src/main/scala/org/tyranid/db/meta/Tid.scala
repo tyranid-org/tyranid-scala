@@ -30,6 +30,8 @@ import org.tyranid.db.{ Domain, DbArray, DbLink, DbTid, Entity, ArrayIndex, Mult
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.db.ram.RamEntity
+import org.tyranid.json.JqHtml
+import org.tyranid.collection.ConcurrentExpireAutoMap
 import org.tyranid.math.Base64
 import org.tyranid.report.AutoQuery
 import org.tyranid.ui.{ PathField, Tab, TabBar }
@@ -89,7 +91,7 @@ case class DeleteResults( ramReferences:Seq[Record], cascadeFailures:Seq[Record]
 }
 
 object Tid {
-  def eye( tid:String ) = T.isEye |* <a href={ "/admin/tid?tid=" + tid } class="eyeBtn">T</a>
+  def eye( tid:String ) = T.isEye |* <a href={ "#tid?tid=" + tid } class="eyeBtn">T</a>
 
   def isRecordTid( tid:String ) = tid.length > 4
 
@@ -378,11 +380,13 @@ object Tidlet extends Weblet {
 
     rpath match {
     case "/delete" =>
-      shell( delete( tid ) )
+      web.jsRes( JqHtml( "#adminContent", delete( tid ) ) )
+      //shell( delete( tid ) )
 
     case _ =>
       if ( "/" == rpath || entityTabBar.has( rpath ) || recordTabBar.has( rpath ) )
-        shell( ui( tid ) )
+        web.jsRes( JqHtml( "#adminContent", ui( tid ) ) )
+        //shell( ui( tid ) )
       else
         _404
     }
