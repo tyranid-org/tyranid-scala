@@ -310,7 +310,7 @@ $( $('#idp').focus() );
         if ( save )
           u.save
           
-        // Add them to any groups specified
+        // Add or remove them them to any groups specified
         if ( mustHaveGroups && groupNames.size > 0 ) {
           val groups = Group.db.find( Mobj( "org" -> orgId, "ssoSynced" -> true ), Mobj( "name" -> 1 ) ).toSeq
           
