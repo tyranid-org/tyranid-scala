@@ -39,6 +39,7 @@ object LoginCookie {
 
   def getUser:Option[User] = {
     val cv = T.web.req.cookieValue( name, domain = domain )
+    
     if ( cv != null ) {
       cv.splitFirst( '|' ) match {
       case ( tid, token ) if !tid.endsWith( "null" ) =>
