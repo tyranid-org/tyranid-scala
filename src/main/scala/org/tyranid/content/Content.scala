@@ -641,8 +641,8 @@ trait ContentMeta extends PrivateKeyEntity {
   "expDate"           is DbDate               as "Expiration Date" is SearchText; 
   "approvalDate"      is DbDate               as "Approval Date" is SearchText; 
   
-  "lastModified"      is DbDateTime           is 'required is SearchText;
-  "lastModifiedBy"    is DbLink(B.User)       is 'required;
+  "lastModified"      is DbDateTime           is 'required is SearchText is 'client;
+  "lastModifiedBy"    is DbLink(B.User)       is 'required is 'client;
   "lastModifiedByOrg" is DbLink(B.Org)        is 'required;
 
   "lastAction"        is DbDateTime           is 'required;
@@ -666,7 +666,7 @@ trait ContentMeta extends PrivateKeyEntity {
   "link"              is DbUrl                ;
   "icon"              is DbUrl                ; // ( TODO:  should be DbImage? ) for links, this is the favicon
   "sourceUrl"         is DbUrl                ;
-  "fileName"          is DbChar(128)          is 'required;
+  "fileName"          is DbChar(128)          is 'required is 'client;
   "size"              is DbLong               ;
   "title"             is DbChar(128)          is SearchText;
 
