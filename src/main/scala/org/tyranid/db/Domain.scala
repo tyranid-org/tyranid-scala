@@ -60,6 +60,8 @@ trait Domain extends Valid {
 		case null => ""
 		case v    => v.toString
 		}
+
+  def tid( v:Any ):String = throw new UnsupportedOperationException
 	
 	def show( s:Scope ) = true
 
@@ -493,6 +495,9 @@ case class DbTid( of:Entity* ) extends LimitedText {
 
   override val isLink = true
 
+  override def tid( v:Any ) = v._s
+
+
 	override def see( v:Any ) = {
 
     if ( v == null ) {
@@ -519,6 +524,8 @@ case class DbLink( toEntity:Entity ) extends Domain {
   override def recordTidToId( recordTid:String ):Any = toEntity.idAtt.flatten( _.domain.recordTidToId( recordTid ), toEntity.problem( "embedded entities don't have IDs" ) )
 
   def idToTid( v:Any ) = toEntity.idToTid( v )
+
+  override def tid( v:Any ) = idToTid( v )
 
   override def ui( s:Scope, f:PathField ) = {
     if ( f.scopeOpts( s ).exists( _._1 == "readonly" ) ) {

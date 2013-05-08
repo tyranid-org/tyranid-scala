@@ -292,6 +292,9 @@ trait Record extends Valid with BsonObject with QuickCache {
 
   def oid( va:ViewAttribute ) = apply( va ).asInstanceOf[ObjectId]
 
+  def tid( va:ViewAttribute ):String = va.domain.tid( apply( va ) )
+  def tid( key:String ):String       = tid( view( key ) )
+
   override def o( name:String ) = o( view( name ) )
   def o( va:ViewAttribute ) = apply( va ).asInstanceOf[BsonObject]
 
