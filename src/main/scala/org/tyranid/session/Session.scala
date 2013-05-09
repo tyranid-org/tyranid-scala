@@ -298,6 +298,9 @@ trait Session extends QuickCache {
       log( Event.Login, "bid" -> TrackingCookie.get )
 
       B.loginListeners.foreach( _( user ) )
+      
+      if ( user.b( 'monitored ) )
+        log( Event.Alert, "m" -> ( "User " + user.s( 'email ) + " just logged in." ) )
     } else {
       put( "incognito", Boolean.box( true ) )
     }

@@ -183,7 +183,10 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
     db.save( l )
 
     if ( ( effEvent == Event.StackTrace || effEvent == Event.Alert ) && B.PRODUCTION ) {
-      println( "*** stack trace/alert entering" )
+      
+      if ( effEvent == Event.StackTrace ) 
+        println( "*** stack trace/alert entering" )
+        
       val sb = new StringBuilder
 
       if ( user != null )
