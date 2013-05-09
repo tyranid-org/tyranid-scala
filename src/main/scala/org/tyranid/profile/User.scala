@@ -106,6 +106,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "activationCode" is DbChar(8)           as "Code";
   "resetCode"      is DbChar(8)           ;
   "loginToken"     is DbChar(10)          ;
+  "monitored"      is DbBoolean           ;
 
   "sms"            is SMS                 ;
 
