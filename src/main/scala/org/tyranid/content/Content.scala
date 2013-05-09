@@ -388,23 +388,25 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
 
   "_id"            is DbInt                  is 'id;
 
+  "id"             is DbInt                  is 'client computed { _.i( '_id ) };
+
   "on"             is DbDateTime             is 'client;
-  "m"              is DbChar(1024)           as "message" is 'label;
+  "m"              is DbChar(1024)           as "Message"     is 'client is 'label;
 
-  "pn"             is DbInt                  as "Page Number";
-  "x"              is DbDouble               as "X";
-  "y"              is DbDouble               as "Y";
-  "w"              is DbDouble               as "When"; // Used for timeline (video annotation)
-  "wi"             is DbDouble               as "Width"; // Used for boxed annotations
-  "hi"             is DbDouble               as "Height"; // Used for boxed annotations
+  "pn"             is DbInt                  as "Page Number" is 'client;
+  "x"              is DbDouble               as "X"           is 'client;
+  "y"              is DbDouble               as "Y"           is 'client;
+  "w"              is DbDouble               as "When"        is 'client; // Used for timeline (video annotation)
+  "wi"             is DbDouble               as "Width"       is 'client; // Used for boxed annotations
+  "hi"             is DbDouble               as "Height"      is 'client; // Used for boxed annotations
 
-  "r"              is DbArray(Comment)       as "Replies";
+  "r"              is DbArray(Comment)       as "Replies"     is 'client;
 
-  "pri"            is DbBoolean              as "Priority"; // a.k.a. "important" or "urgent"
+  "pri"            is DbBoolean              as "Priority"    is 'client; // a.k.a. "important" or "urgent"
 
   override def init = {
     super.init
-    "u"            is DbLink(B.User)         ;           // user who created the reply
+    "u"            is DbLink(B.User)         as "From"        is 'client; // user who created the reply
   }
 
   def maxId( comments:BasicDBList ):Int = {
