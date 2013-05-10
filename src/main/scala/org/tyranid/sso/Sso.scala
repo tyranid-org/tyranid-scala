@@ -43,6 +43,8 @@ object SsoMapping extends MongoEntity( tid = "a0Ut" ) {
   "emailAttrib"     is DbChar(20)    is 'required;
   "firstNameAttrib" is DbChar(20);
   "lastNameAttrib"  is DbChar(20);
+  "titleAttrib"     is DbChar(20);
+  "iconUrlAttrib"   is DbChar(30);
   "groupsAttrib"    is DbChar(20);
   "groupsAttribReq" is DbBoolean;
   "errorMessage"    is DbText;
@@ -117,7 +119,10 @@ $( $('#idp').focus() );
           mapping( "idpId" ) = web.s( 'idp )
           mapping( "emailAttrib" ) = web.s( 'email )
           mapping( "firstNameAttrib" ) = web.s( 'fname )
-          mapping( "lastNameAttrib" ) = web.s( 'lname )
+          mapping( "lastNameAttrib" ) = web.s( 'lname )          
+          mapping( "titleAttrib" ) = web.s( 'title )
+          mapping( "iconUrlAttrib" ) = web.s( 'iconUrl )
+          
           mapping.save
           
           web.jsRes( JqHtml( "#main", pageWrapper(
@@ -221,6 +226,16 @@ $( $('#idp').focus() );
         newUser( 'createdOn ) = new Date
         newUser( 'password ) = ""
         
+        val titleAttrib = mapping.s( 'titleAttrib )
+        
+        if ( titleAttrib.notBlank )
+          newUser( 'title ) = json.s( titleAttrib )
+          
+        val iconUrlAttrib = mapping.s( 'iconUrlAttrib )
+        
+        //if ( iconUrlAttrib.notBlank )
+        //  newUser( 'firstName ) = json.s( iconUrlAttrib )
+          
         if ( mapping.b( 'actOptOut ) )
           newUser( 'actOptOut ) = true
           
@@ -307,6 +322,25 @@ $( $('#idp').focus() );
           save = true
         }
 
+        val titleAttrib = mapping.s( 'titleAttrib )
+        
+        if ( titleAttrib.nonBlank ) {
+          val title = json.s( titleAttrib )
+          
+          if ( title.notBlank ) {
+            u( 'title ) = json.s(title )
+            save = true
+          }
+        }
+        
+//        if ( u.s( 'thumbnail ).isBlank ) {
+//           user( 'thumbnail ) = publicBucket.url( path )
+//
+//          val titleAttrib = mapping.s( 'titleAttrib )Ω
+//          u( 'title ) = json.s( titleAttrib )
+//          save = true
+//        }
+        
         if ( save )
           u.save
           
@@ -395,6 +429,14 @@ $( $('#idp').focus() );
        <div class="row-fluid step2">
         <label for="lname" class="span4">Last Name Attribute:</label>
         <input type="text" class="span8" name="lname" id="lname"/>
+       </div>
+       <div class="row-fluid step2">
+        <label for="title" class="span4">Title Attribute:</label>
+        <input type="text" class="span8" name="title" id="title"/>
+       </div>
+       <div class="row-fluid step2">
+        <label for="iconUrl" class="span4">Icon URL Attribute:</label>
+        <input type="text" class="span8" name="iconUrl" id="iconUrl"/>
        </div>
        <div class="row-fluid">
          <div class="span12" style="height:40px;padding-top:8px;"><button type="submit" id='ssoBtn' class="btn-success btn pull-right"><span>Lookup</span> <i class="icon-caret-right"></i></button></div>
