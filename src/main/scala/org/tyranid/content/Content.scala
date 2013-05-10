@@ -678,6 +678,8 @@ trait ContentMeta extends PrivateKeyEntity {
   "m"                 is DbChar(1024)         as "message" is 'label is 'client is SearchText;
   "r"                 is DbArray(Comment)     as "Replies";
 
+  "rc"                is DbInt                as "Reply Count" is 'temporary computed( _.as[Content].commentCount );
+
   // Image / Thumbnail
   "img"               is DbUrl                is 'client; // TODO:  change to DbImage?
   "imgH"              is DbInt                help Text( "The actual height of the image." );
@@ -699,6 +701,8 @@ trait ContentMeta extends PrivateKeyEntity {
   "archived"          is DbBoolean            is 'client;
   
   "dist"              is DbBoolean            is 'client; // If true, then if a group, it is a distribution group 
+
+  "contents"          is DbArray(DbTid())     is 'temporary is 'client; // contains a sequence of the tids for client for this content
   }
 
   override def searchText = true
