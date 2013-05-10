@@ -32,7 +32,7 @@ import org.tyranid.http.UserAgent
 import org.tyranid.json.{ Js, JsCmd }
 import org.tyranid.Imp._
 import org.tyranid.math.Base62
-import org.tyranid.profile.User
+import org.tyranid.profile.{ User, UserStat, UserStatType }
 import org.tyranid.report.Query
 import org.tyranid.social.Social
 import org.tyranid.time.Time
@@ -293,8 +293,10 @@ trait Session extends QuickCache {
         updates( 'tz ) = id
         user( 'tz ) = id
       }
-
-      B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> updates, $inc -> Mobj( "numLogins" -> 1 ) ) )
+      
+      UserStat.login( user.id )
+      B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> updates ) )
+      //B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> updates, $inc -> Mobj( "numLogins" -> 1 ) ) )
       log( Event.Login, "bid" -> TrackingCookie.get )
 
       B.loginListeners.foreach( _( user ) )

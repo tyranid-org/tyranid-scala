@@ -30,6 +30,8 @@ import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDouble, DbEmail, DbLink, D
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
+import org.tyranid.db.ram.RamEntity
+import org.tyranid.db.tuple.{ Tuple, TupleView }
 import org.tyranid.image.DbThumbnail
 import org.tyranid.sms.SMS
 import org.tyranid.locale.{ Country, Language }
@@ -38,6 +40,47 @@ import org.tyranid.session.{ Session, ThreadData }
 import org.tyranid.ui.LnF
 import org.tyranid.web.{ Comet, WebContext }
 
+object UserStatType extends RamEntity( tid = "a0Nt" ) {
+  type RecType = UserStatType
+  override def convert( view:TupleView ) = new UserStatType( view )
+
+  "_id"     is DbInt      is 'id;
+  "name"    is DbChar(64) is 'label;
+
+  override val addNames = Seq( "_id", "name" )
+  
+  val LoginId     = 1
+
+  val Login    = add( LoginId,     "Login" )
+}
+
+case class UserStatType( override val view:TupleView ) extends Tuple( view )
+
+object UserStat extends MongoEntity( tid = "a0Ot" ) {
+  "_id"  is DbMongoId            is 'id is 'client;
+  "s"    is DbLink(UserStatType) is 'required;
+  "t"    is DbDateTime           is 'required;
+  "u"    is DbLink(B.User)       is 'owner;
+  
+  val index = {
+    db.ensureIndex( Mobj( "s" -> 1, "u" -> 1, "t" -> 1 ) )
+    db.ensureIndex( Mobj( "u" -> 1, "s" -> 1, "t" -> 1 ) )
+  }
+  
+  private def create( userId:ObjectId, statId:Int ) {
+    background {
+      val stat = UserStat.make
+      stat( 's ) = statId
+      stat( 't ) = new Date
+      stat( 'u ) = userId
+      stat.save
+    }
+  }
+  
+  def login( userId:Any ) = create( userId._oid, UserStatType.LoginId )
+}
+
+class UserStat( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserStat.makeView, obj, parent ) {}
 
 object ContactInfo extends MongoEntity( tid = "a0Ov" ) {
   "_id"              is DbMongoId  is 'id;
