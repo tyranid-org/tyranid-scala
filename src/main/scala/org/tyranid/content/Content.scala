@@ -678,6 +678,8 @@ trait ContentMeta extends PrivateKeyEntity {
   "m"                 is DbChar(1024)         as "message" is 'label is 'client is SearchText;
   "r"                 is DbArray(Comment)     as "Replies";
 
+  "rc"                is DbInt                as "Reply Count" is 'temporary computed( _.as[Content].commentCount );
+
   // Image / Thumbnail
   "img"               is DbUrl                is 'client; // TODO:  change to DbImage?
   "imgH"              is DbInt                help Text( "The actual height of the image." );
