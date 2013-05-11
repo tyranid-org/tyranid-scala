@@ -76,6 +76,7 @@ object Event extends RamEntity( tid = "a0It" ) {
   val NewInvite   = add( 26, "NewInvite"  )
   val Login       = add( 27, "Login"      )
   val EmailChange = add( 28, "Email Change" )
+  val Export      = add( 29, "Export"     )
 }
 
 case class Event( override val view:TupleView ) extends Tuple( view ) {

@@ -70,9 +70,7 @@ object Scheduler {
   }
 
   background {
-
     while ( true ) {
-      
       val size =
         tasks.synchronized {
           tasks.sortBy( _.nextMs )
@@ -103,11 +101,8 @@ object Schedulelet extends Weblet {
            "id" -> task.subject,
            "status" -> task.active,
            "runs" -> task.runs,
-           "lastRun" -> ( task.lastRun != null |* task.lastRun.toUserDateTimeStr ),
-           "nextRun"  -> ( if ( task.active )
-               new Date( task.nextMs ).toUserDateTimeStr
-             else
-               "---" )
+           "lastRun" -> ( ( task.lastRun == null ) ? 0 | task.lastRun ),
+           "nextRun"  -> ( task.active ? new Date( task.nextMs ) | 0 )
       )
     }
     
