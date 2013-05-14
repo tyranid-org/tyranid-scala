@@ -89,7 +89,7 @@ object MimeType {
   val types = Seq(
     MimeType( "application/illustrator",                                                   AdobeIllustrator,    "Adobe Illustrator",             Seq( "ai" ) ),
     MimeType( "application/msword",                                                        MicrosoftWord,       "Microsoft Word",                Seq( "doc", "dot" ) ),
-    MimeType( "application/octet-stream",                                                  null,                null,                            Seq( "bin", "exe" ) ),
+    MimeType( "application/octet-stream",                                                  null,                null,                            Seq( "bin", "exe", "aep" ) ),
     MimeType( "application/oda",                                                           null,                null,                            Seq( "oda" ) ),
     MimeType( "application/postscript",                                                    null,                "PostScript",                    Seq( "ps", "eps" ) ),
     MimeType( "application/pdf",                                                           PDF,                 "Portable Document Format",      Seq( "pdf" ) ),
@@ -142,6 +142,7 @@ object MimeType {
     MimeType( "application/x-dvi",                                                         null,                "Digital Video Interface",       Seq( "dvi" ) ),
     MimeType( "application/x-gtar",                                                        null,                "GNU Tape Archive",              Seq( "gtar" ) ),
     MimeType( "application/x-hdf",                                                         null,                null,                            Seq( "hdf" ) ),
+    MimeType( "application/x-indesign",                                                    null,                null,                            Seq( "indd" ) ),    
     MimeType( "application/x-latex",                                                       null,                "LaTeX",                         Seq( "latex" ) ),
     MimeType( "application/x-mif",                                                         null,                "MIF",                           Seq( "mif" ) ),
     MimeType( "application/x-netcdf",                                                      null,                null,                            Seq( "cdf", "nc" ) ),
@@ -157,6 +158,7 @@ object MimeType {
     MimeType( "application/x-troff-man",                                                   null,                "troff man",                     Seq( "man" ) ),
     MimeType( "application/x-troff-me",                                                    null,                "troff me",                      Seq( "me" ) ),
     MimeType( "application/x-troff-ms",                                                    null,                "troff ms",                      Seq( "ms" ) ),
+    MimeType( "application/x-rar-compressed",                                              null,                null,                            Seq( "rar" ) ),
     MimeType( "application/x-wais-source",                                                 null,                "WAIS",                          Seq( "src" ) ),
     MimeType( "application/x-zip-compressed",                                              ZIP,                 "ZIP",                           Seq( "zip" ) ),
 
@@ -228,6 +230,7 @@ object MimeType {
 
   // TODO:  remove once the new way is tested
   val oldByExtension = Map( 
+    "aep"      -> "application/octet-stream",
     "ai"       -> "application/illustrator",
     "aif"      -> "audio/x-aiff",
     "aifc"     -> "audio/x-aiff",
@@ -259,6 +262,7 @@ object MimeType {
     "hdf"      -> "application/x-hdf",
     "htm"      -> "text/html",
     "html"     -> "text/html",
+    "indd"     -> "application/x-indesign",
 
     "jpe"      -> "image/jpeg",
     "jpeg"     -> "image/jpeg",
@@ -326,6 +330,7 @@ object MimeType {
     
     "qt"       -> "video/quicktime",
     
+    "rar"      -> "application/x-rar-compressed",
     "ras"      -> "image/x-cmu-raster",
     "rgb"      -> "image/x-rgb",
     "roff"     -> "application/x-troff",
