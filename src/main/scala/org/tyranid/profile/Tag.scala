@@ -17,11 +17,13 @@
 
 package org.tyranid.profile
 
+import java.util.Date
+
 import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbInt, DbIntSerial, Record }
+import org.tyranid.db.{ DbChar, DbDateTime, DbInt, DbIntSerial, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.db.meta.AutoIncrement
@@ -31,6 +33,7 @@ import org.tyranid.web.{ Weblet, WebContext }
 object Tag extends MongoEntity( tid = "a0Ct" ) {
   "_id"         is DbIntSerial   is 'id is 'client;
   "name"        is DbChar(64)    is 'label is 'client;
+  "on"          is DbDateTime    ;
 
   "idInt"       is DbInt         is 'client is 'temporary computed( _.id )
 
@@ -48,7 +51,7 @@ object Tag extends MongoEntity( tid = "a0Ct" ) {
       db.findOne( Mobj( "name" -> tag ) ) match {
       case null =>
         val id = AutoIncrement( "tag" )
-        db.save( Mobj( "_id" -> id, "name" -> tag ) )
+        db.save( Mobj( "_id" -> id, "name" -> tag, "on" -> new Date() ) )
         id
 
       case to =>
