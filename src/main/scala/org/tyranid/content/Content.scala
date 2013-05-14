@@ -42,6 +42,7 @@ import org.tyranid.io.{ HasText, MimeType }
 import org.tyranid.profile.{ Group, Tag, User }
 import org.tyranid.secure.{ PrivateKeyEntity, PrivateKeyRecord }
 
+
 object ViewType extends RamEntity( tid = "a13v" ) {
   type RecType = ViewType
   override def convert( view:TupleView ) = new ViewType( view )
@@ -404,6 +405,8 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
 
   "pri"            is DbBoolean              as "Priority"    is 'client; // a.k.a. "important" or "urgent"
 
+  "task"           is DbChar(32)             as "Task"        is 'client; // tid of the task associated with this comment
+
   override def init = {
     super.init
     "u"            is DbLink(B.User)         as "From"        is 'client; // user who created the reply
@@ -538,6 +541,15 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
   }
 
   def count( comments:Seq[Comment] ):Int = comments.map( _.count ).sum
+
+  def parse( tid:String ) = {
+    val idx = tid.indexOf( '_' )
+
+    val contentTid = tid.substring( 0, idx )
+    val commentId = tid.substring( idx + 1 )._i
+
+    ( contentTid, commentId )
+  }
 }
 
 class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.makeView, obj, parent ) {
@@ -628,8 +640,8 @@ trait ContentMeta extends PrivateKeyEntity {
 
   "o"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Owners" is 'owner is 'client;
   "ownerTid"          is DbTid(B.User)        is 'temporary is 'client computed( _.as[Content].firstOwnerTid() )
-  //"isOwner"           is DbBoolean            is 'temporary is 'client computed( _.as[Content].isOwner( T.user ) );
-  //"ownerOrgTid"       is DbTid(B.Org)         is 'temporary is 'client computed( rec => B.Org.idToTid( B.User.byTid( rec.as[Content].firstOwnerTid() ).flatten( _.oid( 'org ), null ) )
+//"isOwner"           is DbBoolean            is 'temporary is 'client computed( _.as[Content].isOwner( T.user ) );
+//"ownerOrgTid"       is DbTid(B.Org)         is 'temporary is 'client computed( rec => B.Org.idToTid( B.User.byTid( rec.as[Content].firstOwnerTid() ).flatten( _.oid( 'org ), null ) )
   
   "v"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Viewers" is SearchAuth is 'client is 'auth;
   "subV"              is DbArray(DbTid(B.Org,B.User))       ; // for showing content inside a group, subviewers
@@ -662,6 +674,8 @@ trait ContentMeta extends PrivateKeyEntity {
   "fileMimeType"      is DbChar(64)           is SearchToken;
 
   "video"             is DbBoolean            ;
+
+  "taskComment"       is DbChar(32)           is 'client; // this is a commentTid (i.e. <content tid>_<comment id>)
 
 
   // Attachment / File
