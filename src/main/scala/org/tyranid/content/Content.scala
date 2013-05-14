@@ -699,6 +699,7 @@ trait ContentMeta extends PrivateKeyEntity {
   "locked"            is DbBoolean            is 'client;
   
   "archived"          is DbBoolean            is 'client;
+  "archivedOn"        is DbDateTime           ;
   
   "dist"              is DbBoolean            is 'client; // If true, then if a group, it is a distribution group 
 
