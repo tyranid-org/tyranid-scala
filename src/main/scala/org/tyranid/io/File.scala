@@ -131,6 +131,7 @@ class TxtExtractor extends TextExtractor {
       IOUtils.copy( in, out )
 
       out.flush
+      println( out._s )
       out._s
     } catch {
       case e =>
