@@ -1213,8 +1213,9 @@ abstract class Content( override val view:MongoView,
   def canEdit( tid: String ):Boolean            = isOwner( tid )
 
 
-  override def canView( user: org.tyranid.profile.User ):Boolean =
+  override def canView( user: org.tyranid.profile.User ):Boolean = {
     canView( user.tid ) || ( user.hasOrg && canView( user.org.tid ) )
+  }
 
   def isMember( user:org.tyranid.profile.User ) = canEdit( user ) || canView( user )
 
