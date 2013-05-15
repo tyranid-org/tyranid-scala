@@ -252,14 +252,17 @@ case class Report( query:Query ) {
   }
 
   def extractSearchRec = {
-    for ( sf <- query.searchFields )
+    for ( sf <- query.searchFields ) {
       searchRec( sf.name ) match {
       case v:Valuable => v.set( null )
       case _          => searchRec.remove( sf.name )
       }
+    }
 
     val s = Scope( searchRec )
-    query.searchFields.foreach { _.extract( s ) }
+    query.searchFields.foreach { 
+      _.extract( s ) 
+    }
 
     for ( sf <- query.searchFields )
       if ( sf.show != Show.Editable )

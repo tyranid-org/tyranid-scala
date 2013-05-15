@@ -197,7 +197,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
     val search = Mobj()
 
     for ( sf <- run.report.query.searchFields;
-          value = run.report.searchRec( sf.name ) )
+          value = run.report.searchRec( sf.name ) ) 
       sf.mongoSearch( run, search, value )
 
     var cursor = db.find( search )//, Mobj() )
