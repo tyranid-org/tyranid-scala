@@ -550,6 +550,15 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
 
     ( contentTid, commentId )
   }
+
+  def resolve( tid:String ) = {
+    val ( taskContentTid, taskCommentId ) = parse( tid )
+
+    val taskContent = Record.getByTid( taskContentTid ).as[Content]
+    val comment = taskContent.commentById( taskCommentId )
+ 
+    ( taskContent, comment )
+  }
 }
 
 class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.makeView, obj, parent ) {

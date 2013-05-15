@@ -385,7 +385,8 @@ class StringImp( s:String ) {
 	
   def toNodeSeq = if ( s != null ) Text( s ) else NodeSeq.Empty
 
-  def parseJson       = org.tyranid.json.JsonDecoder( s )
+  def parseJson       = if ( s.notBlank ) org.tyranid.json.JsonDecoder( s )
+                        else              null
   def parseJsonObject = parseJson.as[ObjectMap]
   def parseJsonArray  = parseJson.as[Array[Any]]
 
