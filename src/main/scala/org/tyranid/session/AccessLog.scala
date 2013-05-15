@@ -579,7 +579,7 @@ object Accesslet extends Weblet {
          val count = milestoneCounts( milestone )
 
         <tr>
-         <td><a href={ "?milestone=" + milestone.id }>{ milestone.name }</a></td>
+         <td><a href={ "#admin/activity/" + milestone.id /*"?milestone=" + milestone.id */ }>{ milestone.name }</a></td>
          <td>{ count.distinct }</td>
          <td>{ "%.0f%%".format( count.distinct._d * 100 / totalActiveUsers ) }</td>
          <td>{ "%.0f%%".format( count.distinct._d * 100 / totalUsers ) }</td>
