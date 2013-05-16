@@ -628,7 +628,8 @@ trait ContentMeta extends PrivateKeyEntity {
 
   "o"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Owners" is 'owner is 'client;
   "ownerTid"          is DbTid(B.User)        is 'temporary is 'client computed( _.as[Content].firstOwnerTid() )
-  //"isOwner"           is DbBoolean            is 'temporary is 'client computed( _.as[Content].isOwner( T.user ) );
+  "isOwner"           is DbBoolean            is 'temporary is 'client computed( _.as[Content].isOwner( T.user ) );
+  "isViewer"          is DbBoolean            is 'temporary is 'client computed( _.canView( T.user ) );
   //"ownerOrgTid"       is DbTid(B.Org)         is 'temporary is 'client computed( rec => B.Org.idToTid( B.User.byTid( rec.as[Content].firstOwnerTid() ).flatten( _.oid( 'org ), null ) )
   
   "v"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Viewers" is SearchAuth is 'client is 'auth;
@@ -1071,28 +1072,32 @@ abstract class Content( override val view:MongoView,
 
   def writers = owners
   
-  def viewerUsers = {
-    val userTids:mutable.ArrayBuffer[String] = new mutable.ArrayBuffer[String]
-    
-    viewerTids foreach { vTid =>
-      vTid match {
-        case userTid if B.User.hasTid( userTid ) && !userTids.contains( userTid ) =>
-          userTids += userTid
-        case groupTid if Group.hasTid( groupTid ) =>
-          val g = Group.getByTid( groupTid )
 
-          g.viewerTids foreach { guTid =>
-            if ( B.User.hasTid( guTid ) && !userTids.contains( guTid ) )
-              userTids += guTid
-          }
-        case _ =>
-          // nop
+  def userTids( arrayAttName:String ) = {
+    val uTids = new mutable.ArrayBuffer[String]()
+    
+    a_?( arrayAttName ).toSeq.of[String].foreach( tid => {
+      tid match {
+      case userTid if B.User.hasTid( userTid ) && !uTids.contains( userTid ) =>
+        uTids += userTid
+      case groupTid if Group.hasTid( groupTid ) =>
+        val g = Group.db.findOne( Mobj( "_id" -> Group.tidToId( groupTid ) ), Mobj( "v" -> 1 ) )
+        
+        g.a_?( 'v ).toSeq.of[String].foreach( guTid => {
+          if ( B.User.hasTid( guTid ) && !uTids.contains( guTid ) )
+            uTids += guTid
+        } )
+      case _ =>
+        // nop
       }
-    }
-
-    val users:mutable.ArrayBuffer[Record] = new mutable.ArrayBuffer[Record]
+    } )
     
-    userTids.map( userTid => B.User.getByTid( userTid ) )
+    uTids.toSeq
+  }
+  
+  def viewerUsers = {
+    val users:mutable.ArrayBuffer[Record] = new mutable.ArrayBuffer[Record]
+    userTids( "v" ).map( userTid => B.User.getByTid( userTid ) )
   }
   
   def viewers = Record.getByTids( viewerTids )
