@@ -889,7 +889,7 @@ abstract class Content( override val view:MongoView,
       case _ => null
     }  
     
-    if ( imgFile != null ) {
+    if ( imgFile != null && imgFile.exists && imgFile.length > 0 ) {
       val pathParts = tid.splitAt( 4 )
       val urlPath = pathParts._1 + "/" + pathParts._2 + "/"
       
@@ -917,6 +917,11 @@ abstract class Content( override val view:MongoView,
       }
       
       return true
+    } else {
+      if ( imgFile != null && imgFile.exists )
+        imgFile.delete
+        
+      println( "Error: No suitable thumb file for content " + this.id._s )
     }
     
     false
