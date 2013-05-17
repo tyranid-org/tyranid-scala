@@ -348,6 +348,7 @@ case class Positioning( var moving:Content,
                         var fromContents:Seq[Content] ) {
 
   def reposition {
+//sp am( "MOVING: " + moving.label )
 //sp am( "BEFORE: " + toContents.map( _.label ).mkString( ", " ) )
 
     if ( toContainer.id != fromContainer.id ) {
