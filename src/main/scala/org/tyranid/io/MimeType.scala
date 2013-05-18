@@ -47,9 +47,6 @@ object MetaMimeType {
 
   def byId( id:String ) = values.find( _.id == id ) getOrElse null
 
-
-  //val customIcons = List( "aep","ai","aiff","avi","bmp","dmg","doc","docm","docx","dot","dotx","eps","fla","htm","html","indd","mov","mp3","mp4","mpeg","pdf","pps","ppsm","ppsx","ppt","pptm","pptx","psd","qt","rar","rtf","tiff","txt","wav","xla","xlam","xls","xlsb","xlsm","xlsx","xlt","xltm","xltx","zip" ) // "gif","jpg","png" 
-
   val AdobeIllustrator    = add( "illustrator",  "Adobe Illustrator" )
   val BMP                 = add( "bmp",          "Bitmapped Image" )
   val DXF                 = add( "dxf",          "Drawing Interchange Format" )
@@ -141,6 +138,8 @@ object MimeType {
     MimeType( "application/x-csh",                                                         null,                null,                            Seq( "csh" ) ),
     MimeType( "application/x-dvi",                                                         null,                "Digital Video Interface",       Seq( "dvi" ) ),
     MimeType( "application/x-gtar",                                                        null,                "GNU Tape Archive",              Seq( "gtar" ) ),
+    MimeType( "application/x-gzip",                                                        ZIP,                 "GNU ZIP",                       Seq( "gz" ) ),
+    
     MimeType( "application/x-hdf",                                                         null,                null,                            Seq( "hdf" ) ),
     MimeType( "application/x-indesign",                                                    null,                null,                            Seq( "indd" ) ),    
     MimeType( "application/x-latex",                                                       null,                "LaTeX",                         Seq( "latex" ) ),
@@ -258,6 +257,7 @@ object MimeType {
 
     "gif"      -> "image/gif",
     "gtar"     -> "application/x-gtar",
+    "gz"       -> "application/x-gzip",
     
     "hdf"      -> "application/x-hdf",
     "htm"      -> "text/html",
@@ -376,7 +376,7 @@ object MimeType {
     "xsl"      -> "text/xml",
     "xwd"      -> "image/x-xwindowdump",
     
-    "zip"      -> "application/x-zip-compressed"
+    "zip"      -> "application/x-zip-compressed"    
   )
 
   def isImage( mimeType:String ) =
