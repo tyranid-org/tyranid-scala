@@ -595,6 +595,16 @@ class StringImp( s:String ) {
   }
 
 	def uncapitalize = if ( s.length > 1 ) s.charAt( 0 ).toLower + s.substring( 1 ) else s
+
+  def initials = {
+    var sb = new StringBuilder
+
+    for ( i <- 0 until s.length )
+      if ( i == 0 || s.charAt( i - 1 ) == ' ' )
+        sb += s.charAt( i )
+
+    sb.toString
+  }
 	
   /**
    * Used to a case-insensitive identifier from a camelcase identifier,
