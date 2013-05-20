@@ -17,9 +17,13 @@
 
 package org.tyranid.document.crocodoc
 
+import scala.collection.Map
 import scala.xml.{ Unparsed, NodeSeq }
-import java.io.{ File, FileOutputStream }
+
+import java.io.{ File, FileOutputStream, FileInputStream }
+
 import com.mongodb.DBObject
+
 import org.tyranid.Imp._
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.json.Json
@@ -30,7 +34,6 @@ import org.tyranid.document.DocApp
 import org.tyranid.time.Time
 import org.tyranid.ui.Form
 import org.tyranid.web.{ Weblet, WebContext }
-import java.io.FileInputStream
 
 object Crocodoc {
   val code = "croc"
@@ -101,6 +104,8 @@ _doc = {"status": 3, "socketioHost": "//socket.crocodoc.com:5555/", "objects": [
     val sessionJson = Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s
     val session = Json.parse( sessionJson ).s( 'session )
 
+    //val json:Map[String,Any] = Map()
+    
     val javascript = new StringBuilder()
     
     if ( B.CROC_JS_V2 ) {
