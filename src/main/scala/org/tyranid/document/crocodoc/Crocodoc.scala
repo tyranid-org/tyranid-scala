@@ -17,7 +17,7 @@
 
 package org.tyranid.document.crocodoc
 
-import scala.collection.Map
+//import scala.collection.Map
 import scala.xml.{ Unparsed, NodeSeq }
 
 import java.io.{ File, FileOutputStream, FileInputStream }
