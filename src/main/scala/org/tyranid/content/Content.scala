@@ -544,7 +544,7 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
   def count( comments:Seq[Comment] ):Int = comments.map( _.count ).sum
 
   def parse( tid:String ) = {
-    val idx = tid.indexOf( '_' )
+    val idx = tid.lastIndexOf( '_' )
 
     val contentTid = tid.substring( 0, idx )
     val commentId = tid.substring( idx + 1 )._i
