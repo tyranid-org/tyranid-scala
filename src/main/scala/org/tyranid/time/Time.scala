@@ -426,6 +426,21 @@ object Time {
       if ( "AKST".equals( s ) ) "AST"
       else                      su )
   }
+
+  def briefDate( date:Date ):String = {
+
+    if ( date == null )
+      return "n/a"
+
+    val tz = T.session.netTimeZone
+    val c = date.toCalendar( tz ) 
+    val nc = new Date().toCalendar( tz )
+
+    "%s %d%s".format(
+      c.monthName.substring( 0, 3 ), c.get( Calendar.DAY_OF_MONTH ),
+      if ( c.isSameYearAs( nc ) ) ""
+      else                        ", " + c.get( Calendar.YEAR ) )
+  }
   
   def duration( now:Date, date:Date, brief:Boolean = false ):String = {
 
