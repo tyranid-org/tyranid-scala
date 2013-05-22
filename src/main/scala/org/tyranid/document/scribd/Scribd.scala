@@ -91,8 +91,9 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
     <div class="scribd" id={ "scrib_doc_" + extDocId.split( "," )(0) }></div>    
   }
 
-  override def previewJsFor( extDocId:String, print:Boolean ) = {
+  override def previewJsonFor( extDocId:String, print:Boolean ) = {
     val parts = extDocId.split( "," )
+    /*
     """
     var scribd_doc = scribd.Document.getDoc(""" + parts(0) + ", '" + parts(1) + """');
     var onDocReady = function(e) {
@@ -111,15 +112,21 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
     
     scribd_doc.write('scrib_doc_""" + parts(0) + """');
     scribd_doc.grantAccess('""" + T.user.tid + """','""" + Session().id + """','""" + MD5( parts(0), Session().id, T.user.tid ) + """');"""
+    */
+    
+    Map( 
+        "session" -> Session().id, 
+        "md5" -> MD5( parts(0), Session().id, T.user.tid ),
+        "extDocId" -> extDocId )
   }
   
   def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef] = {
-    val previewJs = previewJsFor( extDocId )
+    val previewJson = previewJsonFor( extDocId )
     
     Map( "width" -> width, 
          "height" -> height,
          "cssClass" -> "no-scroll",
-         "extraJS" -> previewJs,
+         "extraJS" -> previewJson,
          "html" -> docPreviewContainer( extDocId, print = false, annotatable = true ) )
   }
   

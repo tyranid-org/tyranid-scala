@@ -59,14 +59,14 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   "private"      is DbBoolean                          is 'client;
   "ssoSynced"    is DbBoolean                          is 'client;
 
-  "settings"     is GroupSettings                      is 'temporary is 'client computed { _.as[Group].settingsFor( T.user ) }
+  //"settings"     is GroupSettings                      is 'temporary is 'client computed { _.as[Group].settingsFor( T.user ) }
   
   "canSso"       is DbBoolean                          is 'temporary is 'client computed { _.as[Group].canBeSsoSynced( T.user ) }
 
   "website"      is DbChar(80)                         is 'temporary is 'client computed { _.as[Group].website }
   "userIdleDays" is DbInt                              is 'temporary is 'client computed { _.as[Group].userIdleDays }
 
-  "onlineCount"  is DbInt                              is 'temporary is 'client is 'auth computed { _.as[Group].onlineMembers.size }
+  "onlineCount"  is DbInt                              is 'temporary is 'auth computed { _.as[Group].onlineMembers.size }
   
   //"search"         { search criteria } // future ... list search for a group, rather than each id explicitly
   
@@ -388,16 +388,14 @@ object GroupSettings extends MongoEntity( tid = "a0Rt" ) {
   override def init {
     super.init
 
-  "_id"            is DbMongoId                              is 'id;
+  "_id"            is DbMongoId                              is 'id is 'client;
 
   "u"              is DbLink(B.User)                         as "User";
-  "g"              is DbLink(Group)                          as "Group";
+  "g"              is DbLink(Group)                          as "Group" is 'client;
 
   "order"          is DbArray(DbTid( B.ContentEntities:_* )) as "Ordering";
   
-  "flags"          is DbLong                                 as "Flags";
-  
-  "hasVisited"     is DbBoolean                              is 'temporary is 'client computed( _.as[GroupSettings].hasVisited )
+  "flags"          is DbLong                                 as "Flags" is 'client;
   }
 
   db.ensureIndex( Mobj( "g" -> 1, "u" -> 1 ) )

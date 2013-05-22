@@ -36,6 +36,9 @@ import org.tyranid.profile.{ Org, User, Group }
 import org.tyranid.ui.Focus
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
 
+// US BANK ERROR MESSAGE:
+//   "errorMessage" : "Your Reserve Marketplace account has been deactivated for security reasons after inactivity over 90 days.\n\nTo reactivate your account, please contact The Resolution Center.\n\nEmail Address: resolution.center@usbank.com\nInternal Employee Phone: 651-466-7103\nStandard Hours:  Mon-Fri 1:00 am CT - 7:00 pm CT\n"
+
 object SsoMapping extends MongoEntity( tid = "a0Ut" ) {
   "_id"             is DbChar(8)     is 'id;
   "org"             is DbLink(B.Org) is 'required;

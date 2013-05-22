@@ -17,7 +17,8 @@
 
 package org.tyranid.document.crocodoc
 
-import scala.collection.Map
+import scala.collection.mutable
+
 import scala.xml.{ Unparsed, NodeSeq }
 
 import java.io.{ File, FileOutputStream, FileInputStream }
@@ -100,34 +101,15 @@ _doc = {"status": 3, "socketioHost": "//socket.crocodoc.com:5555/", "objects": [
 
       --- */
 
-  override def previewJsFor( extDocId:String, print:Boolean = false ) = {
+  override def previewJsonFor( extDocId:String, print:Boolean = false ) = {
     val sessionJson = Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s
     val session = Json.parse( sessionJson ).s( 'session )
 
-    //val json:Map[String,Any] = Map()
-    
-    val javascript = new StringBuilder()
-    
-    if ( B.CROC_JS_V2 ) {
-      javascript ++= Http.GET( "https://crocodoc.com/webservice/document.js?session=" + session )._s
-      javascript ++= ";"
-        
-      ( if ( print )
-          javascript ++= ( "var docViewer = new DocViewer({ id:'dv_" + extDocId + "', zoom:'fitWidth' });" )
-        else
-          javascript ++= ( """if ( proj ) { proj.initViewer('""" + extDocId + """'); } else { var docViewer = new DocViewer({ "id": "dv_""" + extDocId + """" }); }""" ) )
-    } else {
-      val docViewer = "var docViewer = new Crocodoc.Viewer({ el: '#dv_" + extDocId + "', uuid: '" + extDocId + "', session : '" + session + "', zoom:'fitWidth' });"
-      
-      ( if ( print )
-          javascript ++= docViewer
-        else
-          javascript ++= ( "if ( proj ) { proj.initViewer('" + extDocId + "',null,'" + session + "'); } else { " + docViewer + " }" ) )
-      
-    }
-    
-    //println( javascript._s )
-    javascript._s
+    Map( 
+      "extDocId" -> extDocId,
+      "session" -> session,
+      "_doc" -> ( B.CROC_JS_V2  ? Http.GET( "https://crocodoc.com/webservice/document.js?session=" + session )._s.substring( 6 ).parseJson | Map() )
+    )
   }
   
   def previewUrlFor( extDocId:String ):String = null

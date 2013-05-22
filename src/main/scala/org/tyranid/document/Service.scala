@@ -74,10 +74,10 @@ object Service {
       null
     }
     
-  def previewJsFor( extDocId:String, print:Boolean = false ) = 
+  def previewJsonFor( extDocId:String, print:Boolean = false ) = 
     if ( extDocId.notBlank ) {
       val parts = extDocId.split( "," )
-      appFor( parts(0 ) ).previewJsFor( parts.drop(1).mkString( "," ), print )
+      appFor( parts(0 ) ).previewJsonFor( parts.drop(1).mkString( "," ), print )
     } else {
       null
     }
@@ -129,7 +129,7 @@ trait DocApp {
   def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ):File
   def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef]
   def previewUrlFor( extDocId:String ):String
-  def previewJsFor( extDocId:String, print:Boolean = false ):String = null
+  def previewJsonFor( extDocId:String, print:Boolean = false ):Map[String,Any] = null
   
   def docPreviewContainer( extDocId:String, height:String="100%", print:Boolean = false, annotatable:Boolean = true ):NodeSeq
   def delete( extDocId:String ): Boolean

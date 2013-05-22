@@ -92,6 +92,9 @@ object MimeType {
     MimeType( "application/pdf",                                                           PDF,                 "Portable Document Format",      Seq( "pdf" ) ),
     MimeType( "application/rtf",                                                           null,                "Rich Text",                     Seq( "rtf" ) ),
 
+    // Add ttf, 
+    MimeType( "application/font-woff",                                                     null,                null,                            Seq( "woff" ) ),
+
     MimeType( "application/vnd.ms-excel",                                                  MicrosoftExcel,      "Microsoft Excel",               Seq( "xls" ) ),
     MimeType( "application/vnd.ms-excel",                                                  MicrosoftExcel,      "Microsoft Excel Application",   Seq( "xla" ) ),
     MimeType( "application/vnd.ms-excel",                                                  MicrosoftExcel,      "Microsoft Excel",               Seq( "xlt" ) ),

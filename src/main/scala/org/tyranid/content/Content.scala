@@ -646,7 +646,7 @@ trait ContentMeta extends PrivateKeyEntity {
 
   "name"              is DbChar(50)           is 'label is 'required is SearchText is 'client;
 
-  "pos"               is DbInt                ; // the position of this content within its parent (group, folder, board, etc.) ... see the class "Positioning"
+  "pos"               is DbInt                is 'client; // the position of this content within its parent (group, folder, board, etc.) ... see the class "Positioning"
 
   "o"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Owners" is 'owner is 'client;
   "ownerTid"          is DbTid(B.User)        is 'temporary is 'client computed( _.as[Content].firstOwnerTid() )
@@ -657,10 +657,12 @@ trait ContentMeta extends PrivateKeyEntity {
   "v"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Viewers" is SearchAuth is 'client is 'auth;
   "subV"              is DbArray(DbTid(B.Org,B.User))       ; // for showing content inside a group, subviewers
 
-  "subscr"            is DbArray(DbTid(B.User))             as "Subscribers";
+  "subscr"            is DbArray(DbTid(B.User)) as "Subscribers";
+  "isSubscriber"      is DbBoolean            is 'temporary computed { _.as[Content].isSubscriber( T.user ) }
+  
 
-  "shown"             is DbArray(DbTid(B.User))             as "Shown To" ; // list of tids of users who have "read" this content; only maintained for some content types, like messages
-  "hide"              is DbArray(DbTid(B.User))             as "Hidden From" ; // list of tids of users who have "read" this content; only maintained for some content types, like messages
+  "shown"             is DbArray(DbTid(B.User)) as "Shown To" ; // list of tids of users who have "read" this content; only maintained for some content types, like messages
+  "hide"              is DbArray(DbTid(B.User)) as "Hidden From" ; // list of tids of users who have "read" this content; only maintained for some content types, like messages
  
   "complianceCode"    is DbChar(15)           is SearchToken;
   "expDate"           is DbDate               as "Expiration Date" is SearchText; 
