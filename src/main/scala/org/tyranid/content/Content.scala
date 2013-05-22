@@ -53,11 +53,12 @@ object ViewType extends RamEntity( tid = "a13v" ) {
 
   override val addNames = Seq( "_id", "name" )
 
-  val Post   = add( 1, "Post"  )
-  val Card   = add( 2, "Card"  )
-  val Table  = add( 3, "Table" )
-  val Grid   = add( 4, "Grid"  )
-  val Kanban = add( 5, "Kanban"  )
+  val Post     = add( 1, "Post"      )
+  val Card     = add( 2, "Card"      )
+  val Table    = add( 3, "Table"     )
+  val Grid     = add( 4, "Grid"      )
+  val Kanban   = add( 5, "Kanban"    )
+  val Calendar = add( 6, "Calendar"  )
 }
 
 case class ViewType( override val view:TupleView ) extends Tuple( view )
