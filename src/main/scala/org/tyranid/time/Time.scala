@@ -92,10 +92,15 @@ class CalendarImp( c:Calendar ) {
     c.setTimeZone(                other.getTimeZone )
   }
 
-  def setBeginningOfYear = {
-    c.set( Calendar.MONTH,        0 )
+  def setBeginningOfMonth = {
     c.set( Calendar.DAY_OF_MONTH, 1 )
     setMidnight
+    c
+  }
+
+  def setBeginningOfYear = {
+    c.set( Calendar.MONTH,        0 )
+    setBeginningOfMonth
     c
   }
 
