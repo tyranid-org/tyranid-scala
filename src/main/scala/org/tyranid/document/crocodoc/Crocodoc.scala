@@ -104,8 +104,8 @@ _doc = {"status": 3, "socketioHost": "//socket.crocodoc.com:5555/", "objects": [
   override def previewJsonFor( extDocId:String, print:Boolean = false ) = {
     val sessionJson = Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s
     val session = Json.parse( sessionJson ).s( 'session )
-
-    Map( 
+    
+    session.isBlank ? null | Map( 
       "extDocId" -> extDocId,
       "session" -> session,
       "_doc" -> ( B.CROC_JS_V2  ? Http.GET( "https://crocodoc.com/webservice/document.js?session=" + session )._s.substring( 6 ).parseJson | Map() )
