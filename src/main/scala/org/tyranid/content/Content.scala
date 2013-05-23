@@ -28,6 +28,7 @@ import org.bson.types.ObjectId
 import com.mongodb.{ BasicDBList, DBCollection, DBObject }
 
 import org.tyranid.Imp._
+
 import org.tyranid.cloud.aws.{ S3Bucket, S3 }
 import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDate, DbDateTime, DbDouble, DbInt, DbLink, DbLong, DbTid, DbText, DbUrl, Entity, Record, ViewAttribute }
 import org.tyranid.db.es.{ SearchAuth, SearchText, SearchTextLike, SearchToken }
@@ -713,7 +714,7 @@ trait ContentMeta extends PrivateKeyEntity {
   "imgW"              is DbInt                help Text( "The actual width of the image." );
 
   "netImg"            is DbUrl                as "Image" is 'temporary is 'client computed { _.as[Content].imageUrl( null ) }
-  
+//  "cardImg"           is DbUrl                as "Card Image" is 'temporary is 'client computed { c => val content = c.as[Content]; content.imageUrl( ContentEditHolder( content ) ) }
   
   // RSS & Atom Feeds
   "feedOut"           is DbBoolean            help <span>If this is enabled, outgoing <b>public</b> RSS and Atom feeds are generated.</span>;
@@ -1336,4 +1337,9 @@ abstract class Content( override val view:MongoView,
 trait ContentEdit {
   def tempPath:String
 }
+
+case class ContentEditHolder( content:Content) extends ContentEdit {
+   def tempPath = ""
+}
+
 
