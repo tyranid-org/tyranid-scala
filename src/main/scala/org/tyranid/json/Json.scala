@@ -277,7 +277,7 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
     case data:JsData =>
       if ( data.extra.nonEmpty )
         data.data foreach { _.compute( client, data.extra ) }
-
+      
       write( data.data, data )
 
     case rec:Record =>
@@ -305,7 +305,6 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
 
           for ( i <- 0 until arr.size() )
             mEnt.recify( arr( i ), rec.as[MongoRecord], rec => arr( i ) = rec )
-
           write( va.name )
           sb += ':'
           write( arr )
