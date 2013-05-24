@@ -31,7 +31,7 @@ import org.tyranid.Imp._
 import org.tyranid.boot.Bootable
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.http.UserAgent
-import org.tyranid.json.{ JsCmd, Js, JsData, JsModel, JqHtml, JsNop }
+import org.tyranid.json.{ JsCmd, JsCmds, Js, JsData, JsModel, JqHtml, JsNop }
 import org.tyranid.math.Base64
 import org.tyranid.profile.{ LoginCookie, User }
 import org.tyranid.session.{ AccessLog, Session, ThreadData, Notification }
@@ -382,7 +382,16 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   // TODO:  eliminate "def js" and "tyr.js" since it is redundant with this way of doing it, then rename this to "js"
   def jsRes( js:JsCmd* ) = {
     val res = jsonRes( T.session )
-    res.cmds ++= js
+
+    for ( cmd <- js )
+      cmd match {
+      case cmds:JsCmds =>
+        res.cmds ++= cmds.cmds
+
+      case _ =>
+        res.cmds += cmd
+      }
+
     json( res )
   }
 

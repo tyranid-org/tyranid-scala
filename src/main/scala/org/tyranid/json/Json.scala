@@ -89,6 +89,12 @@ sealed trait JsCmd {
   def toMap:Map[String,Any]
 }
 
+case class JsCmds( cmds: JsCmd* ) extends JsCmd {
+
+  def toMap:Map[String,Any] = throw new UnsupportedOperationException
+}
+
+
 case class Js( js:String ) extends JsCmd  {
 
   def toMap = Map( "extraJS" -> js )
