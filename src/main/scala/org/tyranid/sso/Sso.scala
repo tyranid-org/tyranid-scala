@@ -159,6 +159,9 @@ $( $('#idp').focus() );
       val id = s.split( "/" )(2)
       val mapping = ( id == "test" ) ? SsoMapping.testMapping | SsoMapping.getById( id )
       
+      if ( B.debugSso )
+        println( "DEBUG: Incoming /auth call for: " + id + ", mapping is " + mapping )
+      
       if ( mapping == null || mapping.s( 'idpId ).isBlank ) {
         sess.error( "SSO Mapping for code " + id + " not found." )
         
@@ -168,11 +171,25 @@ $( $('#idp').focus() );
           web.template( <tyr:shell>{ pageWrapper( signupBox ) }</tyr:shell> )
       } else {
         sess.put( "sso", mapping )
-        val idpId = URLEncoder.encode( mapping.s( 'idpId ), "UTF-8" ) 
+        val idpId = URLEncoder.encode( mapping.s( 'idpId ), "UTF-8" )
+        
+        if ( B.debugSso )
+          println( "DEBUG: Mapping found, trying ping identity for ipdid " + idpId )
+        
         web.res.sendRedirect( "https://sso.connect.pingidentity.com/sso/sp/initsso?saasid=" + SAAS_ID + "&idpid=" + idpId + "&appurl=" + TOKEN_URL + "&appurl=" + ERROR_URL )
       }
     case "/token" =>
       val token = web.s( 'tokenid )
+      
+      if ( token.isBlank ) {
+        sess.error( "No token sent!" )
+        web.jsRes()
+        return
+      }
+      
+      if ( B.debugSso )
+        println( "DEBUG: Trying to get info for token: " + token )
+        
       val str = Http.GET( "https://sso.connect.pingidentity.com/sso/TXS/2.0/1/" + token, authScope = AuthScope.ANY, username = B.pingIdentityUsername, password = B.pingIdentityPassword, preemptive = true ).s
  
 /*      
@@ -188,11 +205,27 @@ $( $('#idp').focus() );
    "pingone.authninstant":"1359661588000"
 }      
 */
+      if ( str.isBlank ) {
+        sess.error( "No response when trying to retrieve sso token: " + token )
+        web.jsRes()
+        return
+      }
+      
+      if ( B.debugSso )
+        println( "DEBUG: Raw string response: " + str )
+        
       val json = Json.parse( str )
+      
+      if ( B.debugSso )
+        println( "DEBUG: Pretty JSON response: " + json.toJsonStr( pretty = true ) )
+      
       val mapping = sess.get( "sso" ).as[Record]
       val email = json.s( mapping.s( 'emailAttrib ) )
       
       if ( email.isBlank ) {
+        if ( B.debugSso )
+          println( "DEBUG: There is no email field with the attribute name " + mapping.s( 'emailAttrib ) + "." )
+        
         sess.error( "There is no email field with the attribute name " + mapping.s( 'emailAttrib ) + " in the response:" + str )
         web.jsRes()
         return
@@ -202,6 +235,9 @@ $( $('#idp').focus() );
       val groupNames = ( json.s( mapping.s( 'groupsAttrib ) ) or "" ).split( "," )
       
       if ( mustHaveGroups && groupNames.length == 0 ) {
+        if ( B.debugSso )
+          println( "DEBUG: Sorry, but you must be a member of a group to access " + B.applicationName + "." )
+          
         sess.error( "Sorry, but you must be a member of a group to access " + B.applicationName + "." )
         web.jsRes()
         return
@@ -211,6 +247,9 @@ $( $('#idp').focus() );
       val user = B.User.db.findOne( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) )
       
       if ( user == null ) {
+        if ( B.debugSso )
+          println( "DEBUG: User not found for email " + email + ", creating one." )
+          
         // Create a new one
         val org = B.Org.getById( orgId )
         val newUser = B.newUser()       
@@ -251,18 +290,33 @@ $( $('#idp').focus() );
         newUser.join( org )
         sess.login( newUser )
         newUser.save
+        
+        if ( B.debugSso )
+          println( "DEBUG: New user created and saved." )
+          
         B.welcomeUserEvent
         Group.ensureInOrgGroup( newUser )        
         
         // Add them to any groups specified
         if ( mustHaveGroups && groupNames.size > 0 ) {
-          val groups = Group.db.find( Mobj( "org" -> orgId, "ssoSynced" -> true ), Mobj( "name" -> 1 ) ).toSeq
           
-          for ( group <- groups if ( groupNames.find( g => g.toLowerCase == group.s( 'name ).toLowerCase ) != None ) )
-            Group.db.update( Mobj( "_id" -> group.id ), $addToSet( "v", newUser.tid ) )          
+          val groups = Group.db.find( Mobj( "org" -> orgId, "ssoSynced" -> true ), Mobj( "name" -> 1 ) ).toSeq
+
+          if ( B.debugSso && groups.size == 0 )
+            println( "DEBUG: No SSO managed groups found when they must have them!" )
+
+          for ( group <- groups if ( groupNames.find( g => g.toLowerCase == group.s( 'name ).toLowerCase ) != None ) ) {
+            Group.db.update( Mobj( "_id" -> group.id ), $addToSet( "v", newUser.tid ) )
+            
+            if ( B.debugSso )
+              println( "DEBUG: Adding user to group " + group.s( 'name ) )
+          }
         }
         
         val newProjectNames = mapping.s( 'newProjects )
+
+        if ( B.debugSso )
+          println( "DEBUG: New project names: " + newProjectNames )
         
         if ( newProjectNames.notBlank ) {
           val now = new Date
@@ -278,6 +332,9 @@ $( $('#idp').focus() );
             project( 'v       ) = userList
             project( 'members ) = userList
             project.save
+            
+            if ( B.debugSso )
+              println( "DEBUG: Created new group for user: " + name )
             
             val newBoard = B.DocEntity.make
             newBoard( 'name        ) = "Files"
@@ -298,6 +355,9 @@ $( $('#idp').focus() );
         }
         
       } else if ( user.b( 'inactive ) ) {
+        if ( B.debugSso )
+          println( "DEBUG: User in inactive." )
+              
         val errorMessage = mapping.s( 'errorMessage )
         
         if ( errorMessage.isBlank ) {
@@ -348,19 +408,32 @@ $( $('#idp').focus() );
           u.save
           
         // Add or remove them them to any groups specified
-        if ( mustHaveGroups && groupNames.size > 0 ) {
+        if ( mustHaveGroups && groupNames.size > 0 ) {            
           val groups = Group.db.find( Mobj( "org" -> orgId, "ssoSynced" -> true ), Mobj( "name" -> 1 ) ).toSeq
+          
+          if ( B.debugSso && groups.size == 0 )
+            println( "DEBUG: No SSO managed groups found when they must have them!" )
           
           for ( group <- groups ) {
             if ( groupNames.find( g => g.toLowerCase == group.s( 'name ).toLowerCase ) == None ) {
+              
+              if ( B.debugSso )
+                println( "DEBUG: Removing user from group " + group.s( 'name ) )
+                
               Group.db.update( Mobj( "_id" -> group.id ), $pull( "v", u.tid ) )
             } else {
+              if ( B.debugSso )
+                println( "DEBUG: Ensuring user is in group " + group.s( 'name ) )
+                
               Group.db.update( Mobj( "_id" -> group.id ), $addToSet( "v", u.tid ) )
             }
           }
         }
         
         sess.login( u )
+        
+        if ( B.debugSso )
+          println( "DEBUG: User is logged in." )
       }
    
       web.redirect( "/#dashboard" )
@@ -437,10 +510,10 @@ $( $('#idp').focus() );
         <label for="title" class="span4">Title Attribute:</label>
         <input type="text" class="span8" name="title" id="title"/>
        </div>
-       <div class="row-fluid step2">
+       <!--div class="row-fluid step2">
         <label for="iconUrl" class="span4">Icon URL Attribute:</label>
         <input type="text" class="span8" name="iconUrl" id="iconUrl"/>
-       </div>
+       </div-->
        <div class="row-fluid">
          <div class="span12" style="height:40px;padding-top:8px;"><button type="submit" id='ssoBtn' class="btn-success btn pull-right"><span>Lookup</span> <i class="icon-caret-right"></i></button></div>
        </div>

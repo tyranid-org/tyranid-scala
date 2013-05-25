@@ -37,6 +37,7 @@ object TyranidConfig extends MongoEntity( tid = "a03t" ) {
   "recaptcha"   is DbBoolean         as "Enable ReCaptchas";
   "accessLogs"  is DbBoolean         as "Enable Access Logs";
   "onePagePdf"  is DbBoolean         as "One Page PDF";
+  "debugSso"    is DbBoolean         as "Debug SSO";
 
 
   def apply():TyranidConfig = singleton
@@ -102,6 +103,12 @@ object TyranidConfiglet extends Weblet {
         TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "onePagePdf" -> obj.b( 'onePagePdf ) ) ) )
         sess.notice( "One Page PDF has been turned " + ( B.onePagePdf ? "ON" | "OFF" ) + "." )
   
+      case "sso" =>
+        val obj = TyranidConfig()
+        obj( 'debugSso ) = !B.debugSso
+        TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "debugSso" -> obj.b( 'debugSso ) ) ) )
+        sess.notice( "SSO Debug has been turned " + ( B.debugSso ? "ON" | "OFF" ) + "." )
+  
       case "recaptcha" =>
         val obj = TyranidConfig()
         obj( 'recaptcha ) = !B.requireReCaptcha
@@ -128,6 +135,7 @@ object TyranidConfiglet extends Weblet {
               "eye"        -> user.b( 'eye ),
               "sms"        -> SMS.enabled,
               "onePagePdf" -> B.onePagePdf,
+              "debugSso"   -> B.debugSso,
               "email"      -> Email.enabled,
               "recaptcha"  -> B.requireReCaptcha,
               "accessLogs" -> B.accessLogs
