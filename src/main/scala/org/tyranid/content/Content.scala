@@ -1277,7 +1277,7 @@ abstract class Content( override val view:MongoView,
     val gTid:String = a_?( 'o ).map( _._s ).find( Group.hasTid ).getOrElse( null )
 
     if (gTid.isBlank) {
-      val gOid = oid( 'parentGroup )
+      val gOid = obj.has( 'parentGroup ) ? oid( 'parentGroup ) | null
 
       if (gOid == null)
         null
