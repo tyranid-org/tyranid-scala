@@ -85,7 +85,7 @@ class WebSessionListener extends HttpSessionListener {
   }
  
   def sessionDestroyed( e:HttpSessionEvent ) {
-    Comet.remove( e.getSession.getId  );
+    //Comet.remove( e.getSession.getId  );
     WebSession.sessions.remove( e.getSession.getId )
   }	
 }

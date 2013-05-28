@@ -90,7 +90,7 @@ object Comet {
       val httpSessionId = session.getAttribute( WebSession.CometHttpSessionIdKey )
 
       if ( httpSessionId != null ) {
-        println( "visiting: " + httpSessionId )
+        //println( "visiting: " + httpSessionId )
         val httpSessionIdStr = httpSessionId.as[String]
         
         //if ( !seen( httpSessionIdStr ) ) {
