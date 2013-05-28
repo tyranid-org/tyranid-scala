@@ -133,7 +133,10 @@ class UserAgentParser( ua:String ) {
         return Array( "Netscape", firstAgent.browserVersion )
       
       // TODO: get version from comment string
-      return Array( "Mozilla", firstAgent.browserComments.split(";")(0).trim() )
+      val bc = firstAgent.browserComments
+      val commentParts:Array[String] = bc.isBlank ? null | bc.split(";")
+      val comment = ( commentParts == null || commentParts.length < 2 ) ? "" | commentParts(0)
+      return Array( "Mozilla", comment.isBlank ? "" | comment.trim() )
     }
     
     return Array( firstAgent.browserName, firstAgent.browserVersion )
