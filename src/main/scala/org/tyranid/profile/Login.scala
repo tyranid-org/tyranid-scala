@@ -129,7 +129,6 @@ $( function() {
 """ ) }
     </script> ++
     <form method="post" action={ wpath + "/in" } id="f" class="login" style="margin-bottom:12px;" data-val="1" data-val-top="1">
-     { /*web.s( 'l ).notBlank |* <input name="l" value={ web.s( 'l ) }/> */ }
      <fieldset class="loginBox">
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
@@ -157,7 +156,7 @@ $( function() {
        <hr style="margin:24px 0 0;"/>
       </div>
      </fieldset>
-     <input type="hidden" name="l" value={ web.req.s("l") }/>
+     <!--input type="hidden" name="l" value={ web.req.s("l") }/-->
     </form> ++
     <div class="container-fluid" style="padding:0;">
      <a href="#" id="forgot" class="pull-right">Forgot your password?</a>

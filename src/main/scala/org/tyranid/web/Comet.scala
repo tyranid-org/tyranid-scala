@@ -66,6 +66,22 @@ case class Comet( serviceSession:ServerSession, fromSession:ServerSession, sessi
 
 object Comet {
 
+  def remove( serverSessionId:String ) {
+    println( "remove: "+ serverSessionId )
+    
+    val bSessions = new java.util.ArrayList( B.bayeux.getSessions )
+    
+    for ( session <- bSessions ) {
+      val httpSessionId = session.getAttribute( WebSession.CometHttpSessionIdKey )
+
+      println( "found: " + httpSessionId )
+      if ( httpSessionId != null && serverSessionId == httpSessionId ) {
+        println( "Removed!: " + httpSessionId )
+        B.bayeux.getSessions().remove( session )
+      }
+    }
+  }
+    
   def visit( visitor: ( Comet ) => Unit ) = {
     val serverSession = B.comets.find( _.name == "message" ).get.service.getServerSession
     //val seen = mutable.Set[String]()
@@ -74,6 +90,7 @@ object Comet {
       val httpSessionId = session.getAttribute( WebSession.CometHttpSessionIdKey )
 
       if ( httpSessionId != null ) {
+        println( "visiting: " + httpSessionId )
         val httpSessionIdStr = httpSessionId.as[String]
         
         //if ( !seen( httpSessionIdStr ) ) {
