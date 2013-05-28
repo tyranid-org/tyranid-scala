@@ -733,6 +733,8 @@ trait ContentMeta extends PrivateKeyEntity {
   "dist"              is DbBoolean            is 'client; // If true, then if a group, it is a distribution group 
 
   "contents"          is DbArray(DbTid())     is 'temporary is 'client; // contains a sequence of the tids for client for this content
+  
+  "beingDeleted"      is DbBoolean            ;            
   }
 
   override def searchText = true
