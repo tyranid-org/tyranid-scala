@@ -289,8 +289,12 @@ class StringImp( s:String ) {
     }
 
   // I want just the name of the file: https://a.b.c/d/e?f=g, I want e
-  def getFilenameFromUrl:String =
-    ( s == null ) ? null | ( ( s.suffix( '/' ) or s ).prefix( '?' ) or s )
+  def getFilenameFromUrl:String = {
+    val end:String = ( s == null ) ? null | ( s.suffix( '/' ) or s )
+    val preEnd = end.prefix( '?' )
+    
+    preEnd.notBlank ? preEnd | end
+  }
 
   def encHtml = s.replace( "<", "&lt;" ).replace( ">", "&gt;" )
 
