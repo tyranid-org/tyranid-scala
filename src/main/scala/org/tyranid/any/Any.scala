@@ -72,6 +72,7 @@ class AnyImp[T <: Any]( v:T ) {
     v match {
     case d:Date   => d
     case s:String => s.parseDate()
+    case l:Long   => new Date( l )
     case null     => null
     }
 
