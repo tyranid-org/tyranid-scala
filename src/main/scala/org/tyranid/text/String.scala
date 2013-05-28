@@ -35,7 +35,8 @@ import org.tyranid.time.{ Time }
 
 object StringImp {
   val AmpersandPattern = Pattern.compile( "&" )
-  val CommaPattern = Pattern.compile( "," )
+  val CommaPattern     = Pattern.compile( "," )
+  val PipePattern      = Pattern.compile( "\\|" )
 
   val UnicodeLeftQuote  = 8220
   val UnicodeRightQuote = 8221
@@ -81,8 +82,9 @@ class StringImp( s:String ) {
   /*
    * Faster than s.split( "&" )
    */
-  def splitAmp = StringImp.AmpersandPattern.split( s )
+  def splitAmp   = StringImp.AmpersandPattern.split( s )
   def splitComma = StringImp.CommaPattern.split( s )
+  def splitPipe  = StringImp.PipePattern.split( s )
 
   def asUrl =
     if ( s.isBlank || s.startsWith( "https://" ) || s.startsWith( "http://" ) ) s
