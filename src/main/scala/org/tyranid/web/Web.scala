@@ -400,7 +400,16 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   def jsResNoNotifications( js:JsCmd* ) = {
     val res = jsonRes( T.session )
     res.notifications = false
-    res.cmds ++= js
+
+    for ( cmd <- js )
+      cmd match {
+      case cmds:JsCmds =>
+        res.cmds ++= cmds.cmds
+
+      case _ =>
+        res.cmds += cmd
+      }
+
     json( res )
   }
 

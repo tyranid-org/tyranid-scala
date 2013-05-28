@@ -36,7 +36,7 @@ import org.tyranid.image.DbThumbnail
 import org.tyranid.sms.SMS
 import org.tyranid.locale.{ Country, Language }
 import org.tyranid.secure.DbReCaptcha
-import org.tyranid.session.{ Session, ThreadData }
+import org.tyranid.session.{ Session, ThreadData, WebSession }
 import org.tyranid.ui.LnF
 import org.tyranid.web.{ Comet, WebContext }
 
@@ -226,14 +226,12 @@ class UserMeta extends MongoEntity( "a01v" ) {
   }
 
   def isOnline( userTid:String ):Boolean = {
-    Comet.visit { comet =>      
-      val sess = comet.session
-      
-      if ( sess != null && !sess.isIncognito && sess.user.tid == userTid )
+    WebSession.visit { sess =>      
+      if ( !sess.isIncognito && sess.user.tid == userTid )
         return true
     }
     
-    return false
+    false
   }
 }
 

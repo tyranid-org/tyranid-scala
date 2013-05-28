@@ -75,6 +75,13 @@ object WebSession {
 
   val CometHttpSessionIdKey = "tyrSessId"
   val HttpSessionKey = "tyrSess"
+
+  def visit( visitor: ( Session ) => Unit ) =
+    for ( s <- sessions;
+          httpSession = s._2;
+          tyrSession = httpSession.getAttribute( WebSession.HttpSessionKey ).as[Session];
+          if tyrSession != null )
+      visitor( tyrSession )
 }
 
 class WebSessionListener extends HttpSessionListener {
