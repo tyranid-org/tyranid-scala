@@ -624,6 +624,16 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
   }
 
   def count = 1 + Comment.count( comments )
+
+  def collectUserTids( tids:mutable.Set[String] ) {
+
+    val fromTid = tid( 'u )
+
+    if ( fromTid.notBlank )
+      tids += fromTid
+
+    comments foreach { _.collectUserTids( tids ) }
+  }
 }
 
 
@@ -1035,6 +1045,7 @@ abstract class Content( override val view:MongoView,
 
   def commentCount = Comment.count( comments )
   
+  def commentsCollectUserTids( tids:mutable.Set[String] ) = comments.foreach { _.collectUserTids( tids ) }
 
   def canComment = !isLocked
 
