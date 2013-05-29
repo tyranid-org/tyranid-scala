@@ -355,7 +355,7 @@ object Time {
   val TimeFormat24   = new SimpleDateFormat( "HH:mm" )
   val TimeFormat12   = new SimpleDateFormat( "hh:mma" )
   val MonthDay       = new SimpleDateFormat( "MMM dd" )
-  val MonthDayYear   = new SimpleDateFormat( "MMM dd, YYYY" )
+  val MonthDayYear   = new SimpleDateFormat( "MMM dd, yyyy" )
   
   val Rfc1123Format  = new SimpleDateFormat( "EEE, dd MMM yyyy HH:mm:ss z" )
   val Rfc1123FormatGMT  = {
