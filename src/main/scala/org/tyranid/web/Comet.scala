@@ -91,7 +91,6 @@ object Comet {
 
       //println( "send to : " + httpSessionId )
       if ( httpSessionId != null ) {
-        println( "send to : " + httpSessionId )
         //println( "visiting: " + httpSessionId )
         val httpSessionIdStr = httpSessionId.as[String]
         
