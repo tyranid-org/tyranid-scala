@@ -295,6 +295,7 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
             if !client || va.att.client || ( data != null && data.extra.contains( va.att.name ) );
             if ( data != null && data.auth ) || !va.att.auth;
             if rec.has( va ) ) {
+          
         if ( first )
           first = false
         else
@@ -302,7 +303,6 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
 
         va.domain match {
         case d:MongoEntity =>
-          write( va.name )
           sb += ':'
           write( rec.rec( va ) )
         case d:DbArray if d.of.is[MongoEntity] =>
@@ -375,7 +375,8 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
       
     case ws:WebResponse       => sb ++= ws.toJsonStr
     case note:Notification    => write( note.msg )
-    case null => println( "Warning, turning NULL into JSON (empty string)" ); sb ++= "\"\""
+    case null => 
+      println( "Warning, turning NULL into JSON (empty string)" ); sb ++= "\"\""
     case u => 
       println( "Don't know how to turn " + u + " (" + u.getClass() + ") into JSON" ); sb ++= "\"\"" 
     }
