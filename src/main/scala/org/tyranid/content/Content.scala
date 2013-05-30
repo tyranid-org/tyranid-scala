@@ -1038,6 +1038,29 @@ abstract class Content( override val view:MongoView,
 
 
   /*
+   * * *   Task Comments
+   */
+
+  def taskTid = {
+    val tc = s( 'taskComment )
+
+    if ( tc.notBlank )
+      Comment.parse( tc )._1
+    else
+      null
+  }
+
+  def resolvedTaskComment:( Content, Comment ) = {
+    val tc = s( 'taskComment )
+
+    if ( tc.notBlank )
+      Comment.resolve( tc )
+    else
+      ( null, null )
+  }
+
+
+  /*
    * * *   Comments
    */
 
