@@ -27,8 +27,10 @@ import org.tyranid.Imp._
       
 object Pdf {
   val lock = ""
+  val lock2 = ""
     
   def urlToFile( url:String, outFile:File, enableHyperlinks:Boolean = false, username:String = null, password:String = null ) = {
+    var doConvertApi = false
     // PDF Crowd API only allows one at a time
     lock.synchronized {
       var useJavascript = true
@@ -76,11 +78,17 @@ object Pdf {
     	          println( "PDF failure, status code: " + js )
     	          useJavascript = false
     	        case sc =>
-    	          retry = false
-    	        //503 - Simultaneous API calls from a single IP are not allowed.
-                val msg = why.getMessage
-                println( "status code: " + sc )
-                throw new RuntimeException( "Status code: " + sc + ", " + msg.firstSuffix( '-' ) or msg )
+                retry = false
+                
+    	          if ( sc == 502 ) {
+    	            doConvertApi = true
+    	            println( "PDF Crowd failed, trying convertApi." )
+    	          } else {
+      	        //503 - Simultaneous API calls from a single IP are not allowed.
+                  val msg = why.getMessage
+                  println( "status code: " + sc )
+                  throw new RuntimeException( "Status code: " + sc + ", " + msg.firstSuffix( '-' ) or msg )
+    	          }
     	        }
     	    case e:IOException =>
     	      retry = false
@@ -91,8 +99,68 @@ object Pdf {
     	      fileStream.close
     	  }
       }
-  	  
-  	  outFile
+    }
+ 
+    if ( doConvertApi )
+      convertApi( url, outFile, username, password )
+    else 
+      outFile
+  }
+  
+  def convertApi( url:String, outFile:File, username:String = null, password:String = null ) = {
+    // Only do one at a time
+    lock2.synchronized {
+      var useJavascript = true
+      var retry = true
+      var fileStream:FileOutputStream = null
+      
+      while ( retry ) {
+        try {
+          fileStream = new FileOutputStream( outFile )     
+       
+          val idx = url.lastIndexOf( '?' )
+          val finalUrl = ( idx > -1 ) ? ( url.substring(0, idx) + java.net.URLEncoder.encode( url.substring( idx ), "UTF-8" ) ) | url
+          
+          val result = "http://do.convertapi.com/Web2Pdf".POST(
+              Map( "ApiKey" -> B.convertApiKey,
+                   "Scripts" -> ( useJavascript ? "true" | "false" ),
+                   "AuthUsername" -> username,
+                   "AuthPassword" -> password,
+                   "CUrl" -> finalUrl
+              ) )
+          
+          val res = result.response
+          val entity = res.getEntity
+          
+          if ( entity != null )
+            entity.getContent.transferTo( fileStream, true )
+             
+          // convert a web page and save the PDF to a file
+//          if ( B.onePagePdf )
+//            client.setPageHeight( -1 )
+          
+          if ( !useJavascript )
+            B.sendMessage( "When importing the URL [" + url + "], there was an error.  It was tried again with Javascript turned off on the page and it was successful.  The result may not exactly reflect what the page looked like.", T.user.tid )
+            
+          retry = false
+        } catch {
+          case e:IOException =>            
+            println( e.getMessage )
+            
+            if ( useJavascript ) {
+              println( "PDF failure, turning of JS and trying again." )
+              useJavascript = false
+            } else {
+              retry = false
+              throw new RuntimeException( e )
+            }
+        } finally {
+          if ( fileStream != null )
+            fileStream.close
+        }
+      }
+      
+      outFile
     }
   }
 }

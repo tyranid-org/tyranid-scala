@@ -266,6 +266,8 @@ trait Bootable {
   // PDF Crowd
   val pdfCrowdName:String = ""
   val pdfCrowdKey:String = ""
+    
+  val convertApiKey:String = ""
   
   // AWS
   import org.tyranid.cloud.aws.S3Bucket
