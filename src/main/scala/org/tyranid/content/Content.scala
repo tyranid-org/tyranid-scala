@@ -670,7 +670,7 @@ trait ContentMeta extends PrivateKeyEntity {
   "subV"              is DbArray(DbTid(B.Org,B.User))       ; // for showing content inside a group, subviewers
 
   "subscr"            is DbArray(DbTid(B.User)) as "Subscribers";
-  "isSubscriber"      is DbBoolean            is 'temporary computed { _.as[Content].isSubscriber( T.user ) }
+  "isSubscriber"      is DbBoolean            is 'temporary is 'client computed { _.as[Content].isSubscriber( T.user ) }
   
 
   "shown"             is DbArray(DbTid(B.User)) as "Shown To" ; // list of tids of users who have "read" this content; only maintained for some content types, like messages
