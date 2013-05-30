@@ -285,6 +285,7 @@ object LogQuery extends Query {
         }
       }
     },
+    PathField( "p",   search = Search.Subst ),
     PathField( "m", search = Search.Subst ),
     new CustomField {
       def name = "ua"
@@ -305,7 +306,6 @@ object LogQuery extends Query {
     PathField( "ex",  search = Search.Subst ),
     PathField( "ct",  search = Search.Gte ),
     PathField( "du",  search = Search.Gte ),
-    PathField( "p",   search = Search.Subst ),
     PathField( "bid", search = Search.Equals ),
     new CustomField {
       def name = "agent"
@@ -326,7 +326,7 @@ object LogQuery extends Query {
     }
   )
 
-  val defaultFields = dataFields.take( 5 )
+  val defaultFields = dataFields.take( 6 )
 }
 
 object Loglet extends Weblet {
