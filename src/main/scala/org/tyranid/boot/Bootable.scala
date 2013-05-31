@@ -106,12 +106,10 @@ trait Bootable {
   // DEV assumes the DNS is in your hosts file
   
   def fullDomain = { 
-    val lnf = T.LnF
-    
-    if ( DEV )        ( ( lnf == org.tyranid.ui.LnF.RetailBrand ) ? "rb-" | "" ) + "dev." + domain
-    else if ( STAGE ) ( ( lnf == org.tyranid.ui.LnF.RetailBrand ) ? "rb-" | "" ) + "stage." + domain
-    else if ( BETA )  ( ( lnf == org.tyranid.ui.LnF.RetailBrand ) ? "rb-" | "" ) + "beta." + domain
-    else              ( ( lnf == org.tyranid.ui.LnF.RetailBrand ) ? "rb." | "app." ) + domain
+    if ( DEV )        "rb-dev." + domain
+    else if ( STAGE ) "rb-stage." + domain
+    else if ( BETA )  "rb-beta." + domain
+    else              "rb." + domain
   }
     
   def domainPort = 

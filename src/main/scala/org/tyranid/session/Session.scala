@@ -36,7 +36,6 @@ import org.tyranid.profile.{ User, UserStat, UserStatType }
 import org.tyranid.report.Query
 import org.tyranid.social.Social
 import org.tyranid.time.Time
-import org.tyranid.ui.LnF
 import org.tyranid.QuickCache
 import org.tyranid.web.{ Comet, WebContext }
 
@@ -114,9 +113,6 @@ object ThreadData {
 }
 
 class ThreadData {
-
-  def LnF = Session().LnF
-
   def website = "https://" + B.domainPort
 
   // --- HTTP Session
@@ -215,7 +211,6 @@ class ThreadData {
 
 
 trait SessionMeta {
-  val LnF_KEY = "LnF"
   val UA_KEY = "UA"
     
   def apply():Session = ThreadData().session
@@ -253,8 +248,6 @@ trait Session extends QuickCache {
 
   var passedCaptcha = !B.requireReCaptcha
 
-  def LnF = get( Session.LnF_KEY ).as[LnF] ?| org.tyranid.ui.LnF.RetailBrand
-  
   def get( key:String ) = getV( key )
   def getOrElse( key:String, any:Any ) = getVOrElse( key, any.as[AnyRef] )
   def getOrElseUpdate( key:String, any:Any ) = getVOrElseUpdate( key, any.as[AnyRef] )

@@ -32,21 +32,16 @@ import org.tyranid.math.Base62
 import org.tyranid.secure.DbReCaptcha
 import org.tyranid.session.Session
 import org.tyranid.social.Social
-import org.tyranid.ui.{ Button, Grid, Row, Focus, LnF, Form }
+import org.tyranid.ui.{ Button, Grid, Row, Focus, Form }
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate, WebResponse }
 import org.tyranid.web.WebHandledException
 
 object Register {
   def sendActivation( user:User ) = {
-    val lnf = T.LnF
     val activationCode = Base62.make(8)
     
     user( 'activationCode ) = activationCode
-    user( 'lnf ) = lnf.id
 
-    if ( T.LnF == LnF.SupplyChain ) 
-      T.session.notice( "Thank you!  You should be receiving an email shortly to verify your account." )        
-    
     background { B.emailTemplates.welcome( user, activationCode ) }
   }
 
@@ -85,9 +80,6 @@ object Loginlet extends Weblet {
 
     val params = noSocial |* "?nosocial=1"
 
-    // TODO:  make this more template-based
-     { T.LnF match {
-       case LnF.RetailBrand =>
     <script>{ Unparsed( """
 $( function() {
   $('#forgot').click(function(e) {
@@ -152,48 +144,6 @@ $( function() {
     <div class="container-fluid" style="padding:0;">
      <a href="#" id="forgot" class="pull-right">Forgot your password?</a>
     </div>
- case _ =>
-    <script>{ Unparsed( """
-$( function() {
-  $('#forgot').click(function(e) {
-    window.location.assign( '""" + wpath + """/forgot?un=' + encodeURIComponent( fldVal ) );
-  });
-});
-""" ) }
-    </script> ++
-    <form method="post" action={ wpath + "/in" } id="f" class="form-horizontal">
-     <fieldset class="loginBox">
-      <legend><span>Log In</span></legend>
-      <div class="control-group" style="padding: 0px 8px;">
-       <label class="control-label" for="un">Email:</label>
-       <div class="controls">
-        <input type="text" id="un" name="un" value={ user.s('email) }/>
-        { Focus("#un") }
-       </div>
-       <label class="control-label" for="pw">Password:</label>
-       <div class="controls">
-        <input type="password" name="pw"/>
-       </div>
-       <div class="row-fluid">
-         <label class="checkbox span7">
-          <input type="checkbox" name="save" id="saveLogin" value="Y"/> Stay Logged In
-         </label>
-         <div class="span5"><input type="submit" value="Login" class="btn-success btn pull-right"/></div>
-       </div>
-       { !noSocial && web.req.s( 'na ).isBlank |*
-           Social.networks.flatMap { network =>
-             <hr style="margin:4px 0 8px;"/> ++
-             network.loginButton( this ) }
-       }
-      </div>
-     </fieldset>
-     <input type="hidden" name="l" value={ web.req.s("l") }/>
-     <div class="container-fluid" style="padding:0;margin-top:4px;">
-      <a href={ wpath + "/register" + params } class="pull-left">Join { B.applicationName }!</a>
-      <a href="#" id="forgot" class="pull-right">Forgot password ?</a>
-     </div>
-    </form>
-     } }
   }
 
   def handle( web: WebContext ) {
@@ -232,19 +182,13 @@ $( function() {
           } else if ( email.isBlank ) 
             sess.warn( "Please log in." )
   
-           // check look and feel, and if rb, do json, otherwise this.
-          T.LnF match {
-             case LnF.RetailBrand =>
-               val jsonRes = web.jsonRes( sess )
-               
-               if ( !sess.hasErrors )
-                 jsonRes.redirect = redirect.isBlank ? T.website | ( T.website + "/?l=" + redirect.encUrl )
-                 
-               jsonRes.extraJS = "T.initFormPlaceholders( '#f' );"
-               web.json( jsonRes )
-             case _ =>
-               web.redirect( redirect.isBlank ? T.website | ( T.website + "/?l=" + redirect.encUrl ) )
-          }
+           val jsonRes = web.jsonRes( sess )
+           
+           if ( !sess.hasErrors )
+             jsonRes.redirect = redirect.isBlank ? T.website | ( T.website + "/?l=" + redirect.encUrl )
+             
+           jsonRes.extraJS = "T.initFormPlaceholders( '#f' );"
+           web.json( jsonRes )
         } else {
           copySocialLogins( sessionUser = sess.user, existingUser = user )
           sess.login( user )
@@ -252,12 +196,7 @@ $( function() {
           if ( web.b( 'save ) )
             LoginCookie.set(user)
   
-          T.LnF match {
-             case LnF.RetailBrand =>
-               web.jsRes( Js( "V.common.set( " + user.toClientCommonMap().toJsonStr( client = true ) + " ); V.app.load( '" + ( redirect.isBlank ? "/#dashboard" | redirect ) + "' );" ) )
-             case _ =>
-               web.redirect(redirect.isBlank ? T.website | redirect)
-          }
+          web.jsRes( Js( "V.common.set( " + user.toClientCommonMap().toJsonStr( client = true ) + " ); V.app.load( '" + ( redirect.isBlank ? "/#dashboard" | redirect ) + "' );" ) )
         }
       }
     case "/clear" =>
@@ -270,90 +209,8 @@ $( function() {
     case s if s.startsWith( "/in" ) =>
       socialLogin( s.substring( 3 ) )
     case s if s.startsWith( "/register" ) =>
-      if ( T.LnF == LnF.RetailBrand ) {
-        registerRetail( web, sess )
-        return
-      }
-
-      val network = s.substring( 9 )
-
-      if ( network.notBlank )
-        return socialRegister( network )
-
-      val user =
-        sess.user match {
-        case null => B.newUser()
-        case u    => if ( u.isNew ) u else B.newUser()
-        }
-
-      sess.user = user
-
-      user.extraVaValidations =
-        ( user.view( 'email ),
-          { scope:Scope =>
-            B.User.db.exists( Mobj( "email" -> ("^" + user.s( 'email ).encRegex + "$").toPatternI ) ) |*
-              Some( Invalid( scope.at( 'email ), "'" + user.s( 'email ) + "' email address is already taken.") )
-          } ) ::
-          Nil
-
-      val ui = user.view.ui( "register" )
-
-      user.isAdding = true
-      
-      if ( web.b( 'saving ) ) {
-        val invalids = Scope( user, initialDraw = false, captcha = true ).submit( user, ui )
-
-        if ( invalids.isEmpty ) {
-          user( 'createdOn ) = new Date
-
-          Register.sendActivation( user )
-          
-          user.save
-          
-          web.redirect( "/" )
-        }
-      }
-
-      val inner = 
-       <div class="container">
-        <div style="margin-top:16px; font-size:24px;">Creating an account with { B.applicationName } is Free!</div>
-        { !noSocial |*
-         <div class="plainBox">
-          <div class="title">Use Social Login to Automatically Register</div>
-          <div class="contents">
-           Sign in using a Social Network to quickly create an account automatically:
-           <div>{
-            Social.networks.flatMap { network =>
-             <hr style="margin:4px 0 8px;"/>++ 
-             network.loginButton( this ) }
-           }</div>
-          </div>
-         </div> }
-         <div class="plainBox">
-          <div class="title">{ noSocial ? "Register" | "Manually Register" }</div>
-          <div class="contents" style="height:390px;">
-           <form method="post" action={ web.path } id="f" style="float:left">
-            <table>
-              { Scope(user, saving = true, captcha = true).draw(ui) }
-            </table>
-            <div class="btns">
-              <input type="submit" class="btn-success btn" value="Save &amp; Register" name="saving"/>
-              <a href="/" class="btn">Cancel</a>
-            </div>
-           </form>
-           <div style="float:right; padding-top: 10px;">
-           { Unparsed( """
-            <video id="vid_sign_up" class="video-js vjs-default-skin" controls preload="auto" width="643" height="276" data-setup="{}">
-             <source src="https://d33lorp9dhlilu.cloudfront.net/videos/Volerro_Sign_Up.mp4" type="video/mp4"/>
-            </video>
-            """ ) }
-            <div class="title">{ B.applicationName } Sign Up</div>
-           </div>
-          </div>
-         </div>
-        </div>
-           
-      web.template( <tyr:shell>{ inner }</tyr:shell> )    
+      registerRetail( web, sess )
+      return
     case "/company" =>
       val term = web.req.s( 'term ).toLowerCase
 
@@ -402,12 +259,8 @@ $( function() {
         val email = web.req.s( 'un ) or sess.user.s( 'email )
 
         if ( email.isBlank ) {
-          sess.warn( "Please enter in an email address." )
-          
-          if ( T.LnF == LnF.RetailBrand )
-            return web.json( web.jsonRes( sess ) )
-            
-          web.redirect( "/" )
+          sess.warn( "Please enter in an email address." )          
+          return web.json( web.jsonRes( sess ) )
         }
 
         val dbUser = B.User.db.findOne( Mobj( "email" -> email ) )
@@ -415,10 +268,7 @@ $( function() {
         if ( dbUser == null ) {
           sess.warn( "Sorry, it doesn't look like the email address " + email + " is on " + B.applicationName + "." )
           
-          if ( T.LnF == LnF.RetailBrand )
-            return web.json( web.jsonRes( sess ) )
-            
-          web.redirect("/")
+          return web.json( web.jsonRes( sess ) )
         }
 
         val activationCode = dbUser.s( 'activationCode )
@@ -437,36 +287,21 @@ $( function() {
           B.emailTemplates.forgotPassword( user )          
         }
         
-        if ( T.LnF == LnF.RetailBrand )
-          return web.json( web.jsonRes( sess ) )
-            
-        web.redirect("/")
+        return web.json( web.jsonRes( sess ) )
       } else {
         val dbUser = B.User.db.findOne(Mobj("resetCode" -> forgotCode))
 
         if (dbUser == null) {
-          if ( T.LnF == LnF.RetailBrand ) {
-            sess.notice( "Account access code not found!", deferred = "/#dashboard" )
-            web.jsRes( Js( "V.common.clear().set(V.common.defaults); V.app.load( '/#dashboard' )" ) )
-          } else {
-            web.template(
-            <tyr:shell>
-              <p>Account access code not found!</p>
-            </tyr:shell>)
-          }
+          sess.notice( "Account access code not found!", deferred = "/#dashboard" )
+          web.jsRes( Js( "V.common.clear().set(V.common.defaults); V.app.load( '/#dashboard' )" ) )
         } else {
           val user = B.User(dbUser)
           user.remove('resetCode)
           sess.login( user )
           user.save
           
-          if ( T.LnF == LnF.RetailBrand ) {
-            sess.notice( "You can now change your password in <em>My Profile</em>.", deferred = "/#dashboard" )
-            web.jsRes( Js( "V.common.set( " + user.toClientCommonMap().toJsonStr( client = true ) + " ); V.app.load( '/#dashboard' )" ) )
-          } else {
-            sess.notice( "You can now change your password." )
-            web.redirect( "/user/edit?id=" + user.tid )
-          }
+          sess.notice( "You can now change your password in <em>My Profile</em>.", deferred = "/#dashboard" )
+          web.jsRes( Js( "V.common.set( " + user.toClientCommonMap().toJsonStr( client = true ) + " ); V.app.load( '/#dashboard' )" ) )
         }
       }
 
@@ -987,11 +822,8 @@ $( function() {
         "This account has not been activated yet!  Please check your email for the activation link.",
         <a href={ "/log/resendActivation?id=" + user.id }>Send Again</a> )
         
-    if ( T.LnF == LnF.RetailBrand ) {
-      T.web.jsRes()
-      throw new WebHandledException
-    } else
-      T.web.redirect( "/?na=1" ) // na = need activation
+    T.web.jsRes()
+    throw new WebHandledException
   }
 }
 
