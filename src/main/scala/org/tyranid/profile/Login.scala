@@ -36,15 +36,6 @@ import org.tyranid.ui.{ Button, Grid, Row, Focus, LnF, Form }
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate, WebResponse }
 import org.tyranid.web.WebHandledException
 
-/*
-     new Form( "/user/register", "register" )
-       .style( "margin-bottom:12px;" )
-       .data( "val", "1" )
-       .fieldsetClass( "registerBox" )
-       .title( "Thanks, " + user.s( 'firstName ) + "!" )
-       .hidden( "regStep", "2" )
- */
-
 object Register {
   def sendActivation( user:User ) = {
     val lnf = T.LnF
