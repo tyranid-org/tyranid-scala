@@ -215,11 +215,12 @@ trait Email {
   }
 
   def replyTo( _replyToEmailAddress:String ):Email = {
-    try {
-      replyTo = Email.getInetAddress( _replyToEmailAddress )
-    } catch { 
-      case ae:AddressException => 
-    }
+    if ( _replyToEmailAddress.notBlank )
+      try {
+        replyTo = Email.getInetAddress( _replyToEmailAddress )
+      } catch { 
+        case ae:AddressException => 
+      }
     
     this
   }
