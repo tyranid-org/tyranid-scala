@@ -32,8 +32,6 @@ import org.tyranid.db.{ DbChar, DbInt, DbPassword, DbEmail, DbBoolean }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.profile.User
-import org.tyranid.ui.LnF
-
 
 object EmailConfig extends MongoEntity( tid = "a0At" ) {
   "_id"          is DbInt is 'id;

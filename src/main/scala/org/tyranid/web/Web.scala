@@ -35,8 +35,6 @@ import org.tyranid.json.{ JsCmd, JsCmds, Js, JsData, JsModel, JqHtml, JsNop }
 import org.tyranid.math.Base64
 import org.tyranid.profile.{ LoginCookie, User }
 import org.tyranid.session.{ AccessLog, Session, ThreadData, Notification }
-import org.tyranid.ui.LnF
-
 
 case class WebException( message:String )          extends Exception
 
@@ -98,7 +96,8 @@ trait TyrFilter extends Filter {
       val sess = T.session
       sess.put( "remoteHost", web.req.getRemoteHost() )
       sess.put( "remoteAddr", web.req.getRemoteAddr() )
-      sess.put( Session.LnF_KEY, LnF.byDomain( web.req.getServerName ) )
+      
+      //sess.put( "subdomain", web.req.getServerName )
       sess.ua( web )
       LoginCookie.autoLogin          
     }
@@ -207,7 +206,7 @@ class WebFilter extends TyrFilter {
       if ( session != null && !isAsset ) {
         session.put( "lastPath", web.path )
         session.put( "lastPathTime", new java.util.Date() )
-        session.put( Session.LnF_KEY, LnF.byDomain( web.req.getServerName ) )
+      //sess.put( "subdomain", web.req.getServerName )
       }
     }
     
@@ -285,13 +284,7 @@ class WebFilter extends TyrFilter {
         
         if ( !comet && !isAsset ) ensureSession( thread, web )
         
-        //println( !web.b( 'xhr ) ) 
-        //println( !isAsset )
-        //println( T.user == null || !T.user.loggedIn )
-        //println( T.LnF == LnF.RetailBrand )
-        //println( comet )
-        
-        if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) ) && T.LnF == LnF.RetailBrand && !comet && web.req.getAttribute( "api" )._s.isBlank ) {
+         if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) ) && !comet && web.req.getAttribute( "api" )._s.isBlank ) {
           //println( "full shell page!" )
           
           web.template( B.appShellPage( web ) )

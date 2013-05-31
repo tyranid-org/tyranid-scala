@@ -264,7 +264,6 @@ case class TabBar( weblet:Weblet, tabs:Tab* ) {
   def has( rpath:String ) = tabs.exists( _.rpath == rpath )
 
   def draw( qs:String = "", except:Seq[String] = Nil ) = {
-    val isRb = T.LnF == LnF.RetailBrand 
     val rpath = weblet.rpath
 
     val activeTabs = tabs filter { tab => !except.exists( _ == tab.rpath ) }
@@ -278,8 +277,8 @@ case class TabBar( weblet:Weblet, tabs:Tab* ) {
     }
 
     <div class="tabbar">
-     <ul class={ isRb |* "nav nav-tabs" }>
-      { activeTabs map ( _.draw( this, qs, isRb ) ) }
+     <ul class="nav nav-tabs">
+      { activeTabs map ( _.draw( this, qs ) ) }
      </ul>
     </div>;
   }
@@ -292,7 +291,7 @@ case class TabBar( weblet:Weblet, tabs:Tab* ) {
 
 case class Tab( rpath:String, label:NodeSeq, cls:String = null, default:Boolean = false ) {
 
-  def draw( bar:TabBar, qs:String, isRb:Boolean ) = {
+  def draw( bar:TabBar, qs:String ) = {
     val fpath = bar.weblet.wpath + rpath
     val choice = bar.choice
 
@@ -301,13 +300,13 @@ case class Tab( rpath:String, label:NodeSeq, cls:String = null, default:Boolean 
 
       if ( rpath == choice ) {
         if ( cls == null )
-          cls = isRb ? "active" | "selected";
+          cls = "active";
         else
-          cls += ( " " + ( isRb ? "active" | "selected" ) )
+          cls += " active"
       }
 
-      <a class={ cls } href={ ( isRb ? "javascript:void(0);" | ( fpath + qs ) ) }
-         data-sbt={ isRb |* Some( Text( Form.attrJson( Map( "href" -> ( fpath + qs ) ) ) ) ) }>{ label }</a>
+      <a class={ cls }
+         data-sbt={ Some( Text( Form.attrJson( Map( "href" -> ( fpath + qs ) ) ) ) ) }>{ label }</a>
     }</li>
   }
 }

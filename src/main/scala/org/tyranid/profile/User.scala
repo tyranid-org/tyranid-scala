@@ -37,7 +37,6 @@ import org.tyranid.sms.SMS
 import org.tyranid.locale.{ Country, Language }
 import org.tyranid.secure.DbReCaptcha
 import org.tyranid.session.{ Session, ThreadData, WebSession }
-import org.tyranid.ui.LnF
 import org.tyranid.web.{ Comet, WebContext }
 
 object UserStatType extends RamEntity( tid = "a0Nt" ) {
@@ -171,8 +170,6 @@ class UserMeta extends MongoEntity( "a01v" ) {
 
   "eye"            is DbBoolean           ;
   "bids"           is DbArray(DbChar(10)) as "Browser IDs";
-  
-  "lnf"            is DbLink(LnF)         ;
 
   override def init = {
     super.init
