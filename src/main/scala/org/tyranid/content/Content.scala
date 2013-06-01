@@ -500,7 +500,8 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
   def sort( comments:Seq[Comment], newestFirst:Boolean = false, byPageXy:Boolean = false, byWhen:Boolean = false ) = {
 
     if ( newestFirst )
-      comments.sortBy( _.mostRecentOn ).reverse
+      comments.sortBy( _.on ).reverse
+      //comments.sortBy( _.mostRecentOn ).reverse // This is commented out until comment.js::sort handles mostRecentOn, so the two methods are consistent
     else if ( byWhen )
       comments.sortWith { ( a:Comment, b:Comment ) =>
         val aw = a.d( 'w )
