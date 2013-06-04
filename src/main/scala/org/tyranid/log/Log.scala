@@ -105,7 +105,8 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
     super.init
     "uid"    is DbLink(B.User)    as "User";
     
-    db.ensureIndex( Mobj( "on" -> 1  ) )
+    // Expire after one year
+    db.ensureIndex( Mobj( "on" -> 1 ), Mobj( "expireAfterSeconds" -> 31536000 ) )
   }
 
   def log( event:Event, opts:(String,Any)* ) = {

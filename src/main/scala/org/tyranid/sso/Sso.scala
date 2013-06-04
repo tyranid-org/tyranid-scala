@@ -176,9 +176,10 @@ $( $('#idp').focus() );
         if ( B.debugSso )
           println( "DEBUG: Mapping found, trying ping identity for ipdid " + idpId )
         
-        web.res.sendRedirect( "https://sso.connect.pingidentity.com/sso/sp/initsso?saasid=" + SAAS_ID + "&idpid=" + idpId + "&appurl=" + TOKEN_URL + "&appurl=" + ERROR_URL )
+        web.res.sendRedirect( "https://sso.connect.pingidentity.com/sso/sp/initsso?saasid=" + SAAS_ID + "&idpid=" + idpId + "&appurl=" + TOKEN_URL + "/" + id + "&errorurl=" + ERROR_URL )
       }
-    case "/token" =>
+    case t if t.startsWith( "/token/" ) =>
+      val id = t.split( "/" )(2)
       val token = web.s( 'tokenid )
       
       if ( token.isBlank ) {
@@ -219,7 +220,22 @@ $( $('#idp').focus() );
       if ( B.debugSso )
         println( "DEBUG: Pretty JSON response: " + json.toJsonStr( pretty = true ) )
       
-      val mapping = sess.get( "sso" ).as[Record]
+      var mapping = sess.get( "sso" ).as[Record]
+      
+      if ( mapping == null ) {
+        if ( B.debugSso )
+          println( "DEBUG: No mapping found.  Looking for id from URL: " + id )
+          
+        mapping = SsoMapping.getById( id )
+      }
+
+      if ( mapping == null ) {
+        println( "DEBUG: Mapping not found!" )
+        sess.error( "There is no mapping found to match against." )
+        web.jsRes()
+        return
+      }
+      
       val email = json.s( mapping.s( 'emailAttrib ) )
       
       if ( email.isBlank ) {
