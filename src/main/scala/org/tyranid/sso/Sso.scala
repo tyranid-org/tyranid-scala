@@ -218,7 +218,7 @@ $( $('#idp').focus() );
       val json = Json.parse( str )
       
       if ( B.debugSso )
-        println( "DEBUG: Pretty JSON response: " + json.toJsonStr( pretty = true ) )
+        println( "Json Object: " + json )
       
       var mapping = sess.get( "sso" ).as[Record]
       
