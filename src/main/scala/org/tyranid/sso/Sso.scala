@@ -159,10 +159,10 @@ $( $('#idp').focus() );
       val id = s.split( "/" )(2)
       val mapping = ( id == "test" ) ? SsoMapping.testMapping | SsoMapping.getById( id )
       
-      if ( B.debugSso )
-        println( "DEBUG: Incoming /auth call for: " + id + ", mapping is " + mapping )
-      
       if ( mapping == null || mapping.s( 'idpId ).isBlank ) {
+        if ( B.debugSso )
+          println( "DEBUG: Incoming /auth call for: " + id + ", mapping not found" )
+      
         sess.error( "SSO Mapping for code " + id + " not found." )
         
         if ( web.b( 'xhr ) ) 
@@ -170,6 +170,9 @@ $( $('#idp').focus() );
         else
           web.template( <tyr:shell>{ pageWrapper( signupBox ) }</tyr:shell> )
       } else {
+        if ( B.debugSso )
+          println( "DEBUG: Incoming /auth call for: " + id + ", mapping found" )
+      
         sess.put( "sso", mapping )
         val idpId = URLEncoder.encode( mapping.s( 'idpId ), "UTF-8" )
         
