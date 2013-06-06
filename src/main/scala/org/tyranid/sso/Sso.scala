@@ -79,9 +79,17 @@ object Ssolet extends Weblet {
     </div>
     <div class="offset3 span6">{ inner }</div>
    </div>
-        
+
+  def loginUser( user:User, web:WebContext ) {
+    val thread = T
+    thread.http = web.req.getSession( true )
+    thread.web = web
+       
+    thread.session.login( user )
+  }
+  
   def handle(web: WebContext) {
-    val sess = T.session
+    var sess = T.session
 
     rpath match {
     case "/" =>      
@@ -173,7 +181,6 @@ $( $('#idp').focus() );
         if ( B.debugSso )
           println( "DEBUG: Incoming /auth call for: " + id + ", mapping found" )
       
-        sess.put( "sso", mapping )
         val idpId = URLEncoder.encode( mapping.s( 'idpId ), "UTF-8" )
         
         if ( B.debugSso )
@@ -223,18 +230,11 @@ $( $('#idp').focus() );
       if ( B.debugSso )
         println( "Json Object: " + json )
       
-      var mapping = sess.get( "sso" ).as[Record]
-      
-      if ( mapping == null ) {
-        if ( B.debugSso )
-          println( "DEBUG: No mapping found.  Looking for id from URL: " + id )
-          
-        mapping = SsoMapping.getById( id )
-      }
+      var mapping = SsoMapping.getById( id )
 
       if ( mapping == null ) {
         println( "DEBUG: Mapping not found!" )
-        sess.error( "There is no mapping found to match against." )
+        sess.error( "Unable to determine SSO profile." )
         web.jsRes()
         return
       }
@@ -254,12 +254,14 @@ $( $('#idp').focus() );
       val groupNames = ( json.s( mapping.s( 'groupsAttrib ) ) or "" ).split( "," )
       
       if ( mustHaveGroups && groupNames.length == 0 ) {
-        if ( B.debugSso )
+        if ( B.debugSso ) {
           println( "DEBUG: Sorry, but you must be a member of a group to access " + B.applicationName + "." )
-          
-        sess.error( "Sorry, but you must be a member of a group to access " + B.applicationName + "." )
-        web.jsRes()
-        return
+          sess.error( "Your SSO profile does not list you as a member of group and it is required." )
+        } else {
+          sess.error( "Sorry, but you must be a member of a group to access " + B.applicationName + "." )
+          web.jsRes()
+          return
+        }
       }
       
       val orgId = mapping.oid( 'org )
@@ -307,8 +309,10 @@ $( $('#idp').focus() );
           newUser( 'naOptOut ) = true
           
         newUser.join( org )
-        sess.login( newUser )
         newUser.save
+        
+        loginUser( newUser, web )
+        sess = T.session
         
         if ( B.debugSso )
           println( "DEBUG: New user created and saved." )
@@ -319,16 +323,18 @@ $( $('#idp').focus() );
         // Add them to any groups specified
         if ( mustHaveGroups && groupNames.size > 0 ) {
           
-          val groups = Group.db.find( Mobj( "org" -> orgId, "ssoSynced" -> true ), Mobj( "name" -> 1 ) ).toSeq
+          val groups = Group.db.find( Mobj( "lastModifiedByOrg" -> orgId, "ssoSynced" -> true ), Mobj( "name" -> 1 ) ).toSeq
 
-          if ( B.debugSso && groups.size == 0 )
-            println( "DEBUG: No SSO managed groups found when they must have them!" )
-
-          for ( group <- groups if ( groupNames.find( g => g.toLowerCase == group.s( 'name ).toLowerCase ) != None ) ) {
-            Group.db.update( Mobj( "_id" -> group.id ), $addToSet( "v", newUser.tid ) )
-            
-            if ( B.debugSso )
-              println( "DEBUG: Adding user to group " + group.s( 'name ) )
+          if ( groups.size == 0 ) {
+            if ( B.debugSso  )
+              println( "DEBUG: No SSO managed groups found when they must have them!" )
+          } else {
+            for ( group <- groups if ( groupNames.find( g => g.toLowerCase == group.s( 'name ).toLowerCase ) != None ) ) {
+              Group.db.update( Mobj( "_id" -> group.id ), $addToSet( "v", newUser.tid ) )
+              
+              if ( B.debugSso )
+                println( "DEBUG: Adding user to group " + group.s( 'name ) )
+            }
           }
         }
         
@@ -428,7 +434,7 @@ $( $('#idp').focus() );
           
         // Add or remove them them to any groups specified
         if ( mustHaveGroups && groupNames.size > 0 ) {            
-          val groups = Group.db.find( Mobj( "org" -> orgId, "ssoSynced" -> true ), Mobj( "name" -> 1 ) ).toSeq
+          val groups = Group.db.find( Mobj( "lastModifiedByOrg" -> orgId, "ssoSynced" -> true ), Mobj( "name" -> 1 ) ).toSeq
           
           if ( B.debugSso && groups.size == 0 )
             println( "DEBUG: No SSO managed groups found when they must have them!" )
@@ -449,7 +455,8 @@ $( $('#idp').focus() );
           }
         }
         
-        sess.login( u )
+        loginUser( u, web )
+        sess = T.session
         
         if ( B.debugSso )
           println( "DEBUG: User is logged in." )
