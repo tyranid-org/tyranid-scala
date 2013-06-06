@@ -38,6 +38,7 @@ object TyranidConfig extends MongoEntity( tid = "a03t" ) {
   "accessLogs"  is DbBoolean         as "Enable Access Logs";
   "onePagePdf"  is DbBoolean         as "One Page PDF";
   "debugSso"    is DbBoolean         as "Debug SSO";
+  "debugChat"   is DbBoolean         as "Debug Chat";
 
 
   def apply():TyranidConfig = singleton
@@ -109,6 +110,12 @@ object TyranidConfiglet extends Weblet {
         TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "debugSso" -> obj.b( 'debugSso ) ) ) )
         sess.notice( "SSO Debug has been turned " + ( B.debugSso ? "ON" | "OFF" ) + "." )
   
+      case "chat" =>
+        val obj = TyranidConfig()
+        obj( 'debugChat ) = !B.debugChat
+        TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "debugChat" -> obj.b( 'debugChat ) ) ) )
+        sess.notice( "Chat Debug has been turned " + ( B.debugChat ? "ON" | "OFF" ) + "." )
+  
       case "recaptcha" =>
         val obj = TyranidConfig()
         obj( 'recaptcha ) = !B.requireReCaptcha
@@ -136,6 +143,7 @@ object TyranidConfiglet extends Weblet {
               "sms"        -> SMS.enabled,
               "onePagePdf" -> B.onePagePdf,
               "debugSso"   -> B.debugSso,
+              "debugChat"  -> B.debugChat,
               "email"      -> Email.enabled,
               "recaptcha"  -> B.requireReCaptcha,
               "accessLogs" -> B.accessLogs

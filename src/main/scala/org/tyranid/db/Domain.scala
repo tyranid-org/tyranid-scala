@@ -34,7 +34,7 @@ import org.tyranid.web.WebContext
  * * *   Domains
  */
 
-trait Domain extends Valid {
+trait Domain extends Valid with Serializable {
 
   val isSimple = true
 

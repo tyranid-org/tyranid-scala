@@ -260,7 +260,6 @@ $( $('#idp').focus() );
         } else {
           sess.error( "Sorry, but you must be a member of a group to access " + B.applicationName + "." )
           web.jsRes()
-          return
         }
       }
       

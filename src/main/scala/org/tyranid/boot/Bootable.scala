@@ -156,6 +156,7 @@ trait Bootable {
   def accessLogs       = TyranidConfig().b( 'accessLogs )
   def onePagePdf       = TyranidConfig().b( 'onePagePdf )
   def debugSso         = TyranidConfig().b( 'debugSso )
+  def debugChat        = TyranidConfig().b( 'debugChat )
 
   def access( thread:ThreadData, accessType:AccessType, ref:AnyRef )
 
