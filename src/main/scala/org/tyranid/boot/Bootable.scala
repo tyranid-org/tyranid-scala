@@ -151,6 +151,8 @@ trait Bootable {
    */
 
   val requireSsl = false
+  
+  var maintenanceMode = false
 
   def requireReCaptcha = TyranidConfig().b( 'recaptcha )
   def accessLogs       = TyranidConfig().b( 'accessLogs )

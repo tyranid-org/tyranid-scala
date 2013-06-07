@@ -97,7 +97,7 @@ case class ViewAttribute( val view:View,
   }
 }
 
-trait View {
+trait View extends Serializable {
 
   val entity:Entity
 
@@ -170,7 +170,7 @@ object Record {
     ).toSeq.flatten
 }
 
-trait Record extends Valid with BsonObject with QuickCache {
+trait Record extends Valid with BsonObject with QuickCache with Serializable {
   val view:View
 
   def flatten = Path.flatten( this )

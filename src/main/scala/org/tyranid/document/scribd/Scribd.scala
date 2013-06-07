@@ -120,16 +120,6 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
         "extDocId" -> extDocId )
   }
   
-  def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef] = {
-    val previewJson = previewJsonFor( extDocId )
-    
-    Map( "width" -> width, 
-         "height" -> height,
-         "cssClass" -> "no-scroll",
-         "extraJS" -> previewJson,
-         "html" -> docPreviewContainer( extDocId, print = false, annotatable = true ) )
-  }
-  
   def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ) = {
     val parts = extDocId.split( "," )
     val resultStr = Http.GET( "http://api.scribd.com/api?method=thumbnail.get&api_key=" + apiKey + "&doc_id=" + parts(0) + "&api_sig=" + MD5( parts(0), Session().id, T.user.tid ) + "&width=" + width + "&height=" + height )._s

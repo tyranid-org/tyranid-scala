@@ -37,10 +37,10 @@ trait AttributeAnnotation
  * * *   A t t r i b u t e s
  */
 
-class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid {
+class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid with Serializable {
 	var domain:Domain = null
   var label = name.camelCaseToSpaceUpper
-  var help = NodeSeq.Empty
+  @transient var  help = NodeSeq.Empty
   var required = false
   var internal = false
   var owner = false

@@ -62,14 +62,20 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
 
 	override lazy val dbName = name.plural
 
-  lazy val db = {
-    if ( embedded )
-      problem( "embedded mongodb entities do not have db objects" )
-
-    Mongo.connect.db( B.profileDbName )( dbName )
+	@transient var _db:DBCollection = null
+	
+  def db = {
+    if ( _db == null ) {
+      if ( embedded )
+        problem( "embedded mongodb entities do not have db objects" )
+  
+      _db = Mongo.connect.db( B.profileDbName )( dbName )
+    }
+    
+    _db
   }
 
-  lazy val makeView = MongoView( this )
+  @transient lazy val makeView = MongoView( this )
   
   def make = apply( Mobj() )
 

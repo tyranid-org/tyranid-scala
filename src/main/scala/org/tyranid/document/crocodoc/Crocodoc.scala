@@ -167,23 +167,6 @@ _doc = {"status": 3, "socketioHost": "//socket.crocodoc.com:5555/", "objects": [
       text
   }
   
-  def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef] = {
-    statusFor( extDocId ) match {
-      case "DONE" =>
-        val iframeSrc = previewUrlFor( extDocId )
-        
-        Map( "width" -> width, 
-             "height" -> height,
-             "cssClass" -> "no-scroll",
-             "html" -> ( { org.tyranid.session.Notification.box } ++
-                         <iframe style="width:100%;height:100%;" src={ iframeSrc }/> ) )
-      case "ERROR" =>
-        Map( "status" -> ( "Error occured!: " ) ) //+ statusJson.s( 'error ) ) ) )
-      case s =>
-        Map( "status" -> ( "Error, unknown status: " + s._s ) )
-    }
-  }
-  
   def delete( extDocId:String ):Boolean = {
     val result = Http.POST( "https://crocodoc.com/api/v2/document/delete", null, Map( "token" -> apiKey, "uuid" -> extDocId ) )._s
     

@@ -200,7 +200,6 @@ $( function() {
         }
       }
     case "/clear" =>
-      sess.clearAllEditing
       web.html( NodeSeq.Empty )
     case "/out" =>
       val website = T.website

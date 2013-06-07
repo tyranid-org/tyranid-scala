@@ -40,7 +40,6 @@ object TyranidConfig extends MongoEntity( tid = "a03t" ) {
   "debugSso"    is DbBoolean         as "Debug SSO";
   "debugChat"   is DbBoolean         as "Debug Chat";
 
-
   def apply():TyranidConfig = singleton
 
   lazy val singleton = {
@@ -116,6 +115,10 @@ object TyranidConfiglet extends Weblet {
         TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "debugChat" -> obj.b( 'debugChat ) ) ) )
         sess.notice( "Chat Debug has been turned " + ( B.debugChat ? "ON" | "OFF" ) + "." )
   
+      case "maint" =>
+        B.maintenanceMode = true
+ 
+        web.redirect( "/maintenance.html" )
       case "recaptcha" =>
         val obj = TyranidConfig()
         obj( 'recaptcha ) = !B.requireReCaptcha
@@ -144,6 +147,7 @@ object TyranidConfiglet extends Weblet {
               "onePagePdf" -> B.onePagePdf,
               "debugSso"   -> B.debugSso,
               "debugChat"  -> B.debugChat,
+              "maint"      -> false,
               "email"      -> Email.enabled,
               "recaptcha"  -> B.requireReCaptcha,
               "accessLogs" -> B.accessLogs

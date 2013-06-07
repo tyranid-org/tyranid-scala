@@ -56,6 +56,7 @@ case class Web404Exception()                       extends ControlThrowable
 
 object WebFilter {
   val versionPattern = "^/v[0-9]+/.*".r
+  val maintPattern = "/maintenance.html".r
   
   val assetPattern = java.util.regex.Pattern.compile( "((([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|htc|vtt|odt)))|.*robots\\.txt)$)|.*io/thumb.*|.*/sso/.*" )
   
@@ -106,10 +107,10 @@ trait TyrFilter extends Filter {
   def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData, comet:Boolean ): Unit
   
   def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ):Unit = try {
-    val boot = B
-    
     var web = new WebContext( request.asInstanceOf[HttpServletRequest],
                               response.asInstanceOf[HttpServletResponse], filterConfig.getServletContext() )
+      
+    val boot = B
     
     val removeFromPath = web.req.getAttribute( "removeFromPath" )._s
     
@@ -214,7 +215,10 @@ class WebFilter extends TyrFilter {
 
     val path = web.path
     
-    if ( path.matches( WebFilter.versionPattern ) ) {
+    if ( B.maintenanceMode && !path.matches( WebFilter.maintPattern ) & !isAsset ) {
+      web.ctx.getRequestDispatcher( "/maintenance.html" ).forward( web.req, web.res )
+      return
+    } else if ( path.matches( WebFilter.versionPattern ) ) {
       val slash = path.indexOf( '/', 1 )
       
       if ( slash != -1 ) {

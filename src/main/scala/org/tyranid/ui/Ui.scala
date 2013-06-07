@@ -322,7 +322,7 @@ object UiStyle {
   case object Toggle  extends UiStyle
 }
 
-trait UiObj {
+trait UiObj extends Serializable {
   def bind( view:View ):UiObj
 
   def draw( scope:Scope ):NodeSeq = NodeSeq.Empty
