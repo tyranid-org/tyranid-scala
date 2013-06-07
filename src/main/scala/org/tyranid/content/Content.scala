@@ -60,6 +60,7 @@ object ViewType extends RamEntity( tid = "a13v" ) {
   val Grid     = add( 4, "Grid"      )
   val Kanban   = add( 5, "Kanban"    )
   val Calendar = add( 6, "Calendar"  )
+  val Task     = add( 7, "Task"      )
 }
 
 case class ViewType( override val view:TupleView ) extends Tuple( view )
