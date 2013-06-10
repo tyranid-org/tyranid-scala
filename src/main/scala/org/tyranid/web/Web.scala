@@ -129,6 +129,8 @@ trait TyrFilter extends Filter {
     
     if ( !comet )
       println( "  | " + web.path + ( !B.DEV |* ", referer: " + web.req.getHeader( "referer" ) ) )
+    else
+      request.setAttribute("com.newrelic.agent.IGNORE", true)
 
     val thread = T
     thread.http = web.req.getSession( false )
@@ -182,7 +184,7 @@ class BasicAuthFilter extends TyrFilter {
         web.res.setStatus( HttpServletResponse.SC_UNAUTHORIZED )
         return
       }
-      
+
       ensureSession( thread, web )
       T.session.login( user )
     }
@@ -288,9 +290,7 @@ class WebFilter extends TyrFilter {
         
         if ( !comet && !isAsset ) ensureSession( thread, web )
         
-         if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) ) && !comet && web.req.getAttribute( "api" )._s.isBlank ) {
-          //println( "full shell page!" )
-          
+         if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.session.isLoggedIn ) ) && !comet && web.req.getAttribute( "api" )._s.isBlank ) {
           web.template( B.appShellPage( web ) )
           return
         }
@@ -488,7 +488,7 @@ trait Weblet {
   val rootPath = "/"
   
   def redirectIfNotLoggedIn( web:WebContext ) = 
-    if ( !B.User.isLoggedIn )
+    if ( !Session().isLoggedIn )
       web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
 
   def redirectIfNotHasOrg( web:WebContext ) = {

@@ -114,9 +114,7 @@ object AccessLog {
       // still do "digest" access logs
 
       if ( !session.loggedUser ) {
-        val user = session.user
-
-        if ( user.loggedIn ) {
+        if ( session.isLoggedIn ) {
           Log.log( Event.Access, "ua" -> web.req.getHeader( "User-Agent" ) )
           session.loggedUser = true
           session.loggedEntry = true

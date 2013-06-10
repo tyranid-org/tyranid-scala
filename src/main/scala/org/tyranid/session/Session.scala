@@ -52,9 +52,7 @@ object SessionCleaner {
         if ( tyrsess != null ) { 
           //val lastPathTime = tyrsess.get( "lastPathTime" ).as[Date]
           val idle = now - httpsess.getLastAccessedTime
-          val user = tyrsess.user
-          
-          ( user.isNew && idle > (2*Time.OneMinuteMs) ) || idle > Time.HalfHourMs
+          ( !tyrsess.isLoggedIn && idle > (2*Time.OneMinuteMs) ) || idle > Time.HalfHourMs
         } else {
           true
         }
@@ -97,6 +95,7 @@ class WebSessionListener extends HttpSessionListener {
 }
 
 object ThreadData {
+  private var tested = false
 
   private val data = new ThreadLocal[ThreadData]()
 
@@ -115,34 +114,56 @@ object ThreadData {
 class ThreadData {
   def website = "https://" + B.domainPort
 
+  private var userVar:User = null
+  
+  def user:User = {
+    if ( userVar == null && session != null ) {
+      val userTid = session.getOrElse( "user", "" )._s
+    
+      if ( userTid.notBlank ) {
+        userVar = B.User.getByTid( userTid )
+      } else if ( userVar == null ) {
+        userVar = B.newUser()
+      }
+    }
+    
+    userVar
+  }
+  
+  def user_=( user:User ) = userVar = user
+  
   // --- HTTP Session
 
   private var httpData:HttpSession = _
 
   def http:HttpSession = httpData
 
-  def http_=( obj:HttpSession ) = {
+  def http_=( obj:HttpSession ) = {    
     httpData = obj
     clear
   }
 
-  def clear {
+  def clear {    
     tyrSession = null
+    userVar = null
   }
-
 
   // --- Tyranid Session
 
   private var tyrSession:Session = _
   
-  def becomeSession( s:Session ) = tyrSession = s
+  def becomeSession( s:Session ) = {
+    userVar = s.user
+    tyrSession = s
+  }
 
   def session:Session = {
     if ( tyrSession == null ) {
       tyrSession =
         if ( http != null ) {
           http.getAttribute( WebSession.HttpSessionKey ) match {
-          case s:Session => s
+          case s:Session => 
+            s
           case _         =>
             val s = B.newSession()
             http.setAttribute( WebSession.HttpSessionKey, s )
@@ -161,11 +182,6 @@ class ThreadData {
     http.isLoggingOut = true
     tyrSession = null
   }
-
-  def user:User =
-    if ( session != null ) session.user
-    else                   null
-
 
   /*
    * * *  WebContext
@@ -234,15 +250,23 @@ object Session extends SessionMeta
 trait Session extends QuickCache {
   lazy val id = Base62.make( 10 )
 
-  private var userVar = B.newUser()
-
-  def user:User           = userVar
+  def user:User = T.user
+  
+  def user_=( user:User ) = {
+    if ( !user.isNew )
+      put( "user", user.tid )
+    
+    T.user = user
+  }
+  
   def orgId               = user.orgId
   def orgTid              = user.orgTid
-  def user_=( user:User ) = userVar = user
 
   var loggedEntry = false
   var loggedUser  = false
+
+  // If the user tid is set in the session
+  def isLoggedIn = getOrElse( "user", "" )._s.notBlank
 
   var debug       = B.DEV
 
@@ -283,7 +307,6 @@ trait Session extends QuickCache {
 
   def login( user:User, incognito:Boolean = false ) = {
     this.user = user
-    user.loggedIn = true
     put( "lastLogin", user.t( 'lastLogin ) )
     
     if ( !incognito ) {
@@ -376,7 +399,7 @@ trait Session extends QuickCache {
       return tz
 
     val u = user
-    if ( u != null && u.loggedIn )
+    if ( u != null && isLoggedIn )
       tz = u.timeZone
 
     tz

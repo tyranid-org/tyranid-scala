@@ -177,10 +177,8 @@ class UserMeta extends MongoEntity( "a01v" ) {
   }
 
   
-  def isLoggedIn = Session().user.loggedIn
+  def isLoggedIn = Session().isLoggedIn
   
-  def isAdmin    = Session().user.admin
-
   // TODO:  Make this more sophisticated, allow the entire user to be retrieved instead of just the name, and/or maybe something like ProfileItem
   def nameFor( userId:ObjectId ) = "TODO"
 
@@ -233,9 +231,6 @@ class UserMeta extends MongoEntity( "a01v" ) {
 }
 
 trait User extends MongoRecord {
-  var loggedIn     = false
-  var admin        = false
-
   def hasName = s( 'firstName ) != "unknown"
 
   def fullName =

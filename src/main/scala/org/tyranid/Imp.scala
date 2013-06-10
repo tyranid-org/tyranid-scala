@@ -112,6 +112,7 @@ object Imp {
 	}
 
   def background( block: => Unit ) {
+    println( 1 )
     val s = Session()
     
     scala.concurrent.ops.spawn {
