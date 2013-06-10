@@ -71,18 +71,18 @@ object ChromeFramelet extends Weblet {
     case "/chrome/install" =>
       ctx.res.html(
         WebTemplate(
-          <tyr:chromeShell>
+          <tyr:shell>
           { ChromeFrame.installScript }
-          </tyr:chromeShell> ) )
+          </tyr:shell> ) )
 
     case "/chrome/done" =>
       ctx.res.html(
         WebTemplate(
-          <tyr:chromeShell>
+          <tyr:shell>
            <p>Your browser is now upgraded.  Thank you!</p>
            { Button.bar(
               Button.link( "Return to " + B.applicationName + ".", "/", color = "go" ) ) }
-          </tyr:chromeShell> ) )
+          </tyr:shell> ) )
 
     case _ =>
       ctx.res.ok

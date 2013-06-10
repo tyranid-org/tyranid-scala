@@ -269,6 +269,7 @@ trait Session extends QuickCache {
   def isLoggedIn = getOrElse( "user", "" )._s.notBlank
 
   var debug       = B.DEV
+  var trace       = false
 
   var passedCaptcha = !B.requireReCaptcha
 

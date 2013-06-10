@@ -17,6 +17,8 @@
 
 package org.tyranid.web
 
+import com.newrelic.api.agent.NewRelic
+
 import java.io.IOException
 import javax.servlet.{ Filter, FilterChain, FilterConfig, GenericServlet, ServletException, ServletRequest, ServletResponse, ServletContext }
 import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
@@ -127,11 +129,14 @@ trait TyrFilter extends Filter {
 
     val comet = web.path.endsWith( "/cometd" )
     
-    if ( !comet )
+    if ( comet ) {
+      // Do not report these calls to New Relic because they look like they are taking the max time (when they are in suspend mode), and they
+      // throw off the Apdex score big time.
+      request.setAttribute( "com.newrelic.agent.IGNORE", true )
+    } else {
       println( "  | " + web.path + ( !B.DEV |* ", referer: " + web.req.getHeader( "referer" ) ) )
-    else
-      request.setAttribute("com.newrelic.agent.IGNORE", true)
-
+    }
+    
     val thread = T
     thread.http = web.req.getSession( false )
     thread.web = web
@@ -291,6 +296,14 @@ class WebFilter extends TyrFilter {
         if ( !comet && !isAsset ) ensureSession( thread, web )
         
          if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.session.isLoggedIn ) ) && !comet && web.req.getAttribute( "api" )._s.isBlank ) {
+           
+          if ( T.session.trace ) {
+            val hasUser = T.user != null 
+            NewRelic.setUserName( hasUser ? T.user.fullName | "[Unknown]" )
+            NewRelic.setAccountName( hasUser ? T.user.tid | "[None]" )
+            NewRelic.setProductName( T.session.id )
+          }
+          
           web.template( B.appShellPage( web ) )
           return
         }
@@ -301,6 +314,13 @@ class WebFilter extends TyrFilter {
           first = false
         }
 
+        if ( T.session.trace ) {
+          val hasUser = T.user != null 
+          NewRelic.setUserName( hasUser ? T.user.fullName | "[Unknown]" )
+          NewRelic.setAccountName( hasUser ? T.user.tid | "[None]" )
+          NewRelic.setProductName( T.session.id )
+        }
+          
         if ( handle( webloc ) ) {
           //sp am( "CACHE: CLEARING" )
           thread.tidCache.clear
