@@ -65,7 +65,6 @@ class CalendarImp( c:Calendar ) {
   def minute      = c.get( Calendar.MINUTE )
   def second      = c.get( Calendar.SECOND )
 
-
   def isSameYearAs( other:Calendar ) =
     c.get( Calendar.YEAR )         == other.get( Calendar.YEAR )
 
@@ -126,7 +125,7 @@ class CalendarImp( c:Calendar ) {
   }
 
   def weekday = { weekdays( c.get( Calendar.DAY_OF_WEEK ) ) }
-  
+
   def format( iso8601:Boolean = false ) = {
     val sb = new StringBuilder
     sb ++= "%04d-%02d-%02d%s%02d:%02d".format(
