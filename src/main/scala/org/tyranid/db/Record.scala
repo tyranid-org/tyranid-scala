@@ -152,7 +152,7 @@ object Record {
         flatMap( entity => entity.byRecordTid( recordTid ) ).
         getOrElse( null )
     } catch {
-    case e =>
+    case e:Throwable =>
       e.logWith( "m" -> ( "tid[" + tid + "]" )  )
       null
     }
@@ -194,7 +194,7 @@ trait Record extends Valid with BsonObject with QuickCache with Serializable {
  
   def tid = entityTid + recordTid
   def entityTid = view.entity.tid
-  def recordTid = view.idVa.flatten( va => va.att.domain.idToRecordTid( this( va ) ), view.entity.problem( "embedded entities don't have IDs" ) )
+  def recordTid = view.idVa.pluck( va => va.att.domain.idToRecordTid( this( va ) ), view.entity.problem( "embedded entities don't have IDs" ) )
 
   override def oid = id.as[ObjectId]
 
@@ -227,7 +227,7 @@ trait Record extends Valid with BsonObject with QuickCache with Serializable {
    * * *   Labels & Icons
    */
 
-  def label                   = view.labelVa.flatten( va => s( va ), "n/a" )
+  def label                   = view.labelVa.pluck( va => s( va ), "n/a" )
   def idLabel:(AnyRef,String) = ( apply( view.idVa.get ), label )
 
   def label( va:ViewAttribute )  = va.att.domain.asInstanceOf[DbLink].toEntity.labelFor( apply( va ) )

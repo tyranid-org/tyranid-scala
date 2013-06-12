@@ -203,7 +203,7 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
           try {
             ua = T.web.userAgentStr
           } catch {
-          case e =>
+          case e: Throwable =>
             e.printStackTrace
           }
       }
@@ -232,7 +232,7 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
             from( "no-reply@" + B.domain ).
             send
         } catch {
-        case e =>
+        case e: Throwable =>
           e.printStackTrace
         }
       }
@@ -310,20 +310,20 @@ object LogQuery extends Query {
     PathField( "bid", search = Search.Equals ),
     new CustomField {
       def name = "agent"
-      override def cell( s:Scope ) = Text( s.rec.as[Log].ua.flatten( _.agent, "" ) )
+      override def cell( s:Scope ) = Text( s.rec.as[Log].ua.pluck( _.agent, "" ) )
     },
     new CustomField {
       def name = "agentName"
-      override def cell( s:Scope ) = Text( s.rec.as[Log].ua.flatten( _.s( 'agentName ), "" ) )
+      override def cell( s:Scope ) = Text( s.rec.as[Log].ua.pluck( _.s( 'agentName ), "" ) )
     },
     new CustomField {
       def name = "agentVersion"
-      override def cell( s:Scope ) = Text( s.rec.as[Log].ua.flatten( _.s( 'agentVersion ), "" ) )
+      override def cell( s:Scope ) = Text( s.rec.as[Log].ua.pluck( _.s( 'agentVersion ), "" ) )
     },
     new CustomField {
       def name = "os"
       override lazy val label = "OS"
-      override def cell( s:Scope ) = Text( s.rec.as[Log].ua.flatten( _.os, "" ) )
+      override def cell( s:Scope ) = Text( s.rec.as[Log].ua.pluck( _.os, "" ) )
     }
   )
 

@@ -351,7 +351,7 @@ object Accesslet extends Weblet {
     val milestoneCounts = mutable.Map[Milestone,MilestoneCounts]( B.milestones.map( _ -> MilestoneCounts() ):_* )
 
     val onlyMilestone = web.sOpt( "milestone" ).flatMap( Milestone.apply )
-    val milestones    = onlyMilestone.flatten( Seq(_), B.milestones )
+    val milestones    = onlyMilestone.pluck( Seq(_), B.milestones )
 
 
     //

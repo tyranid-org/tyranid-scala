@@ -79,7 +79,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
       flatMap(
       _ match {
      case tid if tid.startsWith( Group.tid ) =>
-       Group.byTid( tid ).flatten( _.a_?( 'v ).toSeq.of[String], Nil )
+       Group.byTid( tid ).pluck( _.a_?( 'v ).toSeq.of[String], Nil )
 
      case tid =>
        Seq( tid )

@@ -27,6 +27,6 @@ object Ip {
   lazy val Host =
     java.net.NetworkInterface.getNetworkInterfaces.
       find( ni => !ni.isLoopback && ni.getInetAddresses.hasMoreElements ).
-      flatten( _.getInetAddresses.nextElement.getHostAddress, "127.0.0.1" )
+      pluck( _.getInetAddresses.nextElement.getHostAddress, "127.0.0.1" )
 }
 

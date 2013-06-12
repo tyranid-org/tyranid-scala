@@ -44,12 +44,12 @@ class ArrayImp[A]( array:Array[A] ) {
    * equivalent to:  seq.filter( _.isInstanceOf[B] ).map( _.asInstanceOf[B] )
    */
   def of[ B <: A : Manifest ]:Array[B] = {
-    val cls = manifest[B].erasure
+    val cls = manifest[B].runtimeClass
     array.filter( obj => cls.isAssignableFrom( obj.getClass ) ).map( _.asInstanceOf[B] )
   }
 
   def findOf[ B <: A : Manifest ]:Option[B] = {
-    val cls = manifest[B].erasure
+    val cls = manifest[B].runtimeClass
     array.find( obj => cls.isAssignableFrom( obj.getClass ) ).map( _.asInstanceOf[B] )
   }
 

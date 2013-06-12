@@ -135,7 +135,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
       T.tidCache.byTid.getOrElseUpdate( idToTid( id ), queryById( id ) ).as[RecType]
       // TODO:  if we already had it here should we clone it ?
     } catch {
-    case e =>
+    case e:Throwable =>
       e.logWith( "m" -> ( "tid[" + tid + "]" )  )
       null
     }
@@ -151,7 +151,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
         T.tidCache.byTid.getOrElseUpdate( tid, queryById( recordTidToId( tid.substring( 4 ) ) ) ).as[RecType]
         // TODO:  if we already had it here should we clone it ?
       } catch {
-      case e =>
+      case e:Throwable =>
         e.logWith( "m" -> ( "tid[" + tid + "]" )  )
         null
       }

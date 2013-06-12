@@ -318,8 +318,8 @@ object Image {
 }
 
 case class Image( url:URL, dims:Option[Dimensions] = None ) {
-  def pixels = dims.flatten( _.pixels, 0 )
-  def portraitRank = dims.flatten( _.portraitRank, 0.0 )
+  def pixels = dims.pluck( _.pixels, 0 )
+  def portraitRank = dims.pluck( _.portraitRank, 0.0 )
   def dimensions( maxWidth:Int = -1, maxHeight:Int = -1 ) = dims.get.scale( maxWidth, maxHeight )
   def cssDimensions( maxWidth:Int = -1, maxHeight:Int = -1 ) = dimensions( maxWidth, maxHeight ).css
 }
@@ -344,7 +344,7 @@ object Thumbnail {
            try {
              new JpegReader().readImage( originalFile ) 
            } catch {
-             case e2 => 
+             case e2:Throwable => 
                //Find a suitable ImageReader
                val suffix = originalFile.getName.suffix( '.' ).toUpperCase
                val readers = ImageIO.getImageReadersByFormatName( suffix )
@@ -376,7 +376,7 @@ object Thumbnail {
                  null
                }
            }
-         case e3 =>
+         case e3:Throwable =>
            e3.printStackTrace()
            println( "Cannot read image: " + originalFile.getName )
            null
@@ -445,7 +445,7 @@ object Thumbnail {
         try {
           ImageIO.write( thumbImage.getSubimage( x, y, w, h ), "JPG", thumbFile ) 
         } catch {
-          case e =>
+          case e:Throwable =>
             println( "ERROR: " + e.getMessage() )
             println( "orig: " + thumbWidth + ", " + thumbHeight )
             println( "cropped: " + x + ", " + y + ", " + w + ", " + h )

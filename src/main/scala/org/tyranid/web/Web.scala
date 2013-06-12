@@ -145,7 +145,7 @@ trait TyrFilter extends Filter {
   } catch {
   case t:ControlThrowable =>
     throw t
-  case t =>
+  case t:Throwable =>
     t.log
   }
 }

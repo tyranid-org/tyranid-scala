@@ -106,7 +106,7 @@ object FileUploadSupport {
           else
             fileParams( item.getFieldName ) = item +: fileParams.getOrElse(item.getFieldName, Nil )
       } catch {
-        case e => 
+        case e:Throwable => 
           e.printStackTrace
           // nop
       }

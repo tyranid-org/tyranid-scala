@@ -76,7 +76,7 @@ object Uri {
     } catch {
     case e:java.net.UnknownHostException =>
       return null
-    case other =>
+    case other:Throwable =>
       other.printStackTrace()
       return null
     }
@@ -104,7 +104,7 @@ object Uri {
     } catch {
     case e:java.net.UnknownHostException =>
       return null
-    case other =>
+    case other:Throwable =>
       other.printStackTrace()
       return null
     }

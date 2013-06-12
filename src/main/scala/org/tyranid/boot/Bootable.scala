@@ -79,7 +79,7 @@ object Boot {
       case e:ClassCastException =>
         throw new RuntimeException( "bootstrap.tyranid.Boot does not extend org.tyranid.boot.Boot" )
 
-      case e =>
+      case e:Throwable =>
         e.printStackTrace
         throw new RuntimeException( "could not instantiate bootstrap.tyranid.Boot" )
       }

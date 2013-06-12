@@ -17,6 +17,8 @@
 
 package org.tyranid.ui
 
+import scala.language.implicitConversions
+
 import scala.xml.Text
 
 import org.bson.types.ObjectId

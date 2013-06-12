@@ -17,6 +17,8 @@
 
 package org.tyranid.locale
 
+import scala.language.postfixOps
+
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbInt, DbChar, DbLink, Record }
 import org.tyranid.db.ram.RamEntity
@@ -33,10 +35,10 @@ object Region extends RamEntity( tid = "a01t" ) {
     val s = code.toUpperCase
     val abbrIdx = staticView( 'abbr ).index
   
-    staticRecords.find( _( abbrIdx ) == s ).flatten( _.id.asInstanceOf[Int], 0 )
+    staticRecords.find( _( abbrIdx ) == s ).pluck( _.id.asInstanceOf[Int], 0 )
   }
 
-  def codeForId( id:Int ) = staticIdIndex.get( id ).flatten( _.s( 'abbr ), "" )
+  def codeForId( id:Int ) = staticIdIndex.get( id ).pluck( _.s( 'abbr ), "" )
   
   def regionsForCountryCode3( code3:String ):Seq[Record] = {
     val countryId = Country.idForCode3( code3 ) 
@@ -4336,26 +4338,26 @@ object Country extends RamEntity( tid = "a02t" ) {
     val s = code3.toUpperCase
     val codeIdx = staticView( 'code3 ).index
     
-    staticRecords.find( _( codeIdx ) == s ).flatten( _.id.asInstanceOf[Int], 0 )
+    staticRecords.find( _( codeIdx ) == s ).pluck( _.id.asInstanceOf[Int], 0 )
   }
   
   def idForCode( code:String ):Int = {
     val s = code.toUpperCase
     val codeIdx = staticView( 'code ).index
     
-    staticRecords.find( _( codeIdx ) == s ).flatten( _.id.asInstanceOf[Int], 0 )
+    staticRecords.find( _( codeIdx ) == s ).pluck( _.id.asInstanceOf[Int], 0 )
   }
   
   def idForName( s:String ):Int = {
     val nameIdx = staticView( 'name ).index
     
-    staticRecords.find( _( nameIdx ) == s ).flatten( _.id.asInstanceOf[Int], 0 )
+    staticRecords.find( _( nameIdx ) == s ).pluck( _.id.asInstanceOf[Int], 0 )
   }
   
   def nameForId( i:Int ):String = {
     val nameIdx = staticView( 'name ).index
     
-    staticRecords.find( _.id.asInstanceOf[Int] == i ).flatten( _.s( 'name ), "Unknown" )
+    staticRecords.find( _.id.asInstanceOf[Int] == i ).pluck( _.s( 'name ), "Unknown" )
   }
   
   def code3Countries:Seq[Record] = {

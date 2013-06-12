@@ -44,7 +44,7 @@ class SeqImp[A]( seq:Seq[A] ) {
    * equivalent to:  seq.filter( _.isInstanceOf[B] ).map( _.asInstanceOf[B] )
    */
   def of[ B <: A : Manifest ]:Seq[B] = {
-    val cls = manifest[B].erasure
+    val cls = manifest[B].runtimeClass
     if ( cls.isPrimitive && cls == classOf[Int] ) {
       seq.flatMap(
         _ match {
@@ -59,7 +59,7 @@ class SeqImp[A]( seq:Seq[A] ) {
   }
 
   def findOf[ B <: A : Manifest ]:Option[B] = {
-    val cls = manifest[B].erasure
+    val cls = manifest[B].runtimeClass
     seq.find( obj => cls.isAssignableFrom( obj.getClass ) ).map( _.asInstanceOf[B] )
   }
 

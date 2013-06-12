@@ -34,7 +34,7 @@ class AnyImp[T <: Any]( v:T ) {
     if ( v != null ) v.toString
     else             ""
 
-  def is[U:Manifest] = manifest[U].erasure.isAssignableFrom( v.getClass )
+  def is[U:Manifest] = manifest[U].runtimeClass.isAssignableFrom( v.getClass )
   def as[U]          = v.asInstanceOf[U]
 
   def toJsonStr( pretty:Boolean = false, client:Boolean = false ) = new org.tyranid.json.JsonString( v, pretty = pretty, client = client ).toString

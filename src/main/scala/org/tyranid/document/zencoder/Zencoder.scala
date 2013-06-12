@@ -198,7 +198,7 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
                   //om.setHeader( "Accept-Range", "bytes" )
                   ok = true
                 } catch {
-                  case e =>
+                  case e:Throwable =>
                     Thread.sleep( 3300 ) // sleep for 3 secs-- after a bit it SHOULD be available
                 }
               }

@@ -75,7 +75,7 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
     try {
       req.getParameter( param )
     } catch {
-      case e =>
+      case e:Throwable =>
         e.printStackTrace()
         return null
     }
@@ -163,7 +163,7 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
   
   
   def serializeParams( filter:Option[ ( String ) => Boolean ] = None ) =
-    req.getParameterNames.toSeq.filter( name => filter.flatten( _( name.as[String] ), true ) ).map( n => ( n + "=" + s( n.as[String] ).encUrl ) ).mkString( "&" )
+    req.getParameterNames.toSeq.filter( name => filter.pluck( _( name.as[String] ), true ) ).map( n => ( n + "=" + s( n.as[String] ).encUrl ) ).mkString( "&" )
 
   def dumpUserAgent {
     def ua = T.session.ua( T.web )
@@ -388,7 +388,7 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     } catch {
       case e:IOException => ; // bury
       case e if e.getClass.getSimpleName == "EofException" =>
-      case e2 => throw e2
+      case e2:Throwable => throw e2
     }
   }
 
@@ -412,7 +412,7 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
       case e:IOException => ; // bury
       case e if e.getClass.getSimpleName == "EofException" =>
         println( "*** Broken pipe" )
-      case e2 => throw e2
+      case e2:Throwable => throw e2
     } finally {
       if ( out != null )
         out.close

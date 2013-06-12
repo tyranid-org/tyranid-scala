@@ -156,7 +156,7 @@ object Iolet extends Weblet {
             // Happens with IE a lot
             web.res.setStatus( 200 )
             return
-          case e3 =>
+          case e3:Throwable =>
             web.res.setStatus( 302 )
             web.res.setHeader( "Location", notFoundUrl )
             web.res.setHeader( "Connection", "close" )

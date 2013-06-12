@@ -518,10 +518,10 @@ case class DbLink( toEntity:Entity ) extends Domain {
 
   override val isLink = true
 
-	lazy val sqlName = toEntity.idAtt.flatten( _.domain.sqlName, toEntity.problem( "embedded entities don't have IDs" ) )
+	lazy val sqlName = toEntity.idAtt.pluck( _.domain.sqlName, toEntity.problem( "embedded entities don't have IDs" ) )
 
-  override def idToRecordTid( v:Any )                = toEntity.idAtt.flatten( _.domain.idToRecordTid( v ),         toEntity.problem( "embedded entities don't have IDs" ) )
-  override def recordTidToId( recordTid:String ):Any = toEntity.idAtt.flatten( _.domain.recordTidToId( recordTid ), toEntity.problem( "embedded entities don't have IDs" ) )
+  override def idToRecordTid( v:Any )                = toEntity.idAtt.pluck( _.domain.idToRecordTid( v ),         toEntity.problem( "embedded entities don't have IDs" ) )
+  override def recordTidToId( recordTid:String ):Any = toEntity.idAtt.pluck( _.domain.recordTidToId( recordTid ), toEntity.problem( "embedded entities don't have IDs" ) )
 
   def idToTid( v:Any ) = toEntity.idToTid( v )
 
@@ -544,7 +544,7 @@ case class DbLink( toEntity:Entity ) extends Domain {
        * 
        */
   
-      val idLabels = f.filter.flatten(
+      val idLabels = f.filter.pluck(
         filter => toEntity.records.filter( filter ).map( _.idLabel ),
         toEntity.idLabels )
         
@@ -556,14 +556,14 @@ case class DbLink( toEntity:Entity ) extends Domain {
     }
   }
 
-  override def fromString( s:String ) = toEntity.idAtt.flatten( _.domain.fromString( s ), toEntity.problem( "embedded entities don't have IDs" ) )
+  override def fromString( s:String ) = toEntity.idAtt.pluck( _.domain.fromString( s ), toEntity.problem( "embedded entities don't have IDs" ) )
 
   override def inputcClasses = " select"
 
 	override def see( v:Any ) =
 		v match {
 		case null => ""
-    case s:String if toEntity.idAtt.flatten( !_.domain.isInstanceOf[DbTextLike], toEntity.problem( "embedded entities don't have IDs." ) ) => s
+    case s:String if toEntity.idAtt.pluck( !_.domain.isInstanceOf[DbTextLike], toEntity.problem( "embedded entities don't have IDs." ) ) => s
 		case n    => toEntity.labelFor( n )
 		}
 

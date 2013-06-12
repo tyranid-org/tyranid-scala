@@ -16,6 +16,8 @@
  */
 package org.tyranid.ui
 
+import scala.language.postfixOps
+
 import java.util.Date
 
 import scala.collection.mutable
@@ -285,7 +287,7 @@ case class TabBar( weblet:Weblet, tabs:Tab* ) {
 
   def choice = {
     val p = T.session.pathChoiceAt( weblet.wpath, defaultTab.rpath )
-    tabs.find( _.rpath == p ).flatten( _.rpath, defaultTab.rpath )
+    tabs.find( _.rpath == p ).pluck( _.rpath, defaultTab.rpath )
   }
 }
 

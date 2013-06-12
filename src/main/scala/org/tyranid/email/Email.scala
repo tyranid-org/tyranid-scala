@@ -17,6 +17,8 @@
 
 package org.tyranid.email
 
+import scala.language.postfixOps
+
 import java.io.{ File, UnsupportedEncodingException }
 import java.util.{ Date, Properties }
 
@@ -87,7 +89,7 @@ object Email {
       val emailAddr = new InternetAddress( email )
       emailAddr.validate()
     } catch {
-      case e =>
+      case e:Throwable =>
         result = false
     }
     

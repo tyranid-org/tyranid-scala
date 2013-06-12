@@ -54,7 +54,7 @@ object StringImp {
   val urlPattern = Pattern.compile( "(https?:\\/\\/[^\\s]+)", Pattern.CASE_INSENSITIVE)
 }
 
-class StringImp( s:String ) {
+class StringImp( s:String ) extends Serializable {
 	def denull = if ( s == null ) "" else s
 
   def literal =
@@ -670,7 +670,7 @@ class StringImp( s:String ) {
     try {
       new java.text.SimpleDateFormat( format ).parse( s.trim )
     } catch {
-      case e => null
+      case e:Throwable => null
     }
   
   def parseCalendar( dateOnly:Boolean = false, userTime:Boolean = false ) = {

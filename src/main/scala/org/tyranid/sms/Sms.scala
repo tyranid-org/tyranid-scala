@@ -17,6 +17,7 @@
 
 package org.tyranid.sms
 
+import scala.language.postfixOps
 // http://ai.fmcsa.dot.gov/SMS/Data/Downloads.aspx
 
 import scala.xml.{ Unparsed, NodeSeq, Text }
