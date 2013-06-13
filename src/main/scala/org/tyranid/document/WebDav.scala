@@ -17,7 +17,7 @@
 
 package org.tyranid.document
 
-import java.io.{ BufferedOutputStream, File, FileOutputStream }
+import java.io.{ BufferedOutputStream, File, FileOutputStream, InputStream }
 
 import scala.collection.JavaConversions._
 
@@ -31,6 +31,9 @@ import org.tyranid.db.{ DbInt, DbChar, DbBoolean, DbDateTime }
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 
 object WebDavResource extends MongoEntity(tid = "a0Uw") {
+ type RecType = WebDavResource
+ override def convert( obj:DBObject, parent:MongoRecord ) = new WebDavResource( obj, parent )
+   
   "_id"     is DbInt       is 'id is 'client;
   "name"    is DbChar(64)  is 'label is 'client;
   "path"    is DbChar(128) is 'client;
@@ -40,7 +43,7 @@ object WebDavResource extends MongoEntity(tid = "a0Uw") {
   "size"    is DbInt       is 'client;
   "mod"     is DbDateTime  is 'client;
   
-  def convert( r:DavResource ) = {
+  def convert( r:DavResource ):WebDavResource = {
     val cr = WebDavResource.make
     
     cr( '_id )   = r.getPath.hashCode
@@ -57,10 +60,24 @@ object WebDavResource extends MongoEntity(tid = "a0Uw") {
 
 class WebDavResource( obj:DBObject, parent:MongoRecord ) extends MongoRecord( WebDavResource.makeView, obj, parent ) {} 
 
+
 trait WebDav {
   val WEBDAV_URL:String = ""
   
   def webDavUrl( username:String ) = WEBDAV_URL
+  
+  def getResource( path:String, username:String, password:String ) = {
+    try {
+      val sardine = SardineFactory.begin( username, password )
+      val resourceUrl = webDavUrl( username ) + path.split( "/" ).map( part => java.net.URLEncoder.encode( part, "UTF-8" ).replaceAll( java.util.regex.Pattern.quote("+"), "%20" ) ).mkString( "/" )     
+      val resources = sardine.list( resourceUrl )
+        
+      ( resources.length == 1 ) ? WebDavResource.convert( resources( 0 ) ) | null
+    } catch {
+      case se:SardineException =>
+        throw new RuntimeException( se.getResponsePhrase() )
+    }
+  }
   
   def list( path:String, username:String, password:String ) = {
     try {
@@ -71,17 +88,47 @@ trait WebDav {
     }
   }
   
-  def getFile( path:String, username:String, password:String ) = {
+  def putFile( fileIn:InputStream, path:String, username:String, password:String ) {
+    val sardine = SardineFactory.begin( username, password )
+    sardine.enableCompression()
+    
+    try {
+      val resourceUrl = webDavUrl( username ) + path.split( "/" ).map( part => java.net.URLEncoder.encode( part, "UTF-8" ).replaceAll( java.util.regex.Pattern.quote("+"), "%20" ) ).mkString( "/" )
+      sardine.put( resourceUrl, fileIn )
+      fileIn.close
+    } catch {
+      case se: SardineException =>
+        println( "Sarding exception: " + se.getResponsePhrase() )
+        se.printStackTrace
+        throw new RuntimeException( se.getResponsePhrase() )
+      case e: Throwable =>
+        e.printStackTrace
+        throw e
+    }
+  }
+  
+  def getFile( path:String, username:String, password:String, withMeta:Boolean ) = {
     // Must look like [some path]/file.ext
     val file = File.createTempFile( path.suffix( '/' ).prefix( '.' ), "." + path.suffix( '.' ) )
     val sardine = SardineFactory.begin( username, password )
     sardine.enableCompression()
+    
+    var resource:WebDavResource = null
 
     try {
       val out = new BufferedOutputStream( new FileOutputStream( file ) )
       
-      // Sardine does not like dealing with spaces, so adjust the URL to something it can handle 
-      val in = sardine.get( webDavUrl( username ) + path.split( "/" ).map( part => java.net.URLEncoder.encode( part, "UTF-8" ).replaceAll( java.util.regex.Pattern.quote("+"), "%20" ) ).mkString( "/" ) )
+      // Sardine does not like dealing with spaces, so adjust the URL to something it can handle
+      val resourceUrl = webDavUrl( username ) + path.split( "/" ).map( part => java.net.URLEncoder.encode( part, "UTF-8" ).replaceAll( java.util.regex.Pattern.quote("+"), "%20" ) ).mkString( "/" )
+      
+      if ( withMeta ) {
+        val resources = sardine.list( resourceUrl )
+        
+        if ( resources.length == 1 )
+          resource = WebDavResource.convert( resources( 0 ) )
+      }
+      
+      val in = sardine.get( resourceUrl )
 
       in.transferTo( out )
 
@@ -98,7 +145,7 @@ trait WebDav {
         throw e
     }
     
-    file
+    ( resource, file )
   }
 }
 

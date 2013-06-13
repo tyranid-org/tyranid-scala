@@ -159,6 +159,7 @@ trait Bootable {
   def onePagePdf       = TyranidConfig().b( 'onePagePdf )
   def debugSso         = TyranidConfig().b( 'debugSso )
   def debugChat        = TyranidConfig().b( 'debugChat )
+  def syncWebDav       = TyranidConfig().b( 'syncWebDav )
 
   def access( thread:ThreadData, accessType:AccessType, ref:AnyRef )
 

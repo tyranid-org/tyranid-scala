@@ -39,6 +39,7 @@ object TyranidConfig extends MongoEntity( tid = "a03t" ) {
   "onePagePdf"  is DbBoolean         as "One Page PDF";
   "debugSso"    is DbBoolean         as "Debug SSO";
   "debugChat"   is DbBoolean         as "Debug Chat";
+  "syncWebDav"  is DbBoolean         as "Sync WebDavs";
 
   def apply():TyranidConfig = singleton
 
@@ -115,6 +116,12 @@ object TyranidConfiglet extends Weblet {
         TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "debugChat" -> obj.b( 'debugChat ) ) ) )
         sess.notice( "Chat Debug has been turned " + ( B.debugChat ? "ON" | "OFF" ) + "." )
   
+      case "syncWebDav" =>
+        val obj = TyranidConfig()
+        obj( 'syncWebDav ) = !B.syncWebDav
+        TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "syncWebDav" -> obj.b( 'syncWebDav ) ) ) )
+        sess.notice( "WebDav syncing has been turned " + ( B.syncWebDav ? "ON" | "OFF" ) + "." )
+        
       case "maint" =>
         B.maintenanceMode = true
  
@@ -147,6 +154,7 @@ object TyranidConfiglet extends Weblet {
               "onePagePdf" -> B.onePagePdf,
               "debugSso"   -> B.debugSso,
               "debugChat"  -> B.debugChat,
+              "syncWebDav" -> B.syncWebDav,
               "maint"      -> false,
               "email"      -> Email.enabled,
               "recaptcha"  -> B.requireReCaptcha,
