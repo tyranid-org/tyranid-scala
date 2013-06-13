@@ -52,8 +52,6 @@ object CubbyResource extends MongoEntity(tid = "a0Uw") {
     cr( 'isDir ) = r.isDirectory
     cr( 'size )  = r.getContentLength
     cr( 'mod )   = r.getModified
-    
-    
     cr
   }
 }
@@ -77,9 +75,11 @@ object Cubby {
 
     try {
       val out = new BufferedOutputStream( new FileOutputStream( file ) )
-      val in = sardine.get( WEBDAV_URL + path )
+      
+      // Sardine does not like dealing with spaces, so adjust the URL to something it can handle 
+      val in = sardine.get( WEBDAV_URL + path.split( "/" ).map( part => java.net.URLEncoder.encode( part, "UTF-8" ).replaceAll( java.util.regex.Pattern.quote("+"), "%20" ) ).mkString( "/" ) )
 
-      in.transferTo(out)
+      in.transferTo( out )
 
       in.close
       out.flush
