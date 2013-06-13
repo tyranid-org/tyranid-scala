@@ -15,7 +15,7 @@
  *
  */
 
-package org.tyranid.document.cubby
+package org.tyranid.document
 
 import java.io.{ BufferedOutputStream, File, FileOutputStream }
 
@@ -30,8 +30,7 @@ import org.tyranid.Imp._
 import org.tyranid.db.{ DbInt, DbChar, DbBoolean, DbDateTime }
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 
-
-object CubbyResource extends MongoEntity(tid = "a0Uw") {
+object WebDavResource extends MongoEntity(tid = "a0Uw") {
   "_id"     is DbInt       is 'id is 'client;
   "name"    is DbChar(64)  is 'label is 'client;
   "path"    is DbChar(128) is 'client;
@@ -42,7 +41,7 @@ object CubbyResource extends MongoEntity(tid = "a0Uw") {
   "mod"     is DbDateTime  is 'client;
   
   def convert( r:DavResource ) = {
-    val cr = CubbyResource.make
+    val cr = WebDavResource.make
     
     cr( '_id )   = r.getPath.hashCode
     cr( 'name )  = r.getName
@@ -56,18 +55,23 @@ object CubbyResource extends MongoEntity(tid = "a0Uw") {
   }
 }
 
-class CubbyResource( obj:DBObject, parent:MongoRecord ) extends MongoRecord( CubbyResource.makeView, obj, parent ) {} 
+class WebDavResource( obj:DBObject, parent:MongoRecord ) extends MongoRecord( WebDavResource.makeView, obj, parent ) {} 
 
-object Cubby {
-  val WEBDAV_URL = "https://webdav.cubby.com/"
-    
-  def list( path:String, username:String, password:String ) = {    
-    SardineFactory.begin( username, password ).list( WEBDAV_URL + path.or( "/" ) ).tail.map( r => CubbyResource.convert( r ) ).toSeq
+trait WebDav {
+  val WEBDAV_URL:String = ""
+  
+  def webDavUrl( username:String ) = WEBDAV_URL
+  
+  def list( path:String, username:String, password:String ) = {
+    try {
+      SardineFactory.begin( username, password ).list( webDavUrl( username ) + path.or( "/" ) ).tail.map( r => WebDavResource.convert( r ) ).toSeq
+    } catch {
+      case se:SardineException =>
+        throw new RuntimeException( se.getResponsePhrase() )
+    }
   }
   
   def getFile( path:String, username:String, password:String ) = {
-    var err = false
-    
     // Must look like [some path]/file.ext
     val file = File.createTempFile( path.suffix( '/' ).prefix( '.' ), "." + path.suffix( '.' ) )
     val sardine = SardineFactory.begin( username, password )
@@ -77,7 +81,7 @@ object Cubby {
       val out = new BufferedOutputStream( new FileOutputStream( file ) )
       
       // Sardine does not like dealing with spaces, so adjust the URL to something it can handle 
-      val in = sardine.get( WEBDAV_URL + path.split( "/" ).map( part => java.net.URLEncoder.encode( part, "UTF-8" ).replaceAll( java.util.regex.Pattern.quote("+"), "%20" ) ).mkString( "/" ) )
+      val in = sardine.get( webDavUrl( username ) + path.split( "/" ).map( part => java.net.URLEncoder.encode( part, "UTF-8" ).replaceAll( java.util.regex.Pattern.quote("+"), "%20" ) ).mkString( "/" ) )
 
       in.transferTo( out )
 
@@ -86,14 +90,26 @@ object Cubby {
       out.close
     } catch {
       case se: SardineException =>
-        err = true
         println( "Sarding exception: " + se.getResponsePhrase() )
         se.printStackTrace
+        throw new RuntimeException( se.getResponsePhrase() )
       case e: Throwable =>
-        err = true
         e.printStackTrace
+        throw e
     }
     
-    err ? null | file
+    file
   }
+}
+
+object Cubby extends WebDav {
+  override val WEBDAV_URL = "https://webdav.cubby.com/"    
+}
+
+object FilesAnywhere extends WebDav {
+  override def webDavUrl( username: String ) = "https://webfolder.filesanywhere.com/" + username
+}
+
+object Box extends WebDav {
+  override val WEBDAV_URL = "https://dav.box.com/dav/"  
 }
