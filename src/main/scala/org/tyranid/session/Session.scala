@@ -130,6 +130,11 @@ object ThreadData {
 class ThreadData {
   def website = "https://" + B.domainPort
 
+  def user:User =
+    if ( session != null ) session.user
+    else                   null
+    
+  /*
   private var userVar:User = null
   
   def user:User = {
@@ -147,6 +152,7 @@ class ThreadData {
   }
   
   def user_=( user:User ) = userVar = user
+  */
   
   // --- HTTP Session
 
@@ -161,7 +167,7 @@ class ThreadData {
 
   def clear {    
     tyrSession = null
-    userVar = null
+//    userVar = null
   }
 
   // --- Tyranid Session
@@ -169,7 +175,7 @@ class ThreadData {
   private var tyrSession:Session = _
   
   def becomeSession( s:Session ) = {
-    userVar = s.user
+  //  userVar = s.user
     tyrSession = s
   }
 
@@ -267,14 +273,20 @@ object Session extends SessionMeta
 trait Session extends QuickCache {
   lazy val id = Base62.make( 10 )
 
-  def user:User = T.user
   
+  private var userVar = B.newUser()
+  def user:User           = userVar
+  def user_=( user:User ) = userVar = user
+
+  /*
+  def user:User = T.user
   def user_=( user:User ) = {
     if ( !user.isNew )
       put( "user", user.tid )
     
     T.user = user
-  }
+  }  
+  */
   
   def orgId               = user.orgId
   def orgTid              = ( orgId == null ) ? null | B.Org.idToTid( orgId )
@@ -283,7 +295,7 @@ trait Session extends QuickCache {
   var loggedUser  = false
 
   // If the user tid is set in the session
-  def isLoggedIn = getOrElse( "user", "" )._s.notBlank
+  def isLoggedIn = !user.isNew //getOrElse( "user", "" )._s.notBlank
 
   var debug       = B.DEV
   var trace       = false
