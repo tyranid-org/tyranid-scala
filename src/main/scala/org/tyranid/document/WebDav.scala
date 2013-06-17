@@ -79,9 +79,12 @@ trait WebDav {
     }
   }
   
-  def list( path:String, username:String, password:String ) = {
+  def list( p:String, username:String, password:String ) = {
+    val path = p or "/"
+    
     try {
-      SardineFactory.begin( username, password ).list( webDavUrl( username ) + path.or( "/" ) ).tail.map( r => WebDavResource.convert( r ) ).toSeq
+      val resourceUrl = webDavUrl( username ) + path.split( "/" ).map( part => java.net.URLEncoder.encode( part, "UTF-8" ).replaceAll( java.util.regex.Pattern.quote("+"), "%20" ) ).mkString( "/" )
+      SardineFactory.begin( username, password ).list( resourceUrl ).tail.map( r => WebDavResource.convert( r ) ).toSeq
     } catch {
       case se:SardineException =>
         throw new RuntimeException( se.getResponsePhrase() )
