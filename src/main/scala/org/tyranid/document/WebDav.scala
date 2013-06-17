@@ -84,7 +84,7 @@ trait WebDav {
     
     try {
       val resourceUrl = webDavUrl( username ) + path.split( "/" ).map( part => java.net.URLEncoder.encode( part, "UTF-8" ).replaceAll( java.util.regex.Pattern.quote("+"), "%20" ) ).mkString( "/" )
-      SardineFactory.begin( username, password ).list( resourceUrl ).tail.map( r => WebDavResource.convert( r ) ).toSeq
+      SardineFactory.begin( username, password ).list( resourceUrl ).tail.map( r => WebDavResource.convert( r ) ).toSeq.sortWith( _.s( 'name ).toLowerCase < _.s( 'name ).toLowerCase )
     } catch {
       case se:SardineException =>
         throw new RuntimeException( se.getResponsePhrase() )
