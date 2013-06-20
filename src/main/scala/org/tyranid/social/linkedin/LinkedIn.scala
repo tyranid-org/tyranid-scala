@@ -101,7 +101,7 @@ function onLinkedInLoad() {
 }
 """) }</script>
      </head>
-     <script type="IN/Login" data-onAuth="onLinkedInAuth"/>
+     <script type="IN/Login" data-onAuth="onLinkedInAuth"></script>
    }
 
   def removeCookies = {
@@ -142,7 +142,7 @@ function onLinkedInLoad() {
        }
      """ ) }</script>
     </head>
-    <script type="IN/Login" data-onAuth="onLinkedInAuth"/>
+    <script type="IN/Login" data-onAuth="onLinkedInAuth"></script>
   }
 
   def linkPreview( user:User ) = {

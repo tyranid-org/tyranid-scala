@@ -240,7 +240,7 @@ object Basecamplet extends Weblet {
       
     case "/channel" =>
       web.res.html(
-        <script src="//connect.facebook.net/en_US/all.js"/>,
+        <script src="//connect.facebook.net/en_US/all.js"></script>,
         headers = Http.expireCacheControlHeaders( ageMs = Time.OneYearMs )
       )
 

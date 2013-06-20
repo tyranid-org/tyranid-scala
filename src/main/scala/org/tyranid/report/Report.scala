@@ -455,7 +455,7 @@ case class Report( query:Query ) {
       searchRec( va.name ) = v
 
     { query.fields.map( _.drawPreamble ).flatten } ++
-    <div style="display:none;" id="reportInfo" data-qn={ query.name } data-qid={ id }/> ++
+    <div style="display:none;" id="reportInfo" data-qn={ query.name } data-qid={ id }></div> ++
     <div class="report greyBox" id={ id }>
      { recalcFields }
      { innerDraw( user ) }

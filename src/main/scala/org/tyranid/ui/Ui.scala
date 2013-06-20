@@ -38,7 +38,7 @@ object Ui {
         { Text( s ) ++ Unparsed("<br>") }
     else NodeSeq.Empty
     
-  def gridGuide( cols:Int = 12 ) = { B.DEV |* <div class="row"> { for ( i <- 0 until cols) yield {<div class="row-guide span1"/> } } </div> }
+  def gridGuide( cols:Int = 12 ) = { B.DEV |* <div class="row"> { for ( i <- 0 until cols) yield {<div class="row-guide span1"></div> } } </div> }
 }
 
 object Help {
@@ -50,7 +50,7 @@ object Tags {
 
   def tagUi( id:String, label:String, placeholder:String = "" ) =
     <li class="tag">
-     <span>{ label }<a class="closeTag"><i class="icon-remove"/></a><input type="hidden" style="display:none;" value={ id } id="to" name="to[]" placeholder={ placeholder }/></span>
+     <span>{ label }<a class="closeTag"><i class="icon-remove"></i></a><input type="hidden" style="display:none;" value={ id } id="to" name="to[]" placeholder={ placeholder }/></span>
     </li>
 }
 
