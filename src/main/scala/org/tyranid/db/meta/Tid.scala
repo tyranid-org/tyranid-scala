@@ -122,8 +122,12 @@ object Tid {
     //sp am( "entity for tid " + tid + " is " + entity( tid ) )
 
     entity( tid ) match {
-    case mEn:MongoEntity => mEn.db
-    case _               => null
+    case Some( en ) =>
+      en match {
+      case mEn:MongoEntity => mEn.db
+      case _ => null
+      }
+    case _ => null
     }
   }
 

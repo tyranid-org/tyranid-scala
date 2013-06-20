@@ -761,7 +761,7 @@ trait ContentMeta extends PrivateKeyEntity {
       S3.delete( Content.thumbsBucket, urlPath + "s" )
       S3.delete( Content.thumbsBucket, urlPath + "t" )
     } catch {
-      case nop=> ;
+      case nop:Throwable => ;
     }
   }
   
@@ -929,7 +929,7 @@ abstract class Content( override val view:MongoView,
     val imgFile = try {
       imageForThumbs
     } catch {
-      case _ => null
+      case _:Throwable => null
     }  
     
     if ( imgFile != null && imgFile.exists && imgFile.length > 0 ) {
@@ -1302,7 +1302,7 @@ abstract class Content( override val view:MongoView,
         val ot = t._s
       
         Group.hasTid( ot ) &&
-        Group.byTid( ot ).flatten( _.canView( tid ), false )
+        Group.byTid( ot ).pluck( _.canView( tid ), false )
       }
     )
 

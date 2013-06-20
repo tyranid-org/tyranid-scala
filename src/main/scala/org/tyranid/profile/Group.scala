@@ -79,7 +79,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
       flatMap(
       _ match {
      case tid if tid.startsWith( Group.tid ) =>
-       Group.byTid( tid ).flatten( _.a_?( 'v ).toSeq.of[String], Nil )
+       Group.byTid( tid ).pluck( _.a_?( 'v ).toSeq.of[String], Nil )
 
      case tid =>
        Seq( tid )
@@ -301,7 +301,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   }
 
   val newOverlay = <div class="new-overlay"><div class="text">NEW</div></div>
-  val privateOverlay = <div class="private-overlay"><span class="icon-minus"/><div class="text">PRIVATE</div></div>
+  val privateOverlay = <div class="private-overlay"><span class="icon-minus"></span><div class="text">PRIVATE</div></div>
 
   override def thumbHtml( size:String, extraHtml:NodeSeq = null ) = {
     val url = imageUrl( null )
@@ -367,12 +367,6 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   override def copy( ownerTid:String ): Content = {
     val group = super.copy( ownerTid ).as[Group]
     group( 'org ) = T.user.org.id 
-    
-    
-    for ( c <- contents ) {
-      println( c.label )
-    }
-    
     group
   }  
 }

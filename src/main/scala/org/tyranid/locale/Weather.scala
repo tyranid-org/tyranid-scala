@@ -186,7 +186,7 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
       println( "Cannot load weather: " + e.getMessage )
     case e:java.net.UnknownHostException =>
       println( "Cannot load weather: " + e.getMessage )
-    case unknown =>
+    case unknown:Throwable =>
       throw unknown
     }
   }

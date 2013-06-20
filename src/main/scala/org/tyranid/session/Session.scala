@@ -17,6 +17,8 @@
 
 package org.tyranid.session
 
+import scala.language.postfixOps
+
 import java.util.{ Date, TimeZone }
 
 import javax.servlet.http.{ HttpSession, HttpSessionEvent, HttpSessionListener }
@@ -32,7 +34,7 @@ import org.tyranid.http.UserAgent
 import org.tyranid.json.{ Js, JsCmd }
 import org.tyranid.Imp._
 import org.tyranid.math.Base62
-import org.tyranid.profile.{ User, UserStat, UserStatType }
+import org.tyranid.profile.{ LoginCookie, User, UserStat, UserStatType }
 import org.tyranid.report.Query
 import org.tyranid.social.Social
 import org.tyranid.time.Time
@@ -44,7 +46,7 @@ object SessionCleaner {
     val now = System.currentTimeMillis
     
     WebSession.sessions.filter( sess => {
-      val httpsess = sess._2; 
+      val httpsess = sess._2 
     
       try {
         val tyrsess = httpsess.getAttribute( WebSession.HttpSessionKey ).as[Session]
@@ -52,23 +54,35 @@ object SessionCleaner {
         if ( tyrsess != null ) { 
           //val lastPathTime = tyrsess.get( "lastPathTime" ).as[Date]
           val idle = now - httpsess.getLastAccessedTime
-          val user = tyrsess.user
-          
-          ( user.isNew && idle > (2*Time.OneMinuteMs) ) || idle > Time.HalfHourMs
+          ( !tyrsess.isLoggedIn && idle > (2*Time.OneMinuteMs) ) || idle > Time.HalfHourMs
         } else {
           true
         }
       } catch {
         case e:IllegalStateException =>
           true
-        case e =>
+        case e:Throwable =>
           e.printStackTrace
           false
       }
-    }).foreach( sess => { WebSession.sessions.remove( sess._1 ); sess._2.invalidate } )
+    }).foreach( sess => { 
+      WebSession.sessions.remove( sess._1 )
+      ServerSession.remove( sess._2.getId )
+      sess._2.invalidate 
+    })
   }
 }
-   
+
+object ServerSession {
+  private val caches = mutable.Map[String,mutable.Map[String,Any]]()
+    
+  def getOrElseUpdate[ T ]( session:HttpSession, key:String, block: => T ):T = {
+    caches.getOrElseUpdate( session.getId, mutable.Map[String,Any]() ).getOrElseUpdate( key, block ).as[T]
+  }
+  
+  def remove( id:String ) = caches.remove( id )
+}  
+  
 object WebSession {
   val sessions = mutable.Map[String,HttpSession]()
 
@@ -91,12 +105,13 @@ class WebSessionListener extends HttpSessionListener {
   }
  
   def sessionDestroyed( e:HttpSessionEvent ) {
-    //Comet.remove( e.getSession.getId  );
+    //Comet.remove( e.getSession.getId  )
     WebSession.sessions.remove( e.getSession.getId )
   }	
 }
 
 object ThreadData {
+  private var tested = false
 
   private val data = new ThreadLocal[ThreadData]()
 
@@ -115,34 +130,62 @@ object ThreadData {
 class ThreadData {
   def website = "https://" + B.domainPort
 
+  def user:User =
+    if ( session != null ) session.user
+    else                   null
+    
+  /*
+  private var userVar:User = null
+  
+  def user:User = {
+    if ( userVar == null && session != null ) {
+      val userTid = session.getOrElse( "user", "" )._s
+    
+      if ( userTid.notBlank )
+        userVar = B.User.getByTid( userTid )
+    }
+    
+    if ( userVar == null )
+      userVar = B.newUser()
+    
+    userVar
+  }
+  
+  def user_=( user:User ) = userVar = user
+  */
+  
   // --- HTTP Session
 
   private var httpData:HttpSession = _
 
   def http:HttpSession = httpData
 
-  def http_=( obj:HttpSession ) = {
+  def http_=( obj:HttpSession ) = {    
     httpData = obj
     clear
   }
 
-  def clear {
+  def clear {    
     tyrSession = null
+//    userVar = null
   }
-
 
   // --- Tyranid Session
 
   private var tyrSession:Session = _
   
-  def becomeSession( s:Session ) = tyrSession = s
+  def becomeSession( s:Session ) = {
+  //  userVar = s.user
+    tyrSession = s
+  }
 
   def session:Session = {
     if ( tyrSession == null ) {
       tyrSession =
         if ( http != null ) {
           http.getAttribute( WebSession.HttpSessionKey ) match {
-          case s:Session => s
+          case s:Session => 
+            s
           case _         =>
             val s = B.newSession()
             http.setAttribute( WebSession.HttpSessionKey, s )
@@ -161,11 +204,6 @@ class ThreadData {
     http.isLoggingOut = true
     tyrSession = null
   }
-
-  def user:User =
-    if ( session != null ) session.user
-    else                   null
-
 
   /*
    * * *  WebContext
@@ -200,6 +238,7 @@ class ThreadData {
 
 	def requestCached[ T ]( key:String )( block: => T ):T = requestCache.getOrElseUpdate( key, block ).as[T]
 
+  //def serverCached[ T ]( key:String )( block: => T ):T = ServerSession.getOrElseUpdate( http, key, block ).as[T]
 
 
   /*
@@ -234,24 +273,39 @@ object Session extends SessionMeta
 trait Session extends QuickCache {
   lazy val id = Base62.make( 10 )
 
+  
   private var userVar = B.newUser()
-
   def user:User           = userVar
-  def orgId               = user.orgId
-  def orgTid              = user.orgTid
   def user_=( user:User ) = userVar = user
+
+  /*
+  def user:User = T.user
+  def user_=( user:User ) = {
+    if ( !user.isNew )
+      put( "user", user.tid )
+    
+    T.user = user
+  }  
+  */
+  
+  def orgId               = user.orgId
+  def orgTid              = ( orgId == null ) ? null | B.Org.idToTid( orgId )
 
   var loggedEntry = false
   var loggedUser  = false
 
+  // If the user tid is set in the session
+  def isLoggedIn = !user.isNew //getOrElse( "user", "" )._s.notBlank
+
   var debug       = B.DEV
+  var trace       = false
 
   var passedCaptcha = !B.requireReCaptcha
 
   def get( key:String ) = getV( key )
-  def getOrElse( key:String, any:Any ) = getVOrElse( key, any.as[AnyRef] )
-  def getOrElseUpdate( key:String, any:Any ) = getVOrElseUpdate( key, any.as[AnyRef] )
-  def put( key:String, value:Any ) = putV( key, value.as[AnyRef] )
+  def getOrElse( key:String, any:java.io.Serializable ) = getVOrElse( key, any )
+  def getOrElseUpdate( key:String, any:java.io.Serializable ) = getVOrElseUpdate( key, any )
+  def put( key:String, value:java.io.Serializable ) = putV( key, value )
   def clear( key:String ) = clearCache( key )
   
   def ua( web: WebContext ) = {
@@ -267,8 +321,8 @@ trait Session extends QuickCache {
       try {
         tUa.updateIfNeeded
       } catch {
-        case e =>
-          e.printStackTrace();
+        case e:Throwable =>
+          e.printStackTrace()
       }
       
       put( Session.UA_KEY, tUa )
@@ -283,7 +337,6 @@ trait Session extends QuickCache {
 
   def login( user:User, incognito:Boolean = false ) = {
     this.user = user
-    user.loggedIn = true
     put( "lastLogin", user.t( 'lastLogin ) )
     
     if ( !incognito ) {
@@ -305,7 +358,7 @@ trait Session extends QuickCache {
       if ( user.b( 'monitored ) )
         log( Event.Alert, "m" -> ( "User " + user.s( 'email ) + " just logged in." ) )
     } else {
-      put( "incognito", Boolean.box( true ) )
+      put( "incognito", Boolean.box( true ).booleanValue().as[Serializable] )
     }
       
     val onLogin = B.onLogin
@@ -333,11 +386,11 @@ trait Session extends QuickCache {
 
   def isAllowingEmail = !isIncognito || get( "allowEmail" ).as[Boolean]
 
-  def setAllowEmail = put( "allowEmail", Boolean.box( true ) )
+  def setAllowEmail = put( "allowEmail", Boolean.box( true ).booleanValue().as[Serializable] )
   def clearAllowEmail = clear( "allowEmail" )
 
   def logout( unlink:Boolean = true ) = {
-    org.tyranid.profile.LoginCookie.remove
+    LoginCookie.remove
     Social.removeCookies
     
     if ( unlink ) T.unlinkSession
@@ -376,7 +429,7 @@ trait Session extends QuickCache {
       return tz
 
     val u = user
-    if ( u != null && u.loggedIn )
+    if ( u != null && isLoggedIn )
       tz = u.timeZone
 
     tz
@@ -406,17 +459,17 @@ trait Session extends QuickCache {
    * * *   Editing
    */
 
-  private val editings = mutable.Map[ Class[_], AnyRef ]()
+  private val editings = mutable.Map[ Class[_], org.tyranid.db.Record ]()
 
-  def edit[ T: Manifest ]( v:AnyRef ) = editings( manifest[T].erasure ) = v
-  def editing[ T: Manifest ]( gen: => AnyRef ):T = editings.getOrElseUpdate( manifest[T].erasure, gen ).asInstanceOf[T]
+  def edit[ T: Manifest ]( v:org.tyranid.db.Record ) = editings( manifest[T].runtimeClass ) = v
+  def editing[ T: Manifest ]( gen: => org.tyranid.db.Record ):T = editings.getOrElseUpdate( manifest[T].runtimeClass, gen ).asInstanceOf[T]
 
-  def editing[ T: Manifest ]:T                   = editings( manifest[T].erasure ).asInstanceOf[T]
+  def editing[ T: Manifest ]:T                   = editings( manifest[T].runtimeClass ).asInstanceOf[T]
   
   // Note that T and clz are not usually the same ... T might be org.tyranid.profile.User while clz represents com.company.profile.User
-  def editing2[ T:Manifest ]( clz:Class[_], gen: => AnyRef ):T = editings.getOrElseUpdate( clz, gen ).asInstanceOf[T]
+  def editing2[ T:Manifest ]( clz:Class[_], gen: => org.tyranid.db.Record ):T = editings.getOrElseUpdate( clz, gen ).asInstanceOf[T]
   
-  def doneEditing[ T: Manifest ] = editings.remove( manifest[T].erasure )
+  def doneEditing[ T: Manifest ] = editings.remove( manifest[T].runtimeClass )
 
   def clearAllEditing = editings.clear
 

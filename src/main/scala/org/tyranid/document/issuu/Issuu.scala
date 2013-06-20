@@ -121,24 +121,6 @@ case class IssuuApp( apiKey:String, secret:String = null ) extends DocApp {
   }
   
   // TODO
-  def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef] = {
-    statusFor( extDocId ) match {
-      case "DONE" =>
-        val iframeSrc = previewUrlFor( extDocId )
-        
-        Map( "width" -> width, 
-             "height" -> height,
-             "cssClass" -> "no-scroll",
-             "html" -> ( { org.tyranid.session.Notification.box } ++
-                         <iframe style="width:100%;height:100%;" src={ iframeSrc }/> ) )
-      case "ERROR" =>
-        Map( "status" -> ( "Error occured!: " ) ) //+ statusJson.s( 'error ) ) ) )
-      case s =>
-        Map( "status" -> ( "Error, unknown status: " + s._s ) )
-    }
-  }
-  
-  // TODO
   def delete( extDocId:String ):Boolean = {
     //val result = Http.POST( "https://crocodoc.com/api/v2/document/delete", "", Map( "token" -> apiKey, "uuid" -> extDocId ) )._s
     

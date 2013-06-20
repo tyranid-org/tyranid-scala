@@ -80,4 +80,3 @@ class BooleanImp( bval:Boolean ) {
    */
   def ?[A]( a: => A ) = if ( bval ) TernFirst( () => a ) else TernSecond
 }
-

@@ -17,6 +17,8 @@
 
 package org.tyranid.db
 
+import scala.language.implicitConversions
+
 import scala.collection.mutable
 import scala.collection.mutable.{ ArrayBuffer, Buffer }
 import scala.xml.NodeSeq
@@ -37,10 +39,10 @@ trait AttributeAnnotation
  * * *   A t t r i b u t e s
  */
 
-class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid {
+class Attribute( val entity:Entity, val name:String ) extends DbItem with Valid with Serializable {
 	var domain:Domain = null
   var label = name.camelCaseToSpaceUpper
-  var help = NodeSeq.Empty
+  @transient var help = NodeSeq.Empty
   var required = false
   var internal = false
   var owner = false
@@ -280,8 +282,8 @@ trait Entity extends Domain with DbItem {
     recordTidToId( recordTid )
   }
 
-  override def idToRecordTid( id:Any )               = idAtt.flatten( _.domain.idToRecordTid( id ),        this.problem( "embedded entities don't have IDs" ) )
-  override def recordTidToId( recordTid:String ):Any = idAtt.flatten( _.domain.recordTidToId( recordTid ), this.problem( "embedded entities don't have IDs" ) )
+  override def idToRecordTid( id:Any )               = idAtt.pluck( _.domain.idToRecordTid( id ),        this.problem( "embedded entities don't have IDs" ) )
+  override def recordTidToId( recordTid:String ):Any = idAtt.pluck( _.domain.recordTidToId( recordTid ), this.problem( "embedded entities don't have IDs" ) )
 
   
   /*
@@ -346,7 +348,7 @@ trait Entity extends Domain with DbItem {
       block( tl )
       static( tl.tuples:_* )
     } catch {
-      case e =>
+      case e:Throwable =>
         e.printStackTrace
         throw e
     }

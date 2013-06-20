@@ -47,11 +47,11 @@ object Register {
 
   def finishPage( user:User, companyName:String = null ) = 
    <div class="container" style="background: rgb(64,64,65);background: rgba(64,64,65,0.4);margin: 0 auto;width: 740px;border-radius: 8px;padding: 16px;">
-     <div style="text-align:center;background: url(https://d33lorp9dhlilu.cloudfront.net/images/volerro_logo_notag_reversed.png) no-repeat 0px 0px;height: 50px;background-position-x: center;"/>
+     <div style="text-align:center;background: url(https://d33lorp9dhlilu.cloudfront.net/images/volerro_logo_notag_reversed.png) no-repeat 0px 0px;height: 50px;background-position-x: center;"></div>
      <div>
       <form method="post" action="/user/register" id="f" class="register" style="margin-bottom:12px;">
        <fieldset class="registerBox">
-        <div class="top-form-messages"/>
+        <div class="top-form-messages"></div>
         <div class="container-fluid" style="padding:0;">
          <div class="row-fluid">
           <h1 class="span12">Thanks, { user.s( 'firstName ) }!</h1>
@@ -97,7 +97,7 @@ $( function() {
         
     if ( msg ) {
       formHandler.topEl().empty();
-      formHandler.addTopMessage( "error", msg );
+      T.addTopMsg( formHandler.topEl(), "error", msg );
       return false;
     }
 
@@ -120,7 +120,7 @@ $( function() {
        </div>
       </div>
       <hr style="margin:4px 0 30px;"/>
-      <div class="top-form-messages"/>
+      <div class="top-form-messages"></div>
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
         <input type="email" id="un" name="un" placeholder="Email" autocapitalize="off" data-val="req,email"/>
@@ -200,7 +200,6 @@ $( function() {
         }
       }
     case "/clear" =>
-      sess.clearAllEditing
       web.html( NodeSeq.Empty )
     case "/out" =>
       val website = T.website
@@ -291,8 +290,9 @@ $( function() {
       } else {
         val dbUser = B.User.db.findOne(Mobj("resetCode" -> forgotCode))
 
-        if (dbUser == null) {
+        if ( dbUser == null ) {
           sess.notice( "Account access code not found!", deferred = "/#dashboard" )
+          //web.redirect( "/log/in" )
           web.jsRes( Js( "V.common.clear().set(V.common.defaults); V.app.load( '/#dashboard' )" ) )
         } else {
           val user = B.User(dbUser)
@@ -487,7 +487,7 @@ $( function() {
     // TODO:  When we get rid of IE8 support, then get rid of the onClick event on the agreement checkbox
     
     val inner =
-   <div style="text-align:center;background: url(https://d33lorp9dhlilu.cloudfront.net/images/volerro_logo_notag_reversed.png) no-repeat 0px 0px;height: 50px;background-position-x: center;"/> ++
+   <div style="text-align:center;background: url(https://d33lorp9dhlilu.cloudfront.net/images/volerro_logo_notag_reversed.png) no-repeat 0px 0px;height: 50px;background-position-x: center;"></div> ++
    <div>
     <form method="post" action={ wpath + "/register" } id="f" class="register" style="margin-bottom:12px;" data-val="1">
      { keep |* <input type="hidden" name="keep" value="1"/> }
@@ -498,7 +498,7 @@ $( function() {
        </div>
       </div>
       <hr style="margin:4px 0 30px;"/>
-      <div class="top-form-messages"/>
+      <div class="top-form-messages"></div>
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
          <div class="container-fluid span12" style="padding:0;">
@@ -506,7 +506,7 @@ $( function() {
            <div class="span3"><input type="text" id="firstName" name="firstName" value={ user.s( 'firstName ) } placeholder="First Name" data-val="req" data-val-with="lastName"/></div>
            <div class="span3"><input type="text" id="lastName" name="lastName" value={ user.s( 'lastName ) } placeholder="Last Name" data-val="req" data-val-with="firstName"/></div>
            { Focus("#firstName") }
-           <div class="span6 val-display"/>
+           <div class="span6 val-display"></div>
            <div class="span6 hints" style="position:relative;">
             <div>Hint: <b>This will be the email address we send your account activation link to</b>.  Use your company or organization email address to easier connect with co-workers.</div> 
            </div>  
@@ -518,7 +518,7 @@ $( function() {
               <input type="text" name="email" id="email" value={ user.s( 'email ) } readonly="readonly" placeholder="Email address"/>
             }
            </div>
-           <div class="span6 val-display"/>
+           <div class="span6 val-display"></div>
           </div>
           <div class="row-fluid">
            <div class="span6">
@@ -527,28 +527,28 @@ $( function() {
             <input type="text" name="company" id="company" value={ orgName } placeholder="Company Name (not required)" data-update="blur" data-update-url={ wpath + "/register" }/>
             }
            </div>
-           <div class="span6 val-display"/>
+           <div class="span6 val-display"></div>
           </div>
           <div class="row-fluid">
            <div class="span6">
             <input type="password" name="password" id="password" placeholder="Password" data-val="req,min=7"/>
            </div>
-           <div class="span6 val-display"/> 
+           <div class="span6 val-display"></div> 
           </div>
           <div class="row-fluid">
            <div class="span6">
             <input type="hidden" name="keep" value={ web.s( 'keep ) }/>
             <input type="password" name="password2" id="password2" placeholder="Re-type password" data-val="req,same=password,min=7"/>
            </div>
-           <div class="span6 val-display"/>
+           <div class="span6 val-display"></div>
           </div>
           { doRecaptcha |*
-        <div class="row-fluid">
+          <div class="row-fluid">
            <div class="span6">
             <script>{ Unparsed( "jQuery.getScript( \"" + DbReCaptcha.scriptSrc + "\" );" + DbReCaptcha.showFunction( "white" ) ) }</script>
             { DbReCaptcha.div }
            </div>
-           <div class="span6 val-display"/> 
+           <div class="span6 val-display"></div> 
           </div>
         }
           <div class="row-fluid">

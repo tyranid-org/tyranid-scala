@@ -79,7 +79,7 @@ object Boot {
       case e:ClassCastException =>
         throw new RuntimeException( "bootstrap.tyranid.Boot does not extend org.tyranid.boot.Boot" )
 
-      case e =>
+      case e:Throwable =>
         e.printStackTrace
         throw new RuntimeException( "could not instantiate bootstrap.tyranid.Boot" )
       }
@@ -151,12 +151,16 @@ trait Bootable {
    */
 
   val requireSsl = false
+  
+  var maintenanceMode = false
 
   def requireReCaptcha = TyranidConfig().b( 'recaptcha )
   def accessLogs       = TyranidConfig().b( 'accessLogs )
   def onePagePdf       = TyranidConfig().b( 'onePagePdf )
   def debugSso         = TyranidConfig().b( 'debugSso )
   def debugChat        = TyranidConfig().b( 'debugChat )
+  def syncWebDav       = TyranidConfig().b( 'syncWebDav )
+  def hideUpgradeBtn   = TyranidConfig().b( 'hideUpgradeBtn )
 
   def access( thread:ThreadData, accessType:AccessType, ref:AnyRef )
 

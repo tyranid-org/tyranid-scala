@@ -24,8 +24,7 @@ import scala.collection.mutable
 
 import com.mongodb.{ DBObject, BasicDBList }
 
-import akka.actor.Actor
-import akka.actor.Actor.actorOf
+import akka.actor.{ Actor, ActorSystem, Props }
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbArray, DbDateLike, DbLink, DbNumber, DbTextLike, Domain, Entity, Record, View, ViewAttribute }
@@ -80,9 +79,9 @@ case object NoSearch extends Searchable {
 case class IndexMsg( index:String, typ:String, id:String, json:String )
 
 object Indexer {
-
+  val system = ActorSystem( "MySystem" )
   // TODO:  add fault tolerance / load balancing / etc.
-  lazy val actor = actorOf[Indexer].start()
+  lazy val actor = system.actorOf( Props[Indexer], name = "indexer" )//.start()
 }
 
 class Indexer extends Actor {

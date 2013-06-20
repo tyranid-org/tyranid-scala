@@ -51,14 +51,14 @@ class WebSuite extends FunSuite {
     assert(
       WebTemplate(
         <html><head><s>foo</s></head><d><p>Gamma</p><tyr:content/></d></html>,
-        <p><head><s>bar</s></head><i/></p> ).toString ===
+        <p><head><s>bar</s></head><i></i></p> ).toString ===
       <html><head><s>foo</s><s>bar</s></head><d><p>Gamma</p><p><i></i></p></d></html>.toString )
 
     /*
     assert(
       WebTemplate(
         Unparsed( """<!DOCTYPE html>""" ) ++ <html xmlns="https://www.w3.org/1999/xhtml"><head><script>foo</script></head><d><p>Theta</p><tyr:content/></d></html>,
-        <p><head><s>bar</s></head><head><script>{ Unparsed( "var js = 'foo';" ) }</script></head><i/></p> ).toString ===
+        <p><head><s>bar</s></head><head><script>{ Unparsed( "var js = 'foo';" ) }</script></head><i></i></p> ).toString ===
       ( Unparsed( """<!DOCTYPE html>""" ) ++ <html xmlns="https://www.w3.org/1999/xhtml"><head><script>foo</script><s>bar</s><script>{ Unparsed( "var js = 'foo';" ) }</script></head><d><p>Theta</p><p><i></i></p></d></html> ).toString )
      */
 

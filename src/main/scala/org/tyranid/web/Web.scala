@@ -17,6 +17,8 @@
 
 package org.tyranid.web
 
+import com.newrelic.api.agent.NewRelic
+
 import java.io.IOException
 import javax.servlet.{ Filter, FilterChain, FilterConfig, GenericServlet, ServletException, ServletRequest, ServletResponse, ServletContext }
 import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
@@ -56,6 +58,7 @@ case class Web404Exception()                       extends ControlThrowable
 
 object WebFilter {
   val versionPattern = "^/v[0-9]+/.*".r
+  val maintPattern = "/maintenance.html".r
   
   val assetPattern = java.util.regex.Pattern.compile( "((([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|htc|vtt|odt)))|.*robots\\.txt)$)|.*io/thumb.*|.*/sso/.*" )
   
@@ -106,10 +109,10 @@ trait TyrFilter extends Filter {
   def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData, comet:Boolean ): Unit
   
   def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ):Unit = try {
-    val boot = B
-    
     var web = new WebContext( request.asInstanceOf[HttpServletRequest],
                               response.asInstanceOf[HttpServletResponse], filterConfig.getServletContext() )
+      
+    val boot = B
     
     val removeFromPath = web.req.getAttribute( "removeFromPath" )._s
     
@@ -126,9 +129,14 @@ trait TyrFilter extends Filter {
 
     val comet = web.path.endsWith( "/cometd" )
     
-    if ( !comet )
+    if ( comet ) {
+      // Do not report these calls to New Relic because they look like they are taking the max time (when they are in suspend mode), and they
+      // throw off the Apdex score big time.
+      request.setAttribute( "com.newrelic.agent.IGNORE", true )
+    } else {
       println( "  | " + web.path + ( !B.DEV |* ", referer: " + web.req.getHeader( "referer" ) ) )
-
+    }
+    
     val thread = T
     thread.http = web.req.getSession( false )
     thread.web = web
@@ -137,7 +145,7 @@ trait TyrFilter extends Filter {
   } catch {
   case t:ControlThrowable =>
     throw t
-  case t =>
+  case t:Throwable =>
     t.log
   }
 }
@@ -181,7 +189,7 @@ class BasicAuthFilter extends TyrFilter {
         web.res.setStatus( HttpServletResponse.SC_UNAUTHORIZED )
         return
       }
-      
+
       ensureSession( thread, web )
       T.session.login( user )
     }
@@ -214,7 +222,10 @@ class WebFilter extends TyrFilter {
 
     val path = web.path
     
-    if ( path.matches( WebFilter.versionPattern ) ) {
+    if ( B.maintenanceMode && !path.matches( WebFilter.maintPattern ) & !isAsset ) {
+      web.ctx.getRequestDispatcher( "/maintenance.html" ).forward( web.req, web.res )
+      return
+    } else if ( path.matches( WebFilter.versionPattern ) ) {
       val slash = path.indexOf( '/', 1 )
       
       if ( slash != -1 ) {
@@ -284,8 +295,14 @@ class WebFilter extends TyrFilter {
         
         if ( !comet && !isAsset ) ensureSession( thread, web )
         
-         if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.user.loggedIn ) ) && !comet && web.req.getAttribute( "api" )._s.isBlank ) {
-          //println( "full shell page!" )
+         if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.session.isLoggedIn ) ) && !comet && web.req.getAttribute( "api" )._s.isBlank ) {
+           
+          if ( T.session.trace ) {
+            val hasUser = T.user != null 
+            NewRelic.setUserName( hasUser ? T.user.fullName | "[Unknown]" )
+            NewRelic.setAccountName( hasUser ? T.user.tid | "[None]" )
+            NewRelic.setProductName( T.session.id )
+          }
           
           web.template( B.appShellPage( web ) )
           return
@@ -297,6 +314,13 @@ class WebFilter extends TyrFilter {
           first = false
         }
 
+        if ( T.session.trace ) {
+          val hasUser = T.user != null 
+          NewRelic.setUserName( hasUser ? T.user.fullName | "[Unknown]" )
+          NewRelic.setAccountName( hasUser ? T.user.tid | "[None]" )
+          NewRelic.setProductName( T.session.id )
+        }
+          
         if ( handle( webloc ) ) {
           //sp am( "CACHE: CLEARING" )
           thread.tidCache.clear
@@ -501,7 +525,7 @@ trait Weblet {
   val rootPath = "/"
   
   def redirectIfNotLoggedIn( web:WebContext ) = 
-    if ( !B.User.isLoggedIn )
+    if ( !Session().isLoggedIn )
       web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
 
   def redirectIfNotHasOrg( web:WebContext ) = {

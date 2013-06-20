@@ -80,7 +80,7 @@ object AutoCad {
       case e:Exception =>
         log( Event.Converter, "m" -> "Conversion of dxf to svg failed.", "ex" -> e )
         null
-      case _ =>
+      case _:Throwable =>
         null
     } finally {
       if ( in != null )

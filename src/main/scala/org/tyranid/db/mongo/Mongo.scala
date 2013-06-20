@@ -17,6 +17,8 @@
 
 package org.tyranid.db.mongo
 
+import scala.language.implicitConversions
+
 import scala.collection.JavaConversions._
 
 import org.bson.BSONObject
@@ -99,7 +101,7 @@ object Imp {
     def apply = new BasicDBList
     def apply( vals:Any* ):BasicDBList = {
       val l = new BasicDBList
-      import Imp.listImp
+      
       for ( i <- 0 until vals.size )
         l( i ) = vals( i ).asInstanceOf[AnyRef]
       l

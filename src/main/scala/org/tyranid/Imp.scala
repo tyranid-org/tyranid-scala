@@ -17,6 +17,8 @@
 
 package org.tyranid
 
+import scala.language.implicitConversions
+
 import java.io.InputStream
 import java.text.DateFormat
 import java.util.{ Calendar, Date }
@@ -74,7 +76,7 @@ object Imp {
     try {
       block
     } catch {
-    case e =>
+    case e: Throwable =>
       e.printStackTrace
       e.getMessage
     }
@@ -83,7 +85,7 @@ object Imp {
     try {
       block
     } catch {
-    case e => e.log
+    case e: Throwable => e.log
     }
 
   def spam( msg:Any ) =
@@ -113,14 +115,15 @@ object Imp {
 
   def background( block: => Unit ) {
     val s = Session()
+    //scala.concurrent.future(body)
     
-    scala.concurrent.ops.spawn {
+    scala.concurrent.future {
       T.becomeSession( s )
       
       trylog {
         block
       }
-    }
+    } ( scala.concurrent.ExecutionContext.global )
   }
 
   def background_?( test:Boolean, block: => Unit) {

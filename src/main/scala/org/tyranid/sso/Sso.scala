@@ -54,6 +54,7 @@ object SsoMapping extends MongoEntity( tid = "a0Ut" ) {
   "actOptOut"       is DbBoolean;
   "featOptOut"      is DbBoolean;
   "naOptOut"        is DbBoolean;
+  "inviteOptOut"    is DbBoolean;
   "newProjects"     is DbText;
   
   lazy val testMapping = {
@@ -307,6 +308,9 @@ $( $('#idp').focus() );
         if ( mapping.b( 'naOptOut ) )
           newUser( 'naOptOut ) = true
           
+        if ( mapping.b( 'inviteOptOut ) )
+          newUser( 'inviteOptOut ) = true
+          
         newUser.join( org )
         newUser.save
         
@@ -479,7 +483,7 @@ $( $('#idp').focus() );
        </div>
       </div>
       <hr style="margin:4px 0 30px;"/>
-      <div class="top-form-messages"/>
+      <div class="top-form-messages"></div>
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
         <div class="errorMessage" style="white-space:pre-wrap;font-family:'Courier New',monospace;">{ errorMessage }</div>
@@ -508,7 +512,7 @@ $( $('#idp').focus() );
        </div>
       </div>
       <hr style="margin:4px 0 30px;"/>
-      <div class="top-form-messages"/>
+      <div class="top-form-messages"></div>
       <div class="container-fluid" style="padding:0;">
        <div class="row-fluid">
         <label for="code" class="span4">Assigned Code:</label>

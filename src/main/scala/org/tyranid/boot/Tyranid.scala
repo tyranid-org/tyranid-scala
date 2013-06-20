@@ -33,13 +33,14 @@ object TyranidConfig extends MongoEntity( tid = "a03t" ) {
   override def convert( obj:DBObject, parent:MongoRecord ) = new TyranidConfig( obj, parent )
 
 
-  "_id"         is DbMongoId         is 'id;
-  "recaptcha"   is DbBoolean         as "Enable ReCaptchas";
-  "accessLogs"  is DbBoolean         as "Enable Access Logs";
-  "onePagePdf"  is DbBoolean         as "One Page PDF";
-  "debugSso"    is DbBoolean         as "Debug SSO";
-  "debugChat"   is DbBoolean         as "Debug Chat";
-
+  "_id"            is DbMongoId         is 'id;
+  "recaptcha"      is DbBoolean         as "Enable ReCaptchas";
+  "accessLogs"     is DbBoolean         as "Enable Access Logs";
+  "onePagePdf"     is DbBoolean         as "One Page PDF";
+  "debugSso"       is DbBoolean         as "Debug SSO";
+  "debugChat"      is DbBoolean         as "Debug Chat";
+  "syncWebDav"     is DbBoolean         as "Sync WebDavs";
+  "hideUpgradeBtn" is DbBoolean         as "Hide Upgrade Button";
 
   def apply():TyranidConfig = singleton
 
@@ -116,6 +117,22 @@ object TyranidConfiglet extends Weblet {
         TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "debugChat" -> obj.b( 'debugChat ) ) ) )
         sess.notice( "Chat Debug has been turned " + ( B.debugChat ? "ON" | "OFF" ) + "." )
   
+      case "syncWebDav" =>
+        val obj = TyranidConfig()
+        obj( 'syncWebDav ) = !B.syncWebDav
+        TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "syncWebDav" -> obj.b( 'syncWebDav ) ) ) )
+        sess.notice( "WebDav syncing has been turned " + ( B.syncWebDav ? "ON" | "OFF" ) + "." )
+        
+      case "hideUpgradeBtn" =>
+        val obj = TyranidConfig()
+        obj( 'hideUpgradeBtn ) = !B.hideUpgradeBtn
+        TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "hideUpgradeBtn" -> obj.b( 'hideUpgradeBtn ) ) ) )
+        sess.notice( "Hide Upgrade Btn has been turned " + ( B.hideUpgradeBtn ? "ON" | "OFF" ) + "." )
+        
+      case "maint" =>
+        B.maintenanceMode = true
+ 
+        web.redirect( "/maintenance.html" )
       case "recaptcha" =>
         val obj = TyranidConfig()
         obj( 'recaptcha ) = !B.requireReCaptcha
@@ -139,14 +156,17 @@ object TyranidConfiglet extends Weblet {
          Map(
            "config" -> 
              Map(
-              "eye"        -> user.b( 'eye ),
-              "sms"        -> SMS.enabled,
-              "onePagePdf" -> B.onePagePdf,
-              "debugSso"   -> B.debugSso,
-              "debugChat"  -> B.debugChat,
-              "email"      -> Email.enabled,
-              "recaptcha"  -> B.requireReCaptcha,
-              "accessLogs" -> B.accessLogs
+              "eye"            -> user.b( 'eye ),
+              "sms"            -> SMS.enabled,
+              "onePagePdf"     -> B.onePagePdf,
+              "debugSso"       -> B.debugSso,
+              "debugChat"      -> B.debugChat,
+              "syncWebDav"     -> B.syncWebDav,
+              "hideUpgradeBtn" -> B.hideUpgradeBtn,
+              "maint"          -> false,
+              "email"          -> Email.enabled,
+              "recaptcha"      -> B.requireReCaptcha,
+              "accessLogs"     -> B.accessLogs
             )
          ),
          name = "main"

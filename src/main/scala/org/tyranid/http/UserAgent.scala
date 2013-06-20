@@ -28,7 +28,6 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 import org.tyranid.db.meta.AutoIncrement
 
-
 /*
  { "agent_type":"Browser",
    "agent_name":"Opera",
@@ -320,7 +319,7 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
         case k:org.tyranid.http.Http403Exception =>
           UserAgent.serviceFailure = true
           k.printStackTrace()
-        case e => 
+        case e:Throwable => 
           UserAgent.serviceFailure = true
           e.printStackTrace
       }
@@ -343,7 +342,7 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
 
   def isFirefox = s( 'agentName ) == "Firefox"
   //def isIE = T.session.getOrElse( "isIE", false )._b // s( 'agentName ) == "Internet Explorer"
-  def isIE = ( s( 'agentName ) == "Internet Explorer" || s( 'agentName ) == "MSIE" ) || T.session.getOrElse( "isIE", false )._b
+  def isIE = ( s( 'agentName ) == "Internet Explorer" || s( 'agentName ) == "MSIE" ) || T.session.getOrElse( "isIE", false.as[Serializable] )._b
     
   def uaVersion = T.session.getOrElse( "uav", 0 )._i
   

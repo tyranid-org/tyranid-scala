@@ -19,7 +19,7 @@ package org.tyranid.math
 
 import org.tyranid.Imp._
 
-case class IntImp( i:Int ) {
+class IntImp( i:Int ) {
 
   def box = Int.box( i )
 

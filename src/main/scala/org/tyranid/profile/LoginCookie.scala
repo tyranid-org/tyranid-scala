@@ -83,7 +83,7 @@ object LoginCookie {
     val sess = T.session
     val user = sess.user
 
-    if ( !user.loggedIn && !T.http.isLoggingOut && !user.b( 'inactive ) ) {
+    if ( !sess.isLoggedIn && !T.http.isLoggingOut && !user.b( 'inactive ) ) {
       val user = LoginCookie.getUser.of[User].getOrElse( null )
 
       if ( user != null )

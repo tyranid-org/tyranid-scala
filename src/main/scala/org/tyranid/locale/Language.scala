@@ -40,7 +40,7 @@ object Language extends RamEntity( tid = "a0Hw" ) {
   private val iso639_1Idx = mutable.HashMap[String, Int]()
 
   def idByIso630_1( code:String ) =
-    iso639_1Idx.getOrElseUpdate( code, staticRecords.find( _.s( 'al2 ) == code ).flatten( _.i( '_id ), 0 ) )
+    iso639_1Idx.getOrElseUpdate( code, staticRecords.find( _.s( 'al2 ) == code ).pluck( _.i( '_id ), 0 ) )
 
   static(
   ( "_id", "bib3", "ter3", "al2", "name", "frName" ),

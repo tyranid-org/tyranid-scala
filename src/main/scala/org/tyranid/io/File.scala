@@ -17,6 +17,8 @@
 
 package org.tyranid.io
 
+import scala.language.postfixOps
+
 import org.apache.commons.io.{ IOUtils }
 
 import org.apache.tika.detect.{ DefaultDetector, Detector }
@@ -134,7 +136,7 @@ class TxtExtractor extends TextExtractor {
       println( out._s )
       out._s
     } catch {
-      case e =>
+      case e:Throwable =>
         log( Event.StackTrace, "m" -> ( "Txt Extract Exception:" + e.getMessage() ), "ex" -> e )
       null
     } finally {
@@ -222,7 +224,7 @@ object File {
     val fsave = filename.safeString.toLowerCase
     val ext = fsave.suffix( '.' )
     
-    MimeType.byExtension.get( ext ).flatten( _.mimeType, null )
+    MimeType.byExtension.get( ext ).pluck( _.mimeType, null )
   }
   
   def safeExtension( filename:String ) = {
@@ -275,7 +277,7 @@ object File {
       } catch {
       case e if e.getClass.getSimpleName == "EofException" || e.getMessage == "Broken pipe" =>
         println( "*** Broken pipe" )
-      case ex =>
+      case ex:Throwable =>
         ex.log
       } finally {
         in.close
@@ -293,7 +295,7 @@ object File {
       var cnt = 0
       scala.collection.immutable.Stream.continually(in.read).takeWhile( c => c != -1 && cnt < 2 ).filter( 0 == ).length == 2
     } catch {
-      case e => 
+      case e:Throwable => 
         e.printStackTrace
         true // default to true if something bad happens
     } finally {

@@ -99,7 +99,7 @@ case class TwApp( apiKey:String, secret:String, systemToken:Token = null ) exten
     <head>
      <script src={ "https://platform.twitter.com/anywhere.js?id=" + apiKey + "&v=1" } type="text/javascript"></script>
     </head>
-    <span id="twLogin"/>
+    <span id="twLogin"></span>
     <script type="text/javascript">{ Unparsed("""
 
 """ + ( loggingOut |* "window.twLogOut = true;" ) + """
@@ -164,7 +164,7 @@ twttr.anywhere( function(T) {
        }
      """ ) }</script>
     </head>
-    <script type="IN/Login" data-onAuth="onLinkedInAuth"/>
+    <script type="IN/Login" data-onAuth="onLinkedInAuth"></script>
     */
   }
 

@@ -172,7 +172,7 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
               )
           
           throw e
-        case e2 =>
+        case e2:Throwable =>
           val sess = T.session
           val msg = e2.getMessage
           val fromAddress = from.getAddress

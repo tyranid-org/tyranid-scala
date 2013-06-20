@@ -44,7 +44,7 @@ case class Multipass( accountKey:String, apiKey:String, initVector:Array[Byte] =
 
   private val secretKeySpec = {
     val salted = apiKey + accountKey
-    val hash = DigestUtils.sha( salted )
+    val hash = DigestUtils.sha1( salted )
 
     val saltedHash = new Array[Byte]( 16 )
     System.arraycopy( hash, 0, saltedHash, 0, 16 )

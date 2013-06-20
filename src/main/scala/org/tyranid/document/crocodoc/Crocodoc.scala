@@ -88,7 +88,7 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   
   def docPreviewContainer( extDocId:String, height:String="100%", print:Boolean = false, annotatable:Boolean = true ): NodeSeq =
     { print |* <script src={ B.CROCODOC_SCRIPT }></script> } ++
-    <div class={ "doc-view doc crocodoc" + ( annotatable |* " annotatableObject" ) } id={ "dv_" + extDocId }/>
+    <div class={ "doc-view doc crocodoc" + ( annotatable |* " annotatableObject" ) } id={ "dv_" + extDocId }></div>
 
     /* ---
 
@@ -165,23 +165,6 @@ _doc = {"status": 3, "socketioHost": "//socket.crocodoc.com:5555/", "objects": [
       null
     } else 
       text
-  }
-  
-  def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef] = {
-    statusFor( extDocId ) match {
-      case "DONE" =>
-        val iframeSrc = previewUrlFor( extDocId )
-        
-        Map( "width" -> width, 
-             "height" -> height,
-             "cssClass" -> "no-scroll",
-             "html" -> ( { org.tyranid.session.Notification.box } ++
-                         <iframe style="width:100%;height:100%;" src={ iframeSrc }/> ) )
-      case "ERROR" =>
-        Map( "status" -> ( "Error occured!: " ) ) //+ statusJson.s( 'error ) ) ) )
-      case s =>
-        Map( "status" -> ( "Error, unknown status: " + s._s ) )
-    }
   }
   
   def delete( extDocId:String ):Boolean = {

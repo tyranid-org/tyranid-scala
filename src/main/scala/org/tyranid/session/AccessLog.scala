@@ -114,9 +114,7 @@ object AccessLog {
       // still do "digest" access logs
 
       if ( !session.loggedUser ) {
-        val user = session.user
-
-        if ( user.loggedIn ) {
+        if ( session.isLoggedIn ) {
           Log.log( Event.Access, "ua" -> web.req.getHeader( "User-Agent" ) )
           session.loggedUser = true
           session.loggedEntry = true
@@ -353,7 +351,7 @@ object Accesslet extends Weblet {
     val milestoneCounts = mutable.Map[Milestone,MilestoneCounts]( B.milestones.map( _ -> MilestoneCounts() ):_* )
 
     val onlyMilestone = web.sOpt( "milestone" ).flatMap( Milestone.apply )
-    val milestones    = onlyMilestone.flatten( Seq(_), B.milestones )
+    val milestones    = onlyMilestone.pluck( Seq(_), B.milestones )
 
 
     //
@@ -562,7 +560,7 @@ object Accesslet extends Weblet {
     <table class="dtable">
      <thead>
       <tr>
-       <th/>
+       <th></th>
        <th colspan="3">Distinct Users</th>
        <th colspan="2">Events</th>
       </tr>
@@ -619,7 +617,7 @@ object Accesslet extends Weblet {
     <table class="dtable">
      <thead>
       <tr>
-       <th style="width:26px; padding-left:0;"/><th>Agent</th><th>OS</th><th style="width:110px;"># Distinct Users</th><th style="width:90px;">% Distinct</th>
+       <th style="width:26px; padding-left:0;"></th><th>Agent</th><th>OS</th><th style="width:110px;"># Distinct Users</th><th style="width:90px;">% Distinct</th>
       </tr>
      </thead>
      { for ( ua <- userAgents.keys.filter( !_.bot ).toSeq.sortBy( _.s( 'agentName ) ) ) yield {
@@ -641,7 +639,7 @@ object Accesslet extends Weblet {
     <table class="dtable">
      <thead>
       <tr>
-       <th style="width:26px; padding-left:0;"/><th>Agent</th><th style="width:110px;"># Distinct Bots</th><th style="width:50px;">%</th>
+       <th style="width:26px; padding-left:0;"></th><th>Agent</th><th style="width:110px;"># Distinct Bots</th><th style="width:50px;">%</th>
       </tr>
      </thead>
      { for ( ua <- userAgents.keys.filter( _.bot ).toSeq.sortBy( _.s( 'agentName ) ) ) yield {

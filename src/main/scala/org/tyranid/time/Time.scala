@@ -163,7 +163,7 @@ class CalendarImp( c:Calendar ) {
   def toIso8601 = format( iso8601 = true )
 }
 
-class DateImp( d:Date ) {
+class DateImp( d:Date ) extends Serializable {
 
   def max( o:Date ) =
     if ( o.getTime > d.getTime )

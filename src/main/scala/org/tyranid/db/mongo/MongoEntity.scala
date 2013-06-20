@@ -62,14 +62,20 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
 
 	override lazy val dbName = name.plural
 
-  lazy val db = {
-    if ( embedded )
-      problem( "embedded mongodb entities do not have db objects" )
-
-    Mongo.connect.db( B.profileDbName )( dbName )
+	@transient var _db:DBCollection = null
+	
+  def db = {
+    if ( _db == null ) {
+      if ( embedded )
+        problem( "embedded mongodb entities do not have db objects" )
+  
+      _db = Mongo.connect.db( B.profileDbName )( dbName )
+    }
+    
+    _db
   }
 
-  lazy val makeView = MongoView( this )
+  @transient lazy val makeView = MongoView( this )
   
   def make = apply( Mobj() )
 
@@ -129,7 +135,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
       T.tidCache.byTid.getOrElseUpdate( idToTid( id ), queryById( id ) ).as[RecType]
       // TODO:  if we already had it here should we clone it ?
     } catch {
-    case e =>
+    case e:Throwable =>
       e.logWith( "m" -> ( "tid[" + tid + "]" )  )
       null
     }
@@ -145,7 +151,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
         T.tidCache.byTid.getOrElseUpdate( tid, queryById( recordTidToId( tid.substring( 4 ) ) ) ).as[RecType]
         // TODO:  if we already had it here should we clone it ?
       } catch {
-      case e =>
+      case e:Throwable =>
         e.logWith( "m" -> ( "tid[" + tid + "]" )  )
         null
       }

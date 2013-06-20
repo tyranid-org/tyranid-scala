@@ -16,6 +16,8 @@
  */
 package org.tyranid.ui
 
+import scala.language.postfixOps
+
 import java.util.Date
 
 import scala.collection.mutable
@@ -36,7 +38,7 @@ object Ui {
         { Text( s ) ++ Unparsed("<br>") }
     else NodeSeq.Empty
     
-  def gridGuide( cols:Int = 12 ) = { B.DEV |* <div class="row"> { for ( i <- 0 until cols) yield {<div class="row-guide span1"/> } } </div> }
+  def gridGuide( cols:Int = 12 ) = { B.DEV |* <div class="row"> { for ( i <- 0 until cols) yield {<div class="row-guide span1"></div> } } </div> }
 }
 
 object Help {
@@ -48,7 +50,7 @@ object Tags {
 
   def tagUi( id:String, label:String, placeholder:String = "" ) =
     <li class="tag">
-     <span>{ label }<a class="closeTag"><i class="icon-remove"/></a><input type="hidden" style="display:none;" value={ id } id="to" name="to[]" placeholder={ placeholder }/></span>
+     <span>{ label }<a class="closeTag"><i class="icon-remove"></i></a><input type="hidden" style="display:none;" value={ id } id="to" name="to[]" placeholder={ placeholder }/></span>
     </li>
 }
 
@@ -285,7 +287,7 @@ case class TabBar( weblet:Weblet, tabs:Tab* ) {
 
   def choice = {
     val p = T.session.pathChoiceAt( weblet.wpath, defaultTab.rpath )
-    tabs.find( _.rpath == p ).flatten( _.rpath, defaultTab.rpath )
+    tabs.find( _.rpath == p ).pluck( _.rpath, defaultTab.rpath )
   }
 }
 
@@ -322,7 +324,7 @@ object UiStyle {
   case object Toggle  extends UiStyle
 }
 
-trait UiObj {
+trait UiObj extends Serializable {
   def bind( view:View ):UiObj
 
   def draw( scope:Scope ):NodeSeq = NodeSeq.Empty

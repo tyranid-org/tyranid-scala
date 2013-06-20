@@ -59,13 +59,13 @@ object SqlPool {
 	        x.setAutoCommit(false)
 	        Some(x)
 	      } catch {
-          case e => try {
+          case e:Throwable => try {
             pool = xs
             poolSize = poolSize - 1
             x.close
             newConnection
           } catch {
-            case e => newConnection
+            case e:Throwable => newConnection
           }
         }
       }

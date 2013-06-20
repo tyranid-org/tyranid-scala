@@ -90,15 +90,6 @@ object Service {
       null
     }
   
-  def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef] = {
-    if ( extDocId.notBlank ) {
-      val parts = extDocId.split( "," )
-      appFor( parts(0 ) ).previewParams( parts.drop(1).mkString( "," ), width, height )
-    } else {
-      Map()
-    }
-  }
-  
   def delete( extDocId:String ) = {
     if ( extDocId.notBlank ) {
       val parts = extDocId.split( "," )
@@ -127,7 +118,6 @@ trait DocApp {
   def statusFor( extDocId:String ):String
   def getText( extDocId:String ):String
   def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ):File
-  def previewParams( extDocId:String, width:String, height:String ):Map[String,AnyRef]
   def previewUrlFor( extDocId:String ):String
   def previewJsonFor( extDocId:String, print:Boolean = false ):Map[String,Any] = null
   
