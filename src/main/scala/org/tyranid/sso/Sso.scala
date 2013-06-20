@@ -54,6 +54,7 @@ object SsoMapping extends MongoEntity( tid = "a0Ut" ) {
   "actOptOut"       is DbBoolean;
   "featOptOut"      is DbBoolean;
   "naOptOut"        is DbBoolean;
+  "inviteOptOut"    is DbBoolean;
   "newProjects"     is DbText;
   
   lazy val testMapping = {
@@ -306,6 +307,9 @@ $( $('#idp').focus() );
         
         if ( mapping.b( 'naOptOut ) )
           newUser( 'naOptOut ) = true
+          
+        if ( mapping.b( 'inviteOptOut ) )
+          newUser( 'inviteOptOut ) = true
           
         newUser.join( org )
         newUser.save

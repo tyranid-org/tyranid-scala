@@ -160,6 +160,7 @@ trait Bootable {
   def debugSso         = TyranidConfig().b( 'debugSso )
   def debugChat        = TyranidConfig().b( 'debugChat )
   def syncWebDav       = TyranidConfig().b( 'syncWebDav )
+  def hideUpgradeBtn   = TyranidConfig().b( 'hideUpgradeBtn )
 
   def access( thread:ThreadData, accessType:AccessType, ref:AnyRef )
 
