@@ -401,13 +401,17 @@ $( $('#idp').focus() );
         val u = B.User( user )
         var save = false
         
-        if ( u.s( 'firstName ).isBlank ) {
+        val fName = u.s( 'firstName )
+        
+        if ( fName.isBlank || fName == "unknown" ) {
           val fnameAttrib = mapping.s( 'firstNameAttrib )
           u( 'firstName ) = json.s( fnameAttrib )
           save = true
         }
         
-        if ( u.s( 'lastName ).isBlank ) {
+        val lName = u.s( 'lastName )
+        
+        if ( lName.isBlank || lName == "unknown" ) {
           val lnameAttrib = mapping.s( 'lastNameAttrib )
           u( 'lastName ) = json.s( lnameAttrib )
           save = true
