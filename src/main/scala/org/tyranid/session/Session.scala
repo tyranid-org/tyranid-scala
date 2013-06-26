@@ -17,8 +17,6 @@
 
 package org.tyranid.session
 
-import scala.language.postfixOps
-
 import java.util.{ Date, TimeZone }
 
 import javax.servlet.http.{ HttpSession, HttpSessionEvent, HttpSessionListener }
@@ -451,7 +449,7 @@ trait Session extends QuickCache {
   private val reports = mutable.Map[String,org.tyranid.report.Report]()
 
   def reportFor( queryName:String ) = reports.synchronized {
-    ( queryName isBlank ) ? null | reports.getOrElseUpdate( queryName, Query.byName( queryName ).newReport )
+    queryName.isBlank ? null | reports.getOrElseUpdate( queryName, Query.byName( queryName ).newReport )
   }
 
 

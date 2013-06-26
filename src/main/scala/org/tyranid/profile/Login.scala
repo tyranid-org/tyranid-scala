@@ -444,7 +444,7 @@ $( function() {
           B.registerUser( user, companyName )
           B.welcomeUserEvent
             
-          web.jsRes( Js( "V.common.set( " + user.toClientCommonMap().toJsonStr( client = true ) + " ); V.app.load( '/#dashboard' );" ) )            
+          web.jsRes( Js( "V.common.set( " + user.toClientCommonMap( true ).toJsonStr( client = true ) + " ); V.app.load( '/#dashboard' );" ) )            
           return
         }
       } else {

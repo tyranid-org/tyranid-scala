@@ -133,6 +133,10 @@ case class JqHtml( // this is the target selector to place the html at
 }
 
                    
+case class JsValue( map:AnyRef ) extends JsCmd {
+  def toMap = Map( "value" -> map )
+}
+
 // @name if the name is null, it is a local model, otherwise it is a global model
 //
 // model is either a collection.Map[String,Any] or a Record
