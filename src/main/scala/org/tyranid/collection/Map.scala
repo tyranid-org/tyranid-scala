@@ -17,6 +17,8 @@
 
 package org.tyranid.collection
 
+import scala.collection.JavaConversions._
+
 import org.tyranid.Imp._
 
 
@@ -86,5 +88,11 @@ class ObjectMapImp[A]( map:scala.collection.Map[String,Any] ) {
     case Some( v ) => v._t
     case None      => null
     }
+
+  def toDBObject =
+    if ( map == null )
+      null
+    else
+      new com.mongodb.BasicDBObject( map )
 }
 
