@@ -144,14 +144,26 @@ object S3 {
   def write( bucket:S3Bucket, key:String, file:org.apache.commons.fileupload.FileItem, public:Boolean, acceptRanges:Boolean ):Unit =
     write( bucket, key, file.getSize, file.getContentType, file.getInputStream, public, acceptRanges )
 
-  def delete( bucket:S3Bucket, key:String ) = s3.deleteObject( bucket.name, key )
+  def delete( bucket:S3Bucket, key:String ) = try {
+    s3.deleteObject( bucket.name, key )
+  } catch {
+    case e:Throwable =>
+      println( "Error deleting [" + key + "]" )
+      throw e
+  }
   
   def deleteAll( bucket:S3Bucket, keys:Seq[String], keyPrefix:String = null ) = {
     for ( key <- keys )
       delete( bucket, keyPrefix.isBlank ? key | ( keyPrefix + key ) )
   }
   
-  def copy( bucket:S3Bucket, key:String, bucket2:S3Bucket, key2:String ) = s3.copyObject( bucket.name, key, bucket2.name, key2 )
+  def copy( bucket:S3Bucket, key:String, bucket2:S3Bucket, key2:String ) = try {
+    s3.copyObject( bucket.name, key, bucket2.name, key2 )
+  } catch {
+    case e:Throwable =>
+      println( "Error copying from [" + key + "] to [" + key2 + "]" )
+      throw e
+  }
 
   def move( bucketFrom:S3Bucket, fromPath:String, bucketTo:S3Bucket, toPath:String ) = {
     copy( bucketFrom, fromPath, bucketTo, toPath )
