@@ -26,6 +26,8 @@ import scala.xml.{ Node, NodeSeq, Unparsed }
 
 import org.bson.types.ObjectId
 
+import com.mongodb.DBObject
+
 import org.tyranid.db.meta.TidCache
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.http.UserAgent
@@ -35,6 +37,7 @@ import org.tyranid.math.Base62
 import org.tyranid.profile.{ LoginCookie, User, UserStat, UserStatType }
 import org.tyranid.report.Query
 import org.tyranid.social.Social
+import org.tyranid.sso.SsoMapping
 import org.tyranid.time.Time
 import org.tyranid.QuickCache
 import org.tyranid.web.{ Comet, WebContext }
@@ -128,8 +131,16 @@ object ThreadData {
 class ThreadData {
   def baseWebsite = "https://" + B.domainPort
   
-  def website( user:User = null ) = {
-    ( user == null ) ? baseWebsite | baseWebsite
+  def website( path:String = "", user:User = null, ssoMapping:DBObject = null ):String = {
+    if ( user == null ) 
+      return baseWebsite  + path 
+    
+    val ssoMappingImpl = ( ssoMapping == null ) ? ( ( user.obj.oid( 'orgId ) != null ) ? SsoMapping.db.findOne( Mobj( "_id" -> user.obj.oid( 'orgId ) ) ) | null ) | ssoMapping
+    
+    if ( ssoMappingImpl == null )
+      return baseWebsite + path
+      
+    return baseWebsite + path
   }
 
   def user:User =

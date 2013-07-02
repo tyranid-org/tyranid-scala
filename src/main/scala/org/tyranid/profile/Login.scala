@@ -202,9 +202,9 @@ $( function() {
     case "/clear" =>
       web.html( NodeSeq.Empty )
     case "/out" =>
-      val website = T.website( T.user )
+      val website = T.website( "/?lo=1" + ( web.b( 'xhr ) ? "&xhr=1" | "" ), sess.user )
       sess.logout()
-      web.redirect( website + "/?lo=1" + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
+      web.redirect( website )
     case s if s.startsWith( "/in" ) =>
       socialLogin( s.substring( 3 ) )
     case s if s.startsWith( "/register" ) =>
