@@ -166,6 +166,10 @@ $( $('#idp').focus() );
       
       return
     
+    case s if s.startsWith( "/redir/" ) =>
+      val url = T.website( "/#messages", T.user )
+      println( url )
+      web.jsRes()
     case s if s.startsWith( "/auth/" ) =>
       val id = s.split( "/" )(2)
       val mapping = ( id == "test" ) ? SsoMapping.testMapping | SsoMapping.getById( id )
@@ -188,12 +192,16 @@ $( $('#idp').focus() );
         
         if ( B.debugSso )
           println( "DEBUG: Mapping found, trying ping identity for ipdid " + idpId )
+          
+          println( web.s( 'startUrl ) )
        
         web.res.sendRedirect( "https://sso.connect.pingidentity.com/sso/sp/initsso?saasid=" + SAAS_ID + "&idpid=" + idpId + "&appurl=" + tokenUrl( web.s( 'startUrl ) ) + "/" + id + "&errorurl=" + ERROR_URL )
       }
     case t if t.startsWith( "/token/" ) =>
       val id = t.split( "/" )(2)
       val token = web.s( 'tokenid )
+      println( "Token: " + token )
+      println( "startURL: " + web.s( 'startUrl ) )
       
       if ( token.isBlank ) {
         sess.error( "No token sent!" )
