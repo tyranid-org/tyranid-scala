@@ -336,7 +336,7 @@ object Thumbnail {
   val Tiny   = Thumbnail( "tiny",   "t", Dimensions( width =  40, height = 40 ) ) // Dashboard drop-down
   
   def generate( originalFile:File, thumbW:Int, thumbH:Int, thumbnailFile:File = null ):File = {
-    val image = {  
+    var image = {
        try {
          ImageIO.read( originalFile )
        } catch {
@@ -391,6 +391,9 @@ object Thumbnail {
     val imageWidth  = image.getWidth( null )
     val imageHeight = image.getHeight( null )
 
+spam( "   image: " + imageWidth + "x" + imageHeight )
+spam( "   thumb: " + thumbW     + "x" + thumbH      )
+
     val thumbFile = ( thumbnailFile == null ) ? File.createTempFile( originalFile.getName(), ".tmp" ) | thumbnailFile 
 
     // Do not create thumbs that are bigger than the original image, or if the original image is the right size, then use that
@@ -399,6 +402,7 @@ object Thumbnail {
     } else {
       //val thumbRatio:Double = double2Double( thumbW ) / double2Double( thumbH )
       val imageRatio:Double = double2Double( imageWidth ) / double2Double( imageHeight )
+spam( "imageRatio: " + imageRatio )
       
       var thumbHeight = thumbH
       var thumbWidth  = thumbW
@@ -420,19 +424,40 @@ object Thumbnail {
       if ( thumbWidth == 0 || thumbHeight == 0 )
         return null
   
-      val thumbImage = new BufferedImage( thumbWidth, thumbHeight, BufferedImage.TYPE_INT_RGB )
-      val graphics2D = thumbImage.createGraphics()
-      
-      graphics2D.setBackground( Color.WHITE )
-      graphics2D.setPaint( Color.WHITE )
-      graphics2D.fillRect( 0, 0, thumbWidth, thumbHeight )
-      graphics2D.setRenderingHint( RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR )
-      graphics2D.drawImage( image, 0, 0, thumbWidth, thumbHeight, null )
-       
+spam( "new thumb: " + thumbWidth + "x" + thumbHeight )
+
+      var w = imageWidth
+      var h = imageHeight
+        
+      do {
+        if ( w > thumbWidth) {
+          w /= 2
+          if ( w < thumbWidth )
+            w = thumbWidth
+        }
+
+        if ( h > thumbHeight ) {
+          h /= 2
+          if ( h < thumbHeight )
+            h = thumbHeight
+        }
+
+        val tmp = new BufferedImage( w, h, BufferedImage.TYPE_INT_RGB )
+        val g = tmp.createGraphics
+        g.setBackground( Color.WHITE )
+        g.setPaint( Color.WHITE )
+        g.fillRect( 0, 0, thumbWidth, thumbHeight )
+        g.setRenderingHint( RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC )
+        g.drawImage( image, 0, 0, w, h, null )
+        g.dispose
+
+        image = tmp
+      } while ( w != thumbWidth || h != thumbHeight )
+
       // Only crop if needed
       if ( thumbWidth < thumbW || thumbHeight < thumbH ) {
 //      if ( imageWidth < thumbW || imageHeight < thumbH ) {
-        ImageIO.write( thumbImage, "JPG", thumbFile )
+        ImageIO.write( image, "JPG", thumbFile )
       } else {
         var (x,y,w,h) = ( 0, 0, thumbW, thumbH )
         
@@ -443,7 +468,7 @@ object Thumbnail {
         }
         
         try {
-          ImageIO.write( thumbImage.getSubimage( x, y, w, h ), "JPG", thumbFile ) 
+          ImageIO.write( image.getSubimage( x, y, w, h ), "JPG", thumbFile ) 
         } catch {
           case e:Throwable =>
             println( "ERROR: " + e.getMessage() )
@@ -454,6 +479,6 @@ object Thumbnail {
     }
     
     return thumbFile
-  }  
+  }
 }
 
