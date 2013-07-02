@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,32 +126,16 @@ object ThreadData {
 }
 
 class ThreadData {
-  def website = "https://" + B.domainPort
+  def baseWebsite = "https://" + B.domainPort
+  
+  def website( user:User = null ) = {
+    ( user == null ) ? baseWebsite | baseWebsite
+  }
 
   def user:User =
     if ( session != null ) session.user
     else                   null
     
-  /*
-  private var userVar:User = null
-  
-  def user:User = {
-    if ( userVar == null && session != null ) {
-      val userTid = session.getOrElse( "user", "" )._s
-    
-      if ( userTid.notBlank )
-        userVar = B.User.getByTid( userTid )
-    }
-    
-    if ( userVar == null )
-      userVar = B.newUser()
-    
-    userVar
-  }
-  
-  def user_=( user:User ) = userVar = user
-  */
-  
   // --- HTTP Session
 
   private var httpData:HttpSession = _
@@ -165,7 +149,6 @@ class ThreadData {
 
   def clear {    
     tyrSession = null
-//    userVar = null
   }
 
   // --- Tyranid Session
@@ -173,7 +156,6 @@ class ThreadData {
   private var tyrSession:Session = _
   
   def becomeSession( s:Session ) = {
-  //  userVar = s.user
     tyrSession = s
   }
 
@@ -236,9 +218,6 @@ class ThreadData {
 
 	def requestCached[ T ]( key:String )( block: => T ):T = requestCache.getOrElseUpdate( key, block ).as[T]
 
-  //def serverCached[ T ]( key:String )( block: => T ):T = ServerSession.getOrElseUpdate( http, key, block ).as[T]
-
-
   /*
    * * *  PegDown
    */
@@ -276,16 +255,6 @@ trait Session extends QuickCache {
   def user:User           = userVar
   def user_=( user:User ) = userVar = user
 
-  /*
-  def user:User = T.user
-  def user_=( user:User ) = {
-    if ( !user.isNew )
-      put( "user", user.tid )
-    
-    T.user = user
-  }  
-  */
-  
   def orgId               = user.orgId
   def orgTid              = ( orgId == null ) ? null | B.Org.idToTid( orgId )
 
@@ -348,7 +317,6 @@ trait Session extends QuickCache {
       
       UserStat.login( user.id )
       B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> updates ) )
-      //B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> updates, $inc -> Mobj( "numLogins" -> 1 ) ) )
       log( Event.Login, "bid" -> TrackingCookie.get )
 
       B.loginListeners.foreach( _( user ) )

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,7 +124,7 @@ case class BcApp( apiKey:String, secret:String ) extends SoApp {
     val loggingOut = T.web.req.s( 'lo ).notBlank
     
     if ( false && !B.PRODUCTION )
-     <a href={ "https://launchpad.37signals.com/authorization/new?type=web_server&client_id=" + apiKey + "&redirect_uri=" + T.website + "/basecamp" }>Basecamp Login</a>
+     <a href={ "https://launchpad.37signals.com/authorization/new?type=web_server&client_id=" + apiKey + "&redirect_uri=" + T.website() + "/basecamp" }>Basecamp Login</a>
     else 
       NodeSeq.Empty
   }
@@ -150,7 +150,7 @@ case class BcApp( apiKey:String, secret:String ) extends SoApp {
 
   def linkButton = {
     if ( !B.PRODUCTION )
-      <a href={ "https://launchpad.37signals.com/authorization/new?type=web_server&client_id=" + apiKey + "&redirect_uri=" + T.website + "/basecamp/link" }>Authenticate Basecamp</a>
+      <a href={ "https://launchpad.37signals.com/authorization/new?type=web_server&client_id=" + apiKey + "&redirect_uri=" + T.website() + "/basecamp/link" }>Authenticate Basecamp</a>
     else 
       NodeSeq.Empty
   }
@@ -172,7 +172,7 @@ case class BcApp( apiKey:String, secret:String ) extends SoApp {
   def exchangeToken:Boolean = {
     val code = T.web.s( 'code )
     val responseStr =
-     "https://launchpad.37signals.com/authorization/token".POST( Map( "type" -> "web_server", "client_id" -> apiKey, "client_secret" -> secret, "redirect_uri" -> ( T.website + "/basecamp" ), "code" -> code ) ).s
+     "https://launchpad.37signals.com/authorization/token".POST( Map( "type" -> "web_server", "client_id" -> apiKey, "client_secret" -> secret, "redirect_uri" -> ( T.website() + "/basecamp" ), "code" -> code ) ).s
      
     if ( responseStr.startsWith( "error" ) ) {
       println( responseStr )

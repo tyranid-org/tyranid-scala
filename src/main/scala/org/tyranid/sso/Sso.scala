@@ -1,7 +1,7 @@
 package org.tyranid.sso
 
 /**
- * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,9 +67,11 @@ object SsoMapping extends MongoEntity( tid = "a0Ut" ) {
 
 object Ssolet extends Weblet {
   lazy val SAAS_ID = URLEncoder.encode( B.saasId, "UTF-8" )
-  lazy val TOKEN_URL = URLEncoder.encode( T.website + "/sso/token", "UTF-8" ) 
-  lazy val ERROR_URL = URLEncoder.encode( T.website + "/sso/error", "UTF-8" ) 
+  lazy val TOKEN_URL = URLEncoder.encode( T.baseWebsite + "/sso/token", "UTF-8" ) 
+  lazy val ERROR_URL = URLEncoder.encode( T.baseWebsite + "/sso/error", "UTF-8" ) 
 
+  def tokenUrl( startUrl:String = null ) = startUrl.isBlank ? TOKEN_URL | URLEncoder.encode( T.baseWebsite + "/sso/token?startUrl=" + URLEncoder.encode( startUrl, "UTF-8" ), "UTF-8" )
+  
   // PingOne Documentation for this
   // https://connect.pingidentity.com/web-portal/appintegration?x=tyGMaRMgiMSYAHNoa21b84ce4ZKmtJ88
   
@@ -144,7 +146,7 @@ $( $('#idp').focus() );
              </div>
              <div class="row-fluid">
               <h3 class="span12" style="text-align:center">Your single-sign URL for { B.applicationName } is:</h3>
-              <h3 class="span12" style="text-align:center"><a href={ T.website + "/sso/auth/" + mapping.id }>{ T.website + "/sso/auth/" + mapping.id }</a></h3>
+              <h3 class="span12" style="text-align:center"><a href={ T.baseWebsite + "/sso/auth/" + mapping.id }>{ T.baseWebsite + "/sso/auth/" + mapping.id }</a></h3>
              </div>
             </div> ) ) )
         }
@@ -186,8 +188,8 @@ $( $('#idp').focus() );
         
         if ( B.debugSso )
           println( "DEBUG: Mapping found, trying ping identity for ipdid " + idpId )
-        
-        web.res.sendRedirect( "https://sso.connect.pingidentity.com/sso/sp/initsso?saasid=" + SAAS_ID + "&idpid=" + idpId + "&appurl=" + TOKEN_URL + "/" + id + "&errorurl=" + ERROR_URL )
+       
+        web.res.sendRedirect( "https://sso.connect.pingidentity.com/sso/sp/initsso?saasid=" + SAAS_ID + "&idpid=" + idpId + "&appurl=" + tokenUrl( web.s( 'startUrl ) ) + "/" + id + "&errorurl=" + ERROR_URL )
       }
     case t if t.startsWith( "/token/" ) =>
       val id = t.split( "/" )(2)

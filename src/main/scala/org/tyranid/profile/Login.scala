@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,7 +185,7 @@ $( function() {
            val jsonRes = web.jsonRes( sess )
            
            if ( !sess.hasErrors )
-             jsonRes.redirect = redirect.isBlank ? T.website | ( T.website + "/?l=" + redirect.encUrl )
+             jsonRes.redirect = redirect.isBlank ? T.website() | ( T.website() + "/?l=" + redirect.encUrl )
              
            jsonRes.extraJS = "T.initFormPlaceholders( '#f' );"
            web.json( jsonRes )
@@ -202,7 +202,7 @@ $( function() {
     case "/clear" =>
       web.html( NodeSeq.Empty )
     case "/out" =>
-      val website = T.website
+      val website = T.website( T.user )
       sess.logout()
       web.redirect( website + "/?lo=1" + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
     case s if s.startsWith( "/in" ) =>
@@ -675,7 +675,7 @@ $( function() {
     val sess = T.session
 
     if ( !Social.appFor( network ).exchangeToken )
-      T.web.redirect( T.website )
+      T.web.redirect( T.website() )
 
     val user = findUser( network )
 
@@ -687,7 +687,7 @@ $( function() {
       copySocialLogins( sess.user, user )
       sess.login( user )
       LoginCookie.set( user )
-      T.web.redirect( T.website )
+      T.web.redirect( T.website() )
     }
   }
 
