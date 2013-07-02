@@ -69,6 +69,7 @@ object Email {
     "@mediacomcc.com",
     "@msn.com",
     "@netamumail.com",
+    "@wow.com",
     "@yandex.com",
     "@yahoo.com" )
 
