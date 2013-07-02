@@ -391,9 +391,6 @@ object Thumbnail {
     val imageWidth  = image.getWidth( null )
     val imageHeight = image.getHeight( null )
 
-spam( "   image: " + imageWidth + "x" + imageHeight )
-spam( "   thumb: " + thumbW     + "x" + thumbH      )
-
     val thumbFile = ( thumbnailFile == null ) ? File.createTempFile( originalFile.getName(), ".tmp" ) | thumbnailFile 
 
     // Do not create thumbs that are bigger than the original image, or if the original image is the right size, then use that
@@ -402,7 +399,6 @@ spam( "   thumb: " + thumbW     + "x" + thumbH      )
     } else {
       //val thumbRatio:Double = double2Double( thumbW ) / double2Double( thumbH )
       val imageRatio:Double = double2Double( imageWidth ) / double2Double( imageHeight )
-spam( "imageRatio: " + imageRatio )
       
       var thumbHeight = thumbH
       var thumbWidth  = thumbW
@@ -424,8 +420,6 @@ spam( "imageRatio: " + imageRatio )
       if ( thumbWidth == 0 || thumbHeight == 0 )
         return null
   
-spam( "new thumb: " + thumbWidth + "x" + thumbHeight )
-
       var w = imageWidth
       var h = imageHeight
         
