@@ -152,6 +152,35 @@ object S3 {
       throw e
   }
   
+  def findKey( bucket:S3Bucket, name:String ):String = {
+    var objectListing = s3.listObjects( new ListObjectsRequest().withBucketName( bucket.name ) )
+    var cnt = 0
+    val n = name.toLowerCase
+    var more = false
+    
+    do {    
+      for ( objectSummary <- objectListing.getObjectSummaries() ) {
+        val key = objectSummary.getKey()
+        
+        println( key )
+        
+        cnt = cnt + 1
+        
+        if ( key.toLowerCase.endsWith( n ) )
+          return key
+      }
+      
+      more = objectListing.isTruncated
+      
+      if ( more )
+        objectListing = s3.listNextBatchOfObjects( objectListing )
+        
+    } while ( more )
+      
+    null
+  }
+    
+        
   def deleteAll( bucket:S3Bucket, keys:Seq[String], keyPrefix:String = null ) = {
     for ( key <- keys )
       delete( bucket, keyPrefix.isBlank ? key | ( keyPrefix + key ) )
