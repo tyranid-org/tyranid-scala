@@ -132,10 +132,10 @@ class ThreadData {
   def baseWebsite = "https://" + B.domainPort
   
   def website( path:String = "", user:User = null, ssoMapping:DBObject = null ):String = {
-    if ( true || user == null ) 
+    if ( user == null ) 
       return baseWebsite  + path 
-    
-    val ssoMappingImpl = ( ssoMapping == null ) ? ( ( user.obj.oid( 'org ) != null ) ? SsoMapping.db.findOne( Mobj( "_id" -> user.obj.oid( 'org ) ) ) | null ) | ssoMapping
+      
+    val ssoMappingImpl = ( ssoMapping == null ) ? ( ( user.obj.oid( 'org ) != null ) ? SsoMapping.db.findOne( Mobj( "org" -> user.obj.oid( 'org ) ) ) | null ) | ssoMapping
     
     if ( ssoMappingImpl == null )
       return baseWebsite + path

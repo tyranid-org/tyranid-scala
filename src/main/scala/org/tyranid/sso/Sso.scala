@@ -67,10 +67,10 @@ object SsoMapping extends MongoEntity( tid = "a0Ut" ) {
 
 object Ssolet extends Weblet {
   lazy val SAAS_ID = URLEncoder.encode( B.saasId, "UTF-8" )
-  lazy val TOKEN_URL = URLEncoder.encode( T.baseWebsite + "/sso/token", "UTF-8" ) 
+  lazy val TOKEN_URL = URLEncoder.encode( T.baseWebsite + "/sso/token/", "UTF-8" ) 
   lazy val ERROR_URL = URLEncoder.encode( T.baseWebsite + "/sso/error", "UTF-8" ) 
 
-  def tokenUrl( startUrl:String = null ) = startUrl.isBlank ? TOKEN_URL | URLEncoder.encode( T.baseWebsite + "/sso/token?startUrl=" + URLEncoder.encode( startUrl, "UTF-8" ), "UTF-8" )
+  def tokenUrl( id:String, startUrl:String ) = startUrl.isBlank ? ( TOKEN_URL + id ) | URLEncoder.encode( T.baseWebsite + "/sso/token/" + id + "?startUrl=" + URLEncoder.encode( startUrl, "UTF-8" ), "UTF-8" )
   
   // PingOne Documentation for this
   // https://connect.pingidentity.com/web-portal/appintegration?x=tyGMaRMgiMSYAHNoa21b84ce4ZKmtJ88
@@ -166,7 +166,7 @@ $( $('#idp').focus() );
       
       return
     
-    case s if s.startsWith( "/redir/" ) =>
+    case r if r.startsWith( "/redir/" ) =>
       val url = T.website( "/#messages", T.user )
       println( url )
       web.jsRes()
@@ -193,15 +193,14 @@ $( $('#idp').focus() );
         if ( B.debugSso )
           println( "DEBUG: Mapping found, trying ping identity for ipdid " + idpId )
           
-          println( web.s( 'startUrl ) )
-       
-        web.res.sendRedirect( "https://sso.connect.pingidentity.com/sso/sp/initsso?saasid=" + SAAS_ID + "&idpid=" + idpId + "&appurl=" + tokenUrl( web.s( 'startUrl ) ) + "/" + id + "&errorurl=" + ERROR_URL )
+        val appUrl = tokenUrl( id, web.s( 'startUrl ) )
+        
+        web.res.sendRedirect( "https://sso.connect.pingidentity.com/sso/sp/initsso?saasid=" + SAAS_ID + "&idpid=" + idpId + "&appurl=" + appUrl + "/" + id + "&errorurl=" + ERROR_URL )
       }
     case t if t.startsWith( "/token/" ) =>
       val id = t.split( "/" )(2)
       val token = web.s( 'tokenid )
-      println( "Token: " + token )
-      println( "startURL: " + web.s( 'startUrl ) )
+      val startUrl = web.s( 'startUrl )
       
       if ( token.isBlank ) {
         sess.error( "No token sent!" )
@@ -479,7 +478,7 @@ $( $('#idp').focus() );
           println( "DEBUG: User is logged in." )
       }
    
-      web.redirect( "/#dashboard" )
+      web.redirect( startUrl.isBlank ? "/#dashboard" | startUrl )
     case "/error" =>
       web.redirect( "/#dashboard" )
     case _ =>
