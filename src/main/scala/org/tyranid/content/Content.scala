@@ -778,6 +778,8 @@ trait ContentMeta extends PrivateKeyEntity {
       
     super.delete(rec)
   }
+
+  override def canView( rec:Record, viewer:org.tyranid.profile.User ) = rec.as[Content].canView( viewer )
 }
 
 object Content {
