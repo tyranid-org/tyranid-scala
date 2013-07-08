@@ -436,6 +436,7 @@ $( function() {
           Register.sendActivation( user )
           B.registerUser( user, companyName )
           web.jsRes( JqHtml( "#main", Register.finishPage( user, companyName ) ) )
+          sess.logout( true )
           return
         } else {          
           sess.login( user )
