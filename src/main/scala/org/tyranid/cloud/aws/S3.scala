@@ -261,7 +261,12 @@ object S3 {
 
   def exists( bucket:S3Bucket, key:String ) = {
     try {
-      s3.getObject( bucket.name, key ) != null
+      val obj = s3.getObject( bucket.name, key )
+      
+      if ( obj != null )
+        obj.getObjectContent().close()
+      
+      true
     } catch {
       case e:com.amazonaws.AmazonClientException =>
         false
