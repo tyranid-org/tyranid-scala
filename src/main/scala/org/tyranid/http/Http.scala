@@ -316,7 +316,7 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
         
         if ( ifModSince != -1 && ifModSince >= lastModified.getTime ) {
           res.setStatus( HttpServletResponse.SC_NOT_MODIFIED )
-          headOnly = true;
+          headOnly = true
         }        
       }
       
