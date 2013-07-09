@@ -792,7 +792,7 @@ object Content {
   lazy val fileshareTag = Tag.idFor( "fileshare" )
   
   //val defaultColors = Array( "5f89a2", "597b7c", "93278f", "e72967", "f47b20", "ef5033", "009591", "9fd5b5", "1bb7ea", "73d0f9" )
-  val defaultColors = Array( "1276bc","a73c15","98bb23","0c2074","77003a","f7941e","000341","d2891e","215429","34b44a","00aeef","560047","24cobb","68162b","fdba2c" )
+  val defaultColors = Array( "1276bc","a73c15","98bb23","0c2074","77003a","f7941e","000341","d2891e","215429","34b44a","00aeef","560047","24c0bb","68162b","fdba2c" )
   val defaultCardColor = "faf082"
   val cardColors = Array( "34b27d", defaultCardColor, "e09952", "cb4d4d", "9933cc", "4d77cb" )  
 }
