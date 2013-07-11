@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 2 <http://tyranid.org>
+ * Copyright (c) 2008-2013 2 <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

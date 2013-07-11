@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,14 +144,55 @@ object S3 {
   def write( bucket:S3Bucket, key:String, file:org.apache.commons.fileupload.FileItem, public:Boolean, acceptRanges:Boolean ):Unit =
     write( bucket, key, file.getSize, file.getContentType, file.getInputStream, public, acceptRanges )
 
-  def delete( bucket:S3Bucket, key:String ) = s3.deleteObject( bucket.name, key )
+  def delete( bucket:S3Bucket, key:String ) = try {
+    s3.deleteObject( bucket.name, key )
+  } catch {
+    case e:Throwable =>
+      println( "Error deleting [" + key + "]" )
+      throw e
+  }
   
+  def findKey( bucket:S3Bucket, name:String ):String = {
+    var objectListing = s3.listObjects( new ListObjectsRequest().withBucketName( bucket.name ) )
+    var cnt = 0
+    val n = name.toLowerCase
+    var more = false
+    
+    do {    
+      for ( objectSummary <- objectListing.getObjectSummaries() ) {
+        val key = objectSummary.getKey()
+        
+        println( key )
+        
+        cnt = cnt + 1
+        
+        if ( key.toLowerCase.endsWith( n ) )
+          return key
+      }
+      
+      more = objectListing.isTruncated
+      
+      if ( more )
+        objectListing = s3.listNextBatchOfObjects( objectListing )
+        
+    } while ( more )
+      
+    null
+  }
+    
+        
   def deleteAll( bucket:S3Bucket, keys:Seq[String], keyPrefix:String = null ) = {
     for ( key <- keys )
       delete( bucket, keyPrefix.isBlank ? key | ( keyPrefix + key ) )
   }
   
-  def copy( bucket:S3Bucket, key:String, bucket2:S3Bucket, key2:String ) = s3.copyObject( bucket.name, key, bucket2.name, key2 )
+  def copy( bucket:S3Bucket, key:String, bucket2:S3Bucket, key2:String ) = try {
+    s3.copyObject( bucket.name, key, bucket2.name, key2 )
+  } catch {
+    case e:Throwable =>
+      println( "Error copying from [" + key + "] to [" + key2 + "]" )
+      throw e
+  }
 
   def move( bucketFrom:S3Bucket, fromPath:String, bucketTo:S3Bucket, toPath:String ) = {
     copy( bucketFrom, fromPath, bucketTo, toPath )
@@ -220,7 +261,12 @@ object S3 {
 
   def exists( bucket:S3Bucket, key:String ) = {
     try {
-      s3.getObject( bucket.name, key ) != null
+      val obj = s3.getObject( bucket.name, key )
+      
+      if ( obj != null )
+        obj.getObjectContent().close()
+      
+      true
     } catch {
       case e:com.amazonaws.AmazonClientException =>
         false

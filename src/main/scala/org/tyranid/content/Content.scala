@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,6 +108,7 @@ object ContentType extends RamEntity( tid = "a10v" ) {
   val Group              = add( 6, "Group" )
   val Project            = add( 7, "Project" )
   val Organization       = add( 8, "Organization" )
+  val ProjectExample     = add( 9, "Project Example" )
 }
 
 case class ContentType( override val view:TupleView ) extends Tuple( view )
@@ -778,6 +779,8 @@ trait ContentMeta extends PrivateKeyEntity {
       
     super.delete(rec)
   }
+
+  override def canView( rec:Record, viewer:org.tyranid.profile.User ) = rec.as[Content].canView( viewer )
 }
 
 object Content {
@@ -789,7 +792,8 @@ object Content {
   lazy val messageTag   = Tag.idFor( "message" )
   lazy val fileshareTag = Tag.idFor( "fileshare" )
   
-  val defaultColors = Array( "5f89a2", "597b7c", "93278f", "e72967", "f47b20", "ef5033", "009591", "9fd5b5", "1bb7ea", "73d0f9" )
+  //val defaultColors = Array( "5f89a2", "597b7c", "93278f", "e72967", "f47b20", "ef5033", "009591", "9fd5b5", "1bb7ea", "73d0f9" )
+  val defaultColors = Array( "1276bc","a73c15","98bb23","0c2074","77003a","f7941e","000341","d2891e","215429","34b44a","00aeef","560047","24c0bb","68162b","fdba2c" )
   val defaultCardColor = "faf082"
   val cardColors = Array( "34b27d", defaultCardColor, "e09952", "cb4d4d", "9933cc", "4d77cb" )  
 }
@@ -897,7 +901,7 @@ abstract class Content( override val view:MongoView,
   def imageForThumbs:File = {
     val imgUrl = imageUrl( editing = null )
     var dlUrl:String = ( imgUrl.notBlank ) ?
-      ( imgUrl.toLowerCase.startsWith( "http" ) ? imgUrl | T.website + imgUrl ) | null
+      ( imgUrl.toLowerCase.startsWith( "http" ) ? imgUrl | T.website() + imgUrl ) | null
     
     if ( dlUrl.notBlank ) {
       dlUrl = dlUrl.prefix( '?' ) or dlUrl

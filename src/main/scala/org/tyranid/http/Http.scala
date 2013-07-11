@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -316,7 +316,7 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
         
         if ( ifModSince != -1 && ifModSince >= lastModified.getTime ) {
           res.setStatus( HttpServletResponse.SC_NOT_MODIFIED )
-          headOnly = true;
+          headOnly = true
         }        
       }
       

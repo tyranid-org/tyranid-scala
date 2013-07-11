@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,14 +145,6 @@ object Entity {
       throw new RuntimeException( "Entity \"" + en.name + "\" has a duplicate TID of \"" + en.tid + "\"." )
 
     index( en.tid ) = en
-  }
-
-  def init {
-    // 50 is arbitrary, we're checking to make sure that the class loader found all the relevant entities on boot via ClassUtil
-    assert( index.values.size > 50 )
-
-    for ( en <- index.values )
-      en.checkInit
   }
 }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import scala.xml.{ Node, NodeSeq, Unparsed }
 
 import org.bson.types.ObjectId
 
+import com.mongodb.DBObject
+
 import org.tyranid.db.meta.TidCache
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.http.UserAgent
@@ -35,6 +37,7 @@ import org.tyranid.math.Base62
 import org.tyranid.profile.{ LoginCookie, User, UserStat, UserStatType }
 import org.tyranid.report.Query
 import org.tyranid.social.Social
+import org.tyranid.sso.SsoMapping
 import org.tyranid.time.Time
 import org.tyranid.QuickCache
 import org.tyranid.web.{ Comet, WebContext }
@@ -126,32 +129,24 @@ object ThreadData {
 }
 
 class ThreadData {
-  def website = "https://" + B.domainPort
+  def baseWebsite = "https://" + B.domainPort
+  
+  def website( path:String = "", user:User = null, ssoMapping:DBObject = null ):String = {
+    if ( user == null ) 
+      return baseWebsite  + path 
+      
+    val ssoMappingImpl = ( ssoMapping == null ) ? ( ( user.obj.oid( 'org ) != null ) ? SsoMapping.db.findOne( Mobj( "org" -> user.obj.oid( 'org ) ) ) | null ) | ssoMapping
+    
+    if ( ssoMappingImpl == null )
+      return baseWebsite + path
+      
+    return baseWebsite + "/sso/auth/" + ssoMappingImpl.id._s + "?startUrl=" + java.net.URLEncoder.encode( path, "UTF-8" )
+  }
 
   def user:User =
     if ( session != null ) session.user
     else                   null
     
-  /*
-  private var userVar:User = null
-  
-  def user:User = {
-    if ( userVar == null && session != null ) {
-      val userTid = session.getOrElse( "user", "" )._s
-    
-      if ( userTid.notBlank )
-        userVar = B.User.getByTid( userTid )
-    }
-    
-    if ( userVar == null )
-      userVar = B.newUser()
-    
-    userVar
-  }
-  
-  def user_=( user:User ) = userVar = user
-  */
-  
   // --- HTTP Session
 
   private var httpData:HttpSession = _
@@ -165,7 +160,6 @@ class ThreadData {
 
   def clear {    
     tyrSession = null
-//    userVar = null
   }
 
   // --- Tyranid Session
@@ -173,7 +167,6 @@ class ThreadData {
   private var tyrSession:Session = _
   
   def becomeSession( s:Session ) = {
-  //  userVar = s.user
     tyrSession = s
   }
 
@@ -236,14 +229,14 @@ class ThreadData {
 
 	def requestCached[ T ]( key:String )( block: => T ):T = requestCache.getOrElseUpdate( key, block ).as[T]
 
-  //def serverCached[ T ]( key:String )( block: => T ):T = ServerSession.getOrElseUpdate( http, key, block ).as[T]
-
 
   /*
-   * * *  PegDown
+   * * *  Markdown
    */
 
-  lazy val pegdown = new org.pegdown.PegDownProcessor( org.pegdown.Extensions.ALL )
+  lazy val actuariusTransformer = new eu.henkelmann.actuarius.ActuariusTransformer()
+
+  //lazy val pegdown = new org.pegdown.PegDownProcessor( org.pegdown.Extensions.ALL )
 }
 
 
@@ -276,16 +269,6 @@ trait Session extends QuickCache {
   def user:User           = userVar
   def user_=( user:User ) = userVar = user
 
-  /*
-  def user:User = T.user
-  def user_=( user:User ) = {
-    if ( !user.isNew )
-      put( "user", user.tid )
-    
-    T.user = user
-  }  
-  */
-  
   def orgId               = user.orgId
   def orgTid              = ( orgId == null ) ? null | B.Org.idToTid( orgId )
 
@@ -348,7 +331,6 @@ trait Session extends QuickCache {
       
       UserStat.login( user.id )
       B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> updates ) )
-      //B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> updates, $inc -> Mobj( "numLogins" -> 1 ) ) )
       log( Event.Login, "bid" -> TrackingCookie.get )
 
       B.loginListeners.foreach( _( user ) )

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,10 @@ import org.tyranid.Imp._
 import org.tyranid.json.JsModel
 import org.tyranid.web.{ Weblet, WebContext }
 
+object Markdown {
+
+  def convert( markdown:String ) = T.actuariusTransformer( markdown )
+}
 
 object Markdownlet extends Weblet {
 
@@ -43,7 +47,7 @@ object Markdownlet extends Weblet {
 
       web.json(
         Map(
-          "html" -> T.pegdown.markdownToHtml( opts.s( 'markdown ) )
+          "html" -> Markdown.convert( opts.s( 'markdown ) )
         )
       )
 

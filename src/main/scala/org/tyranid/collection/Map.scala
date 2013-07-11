@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
  */
 
 package org.tyranid.collection
+
+import scala.collection.JavaConversions._
 
 import org.tyranid.Imp._
 
@@ -86,5 +88,11 @@ class ObjectMapImp[A]( map:scala.collection.Map[String,Any] ) {
     case Some( v ) => v._t
     case None      => null
     }
+
+  def toDBObject =
+    if ( map == null )
+      null
+    else
+      new com.mongodb.BasicDBObject( map )
 }
 

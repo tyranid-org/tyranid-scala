@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2012 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -272,7 +272,7 @@ object Smslet extends Weblet {
                 sms( "vCode" ) = vCode
                 user.save
                 
-                B.sms.send( "1" + smsNumber, B.applicationName + ". Other charges may apply. Please enter this verification code at " + T.website + ": " + vCode )
+                B.sms.send( "1" + smsNumber, B.applicationName + ". Other charges may apply. Please enter this verification code at " + T.baseWebsite + ": " + vCode )
                 header = sendHeader( smsNumber.toPhoneMask, user.tid )
               }
             }
@@ -353,7 +353,7 @@ object Smslet extends Weblet {
          user.save
       }
       
-      B.sms.send( "1" + sms.s( 'phone ).toOnlyNumbers, B.applicationName + ". Other charges may apply. Please enter this verification code at " + T.website + ": " + vCode )
+      B.sms.send( "1" + sms.s( 'phone ).toOnlyNumbers, B.applicationName + ". Other charges may apply. Please enter this verification code at " + T.baseWebsite + ": " + vCode )
       sess.notice( "Verfication code has been sent again." )
       web.forward( "/sms/verify?id=" + web.s( "id" ) or "" )
   
