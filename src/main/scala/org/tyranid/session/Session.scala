@@ -229,11 +229,14 @@ class ThreadData {
 
 	def requestCached[ T ]( key:String )( block: => T ):T = requestCache.getOrElseUpdate( key, block ).as[T]
 
+
   /*
-   * * *  PegDown
+   * * *  Markdown
    */
 
-  lazy val pegdown = new org.pegdown.PegDownProcessor( org.pegdown.Extensions.ALL )
+  lazy val actuariusTransformer = new eu.henkelmann.actuarius.ActuariusTransformer()
+
+  //lazy val pegdown = new org.pegdown.PegDownProcessor( org.pegdown.Extensions.ALL )
 }
 
 

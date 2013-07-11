@@ -29,6 +29,10 @@ import org.tyranid.Imp._
 import org.tyranid.json.JsModel
 import org.tyranid.web.{ Weblet, WebContext }
 
+object Markdown {
+
+  def convert( markdown:String ) = T.actuariusTransformer( markdown )
+}
 
 object Markdownlet extends Weblet {
 
@@ -43,7 +47,7 @@ object Markdownlet extends Weblet {
 
       web.json(
         Map(
-          "html" -> T.pegdown.markdownToHtml( opts.s( 'markdown ) )
+          "html" -> Markdown.convert( opts.s( 'markdown ) )
         )
       )
 

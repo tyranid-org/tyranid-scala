@@ -23,7 +23,7 @@ import java.net.InetAddress
 import scala.xml.NodeSeq
 
 import org.cometd.bayeux.server.BayeuxServer
-import org.clapper.classutil.ClassFinder
+//import org.clapper.classutil.ClassFinder
 
 import com.braintreegateway.BraintreeGateway
 
@@ -291,19 +291,19 @@ trait Bootable {
 
   def groupContents( group:Group ):Seq[Content] = Nil
  
-  def initEntities {
-    val cl = Thread.currentThread.getContextClassLoader
-    val urls = cl.as[java.net.URLClassLoader].getURLs.map( _.getFile ).filter( !_.endsWith( ".jar" ) )
+  //def initEntities {
+    //val cl = Thread.currentThread.getContextClassLoader
+    //val urls = cl.as[java.net.URLClassLoader].getURLs.map( _.getFile ).filter( !_.endsWith( ".jar" ) )
 
-    val finder = ClassFinder( urls.map( new File(_) ) )
-    val infoMap = ClassFinder.classInfoMap( finder.getClasses )
+    //val finder = ClassFinder( urls.map( new File(_) ) )
+    //val infoMap = ClassFinder.classInfoMap( finder.getClasses )
 
-    ClassFinder.concreteSubclasses( "org.tyranid.db.Entity", infoMap ).foreach { c =>
-      if ( !c.name.contains( ".test." ) ) Class.forName( c.name )
-    }
+    //ClassFinder.concreteSubclasses( "org.tyranid.db.Entity", infoMap ).foreach { c =>
+      //if ( !c.name.contains( ".test." ) ) Class.forName( c.name )
+    //}
 
-    org.tyranid.db.Entity.init
-  }
+    //org.tyranid.db.Entity.init
+  //}
   
   // Security
   java.security.Security.addProvider( new org.bouncycastle.jce.provider.BouncyCastleProvider() )
