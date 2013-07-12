@@ -395,8 +395,8 @@ object GroupSettings extends MongoEntity( tid = "a0Rt" ) {
 
   db.ensureIndex( Mobj( "g" -> 1, "u" -> 1 ) )
   
-  val FLAG_VISITED         = 1
-  val FLAG_HIDDEN_COMMENTS = 2
+  val FLAG_VISITED          = 1
+  val FLAG_HIDDEN_COMMENTS  = 2
   
   def forGroupTid( tid:String, user:User ) = 
     GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> user.id , "g" -> Group.tidToId( tid ) ) ) )
@@ -439,7 +439,7 @@ class GroupSettings( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Gro
   def toggleHiddenComments = {
     var flags = this.l( 'flags )
     this( 'flags ) = hasHiddenComments ? ( flags ^ GroupSettings.FLAG_HIDDEN_COMMENTS ) | ( flags | GroupSettings.FLAG_HIDDEN_COMMENTS )
-  }
+  }  
 }
 
 object Grouplet extends Weblet {
