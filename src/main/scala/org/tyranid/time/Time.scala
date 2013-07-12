@@ -293,7 +293,9 @@ class DateImp( d:Date ) extends Serializable {
     if ( d == null ) null
     else             Time.TimeFormat24.inUser.format( d )
 
-  def toIso8601 = toUtcCalendar.format( iso8601 = true )
+  def toIso8601Str = 
+    if ( d == null ) null
+    else             toUtcCalendar.format( iso8601 = true )
 
   def toAttr =
     if ( d == null ) null

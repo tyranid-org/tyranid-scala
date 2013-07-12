@@ -51,7 +51,7 @@ object Transcoder {
     val date = cal.getTime
 
     val headers = Map[String,String](
-        "x-amz-date" -> date.toIso8601,
+        "x-amz-date" -> date.toIso8601Str,
         "host" -> endpoint,
         "content-type" -> "application/x-amz-json-1.0"
     )

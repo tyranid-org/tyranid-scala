@@ -250,7 +250,7 @@ trait BsonObject extends Deep {
         sb ++= m( if ( b ) "true" else "false", "Literal" )
 
       case t:Date =>
-        sb ++= m( "ISODate(\"", "Type" ) ++= m( t.toIso8601, "String" ) ++= m( "\")", "Type" )
+        sb ++= m( "ISODate(\"", "Type" ) ++= m( t.toIso8601Str, "String" ) ++= m( "\")", "Type" )
 
       case s:String =>
         sb ++= m( "\"" + s.encJson.encHtml + '"', "String" )

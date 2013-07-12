@@ -217,7 +217,7 @@ object Es {
           case arr:BasicDBList => array( va, arr )
           case dbo:DBObject    => enter( rec.rec( va ) )
           case v:Number        => sb ++= v.toString
-          case t:Date          => sb += '"' ++= t.toIso8601 += '"'
+          case t:Date          => sb += '"' ++= t.toIso8601Str += '"'
           //case v               => sb += '"' ++= new String( v.toString.getBytes(UTF8_CHARSET), UTF8_CHARSET ).encJson += '"'
           case v               => sb += '"' ++= v.toString.encJson += '"'
           }
