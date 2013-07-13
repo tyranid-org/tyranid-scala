@@ -422,7 +422,8 @@ object Thumbnail {
   
       var w = imageWidth
       var h = imageHeight
-        
+      var first = true
+      
       do {
         if ( w > thumbWidth) {
           w /= 2
@@ -438,9 +439,14 @@ object Thumbnail {
 
         val tmp = new BufferedImage( w, h, BufferedImage.TYPE_INT_RGB )
         val g = tmp.createGraphics
-        g.setBackground( Color.WHITE )
-        g.setPaint( Color.WHITE )
-        g.fillRect( 0, 0, thumbWidth, thumbHeight )
+        
+        if ( first ) {
+          g.setBackground( Color.WHITE )
+          g.setPaint( Color.WHITE )
+          g.fillRect( 0, 0, w, h )
+          first = false
+        }
+        
         g.setRenderingHint( RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC )
         g.drawImage( image, 0, 0, w, h, null )
         g.dispose
