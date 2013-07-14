@@ -26,7 +26,7 @@ import org.apache.http.auth.{ AuthScope }
 
 import org.tyranid.Imp._
 import org.tyranid.content.ContentType
-import org.tyranid.db.{ DbChar, DbLink, DbBoolean, Record, DbText }
+import org.tyranid.db.{ DbChar, DbLink, DbBoolean, Record, DbText, DbUrl }
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
@@ -56,6 +56,7 @@ object SsoMapping extends MongoEntity( tid = "a0Ut" ) {
   "naOptOut"        is DbBoolean;
   "inviteOptOut"    is DbBoolean;
   "newProjects"     is DbText;
+  "loEndpoint"      is DbUrl; // Log Out Endpoint
   
   lazy val testMapping = {
     val ts = SsoMapping.make

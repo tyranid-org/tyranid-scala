@@ -32,6 +32,7 @@ import org.tyranid.math.Base62
 import org.tyranid.secure.DbReCaptcha
 import org.tyranid.session.Session
 import org.tyranid.social.Social
+import org.tyranid.sso.SsoMapping
 import org.tyranid.ui.{ Button, Grid, Row, Focus, Form }
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate, WebResponse }
 import org.tyranid.web.WebHandledException
@@ -202,7 +203,12 @@ $( function() {
     case "/clear" =>
       web.html( NodeSeq.Empty )
     case "/out" =>
-      val website = T.website( "/?lo=1" + ( web.b( 'xhr ) ? "&xhr=1" | "" ), sess.user )
+      val org = sess.user.org
+      val hasOrg = !org.isNew
+      val sso = hasOrg ? SsoMapping.db.findOne( Mobj( "org" -> org.id ) ) | null
+      val ssoLoe:String = ( sso == null ) ? null | sso.s( 'loEndpoint ) 
+      val website = ( ssoLoe.isBlank ) ? T.website( "/?lo=1" + ( web.b( 'xhr ) ? "&xhr=1" | "" ), sess.user ) | ssoLoe
+      
       sess.logout()
       web.redirect( website )
     case s if s.startsWith( "/in" ) =>
