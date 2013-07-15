@@ -1146,21 +1146,21 @@ abstract class Content( override val view:MongoView,
   def userTids( arrayAttName:String ) = {
     val uTids = new mutable.ArrayBuffer[String]()
     
-    a_?( arrayAttName ).toSeq.of[String].foreach( tid => {
+    a_?( arrayAttName ).toSeq.of[String].foreach { tid =>
       tid match {
       case userTid if B.User.hasTid( userTid ) && !uTids.contains( userTid ) =>
         uTids += userTid
       case groupTid if Group.hasTid( groupTid ) =>
         val g = Group.db.findOne( Mobj( "_id" -> Group.tidToId( groupTid ) ), Mobj( "v" -> 1 ) )
         
-        g.a_?( 'v ).toSeq.of[String].foreach( guTid => {
+        g.a_?( 'v ).toSeq.of[String].foreach { guTid =>
           if ( B.User.hasTid( guTid ) && !uTids.contains( guTid ) )
             uTids += guTid
-        } )
+        }
       case _ =>
         // nop
       }
-    } )
+    }
     
     uTids.toSeq
   }
