@@ -201,6 +201,8 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
 
   def hasParent = get( 'parent ) != null
 
+  def parentGroup = Group.getById( get( 'parent ) )
+
 
   def idsForEntity( en:Entity ) = a_?( 'v ).map( _._s ).filter( _.startsWith( en.tid ) ).map( en.tidToId )
 
