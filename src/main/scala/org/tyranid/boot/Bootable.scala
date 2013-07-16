@@ -124,6 +124,7 @@ trait Bootable {
 
   val systemEmail:String
   val systemUser:User
+  val demoUser:User
 
   val weblocs:Seq[Webloc]
 

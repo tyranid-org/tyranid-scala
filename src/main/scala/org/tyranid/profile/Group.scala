@@ -193,7 +193,16 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   def fullName( user:User ) = name + " (" + ( isOwner( user ) ? "me" | ownerNames ) + ")"
 
   override def id:ObjectId = super.apply( "_id" ).as[ObjectId]
-  
+ 
+
+  /*
+   * * *   Nested Groups
+   */
+
+  def hasParent = get( 'parent ) != null
+
+  def parentGroup = Group.getById( get( 'parent ) )
+
 
   def idsForEntity( en:Entity ) = a_?( 'v ).map( _._s ).filter( _.startsWith( en.tid ) ).map( en.tidToId )
 
