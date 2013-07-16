@@ -51,7 +51,7 @@ object StringImp {
   val vbscriptPattern = Pattern.compile("vbscript:", Pattern.CASE_INSENSITIVE)
   val onloadPattern = Pattern.compile("onload(.*?)=", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL)
 
-  val urlPattern = Pattern.compile( "(https?:\\/\\/[^\\s]+)", Pattern.CASE_INSENSITIVE)
+  val urlPattern = Pattern.compile( "(https?:\\/\\/[^\\s<]+)", Pattern.CASE_INSENSITIVE)
 }
 
 class StringImp( s:String ) extends Serializable {
@@ -130,6 +130,34 @@ class StringImp( s:String ) extends Serializable {
       nodes += Text( s.substring( i ) )
       
     nodes.flatten
+  }  
+      
+  def urlifyAsString = {
+    var sb = new StringBuilder
+    val matcher = StringImp.urlPattern.matcher( s )
+    
+    var i = 0
+    
+    while ( matcher.find ) {
+      val grp = matcher.group
+      
+      val mi = matcher.start
+      
+      if ( mi > i ) 
+        sb ++= s.substring( i, mi )
+
+      if ( mi > 6 && s.substring( mi - 6, mi ) == "href=\"" )
+        sb ++= grp
+      else
+        sb ++= "<a target=\"_blank\" class=\"urlify\" href=\"" ++= grp ++= "\">" ++= grp ++= "</a>" // wrap this grp with the <a>
+
+      i = matcher.end
+    }
+    
+    if ( i < s.length )
+      sb ++= s.substring( i )
+
+    sb.toString
   }  
       
    // }Unparsed( urlPattern.matcher( s ).replaceAll( "<a target='_blank' class='urlify' href='$1'>$1</a>" ) )

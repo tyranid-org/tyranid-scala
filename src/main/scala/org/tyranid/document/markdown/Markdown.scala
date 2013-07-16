@@ -31,7 +31,8 @@ import org.tyranid.web.{ Weblet, WebContext }
 
 object Markdown {
 
-  def convert( markdown:String ) = T.actuariusTransformer( markdown )
+  //def convert( markdown:String ) = T.actuariusTransformer( markdown )
+  def convert( markdown:String ) = new org.markdown4j.Markdown4jProcessor().process( markdown ).urlifyAsString
 }
 
 object Markdownlet extends Weblet {

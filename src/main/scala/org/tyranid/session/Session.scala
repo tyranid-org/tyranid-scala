@@ -234,7 +234,7 @@ class ThreadData {
    * * *  Markdown
    */
 
-  lazy val actuariusTransformer = new eu.henkelmann.actuarius.ActuariusTransformer()
+  //lazy val actuariusTransformer = new eu.henkelmann.actuarius.ActuariusTransformer()
 
   //lazy val pegdown = new org.pegdown.PegDownProcessor( org.pegdown.Extensions.ALL )
 }
