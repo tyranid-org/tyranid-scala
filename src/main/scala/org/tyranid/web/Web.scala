@@ -60,7 +60,7 @@ object WebFilter {
   val versionPattern = "^/v[0-9]+/.*".r
   val maintPattern = "/maintenance.html".r
   
-  val assetPattern = java.util.regex.Pattern.compile( "((([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|htc|vtt|odt)))|.*robots\\.txt)$)|.*io/thumb.*|.*/sso/.*" )
+  val assetPattern = java.util.regex.Pattern.compile( "((([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|map|htc|vtt|odt)))|.*robots\\.txt)$)|.*io/thumb.*|.*/sso/.*" )
   
   def notAsset( path:String ) = !assetPattern.matcher( path ).matches
 }
@@ -526,8 +526,14 @@ trait Weblet {
   val rootPath = "/"
   
   def redirectIfNotLoggedIn( web:WebContext ) = 
-    if ( !Session().isLoggedIn )
-      web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
+    if ( !Session().isLoggedIn ) {
+      //if ( web.b( 'xhr ) ) {
+      //  web.redirect( "#login?l=" + web.req.uriAndQueryString.encUrl )         
+      //} else {
+        web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
+      //}
+    }
+    //web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
 
   def redirectIfNotHasOrg( web:WebContext ) = {
     redirectIfNotLoggedIn( web )
