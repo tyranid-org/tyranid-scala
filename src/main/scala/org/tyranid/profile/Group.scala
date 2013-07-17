@@ -203,6 +203,12 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
 
   def parentGroup = Group.getById( get( 'parent ) )
 
+  def isContainedIn( groupTid:String ):Boolean =
+    this.tid == groupTid || {
+      val p = parentGroup
+      p != null && p.isContainedIn( groupTid )
+    }
+
 
   def idsForEntity( en:Entity ) = a_?( 'v ).map( _._s ).filter( _.startsWith( en.tid ) ).map( en.tidToId )
 
