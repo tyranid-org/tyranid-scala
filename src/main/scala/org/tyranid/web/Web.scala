@@ -528,12 +528,12 @@ trait Weblet {
   def redirectIfNotLoggedIn( web:WebContext ) = 
     if ( !Session().isLoggedIn ) {
       //if ( web.b( 'xhr ) ) {
-      //  web.redirect( "#login?l=" + web.req.uriAndQueryString.encUrl )         
+      //  web.redirect( "#login/" + web.req.uriAndQueryString.encUrl )         
       //} else {
-        web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
+      //  web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
       //}
+    web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
     }
-    //web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
 
   def redirectIfNotHasOrg( web:WebContext ) = {
     redirectIfNotLoggedIn( web )
