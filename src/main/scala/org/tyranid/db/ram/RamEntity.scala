@@ -98,6 +98,12 @@ case class RamEntity( tid:String ) extends Entity {
 
   def getById( id:Long ) = byId( id ).orNull
 
+  def getByTid( tid:String ) =
+    if ( tid.isBlank || !tid.startsWith( this.tid ) )
+      null
+    else
+      getById( recordTidToId( tid.substring( 4 ) )._l )
+  
   override def byRecordTid( recordTid:String ):Option[RecType] =
     byId( recordTidToId( recordTid )._l )
 

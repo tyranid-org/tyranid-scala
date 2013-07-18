@@ -45,6 +45,43 @@ import org.tyranid.sso.SsoMapping
 import org.tyranid.ui.{ Checkbox, Field, Help, Select, Search, Show, Valuable }
 import org.tyranid.web.{ WebContext, Weblet }
 
+object GroupCategory extends RamEntity( tid = "a1Nv" ) {
+  type RecType = GroupCategory
+  override def convert( view:TupleView ) = new GroupCategory( view )
+
+  "_id"     is DbInt      is 'id is 'client;
+  "name"    is DbChar(64) is 'label is 'client;
+
+  override val addNames = Seq( "_id", "name" )
+  
+  add( 1, "Accounting & Finance" )
+  add( 2, "HR, Legal & Logistics" )
+  add( 3, "Marketing & Analytics" )
+  add( 4, "Sales & CRM" )
+  add( 5, "Education" )
+  add( 6, "Books" )
+  add( 7, "Photos" )
+  add( 8, "Video & Music" )
+  add( 9, "Games" )
+  add( 10, "Lifestyle" )
+  add( 11, "News" )
+  add( 12, "Sports" )
+  add( 13, "Creative" )
+  add( 14, "Developer" )
+  add( 15, "Office" )
+  add( 16, "Task Managment" )
+  add( 17, "Project Managment" )
+  add( 18, "Social Networking" )
+  add( 19, "Blogging" )
+  add( 20, "Utilities" )  
+  add( 21, "Food" )
+  add( 22, "Retail" )
+  add( 23, "Assets" )
+  add( 24, "Other" )
+}
+
+case class GroupCategory( override val view:TupleView ) extends Tuple( view )
+
 
 object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   type RecType = Group
@@ -69,6 +106,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
 
   "onlineCount"  is DbInt                              is 'temporary is 'auth computed { _.as[Group].onlineMembers.size }
   
+  "category"     is DbLink(GroupCategory)              is 'client;
   //"search"         { search criteria } // future ... list search for a group, rather than each id explicitly
   
 
