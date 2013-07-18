@@ -227,7 +227,7 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
           println( "*** sending email" )
             
           AWSEmail( subject = ( effEvent == Event.StackTrace ) ? "Volerro Stack Trace" | "Volerro Alert",
-                    text = sb.toString ).
+                    text = sb.toString, rethrowError = false ).
             addTo( B.alertEmail ).
             from( "no-reply@" + B.domain ).
             send

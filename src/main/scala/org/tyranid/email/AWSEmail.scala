@@ -70,7 +70,7 @@ object AWSEmail {
   val client = new AmazonSimpleEmailServiceClient( B.awsCredentials )
 }
 
-case class AWSEmail( subject:String, text:String, html:String=null ) extends Email {
+case class AWSEmail( subject:String, text:String, html:String=null, rethrowError: Boolean = true ) extends Email {
   var request:SendEmailRequest = null
   
   @throws(classOf[MessagingException])
@@ -171,7 +171,8 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
               "|  HTML: " + html )
               )
           
-          throw e
+          if ( rethrowError )
+            throw e
         case e2:Throwable =>
           val sess = T.session
           val msg = e2.getMessage
@@ -191,7 +192,8 @@ case class AWSEmail( subject:String, text:String, html:String=null ) extends Ema
               "|  HTML: " + html )
               )
               
-          throw e2
+          if ( rethrowError )
+            throw e2
       }
     }
     
