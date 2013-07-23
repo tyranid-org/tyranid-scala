@@ -48,9 +48,11 @@ object UserStatType extends RamEntity( tid = "a0Nt" ) {
 
   override val addNames = Seq( "_id", "name" )
   
-  val LoginId     = 1
+  val LoginId   = 1
+  val ApiId     = 1
 
-  val Login    = add( LoginId,     "Login" )
+  val Login    = add( LoginId,   "Login" )
+  val Api      = add( ApiId,     "Api Call" )
 }
 
 case class UserStatType( override val view:TupleView ) extends Tuple( view )
@@ -59,24 +61,30 @@ object UserStat extends MongoEntity( tid = "a0Ot" ) {
   "_id"  is DbMongoId            is 'id is 'client;
   "s"    is DbLink(UserStatType) is 'required;
   "t"    is DbDateTime           is 'required;
-  "u"    is DbLink(B.User)       is 'owner;
+  "u"    is DbLink(B.User)       is 'required is 'owner;
+  "x"    is DbChar( 50 )         as "Extra";
   
   val index = {
     db.ensureIndex( Mobj( "s" -> 1, "u" -> 1, "t" -> 1 ) )
     db.ensureIndex( Mobj( "u" -> 1, "s" -> 1, "t" -> 1 ) )
   }
   
-  private def create( userId:ObjectId, statId:Int ) {
+  private def create( userId:ObjectId, statId:Int, x:String = null ) {
     background {
       val stat = UserStat.make
       stat( 's ) = statId
       stat( 't ) = new Date
       stat( 'u ) = userId
+      
+      if ( x.notBlank )
+        stat( 'x ) = x
+        
       stat.save
     }
   }
   
   def login( userId:Any ) = create( userId._oid, UserStatType.LoginId )
+  def api( userId:Any, path:String ) = create( userId._oid, UserStatType.ApiId, path )
 }
 
 class UserStat( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserStat.makeView, obj, parent ) {}
