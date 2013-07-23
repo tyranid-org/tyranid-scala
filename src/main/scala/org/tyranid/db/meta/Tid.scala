@@ -277,6 +277,7 @@ object Tid {
         for ( va <- en.makeView.vas )
           if ( enter( va :: path ) ) {
             val r = if ( p != Nil ) p.get( rec ).as[DBObject] else rec.as[DBObject]
+            
             r.remove( va.name )
 
             if ( va.att.owner )

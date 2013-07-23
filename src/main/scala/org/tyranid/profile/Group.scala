@@ -106,9 +106,12 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
 
   "onlineCount"  is DbInt                              is 'temporary is 'auth computed { _.as[Group].onlineMembers.size }
   
-  "category"     is DbLink(GroupCategory)              is 'client;
+  "category"     is DbLink(GroupCategory);//              is 'client;
+  "categoryId"   is DbInt                              is 'client computed { _.as[Group].i( 'category ) }
   //"search"         { search criteria } // future ... list search for a group, rather than each id explicitly
   
+  "tmpl"         is DbBoolean                          is 'client as "Template Project"
+  "canComment"   is DbBoolean                          is 'temporary computed { _.as[Group].canComment }
 
   db.ensureIndex( Mobj( "o" -> 1, "name" -> 1 ) )
   db.ensureIndex( Mobj( "members" -> 1 ) )
@@ -271,6 +274,8 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     collectOnlineMembers( members )
     members
   }
+  
+  override def canComment = !isLocked && !b( 'tmpl )
   
   private def collectOnlineMembers( omembers:mutable.ArrayBuffer[Record] ) = {
     val meTid = T.user.tid
