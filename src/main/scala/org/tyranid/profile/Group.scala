@@ -135,7 +135,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   
   def canSeeOther( orgTid:String, user:User ) = ownedBy( orgTid ).filter( g => Group( g ).canSee( user ) )
   
-  def visibleTo( user:User, contentType:ContentType = ContentType.Group, allowBuiltins:Boolean = true ) = {
+  def visibleTo( user:User, contentType:ContentType = ContentType.Group, allowBuiltins:Boolean = true, publicGroup:Boolean = false ) = {
 
     def in( tids:Seq[String] ) =
       if ( tids.size == 1 )
@@ -159,7 +159,10 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
 
     if ( contentType != ContentType.Group )
       tids ++= user.groups.map( _.tid )
-
+    
+    if ( publicGroup )
+      tids ++= Seq( B.publicGroup.tid )
+      
     val myGroups =
       db.find(
         query( Mobj( "o" -> in( tids ) ) )
