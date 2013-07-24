@@ -120,6 +120,10 @@ object Imp {
     scala.concurrent.future {
       T.becomeSession( s )
       
+      // These are request only and looks like scala.concurrent.future does thread pooling.
+      T.tidCache.clear
+      T.requestCache.clear
+      
       trylog {
         block
       }
