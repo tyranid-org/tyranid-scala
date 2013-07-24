@@ -69,6 +69,7 @@ object TextExtractors {
   def extract( file:SysFile ):String = {
     val filename = file.getName
     val extractor = findByFilename( filename )
+    
     ( extractor != null ) ? extractor.extract( file ) | new TikaExtractor().extract( file )
   } 
 }
@@ -93,7 +94,7 @@ class TikaExtractor extends TextExtractor {
       out.toString( "UTF-8" ).stripNonUtf8
     } catch {
       case te:TikaException =>
-        log( Event.StackTrace, "m" -> ( "Tika Exception:" + te.getMessage() ), "ex" -> te )
+        log( Event.StackTrace, "m" -> ( "Tika Exception (" + file.getName + "):" + te.getMessage() ), "ex" -> te )
       null
     } finally {
       is.close()
