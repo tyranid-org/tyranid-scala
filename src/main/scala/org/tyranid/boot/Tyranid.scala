@@ -41,6 +41,7 @@ object TyranidConfig extends MongoEntity( tid = "a03t" ) {
   "debugChat"      is DbBoolean         as "Debug Chat";
   "syncWebDav"     is DbBoolean         as "Sync WebDavs";
   "hideUpgradeBtn" is DbBoolean         as "Hide Upgrade Button";
+  "allTmpl"        is DbBoolean         as "Templates for All";
 
   def apply():TyranidConfig = singleton
 
@@ -105,6 +106,12 @@ object TyranidConfiglet extends Weblet {
         TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "onePagePdf" -> obj.b( 'onePagePdf ) ) ) )
         sess.notice( "One Page PDF has been turned " + ( B.onePagePdf ? "ON" | "OFF" ) + "." )
   
+      case "tmpl" =>
+        val obj = TyranidConfig()
+        obj( 'allTmpl ) = !B.allTmpl
+        TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "allTmpl" -> obj.b( 'allTmpl ) ) ) )
+        sess.notice( "Templates for ALL has been turned " + ( B.allTmpl ? "ON" | "OFF" ) + "." )
+  
       case "sso" =>
         val obj = TyranidConfig()
         obj( 'debugSso ) = !B.debugSso
@@ -159,6 +166,7 @@ object TyranidConfiglet extends Weblet {
               "eye"            -> user.b( 'eye ),
               "sms"            -> SMS.enabled,
               "onePagePdf"     -> B.onePagePdf,
+              "allTmpl"        -> B.allTmpl,
               "debugSso"       -> B.debugSso,
               "debugChat"      -> B.debugChat,
               "syncWebDav"     -> B.syncWebDav,
