@@ -270,6 +270,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   
   def canSee( member:Record ):Boolean = canSee( T.user, member )
 
+  def isTemplate = b( 'tmpl )
   def isSsoSynced = b( 'ssoSynced )
   
   def onlineMembers = { 
@@ -278,7 +279,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     members
   }
   
-  override def canComment = !isLocked && !b( 'tmpl )
+  override def canComment = !isLocked && !isTemplate
   
   private def collectOnlineMembers( omembers:mutable.ArrayBuffer[Record] ) = {
     val meTid = T.user.tid
