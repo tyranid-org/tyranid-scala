@@ -476,6 +476,11 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
     null
   }
 
+  def visit( comments:BasicDBList, block:Comment => Unit ) {
+    for ( c <- asComments( comments ) )
+      c.visit( block )
+  }
+
   def mostRecent( comments:Seq[Comment] ):Comment = {
 
     var mostRecent:Comment = null
@@ -594,6 +599,12 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
       this
     else
       Comment.find( a_?( 'r ), id )
+
+  def visit( block:Comment => Unit ) {
+    block( this )
+
+    Comment.visit( a_?( 'r ), block )
+  }
 
   def comments = {
     val ea = Mongo.EmptyArray 
