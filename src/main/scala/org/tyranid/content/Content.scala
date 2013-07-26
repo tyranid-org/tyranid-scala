@@ -476,6 +476,11 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
     null
   }
 
+  def visit( comments:BasicDBList, block:Comment => Unit ) {
+    for ( c <- asComments( comments ) )
+      c.visit( block )
+  }
+
   def mostRecent( comments:Seq[Comment] ):Comment = {
 
     var mostRecent:Comment = null
@@ -594,6 +599,12 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
       this
     else
       Comment.find( a_?( 'r ), id )
+
+  def visit( block:Comment => Unit ) {
+    block( this )
+
+    Comment.visit( a_?( 'r ), block )
+  }
 
   def comments = {
     val ea = Mongo.EmptyArray 
@@ -1296,14 +1307,32 @@ abstract class Content( override val view:MongoView,
     canView( user.tid ) || ( user.hasOrg && canView( user.org.tid ) )
   }
 
+  /**
+   * Directly means a user is specifically mentioned either via a group or themselves -- they're not connected simply by a group like the Public Group.
+   */
+  def canViewDirectly( user: org.tyranid.profile.User ):Boolean = {
+    canViewDirectly( user.tid ) || ( user.hasOrg && canViewDirectly( user.org.tid ) )
+  }
+  
   def isMember( user:org.tyranid.profile.User ) = canEdit( user ) || canView( user )
 
   def canView( tid:String ):Boolean =
     tid.nonBlank &&
     a_?( 'v ).exists( t =>
-      t == tid || {
+      t == tid || t == B.publicGroup.tid || { //  ( B.User.hasTid( tid ) && t == B.publicGroup.tid ) || {
         val ot = t._s
-      
+     
+        Group.hasTid( ot ) &&
+        Group.byTid( ot ).pluck( _.canView( tid ), false )
+      }
+    )
+
+  def canViewDirectly( tid:String ):Boolean =
+    tid.nonBlank &&
+    a_?( 'v ).exists( t =>
+      t == tid || { //  ( B.User.hasTid( tid ) && t == B.publicGroup.tid ) || {
+        val ot = t._s
+     
         Group.hasTid( ot ) &&
         Group.byTid( ot ).pluck( _.canView( tid ), false )
       }

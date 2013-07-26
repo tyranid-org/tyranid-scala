@@ -285,6 +285,16 @@ object LogQuery extends Query {
         case uid  => <a href={ "#admin/tid/" + B.User.idToTid( uid ) }>{ B.userMeta.nameFor( uid ) }</a>
         }
       }
+      
+      //override val search = Search.Custom
+      //override val baseName = "uid"
+      //override def ui( user:org.tyranid.profile.User, s:Scope ) = org.tyranid.ui.Input( id, s.rec.s( name ) )
+      //override def extract( s:Scope ) = {
+      //  println( T.web.s( id ) )
+      //  s.rec( name ) = T.web.s( id )
+      //}
+      //override val default = Some( () => "" )
+      
     },
     PathField( "p",   search = Search.Subst ),
     PathField( "m", search = Search.Subst ),

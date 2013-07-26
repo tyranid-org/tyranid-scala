@@ -312,7 +312,7 @@ trait User extends MongoRecord {
   def nonBuiltinGroupTids = nonBuiltinGroups.map( _.tid )
 
   // TODO:  cache this better somehow
-  def projects = T.requestCached( tid + "projects" ) { Group.visibleTo( this, contentType = ContentType.Project ) }
+  def projects = T.requestCached( tid + "projects" ) { Group.visibleTo( this, contentType = ContentType.Project, publicGroup = true ) }
   def projectIds  = projects.map( _.id )
   def projectTids = projects.map( _.tid )
 
