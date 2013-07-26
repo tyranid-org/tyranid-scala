@@ -316,8 +316,14 @@ object Es {
 
   def index( rec:Record ) = {
     try {
-      //println( "ES:  indexing " + rec.tid )
-      Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
+      if ( B.DEV ) println( "ES:  indexing " + rec.tid )
+spam( "getting JSON" )
+      val json = jsonFor( rec )
+spam( "queuing to index" )
+      Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, json )
+spam( "done" )
+
+      //Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
     } catch {
       case e:Exception =>
         Log.log( Event.Search, "m" -> ( "Failed to index, err=" + e ), "ex" -> e )
@@ -367,15 +373,28 @@ object Es {
   }
 
   def indexAll {
+    //if ( true ) {
+      //val broken = Record.getByTid( "a09vUcjPbeSw48-4weNm" )
+      //index( broken )
+      //return
+    //}
+
     deleteAll
     mapAll
 
     var count = 0
     for ( e <- Entity.all;
-          if !e.embedded && e.isSearchable;
-          r <- e.records;
-          if e.searchIndexable( r ) ) {
-      index( r )
+          if !e.embedded && e.isSearchable ) {
+      // TODO:  we're reading all the records in memory since the Tika extraction code can take so long on a handful of large documents that the mongodb cursor times out
+      //        need to implement some sort of paging mechanism to avoid reading all (searchable) records in memory or utilize MongoDB's no query timeout code (which is scary in different ways)
+      //        another option would be to just read in all the TIDs and then read each record individually.
+      val recs = e.records.filter( e.searchIndexable ).toSeq
+      for ( r <- recs )
+        r.tid // force it to get read in, toSeq alone wasn't doing it
+
+      for ( r <- recs )
+        index( r )
+
       count += 1
     }
       
