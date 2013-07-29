@@ -889,6 +889,8 @@ abstract class Content( override val view:MongoView,
 
   def isPrivate = has( 'private ) && b( 'private )
   
+  def isDist = b( 'dist )
+  
   def imageUrl( editing:ContentEdit = null ) = s( 'img )
 
   def imageDimensions = {

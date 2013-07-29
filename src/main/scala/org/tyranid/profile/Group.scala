@@ -392,7 +392,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
 
     if ( isNew || isPrivate ) {
       val overlays = ( isPrivate && isNew ) ? ( newOverlay ++ privateOverlay ) | ( isNew ? newOverlay | privateOverlay )
-      <div class={ ( isNew |* "new-box" ) + ( isPrivate |* ( " private-box sz-" + size ) ) }>{ inner }{ overlays }</div>
+      <div class={ ( ( isNew && isDist ) |* "new-box" ) + ( isPrivate |* ( " private-box sz-" + size ) ) }>{ inner }{ overlays }</div>
     } else {
       inner 
     }
