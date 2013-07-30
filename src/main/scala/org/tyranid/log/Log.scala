@@ -250,6 +250,8 @@ class Log( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Log.makeView,
   def e = Event.getById( i( 'e ) )
   
   def qs = obj.o_?( 'qs )
+
+  def path = s( 'p )
 }
 
 object LogQuery extends Query {

@@ -340,6 +340,8 @@ class StringImp( s:String ) extends Serializable {
 	def notBlank = ( s != null && s.length >  0 )
 	def nonBlank = ( s != null && s.length >  0 )
 
+  def blankOr( v:String ) = isBlank || s == v;
+
   def allBlank:Boolean = {
     if ( s != null )
       for ( i <- 0 until s.length )
