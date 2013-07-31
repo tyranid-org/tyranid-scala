@@ -135,6 +135,9 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
     this
   }
   
+  /*
+   * This only buries exceptions if the exception is on an email originating from a Log message
+   */
   @throws(classOf[MessagingException])
   override def send():Email = {
     if ( Email.enabled ) {
