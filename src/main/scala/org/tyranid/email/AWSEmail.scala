@@ -70,7 +70,7 @@ object AWSEmail {
   val client = new AmazonSimpleEmailServiceClient( B.awsCredentials )
 }
 
-case class AWSEmail( subject:String, text:String, html:String=null, rethrowError: Boolean = true ) extends Email {
+case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boolean = false ) extends Email {
   var request:SendEmailRequest = null
   
   @throws(classOf[MessagingException])
@@ -148,52 +148,54 @@ case class AWSEmail( subject:String, text:String, html:String=null, rethrowError
         AWSEmail.client.sendEmail( request )
       } catch {
         case e:MessageRejectedException =>
-          val sess = T.session
-          val msg = e.getMessage
-          val fromAddress = from.getAddress
-          val recipients = primaryRecipients.mkString( "," )
-          val user = ( sess == null ) ? null | sess.user
-
-          // Only send these if one of the real users is sending email
-          val userEmail = ( user == null || user == B.systemUser ) ? null | user.s( 'email )
-          
-          if ( userEmail.notBlank && !Email.isBlacklisted( userEmail ) )
-            sendRejectionNotice( msg, userEmail )
-          
-          e.logWith( "m" -> (
-              "| MessageRejectedException: " + msg + "\n" +
-              "|  From: " + fromAddress + "\n" +
-              ( userEmail.notBlank ? ( "|  From User Email: " + userEmail + ( ( Email.isBlacklisted( userEmail ) ) |* " (BLACKLISTED)" ) + "\n" ) | "" ) +
-              "|  Sent to: " + recipients + "\n" +
-              "|  Reply to: " + ( if ( replyTo != null && replyTo != from ) replyTo.getAddress() else "" ) + "\n" +
-              "|  Subject: " + subject + "\n" +
-              "|  Text: " + text + "\n" +
-              "|  HTML: " + html )
-              )
-          
-          if ( rethrowError )
+          if ( !fromLog ) {
+            val sess = T.session
+            val msg = e.getMessage
+            val fromAddress = from.getAddress
+            val recipients = primaryRecipients.mkString( "," )
+            val user = ( sess == null ) ? null | sess.user
+  
+            // Only send these if one of the real users is sending email
+            val userEmail = ( user == null || user == B.systemUser ) ? null | user.s( 'email )
+            
+            if ( userEmail.notBlank && !Email.isBlacklisted( userEmail ) )
+              sendRejectionNotice( msg, userEmail )
+            
+              e.logWith( "m" -> (
+                  "| MessageRejectedException: " + msg + "\n" +
+                  "|  From: " + fromAddress + "\n" +
+                  ( userEmail.notBlank ? ( "|  From User Email: " + userEmail + ( ( Email.isBlacklisted( userEmail ) ) |* " (BLACKLISTED)" ) + "\n" ) | "" ) +
+                  "|  Sent to: " + recipients + "\n" +
+                  "|  Reply to: " + ( if ( replyTo != null && replyTo != from ) replyTo.getAddress() else "" ) + "\n" +
+                  "|  Subject: " + subject + "\n" +
+                  "|  Text: " + text + "\n" +
+                  "|  HTML: " + html )
+                  )
+                  
             throw e
+          }
         case e2:Throwable =>
-          val sess = T.session
-          val msg = e2.getMessage
-          val fromAddress = from.getAddress
-          val recipients = primaryRecipients.mkString( "," )
-          val user = ( sess == null ) ? null | sess.user
-          val userEmail:String = ( user == null || user == B.systemUser ) ? null | user.s( 'email )
-          
-          e2.logWith( "m" -> (
-              "| AWS Mail Exception: " + msg + "\n" +
-              "|  From: " + fromAddress + "\n" +
-              ( userEmail.notBlank ? ( "|  From User Email: " + userEmail + ( ( Email.isBlacklisted( userEmail ) ) |* " (BLACKLISTED)" ) + "\n" ) | "" ) +
-              "|  Sent to: " + recipients + "\n" +
-              "|  Reply to: " + ( if ( replyTo != null && replyTo != from ) replyTo.getAddress() else "" ) + "\n" +
-              "|  Subject: " + subject + "\n" +
-              "|  Text: " + text + "\n" +
-              "|  HTML: " + html )
-              )
-              
-          if ( rethrowError )
+          if ( !fromLog ) {
+            val sess = T.session
+            val msg = e2.getMessage
+            val fromAddress = from.getAddress
+            val recipients = primaryRecipients.mkString( "," )
+            val user = ( sess == null ) ? null | sess.user
+            val userEmail:String = ( user == null || user == B.systemUser ) ? null | user.s( 'email )
+            
+              e2.logWith( "m" -> (
+                  "| AWS Mail Exception: " + msg + "\n" +
+                  "|  From: " + fromAddress + "\n" +
+                  ( userEmail.notBlank ? ( "|  From User Email: " + userEmail + ( ( Email.isBlacklisted( userEmail ) ) |* " (BLACKLISTED)" ) + "\n" ) | "" ) +
+                  "|  Sent to: " + recipients + "\n" +
+                  "|  Reply to: " + ( if ( replyTo != null && replyTo != from ) replyTo.getAddress() else "" ) + "\n" +
+                  "|  Subject: " + subject + "\n" +
+                  "|  Text: " + text + "\n" +
+                  "|  HTML: " + html )
+                  )
+                
             throw e2
+          }
       }
     }
     

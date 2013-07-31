@@ -227,13 +227,13 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
           println( "*** sending email" )
             
           AWSEmail( subject = ( effEvent == Event.StackTrace ) ? "Volerro Stack Trace" | "Volerro Alert",
-                    text = sb.toString, rethrowError = false ).
+                    text = sb.toString, fromLog = true ).
             addTo( B.alertEmail ).
             from( "no-reply@" + B.domain ).
             send
         } catch {
-        case e: Throwable =>
-          e.printStackTrace
+          case e: Throwable =>
+            e.printStackTrace
         }
       }
     }
