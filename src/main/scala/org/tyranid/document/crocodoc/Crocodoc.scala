@@ -170,8 +170,9 @@ _doc = {"status": 3, "socketioHost": "//socket.crocodoc.com:5555/", "objects": [
     if ( text.startsWith( "{\"error\"" ) ) {
       log( Event.Crocodoc, "m" -> ( "Extract text failed for crocodoc uuid: " + extDocId + ", error is: " + text ) )
       null
-    } else 
+    } else {
       text
+    }
   }
   
   def delete( extDocId:String ):Boolean = {

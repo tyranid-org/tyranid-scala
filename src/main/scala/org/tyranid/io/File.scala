@@ -92,10 +92,6 @@ class TikaExtractor extends TextExtractor {
       is = TikaInputStream.get( file )
       parser.parse( is, new BodyContentHandler( out ), new Metadata, context ) 
       out.toString( "UTF-8" ).stripNonUtf8
-    } catch {
-      case te:TikaException =>
-        log( Event.StackTrace, "m" -> ( "Tika Exception (" + file.getName + "):" + te.getMessage() ), "ex" -> te )
-      null
     } finally {
       is.close()
     } 
