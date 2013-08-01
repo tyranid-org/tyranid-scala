@@ -20,9 +20,58 @@ package org.tyranid.io
 import scala.collection.mutable
 
 import org.tyranid.Imp._
+import org.tyranid.db.DbChar
+import org.tyranid.db.ram.RamEntity
+import org.tyranid.db.tuple.{ Tuple, TupleView }
 
 
-case class MetaMimeType( id:String, baseLabel:String, includes:Seq[MetaMimeType] ) {
+object MetaMimeType extends RamEntity( tid = "a00u" ) {
+  type RecType = MetaMimeType
+  override def convert( view:TupleView ) = new MetaMimeType( view )
+
+  "_id"    is DbChar(32) is 'id;
+  "label"  is DbChar(64) is 'label;
+
+  //def byId( id:String ) = values.find( _.id == id ) getOrElse null
+
+  override val addNames = Seq( "_id", "label" )
+
+  val AdobeIllustrator    = add(  1, "Adobe Illustrator" )
+  val BMP                 = add(  2, "Bitmapped Image" )
+  val DXF                 = add(  3, "Drawing Interchange Format" )
+  val GIF                 = add(  4, "Graphics Interchange Format" )
+  val HTML                = add(  5, "HTML" )
+  val JPEG                = add(  6, "JPEG" )
+  val MicrosoftExcel      = add(  7, "Microsoft Excel" )
+  val MicrosoftPowerPoint = add(  8, "Microsoft PowerPoint" )
+  val MicrosoftWord       = add(  9, "Microsoft Word" )
+  val PDF                 = add( 10, "Portable Document Format" )
+  val PNG                 = add( 11, "Portable Network Graphics" )
+  val SVG                 = add( 12, "Scaled Vector Graphic" )
+  val Text                = add( 13, "Text" )
+  val TIFF                = add( 14, "Tagged Image Format" )
+  val Video               = add( 15, "Video / Movie" )
+  val XML                 = add( 16, "XML - Extensible Markup Language" )
+  val ZIP                 = add( 17, "ZIP Archive" )
+
+  val Image               = add( 18, "Image" ).setIncludes( Seq( BMP, GIF, JPEG, PNG, TIFF ) )
+
+  def updateLabels = {
+    spam( "UPDATE LABELS CALLED" )
+    records foreach { _.updateLabel }
+  }
+
+  MimeType.init
+}
+
+case class MetaMimeType( override val view:TupleView ) extends Tuple( view ) {
+
+  var includes:Seq[MetaMimeType] = Nil
+
+  def setIncludes( includes:Seq[MetaMimeType] ) = {
+    this.includes = includes
+    this
+  }
 
   def types = MimeType.types.filter( mt => mt.meta == this || includes.contains( mt.meta ) )
 
@@ -30,54 +79,11 @@ case class MetaMimeType( id:String, baseLabel:String, includes:Seq[MetaMimeType]
 
   lazy val extensions = types.flatMap( _.extensions )
 
-  lazy val label = baseLabel + " (" + extensions.sorted.map( "." + _ ).mkString( ", " ) + ")"
-
   def matchesExtension( ext:String ) = extensions.contains( ext )
+
+  def updateLabel = this( 'label ) = s( 'label ) + " (" + extensions.sorted.map( "." + _ ).mkString( ", " ) + ")"
 }
 
-object MetaMimeType {
-
-  val values = mutable.Buffer[MetaMimeType]()
-
-  def add( id:String, label:String, includes:Seq[MetaMimeType] = Nil ) = {
-    val v = MetaMimeType( id, label, includes )
-    values += v
-    v
-  }
-
-  def byId( id:String ) = values.find( _.id == id ) getOrElse null
-
-  val AdobeIllustrator    = add( "illustrator",  "Adobe Illustrator" )
-  val BMP                 = add( "bmp",          "Bitmapped Image" )
-  val DXF                 = add( "dxf",          "Drawing Interchange Format" )
-  val GIF                 = add( "gif",          "Graphics Interchange Format" )
-  val HTML                = add( "html",         "HTML" )
-  val JPEG                = add( "jpeg",         "JPEG" )
-  val MicrosoftExcel      = add( "msexcel",      "Microsoft Excel" )
-  val MicrosoftPowerPoint = add( "mspowerpoint", "Microsoft PowerPoint" )
-  val MicrosoftWord       = add( "msword",       "Microsoft Word" )
-  val PDF                 = add( "pdf",          "Portable Document Format" )
-  val PNG                 = add( "png",          "Portable Network Graphics" )
-  val SVG                 = add( "svg",          "Scaled Vector Graphic" )
-  val Text                = add( "text",         "Text" )
-  val TIFF                = add( "tiff",         "Tagged Image Format" )
-  val Video               = add( "video",        "Video / Movie" )
-  val XML                 = add( "xml",          "XML - Extensible Markup Language" )
-  val ZIP                 = add( "zip",          "ZIP Archive" )
-
-  val Image               = add( "image",        "Image", includes = Seq( BMP, GIF, JPEG, PNG, TIFF ) )
-}
-
-
-case class MimeType( mimeType:String, meta:MetaMimeType, name:String, extensions:Seq[String] ) {
-
-  // this is the primary/default extension
-  def extension = extensions( 0 )
-
-  val label =
-    if ( name.notBlank ) name
-    else                 extension.toUpperCase
-}
 
 object MimeType {
 
@@ -208,7 +214,7 @@ object MimeType {
     MimeType( "video/x-sgi-movie",                                                         null,                "SGI Movie",                     Seq( "movie" ) ),
     MimeType( "video/x-msvideo",                                                           Video,               "Microsoft AVI",                 Seq( "avi" ) )
   )
-  
+ 
   
   // DXF is all of these:
   // application/dxf, application/x-autocad, application/x-dxf, drawing/x-dxf, image/vnd.dxf, image/x-autocad, image/x-dxf, zz-application/zz-winassoc-dxf
@@ -241,5 +247,18 @@ object MimeType {
     case "video/mp4" => true
     case _ => false
     }
+
+  def init =
+    MetaMimeType.updateLabels
+}
+
+case class MimeType( mimeType:String, meta:MetaMimeType, name:String, extensions:Seq[String] ) {
+
+  // this is the primary/default extension
+  def extension = extensions( 0 )
+
+  val label =
+    if ( name.notBlank ) name
+    else                 extension.toUpperCase
 }
 
