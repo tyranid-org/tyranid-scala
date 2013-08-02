@@ -60,8 +60,6 @@ object MetaMimeType extends RamEntity( tid = "a00u" ) {
     spam( "UPDATE LABELS CALLED" )
     records foreach { _.updateLabel }
   }
-
-  MimeType.init
 }
 
 case class MetaMimeType( override val view:TupleView ) extends Tuple( view ) {
@@ -222,6 +220,8 @@ object MimeType {
    
 
   lazy val byMimeType:collection.Map[String,MimeType] = {
+    init
+
     val map = mutable.Map[String,MimeType]()
 
     for ( mt <- types )
@@ -230,11 +230,14 @@ object MimeType {
     map
   }
 
-  lazy val byExtension:collection.Map[String,MimeType] =
+  lazy val byExtension:collection.Map[String,MimeType] = {
+    init
+
     Map(
       ( for ( mt <- types;
               ext <- mt.extensions )
           yield ext -> mt ):_* )
+  }
 
   def isImage( mimeType:String ) =
     mimeType match {
@@ -248,7 +251,7 @@ object MimeType {
     case _ => false
     }
 
-  def init =
+  lazy val init =
     MetaMimeType.updateLabels
 }
 
