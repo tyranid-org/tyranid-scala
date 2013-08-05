@@ -56,7 +56,11 @@ object MetaMimeType extends RamEntity( tid = "a00u" ) {
 
   val Image               = add( 18, "Image" ).setIncludes( Seq( BMP, GIF, JPEG, PNG, TIFF ) )
 
-  def updateLabels = {
+  override def init = {
+    super.init
+
+    MimeType.types.length
+
     spam( "UPDATE LABELS CALLED" )
     records foreach { _.updateLabel }
   }
@@ -220,8 +224,6 @@ object MimeType {
    
 
   lazy val byMimeType:collection.Map[String,MimeType] = {
-    init
-
     val map = mutable.Map[String,MimeType]()
 
     for ( mt <- types )
@@ -231,8 +233,6 @@ object MimeType {
   }
 
   lazy val byExtension:collection.Map[String,MimeType] = {
-    init
-
     Map(
       ( for ( mt <- types;
               ext <- mt.extensions )
@@ -250,11 +250,6 @@ object MimeType {
     case "video/mp4" => true
     case _ => false
     }
-
-  lazy val init =
-    MetaMimeType.updateLabels
-
-  init
 }
 
 case class MimeType( mimeType:String, meta:MetaMimeType, name:String, extensions:Seq[String] ) {
