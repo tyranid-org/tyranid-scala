@@ -57,7 +57,7 @@ case class Comet( serviceSession:ServerSession, fromSession:ServerSession, sessi
     send(
       Map(
         "act"  -> act,
-        "data" -> data.toJsonStr( pretty = true, client = true )
+        "data" -> data.toJsonStr( client = true )
       ),
       cmds:_*
     )
