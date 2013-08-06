@@ -56,10 +56,7 @@ object MetaMimeType extends RamEntity( tid = "a00u" ) {
 
   val Image               = add( 18, "Image" ).setIncludes( Seq( BMP, GIF, JPEG, PNG, TIFF ) )
 
-  def updateLabels = {
-    spam( "UPDATE LABELS CALLED" )
-    records foreach { _.updateLabel }
-  }
+  def updateLabels = records foreach { _.updateLabel }
 }
 
 case class MetaMimeType( override val view:TupleView ) extends Tuple( view ) {
