@@ -41,10 +41,9 @@ case class CometService( name:String, create: ( BayeuxServer ) => AbstractServic
 case class Comet( serviceSession:ServerSession, fromSession:ServerSession, session:Session ) {
 
   def send( output:collection.Map[String,Any], cmds:JsCmd* ) {
-
     val data =
-      if ( cmds.nonEmpty )
-        output + ( "cmds" -> cmds.map( _.toMap ).toJsonStr( client = true ) )
+      if ( cmds != null && cmds.nonEmpty )
+        output + ( "cmds" -> cmds.filter( _ != null ).map( _.toMap ).toJsonStr( client = true ) )
       else
         output
 
