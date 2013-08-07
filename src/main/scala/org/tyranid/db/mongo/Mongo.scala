@@ -24,7 +24,7 @@ import scala.collection.JavaConversions._
 import org.bson.BSONObject
 import org.bson.types.ObjectId
 
-import com.mongodb.{ BasicDBList, BasicDBObject, DB, DBCollection, DBCursor, DBObject }
+import com.mongodb.{ BasicDBList, BasicDBObject, DB, DBCollection, DBCursor, DBObject, MongoClient }
 
 import org.tyranid.Imp._
 import org.tyranid.any.Deep
@@ -109,7 +109,7 @@ object Imp {
   }
 
   object Mongo {
-    lazy val connect = new com.mongodb.Mongo( B.mongoHost )
+    lazy val connect = new MongoClient( B.mongoHost )
     
     trait ImmutableObject extends DBObject {
       import java.util.Map
