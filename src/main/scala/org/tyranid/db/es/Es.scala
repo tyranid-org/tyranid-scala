@@ -317,11 +317,11 @@ object Es {
   def index( rec:Record ) = {
     try {
       if ( B.DEV ) println( "ES:  indexing " + rec.tid )
-spam( "getting JSON" )
+//sp am( "getting JSON" )
       val json = jsonFor( rec )
-spam( "queuing to index" )
+//sp am( "queuing to index" )
       Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, json )
-spam( "done" )
+//sp am( "done" )
 
       //Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, jsonFor( rec ) )
     } catch {

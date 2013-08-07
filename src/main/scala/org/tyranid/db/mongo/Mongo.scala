@@ -109,7 +109,7 @@ object Imp {
   }
 
   object Mongo {
-    lazy val connect = new com.mongodb.Mongo( B.mongoHost )
+    lazy val connect = new com.mongodb.MongoClient( B.mongoHost )
     
     trait ImmutableObject extends DBObject {
       import java.util.Map

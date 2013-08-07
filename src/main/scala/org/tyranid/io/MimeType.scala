@@ -61,7 +61,6 @@ object MetaMimeType extends RamEntity( tid = "a00u" ) {
 
     MimeType.types.length
 
-    spam( "UPDATE LABELS CALLED" )
     records foreach { _.updateLabel }
   }
 }
