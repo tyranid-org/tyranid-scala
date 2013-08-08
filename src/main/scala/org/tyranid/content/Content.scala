@@ -43,7 +43,6 @@ import org.tyranid.io.{ HasText, MimeType }
 import org.tyranid.profile.{ Group, Tag, User }
 import org.tyranid.secure.{ PrivateKeyEntity, PrivateKeyRecord }
 
-
 object ViewType extends RamEntity( tid = "a13v" ) {
   type RecType = ViewType
   override def convert( view:TupleView ) = new ViewType( view )
@@ -497,10 +496,11 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
 
   def remove( comments:BasicDBList, id:Int ) {
     for ( c <- comments.toSeq.of[DBObject] )
-      if ( c.i( '_id ) == id )
+      if ( c.i( '_id ) == id ) {
         comments.remove( c )
-      else
+      } else {
         remove( c.a_?( 'r ), id )
+      }
   }
 
   def sort( comments:Seq[Comment], newestFirst:Boolean = false, byPageXy:Boolean = false, byWhen:Boolean = false ) = {
