@@ -382,6 +382,10 @@ class WebResponse( web:WebContext, sess:Session ) {
     val req = web.req
     
     if ( req != null ) {
+      // If I have requested common and I have not sent it, then get it now and send it.
+      if ( T.requestCache.getOrElse( "req-common", false ).as[Boolean] && !T.requestCache.getOrElse( "sent-common", false ).as[Boolean] )
+        req.addJsCmd( JsModel( T.user.toClientCommonMap( true ), "common" ) )
+        
       val jsCmds = req.getAttribute( "jscmds" ).as[mutable.Buffer[JsCmd]]
       
       if ( jsCmds != null ) {

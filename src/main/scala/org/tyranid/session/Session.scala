@@ -359,6 +359,8 @@ trait Session extends QuickCache {
         put( "remoteAddr", web.req.getRemoteAddr() )
         userAgent = ua( web )
       }
+      
+      T.requestCache.put( "req-common", true )      
     }
   }
   
