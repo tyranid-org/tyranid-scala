@@ -20,7 +20,7 @@ package org.tyranid.io
 import scala.collection.mutable
 
 import org.tyranid.Imp._
-import org.tyranid.db.DbChar
+import org.tyranid.db.{ DbChar, DbInt }
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.db.tuple.{ Tuple, TupleView }
 
@@ -29,12 +29,12 @@ object MetaMimeType extends RamEntity( tid = "a00u" ) {
   type RecType = MetaMimeType
   override def convert( view:TupleView ) = new MetaMimeType( view )
 
-  "_id"    is DbChar(32) is 'id;
-  "label"  is DbChar(64) is 'label;
+  "_id"    is DbInt      is 'id    is 'client;
+  "name"   is DbChar(64) is 'label is 'client;
 
   //def byId( id:String ) = values.find( _.id == id ) getOrElse null
 
-  override val addNames = Seq( "_id", "label" )
+  override val addNames = Seq( "_id", "name" )
 
   val AdobeIllustrator    = add(  1, "Adobe Illustrator" )
   val BMP                 = add(  2, "Bitmapped Image" )
@@ -56,7 +56,13 @@ object MetaMimeType extends RamEntity( tid = "a00u" ) {
 
   val Image               = add( 18, "Image" ).setIncludes( Seq( BMP, GIF, JPEG, PNG, TIFF ) )
 
-  def updateLabels = records foreach { _.updateLabel }
+  override def init = {
+    super.init
+
+    MimeType.types.length
+
+    records foreach { _.updateLabel }
+  }
 }
 
 case class MetaMimeType( override val view:TupleView ) extends Tuple( view ) {
@@ -76,7 +82,7 @@ case class MetaMimeType( override val view:TupleView ) extends Tuple( view ) {
 
   def matchesExtension( ext:String ) = extensions.contains( ext )
 
-  def updateLabel = this( 'label ) = s( 'label ) + " (" + extensions.sorted.map( "." + _ ).mkString( ", " ) + ")"
+  def updateLabel = this( 'name ) = s( 'name ) + " (" + extensions.sorted.map( "." + _ ).mkString( ", " ) + ")"
 }
 
 
@@ -217,8 +223,6 @@ object MimeType {
    
 
   lazy val byMimeType:collection.Map[String,MimeType] = {
-    init
-
     val map = mutable.Map[String,MimeType]()
 
     for ( mt <- types )
@@ -228,8 +232,6 @@ object MimeType {
   }
 
   lazy val byExtension:collection.Map[String,MimeType] = {
-    init
-
     Map(
       ( for ( mt <- types;
               ext <- mt.extensions )
@@ -247,9 +249,6 @@ object MimeType {
     case "video/mp4" => true
     case _ => false
     }
-
-  lazy val init =
-    MetaMimeType.updateLabels
 }
 
 case class MimeType( mimeType:String, meta:MetaMimeType, name:String, extensions:Seq[String] ) {

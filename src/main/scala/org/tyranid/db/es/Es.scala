@@ -319,7 +319,7 @@ object Es {
       if ( B.DEV ) println( "ES:  indexing " + rec.tid )
 //sp am( "getting JSON" )
       val json = jsonFor( rec )
-//sp am( "queuing to index" )
+spam( "json=\n\n" + json + "\n\n" )
       Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, json )
 //sp am( "done" )
 
