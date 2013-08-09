@@ -23,9 +23,9 @@ import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbDateTime, DbInt, DbIntSerial, Record }
+import org.tyranid.db.{ DbChar, DbDateTime, DbInt, DbIntSerial, DbLink, DbText, Record }
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.db.mongo.MongoEntity
+import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
 import org.tyranid.db.meta.AutoIncrement
 import org.tyranid.web.{ Weblet, WebContext }
 
@@ -99,5 +99,19 @@ object Tag extends MongoEntity( tid = "a0Ct" ) {
     else
       r.remove( key )
   }
+}
+
+object TagDef extends MongoEntity( tid = "a0Cu" ) {
+
+  "_id"         is DbMongoId     is 'id is 'client;
+
+  "group"       is DbLink(Group) is 'client;
+
+  "tag"         is DbLink(Tag)   is 'client;
+
+  "label"       is DbChar(64)    is 'client;
+
+  "desc"        is DbText        is 'client;
+  "color"       is DbChar(6)     is 'client;
 }
 
