@@ -169,7 +169,7 @@ spam( "query=" + query.toJsonStr() )
         ""
 
     val s = ( Es.host + "/_search" + params ).POST( content = query.toJsonStr( false ) ).s
-spam( "results=[\n\n" + results + "\n\n]" )
+spam( "results=[\n\n" + s + "\n\n]" )
 
     val json = s.parseJsonObject
 
