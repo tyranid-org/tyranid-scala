@@ -156,7 +156,7 @@ object Es {
     )
 
   def search( query:Map[String,Any], user:User, offset:Int, pageSize:Int ):ObjectMap = {
-//sp am( "query=" + query.toJsonStr )
+spam( "query=" + query.toJsonStr )
 
     var params =
       if ( offset != 0 && pageSize != ElasticSearchDefaultPageSize )
