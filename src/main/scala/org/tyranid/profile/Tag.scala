@@ -47,11 +47,13 @@ object Tag extends MongoEntity( tid = "a0Ct" ) {
   def extractNew( value:String ) = value.substring( newPrefix.length )
 
   def idFor( tag:String ) = synchronized {
-    tags.getOrElseUpdate( tag, {
-      db.findOne( Mobj( "name" -> tag ) ) match {
+    val tagl = tag.toLowerCase
+
+    tags.getOrElseUpdate( tagl, {
+      db.findOne( Mobj( "name" -> tagl ) ) match {
       case null =>
         val id = AutoIncrement( "tag" )
-        db.save( Mobj( "_id" -> id, "name" -> tag, "on" -> new Date() ) )
+        db.save( Mobj( "_id" -> id, "name" -> tagl, "on" -> new Date() ) )
         id
 
       case to =>
