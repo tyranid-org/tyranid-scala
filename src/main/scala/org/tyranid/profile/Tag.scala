@@ -19,13 +19,15 @@ package org.tyranid.profile
 
 import java.util.Date
 
+import com.mongodb.DBObject
+
 import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbChar, DbDateTime, DbInt, DbIntSerial, DbLink, DbText, Record }
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
+import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.db.meta.AutoIncrement
 import org.tyranid.web.{ Weblet, WebContext }
 
@@ -102,6 +104,8 @@ object Tag extends MongoEntity( tid = "a0Ct" ) {
 }
 
 object TagDef extends MongoEntity( tid = "a0Cu" ) {
+  type RecType = TagDef
+  override def convert( obj: DBObject, parent: MongoRecord ) = new TagDef( obj, parent )
 
   "_id"         is DbMongoId     is 'id is 'client;
 
@@ -114,4 +118,7 @@ object TagDef extends MongoEntity( tid = "a0Cu" ) {
   "desc"        is DbText        is 'client;
   "color"       is DbChar(6)     is 'client;
 }
+
+class TagDef( obj:DBObject, parent:MongoRecord ) extends MongoRecord( TagDef.makeView, obj, parent ) {}
+
 
