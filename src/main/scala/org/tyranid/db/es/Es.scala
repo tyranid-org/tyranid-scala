@@ -319,7 +319,7 @@ spam( "results=[\n\n" + s + "\n\n]" )
       if ( B.DEV ) println( "ES:  indexing " + rec.tid )
 //sp am( "getting JSON" )
       val json = jsonFor( rec )
-spam( "json=\n\n" + json + "\n\n" )
+//sp am( "json=\n\n" + json + "\n\n" )
       Indexer.actor ! IndexMsg( rec.view.entity.searchIndex, rec.view.entity.dbName, rec.tid, json )
 //sp am( "done" )
 
