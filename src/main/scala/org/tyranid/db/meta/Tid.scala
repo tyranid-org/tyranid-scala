@@ -311,13 +311,16 @@ object Tid {
   // WARNING!  This will perform a blind cascade delete
   def deleteCascade( tid:String, deletions:mutable.Buffer[Record] = null ) {
     val delStat = delete( tid, true )
-    val cFailures = delStat.cascadeFailures
     
-    if ( cFailures.nonEmpty ) {
-      cFailures.foreach( f => deleteCascade( f.tid ) )
-      deleteCascade( tid )
-    } else if ( deletions != null ) {
-      deletions ++= delStat.deletes
+    if ( delStat != null ) {
+      val cFailures = delStat.cascadeFailures
+      
+      if ( cFailures.nonEmpty ) {
+        cFailures.foreach( f => deleteCascade( f.tid ) )
+        deleteCascade( tid )
+      } else if ( deletions != null ) {
+        deletions ++= delStat.deletes
+      }
     }
   }
   
@@ -344,18 +347,24 @@ object Tid {
       }
     }
 
-    val rec = Record.byTid( tid ).get
+    val recOpt = Record.byTid( tid )
     
-    if ( rec.view.entity.isInstanceOf[RamEntity] )
-      ramReferences += rec
-    else
-      deletes += rec
-
-    val results = DeleteResults( ramReferences = ramReferences, cascadeFailures = cascadeFailures, updates = updates, deletes = deletes )
-
-    if ( results.success && performDeletion ) {
-      updates foreach { _.save }
-      deletes foreach { _.delete }
+    var results:DeleteResults = null
+    
+    if ( recOpt != None ) {
+      val rec = recOpt.get
+      
+      if ( rec.view.entity.isInstanceOf[RamEntity] )
+        ramReferences += rec
+      else
+        deletes += rec
+  
+      results = DeleteResults( ramReferences = ramReferences, cascadeFailures = cascadeFailures, updates = updates, deletes = deletes )
+  
+      if ( results.success && performDeletion ) {
+        updates foreach { _.save }
+        deletes foreach { _.delete }
+      }
     }
 
     results
