@@ -64,6 +64,12 @@ object Tag extends MongoEntity( tid = "a0Ct" ) {
     } )
   }
 
+  def tagFor( tag:String ) =
+    if ( isNew( tag ) )
+      extractNew( tag ).toLowerCase
+    else
+      tag.toLowerCase
+
   def strFor( tagId:Int ) = {
     val tag = Tag.getById( tagId )
       
