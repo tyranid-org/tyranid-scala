@@ -25,11 +25,11 @@ import org.tyranid.db.ram.RamEntity
 
 
 object Region extends RamEntity( tid = "a01t" ) {
-  "_id"     is DbInt           is 'id;
-  "name"    is DbChar(64)      is 'label;
+  "_id"     is DbInt           is 'id is 'client;
+  "name"    is DbChar(64)      is 'label is 'client;
   "fips"    is DbChar(4)       ;
-  "country" is DbLink(Country) ;
-  "abbr"    is DbChar(2)       ; 
+  "country" is DbLink(Country) is 'client;
+  "abbr"    is DbChar(2)       is 'client; 
 
   def idForAbbr( code:String ):Int = {
     val s = code.toUpperCase
@@ -4325,10 +4325,10 @@ object Region extends RamEntity( tid = "a01t" ) {
 }
 
 object Country extends RamEntity( tid = "a02t" ) {
-  "_id"    is DbInt      is 'id   ;
-  "name"   is DbChar(64) is 'label;
-  "code"   is DbChar(2)           ;
-  "code3"  is DbChar(3)           ;
+  "_id"    is DbInt      is 'id is 'client;
+  "name"   is DbChar(64) is 'label is 'client;
+  "code"   is DbChar(2)  is 'client;
+  "code3"  is DbChar(3)  is 'client ;
 
   val US = 4306
 

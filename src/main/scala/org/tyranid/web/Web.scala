@@ -496,7 +496,7 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   def a_?( param:String ):Seq[String] = req.a_?( param )
 
   def jsobj( param:String )           = req.s( param ).parseJson.asJsonObject
-  def dbobj( param:String )           = req.s( param ).parseJson.asJsonObject.toDBObject
+  def dbobj( param:String ):com.mongodb.DBObject = req.s( param ).parseJson.asJsonObject.toDBObject
 
   def sOpt( param:String ) = {
     val v = s( param )
