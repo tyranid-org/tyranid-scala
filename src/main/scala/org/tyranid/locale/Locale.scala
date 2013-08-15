@@ -20,16 +20,16 @@ package org.tyranid.locale
 import scala.language.postfixOps
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbInt, DbChar, DbLink, Record }
+import org.tyranid.db.{ DbInt, DbChar, DbLink, Record, DbTid }
 import org.tyranid.db.ram.RamEntity
 
 
 object Region extends RamEntity( tid = "a01t" ) {
-  "_id"     is DbInt           is 'id is 'client;
-  "name"    is DbChar(64)      is 'label is 'client;
-  "fips"    is DbChar(4)       ;
-  "country" is DbLink(Country) is 'client;
-  "abbr"    is DbChar(2)       is 'client; 
+  "_id"        is DbInt           is 'id is 'client;
+  "name"       is DbChar(64)      is 'label is 'client;
+  "fips"       is DbChar(4)       ;
+  "country"    is DbLink(Country) is 'client;
+  "abbr"       is DbChar(2)       is 'client; 
 
   def idForAbbr( code:String ):Int = {
     val s = code.toUpperCase
@@ -4325,7 +4325,7 @@ object Region extends RamEntity( tid = "a01t" ) {
 }
 
 object Country extends RamEntity( tid = "a02t" ) {
-  "_id"    is DbInt      is 'id is 'client;
+  "_id"    is DbInt      is 'id  is 'client;
   "name"   is DbChar(64) is 'label is 'client;
   "code"   is DbChar(2)  is 'client;
   "code3"  is DbChar(3)  is 'client ;

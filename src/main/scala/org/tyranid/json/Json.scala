@@ -295,6 +295,13 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
       
       sb += '{'
       var first = true
+      
+      // JS-TID-HACK-1
+      if ( rec.is[org.tyranid.db.tuple.Tuple] ) {
+        sb ++= "\"_idi\":" ++= rec.id._s
+        first = false
+      }
+
       for ( va <- rec.view.vas;
             if !client || va.att.client || ( data != null && data.extra.contains( va.att.name ) );
             if ( data != null && data.auth ) || !va.att.auth;
@@ -304,7 +311,7 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
           first = false
         else
           sb += ','
-
+            
         va.domain match {
         case d:MongoEntity =>
           sb += ':'
@@ -322,7 +329,10 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
           write( "id" )
           sb += ':'
           write( va.att.entity.idToTid( rec( va ) ) )
-        case d:DbLink if client && !d.toEntity.is[RamEntity] =>
+        case d:DbLink if client &&
+            // JS-TID-HACK-1:  this shouldn't be here -- causes all sorts of problems, better to just send down the RamEntity ... if this gets fixed
+            //                 remove other references to JS-TID-HACK-1
+            !d.toEntity.is[RamEntity] =>
           val id = rec( va )
           
           if ( va.name == "_id" ) {
