@@ -337,8 +337,10 @@ class WebFilter extends TyrFilter {
 }
 
 class WebResponse( web:WebContext, sess:Session ) {
+  
   var redirect:String = null
   val EMPTY_LIST = List[Notification]()
+  var notifications = true
   
   lazy val notices = ( notifications ? sess.popNotices | EMPTY_LIST )
   lazy val warnings = ( notifications ? sess.popWarnings | EMPTY_LIST )
@@ -349,7 +351,6 @@ class WebResponse( web:WebContext, sess:Session ) {
 
   val cmds = mutable.Buffer[JsCmd]()
   
-  var notifications = true
   var extraJS:String = null
   var htmlMap:collection.Map[String,Any] = null
   var variables:Map[String,Any] = null
