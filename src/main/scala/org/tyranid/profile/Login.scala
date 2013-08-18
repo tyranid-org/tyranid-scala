@@ -349,7 +349,7 @@ $( function() {
           }
           
           val domain = Email.domainFor( email )
-          val org = B.Org.db.findOne( Mobj( "domain" -> domain.toPatternI ) )
+          val org = B.Org.db.findOne( Mobj( "domain" -> ( "^" + domain.encRegex + "$" ).toPatternI ) )
           
           if ( org != null ) {
             T.user( 'org ) = org.id
@@ -364,7 +364,7 @@ $( function() {
           if ( exists ) {
             sess.error( "Company name is already in use." )
             web.jsRes()
-          }
+          } 
         case _ => 
            web.jsRes()
       }
@@ -478,7 +478,7 @@ $( function() {
           TidItem.by( B.Org.idToTid( orgId ) ).label
         } else {
           val domain = Email.domainFor( userEmail )
-          val org = B.Org.db.findOne( Mobj( "domain" -> domain.toPatternI ) )
+          val org = B.Org.db.findOne( Mobj( "domain" -> ( "^" + domain.encRegex + "$" ).toPatternI ) )
             
           if ( org != null ) {
             T.user( 'org ) = org.id
