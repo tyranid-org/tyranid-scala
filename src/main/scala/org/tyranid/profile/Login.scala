@@ -353,11 +353,12 @@ $( function() {
           
           if ( org != null ) {
             if ( !B.canAddUser( org ) ) {
-              
+              sess.error( "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available." )
+              web.jsRes()
+            } else {
+              T.user( 'org ) = org.id
+              web.jsRes( Js( "$('#company').val( '" + org.s( 'name ) + "' ).attr( 'readonly', 'readonly' );" ) )
             }
-            //com.volerro.profile.Org( org )
-            T.user( 'org ) = org.id
-            web.jsRes( Js( "$('#company').val( '" + org.s( 'name ) + "' ).attr( 'readonly', 'readonly' );" ) )
           } else {
             T.user( 'org ) = null
             web.jsRes( Js( "$('#company').val( '' ).removeAttr( 'readonly' );" ) )
