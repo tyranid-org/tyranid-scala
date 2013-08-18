@@ -283,6 +283,13 @@ $( $('#idp').focus() );
           
         // Create a new one
         val org = B.Org.getById( orgId )
+        
+        if ( !B.canAddUser( org ) ) {
+          sess.error( "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available." )
+          web.jsRes()
+          return
+        }
+        
         val newUser = B.newUser()       
         
         val fnameAttrib = mapping.s( 'firstNameAttrib )
