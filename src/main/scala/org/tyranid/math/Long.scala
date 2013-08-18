@@ -28,11 +28,14 @@ object LongImp {
   val MB:Double = math.pow( KB, 2 )
   val GB:Double = math.pow( KB, 3 )
   val TB:Double = math.pow( KB, 4 )
+  val PB:Double = math.pow( KB, 5 )
 }
 
 case class LongImp( l:Long ) {
   def toBytesString = {
-    if ( l >= LongImp.TB )
+    if ( l >= LongImp.PB )
+      String.format( "%2.2f petabytes", double2Double( ( l / LongImp.TB ).asInstanceOf[Double] ) )
+    else if ( l >= LongImp.TB )
       String.format( "%2.2f terabytes", double2Double( ( l / LongImp.TB ).asInstanceOf[Double] ) )
     else if ( l >= LongImp.GB ) 
       String.format( "%1.2f gigabytes", double2Double( ( l / LongImp.GB ).asInstanceOf[Double] ) )
@@ -45,7 +48,9 @@ case class LongImp( l:Long ) {
   }
   
   def toBytesAbbrString = {
-    if ( l >= LongImp.TB )
+    if ( l >= LongImp.PB )
+      String.format( "%2.2f PB", double2Double( ( l / LongImp.TB ).asInstanceOf[Double] ) )
+    else if ( l >= LongImp.TB )
       String.format( "%2.2f TB", double2Double( ( l / LongImp.TB ).asInstanceOf[Double] ) )
     else if ( l >= LongImp.GB ) 
       String.format( "%1.2f GB", double2Double( ( l / LongImp.GB ).asInstanceOf[Double] ) )
