@@ -116,7 +116,6 @@ trait Bootable {
     if ( DEV )        fullDomain + ":8443"
     else              fullDomain
     
-
   def nonsecureWebsite = "http://" + domainPort
     
   val bounceEmail = "support@" + domain 
@@ -143,7 +142,6 @@ trait Bootable {
 
   def boot:Unit
 
-
   def loginListeners:Seq[ User => Unit ] = Nil
   def logoutListeners:Seq[ User => Unit ] = Nil
 
@@ -169,6 +167,7 @@ trait Bootable {
 
   def secureBypass( url:String ) = false
 
+  def canAddUser( o:org.tyranid.profile.Org ):Boolean
   @volatile var onLogin: ( Session ) => Unit = null
 
   @volatile var newUser:() => User = null

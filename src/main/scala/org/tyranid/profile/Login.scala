@@ -349,9 +349,13 @@ $( function() {
           }
           
           val domain = Email.domainFor( email )
-          val org = B.Org.db.findOne( Mobj( "domain" -> ( "^" + domain.encRegex + "$" ).toPatternI ) )
+          val org = B.Org( B.Org.db.findOne( Mobj( "domain" -> ( "^" + domain.encRegex + "$" ).toPatternI ) ) )
           
           if ( org != null ) {
+            if ( !B.canAddUser( org ) ) {
+              
+            }
+            //com.volerro.profile.Org( org )
             T.user( 'org ) = org.id
             web.jsRes( Js( "$('#company').val( '" + org.s( 'name ) + "' ).attr( 'readonly', 'readonly' );" ) )
           } else {

@@ -39,6 +39,8 @@ class Boot extends org.tyranid.boot.Bootable {
   override val awsCredentials = new com.amazonaws.auth.BasicAWSCredentials( "TODO", "TODO" )
   override val bucketSuffix   = ".volerro.com"
 
+  def canAddUser( o:org.tyranid.profile.Org ) = true
+  
   val emailTemplates = null
 
   val comets = Nil
