@@ -26,6 +26,7 @@ import java.io.{ File, FileOutputStream, FileInputStream }
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
+import org.tyranid.app.AppStat
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.json.Json
 import org.tyranid.http.Http
@@ -56,8 +57,14 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
       //println( file.length )
       
       var error:String = null
+      var retryCount = 0
         
       while ( error.isBlank ) {
+        retryCount = retryCount + 1
+        
+        if ( retryCount == 1 )
+          AppStat.CrocodocUpload
+        
         val result = Http.POST_FILE( "https://crocodoc.com/api/v2/document/upload", file, fileSize, filename, params = Map( "token" -> apiKey ) ).s
       
       //println( "croc: " + result )
@@ -67,12 +74,15 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
         
         if ( error.isBlank ) {
           obj( 'externalId ) = externalDocId( res.s( 'uuid ) )
+          AppStat.CrocodocSuccess
           return true
         } else if ( error.containsIgnoreCase( "rate limit exceeded" ) ) {
+          AppStat.CrocodocRetry
           Thread.sleep( 2000 )
           error = null
         } else {
           log( Event.Crocodoc, "m" -> ( "Failed to upload document: " + filename + ", error=" + error ) )
+          AppStat.CrocodocFailure
           return false
         }
       }

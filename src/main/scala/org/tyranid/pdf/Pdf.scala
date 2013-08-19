@@ -21,9 +21,10 @@ import java.io.{ File, FileOutputStream, IOException }
 
 import com.pdfcrowd.{ Client, PdfcrowdError }
 
-import org.tyranid.math.Base36
 
 import org.tyranid.Imp._
+import org.tyranid.math.Base36
+import org.tyranid.app.AppStat
       
 object Pdf {
   val lock = ""
@@ -31,13 +32,17 @@ object Pdf {
     
   def urlToFile( url:String, outFile:File, enableHyperlinks:Boolean = false, username:String = null, password:String = null ) = {
     var doConvertApi = false
+    
     // PDF Crowd API only allows one at a time
     lock.synchronized {
       var useJavascript = true
       var retry = true
       var fileStream:FileOutputStream = null
+      var retryCount = 0
         
       while ( retry ) {
+        retryCount = retryCount + 1
+        
     	  try {
     	    fileStream = new FileOutputStream( outFile )     
     	 
@@ -65,19 +70,25 @@ object Pdf {
           } | url
           
           //println( finalUrl )
+          if ( retryCount == 1 )
+            AppStat.PdfCrowdSend
+            
     	    client.convertURI( finalUrl, fileStream )
     	    
     	    if ( !useJavascript )
             B.sendMessage( "When importing the URL [" + url + "], there was an error.  It was tried again with Javascript turned off on the page and it was successful.  The result may not exactly reflect what the page looked like.", T.user.tid )
-            
-    	    retry = false
+          
+          retry = false
+          AppStat.PdfCrowdSuccess
     	  } catch {
     	    case why:PdfcrowdError =>
     	      why.statusCode match {
     	        case js if useJavascript => // 510 = 413 Timed out. Can't load the specified URL.
     	          println( "PDF failure, status code: " + js )
     	          useJavascript = false
+                AppStat.PdfCrowdRetry
     	        case sc =>
+    	          AppStat.PdfCrowdFailure
                 retry = false
                 
     	          if ( sc == 502 ) {
@@ -91,6 +102,7 @@ object Pdf {
     	          }
     	        }
     	    case e:IOException =>
+    	      AppStat.PdfCrowdFailure
     	      retry = false
             println( e.getMessage )
             throw new RuntimeException( e )
@@ -113,13 +125,20 @@ object Pdf {
       var useJavascript = true
       var retry = true
       var fileStream:FileOutputStream = null
+      var retryCount = 0
+
       
       while ( retry ) {
+        retryCount = retryCount + 1
+
         try {
           fileStream = new FileOutputStream( outFile )     
        
           val idx = url.lastIndexOf( '?' )
           val finalUrl = ( idx > -1 ) ? ( url.substring(0, idx) + java.net.URLEncoder.encode( url.substring( idx ), "UTF-8" ) ) | url
+          
+          if ( retryCount == 1 )
+            AppStat.PdfConvertApiSend
           
           val result = "http://do.convertapi.com/Web2Pdf".POST(
               Map( "ApiKey" -> B.convertApiKey,
@@ -143,14 +162,18 @@ object Pdf {
             B.sendMessage( "When importing the URL [" + url + "], there was an error.  It was tried again with Javascript turned off on the page and it was successful.  The result may not exactly reflect what the page looked like.", T.user.tid )
             
           retry = false
+          AppStat.PdfConvertApiSuccess
         } catch {
-          case e:IOException =>            
+          case e:IOException =>
+            AppStat.PdfConvertApiFailure
             println( e.getMessage )
             
             if ( useJavascript ) {
-              println( "PDF failure, turning of JS and trying again." )
+              println( "PDF failure, turning off JS and trying again." )
               useJavascript = false
+              AppStat.PdfConvertApiRetry
             } else {
+              AppStat.PdfConvertApiFailure
               retry = false
               throw new RuntimeException( e )
             }

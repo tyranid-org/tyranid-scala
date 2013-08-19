@@ -25,6 +25,7 @@ import java.io.{ File, FileInputStream }
 import com.mongodb.{ DBObject, DBCollection }
 
 import org.tyranid.Imp._
+import org.tyranid.app.AppStat
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.json.Json
@@ -137,13 +138,16 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
           "output" -> outputFormats )
           
       //println( "request: " + jsonReq.toJsonStr )
+      AppStat.ZencoderUpload
       val req = Http.POST( "https://app.zencoder.com/api/v2/jobs", jsonReq.toJsonStr( false ), null, "application/json", Map( "Zencoder-Api-Key" -> apiKey ) )
       val result = req.s            
       
       //println( "zc res: " + result )
       if ( req.response.getStatusLine().getStatusCode() != 201 ) {
+        AppStat.ZencoderFailure
         log( Event.Zencoder, "m" -> ( "Failed to upload video: " + filename + ", error=" + result ) )
       } else {
+        AppStat.ZencoderSuccess
         //{"outputs":[{"label":null,"url":"https://s3.amazonaws.com/files.volerro.com/5069a80ad748dff278930a82/50d2180fd748c9c33a8e8b0f.ogg","id":66443523},{"label":null,"url":"https://s3.amazonaws.com/files.volerro.com/5069a80ad748dff278930a82/50d2180fd748c9c33a8e8b0f.mp4","id":66443525}],"test":true,"id":34152199}
         val res = Json.parse( result )
         doc( 'zid ) = res.i( 'id )
