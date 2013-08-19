@@ -25,14 +25,16 @@ import scala.xml.NodeSeq
 import org.apache.http.auth.{ AuthScope }
 
 import org.tyranid.Imp._
+import org.tyranid.cloud.aws.S3
 import org.tyranid.content.ContentType
 import org.tyranid.db.{ DbChar, DbLink, DbBoolean, Record, DbText, DbUrl }
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
 import org.tyranid.http.Http
+import org.tyranid.io.{ File => TFile }
 import org.tyranid.json.{ Js, Json, JqHtml }
-import org.tyranid.profile.{ Org, User, Group }
+import org.tyranid.profile.{ Org, User, Group, Tag }
 import org.tyranid.ui.Focus
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
 
@@ -56,6 +58,8 @@ object SsoMapping extends MongoEntity( tid = "a0Ut" ) {
   "naOptOut"        is DbBoolean;
   "inviteOptOut"    is DbBoolean;
   "newProjects"     is DbText;
+  "newProjectImgs"  is DbText;
+  "newProjectTags"  is DbText;
   "loEndpoint"      is DbUrl; // log out endpoint
   
   lazy val testMapping = {
@@ -366,8 +370,12 @@ $( $('#idp').focus() );
         if ( newProjectNames.notBlank ) {
           val now = new Date
           val userList = Mlist( newUser.tid )
+          val newProjectImgs = mapping.s( 'newProjectImgs )
+          val newProjectTags = mapping.s( 'newProjectTags )
+          var idx = -1
           
           newProjectNames.split( "," ).foreach( name => {
+            idx = idx + 1
             val project = Group.make
             project( 'name    ) = name
             project( 'on      ) = now
@@ -376,7 +384,39 @@ $( $('#idp').focus() );
             project( 'color   ) = project.getRandomColor
             project( 'v       ) = userList
             project( 'members ) = userList
+            
+            if ( newProjectTags.notBlank ) {
+              val tags = newProjectTags.split( "," )
+              
+              tags.foreach( tag => {
+                val tag = Tag.tagFor( "Marketplace" )
+                val tagId = Tag.idFor( "Marketplace" )
+                project.a_!( 'tags ).addToSet( tagId.as[AnyRef] )
+              } )
+            }
+            
             project.save
+            
+            if ( newProjectImgs.notBlank ) {
+              val newProjectImages = newProjectImgs.split( "," )
+              
+              if ( newProjectImages.length >= idx ) {
+                val workingImg = newProjectImages( idx )
+                
+                if ( workingImg.length > 0 ) {                    
+                  val bucket = B.bucketByUrl( workingImg ).get
+                  val bucketPrefix = bucket.url( "" )
+                  val fullPath = workingImg.substring( bucketPrefix.length )
+                  val publicBucket = B.getS3Bucket( "public" )
+                  
+                  val path = TFile.pathFor( project.entityTid, project.tid, "thumbnail_" + System.currentTimeMillis, workingImg )
+                  S3.copy( bucket, fullPath, publicBucket, path )
+                  S3.access( publicBucket, path, public = true )
+                    
+                  Group.db.update( Mobj( "_id" -> project.id ), Mobj( $set -> Mobj( "img" -> publicBucket.url( path ) ) ) )
+                }
+              }               
+            }
             
             if ( B.debugSso )
               println( "DEBUG: Created new group for user: " + name )
