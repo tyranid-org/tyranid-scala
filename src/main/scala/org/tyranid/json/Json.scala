@@ -298,7 +298,7 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
       
       // JS-TID-HACK-1
       if ( rec.is[org.tyranid.db.tuple.Tuple] ) {
-        sb ++= "\"_idi\":" ++= rec.id._s
+        sb ++= "\"_idi\":" += '"' ++= rec.id._s += '\"'
         first = false
       }
 
