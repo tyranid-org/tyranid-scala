@@ -381,7 +381,7 @@ $( $('#idp').focus() );
             project( 'on      ) = now
             project( 'o       ) = userList
             project( 'type    ) = ContentType.Project.id
-            project( 'color   ) = project.getRandomColor
+            project( 'color   ) = Group.getRandomColor
             project( 'v       ) = userList
             project( 'members ) = userList
             

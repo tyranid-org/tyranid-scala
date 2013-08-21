@@ -229,6 +229,25 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
       }
     }
   }
+  
+  def getRandomColor = {
+    import java.util.Random
+    val rand = new Random( System.currentTimeMillis )
+    val pick = rand.nextInt( Content.defaultColors.length )
+    Content.defaultColors( pick )
+    
+    /*
+    val random = new Random()
+    val hue = random.nextFloat()
+    val saturation = random.nextFloat()
+    val luminance = random.nextFloat()
+    val color = java.awt.Color.getHSBColor(hue, saturation, luminance)
+    color.darker()
+    color.darker()
+    color.darker()
+    Integer.toHexString( color.getRGB() ).substring(2, 8)
+    */
+  }
 }
 
 class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView, obj, parent ) {
@@ -361,25 +380,6 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     ( file != null ) ? file | B.getS3Bucket( "public" ).file( "images/default_project_image.png" )
   }  
 
-  def getRandomColor = {
-    import java.util.Random
-    val rand = new Random( System.currentTimeMillis )
-    val pick = rand.nextInt( Content.defaultColors.length )
-    Content.defaultColors( pick )
-    
-    /*
-    val random = new Random()
-    val hue = random.nextFloat()
-    val saturation = random.nextFloat()
-    val luminance = random.nextFloat()
-    val color = java.awt.Color.getHSBColor(hue, saturation, luminance)
-    color.darker()
-    color.darker()
-    color.darker()
-    Integer.toHexString( color.getRGB() ).substring(2, 8)
-    */
-  }
-
   val newOverlay = <div class="new-overlay"><span class="text">NEW</span></div>
   val privateOverlay = <div class="private-overlay"><span class="icon-minus"></span><span class="text">PRIVATE</span></div>
 
@@ -390,7 +390,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
       var color = s( 'color )
       
       if ( color.isBlank ) {
-        color = getRandomColor
+        color = Group.getRandomColor
         this( 'color ) = color
         save
       }
