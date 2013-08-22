@@ -280,6 +280,8 @@ trait Bootable {
 
   val awsCredentials:com.amazonaws.auth.AWSCredentials = null
   val bucketSuffix:String = ""
+    
+  val domainRoute53ZoneId = ""
 
   private val s3Buckets = scala.collection.mutable.Map[String,S3Bucket]()
 

@@ -25,13 +25,15 @@ import scala.collection.mutable
 import scala.collection.mutable.Buffer
 import org.jets3t.service.CloudFrontService
 import org.jets3t.service.utils.ServiceUtils
+
 import com.amazonaws.services.s3.AmazonS3Client
-import com.amazonaws.services.s3.model.{ AmazonS3Exception, GeneratePresignedUrlRequest, GroupGrantee, ObjectMetadata, Permission, S3Object, GetObjectRequest, ListObjectsRequest, DeleteObjectsRequest }
+import com.amazonaws.services.s3.model.{ AmazonS3Exception, GeneratePresignedUrlRequest, DeleteObjectRequest, GroupGrantee, ObjectMetadata, Permission, S3Object, GetObjectRequest, ListObjectsRequest, DeleteObjectsRequest }
+
 import com.mongodb.DBObject
+
 import org.tyranid.Imp._
 import org.tyranid.net.Uri
 import org.apache.commons.io.IOUtils
-import com.amazonaws.services.s3.model.DeleteObjectRequest
 
 case class S3StoreResult( url:String, mimeType:String )
 
