@@ -269,7 +269,7 @@ $( function() {
           return web.json( web.jsonRes( sess ) )
         }
 
-        val dbUser = B.User.db.findOne( Mobj( "email" -> email ) )
+        val dbUser = B.User.db.findOne( Mobj( "email" -> email.toPatternI ) )
 
         if ( dbUser == null ) {
           sess.warn( "Sorry, it doesn't look like the email address " + email + " is on " + B.applicationName + "." )
