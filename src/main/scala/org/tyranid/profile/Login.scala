@@ -326,18 +326,6 @@ $( function() {
       val updateFld = web.s( 'updateFld )
       
       updateFld match {
-        case "activationCode" =>
-          val contact = ContactInfo.db.findOne( Mobj( "inviteCode" -> web.s( 'activationCode ) ) )
-              
-          if ( contact != null ) {
-            web.jsRes( Js( """ 
-  $('#email').val( '""" + contact.s( 'email ) + """' );
-  $('#firstName').val( '""" + contact.s( 'name ).split( ' ' )(0) + """' );
-  $('#lastName').val( '""" + contact.s( 'name ).split( ' ' )(1) + """' );""" ) ) 
-          } else {
-            sess.error( "Invalid invite code" )
-            web.jsRes()
-          }
         case "email" =>
           val email = web.s( 'email )
           
