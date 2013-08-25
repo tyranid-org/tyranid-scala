@@ -156,7 +156,7 @@ object Es {
     )
 
   def search( query:Map[String,Any], user:User, offset:Int, pageSize:Int ):ObjectMap = {
-spam( "query=" + query.toJsonStr() )
+//sp-am( "query=" + query.toJsonStr() )
 
     var params =
       if ( offset != 0 && pageSize != ElasticSearchDefaultPageSize )
@@ -169,7 +169,7 @@ spam( "query=" + query.toJsonStr() )
         ""
 
     val s = ( Es.host + "/_search" + params ).POST( content = query.toJsonStr( false ) ).s
-spam( "results=[\n\n" + s + "\n\n]" )
+//sp-am( "results=[\n\n" + s + "\n\n]" )
 
     val json = s.parseJsonObject
 
