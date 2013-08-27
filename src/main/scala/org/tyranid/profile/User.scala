@@ -17,6 +17,8 @@
 
 package org.tyranid.profile
 
+import java.io.{ File, FileOutputStream }
+import java.security.MessageDigest
 import java.util.{ Date, TimeZone }
 
 import scala.collection.mutable.ArrayBuffer
@@ -26,13 +28,16 @@ import com.mongodb.DBObject
 
 import org.tyranid.Imp._
 import org.tyranid.content.ContentType
+import org.tyranid.cloud.aws.S3
 import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDouble, DbEmail, DbLink, DbLong, DbPassword, Record, DbDate, DbInt, DbDateTime, DbUrl }
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.db.tuple.{ Tuple, TupleView }
+import org.tyranid.http.Http
 import org.tyranid.image.DbThumbnail
+
 import org.tyranid.sms.SMS
 import org.tyranid.locale.{ Country, Language }
 import org.tyranid.secure.DbReCaptcha
@@ -200,9 +205,49 @@ class UserMeta extends MongoEntity( "a01v" ) {
       createUser( email, invitedBy = invitedBy )
   }
 
+  def hex( array:Array[Byte]) = {
+    val sb = new StringBuilder
+    
+    for ( a <- array )
+      sb.append( Integer.toHexString( ( a & 0xFF ) | 0x100).substring( 1, 3 ) )        
+    
+    sb.toString()
+  }
+  
+  def md5Hex( message:String ):String = {
+    try {
+      val md = MessageDigest.getInstance( "MD5" )
+      return hex( md.digest( message.getBytes( "CP1252" ) ) )
+    } catch {
+      case t:Throwable =>
+    }
+    
+    return null
+  }
+
+  /* 
+   * Check to see if the user has a Gravatar, and use it
+   * if they do.
+   */
+  def setGravatar( userId:ObjectId, email:String ) {
+    background {
+      try {
+        val iconUrl = "https://www.gravatar.com/avatar/" + md5Hex( email ) + ".jpg?d=404"
+        val res = Http.GET( iconUrl )
+        
+        if ( res.response.getStatusLine.getStatusCode != 404 )
+          B.User.db.update( Mobj( "_id" -> userId ), Mobj( $set -> Mobj( "thumbnail" -> iconUrl ) ) )
+      } catch {
+        case t:Throwable =>
+          t.printStackTrace()
+      }
+    }
+  }
+
   def createUser( email:String, possibleNames:String = null, invitedBy:ObjectId = null ) = {
     val user = make
     user( 'email ) = email
+    
     user( 'activationCode ) = org.tyranid.math.Base62.make(8)
     user( 'createdOn ) = new Date
     
@@ -225,6 +270,9 @@ class UserMeta extends MongoEntity( "a01v" ) {
       user( 'invitedBy ) = invitedBy
     
     user.save
+    
+    setGravatar( user.id._oid, email )
+    
     user
   }
 

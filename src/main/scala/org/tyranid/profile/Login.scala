@@ -434,6 +434,7 @@ $( function() {
           
         if ( user.s( 'activationCode ).isBlank ) {
           Register.sendActivation( user )
+          B.User.setGravatar( user.id._oid, user.s( 'email ) )
           B.registerUser( user, companyName )
           web.jsRes( JqHtml( "#main", Register.finishPage( user, companyName ) ) )
           sess.logout( true )
