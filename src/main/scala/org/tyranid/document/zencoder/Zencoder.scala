@@ -36,12 +36,15 @@ import org.tyranid.time.Time
 object Zencoder {
   val mp4Vid = Seq( "mp4", "h264", "aac" )
   val oggVid = Seq( "ogg", "theora", "vorbis" )
+  //val webmVid = Seq( "webm", "vp8, vorbis" )
+  
   val allVids = Seq( oggVid, mp4Vid )
   
   val otherVidFormats = Map(   
         "mp4" -> Seq( oggVid ),
         "ogg" -> Seq( mp4Vid ),
         "ogv" -> Seq( mp4Vid ),
+        "webm" -> allVids,
         "mov" -> allVids,
         "flv" -> allVids,
         "3gp" -> allVids,
