@@ -232,7 +232,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   def setGravatar( userId:ObjectId, email:String ) {
     background {
       try {
-        val iconUrl = "https://www.gravatar.com/avatar/" + md5Hex( email ) + ".jpg?d=404"
+        val iconUrl = "https://secure.gravatar.com/avatar/" + md5Hex( email ) + ".jpg?d=404"
         val res = Http.GET( iconUrl )
         
         if ( res.response.getStatusLine.getStatusCode != 404 )
