@@ -17,6 +17,7 @@
 
 package org.tyranid.profile
 
+import java.security.MessageDigest
 import java.util.{ Date, TimeZone }
 
 import scala.collection.mutable.ArrayBuffer
