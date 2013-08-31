@@ -112,6 +112,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
   
   "tmpl"         is DbBoolean                          is 'client as "Template Project"
   "canComment"   is DbBoolean                          is 'temporary computed { _.as[Group].canComment }
+  "ooab"         is DbBoolean                          is 'client as "Only Owner can add boards / sub-projects"
 
   db.ensureIndex( Mobj( "o" -> 1, "name" -> 1 ) )
   db.ensureIndex( Mobj( "members" -> 1 ) )

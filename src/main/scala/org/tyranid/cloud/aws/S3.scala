@@ -27,7 +27,7 @@ import org.jets3t.service.CloudFrontService
 import org.jets3t.service.utils.ServiceUtils
 
 import com.amazonaws.services.s3.AmazonS3Client
-import com.amazonaws.services.s3.model.{ AmazonS3Exception, GeneratePresignedUrlRequest, DeleteObjectRequest, GroupGrantee, ObjectMetadata, Permission, S3Object, GetObjectRequest, ListObjectsRequest, DeleteObjectsRequest }
+import com.amazonaws.services.s3.model.{ AmazonS3Exception, GeneratePresignedUrlRequest, DeleteObjectRequest, GroupGrantee, ObjectMetadata, Permission, S3Object, GetObjectRequest, ListObjectsRequest, DeleteObjectsRequest, CopyObjectRequest }
 
 import com.mongodb.DBObject
 
@@ -78,14 +78,17 @@ object S3 {
     }
   }
   
-  def write( bucket:S3Bucket, key:String, file:java.io.File, public:Boolean = false, authorized:Boolean = false, acceptRanges:Boolean = false ) = {
+  def write( bucket:S3Bucket, key:String, file:java.io.File, public:Boolean = false, authorized:Boolean = false, acceptRanges:Boolean = false, encrypt:Boolean = false ) = {
     val mimeType = new FileInputStream( file ).detectMimeType( file.getName )
     
     if ( mimeType.notBlank ) {
       val md = new ObjectMetadata
       md.setContentLength( file.length )
       md.setContentType( mimeType )
-      md.setLastModified( new java.util.Date() )
+      md.setLastModified( new Date )
+      
+      if ( encrypt )
+        md.setServerSideEncryption( ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION )
 
       if ( acceptRanges )
         md.setHeader( "Accept-Ranges", "bytes" ) 
@@ -105,10 +108,13 @@ object S3 {
     }
   }
   
-  def write( bucket:S3Bucket, key:String, mimeType:String, data:Array[Byte] ) = {
+  def write( bucket:S3Bucket, key:String, mimeType:String, data:Array[Byte], encrypt:Boolean ) = {
     val md = new ObjectMetadata
     md.setContentLength( data.length )
     md.setContentType( mimeType )
+    
+    if ( encrypt )
+      md.setServerSideEncryption( ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION )
 
     val is = new ByteArrayInputStream( data )
 
@@ -119,7 +125,7 @@ object S3 {
     }
   }
   
-  def write( bucket:S3Bucket, key:String, contentLength:Long, contentType:String, in:InputStream, public:Boolean, acceptRanges:Boolean ) = {
+  def write( bucket:S3Bucket, key:String, contentLength:Long, contentType:String, in:InputStream, public:Boolean, acceptRanges:Boolean, encrypt:Boolean ) = {
     val md = new ObjectMetadata
     
     if ( contentLength != -1 )
@@ -130,6 +136,9 @@ object S3 {
     if ( acceptRanges )
       md.setHeader( "Accept-Ranges", "bytes" ) 
 
+    if ( encrypt )
+      md.setServerSideEncryption( ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION )
+      
     try {
       s3.putObject( bucket.name, key, in, md )
       
@@ -143,8 +152,8 @@ object S3 {
     md
   }
   
-  def write( bucket:S3Bucket, key:String, file:org.apache.commons.fileupload.FileItem, public:Boolean, acceptRanges:Boolean ):Unit =
-    write( bucket, key, file.getSize, file.getContentType, file.getInputStream, public, acceptRanges )
+  def write( bucket:S3Bucket, key:String, file:org.apache.commons.fileupload.FileItem, public:Boolean, acceptRanges:Boolean, encrypt:Boolean ):Unit =
+    write( bucket, key, file.getSize, file.getContentType, file.getInputStream, public, acceptRanges, encrypt )
 
   def delete( bucket:S3Bucket, key:String ) = try {
     s3.deleteObject( bucket.name, key )
@@ -188,11 +197,20 @@ object S3 {
       delete( bucket, keyPrefix.isBlank ? key | ( keyPrefix + key ) )
   }
   
-  def copy( bucket:S3Bucket, key:String, bucket2:S3Bucket, key2:String ) = try {
-    s3.copyObject( bucket.name, key, bucket2.name, key2 )
+  def copy( sourceBucket:S3Bucket, sourceKey:String, targetBucket:S3Bucket, targetKey:String, encrypt:Boolean = false ) = try {
+    val copyObjRequest = new CopyObjectRequest( sourceBucket.name, sourceKey, targetBucket.name, targetKey )
+            
+    if ( encrypt ) {
+      val md = new ObjectMetadata()
+      md.setServerSideEncryption( ObjectMetadata.AES_256_SERVER_SIDE_ENCRYPTION ) 
+              
+      copyObjRequest.setNewObjectMetadata(md)
+    }
+    
+    s3.copyObject( copyObjRequest )
   } catch {
     case e:Throwable =>
-      println( "Error copying from [" + key + "] to [" + key2 + "]" )
+      println( "Error copying from [" + sourceKey + "] to [" + targetKey + "]" )
       throw e
   }
 
@@ -278,21 +296,21 @@ object S3 {
   def getObject( bucket:S3Bucket, key:String ) = s3.getObject( new GetObjectRequest( bucket.name, key ) )
   def getObjectMetadata( bucket:S3Bucket, key:String ) = s3.getObjectMetadata( bucket.name, key )
 
-  def storeUrl( bucket:S3Bucket, urlStr:String, path:String, isPublic:Boolean = true, acceptRanges:Boolean = false ):S3StoreResult = {
+  def storeUrl( bucket:S3Bucket, urlStr:String, path:String, isPublic:Boolean = true, acceptRanges:Boolean = false, encrypt:Boolean = false ):S3StoreResult = {
     val url = new java.net.URL( urlStr )
     val conn = url.openConnection
     val in = conn.getInputStream
     val mimeType = conn.getContentType
     
-    S3.write( bucket, path, conn.getContentLength, mimeType, in, isPublic, acceptRanges )
+    S3.write( bucket, path, conn.getContentLength, mimeType, in, isPublic, acceptRanges, encrypt )
     in.close
       
     S3StoreResult( bucket.url( path ), mimeType )
   }
 
-  def storeUnsecureUrl( bucket:S3Bucket, urlStr:String, path:String, isPublic:Boolean = true, acceptRanges:Boolean = false ):String = {
+  def storeUnsecureUrl( bucket:S3Bucket, urlStr:String, path:String, isPublic:Boolean = true, acceptRanges:Boolean = false, encrypt:Boolean = false ):String = {
     if ( !Uri.isSecure( urlStr ) )
-      storeUrl( bucket, urlStr, path, isPublic, acceptRanges ).url
+      storeUrl( bucket, urlStr, path, isPublic, acceptRanges, encrypt ).url
     else
       urlStr
   }

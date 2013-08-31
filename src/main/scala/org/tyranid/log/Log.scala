@@ -37,7 +37,7 @@ import org.tyranid.json.JqHtml
 import org.tyranid.net.DnsDomain
 import org.tyranid.report.{ Query, Run, Sort }
 import org.tyranid.ui.{ CustomField, PathField, Search }
-import org.tyranid.web.{ Weblet, WebContext }
+import org.tyranid.web.{ Comet, Weblet, WebContext }
 
 object Event extends RamEntity( tid = "a0It" ) {
   type RecType = Event
@@ -344,15 +344,71 @@ object LogQuery extends Query {
   val defaultFields = dataFields.take( 6 )
 }
 
+
+class CometDebugTask( sess:org.tyranid.session.Session ) extends java.util.TimerTask {  
+  override def run {
+    println( "Comet ping!" )
+    Comet.visit { comet =>      
+      val sess = comet.session
+      
+      if ( sess != null && sess.getOrElse( "comet-debug", false ).as[Boolean] ) {
+        comet.send( Map(
+            "act" -> "cometPing",
+            "cid" -> comet.session.id,
+            "uid" -> sess.user.tid
+        ) )
+      }
+    }
+  }
+}
+
 object Loglet extends Weblet {
+  import java.util.concurrent.{ Executors, ScheduledExecutorService, TimeUnit }
+  
+  var executor:ScheduledExecutorService = null
+  
   def handle( web:WebContext ) = {
-
-    if ( !T.user.isGod )
-      _404
-
     rpath match {
     case "/" =>
+      if ( !T.user.isGod )
+        _404
       web.jsRes( JqHtml( "#adminContent", LogQuery.draw ) )
+    case "/cometStart" =>
+      val debug = T.session.getOrElse( "comet-debug", false ).as[Boolean]
+      
+      if ( !debug ) {
+        T.session.put( "comet-debug", true )
+      }
+      
+      if ( executor == null ) {
+        val secs = web.i( 't ) or 1
+        executor = Executors.newScheduledThreadPool( 1 )
+        executor.scheduleAtFixedRate( new CometDebugTask( T.session ), 0, secs, TimeUnit.SECONDS )
+        println( "Started comet debug, ping every " + secs + " seconds" )
+      }
+      
+      web.jsRes()
+    case "/cometStop" =>
+      T.session.put( "comet-debug", false )
+      
+      if ( executor != null ) {
+        var numDebugs = 0
+        
+        Comet.visit { comet =>      
+          val sess = comet.session
+          
+          if ( sess != null && sess.getOrElse( "comet-debug", false ).as[Boolean] ) {
+            numDebugs += 1
+          }
+        }
+
+        if ( numDebugs == 0 ) { 
+          executor.shutdown
+          println( "Stopped comet debug" )
+        } else {
+          println( "Comet debug NOT stopped, there are still " + numDebugs + " session being debugged." )
+        }
+      }
     case _ =>
       _404
     }

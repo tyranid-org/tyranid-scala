@@ -17,8 +17,6 @@
 
 package org.tyranid.profile
 
-import java.io.{ File, FileOutputStream }
-import java.security.MessageDigest
 import java.util.{ Date, TimeZone }
 
 import scala.collection.mutable.ArrayBuffer
@@ -37,7 +35,6 @@ import org.tyranid.db.ram.RamEntity
 import org.tyranid.db.tuple.{ Tuple, TupleView }
 import org.tyranid.http.Http
 import org.tyranid.image.DbThumbnail
-
 import org.tyranid.sms.SMS
 import org.tyranid.locale.{ Country, Language }
 import org.tyranid.secure.DbReCaptcha
@@ -247,7 +244,6 @@ class UserMeta extends MongoEntity( "a01v" ) {
   def createUser( email:String, possibleNames:String = null, invitedBy:ObjectId = null ) = {
     val user = make
     user( 'email ) = email
-    
     user( 'activationCode ) = org.tyranid.math.Base62.make(8)
     user( 'createdOn ) = new Date
     
