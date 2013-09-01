@@ -82,6 +82,13 @@ object Comet {
   }
     
   def visit( visitor: ( Comet ) => Unit ) = {
+    // 1) Get all sessions on all servers
+    // 2) Send output to queue
+    
+    // 3) Separate periodic thread - read from queue for your tasks (by server) and do comet sends
+    //    - optimize by having local box do it right now
+    
+
     val serverSession = B.comets.find( _.name == "message" ).get.service.getServerSession
     //val seen = mutable.Set[String]()
 
