@@ -314,6 +314,7 @@ $( function() {
 
     case "/tz" =>
       T.session.setTimeZoneFromClient( web.s( 'v ) )
+      web.jsRes()
 
     case "/null" =>
       log( Event.RefInt, "m" -> ( "null, Referer: " + web.req.getHeader( "referer" ) ) ) 
