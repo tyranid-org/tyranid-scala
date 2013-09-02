@@ -31,7 +31,9 @@ object ZipCode extends MongoEntity( tid = "a0Ft" ) {
 
   def latLongFor( zipCode:Int ) = {
 
-    val obj = db.findOne( Mobj( "ZipCode" -> zipCode ) )
+    val objc = db.find( Mobj( "ZipCode" -> zipCode ) ).limit(1)
+    val obj = objc.hasNext ? objc.next | null
+    
     obj != null |* Some( LatLong( lat = obj.d( 'Latitude ), long = obj.d( 'Longitude ) ) )
   }
 

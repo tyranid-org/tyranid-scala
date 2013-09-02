@@ -124,7 +124,10 @@ object DnsDomain extends MongoEntity( tid = "a0Pt" ) {
 
   def domainFor( id:Int ) = synchronized {
     domainById.getOrElseUpdate( id, {
-      db.findOne( Mobj( "_id" -> id ) ) match {
+      val uac = db.find( Mobj( "_id" -> id ) ).limit(1)
+      val ua = uac.hasNext ? uac.next | null
+      
+      ua match {
       case null => "unknown"
       case to   => to.s( "ua" )
       }
@@ -133,7 +136,10 @@ object DnsDomain extends MongoEntity( tid = "a0Pt" ) {
 
   def idFor( domain:String ) = synchronized {
     idByDomain.getOrElseUpdate( domain, {
-      db.findOne( Mobj( "domain" -> domain ) ) match {
+      val uac = db.find( Mobj( "domain" -> domain ) ).limit(1)
+      val ua = uac.hasNext ? uac.next | null
+      
+      ua match {
       case null =>
         val id = AutoIncrement( "dnsDomain" )
         db.save( Mobj( "_id" -> id, "domain" -> domain ) )

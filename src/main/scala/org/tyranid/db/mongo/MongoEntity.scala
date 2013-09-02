@@ -157,7 +157,10 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
       }
     }
 
-  def queryById( id:Any ) = apply( db.findOne( id ) )
+  def queryById( id:Any ) = {
+    val c = db.find( Mobj( "_id" -> id ) ).limit(1)
+    apply( c.hasNext ? c.next | null )
+  }
 
   def getByIds( ids:Seq[Any] ) = db.find( Mobj( "_id" -> Mobj( $in -> ids.toMlist ) ) ).map( apply ).toSeq
     
@@ -177,7 +180,8 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
     } else {
       // TODO:  this should be labelAtt.dbName, but dbName by default is underscore-upper, and there is no MongoAttribute
       val labelName = labelAtt.map( _.name ).getOrElse { return idToTid( id ) /* problem( "missing a label attribute" ) */ }
-      val obj = db.findOne( Mobj( "_id" -> id ), Mobj( labelName -> 1 ) )
+      val objc = db.find( Mobj( "_id" -> id ), Mobj( labelName -> 1 ) ).limit(1)
+      val obj = objc.hasNext ? objc.next | null
 
       if ( obj != null ) obj.s( labelName )
       else               ""

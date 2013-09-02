@@ -199,7 +199,10 @@ object UserAgent extends MongoEntity( tid = "a0Dt" ) {
 
   def uaFor( id:Int ):String = synchronized {
     uaById.getOrElseUpdate( id, {
-      db.findOne( Mobj( "_id" -> id ) ) match {
+      val uac = db.find( Mobj( "_id" -> id ) ).limit(1)
+      val ua = uac.hasNext ? uac.next | null
+      
+      ua match {
       case null => "unknown"
       case to   => to.s( "ua" )
       }
@@ -208,7 +211,10 @@ object UserAgent extends MongoEntity( tid = "a0Dt" ) {
 
   def idFor( ua:String ):Int = synchronized {
     idByUa.getOrElseUpdate( ua, {
-      db.findOne( Mobj( "ua" -> ua ) ) match {
+      val uaidc = db.find( Mobj( "ua" -> ua ) ).limit(1)
+      val uaid = uaidc.hasNext ? uaidc.next | null
+      
+      uaid match {
       case null =>
         val id = AutoIncrement( "userAgent" )
         db.save( Mobj( "_id" -> id, "ua" -> ua ) )

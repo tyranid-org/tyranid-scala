@@ -104,10 +104,8 @@ object ContactInfo extends MongoEntity( tid = "a0Ov" ) {
   "lastInviteDate"   is DbDateTime       ;
   
   def ensure( email:String, name:String, company:String = null, beta:Boolean = false ) = {
-    var contactInfo = ContactInfo.db.findOne( Mobj( "email" -> email.toPatternI ) )
-    
-    if ( contactInfo == null )
-      contactInfo = ContactInfo.make
+    val contactInfoC = ContactInfo.db.find( Mobj( "email" -> email.toPatternI ) ).limit(1)
+    val contactInfo = contactInfoC.hasNext ? contactInfoC.next | ContactInfo.make
     
     if ( contactInfo.isNew ) {
       contactInfo( 'name ) = name
@@ -194,8 +192,8 @@ class UserMeta extends MongoEntity( "a01v" ) {
   def nameFor( userId:ObjectId ) = "TODO"
 
   def ensureUser( email:String, invitedBy:ObjectId ) = {
-
-    var u = db.findOne( Mobj( "email" -> ( "^" + email.encRegex + "$" ).toPatternI ) )
+    val uc = db.find( Mobj( "email" -> ( "^" + email.encRegex + "$" ).toPatternI ) ).limit(1)    
+    var u = uc.hasNext ? uc.next | null
 
     if ( u != null )
       apply( u )

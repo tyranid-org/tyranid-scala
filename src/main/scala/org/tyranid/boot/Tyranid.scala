@@ -46,7 +46,8 @@ object TyranidConfig extends MongoEntity( tid = "a03t" ) {
   def apply():TyranidConfig = singleton
 
   lazy val singleton = {
-    var rec = apply( db.findOne( Mobj() ) )
+    val recc = db.find( Mobj() ).limit(1)
+    var rec = recc.hasNext ? apply( recc.next ) | null
 
     if ( rec == null ) {
       rec = make

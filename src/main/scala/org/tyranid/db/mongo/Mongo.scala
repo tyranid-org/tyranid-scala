@@ -166,8 +166,7 @@ case class DBCollectionImp( coll:DBCollection ) {
 
   def +=( obj:DBObject ) = coll.insert( obj )
   
-  // TODO:  is there a way to implement this without actually bringing the object back?
-  def exists( query:DBObject ) = coll.findOne( query ) != null
+  def exists( query:DBObject ) = coll.find( query ).limit(1).hasNext
 
   def updateId( id:ObjectId, update:DBObject ) =
     coll.update( Mobj( "_id" -> id ), update )
@@ -180,8 +179,11 @@ case class DBCollectionImp( coll:DBCollection ) {
    * This attempts to find the object in the collection.  If it does not exist, a clone of the
    * query object is returned.
    */
-  def findOrMake( query:DBObject ) =
-    coll.findOne( query ) match {
+  def findOrMake( query:DBObject ) = {
+    val resc = coll.find( query ).limit(1)
+    val res = resc.hasNext ? resc.next | null
+    
+    res match {
     case null =>
       val o =
         query match {
@@ -192,6 +194,7 @@ case class DBCollectionImp( coll:DBCollection ) {
       o.deep.asInstanceOf[DBObject]
     case o    => o
     }
+  }
 }
 
 case class DBCursorImp( cursor:DBCursor ) extends Iterator[DBObject] {

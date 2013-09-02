@@ -74,7 +74,8 @@ object Email {
     "@yahoo.com" )
 
   def isBlacklisted( email:String ) = {
-    val u = B.User.db.findOne( Mobj( "email" -> email.toPatternI ), Mobj( "noEmail" -> 1 ) )
+    val uc = B.User.db.find( Mobj( "email" -> email.toPatternI ), Mobj( "noEmail" -> 1 ) ).limit(1)
+    val u = uc.hasNext ? uc.next | null
     
     ( u == null ) ? false | u.b( 'noEmail )
   }

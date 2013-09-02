@@ -33,8 +33,11 @@ object AutoIncrement {
 
   private lazy val db = {
     val db = Mongo.connect.db( B.profileDbName )( "auto_increment" )
-    if ( db.findOne() == null )
+    val dbc = db.find().limit(1)
+    
+    if ( !dbc.hasNext )
       db.save( Mobj( "_id" -> 1 ) )
+      
     db
   }
 

@@ -206,7 +206,11 @@ $( function() {
     case "/out" =>
       val org = sess.user.org
       val hasOrg = !org.isNew
-      val sso = hasOrg ? SsoMapping.db.findOne( Mobj( "org" -> org.id ) ) | null
+      val sso = hasOrg ? {
+        val ssoc = SsoMapping.db.find( Mobj( "org" -> org.id ) ).limit(1)
+        ssoc.hasNext ? ssoc.next | null
+      } | null
+      
       val ssoLoe:String = ( sso == null ) ? null | sso.s( 'loEndpoint ) 
       val website = ( ssoLoe.isBlank ) ? T.website( "/?lo=1" + ( web.b( 'xhr ) ? "&xhr=1" | "" ), sess.user ) | ssoLoe
       
@@ -269,7 +273,8 @@ $( function() {
           return web.json( web.jsonRes( sess ) )
         }
 
-        val dbUser = B.User.db.findOne( Mobj( "email" -> email.toPatternI ) )
+        val dbUserc = B.User.db.find( Mobj( "email" -> email.toPatternI ) ).limit(1)
+        val dbUser = dbUserc.hasNext ? dbUserc.next | null
 
         if ( dbUser == null ) {
           sess.warn( "Sorry, it doesn't look like the email address " + email + " is on " + B.applicationName + "." )
@@ -293,10 +298,12 @@ $( function() {
           B.emailTemplates.forgotPassword( user )          
         }
         
-        return web.json( web.jsonRes( sess ) )
+        web.jsRes()
+        //return web.json( web.jsonRes( sess ) )
       } else {
-        val dbUser = B.User.db.findOne(Mobj("resetCode" -> forgotCode))
-
+        val dbUserc = B.User.db.find( Mobj( "resetCode" -> forgotCode ) ).limit(1)
+        val dbUser = dbUserc.hasNext ? dbUserc.next | null
+        
         if ( dbUser == null ) {
           sess.notice( "Account access code not found!", deferred = "/#dashboard" )
           //web.redirect( "/log/in" )
@@ -307,7 +314,7 @@ $( function() {
           sess.login( user )
           user.save
           
-          sess.notice( "You can now change your password in <em>My Profile</em>.", deferred = "/#dashboard" )
+          sess.notice( "You can now change your password in <em>My Profile</em>.", deferred = "/#dashboard" )          
           web.jsRes( Js( "V.common.set( " + user.toClientCommonMap().toJsonStr( client = true ) + " ); V.app.load( '/#dashboard' )" ) )
         }
       }
@@ -338,7 +345,9 @@ $( function() {
           }
           
           val domain = Email.domainFor( email )
-          val org = B.Org( B.Org.db.findOne( Mobj( "domain" -> ( "^" + domain.encRegex + "$" ).toPatternI ) ) )
+          
+          val orgc = B.Org.db.find( Mobj( "domain" -> ( "^" + domain.encRegex + "$" ).toPatternI ) ).limit(1)
+          val org = orgc.hasNext ? B.Org( orgc.next ) | null
           
           if ( org != null ) {
             if ( !B.canAddUser( org ) ) {
@@ -397,7 +406,8 @@ $( function() {
       if ( inviteCode.notBlank ) {
         user( 'activationCode ) = inviteCode
         
-        val contact = ContactInfo.db.findOne( Mobj( "inviteCode" -> inviteCode ) )
+        val contactc = ContactInfo.db.find( Mobj( "inviteCode" -> inviteCode ) ).limit(1)
+        val contact = contactc.hasNext ? contactc.next | null
         
         if ( contact != null ) {
           user( 'email ) = contact.s( 'email )
@@ -472,7 +482,8 @@ $( function() {
           TidItem.by( B.Org.idToTid( orgId ) ).label
         } else {
           val domain = Email.domainFor( userEmail )
-          val org = B.Org.db.findOne( Mobj( "domain" -> ( "^" + domain.encRegex + "$" ).toPatternI ) )
+          val orgc = B.Org.db.find( Mobj( "domain" -> ( "^" + domain.encRegex + "$" ).toPatternI ) ).limit(1)
+          val org = orgc.hasNext ? orgc.next | null
             
           if ( org != null ) {
             T.user( 'org ) = org.id
@@ -653,7 +664,8 @@ $( function() {
     for ( app <- networks;
           uid = suser.s( app.idName );
           if uid.notBlank ) {
-      val user = B.User.db.findOne( Mobj( app.idName -> uid ) ) 
+      val userc = B.User.db.find( Mobj( app.idName -> uid ) ).limit(1)
+      val user = userc.hasNext ? userc.next | null
 
       if ( user != null )
         return B.User( user )

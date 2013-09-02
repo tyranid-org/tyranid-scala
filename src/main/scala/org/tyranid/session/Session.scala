@@ -135,7 +135,11 @@ class ThreadData {
     if ( user == null ) 
       return baseWebsite  + path 
       
-    val ssoMappingImpl = ( ssoMapping == null ) ? ( ( user.obj.oid( 'org ) != null ) ? SsoMapping.db.findOne( Mobj( "org" -> user.obj.oid( 'org ) ) ) | null ) | ssoMapping
+    val ssoMappingImpl = ( ssoMapping == null ) ? ( ( user.obj.oid( 'org ) != null ) ?
+      {
+        val ssoc = SsoMapping.db.find( Mobj( "org" -> user.obj.oid( 'org ) ) ).limit(1)
+        ssoc.hasNext ? ssoc.next | null
+      } | null ) | ssoMapping
     
     if ( ssoMappingImpl == null )
       return baseWebsite + path

@@ -279,7 +279,8 @@ $( $('#idp').focus() );
       }
       
       val orgId = mapping.oid( 'org )
-      val user = B.User.db.findOne( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) )
+      val userc = B.User.db.find( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) ).limit(1)
+      val user = userc.hasNext ? userc.next | null
       
       if ( user == null ) {
         if ( B.debugSso )

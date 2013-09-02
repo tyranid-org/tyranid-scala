@@ -37,8 +37,8 @@ object GeoCode extends MongoEntity( tid = "a0Lt" ) {
   def byRawAddress( rawAddress:String ) = byCanonicalAddress( canonical( rawAddress ) )
 
   def byCanonicalAddress( canonicalAddress:String ) = {
-
-    val obj = db.findOne( Mobj( "_id" -> canonicalAddress ) )
+    val objc = db.find( Mobj( "_id" -> canonicalAddress ) ).limit(1)
+    val obj = objc.hasNext ? objc.next | null
 
     if ( obj != null ) {
       val coordinates = obj.a( 'c )

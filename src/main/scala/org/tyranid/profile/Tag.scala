@@ -52,7 +52,10 @@ object Tag extends MongoEntity( tid = "a0Ct" ) {
     val tagl = tag.toLowerCase
 
     tags.getOrElseUpdate( tagl, {
-      db.findOne( Mobj( "name" -> tagl ) ) match {
+      val tc = db.find( Mobj( "name" -> tagl ) ).limit(1)
+      val t = tc.hasNext ? tc.next | null
+      
+      t match {
       case null =>
         val id = AutoIncrement( "tag" )
         db.save( Mobj( "_id" -> id, "name" -> tagl, "on" -> new Date() ) )

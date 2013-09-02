@@ -162,11 +162,11 @@ object Cap extends MongoEntity( tid = "a0Et" ) {
       str = "http://alerts.weather.gov/cap/us.php?x=0".GET().s
       for ( entryXml <- str.toXml \ "entry" ) {
   
-        var entry = db.findOne( Mobj( "_id" -> idFromEntry( entryXml ) ) )
+        val entryc = db.find( Mobj( "_id" -> idFromEntry( entryXml ) ) ).limit(1)
+        var entry = entryc.hasNext ? entryc.next | null
   
-        if ( entry == null ) {
+        if ( entry == null )
           entry = Mobj()
-        }
 
         if ( entry.i( 'setid ) == 0 )
           entry( 'setid ) = AutoIncrement( "cap" )
@@ -264,7 +264,8 @@ object Weatherlet extends Weblet {
     rpath match {
     case "/capinfo" =>
 
-      val capo = Cap.db.findOne( Mobj( "setid" -> web.req.i( 'setid ) ) )
+      val capoc = Cap.db.find( Mobj( "setid" -> web.req.i( 'setid ) ) ).limit(1)
+      val capo = capoc.hasNext ? capoc.next | null
 
       web.res.html(
         if ( capo == null )
