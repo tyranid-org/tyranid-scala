@@ -1,5 +1,5 @@
 /**
-\ * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,34 @@ package org.tyranid.time
 
 import java.util.Date
 
+
 import scala.collection.mutable
 
+import com.mongodb.DBObject
+
 import org.tyranid.Imp._
+import org.tyranid.db.mongo.{ MongoEntity, MongoRecord, DbMongoId }
+import org.tyranid.db.{ DbChar, DbDateTime, DbLong, DbBoolean }
+import org.tyranid.db.mongo.Imp._
 import org.tyranid.json.JsModel
 import org.tyranid.web.{ Weblet, WebContext }
 
+object ScheduledTask extends MongoEntity( "a0Mv" ) {
+  type RecType = ScheduledTask
+  override def convert( obj:DBObject, parent:MongoRecord ) = new ScheduledTask( obj, parent )
+  
+  "_id"         is DbMongoId         is 'id;
+  "subject"     is DbChar(30)        ;
+  "startOn"     is DbDateTime        ;
+  "periodMs"    is DbLong            ;
+  "skipWeekend" is DbBoolean         ;
+  "singular"    is DbBoolean         ; // Either all servers do this task or just one
+  "serverIp"    is DbChar(12)        ; // Server IP Address servicing this task
+  "active"      is DbChar(12)        ; // Server IP Address servicing this task
+}
+
+class ScheduledTask( obj:DBObject, parent:MongoRecord ) extends MongoRecord( ScheduledTask.makeView, obj, parent ) {
+}
 
 case class Task( subject:String, var nextMs:Long, periodMs:Long, var active:Boolean, task: () => Unit, skipWeekend:Boolean = false ) {
   var runs = 0
@@ -57,36 +79,42 @@ case class Task( subject:String, var nextMs:Long, periodMs:Long, var active:Bool
 }
 
 object Scheduler {
-
   private[time] val tasks = mutable.ArrayBuffer[Task]()
 
   def schedule( subject:String, start:Date, periodMs:Long, active:Boolean = true, skipWeekend:Boolean = false )( task: () => Unit ) {
 
     tasks.synchronized {
+      //val sTask = ScheduledTask( ScheduledTask.db.findOrMake( Mobj( "subject" -> subject ) ) )
+      
+      //if ( sTask.isNew )
+      //  sTask.save
+        
       val idx = tasks.indexWhere( _.subject == subject )
       if ( idx != -1 ) tasks.remove( idx )
       tasks += Task( subject, start.getTime, periodMs, active, task, skipWeekend = skipWeekend )
     }
   }
 
-  background {
-    while ( true ) {
-      val size =
-        tasks.synchronized {
-          tasks.sortBy( _.nextMs )
-          tasks.size
+  def start = {
+    background {
+      while ( true ) {
+        val size =
+          tasks.synchronized {
+            tasks.sortBy( _.nextMs )
+            tasks.size
+          }
+  
+        val nowMs = System.currentTimeMillis
+  
+        for ( i <- 0 until size ) {
+          val task = tasks( i )
+  
+          if ( task.active && nowMs >= task.nextMs )
+            task.run( manual = false )
         }
-
-      val nowMs = System.currentTimeMillis
-
-      for ( i <- 0 until size ) {
-        val task = tasks( i )
-
-        if ( task.active && nowMs >= task.nextMs )
-          task.run( manual = false )
+  
+        Thread.sleep( Time.OneMinuteMs )
       }
-
-      Thread.sleep( Time.OneMinuteMs )
     }
   }
 }
