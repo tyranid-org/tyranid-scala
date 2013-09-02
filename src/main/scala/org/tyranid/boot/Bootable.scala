@@ -241,7 +241,11 @@ trait Bootable {
   val saasId:String = null
   val pingIdentityUsername:String = null
   val pingIdentityPassword:String = null
-  
+
+  // CreatePDF
+  val createPDFUsername:String = null
+  val createPDFPassword:String = null
+
   // Social
   val facebook:FbApp      = null
   val linkedIn:LiApp      = null
