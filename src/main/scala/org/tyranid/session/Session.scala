@@ -18,21 +18,21 @@
 package org.tyranid.session
 
 import java.util.{ Date, TimeZone }
-
 import javax.servlet.http.{ HttpSession, HttpSessionEvent, HttpSessionListener }
 
 import scala.collection.mutable
 import scala.xml.{ Node, NodeSeq, Unparsed }
 
 import org.bson.types.ObjectId
-
 import com.mongodb.DBObject
 
+import org.tyranid.Imp._
+import org.tyranid.db.{ DbChar, DbLink }
 import org.tyranid.db.meta.TidCache
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.http.UserAgent
 import org.tyranid.json.{ Js, JsCmd }
-import org.tyranid.Imp._
 import org.tyranid.math.Base62
 import org.tyranid.profile.{ LoginCookie, User, UserStat, UserStatType }
 import org.tyranid.report.Query
@@ -41,6 +41,7 @@ import org.tyranid.sso.SsoMapping
 import org.tyranid.time.Time
 import org.tyranid.QuickCache
 import org.tyranid.web.{ Comet, WebContext }
+
 
 object SessionCleaner { 
   def clean {
@@ -511,6 +512,40 @@ trait Session extends QuickCache {
     pathChoices( wpath ) = rpath
   }
 }
+
+
+/*
+ * * *   SessionData
+ *
+ * Session represents the local Session in RAM in the HttpSession
+ * SessionData represents the global Session in MongoDB ... a Session can be reconstituted from a SessionData if a session needs to be migrated
+ */
+
+class SessionDataMeta extends MongoEntity( "a04t" ) {
+  type RecType >: Null <: SessionData
+  override def convert( obj:DBObject, parent:MongoRecord ):RecType = throw new UnsupportedOperationException()
+
+  "_id"                is DbMongoId         is 'id is 'client;
+
+  "sv"                 is DbChar(32)        as "Server ID";
+  "ss"                 is DbChar(32)        as "Session ID";
+
+  override def init = {
+    super.init
+
+    "u"                is DbLink(B.User)    as "User";
+  }
+
+}
+
+trait SessionData extends MongoRecord {
+  
+}
+
+
+/*
+ * * *   Notification
+ */
 
 object Notification {
   val NOTICE = 1
