@@ -1319,14 +1319,17 @@ abstract class Content( override val view:MongoView,
   def isMember( user:org.tyranid.profile.User ) = canEdit( user ) || canView( user )
 
   def canView( tid:String ):Boolean =
-    tid.nonBlank &&
-    a_?( 'v ).exists( t =>
-      t == tid || t == B.publicGroup.tid || { //  ( B.User.hasTid( tid ) && t == B.publicGroup.tid ) || {
-        val ot = t._s
-     
-        Group.hasTid( ot ) &&
-        Group.byTid( ot ).pluck( _.canView( tid ), false )
-      }
+    T.permissionCache.getOrElseUpdate(
+      this.tid + '|' + tid,
+      tid.nonBlank &&
+      a_?( 'v ).exists( t =>
+        t == tid || t == B.publicGroup.tid || { //  ( B.User.hasTid( tid ) && t == B.publicGroup.tid ) || {
+          val ot = t._s
+       
+          Group.hasTid( ot ) &&
+          Group.byTid( ot ).pluck( _.canView( tid ), false )
+        }
+      )
     )
 
   def canViewDirectly( tid:String ):Boolean =

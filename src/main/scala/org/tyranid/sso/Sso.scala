@@ -334,6 +334,7 @@ $( $('#idp').focus() );
           newUser( 'inviteOptOut ) = true
           
         newUser.join( org )
+
         newUser.save
         
         loginUser( newUser, web )
@@ -484,6 +485,22 @@ $( $('#idp').focus() );
             u( 'title ) = json.s(title )
             save = true
           }
+        }
+        
+        if ( !u.hasOrg ) {
+          val org = B.Org.getById( orgId )
+          
+          if ( !B.canAddUser( org ) ) {
+            sess.error( "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available." )
+            web.jsRes()
+            return
+          }
+          
+          u.join( org )
+          B.welcomeUserEvent
+          Group.ensureInOrgGroup( u )        
+
+          save = true
         }
         
 //        if ( u.s( 'thumbnail ).isBlank ) {

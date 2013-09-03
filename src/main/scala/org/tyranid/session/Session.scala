@@ -234,6 +234,13 @@ class ThreadData {
 
 	def requestCached[ T ]( key:String )( block: => T ):T = requestCache.getOrElseUpdate( key, block ).as[T]
 
+  
+  /*
+   * * *  Permissions Cache
+   */
+
+  def permissionCache = requestCached( "permissions" ) { mutable.Map[String,Boolean]() }
+  
 
   /*
    * * *  Markdown
