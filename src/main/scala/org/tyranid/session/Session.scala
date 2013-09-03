@@ -525,7 +525,7 @@ class SessionDataMeta extends MongoEntity( "a04t" ) {
   type RecType >: Null <: SessionData
   override def convert( obj:DBObject, parent:MongoRecord ):RecType = throw new UnsupportedOperationException()
 
-  "_id"                is DbMongoId         is 'id is 'client;
+  "_id"                is DbMongoId         is 'id;
 
   "sv"                 is DbChar(32)        as "Server ID";
   "ss"                 is DbChar(32)        as "Session ID";
@@ -536,6 +536,19 @@ class SessionDataMeta extends MongoEntity( "a04t" ) {
     "u"                is DbLink(B.User)    as "User";
   }
 
+  /*
+   * TODO:
+   *
+   *   1.  when a user logs in, add an entry to this table
+   *
+   *   2.  change the session list in admin to use this table rather than the local session list
+   *
+   *   3.  change Comet.visit to use the CometQueue
+   *
+   *
+   *
+   *
+   */
 }
 
 trait SessionData extends MongoRecord {

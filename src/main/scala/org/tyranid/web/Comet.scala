@@ -20,10 +20,15 @@ package org.tyranid.web
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 
+import com.mongodb.DBObject
+
 import org.cometd.bayeux.server.{ BayeuxServer, ServerSession }
 import org.cometd.server.AbstractService
 
 import org.tyranid.Imp._
+import org.tyranid.db.{ DbChar, DbLink }
+import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.json.JsCmd
 import org.tyranid.session.{ Session, WebSession }
 
@@ -109,5 +114,30 @@ object Comet {
       }
     }
   }
+}
+
+
+/*
+ * * *  CometQueue
+ */
+
+object CometQueue extends MongoEntity( tid = "a05t" ) {
+  type RecType = CometQueue
+  override def convert( obj:DBObject, parent:MongoRecord ) = new CometQueue( obj, parent )
+
+  "_id"      is DbMongoId         is 'id;
+  "sv"       is DbChar(32)        as "Server";
+
+//"m"        is DbObject          as "Comet Message";
+
+  override def init = {
+    super.init
+    "u"      is DbLink(B.User)    as "User";
+  }
+
+}
+
+class CometQueue( obj:DBObject, parent:MongoRecord ) extends MongoRecord( CometQueue.makeView, obj, parent ) {
+
 }
 
