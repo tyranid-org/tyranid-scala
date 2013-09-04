@@ -90,6 +90,8 @@ class StringImp( s:String ) extends Serializable {
     if ( s.isBlank || s.startsWith( "https://" ) || s.startsWith( "http://" ) ) s
     else                                                            "http://" + s
 
+  def encCsv = s.replace( "\"", "\\\"" )
+  
 	def encUrl = java.net.URLEncoder.encode( s, "UTF-8" ) 
 	def decUrl = java.net.URLDecoder.decode( s, "UTF-8" )
   //def decUrl = new org.apache.commons.codec.net.URLCodec( "UTF-8" ).decode( s )
