@@ -346,7 +346,9 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   
   def canBeSsoSynced( user:User ):Boolean = {
     val userOrgId = user.orgId 
-    val ssoExists = userOrgId != null && SsoMapping.db.exists( Mobj( "org" -> userOrgId ) )
+    val ssoExists = userOrgId != null && {
+      T.requestCache.getOrElseUpdate( "sso", SsoMapping.db.exists( Mobj( "org" -> userOrgId ) ) ).as[Boolean]
+    }
     
     if ( !ssoExists )
       return false
@@ -480,6 +482,10 @@ object GroupSettings extends MongoEntity( tid = "a0Rt" ) {
   
   def forGroupTid( tid:String, user:User ) = 
     GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> user.id , "g" -> Group.tidToId( tid ) ) ) )
+    
+  val index = {
+    db.ensureIndex( Mobj( "u" -> 1, "g" -> 1 ) )
+  }    
 }
 
 class GroupSettings( obj:DBObject, parent:MongoRecord ) extends MongoRecord( GroupSettings.makeView, obj, parent ) {
