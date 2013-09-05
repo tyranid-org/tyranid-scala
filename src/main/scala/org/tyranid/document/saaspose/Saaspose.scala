@@ -46,10 +46,10 @@ object Saaspose {
 
 case class SaasposeApp( appSid:String, appKey:String ) {
   val fileUploadUri = "http://api.saaspose.com/v1.0/storage/file/"
-  val slidesUri = "http://api.saaspose.com/v1.0/slides/"
+  val slidesUri = "http://api.aspose.com/v1.1/slides/"
   
   def signUrl( uri:String ) = {
-    val url = uri.replace( " ","%20" ) + "?appSID=" + appSid
+    val url = uri.replace( " ","%20" ) + "&appSID=" + appSid
 
     // get an hmac_sha1 key from the raw key bytes
     val signingKey = new SecretKeySpec( appKey.getBytes(), "HmacSHA1" )//HMAC_SHA1_ALGORITHM
@@ -61,6 +61,7 @@ case class SaasposeApp( appSid:String, appKey:String ) {
     // compute the hmac on input data bytes
     val rawHmac = mac.doFinal( url.getBytes() )
     val newresult = Base64.toString( rawHmac )
+    println( "base 64: " + newresult )
     
     // Remove invalid symbols.
     val result = newresult.endsWith( "/" ) ? newresult.prefix( '/' ) | newresult 
@@ -128,6 +129,35 @@ case class SaasposeApp( appSid:String, appKey:String ) {
     }
   }
 
+  def uploadBinaryFile2( localFile:File, uploadUrl:String, strHttpCommand:String, format:String = "PPTX" ) = {
+    val url = new URL( uploadUrl )
+    //val buf = getBytesFromFile(localFile)
+    val connection = url.openConnection().as[HttpURLConnection]  
+    
+    //String parameters = "data=some_post_data"  
+    connection.setRequestMethod( strHttpCommand )
+    //connection.setRequestProperty("Accept", "text/json")
+    connection.setRequestProperty("Content-Type", "MultiPart/Form-Data")  
+    //byte bytes[] = parameters.getBytes();  
+    connection.setRequestProperty("Content-length", "" + localFile.length)
+    connection.setUseCaches( false )
+    connection.setDoOutput(true)
+    connection.connect()
+    
+    val out  = connection.getOutputStream()  
+    
+    val connIn = new FileInputStream( localFile )
+    val connBufIn = new java.io.BufferedInputStream( connIn )
+    
+    connBufIn.transferTo( out, true )
+
+    val tmpFile = File.createTempFile( localFile.getName, "." + format.toLowerCase )
+    val fileOut = new FileOutputStream( tmpFile )
+    connection.getInputStream().transferTo( fileOut, true )
+  
+    tmpFile
+  }
+  
   def processCommand( strURI:String, strHttpCommand:String ) = {
     val address = new URL( strURI )
     val httpCon = address.openConnection().as[HttpURLConnection]
@@ -144,7 +174,16 @@ case class SaasposeApp( appSid:String, appKey:String ) {
     httpCon.getInputStream
   }
   
-  def convertPpt( file:File ): File = {
+  def convert2( file:File, format:String = "PPTX" ): File = {
+    val url = B.saaspose.slidesUri + "convert?format=" + format
+    println(url)
+    val uploadUrl = signUrl( url )
+    println( uploadUrl )
+    
+    uploadBinaryFile2( file, uploadUrl, "PUT", format )
+  }
+  
+  def convert( file:File, format:String = "PPTX" ): File = {
     val filename = file.getName
     val uploadUrl = signUrl( B.saaspose.fileUploadUri + filename )
     
@@ -153,7 +192,7 @@ case class SaasposeApp( appSid:String, appKey:String ) {
     println( "Upload: " + Json.parse( responseStr ).toJsonStr( true ) )
     
     
-    val slidesUri = B.saaspose.slidesUri + filename + "?format=PPTX"
+    val slidesUri = B.saaspose.slidesUri + filename + "?format=" + format
     val slidesUrl = signUrl( slidesUri )
 
     //return Http.GET_File( slidesUrl, ext = ".pptx", headers = Map(
@@ -163,7 +202,7 @@ case class SaasposeApp( appSid:String, appKey:String ) {
     
     val responseStream = processCommand( slidesUrl, "GET" )
 
-    val tmpFile = File.createTempFile( file.getName, ".pptx" )
+    val tmpFile = File.createTempFile( file.getName, "." + format.toLowerCase )
     val out = new FileOutputStream( tmpFile )
     responseStream.transferTo( out, true )
 
