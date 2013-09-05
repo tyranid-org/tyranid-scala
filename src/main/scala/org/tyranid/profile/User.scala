@@ -201,31 +201,30 @@ class UserMeta extends MongoEntity( "a01v" ) {
       createUser( email, invitedBy = invitedBy )
   }
 
-  def hex( array:Array[Byte]) = {
-    val sb = new StringBuilder
-    
-    for ( a <- array )
-      sb.append( Integer.toHexString( ( a & 0xFF ) | 0x100).substring( 1, 3 ) )        
-    
-    sb.toString()
-  }
-  
-  def md5Hex( message:String ):String = {
-    try {
-      val md = MessageDigest.getInstance( "MD5" )
-      return hex( md.digest( message.getBytes( "CP1252" ) ) )
-    } catch {
-      case t:Throwable =>
-    }
-    
-    return null
-  }
-
   /* 
    * Check to see if the user has a Gravatar, and use it
    * if they do.
    */
   def setGravatar( userId:ObjectId, email:String ) {
+    def md5Hex( message:String ):String = {
+      def hex( array:Array[Byte]) = {
+        val sb = new StringBuilder
+        
+        for ( a <- array )
+          sb.append( Integer.toHexString( ( a & 0xFF ) | 0x100).substring( 1, 3 ) )        
+        
+        sb.toString()
+      }
+      
+      try {
+        return hex( MessageDigest.getInstance( "MD5" ).digest( message.getBytes( "CP1252" ) ) )
+      } catch {
+        case t:Throwable =>
+      }
+      
+      return null
+    }
+    
     background {
       try {
         val iconUrl = "https://secure.gravatar.com/avatar/" + md5Hex( email ) + ".jpg?d=404"
@@ -239,7 +238,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
       }
     }
   }
-
+  
   def createUser( email:String, possibleNames:String = null, invitedBy:ObjectId = null ) = {
     val user = make
     user( 'email ) = email
@@ -306,6 +305,8 @@ trait User extends MongoRecord {
     return true
   }
 
+  def cool = { null }
+  
   def email = s( 'email )
 
   /**
