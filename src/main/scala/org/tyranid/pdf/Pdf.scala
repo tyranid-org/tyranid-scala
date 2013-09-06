@@ -186,37 +186,65 @@ object Pdf {
       outFile
     }
   }
-  
+
   def convertApiPptx( inFile:File, outFile:File ) = {
     // Only do one at a time
-    lock2.synchronized {
-      var fileStream:FileOutputStream = null
-    
-      try {
-        fileStream = new FileOutputStream( outFile )     
-     
-        AppStat.PdfConvertApiSend
-        
-        val result = org.tyranid.http.Http.POST_FILE( "http://do.convertapi.com/PowerPoint2Pdf", inFile, inFile.length, inFile.getName, Map( "ApiKey" -> B.convertApiKey ) )
-        val res = result.response
-        val entity = res.getEntity
-        
-        if ( entity != null )
-          entity.getContent.transferTo( fileStream, true )
-           
-        AppStat.PdfConvertApiSuccess
-      } catch {
-        case e:IOException =>
-          AppStat.PdfConvertApiFailure
-          println( e.getMessage )
-          throw new RuntimeException( e )
-      } finally {
-        if ( fileStream != null )
-          fileStream.close
-      }
+    var fileStream:FileOutputStream = null
+  
+    try {
+      fileStream = new FileOutputStream( outFile )     
+   
+      AppStat.PdfConvertApiSend
       
-      outFile
+      val result = org.tyranid.http.Http.POST_FILE( "http://do.convertapi.com/PowerPoint2Pdf", inFile, inFile.length, inFile.getName, Map( "ApiKey" -> B.convertApiKey ) )
+      val res = result.response
+      val entity = res.getEntity
+      
+      if ( entity != null )
+        entity.getContent.transferTo( fileStream, true )
+         
+      AppStat.PdfConvertApiSuccess
+    } catch {
+      case e:IOException =>
+        AppStat.PdfConvertApiFailure
+        println( e.getMessage )
+        throw new RuntimeException( e )
+    } finally {
+      if ( fileStream != null )
+        fileStream.close
     }
+    
+    outFile
+  }
+
+  def convertApiImage( inFile:File, outFile:File ) = {
+    // Only do one at a time
+    var fileStream:FileOutputStream = null
+  
+    try {
+      fileStream = new FileOutputStream( outFile )     
+   
+      AppStat.PdfConvertApiSend
+      
+      val result = org.tyranid.http.Http.POST_FILE( "http://do.convertapi.com/Image2Pdf", inFile, inFile.length, inFile.getName, Map( "ApiKey" -> B.convertApiKey ) )
+      val res = result.response
+      val entity = res.getEntity
+      
+      if ( entity != null )
+        entity.getContent.transferTo( fileStream, true )
+         
+      AppStat.PdfConvertApiSuccess
+    } catch {
+      case e:IOException =>
+        AppStat.PdfConvertApiFailure
+        println( e.getMessage )
+        throw new RuntimeException( e )
+    } finally {
+      if ( fileStream != null )
+        fileStream.close
+    }
+    
+    outFile
   }
   
 }

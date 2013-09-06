@@ -130,6 +130,24 @@ case class SaasposeApp( appSid:String, appKey:String ) {
   }
 
   def uploadBinaryFile2( localFile:File, uploadUrl:String, strHttpCommand:String, format:String = "PPTX" ) = {
+    val res = Http.POST_FILE( uploadUrl, localFile, localFile.length(), localFile.getName(), put = true )
+    
+    val entity = res.response.getEntity
+    
+    if ( entity != null ) {
+      val instream = entity.getContent
+      
+      val tmpFile = File.createTempFile( localFile.getName, "." + format.toLowerCase )
+      val out = new FileOutputStream( tmpFile )
+       
+      instream.transferTo( out, true )
+
+      tmpFile
+    } else {
+      null
+    }
+    
+    /*
     val url = new URL( uploadUrl )
     //val buf = getBytesFromFile(localFile)
     val connection = url.openConnection().as[HttpURLConnection]  
@@ -156,6 +174,7 @@ case class SaasposeApp( appSid:String, appKey:String ) {
     connection.getInputStream().transferTo( fileOut, true )
   
     tmpFile
+    */
   }
   
   def processCommand( strURI:String, strHttpCommand:String ) = {

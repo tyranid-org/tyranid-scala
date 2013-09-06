@@ -33,6 +33,7 @@ import org.tyranid.Imp._
 import org.tyranid.content.Content
 import org.tyranid.db.{ Entity }
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.document.CloudConvertApp
 import org.tyranid.document.crocodoc.CrocApp
 import org.tyranid.document.dropbox.DropboxApp
 import org.tyranid.document.issuu.IssuuApp
@@ -263,6 +264,7 @@ trait Bootable {
   val scribd:ScribdApp = null
   val issuu:IssuuApp = null
   val saaspose:SaasposeApp = null
+  val cloudConvert:CloudConvertApp = null
   
   // ReCaptcha
   val reCaptchaPublicKey  = ""

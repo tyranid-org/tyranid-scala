@@ -21,16 +21,12 @@ import java.io.{ InputStream, File, FileInputStream, FileOutputStream, IOExcepti
 import java.net.URL
 import java.text.DateFormat
 import java.util.Date
-
 import javax.servlet.{ Filter, FilterChain, FilterConfig, ServletRequest, ServletResponse }
 import javax.servlet.http.{ Cookie, HttpServlet, HttpServletRequest, HttpServletResponse, HttpSession }
-
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.xml.NodeSeq
-
 import org.bson.types.ObjectId
-
 import org.apache.commons.httpclient.util.DateUtil
 import org.apache.http.{ Header, NameValuePair, HttpHost, HttpResponse, HttpRequestInterceptor }
 import org.apache.http.auth.AuthScope
@@ -48,7 +44,6 @@ import org.apache.http.message.{ BasicHeader, BasicNameValuePair }
 import org.apache.http.params.{ BasicHttpParams, HttpConnectionParams }
 import org.apache.http.protocol.{ ExecutionContext, HttpContext, BasicHttpContext }
 import org.apache.http.util.EntityUtils
-
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.json.JsCmd
 import org.tyranid.Imp._
@@ -56,6 +51,7 @@ import org.tyranid.math.Base36
 import org.tyranid.pdf.Pdf
 import org.tyranid.time.Time
 import org.tyranid.web.{ FileUploadSupport, WebHandledException }
+import javax.security.cert.X509Certificate
 
 case class RestException( code:String, message:String ) extends Exception
 
@@ -255,6 +251,31 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
   def ok = {
     res.setStatus( 200 )
   }
+  
+  /*
+  
+  def wrapClient( base:org.apache.http.client.HttpClient ) = {
+    import javax.security.cert.{ X509Certificate }
+    import javax.net.ssl.{ SSLContext, SSLSocketFactory, X509TrustManager, TrustManager }
+    
+    val ctx = SSLContext.getInstance("TLS")
+    val tm = new X509TrustManager() {
+       override def checkClientTrusted( xcs:Array[X509Certificate], string:String ) { }
+       override def checkServerTrusted( xcs:Array[X509Certificate], string:String) { }
+ 
+       override def getAcceptedIssuers() = { null }
+    }
+     
+    ctx.init(null, Array[TrustManager]{tm}, null )
+    val ssf = new org.apache.http.conn.ssl.SSLSocketFactory(ctx)
+    ssf.setHostnameVerifier(org.apache.http.conn.ssl.SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER)
+    val ccm = base.getConnectionManager()
+    val sr = ccm.getSchemeRegistry()
+    sr.register(new org.apache.http.conn.scheme.Scheme("https", ssf, 443))
+    new org.apache.http.impl.client.DefaultHttpClient(ccm, base.getParams())
+  }   
+  
+  */
   
   def json( json:Any, status:Int = 200, jsonpCallback:String = null, headers:Map[String,String] = null, req:HttpServletRequest = null, cache:Boolean = false ) = {
     var jsonContentType = "application/json"
@@ -596,9 +617,9 @@ object Http {
     execute( request )
   }
   
-  def POST_FILE( url:String, file:File, contentLength: Long, filename:String, params:collection.Map[String,String] = null, headers:collection.Map[String,String] = null, filePartName:String = "file" ):HttpResult = {
+  def POST_FILE( url:String, file:File, contentLength: Long, filename:String, params:collection.Map[String,String] = null, headers:collection.Map[String,String] = null, filePartName:String = "file", put:Boolean = false ):HttpResult = {
         
-    val request = new HttpPost( url )
+    val request = put ? new HttpPut( url ) | new HttpPost( url )
     
     if ( headers != null )
       request.setHeaders( convertHeaders( headers ) )
