@@ -61,6 +61,8 @@ object SsoMapping extends MongoEntity( tid = "a0Ut" ) {
   "newProjectImgs"  is DbText;
   "newProjectTags"  is DbText;
   "loEndpoint"      is DbUrl; // log out endpoint
+  "emailHeaderHtml" is DbText;
+  "emailHeaderText" is DbText;
   
   lazy val testMapping = {
     val ts = SsoMapping.make
