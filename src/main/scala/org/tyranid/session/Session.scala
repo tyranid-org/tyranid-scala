@@ -548,6 +548,10 @@ class SessionDataMeta extends MongoEntity( "a04t" ) {
    *
    *   1.  when a user logs in, add an entry to this table
    *
+   *       a.  probably need to keep the session active even if they aren't logged in
+   *
+   *       b.  expired lastModifiedDate on session
+   *
    *   2.  change the session list in admin to use this table rather than the local session list
    *
    *   3.  change Comet.visit to use the CometQueue
