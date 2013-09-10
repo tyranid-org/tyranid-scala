@@ -53,8 +53,9 @@ object MetaMimeType extends RamEntity( tid = "a00u" ) {
   val Video               = add( 15, "Video / Movie" )
   val XML                 = add( 16, "XML - Extensible Markup Language" )
   val ZIP                 = add( 17, "ZIP Archive" )
+  val PSD                 = add( 18, "Adobe Photoshop" )
 
-  val Image               = add( 18, "Image" ).setIncludes( Seq( BMP, GIF, JPEG, PNG, TIFF ) )
+  val Image               = add( 19, "Image" ).setIncludes( Seq( BMP, GIF, JPEG, PNG, TIFF, PSD ) )
 
   override def init = {
     super.init
@@ -99,8 +100,11 @@ object MimeType {
     MimeType( "application/pdf",                                                           PDF,                 "Portable Document Format",      Seq( "pdf" ) ),
     MimeType( "application/rtf",                                                           null,                "Rich Text",                     Seq( "rtf" ) ),
 
-    // Add ttf, 
+    // Add ttf,
     MimeType( "application/font-woff",                                                     null,                null,                            Seq( "woff" ) ),
+    
+    MimeType( "application/photoshop",                                                     PSD,                 "Adobe Photoshop",               Seq( "psd" ) ),
+    MimeType( "application/psd",                                                           PSD,                 "Adobe Photoshop",               Seq( "psd" ) ),
 
     MimeType( "application/vnd.ms-excel",                                                  MicrosoftExcel,      "Microsoft Excel",               Seq( "xls" ) ),
     MimeType( "application/vnd.ms-excel",                                                  MicrosoftExcel,      "Microsoft Excel Application",   Seq( "xla" ) ),
@@ -170,6 +174,7 @@ object MimeType {
     MimeType( "application/x-rar-compressed",                                              null,                null,                            Seq( "rar" ) ),
     MimeType( "application/x-wais-source",                                                 null,                "WAIS",                          Seq( "src" ) ),
     MimeType( "application/x-zip-compressed",                                              ZIP,                 "ZIP",                           Seq( "zip" ) ),
+    MimeType( "zz-application/zz-winassoc-psd",                                            PSD,                 "Adobe Photoshop",               Seq( "psd" ) ),
 
     MimeType( "audio/basic",                                                               null,                "Basic Audio",                   Seq( "au", "snd" ) ),
     MimeType( "audio/ogg",                                                                 null,                "OGG Audio",                     Seq( "oga", "ogg" ) ),
@@ -182,10 +187,14 @@ object MimeType {
     MimeType( "image/x-dxf",                                                               DXF,                 "Drawing Interchange Format",    Seq( "dxf" ) ),
     MimeType( "image/gif",                                                                 GIF,                 "GIF Image",                     Seq( "gif" ) ),
     MimeType( "image/jpeg",                                                                JPEG,                "JPEG Image",                    Seq( "jpeg", "jpg", "jpe" ) ),
+    MimeType( "image/photoshop",                                                           PSD,                 "Adobe Photoshop",               Seq( "psd" ) ),
     MimeType( "image/png",                                                                 PNG,                 "Portable Network Graphics",     Seq( "png" ) ),
+    MimeType( "image/psd",                                                                 PSD,                 "Adobe Photoshop",               Seq( "psd" ) ),
+    
     MimeType( "image/tiff",                                                                TIFF,                "Tagged Image File Format",      Seq( "tiff", "tif" ) ),
     MimeType( "image/svg+xml",                                                             SVG,                 "Scaled Vector Graphic",         Seq( "svg" ) ),
     MimeType( "image/x-cmu-raster",                                                        null,                "CMU Raster",                    Seq( "ras" ) ),
+    MimeType( "image/x-photoshop",                                                         PSD,                 "Adobe Photoshop",               Seq( "psd" ) ),
     MimeType( "image/x-portable-bitmap",                                                   null,                "Portable Bitmap",               Seq( "pbm" ) ),
     MimeType( "image/x-portable-graymap",                                                  null,                "Portable Grey Map",             Seq( "pgm" ) ),
     MimeType( "image/x-portable-anymap",                                                   null,                "Portable Any Map",              Seq( "pnm" ) ),
@@ -194,6 +203,7 @@ object MimeType {
     MimeType( "image/x-xbitmap",                                                           null,                "X Windows Bitmap",              Seq( "xbm" ) ),
     MimeType( "image/x-xpixmap",                                                           null,                "X PixMap",                      Seq( "xpm" ) ),
     MimeType( "image/x-xwindowdump",                                                       null,                "X Windows Dump",                Seq( "xwd" ) ),
+    
 
     MimeType( "text/css",                                                                  null,                "CSS",                           Seq( "css", "less" ) ),
     MimeType( "text/html",                                                                 HTML,                "HTML",                          Seq( "html", "htm" ) ),
