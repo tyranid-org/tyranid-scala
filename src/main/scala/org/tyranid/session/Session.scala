@@ -148,6 +148,8 @@ class ThreadData {
     return baseWebsite + "/sso/auth/" + ssoMappingImpl.id._s + "?startUrl=" + java.net.URLEncoder.encode( path, "UTF-8" )
   }
 
+  def ssoId = session.get( "ssoId" ).as[String]
+  
   def user:User =
     if ( session != null ) session.user
     else                   null

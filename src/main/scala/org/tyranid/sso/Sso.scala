@@ -44,6 +44,7 @@ import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
 object SsoMapping extends MongoEntity( tid = "a0Ut" ) {
   "_id"             is DbChar(8)     is 'id;
   "org"             is DbLink(B.Org) is 'required;
+  "group"           is DbLink(Group);
   "idpId"           is DbChar(40)    is 'required;
   "emailAttrib"     is DbChar(20)    is 'required;
   "firstNameAttrib" is DbChar(20);
@@ -77,7 +78,7 @@ object Ssolet extends Weblet {
   lazy val TOKEN_URL = URLEncoder.encode( T.baseWebsite + "/sso/token/", "UTF-8" ) 
   lazy val ERROR_URL = URLEncoder.encode( T.baseWebsite + "/sso/error", "UTF-8" ) 
 
-  def tokenUrl( id:String, startUrl:String ) = startUrl.isBlank ? ( TOKEN_URL + id ) | URLEncoder.encode( T.baseWebsite + "/sso/token/" + id + "?startUrl=" + URLEncoder.encode( startUrl, "UTF-8" ), "UTF-8" )
+  def tokenUrl( id:String, startUrl:String ) = startUrl.isBlank ? ( TOKEN_URL + id  ) | URLEncoder.encode( T.baseWebsite + "/sso/token/" + id + "?startUrl=" + URLEncoder.encode( startUrl, "UTF-8" ), "UTF-8" )
   
   // PingOne Documentation for this
   // https://connect.pingidentity.com/web-portal/appintegration?x=tyGMaRMgiMSYAHNoa21b84ce4ZKmtJ88
@@ -342,6 +343,8 @@ $( $('#idp').focus() );
         loginUser( newUser, web )
         sess = T.session
         
+        sess.put( "ssoId", id )
+        
         if ( B.debugSso )
           println( "DEBUG: New user created and saved." )
           
@@ -541,6 +544,7 @@ $( $('#idp').focus() );
         
         loginUser( u, web )
         sess = T.session
+        sess.put( "ssoId", id )
         
         if ( B.debugSso )
           println( "DEBUG: User is logged in." )
