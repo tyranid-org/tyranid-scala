@@ -44,7 +44,7 @@ import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.email.EmailTemplate
 import org.tyranid.profile.{ Group, OrgMeta, User, UserMeta }
 import org.tyranid.secure.{ AccessType, Multipass }
-import org.tyranid.session.{ Milestone, Session, ThreadData, SessionDataMeta }
+import org.tyranid.session.{ Milestone, Session, SessionData, ThreadData, SessionDataMeta }
 import org.tyranid.sms.NexmoApp
 import org.tyranid.social.{ TwApp }
 import org.tyranid.social.basecamp.BcApp
@@ -179,7 +179,8 @@ trait Bootable {
   @volatile var Org:OrgMeta = null
   @volatile var SessionData:SessionDataMeta = null
   @volatile var Location:MongoEntity = null
-  @volatile var newSession:() => Session = null
+  @volatile var newSession:()     => Session     = null
+  @volatile var newSessionData:() => SessionData = null
   
   def welcomeUserEvent
 

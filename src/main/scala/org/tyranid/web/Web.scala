@@ -20,6 +20,8 @@ package org.tyranid.web
 import com.newrelic.api.agent.NewRelic
 
 import java.io.IOException
+import java.util.Date
+
 import javax.servlet.{ Filter, FilterChain, FilterConfig, GenericServlet, ServletException, ServletRequest, ServletResponse, ServletContext }
 import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
 
@@ -99,6 +101,8 @@ trait TyrFilter extends Filter {
       val sess = T.session
       sess.put( "remoteHost", web.req.getRemoteHost() )
       sess.put( "remoteAddr", web.req.getRemoteAddr() )
+
+      sess.record( "rh" -> web.req.getRemoteHost, "ra" -> web.req.getRemoteAddr )
       
       //sess.put( "subdomain", web.req.getServerName )
       sess.ua( web )
@@ -212,8 +216,11 @@ class WebFilter extends TyrFilter {
       val session = T.session
       
       if ( session != null && !isAsset ) {
-        session.put( "lastPath", web.path )
-        session.put( "lastPathTime", new java.util.Date() )
+        val now = new Date
+        val path = web.path
+        session.put( "lastPath", path )
+        session.put( "lastPathTime", now )
+        session.record( "lp" -> path, "lpt" -> now )
       //sess.put( "subdomain", web.req.getServerName )
       }
     }
@@ -301,7 +308,7 @@ class WebFilter extends TyrFilter {
             val hasUser = T.user != null 
             NewRelic.setUserName( hasUser ? T.user.fullName | "[Unknown]" )
             NewRelic.setAccountName( hasUser ? T.user.tid | "[None]" )
-            NewRelic.setProductName( T.session.id )
+            NewRelic.setProductName( T.session.tid )
           }
           
           web.template( B.appShellPage( web ) )
@@ -318,7 +325,7 @@ class WebFilter extends TyrFilter {
           val hasUser = T.user != null 
           NewRelic.setUserName( hasUser ? T.user.fullName | "[Unknown]" )
           NewRelic.setAccountName( hasUser ? T.user.tid | "[None]" )
-          NewRelic.setProductName( T.session.id )
+          NewRelic.setProductName( T.session.tid )
         }
           
         if ( handle( webloc ) ) {

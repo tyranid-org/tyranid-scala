@@ -71,18 +71,13 @@ case class Comet( serviceSession:ServerSession, fromSession:ServerSession, sessi
 object Comet {
 
   def remove( serverSessionId:String ) {
-    println( "remove: "+ serverSessionId )
-    
     val bSessions = new java.util.ArrayList( B.bayeux.getSessions )
     
     for ( session <- bSessions ) {
       val httpSessionId = session.getAttribute( WebSession.CometHttpSessionIdKey )
 
-      println( "found: " + httpSessionId )
-      if ( httpSessionId != null && serverSessionId == httpSessionId ) {
-        println( "Removed!: " + httpSessionId )
+      if ( httpSessionId != null && serverSessionId == httpSessionId )
         B.bayeux.getSessions().remove( session )
-      }
     }
   }
     
@@ -95,22 +90,15 @@ object Comet {
     
 
     val serverSession = B.comets.find( _.name == "message" ).get.service.getServerSession
-    //val seen = mutable.Set[String]()
 
     for ( session <- B.bayeux.getSessions ) {
       val httpSessionId = session.getAttribute( WebSession.CometHttpSessionIdKey )
 
-      //println( "send to : " + httpSessionId )
       if ( httpSessionId != null ) {
-        //println( "visiting: " + httpSessionId )
         val httpSessionIdStr = httpSessionId.as[String]
         
-        //if ( !seen( httpSessionIdStr ) ) {
-          //seen += httpSessionIdStr
-          
-          val tyrSession = Session.byHttpSessionId( httpSessionIdStr ).as[Session] // as a Volerro session
-          visitor( Comet( serverSession, session, tyrSession ) )
-       // }
+        val tyrSession = Session.byHttpSessionId( httpSessionIdStr ).as[Session] // as a Volerro session
+        visitor( Comet( serverSession, session, tyrSession ) )
       }
     }
   }
