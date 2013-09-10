@@ -241,6 +241,11 @@ class ThreadData {
 
   def permissionCache = requestCached( "permissions" ) { mutable.Map[String,Boolean]() }
   
+  
+  /*
+   * * *  WhiteLabel Cache
+   */
+  def whitelabelCache = requestCached( "whitelabel" ) { mutable.Map[String,org.tyranid.db.Record]() }
 
   /*
    * * *  Markdown
