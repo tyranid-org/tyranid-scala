@@ -21,6 +21,8 @@ import java.util.Date
 
 import scala.xml.{ NodeSeq, Unparsed }
 
+import com.mongodb.DBObject
+
 import org.tyranid.Imp._
 import org.tyranid.db.Scope
 import org.tyranid.db.meta.TidItem
@@ -33,7 +35,6 @@ import org.tyranid.secure.DbReCaptcha
 import org.tyranid.session.Session
 import org.tyranid.sso.SsoMapping
 import org.tyranid.social.Social
-import org.tyranid.sso.SsoMapping
 import org.tyranid.ui.{ Button, Grid, Row, Focus, Form }
 import org.tyranid.web.{ Weblet, WebContext, WebTemplate, WebResponse }
 import org.tyranid.web.WebHandledException
@@ -206,11 +207,7 @@ $( function() {
     case "/out" =>
       val org = sess.user.org
       val hasOrg = !org.isNew
-      val sso = hasOrg ? {
-        val ssoc = SsoMapping.db.find( Mobj( "org" -> org.id ) ).limit(1)
-        ssoc.hasNext ? ssoc.next | null
-      } | null
-      
+      val sso = sess.get( "sso" ).as[SsoMapping]
       val ssoLoe:String = ( sso == null ) ? null | sso.s( 'loEndpoint ) 
       val website = ( ssoLoe.isBlank ) ? T.website( "/?lo=1" + ( web.b( 'xhr ) ? "&xhr=1" | "" ), sess.user ) | ssoLoe
       
