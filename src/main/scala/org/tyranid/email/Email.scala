@@ -104,7 +104,7 @@ object Email {
   def domainFor( email:String ) =
     email.indexOf( '@' ) match {
     case -1 => ""
-    case n  => email.substring( n+1 )
+    case n  => email.substring( n + 1 ).trim.toLowerCase
     }
     
   def domainPart( email:String ) =

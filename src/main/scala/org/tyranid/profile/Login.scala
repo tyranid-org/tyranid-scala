@@ -209,7 +209,7 @@ $( function() {
       val hasOrg = !org.isNew
       val sso = sess.get( "sso" ).as[SsoMapping]
       val ssoLoe:String = ( sso == null ) ? null | sso.s( 'loEndpoint ) 
-      val website = ( ssoLoe.isBlank ) ? T.website( "/?lo=1" + ( web.b( 'xhr ) ? "&xhr=1" | "" ), sess.user ) | ssoLoe
+      val website = ( ssoLoe.isBlank ) ? T.website( "/?lo=1" + ( web.b( 'xhr ) ? "&xhr=1" | "" ), sess.user, sso ) | ssoLoe
       
       sess.logout()
       web.redirect( website )
@@ -247,7 +247,7 @@ $( function() {
       if ( userId == null ) {
         T.session.notice( "Your user was not found." )
       } else {
-        val u = B.User.byId( new ObjectId( userId ) ).getOrElse( null ) 
+        val u = B.User.byId( userId._oid ).getOrElse( null ) 
         val user = if ( u == null ) null else u
         
         if ( user != null ) {

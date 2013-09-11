@@ -277,6 +277,9 @@ $( $('#idp').focus() );
         return
       }
       
+      /*
+      // This is disconnected for now-- we will ensure group membership from what is in the SsoMapping, not from what comes in JSON
+      
       val mustHaveGroups = mapping.b( 'groupsAttribReq )
       val groupNames = ( json.s( mapping.s( 'groupsAttrib ) ) or "" ).split( "," )
       
@@ -289,6 +292,7 @@ $( $('#idp').focus() );
           web.jsRes()
         }
       }
+      */
       
       val orgId = mapping.oid( 'org )
       val userc = B.User.db.find( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) ).limit(1)
@@ -357,7 +361,12 @@ $( $('#idp').focus() );
           
         B.welcomeUserEvent
         Group.ensureInOrgGroup( newUser )        
+
+        val groupId = mapping.oid( 'group )
+        Group.db.update( Mobj( "_id" -> groupId ), $addToSet( "v", newUser.tid ) )
         
+        /*
+        // We are instead ensure group ownership by the mapping, not the JSON, for now.
         // Add them to any groups specified
         if ( mustHaveGroups && groupNames.size > 0 ) {
           
@@ -375,6 +384,7 @@ $( $('#idp').focus() );
             }
           }
         }
+        */
         
         val newProjectNames = mapping.s( 'newProjects )
 
@@ -451,7 +461,6 @@ $( $('#idp').focus() );
             newBoard.save
           } )
         }
-        
       } else if ( user.b( 'inactive ) ) {
         if ( B.debugSso )
           println( "DEBUG: User in inactive." )
@@ -525,6 +534,11 @@ $( $('#idp').focus() );
         if ( save )
           u.save
           
+        val groupId = mapping.oid( 'group )
+        Group.db.update( Mobj( "_id" -> groupId ), $addToSet( "v", u.tid ) )
+        
+        /*
+        // For now, we are ensuring group membership from the mapping, not the JSON
         // Add or remove them them to any groups specified
         if ( mustHaveGroups && groupNames.size > 0 ) {            
           val groups = Group.db.find( Mobj( "lastModifiedByOrg" -> orgId, "ssoSynced" -> true ), Mobj( "name" -> 1 ) ).toSeq
@@ -547,6 +561,7 @@ $( $('#idp').focus() );
             }
           }
         }
+        */
         
         loginUser( u, web, mapping )
         sess = T.session
