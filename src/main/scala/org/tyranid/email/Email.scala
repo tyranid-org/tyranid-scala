@@ -68,8 +68,10 @@ object Email {
     "@me.com",
     "@mediacomcc.com",
     "@msn.com",
+    "@myway.com",
     "@netamumail.com",
     "@wow.com",
+    "@wp.pl",
     "@yandex.com",
     "@yahoo.com" )
 
