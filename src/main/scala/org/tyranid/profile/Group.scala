@@ -214,7 +214,9 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
 
   def ensureInOrgGroup( user:User ) {
     assert( user.org != null )
-    val grp = Group( Group.db.findOrMake( Mobj( "org" -> user.org.id, "name" -> user.org.name, "type" -> ContentType.Organization.id ) ) )
+    
+    val org = B.Org.getById( user.org.id )
+    val grp = Group( Group.db.findOrMake( Mobj( "org" -> org.id, "name" -> org.s( 'name ), "type" -> ContentType.Organization.id ) ) )
     
     if ( grp.isNew ) { 
       grp.a_!( 'o ).add( user.tid )

@@ -101,15 +101,15 @@ object Tag extends MongoEntity( tid = "a0Ct" ) {
       tagList.addToSet(
         tag match {
         case id:Int => 
-          changed = changed || existing.contains( id )
+          changed = changed || !existing.contains( id )
           id.as[AnyRef]
         case name:String if isNew( name ) => 
           val newId = idFor( extractNew( name ) ).as[AnyRef]
-          changed = changed || existing.contains( newId )
+          changed = changed || !existing.contains( newId )
           newId
         case name:String => 
           val exId = idFor( name ).as[AnyRef]
-          changed = changed || existing.contains( exId )
+          changed = changed || !existing.contains( exId )
           exId
         }
       )
