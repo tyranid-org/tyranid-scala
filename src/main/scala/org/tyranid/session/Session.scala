@@ -149,15 +149,14 @@ object ThreadData {
 class ThreadData {
   def baseWebsite = "https://" + B.domainPort
   
-  def website( path:String = "", user:User = null, ssoMapping:DBObject = null ):String = {
+  def website( path:String = "", user:User = null, ssoMapping:SsoMapping = null ):String = {
     if ( user == null ) 
       return baseWebsite  + path 
-      
-    val ssoMappingImpl = ( ssoMapping == null ) ? ( ( user.obj.oid( 'org ) != null ) ?
-      {
-        val ssoc = SsoMapping.db.find( Mobj( "org" -> user.obj.oid( 'org ) ) ).limit(1)
-        ssoc.hasNext ? ssoc.next | null
-      } | null ) | ssoMapping
+    
+    val ssoMappingImpl = ( ssoMapping == null ) ? {
+      val ssoId = user.s( 'sso )
+      ssoId.isBlank ? null | SsoMapping.getById( ssoId )
+    } | ssoMapping
     
     if ( ssoMappingImpl == null )
       return baseWebsite + path
@@ -165,8 +164,6 @@ class ThreadData {
     return baseWebsite + "/sso/auth/" + ssoMappingImpl.id._s + "?startUrl=" + java.net.URLEncoder.encode( path, "UTF-8" )
   }
 
-  def ssoId = session.get( "ssoId" ).as[String]
-  
   def user:User =
     if ( session != null ) session.user
     else                   null
@@ -396,7 +393,7 @@ trait Session extends QuickCache {
    * * *   Login
    */
 
-  def login( user:User, incognito:Boolean = false ) = {
+  def login( user:User, incognito:Boolean = false, sso:SsoMapping = null ) = {
     this.user = user
     put( "lastLogin", user.t( 'lastLogin ) )
 
@@ -410,6 +407,9 @@ trait Session extends QuickCache {
         updates( 'tz ) = id
         user( 'tz ) = id
       }
+      
+      if ( sso != null )
+        updates( 'sso ) = sso.id
       
       UserStat.login( user.id )
       B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> updates ) )

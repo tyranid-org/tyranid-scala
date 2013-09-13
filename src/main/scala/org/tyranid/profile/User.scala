@@ -37,6 +37,7 @@ import org.tyranid.db.tuple.{ Tuple, TupleView }
 import org.tyranid.http.Http
 import org.tyranid.image.DbThumbnail
 import org.tyranid.sms.SMS
+import org.tyranid.sso.SsoMapping
 import org.tyranid.locale.{ Country, Language }
 import org.tyranid.secure.DbReCaptcha
 import org.tyranid.session.{ Session, ThreadData, WebSession }
@@ -179,13 +180,13 @@ class UserMeta extends MongoEntity( "a01v" ) {
 
   "eye"            is DbBoolean           ;
   "bids"           is DbArray(DbChar(10)) as "Browser IDs";
+  "sso"            is DbLink(SsoMapping)  ;
 
   override def init = {
     super.init
     "invitedBy"    is DbLink(B.User)      ;
   }
 
-  
   def isLoggedIn = Session().isLoggedIn
   
   // TODO:  Make this more sophisticated, allow the entire user to be retrieved instead of just the name, and/or maybe something like ProfileItem

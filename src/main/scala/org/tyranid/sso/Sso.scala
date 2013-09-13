@@ -22,6 +22,8 @@ import java.util.Date
 
 import scala.xml.NodeSeq
 
+import com.mongodb.DBObject
+
 import org.apache.http.auth.{ AuthScope }
 
 import org.tyranid.Imp._
@@ -30,7 +32,7 @@ import org.tyranid.content.ContentType
 import org.tyranid.db.{ DbChar, DbLink, DbBoolean, Record, DbText, DbUrl }
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
-import org.tyranid.db.mongo.{ DbMongoId, MongoEntity }
+import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.http.Http
 import org.tyranid.io.{ File => TFile }
 import org.tyranid.json.{ Js, Json, JqHtml }
@@ -42,9 +44,10 @@ import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
 //   "errorMessage" : "Your Reserve Marketplace account has been deactivated for security reasons after inactivity over 90 days.\n\nTo reactivate your account, please contact The Resolution Center.\n\nEmail Address: resolution.center@usbank.com\nInternal Employee Phone: 651-466-7103\nStandard Hours:  Mon-Fri 1:00 am CT - 7:00 pm CT\n"
 
 object SsoMapping extends MongoEntity( tid = "a0Ut" ) {
+  type RecType = SsoMapping
+  override def convert( obj:DBObject, parent:MongoRecord ) = new SsoMapping( obj, parent )
+
   "_id"             is DbChar(8)     is 'id;
-  "org"             is DbLink(B.Org) is 'required;
-  "group"           is DbLink(Group);
   "idpId"           is DbChar(40)    is 'required;
   "emailAttrib"     is DbChar(20)    is 'required;
   "firstNameAttrib" is DbChar(20);
@@ -62,8 +65,12 @@ object SsoMapping extends MongoEntity( tid = "a0Ut" ) {
   "newProjectImgs"  is DbText;
   "newProjectTags"  is DbText;
   "loEndpoint"      is DbUrl; // log out endpoint
-  "emailHeaderHtml" is DbText;
-  "emailHeaderText" is DbText;
+  
+  override def init = {
+    super.init
+    "org"             is DbLink(B.Org) is 'required;
+    "group"           is DbLink(Group);
+  }
   
   lazy val testMapping = {
     val ts = SsoMapping.make
@@ -72,6 +79,8 @@ object SsoMapping extends MongoEntity( tid = "a0Ut" ) {
     ts
   }  
 }
+
+class SsoMapping( obj:DBObject, parent:MongoRecord ) extends MongoRecord( SsoMapping.makeView, obj, parent ) {}
 
 object Ssolet extends Weblet {
   lazy val SAAS_ID = URLEncoder.encode( B.saasId, "UTF-8" )
@@ -91,12 +100,12 @@ object Ssolet extends Weblet {
     <div class="offset3 span6">{ inner }</div>
    </div>
 
-  def loginUser( user:User, web:WebContext ) {
+  def loginUser( user:User, web:WebContext, sso:SsoMapping ) {
     val thread = T
     thread.http = web.req.getSession( true )
     thread.web = web
        
-    thread.session.login( user )
+    thread.session.login( user, sso = sso )
   }
   
   def handle(web: WebContext) {
@@ -268,6 +277,9 @@ $( $('#idp').focus() );
         return
       }
       
+      /*
+      // This is disconnected for now-- we will ensure group membership from what is in the SsoMapping, not from what comes in JSON
+      
       val mustHaveGroups = mapping.b( 'groupsAttribReq )
       val groupNames = ( json.s( mapping.s( 'groupsAttrib ) ) or "" ).split( "," )
       
@@ -280,6 +292,7 @@ $( $('#idp').focus() );
           web.jsRes()
         }
       }
+      */
       
       val orgId = mapping.oid( 'org )
       val userc = B.User.db.find( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) ).limit(1)
@@ -340,17 +353,20 @@ $( $('#idp').focus() );
 
         newUser.save
         
-        loginUser( newUser, web )
+        loginUser( newUser, web, mapping )
         sess = T.session
-        
-        sess.put( "ssoId", id )
         
         if ( B.debugSso )
           println( "DEBUG: New user created and saved." )
           
         B.welcomeUserEvent
         Group.ensureInOrgGroup( newUser )        
+
+        val groupId = mapping.oid( 'group )
+        Group.db.update( Mobj( "_id" -> groupId ), $addToSet( "v", newUser.tid ) )
         
+        /*
+        // We are instead ensure group ownership by the mapping, not the JSON, for now.
         // Add them to any groups specified
         if ( mustHaveGroups && groupNames.size > 0 ) {
           
@@ -368,6 +384,7 @@ $( $('#idp').focus() );
             }
           }
         }
+        */
         
         val newProjectNames = mapping.s( 'newProjects )
 
@@ -442,10 +459,8 @@ $( $('#idp').focus() );
             newBoard( 'lastActionBy ) = newUser.id
             newBoard( 'lastActionByOrg ) = org.id
             newBoard.save
-            
           } )
         }
-        
       } else if ( user.b( 'inactive ) ) {
         if ( B.debugSso )
           println( "DEBUG: User in inactive." )
@@ -519,6 +534,11 @@ $( $('#idp').focus() );
         if ( save )
           u.save
           
+        val groupId = mapping.oid( 'group )
+        Group.db.update( Mobj( "_id" -> groupId ), $addToSet( "v", u.tid ) )
+        
+        /*
+        // For now, we are ensuring group membership from the mapping, not the JSON
         // Add or remove them them to any groups specified
         if ( mustHaveGroups && groupNames.size > 0 ) {            
           val groups = Group.db.find( Mobj( "lastModifiedByOrg" -> orgId, "ssoSynced" -> true ), Mobj( "name" -> 1 ) ).toSeq
@@ -541,10 +561,10 @@ $( $('#idp').focus() );
             }
           }
         }
+        */
         
-        loginUser( u, web )
+        loginUser( u, web, mapping )
         sess = T.session
-        sess.put( "ssoId", id )
         
         if ( B.debugSso )
           println( "DEBUG: User is logged in." )

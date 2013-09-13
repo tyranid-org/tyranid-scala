@@ -355,7 +355,7 @@ trait DBListWrap extends DBObjectWrap with BsonList {
 
   def hasOnly( v:Any ) = obj.size == 1 && obj( 0 ) == v
 
-  def addToSet( v:AnyRef )
+  def addToSet( v:AnyRef ): Unit
 
 
   /*

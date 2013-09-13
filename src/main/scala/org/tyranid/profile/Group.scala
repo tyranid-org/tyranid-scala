@@ -41,7 +41,6 @@ import org.tyranid.http.Http
 import org.tyranid.json.JqHtml
 import org.tyranid.math.Base62
 import org.tyranid.report.{ Report, Run }
-import org.tyranid.sso.SsoMapping
 import org.tyranid.ui.{ Checkbox, Field, Help, Select, Search, Show, Valuable }
 import org.tyranid.web.{ WebContext, Weblet }
 
@@ -99,7 +98,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
 
   //"settings"     is GroupSettings                      is 'temporary is 'client computed { _.as[Group].settingsFor( T.user ) }
   
-  "canSso"       is DbBoolean                          is 'temporary is 'client computed { _.as[Group].canBeSsoSynced( T.user ) }
+  "canSso"       is DbBoolean                          is 'temporary is 'client computed { _.as[Group].canBeSsoSynced }
 
   "website"      is DbChar(80)                         is 'temporary is 'client computed { _.as[Group].website }
   "userIdleDays" is DbInt                              is 'temporary is 'client computed { _.as[Group].userIdleDays }
@@ -215,7 +214,9 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
 
   def ensureInOrgGroup( user:User ) {
     assert( user.org != null )
-    val grp = Group( Group.db.findOrMake( Mobj( "org" -> user.org.id, "name" -> user.org.name, "type" -> ContentType.Organization.id ) ) )
+    
+    val org = B.Org.getById( user.org.id )
+    val grp = Group( Group.db.findOrMake( Mobj( "org" -> org.id, "name" -> org.s( 'name ), "type" -> ContentType.Organization.id ) ) )
     
     if ( grp.isNew ) { 
       grp.a_!( 'o ).add( user.tid )
@@ -344,30 +345,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
 
   def canSee( viewer:User, member:Record ) = isOwner( viewer ) || canView( viewer )
   
-  def canBeSsoSynced( user:User ):Boolean = {
-    val userOrgId = user.orgId 
-    val ssoExists = userOrgId != null && {
-      T.requestCache.getOrElseUpdate( "sso", SsoMapping.db.exists( Mobj( "org" -> userOrgId ) ) ).as[Boolean]
-    }
-    
-    if ( !ssoExists )
-      return false
-      
-    if ( isNew )
-      return true
-    
-    var orgId:Any = null
-      
-    for ( user <- owners if B.User.hasTid( user.tid ) ) {
-      if ( orgId == null ) {
-        orgId = user.oid( 'org )
-      } else if ( orgId != user.oid( 'org ) ) {
-        return false
-      }
-    }
-    
-    return true
-  }
+  def canBeSsoSynced:Boolean = T.session.get( "sso" ) != null
   
   override def imageUrl( editing:ContentEdit = null ) =
     if ( contentType == ContentType.Organization ) {

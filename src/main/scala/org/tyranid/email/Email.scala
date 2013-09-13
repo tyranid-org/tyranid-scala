@@ -68,8 +68,10 @@ object Email {
     "@me.com",
     "@mediacomcc.com",
     "@msn.com",
+    "@myway.com",
     "@netamumail.com",
     "@wow.com",
+    "@wp.pl",
     "@yandex.com",
     "@yahoo.com" )
 
@@ -104,7 +106,7 @@ object Email {
   def domainFor( email:String ) =
     email.indexOf( '@' ) match {
     case -1 => ""
-    case n  => email.substring( n+1 )
+    case n  => email.substring( n + 1 ).trim.toLowerCase
     }
     
   def domainPart( email:String ) =

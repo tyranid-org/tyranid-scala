@@ -24,6 +24,7 @@ import org.apache.commons.fileupload.disk.DiskFileItem
 import java.io.{ IOException, FileOutputStream, InputStream, InputStreamReader, OutputStream, File => JFile }
 import java.util.HashMap
 
+import com.amazonaws.AmazonClientException
 import com.amazonaws.services.s3.model.{ AmazonS3Exception }
 
 import org.xml.sax.helpers.DefaultHandler
@@ -156,11 +157,17 @@ object Iolet extends Weblet {
             // Happens with IE a lot
             web.res.setStatus( 200 )
             return
-          case e3:Throwable =>
+          case e3:AmazonClientException =>
             web.res.setStatus( 302 )
             web.res.setHeader( "Location", notFoundUrl )
             web.res.setHeader( "Connection", "close" )
-            throw e3
+            log( Event.Eof, "m" -> ( e3.getMessage() + " for thumb path= " + rpath ) )
+            return
+          case e4:Throwable =>
+            web.res.setStatus( 302 )
+            web.res.setHeader( "Location", notFoundUrl )
+            web.res.setHeader( "Connection", "close" )
+            throw e4
         }
       }
       
