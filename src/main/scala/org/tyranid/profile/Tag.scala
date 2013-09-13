@@ -93,22 +93,35 @@ object Tag extends MongoEntity( tid = "a0Ct" ) {
 
 
   def update( r:Record, key:String, tags:Seq[Any] ) = {
-
     val tagList = Mlist()
+    var changed = false
+    val existing = r.a_?( key )
 
     for ( tag <- tags )
       tagList.addToSet(
         tag match {
-        case id:Int                       => id.as[AnyRef]
-        case name:String if isNew( name ) => idFor( extractNew( name ) ).as[AnyRef]
-        case name:String                  => idFor( name ).as[AnyRef]
+        case id:Int => 
+          changed = changed || existing.contains( id )
+          id.as[AnyRef]
+        case name:String if isNew( name ) => 
+          val newId = idFor( extractNew( name ) ).as[AnyRef]
+          changed = changed || existing.contains( newId )
+          newId
+        case name:String => 
+          val exId = idFor( name ).as[AnyRef]
+          changed = changed || existing.contains( exId )
+          exId
         }
       )
 
-    if ( tagList.nonEmpty )
+    if ( tagList.nonEmpty ) {
       r( key ) = tagList
-    else
+    } else {
+      changed = existing.length > 0
       r.remove( key )
+    }
+    
+    changed
   }
 }
 
