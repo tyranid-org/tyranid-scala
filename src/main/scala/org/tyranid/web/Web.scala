@@ -99,8 +99,6 @@ trait TyrFilter extends Filter {
     if ( thread.http == null ) {
       thread.http = web.req.getSession( true )
       val sess = T.session
-      sess.put( "remoteHost", web.req.getRemoteHost() )
-      sess.put( "remoteAddr", web.req.getRemoteAddr() )
 
       sess.record( "rh" -> web.req.getRemoteHost, "ra" -> web.req.getRemoteAddr )
       
@@ -218,8 +216,6 @@ class WebFilter extends TyrFilter {
       if ( session != null && !isAsset ) {
         val now = new Date
         val path = web.path
-        session.put( "lastPath", path )
-        session.put( "lastPathTime", now )
         session.record( "lp" -> path, "lpt" -> now )
       //sess.put( "subdomain", web.req.getServerName )
       }

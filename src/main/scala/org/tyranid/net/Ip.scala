@@ -24,9 +24,31 @@ import org.tyranid.Imp._
 
 object Ip {
 
-  lazy val Host =
-    java.net.NetworkInterface.getNetworkInterfaces.
-      find( ni => !ni.isLoopback && ni.getInetAddresses.hasMoreElements ).
-      pluck( _.getInetAddresses.nextElement.getHostAddress, "127.0.0.1" )
+  def sanitize( s:String ) =
+    if ( s.startsWith( "/" ) )
+      s.substring( 1 )
+    else
+      s
+
+  def determineHost:String = {
+    val addresses =
+      for ( interface <- java.net.NetworkInterface.getNetworkInterfaces;
+            //if !interface.isLoopbackAddress;
+            address <- interface.getInetAddresses;
+            if !address.isLoopbackAddress )
+        yield address.toString
+
+    // prefer an ipv4 address if we have one
+    for ( a <- addresses;
+          if a.indexOf( ':' ) < 0 )
+      return sanitize( a )
+
+    for ( a <- addresses )
+      return sanitize( a )
+
+    "127.0.0.1"
+  }
+
+  lazy val Host:String = determineHost
 }
 

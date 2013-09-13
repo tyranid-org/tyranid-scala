@@ -386,5 +386,12 @@ case class MongoRecord( override val view:MongoView,
   def remove {
     db.remove( this )
   }
+
+  def update( update:DBObject ) = db.update( Mobj( "_id" -> this.id ), update )
+
+  def inc( key:String, value:Int = 1 ) = {
+    this( key ) = i( key ) + value
+    update( Mobj( $inc -> Mobj( key -> value ) ) )
+  }
 }
 

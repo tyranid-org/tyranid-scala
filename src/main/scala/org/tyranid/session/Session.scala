@@ -27,7 +27,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbBoolean, DbChar, DbDateTime, DbLink }
+import org.tyranid.db.{ DbBoolean, DbChar, DbDateTime, DbInt, DbLink }
 import org.tyranid.db.meta.TidCache
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
@@ -76,6 +76,15 @@ object SessionCleaner {
       WebSession.sessions.remove( sess._1 )
       sess._2.invalidate 
     }
+
+    serverClean
+  }
+
+  def serverClean {
+
+    val cutoff = new Date - ( 2 * Time.OneHourMs )
+
+    B.SessionData.db.remove( Mobj( "lat" -> Mobj( $lte -> cutoff ) ) )
   }
 }
 
@@ -365,6 +374,8 @@ trait Session extends QuickCache {
 
   def tid:String = return B.SessionData.idToTid( id )
 
+  def data = B.SessionData.getById( id )
+
 
   def record( values:Pair[String,Any]* ) {
 
@@ -373,7 +384,11 @@ trait Session extends QuickCache {
     for ( pair <- values )
       seto( pair._1 ) = pair._2
 
-    B.SessionData.db.update( Mobj( "_id" -> id ), Mobj( $set -> seto ) )
+    record( Mobj( $set -> seto ) )
+  }
+
+  def record( update:DBObject ) {
+    B.SessionData.db.update( Mobj( "_id" -> id ), update )
   }
 
 
@@ -423,8 +438,6 @@ trait Session extends QuickCache {
       if ( req != null ) {
         web.req.addJsCmd( Js( "tyrl( window.cometConnect );" ) )
         
-        put( "remoteHost", web.req.getRemoteHost() )
-        put( "remoteAddr", web.req.getRemoteAddr() )
         userAgent = ua( web )
       }
       
@@ -562,8 +575,6 @@ trait Session extends QuickCache {
   
   def peekNotes( level:Int = 0 ): List[Notification] = ( level == 0 ) ? notes | notes.filter( n => n.level == level )
 
-  @volatile var unshownPosts:Int = 0
-
 
   /*
    * * *   Web Paths / Tabs Memory
@@ -620,6 +631,7 @@ class SessionDataMeta extends MongoEntity( "a04t" ) {
   "rh"                 is DbChar(32)        as "Remote Host";
   "ra"                 is DbChar(32)        as "Remote Address";
 
+  "ct"                 is DbDateTime        as "Session Creation Time";
   "lit"                is DbDateTime        as "Login Time";
 
   "lp"                 is DbChar(64)        as "Last Path";
@@ -628,6 +640,10 @@ class SessionDataMeta extends MongoEntity( "a04t" ) {
   "ua"                 is DbLink(UserAgent) ;
 
   "incognito"          is DbBoolean         ;
+
+  "cometDebug"         is DbBoolean         ;
+
+  "unshownPosts"       is DbInt             ;
 
   override def init = {
     super.init
@@ -644,6 +660,13 @@ class SessionDataMeta extends MongoEntity( "a04t" ) {
 
     if ( rec == null ) {
       rec = B.newSessionData()
+
+      val http = T.http
+      if ( http != null )
+        rec( 'ct ) = new Date( http.getCreationTime )
+      else
+        rec( 'ct ) = new Date
+
       rec( 'ss ) = hsid
       rec( 'sv ) = Ip.Host.toString
       rec.save
@@ -677,12 +700,23 @@ class SessionDataMeta extends MongoEntity( "a04t" ) {
 
      X.  change the session list in admin to use this table rather than the local session list
     
+     X.  clean up mongo-sessions in SessionCleaner
+    
+         X.  expired lastModifiedDate on session
+    
      /.  change Comet.visit to use the CometQueue
 
-     /.  clean up mongo-sessions in SessionCleaner
-    
-         /.  expired lastModifiedDate on session
-    
+         X.  NAME:  come up with way to name local server that can be encoded in a mongodb collection name
+
+         X.  create capped collection comet_$NAME
+
+         /.  figure out read loop
+
+
+     /.  scheduled tasks
+
+         /. session cleaner needs to be both server-local (HttpSessions) and one-server (SessionData)
+
     
     
    */
