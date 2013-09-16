@@ -49,7 +49,7 @@ import org.tyranid.web.{ Comet, WebContext }
  */
 
 object SessionCleaner { 
-  def clean {
+  def cleanLocal {
     val now = System.currentTimeMillis
     
     WebSession.sessions.filter { sess =>
@@ -76,11 +76,9 @@ object SessionCleaner {
       WebSession.sessions.remove( sess._1 )
       sess._2.invalidate 
     }
-
-    serverClean
   }
 
-  def serverClean {
+  def cleanGlobal {
 
     val cutoff = new Date - ( 2 * Time.OneHourMs )
 
@@ -704,18 +702,18 @@ class SessionDataMeta extends MongoEntity( "a04t" ) {
     
          X.  expired lastModifiedDate on session
     
-     /.  change Comet.visit to use the CometQueue
+     X.  change Comet.visit to use the CometQueue
 
          X.  NAME:  come up with way to name local server that can be encoded in a mongodb collection name
 
          X.  create capped collection comet_$NAME
 
-         /.  figure out read loop
+         X.  figure out read loop
 
 
-     /.  scheduled tasks
+     X.  scheduled tasks
 
-         /. session cleaner needs to be both server-local (HttpSessions) and one-server (SessionData)
+         X. session cleaner needs to be both server-local (HttpSessions) and one-server (SessionData)
 
     
     
