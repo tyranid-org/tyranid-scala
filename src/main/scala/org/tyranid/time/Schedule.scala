@@ -31,6 +31,21 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.json.JsModel
 import org.tyranid.web.{ Weblet, WebContext }
 
+
+
+/*
+
+    Scheduled Tasks across multiple servers
+
+    1.  add support to ScheduledTask for local vs. global tasks
+ 
+    2.  be able to generate an identifier for a particular run of a scheduled task:  taskRunId
+
+    3.  when a server has free time, it checks to see if any tasks are due and if they are in the ScheduledTask table
+
+
+ */
+
 object ScheduledTask extends MongoEntity( "a0Mv" ) {
   type RecType = ScheduledTask
   override def convert( obj:DBObject, parent:MongoRecord ) = new ScheduledTask( obj, parent )
@@ -47,6 +62,8 @@ object ScheduledTask extends MongoEntity( "a0Mv" ) {
 
 class ScheduledTask( obj:DBObject, parent:MongoRecord ) extends MongoRecord( ScheduledTask.makeView, obj, parent ) {
 }
+
+
 
 case class Task( subject:String, var nextMs:Long, periodMs:Long, var active:Boolean, task: () => Unit, skipWeekend:Boolean = false ) {
   var runs = 0
