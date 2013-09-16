@@ -407,6 +407,7 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
   "r"              is DbArray(Comment)       as "Replies"     is 'client;
 
   "pri"            is DbBoolean              as "Priority"    is 'client; // a.k.a. "important" or "urgent"
+  "s"              is DbBoolean              as "System"      is 'client; // System generated--- not editable or removable
 
   "task"           is DbChar(32)             as "Task"        is 'client; // tid of the task associated with this comment
 
@@ -609,7 +610,7 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
   def comments = {
     val ea = Mongo.EmptyArray 
     Comment.asComments( a_?( 'r ) )
-    }
+  }
 
   def hasAnnotation = ( has( 'w ) && d( 'w ) > -1 ) || has( 'x ) || has ( 'y )
 
