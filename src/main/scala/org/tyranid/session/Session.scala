@@ -133,11 +133,13 @@ class ThreadData {
   def baseWebsite = "https://" + B.domainPort
   
   def website( path:String = "", user:User = null, ssoMapping:SsoMapping = null ):String = {
-    val base = ( session == null ) ? baseWebsite | {
-      val subdomain = session.s( 'subdomain ) 
+    val base = baseWebsite
+    
+    //( session == null ) ? baseWebsite | {
+    //  val subdomain = session.s( 'subdomain ) 
       
-      ( subdomain.isBlank ) ? baseWebsite | "https://" + subdomain + B.port
-    }
+    //  ( subdomain.isBlank ) ? baseWebsite | "https://" + subdomain + B.port
+   // }
     
     if ( user == null ) 
       return base  + path 
