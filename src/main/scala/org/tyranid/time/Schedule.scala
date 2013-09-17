@@ -47,11 +47,9 @@ import org.tyranid.web.{ Weblet, WebContext }
 
         if not, add the run task to the scheduled task table along with the server id
 
-    /.  add runs UI in admin
+    X.  add runs UI in admin
 
-        /. add "active" flag to TaskStats so you can turn off a task from the console
-
-        /. add a "run immediate" flag to TaskStats so you run a task from the console
+        X. add "active" flag to TaskStats so you can turn off a task from the console
 
  */
 
@@ -71,9 +69,27 @@ object TaskStats extends MongoEntity( "a06t" ) {
 
   "active"      is DbBoolean         ;
   "runRequest"  is DbBoolean         ;
+
+
+  def start( task:Task, sv:String, startOn:Date ) =
+    db.update(
+      Mobj( "_id" -> task.id ),
+      Mobj( $set -> Mobj( "lastSv" -> sv, "lastStart" -> startOn ), $inc -> Mobj( "runs" -> 1 ) ),
+      true,
+      false
+    )
+
+  def end( task:Task, endOn:Date ) =
+    db.update( Mobj( "_id" -> task.id ), Mobj( $set -> Mobj( "lastEnd" -> endOn ) ) )
 }
 
 class TaskStats( obj:DBObject, parent:MongoRecord ) extends MongoRecord( TaskStats.makeView, obj, parent ) {
+
+  def active =
+    if ( has( 'active ) )
+      b( 'active )
+    else
+      Task.byId( i( '_id ) ).enabled
 }
 
 
@@ -95,12 +111,21 @@ class TaskRun( obj:DBObject, parent:MongoRecord ) extends MongoRecord( TaskRun.m
 }
 
 
+object Task {
+  private[time] val tasks = mutable.ArrayBuffer[Task]()
+
+  def byId( id:Int ) = tasks.find( _.id == id ).getOrElse( null )
+}
 
 case class Task( id:Int, subject:String, var nextMs:Long, periodMs:Long, var enabled:Boolean, task: () => Unit, skipWeekend:Boolean = false, allServers:Boolean = false ) {
-  var runs = 0
-  var lastRun:Date = null
 
-  def run( manual:Boolean ) {
+  def active( ts:TaskStats ) =
+    if ( ts != null ) ts.active
+    else              enabled
+
+  def active:Boolean = active( TaskStats.getById( id ) )
+
+  def run {
     if ( !( skipWeekend && new Date().isWeekend ) ) { 
       println( "Scheduler:  running " + subject + " at " + new Date().toString )
   
@@ -113,15 +138,8 @@ case class Task( id:Int, subject:String, var nextMs:Long, periodMs:Long, var ena
         task()
       }
   
-      runs += 1
-      lastRun = new Date
-  
       if ( periodMs > Time.OneHourMs )
         log( Event.Scheduler, "m" -> ( "completed: " + subject ), "du" -> ( System.currentTimeMillis - start ) )
-  
-      if ( !manual )
-        while ( nextMs < System.currentTimeMillis )
-          nextMs += periodMs
     }
   }
 
@@ -164,24 +182,22 @@ case class Task( id:Int, subject:String, var nextMs:Long, periodMs:Long, var ena
 }
 
 object Scheduler {
-  private[time] val tasks = mutable.ArrayBuffer[Task]()
-
   def schedule( id:Int, subject:String, start:Date, periodMs:Long, active:Boolean = true, skipWeekend:Boolean = false, allServers:Boolean = false )( task: () => Unit ) {
 
-    tasks.synchronized {
+    Task.tasks.synchronized {
       //val sTask = TaskRun( ScheduledTask.db.findOrMake( Mobj( "subject" -> subject ) ) )
       
       //if ( sTask.isNew )
       //  sTask.save
         
-      val idx = tasks.indexWhere( _.subject == subject )
-      if ( idx != -1 ) tasks.remove( idx )
+      val idx = Task.tasks.indexWhere( _.subject == subject )
+      if ( idx != -1 ) Task.tasks.remove( idx )
       val t = Task( id, subject, start.getTime, periodMs, active, task, skipWeekend = skipWeekend, allServers = allServers )
 
       // run this just to verify it's a valid interval at boot time (exception will be thrown if this fails)
       t.runIdFor( System.currentTimeMillis )
 
-      tasks += t
+      Task.tasks += t
     }
   }
 
@@ -189,21 +205,21 @@ object Scheduler {
     background {
       while ( true ) {
         val size =
-          tasks.synchronized {
-            tasks.sortBy( _.nextMs )
-            tasks.size
+          Task.tasks.synchronized {
+            Task.tasks.sortBy( _.nextMs )
+            Task.tasks.size
           }
   
         val nowMs = System.currentTimeMillis
   
         for ( i <- 0 until size;
-              task = tasks( i );
-              if task.enabled;
+              task = Task.tasks( i );
+              if task.active;
               nextMs = task.nextMs;
               if nowMs >= nextMs ) {
 
           if ( task.allServers ) {
-            task.run( manual = false )
+            task.run
           } else {
             val taskRunId = task.runIdFor( nextMs )
 
@@ -224,20 +240,18 @@ spam( "----- CODE " + code )
 
             if ( code != 11000 ) {
 spam( "----- updating " + task.id )
-              TaskStats.db.update(
-                Mobj( "_id" -> task.id ),
-                Mobj( $set -> Mobj( "lastSv" -> sv, "lastStart" -> startOn ), $inc -> Mobj( "runs" -> 1 ) ),
-                true,
-                false
-              )
+              TaskStats.start( task, sv, startOn )
 
-              task.run( manual = false )
+              task.run
 
               val endAt = new Date
               TaskRun  .db.update( Mobj( "_id" -> taskRunId ), Mobj( $set -> Mobj( "end" -> endAt     ) ) )
-              TaskStats.db.update( Mobj( "_id" -> task.id   ), Mobj( $set -> Mobj( "lastEnd" -> endAt ) ) )
+              TaskStats.end( task, endAt )
             }
           }
+  
+          while ( task.nextMs < System.currentTimeMillis )
+            task.nextMs += task.periodMs
         }
   
         Thread.sleep( Time.OneMinuteMs )
@@ -251,22 +265,24 @@ object Schedulelet extends Weblet {
   private def jsonTasks = {
     val taskStats = TaskStats.db.find().toSeq
 
-    for ( task <- Scheduler.tasks ) yield {
+    for ( task <- Task.tasks ) yield {
+
+      val ts = TaskStats( taskStats.find( _.i( '_id ) == task.id ).getOrElse( null ) )
 
       val ( runs, lastSv, lastStart, lastEnd ) =
-        taskStats.find( _.i( '_id ) == task.id ) match {
-        case Some( stats ) => ( stats.i( 'runs ), stats.s( 'lastSv ), stats.t( 'lastStart ), stats.t( 'lastEnd   ) )
-        case _             => ( 0,                "",                 "",                    ""                    )
-        }
+        if ( ts != null ) ( ts.i( 'runs ), ts.s( 'lastSv ), ts.t( 'lastStart ), ts.t( 'lastEnd   ) )
+        else              ( 0,             "",              "",                 ""                 )
+
+      val active = task.active( ts )
 
       Map(
         "id"        -> task.subject,
-        "status"    -> task.active,
+        "status"    -> active,
         "runs"      -> runs,
         "lastSv"    -> lastSv,
         "lastStart" -> lastStart,
         "lastEnd"   -> lastEnd,
-        "nextRun"   -> ( task.active ? new Date( task.nextMs ) | 0 )
+        "nextRun"   -> ( active ? new Date( task.nextMs ) | 0 )
       )
     }
   }
@@ -278,7 +294,7 @@ object Schedulelet extends Weblet {
 
     def task = {
       val subject = web.req.s( 'task )
-      Scheduler.tasks.find( _.subject == subject ) 
+      Task.tasks.find( _.subject == subject ) 
     }
 
     rpath match {
@@ -292,7 +308,16 @@ object Schedulelet extends Weblet {
        ) )
     case "/run" =>
       task foreach { task =>
-        background { task.run( manual = true ) }
+
+        background {
+
+          if ( !task.allServers )
+            TaskStats.start( task, Ip.Host.toString, new Date )
+          task.run
+          if ( !task.allServers )
+            TaskStats.end( task, new Date )
+        }
+
         T.session.notice( "Running: " + task.subject )
       }
       
@@ -300,15 +325,7 @@ object Schedulelet extends Weblet {
     case "/toggle" =>
       task foreach { task =>
         val ts = TaskStats.getById( task.id )
-        val active =
-          if ( ts != null ) {
-            if ( ts.has( 'active ) )
-              ts.b( 'active )
-            else
-              task.active
-          } else {
-            task.active
-          }
+        val active = task.active( ts )
 
         TaskStats.db.update( Mobj( "_id" -> task.id ), Mobj( $set -> Mobj( "active" -> active ) ), true, false )
       }
