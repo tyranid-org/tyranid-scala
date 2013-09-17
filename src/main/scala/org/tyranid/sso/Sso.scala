@@ -403,7 +403,7 @@ $( $('#idp').focus() );
             val project = Group.make
             project( 'name    ) = name
             project( 'on      ) = now
-            project( 'c       ) = user.id
+            project( 'c       ) = newUser.id
             project( 'o       ) = userList
             project( 'type    ) = ContentType.Project.id
             project( 'color   ) = Group.getRandomColor

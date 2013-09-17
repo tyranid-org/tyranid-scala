@@ -300,6 +300,8 @@ trait Session extends QuickCache {
   // If the user tid is set in the session
   def isLoggedIn = !user.isNew //getOrElse( "user", "" )._s.notBlank
 
+  def isLite = b( "lite" )
+  
   var debug       = B.DEV
   var trace       = false
 
