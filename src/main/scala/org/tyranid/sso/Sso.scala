@@ -449,7 +449,7 @@ $( $('#idp').focus() );
             val newBoard = B.DocEntity.make
             newBoard( 'name        ) = "Files"
             newBoard( 'on          ) = now
-            newBoard( 'c           ) = user.id
+            newBoard( 'c           ) = newUser.id
             newBoard( 'o           ) = userList
             newBoard( 'v           ) = userList
             newBoard( 'type        ) = ContentType.Folder.id
