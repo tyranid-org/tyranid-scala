@@ -145,8 +145,8 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
       
       compose
       
-      if ( !request.getDestination().getToAddresses().contains( "mbradley@volerro.com" ) )
-        return null
+      //if ( !request.getDestination().getToAddresses().contains( "mbradley@volerro.com" ) )
+      //  return null
       
       AWSEmail.throttle
     
