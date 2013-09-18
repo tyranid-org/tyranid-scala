@@ -311,17 +311,6 @@ class WebFilter extends TyrFilter {
             if web.matches( webloc.weblet.wpath ) && webloc.weblet.matches( web ) ) {
         if ( !comet && !isAsset ) ensureSession( thread, web )
         
-<<<<<<< HEAD
-         if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.session.isLoggedIn ) ) && !comet && web.req.getAttribute( "api" )._s.isBlank ) {
-           
-          if ( T.session.trace ) {
-            val hasUser = T.user != null 
-            NewRelic.setUserName( hasUser ? T.user.fullName | "[Unknown]" )
-            NewRelic.setAccountName( hasUser ? T.user.tid | "[None]" )
-            NewRelic.setProductName( T.session.tid )
-          }
-          
-=======
         if ( T.session.trace ) {
           val hasUser = T.user != null 
           NewRelic.setUserName( hasUser ? T.user.fullName | "[Unknown]" )
@@ -330,7 +319,6 @@ class WebFilter extends TyrFilter {
         }
         
         if ( !comet && ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( ( T.user == null || !T.session.isLoggedIn ) && webloc.weblet.requiresLogin ) ) ) && web.req.getAttribute( "api" )._s.isBlank ) {
->>>>>>> dev
           web.template( B.appShellPage( web ) )
           return
         }
@@ -341,16 +329,6 @@ class WebFilter extends TyrFilter {
           first = false
         }
 
-<<<<<<< HEAD
-        if ( T.session.trace ) {
-          val hasUser = T.user != null 
-          NewRelic.setUserName( hasUser ? T.user.fullName | "[Unknown]" )
-          NewRelic.setAccountName( hasUser ? T.user.tid | "[None]" )
-          NewRelic.setProductName( T.session.tid )
-        }
-          
-=======
->>>>>>> dev
         if ( handle( webloc ) ) {
           //sp am( "CACHE: CLEARING" )
           thread.tidCache.clear
