@@ -325,7 +325,7 @@ object Schedulelet extends Weblet {
     case "/toggle" =>
       task foreach { task =>
         val ts = TaskStats.getById( task.id )
-        val active = task.active( ts )
+        val active = !task.active( ts )
 
         TaskStats.db.update( Mobj( "_id" -> task.id ), Mobj( $set -> Mobj( "active" -> active ) ), true, false )
       }
