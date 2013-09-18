@@ -217,19 +217,14 @@ class WebFilter extends TyrFilter {
       val session = T.session
       
       if ( session != null && !isAsset ) {
-<<<<<<< HEAD
         val now = new Date
         val path = web.path
-        session.record( "lp" -> path, "lpt" -> now )
-      //sess.put( "subdomain", web.req.getServerName )
-=======
         val subdomain = web.req.getServerName
 
         session.put( "lite", subdomain.startsWith( B.liteDomainName ) )
-        session.put( "lastPath", web.path )
-        session.put( "lastPathTime", new java.util.Date() )
+        session.record( "lp" -> path, "lpt" -> now )
         session.put( "subdomain", subdomain )
->>>>>>> dev
+        //sess.put( "subdomain", web.req.getServerName )
       }
     }
     
@@ -315,7 +310,7 @@ class WebFilter extends TyrFilter {
           val hasUser = T.user != null 
           NewRelic.setUserName( hasUser ? T.user.fullName | "[Unknown]" )
           NewRelic.setAccountName( hasUser ? T.user.tid | "[None]" )
-          NewRelic.setProductName( T.session.id )
+          NewRelic.setProductName( T.session.id.toString )
         }
         
         if ( !comet && ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( ( T.user == null || !T.session.isLoggedIn ) && webloc.weblet.requiresLogin ) ) ) && web.req.getAttribute( "api" )._s.isBlank ) {

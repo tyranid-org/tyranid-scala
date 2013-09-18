@@ -117,7 +117,7 @@ object Task {
   def byId( id:Int ) = tasks.find( _.id == id ).getOrElse( null )
 }
 
-case class Task( id:Int, subject:String, var nextMs:Long, periodMs:Long, var enabled:Boolean, task: () => Unit, skipWeekend:Boolean = false, allServers:Boolean = false ) {
+case class Task( id:Int, subject:String, var nextMs:Long, periodMs:Long, var enabled:Boolean, task: () => Unit, skipWeekend:Boolean = false, local:Boolean = false ) {
 
   def active( ts:TaskStats ) =
     if ( ts != null ) ts.active
@@ -183,7 +183,7 @@ case class Task( id:Int, subject:String, var nextMs:Long, periodMs:Long, var ena
 }
 
 object Scheduler {
-  def schedule( id:Int, subject:String, start:Date, periodMs:Long, active:Boolean = true, skipWeekend:Boolean = false, allServers:Boolean = false )( task: () => Unit ) {
+  def schedule( id:Int, subject:String, start:Date, periodMs:Long, active:Boolean = true, skipWeekend:Boolean = false, local:Boolean = false )( task: () => Unit ) {
 
     Task.tasks.synchronized {
       //val sTask = TaskRun( ScheduledTask.db.findOrMake( Mobj( "subject" -> subject ) ) )
@@ -193,7 +193,7 @@ object Scheduler {
         
       val idx = Task.tasks.indexWhere( _.subject == subject )
       if ( idx != -1 ) Task.tasks.remove( idx )
-      val t = Task( id, subject, start.getTime, periodMs, active, task, skipWeekend = skipWeekend, allServers = allServers )
+      val t = Task( id, subject, start.getTime, periodMs, active, task, skipWeekend = skipWeekend, local = local )
 
       // run this just to verify it's a valid interval at boot time (exception will be thrown if this fails)
       t.runIdFor( System.currentTimeMillis )
@@ -222,7 +222,7 @@ object Scheduler {
               if nowMs >= nextMs ) {
 
 spam( "checking " + task.id + " (" + task.subject + ")" )
-          if ( task.allServers ) {
+          if ( task.local ) {
             task.run
           } else {
             val taskRunId = task.runIdFor( nextMs )
@@ -322,10 +322,10 @@ spam( "subject=\"" + subject + "\"" )
         background {
 
       spam( "running 3 " + task.id )
-          if ( !task.allServers )
+          if ( !task.local )
             TaskStats.start( task, Ip.Host.toString, new Date )
           task.run
-          if ( !task.allServers )
+          if ( !task.local )
             TaskStats.end( task, new Date )
         }
 
