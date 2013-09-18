@@ -304,7 +304,7 @@ class WebFilter extends TyrFilter {
           NewRelic.setProductName( T.session.id )
         }
         
-        println( T.session.id + ":" + T.session.isLite )
+        //println( T.session.id + ":" + T.session.isLite )
         
         if ( !comet && ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( ( T.user == null || !T.session.isLoggedIn ) && webloc.weblet.requiresLogin ) ) ) && web.req.getAttribute( "api" )._s.isBlank ) {
           web.template( B.appShellPage( web ) )
