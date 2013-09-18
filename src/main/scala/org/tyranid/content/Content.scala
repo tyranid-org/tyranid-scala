@@ -846,7 +846,6 @@ abstract class Content( override val view:MongoView,
     content( 'hide ) = null
 
     content.stampLastModified
-    content.stampLastAction
     
     //content.save
     content
@@ -1002,13 +1001,6 @@ abstract class Content( override val view:MongoView,
     this( 'lastModifiedByOrg ) = u.orgId
   }
   
-  def stampLastAction = {
-    val u = T.user
-    this( 'lastModified )      = new Date
-    this( 'lastModifiedBy )    = u.id
-    this( 'lastModifiedByOrg ) = u.orgId
-  }
-
   def lastModifiedByTidItem = TidItem.by( B.User.idToTid( oid( 'lastModifiedBy ) ) )
 
   def lastModifiedByUser = {

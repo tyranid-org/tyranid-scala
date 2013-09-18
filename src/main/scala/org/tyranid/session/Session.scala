@@ -133,26 +133,24 @@ class ThreadData {
   def baseWebsite = "https://" + B.domainPort
   
   def website( path:String = "", user:User = null, ssoMapping:SsoMapping = null ):String = {
-    val base = baseWebsite
-    
-    //( session == null ) ? baseWebsite | {
-    //  val subdomain = session.s( 'subdomain ) 
+    val subdomainWebsite = ( session == null ) ? baseWebsite | {
+      val subdomain = session.s( 'subdomain ) 
       
-    //  ( subdomain.isBlank ) ? baseWebsite | "https://" + subdomain + B.port
-   // }
+      ( subdomain.isBlank ) ? baseWebsite | "https://" + subdomain + B.port
+    }
     
     if ( user == null ) 
-      return base  + path 
-    
+      return subdomainWebsite  + path
+        
     val ssoMappingImpl = ( ssoMapping == null ) ? {
       val ssoId = user.s( 'sso )
       ssoId.isBlank ? null | SsoMapping.getById( ssoId )
     } | ssoMapping
     
     if ( ssoMappingImpl == null )
-      return base + path
+      return subdomainWebsite + path
       
-    return base + "/sso/auth/" + ssoMappingImpl.id._s + "?startUrl=" + java.net.URLEncoder.encode( path, "UTF-8" )
+    return subdomainWebsite + "/sso/auth/" + ssoMappingImpl.id._s + "?startUrl=" + java.net.URLEncoder.encode( path, "UTF-8" )
   }
 
   def user:User =

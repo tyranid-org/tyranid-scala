@@ -212,7 +212,7 @@ class WebFilter extends TyrFilter {
     var web = webr
     val isAsset = !comet && !WebFilter.notAsset( web.path )
 
-    if ( !comet && thread.http != null ) {
+    if ( !comet ) {
       val session = T.session
       
       if ( session != null && !isAsset ) {
@@ -301,17 +301,16 @@ class WebFilter extends TyrFilter {
     try {
       for ( webloc <- boot.weblocs;
             if web.matches( webloc.weblet.wpath ) && webloc.weblet.matches( web ) ) {
-        
         if ( !comet && !isAsset ) ensureSession( thread, web )
         
-        if ( !comet && ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.session.isLoggedIn ) ) ) && web.req.getAttribute( "api" )._s.isBlank ) {
-          if ( T.session.trace ) {
-            val hasUser = T.user != null 
-            NewRelic.setUserName( hasUser ? T.user.fullName | "[Unknown]" )
-            NewRelic.setAccountName( hasUser ? T.user.tid | "[None]" )
-            NewRelic.setProductName( T.session.id )
-          }
-          
+        if ( T.session.trace ) {
+          val hasUser = T.user != null 
+          NewRelic.setUserName( hasUser ? T.user.fullName | "[Unknown]" )
+          NewRelic.setAccountName( hasUser ? T.user.tid | "[None]" )
+          NewRelic.setProductName( T.session.id )
+        }
+        
+        if ( !comet && ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( ( T.user == null || !T.session.isLoggedIn ) && webloc.weblet.requiresLogin ) ) ) && web.req.getAttribute( "api" )._s.isBlank ) {
           web.template( B.appShellPage( web ) )
           return
         }
@@ -322,13 +321,6 @@ class WebFilter extends TyrFilter {
           first = false
         }
 
-        if ( T.session.trace ) {
-          val hasUser = T.user != null 
-          NewRelic.setUserName( hasUser ? T.user.fullName | "[Unknown]" )
-          NewRelic.setAccountName( hasUser ? T.user.tid | "[None]" )
-          NewRelic.setProductName( T.session.id )
-        }
-          
         if ( handle( webloc ) ) {
           //sp am( "CACHE: CLEARING" )
           thread.tidCache.clear
@@ -557,7 +549,9 @@ trait Weblet {
     if ( !org.tyranid.session.Session().user.has( 'org ) )
       web.redirect( "/" + ( web.b( 'xhr ) ? "?xhr=1" | "" ) )
   }
-     
+   
+  val requiresLogin = true
+  
   def matches( web:WebContext ) = true
 
   def handle( web:WebContext ):Unit
