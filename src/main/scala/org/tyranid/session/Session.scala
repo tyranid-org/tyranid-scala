@@ -80,9 +80,9 @@ object SessionCleaner {
 
   def cleanGlobal {
 
-    val cutoff = new Date - ( 2 * Time.OneHourMs )
+    val cutoff = new Date - ( 1 * Time.OneHourMs )
 
-    B.SessionData.db.remove( Mobj( "lat" -> Mobj( $lte -> cutoff ) ) )
+    B.SessionData.db.remove( Mobj( "lpt" -> Mobj( $lte -> cutoff ) ) )
   }
 }
 
@@ -249,6 +249,11 @@ class ThreadData {
   /*
    * * *  RequestCache ... prefer TidCache to this, this is problematic to extend into something like memcache
    */
+
+  def clearRequestCache = {
+    tidCache.clear
+    requestCache.clear
+  }
 
   val requestCache = mutable.Map[String,Any]()
 

@@ -88,6 +88,15 @@ object Imp {
     case e: Throwable => e.log
     }
 
+  def trytrace( block: => Unit ) =
+    try {
+      block
+    } catch {
+    case e: Throwable =>
+      e.printStackTrace
+      e.getMessage
+    }
+
   def spam( msg:Any ) =
     if ( msg != null ) println( "SPAM: " + msg.toString )
     else               println( "SPAM: null" )
@@ -114,20 +123,23 @@ object Imp {
 	}
 
   def background( block: => Unit ) {
+
     val s = Session()
-    //scala.concurrent.future(body)
-    
-    scala.concurrent.future {
-      T.becomeSession( s )
+   
+    val r = new Runnable() {
+      def run {
+        T.becomeSession( s )
       
-      // These are request only and looks like scala.concurrent.future does thread pooling.
-      T.tidCache.clear
-      T.requestCache.clear
+        // not technically needed unless we go back to thread pooling
+        T.clearRequestCache
       
-      trylog {
-        block
+        trylog {
+          block
+        }
       }
-    } ( scala.concurrent.ExecutionContext.global )
+    }
+
+    new Thread( r ).start
   }
 
   def background_?( test:Boolean, block: => Unit) {

@@ -126,6 +126,7 @@ case class Task( id:Int, subject:String, var nextMs:Long, periodMs:Long, var ena
   def active:Boolean = active( TaskStats.getById( id ) )
 
   def run {
+    spam( "running task " + this.id + " - inside run" )
     if ( !( skipWeekend && new Date().isWeekend ) ) { 
       println( "Scheduler:  running " + subject + " at " + new Date().toString )
   
@@ -204,6 +205,8 @@ object Scheduler {
   def start = {
     background {
       while ( true ) {
+        T.clearRequestCache
+
         val size =
           Task.tasks.synchronized {
             Task.tasks.sortBy( _.nextMs )
@@ -218,6 +221,7 @@ object Scheduler {
               nextMs = task.nextMs;
               if nowMs >= nextMs ) {
 
+spam( "checking " + task.id + " (" + task.subject + ")" )
           if ( task.allServers ) {
             task.run
           } else {
@@ -236,17 +240,19 @@ object Scheduler {
             val wr = TaskRun.db.insert( tr, WriteConcern.NONE )
 
             val code = wr.getField( "code" )
-spam( "----- CODE " + code )
 
             if ( code != 11000 ) {
-spam( "----- updating " + task.id )
+spam( "----- processing " + task.id )
               TaskStats.start( task, sv, startOn )
 
               task.run
 
               val endAt = new Date
-              TaskRun  .db.update( Mobj( "_id" -> taskRunId ), Mobj( $set -> Mobj( "end" -> endAt     ) ) )
+              TaskRun.db.update( Mobj( "_id" -> taskRunId ), Mobj( $set -> Mobj( "end" -> endAt ) ) )
               TaskStats.end( task, endAt )
+spam( "----- done processing " + task.id )
+            } else {
+spam( "----- another server is running it already" )
             }
           }
   
@@ -293,7 +299,9 @@ object Schedulelet extends Weblet {
       _404
 
     def task = {
+      // TODO-LOW:  change this to work off task ids instead of subjects now that tasks have ids
       val subject = web.req.s( 'task )
+spam( "subject=\"" + subject + "\"" )
       Task.tasks.find( _.subject == subject ) 
     }
 
@@ -307,10 +315,13 @@ object Schedulelet extends Weblet {
            name = "scheduler"
        ) )
     case "/run" =>
+      spam( "running 1 " + task )
       task foreach { task =>
 
+      spam( "running 2 " + task.id )
         background {
 
+      spam( "running 3 " + task.id )
           if ( !task.allServers )
             TaskStats.start( task, Ip.Host.toString, new Date )
           task.run
