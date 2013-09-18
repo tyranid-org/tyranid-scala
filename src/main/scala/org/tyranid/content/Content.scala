@@ -674,6 +674,7 @@ trait ContentMeta extends PrivateKeyEntity {
 
   "pos"               is DbInt                is 'client; // the position of this content within its parent (group, folder, board, etc.) ... see the class "Positioning"
 
+  "c"                 is DbLink(B.User)       as "Created By" is 'client;
   "o"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Owners" is 'owner is 'client;
   "ownerTid"          is DbTid(B.User)        is 'temporary is 'client computed( _.as[Content].firstOwnerTid() )
   "isOwner"           is DbBoolean            is 'temporary is 'client computed( _.as[Content].isOwner( T.user ) );
@@ -845,7 +846,6 @@ abstract class Content( override val view:MongoView,
     content( 'hide ) = null
 
     content.stampLastModified
-    content.stampLastAction
     
     //content.save
     content
@@ -1001,13 +1001,6 @@ abstract class Content( override val view:MongoView,
     this( 'lastModifiedByOrg ) = u.orgId
   }
   
-  def stampLastAction = {
-    val u = T.user
-    this( 'lastModified )      = new Date
-    this( 'lastModifiedBy )    = u.id
-    this( 'lastModifiedByOrg ) = u.orgId
-  }
-
   def lastModifiedByTidItem = TidItem.by( B.User.idToTid( oid( 'lastModifiedBy ) ) )
 
   def lastModifiedByUser = {

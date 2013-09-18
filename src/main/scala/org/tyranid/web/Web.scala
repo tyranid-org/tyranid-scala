@@ -102,7 +102,6 @@ trait TyrFilter extends Filter {
 
       sess.record( "rh" -> web.req.getRemoteHost, "ra" -> web.req.getRemoteAddr )
       
-      //sess.put( "subdomain", web.req.getServerName )
       sess.ua( web )
       LoginCookie.autoLogin          
     }
@@ -193,7 +192,11 @@ class BasicAuthFilter extends TyrFilter {
       }
 
       ensureSession( thread, web )
-      T.session.login( user )
+      val sess = T.session
+      val subdomain = web.req.getServerName
+      sess.put( "lite", subdomain.startsWith( B.liteDomainName ) )
+      sess.put( "subdomain", web.req.getServerName )
+      sess.login( user )
     }
     
     //web.req.setAttribute( "removeFromPath", "/api" )
@@ -210,14 +213,23 @@ class WebFilter extends TyrFilter {
     var web = webr
     val isAsset = !comet && !WebFilter.notAsset( web.path )
 
-    if ( !comet && thread.http != null ) {
+    if ( !comet ) {
       val session = T.session
       
       if ( session != null && !isAsset ) {
+<<<<<<< HEAD
         val now = new Date
         val path = web.path
         session.record( "lp" -> path, "lpt" -> now )
       //sess.put( "subdomain", web.req.getServerName )
+=======
+        val subdomain = web.req.getServerName
+
+        session.put( "lite", subdomain.startsWith( B.liteDomainName ) )
+        session.put( "lastPath", web.path )
+        session.put( "lastPathTime", new java.util.Date() )
+        session.put( "subdomain", subdomain )
+>>>>>>> dev
       }
     }
     
@@ -228,7 +240,9 @@ class WebFilter extends TyrFilter {
     if ( B.maintenanceMode && !path.matches( WebFilter.maintPattern ) & !isAsset ) {
       web.ctx.getRequestDispatcher( "/maintenance.html" ).forward( web.req, web.res )
       return
-    } else if ( path.matches( WebFilter.versionPattern ) ) {
+    }
+    
+    if ( path.matches( WebFilter.versionPattern ) ) {
       val slash = path.indexOf( '/', 1 )
       
       if ( slash != -1 ) {
@@ -295,9 +309,9 @@ class WebFilter extends TyrFilter {
     try {
       for ( webloc <- boot.weblocs;
             if web.matches( webloc.weblet.wpath ) && webloc.weblet.matches( web ) ) {
-        
         if ( !comet && !isAsset ) ensureSession( thread, web )
         
+<<<<<<< HEAD
          if ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( T.user == null || !T.session.isLoggedIn ) ) && !comet && web.req.getAttribute( "api" )._s.isBlank ) {
            
           if ( T.session.trace ) {
@@ -307,6 +321,16 @@ class WebFilter extends TyrFilter {
             NewRelic.setProductName( T.session.tid )
           }
           
+=======
+        if ( T.session.trace ) {
+          val hasUser = T.user != null 
+          NewRelic.setUserName( hasUser ? T.user.fullName | "[Unknown]" )
+          NewRelic.setAccountName( hasUser ? T.user.tid | "[None]" )
+          NewRelic.setProductName( T.session.id )
+        }
+        
+        if ( !comet && ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( ( T.user == null || !T.session.isLoggedIn ) && webloc.weblet.requiresLogin ) ) ) && web.req.getAttribute( "api" )._s.isBlank ) {
+>>>>>>> dev
           web.template( B.appShellPage( web ) )
           return
         }
@@ -317,6 +341,7 @@ class WebFilter extends TyrFilter {
           first = false
         }
 
+<<<<<<< HEAD
         if ( T.session.trace ) {
           val hasUser = T.user != null 
           NewRelic.setUserName( hasUser ? T.user.fullName | "[Unknown]" )
@@ -324,6 +349,8 @@ class WebFilter extends TyrFilter {
           NewRelic.setProductName( T.session.tid )
         }
           
+=======
+>>>>>>> dev
         if ( handle( webloc ) ) {
           //sp am( "CACHE: CLEARING" )
           thread.tidCache.clear
@@ -533,15 +560,18 @@ case class Webloc( path:String, weblet:Weblet, children:Webloc* ) {
 trait Weblet {
   val rootPath = "/"
   
-  def redirectIfNotLoggedIn( web:WebContext ) = 
-    if ( !Session().isLoggedIn ) {
+  def redirectIfNotLoggedIn( web:WebContext ) = {
+    val sess = Session()
+    
+    if ( !sess.isLoggedIn ) {
       //if ( web.b( 'xhr ) ) {
       //  web.redirect( "#login/" + web.req.uriAndQueryString.encUrl )         
       //} else {
       //  web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
       //}
-    web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
+      web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
     }
+  }
 
   def redirectIfNotHasOrg( web:WebContext ) = {
     redirectIfNotLoggedIn( web )
@@ -549,7 +579,9 @@ trait Weblet {
     if ( !org.tyranid.session.Session().user.has( 'org ) )
       web.redirect( "/" + ( web.b( 'xhr ) ? "?xhr=1" | "" ) )
   }
-     
+   
+  val requiresLogin = true
+  
   def matches( web:WebContext ) = true
 
   def handle( web:WebContext ):Unit

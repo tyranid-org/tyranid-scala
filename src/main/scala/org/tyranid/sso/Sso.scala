@@ -403,6 +403,7 @@ $( $('#idp').focus() );
             val project = Group.make
             project( 'name    ) = name
             project( 'on      ) = now
+            project( 'c       ) = newUser.id
             project( 'o       ) = userList
             project( 'type    ) = ContentType.Project.id
             project( 'color   ) = Group.getRandomColor
@@ -448,6 +449,7 @@ $( $('#idp').focus() );
             val newBoard = B.DocEntity.make
             newBoard( 'name        ) = "Files"
             newBoard( 'on          ) = now
+            newBoard( 'c           ) = newUser.id
             newBoard( 'o           ) = userList
             newBoard( 'v           ) = userList
             newBoard( 'type        ) = ContentType.Folder.id

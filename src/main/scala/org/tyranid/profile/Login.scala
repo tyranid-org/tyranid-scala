@@ -161,7 +161,7 @@ $( function() {
         val jsonRes = web.jsonRes( sess )
         
         jsonRes.htmlMap = Map( 
-              "html" -> B.loginPage(),
+              "html" -> B.loginPage,
               "target" -> "#main",
               "transition" -> "fadeOutIn",
               "duration" -> 500 )

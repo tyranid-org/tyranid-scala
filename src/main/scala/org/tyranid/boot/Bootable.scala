@@ -106,6 +106,8 @@ trait Bootable {
 
   // DEV assumes the DNS is in your hosts file
   
+  def liteDomainName = "annotate"
+    
   def fullDomain = { 
     if ( DEV )        "rb-dev." + domain
     else if ( STAGE ) "rb-stage." + domain
@@ -113,9 +115,11 @@ trait Bootable {
     else              "rb." + domain
   }
     
-  def domainPort = 
-    if ( DEV )        fullDomain + ":8443"
-    else              fullDomain
+  def port = 
+    if ( DEV )        ":8443"
+    else              ""
+      
+  def domainPort = fullDomain + port 
     
   def nonsecureWebsite = "http://" + domainPort
     

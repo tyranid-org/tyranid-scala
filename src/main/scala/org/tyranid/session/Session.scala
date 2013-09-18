@@ -148,18 +148,24 @@ class ThreadData {
   def baseWebsite = "https://" + B.domainPort
   
   def website( path:String = "", user:User = null, ssoMapping:SsoMapping = null ):String = {
-    if ( user == null ) 
-      return baseWebsite  + path 
+    val subdomainWebsite = ( session == null ) ? baseWebsite | {
+      val subdomain = session.s( 'subdomain ) 
+      
+      ( subdomain.isBlank ) ? baseWebsite | "https://" + subdomain + B.port
+    }
     
+    if ( user == null ) 
+      return subdomainWebsite  + path
+        
     val ssoMappingImpl = ( ssoMapping == null ) ? {
       val ssoId = user.s( 'sso )
       ssoId.isBlank ? null | SsoMapping.getById( ssoId )
     } | ssoMapping
     
     if ( ssoMappingImpl == null )
-      return baseWebsite + path
+      return subdomainWebsite + path
       
-    return baseWebsite + "/sso/auth/" + ssoMappingImpl.id._s + "?startUrl=" + java.net.URLEncoder.encode( path, "UTF-8" )
+    return subdomainWebsite + "/sso/auth/" + ssoMappingImpl.id._s + "?startUrl=" + java.net.URLEncoder.encode( path, "UTF-8" )
   }
 
   def user:User =
@@ -325,6 +331,8 @@ trait Session extends QuickCache {
   // If the user tid is set in the session
   def isLoggedIn = !user.isNew //getOrElse( "user", "" )._s.notBlank
 
+  def isLite = b( "lite" )
+  
   var debug       = B.DEV
   var trace       = false
 
@@ -335,6 +343,10 @@ trait Session extends QuickCache {
   def getOrElseUpdate( key:String, any:java.io.Serializable ) = getVOrElseUpdate( key, any )
   def put( key:String, value:java.io.Serializable ) = putV( key, value )
   def clear( key:String ) = clearCache( key )
+  
+  def b( key:String ) = getVOrElse( key, false ).as[Boolean]
+  def s( key:String ) = getVOrElse( key, null ).as[String]
+  def i( key:String ) = getVOrElse( key, null ).as[Integer]
   
   def ua( web: WebContext ) = {
     var tUa:UserAgent = get( Session.UA_KEY ).as[UserAgent]
