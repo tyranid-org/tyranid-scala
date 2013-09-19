@@ -651,6 +651,7 @@ class SessionDataMeta extends MongoEntity( "a04t" ) {
 
   "lp"                 is DbChar(64)        as "Last Path";
   "lpt"                is DbDateTime        as "Last Path Time";
+  "dom"                is DbChar(32)        as "Website Domain";
 
   "ua"                 is DbLink(UserAgent) ;
 

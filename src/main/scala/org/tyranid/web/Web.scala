@@ -217,13 +217,13 @@ class WebFilter extends TyrFilter {
     if ( !comet && !isAsset ) {
       val session = T.session
       
-      if ( session != null && !isAsset ) {
+      if ( session != null && T.http != null && !isAsset ) {
         val now = new Date
         val path = web.path
         val subdomain = web.req.getServerName
 
         session.put( "lite", subdomain.startsWith( B.liteDomainName ) )
-        session.record( "lp" -> path, "lpt" -> now )
+        session.record( "lp" -> path, "lpt" -> now, "dom" -> subdomain )
         session.put( "subdomain", subdomain )
         //sess.put( "subdomain", web.req.getServerName )
       }
