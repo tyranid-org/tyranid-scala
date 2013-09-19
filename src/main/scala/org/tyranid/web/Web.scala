@@ -98,11 +98,23 @@ trait TyrFilter extends Filter {
   def ensureSession( thread:ThreadData, web:WebContext ) {
     if ( thread.http == null ) {
       thread.http = web.req.getSession( true )
+<<<<<<< HEAD
       val sess = T.session
 
       sess.record( "rh" -> web.req.getRemoteHost, "ra" -> web.req.getRemoteAddr )
+=======
+      val session = T.session
       
-      sess.ua( web )
+      session.put( "remoteHost", web.req.getRemoteHost() )
+      session.put( "remoteAddr", web.req.getRemoteAddr() )
+>>>>>>> lite
+      
+      val subdomain = web.req.getServerName
+
+      session.put( "lite", subdomain.startsWith( B.liteDomainName ) )
+      session.put( "subdomain", subdomain )
+      
+      session.ua( web )
       LoginCookie.autoLogin          
     }
   }
@@ -192,11 +204,7 @@ class BasicAuthFilter extends TyrFilter {
       }
 
       ensureSession( thread, web )
-      val sess = T.session
-      val subdomain = web.req.getServerName
-      sess.put( "lite", subdomain.startsWith( B.liteDomainName ) )
-      sess.put( "subdomain", web.req.getServerName )
-      sess.login( user )
+      T.session.login( user )
     }
     
     //web.req.setAttribute( "removeFromPath", "/api" )
@@ -204,7 +212,7 @@ class BasicAuthFilter extends TyrFilter {
     
     chain.doFilter( web.req, web.res )
     
-    if ( T.session != null ) T.session.logout()
+    T.session.logout()
   }
 }
 
@@ -213,8 +221,9 @@ class WebFilter extends TyrFilter {
     var web = webr
     val isAsset = !comet && !WebFilter.notAsset( web.path )
 
-    if ( !comet ) {
+    if ( !comet && !isAsset ) {
       val session = T.session
+<<<<<<< HEAD
       
       if ( session != null && !isAsset ) {
         val now = new Date
@@ -226,6 +235,10 @@ class WebFilter extends TyrFilter {
         session.put( "subdomain", subdomain )
         //sess.put( "subdomain", web.req.getServerName )
       }
+=======
+      session.put( "lastPath", web.path )
+      session.put( "lastPathTime", new java.util.Date() )
+>>>>>>> lite
     }
     
     var first = true
@@ -312,6 +325,8 @@ class WebFilter extends TyrFilter {
           NewRelic.setAccountName( hasUser ? T.user.tid | "[None]" )
           NewRelic.setProductName( T.session.id.toString )
         }
+        
+        //println( T.session.id + ":" + T.session.isLite )
         
         if ( !comet && ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( ( T.user == null || !T.session.isLoggedIn ) && webloc.weblet.requiresLogin ) ) ) && web.req.getAttribute( "api" )._s.isBlank ) {
           web.template( B.appShellPage( web ) )
