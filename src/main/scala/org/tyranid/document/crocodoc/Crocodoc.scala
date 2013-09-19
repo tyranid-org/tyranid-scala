@@ -139,7 +139,7 @@ _doc = {"status": 3, "socketioHost": "//socket.crocodoc.com:5555/", "objects": [
   def getThumbnailFile( extDocId:String, width:Int = 300, height:Int = 300 ):File = {
     var tries = 0
     
-    while ( tries < 8 ) {
+    while ( tries < 10 ) {
       tries += 1
       val res = Http.GET( "https://crocodoc.com/api/v2/download/thumbnail?token=" + apiKey + "&uuid=" + extDocId + "&size=" + width + "x" + height )
       val entity = res.response.getEntity
@@ -161,7 +161,7 @@ _doc = {"status": 3, "socketioHost": "//socket.crocodoc.com:5555/", "objects": [
           try {
             entity.getContent.transferTo( out, true )
           } finally {
-             out.close
+            out.close
           }
     
           return tmpFile
