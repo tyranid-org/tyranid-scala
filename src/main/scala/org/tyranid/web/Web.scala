@@ -104,10 +104,10 @@ trait TyrFilter extends Filter {
       
       val subdomain = web.req.getServerName
 
-      session.put( "lite", subdomain.startsWith( B.liteDomainName ) )
-      session.put( "subdomain", subdomain )
+      sess.put( "lite", subdomain.startsWith( B.liteDomainName ) )
+      sess.put( "subdomain", subdomain )
       
-      session.ua( web )
+      sess.ua( web )
       LoginCookie.autoLogin          
     }
   }
