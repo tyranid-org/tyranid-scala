@@ -101,11 +101,6 @@ trait TyrFilter extends Filter {
       session.put( "remoteHost", web.req.getRemoteHost() )
       session.put( "remoteAddr", web.req.getRemoteAddr() )
       
-      val subdomain = web.req.getServerName
-
-      session.put( "lite", subdomain.startsWith( B.liteDomainName ) )
-      session.put( "subdomain", subdomain )
-      
       session.ua( web )
       LoginCookie.autoLogin          
     }
