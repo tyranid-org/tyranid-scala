@@ -84,7 +84,7 @@ object Zencoder {
     for ( format <- formats )
       maps += mapForFormat( url, format, forAudio )
     
-    if ( !forAudio )
+    if ( !forAudio ) {
       maps += Map( 
         "url" -> ( url + ".TMP.mobile_mp4" ),
         "size" -> "1280x720",
@@ -93,6 +93,18 @@ object Zencoder {
         "h264_profile" -> "main",
         "h264_level" -> "3.1",
         "max_frame_rate" -> 30 )
+       
+      /*
+      maps += Map( "thumbnails" -> 
+        Map(
+          "label" -> 1,
+          "number" -> 1,
+          "start_at_first_frame" -> 1,
+          "base_url" -> "https://s3.amazonaws.com/files.volerro.com/" 
+          "filename": "x.png"
+        ) )
+      */
+    }    
         
     maps
   }
