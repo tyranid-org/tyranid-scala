@@ -87,23 +87,23 @@ object Transcoder {
 }
 */    
     val payload = Map(
-         "Input" -> Map(
-             "Key" -> inputKey,
-             "FrameRate" -> "auto",
-             "Resolution" -> "auto",
-             "AspectRatio" -> "auto",
-             "Interlaced" -> "auto",
-             "Container" -> "auto"
-         ),
-         "Output" -> Map(
-            "Key" -> ( inputKey + ".mp4" ),
-            "ThumbnailPattern" -> "",
-            "Rotate" -> "0",
-            "PresetId" -> PRESET_WEB
-         ),
-         "PipelineId" -> pipeline_standardId
-        )
-        
+     "Input" -> Map(
+       "Key" -> inputKey,
+       "FrameRate" -> "auto",
+       "Resolution" -> "auto",
+       "AspectRatio" -> "auto",
+       "Interlaced" -> "auto",
+       "Container" -> "auto"
+     ),
+     "Output" -> Map(
+      "Key" -> ( inputKey + ".mp4" ),
+      "ThumbnailPattern" -> "",
+      "Rotate" -> "0",
+      "PresetId" -> PRESET_WEB
+     ),
+     "PipelineId" -> pipeline_standardId
+    )
+    
     val req = request( "POST", "/2012-09-25/jobs", null, payload.toJsonStr( false ) )
     val result = req.s            
       
@@ -144,14 +144,14 @@ object Transcoder {
     return true
   }
   
-  def checkStatus( doc:DBObject, db:DBCollection, bkt:S3Bucket, key:String, s3Url:String ) = {
+  def checkStatus( doc:DBObject, db:DBCollection, bkt:S3Bucket, key:String, s3Url:String, tries:Int = 3, waitTime:Int = 5000 ) = {
     val jobId = doc.s( 'trid )
     
     if ( jobId.notBlank ) {
       var outerTries = 0
       var complete = false
                          
-      while ( outerTries < 3 && !complete ) {
+      while ( outerTries < tries && !complete ) {
         val state = status( doc )
         
         state match {
@@ -164,8 +164,8 @@ object Transcoder {
               log( Event.Zencoder, "m" -> ( "Status came back as " + state + " for job id " + zid + " on doc " + doc.s( '_id ) ) )
               complete = true
             }
-          case "Submitted" | "In Progess" =>
-            Thread.sleep( 5000 )
+          case "Submitted" | "In Progress" =>
+            Thread.sleep( waitTime )
           case _ =>
             log( Event.Zencoder, "m" -> ( "Status came back as: " + state + "for job id " + jobId + " on doc " + doc.s( '_id ) ) )
             complete = true

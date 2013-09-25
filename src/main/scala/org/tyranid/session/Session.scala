@@ -409,6 +409,7 @@ trait Session extends QuickCache {
    */
 
   def login( user:User, incognito:Boolean = false, sso:SsoMapping = null ) = {
+spam( "logging in " + user.label )
     this.user = user
     put( "lastLogin", user.t( 'lastLogin ) )
 

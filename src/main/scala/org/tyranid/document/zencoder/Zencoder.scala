@@ -17,6 +17,8 @@
 
 package org.tyranid.document.zencoder
 
+import com.amazonaws.AmazonServiceException
+
 import scala.collection.mutable
 import scala.collection.mutable.Buffer
 
@@ -68,23 +70,42 @@ object Zencoder {
   def supportsVideo( filename:String ) = otherVidFormats.getOrElse( filename.suffix( '.' ).toLowerCase, null ) != null
   def supportsAudio( filename:String ) = otherAudioFormats.getOrElse( filename.suffix( '.' ).toLowerCase, null ) != null
   
-  private def mapForFormat( url:String, format:Seq[String], forAudio:Boolean = false ) = {
-    if ( forAudio )
+  private def mapForFormat( url:String, s3ParentPath:String, format:Seq[String], forAudio:Boolean = false, addThumb:Boolean = false ) = {
+    if ( forAudio ) {
       Map( "url" -> ( url + ".TMP." + format(0) ),
          "audio_codec" -> format(1) )
-    else 
-      Map( "url" -> ( url + ".TMP." + format(0) ),
-         "video_codec" -> format(1),
-         "audio_codec" -> format(2) )
+    } else {
+      if ( addThumb ) {
+        val bucket = B.bucketByUrl( url ).get
+        Map( "url" -> ( url + ".TMP." + format(0) ),
+             "video_codec" -> format(1),
+             "audio_codec" -> format(2),
+             "thumbnails" -> Map(
+               "label" -> 1,
+               "number" -> 1,
+               "start_at_first_frame" -> 1,
+               "base_url" -> bucket.url( s3ParentPath, true ), 
+               "filename" -> ( url.suffix( '/' ) + "_TMP_thumb" )
+             )
+           )
+      } else {
+        Map( "url" -> ( url + ".TMP." + format(0) ),
+             "video_codec" -> format(1),
+             "audio_codec" -> format(2) )
+      }
+    }
   }
   
-  def outputFormats( url:String, formats:Seq[Seq[String]], forAudio:Boolean = false ) = {
-    var maps = new mutable.ArrayBuffer[Map[String,Any]]()
+  def outputFormats( url:String, s3Path:String, formats:Seq[Seq[String]], forAudio:Boolean = false ) = {
+    val maps = new mutable.ArrayBuffer[Map[String,Any]]()
+    var addThumb = true
     
     for ( format <- formats )
-      maps += mapForFormat( url, format, forAudio )
+      maps += mapForFormat( url, s3Path, format, forAudio, addThumb )
+      addThumb = false
     
-    if ( !forAudio )
+    if ( !forAudio ) {
+      
       maps += Map( 
         "url" -> ( url + ".TMP.mobile_mp4" ),
         "size" -> "1280x720",
@@ -92,7 +113,9 @@ object Zencoder {
         "max_video_bitrate" -> 5000,
         "h264_profile" -> "main",
         "h264_level" -> "3.1",
-        "max_frame_rate" -> 30 )
+        "max_frame_rate" -> 30
+      )
+    }    
         
     maps
   }
@@ -121,7 +144,7 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
 }
 */
   
-  def upload( inputUrl:String, filename:String, doc:DBObject ): Boolean = {
+  def upload( inputUrl:String, filename:String, doc:DBObject, parentPath:String ): Boolean = {
     var ext = filename.suffix( '.' ).toLowerCase
     
     var formats = Zencoder.otherVidFormats.getOrElse( ext, null )
@@ -133,14 +156,14 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
     }
       
     if ( formats != null ) {
-      val outputFormats = Zencoder.outputFormats( inputUrl, formats, isAudio ).toSeq
+      val outputFormats = Zencoder.outputFormats( inputUrl, parentPath, formats, isAudio ).toSeq
       
       val jsonReq = Map( 
           "test" -> B.DEV,  
           "input" -> inputUrl,
           "output" -> outputFormats )
           
-      //println( "request: " + jsonReq.toJsonStr )
+      //println( "request: " + jsonReq.toJsonStr( true ) )
       AppStat.ZencoderUpload
       val req = Http.POST( "https://app.zencoder.com/api/v2/jobs", jsonReq.toJsonStr( false ), null, "application/json", Map( "Zencoder-Api-Key" -> apiKey ) )
       val result = req.s            
@@ -176,14 +199,14 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
   // Need to copy these over because they are not solely owned by us:
   // See: https://forums.aws.amazon.com/message.jspa?messageID=371475
         
-  def checkStatus( doc:DBObject, db:DBCollection, bkt:S3Bucket, key:String, s3Url:String ) = {
+  def checkStatus( doc:DBObject, db:DBCollection, bkt:S3Bucket, key:String, s3Url:String, s3ParentPath:String, tries:Int = 3, waitTime:Int = 5000 ) = {
     val zformats = doc.a( 'zfmts )
     
     if ( zformats != null ) {
       var outerTries = 0
       var complete = false
                          
-      while ( outerTries < 3 && !complete ) {
+      while ( outerTries < tries && !complete ) {
         status( doc ) match {
           case "finished" | "ready" =>
             db.update( Mobj( "_id" -> doc.id ), Mobj( $unset -> Mobj( "zfmts" -> 1, "zid" -> 1, "zoids" -> 1, "ztries" -> 1 ) ) )
@@ -201,25 +224,34 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
                   tries += 1
                   S3.move( bkt, key + ".TMP." + fmt, bkt, key + "." + fmt )
                   
-                  val om = S3.getObjectMetadata( bkt, key + ".TMP." + fmt )
+                  //val om = S3.getObjectMetadata( bkt, key + ".TMP." + fmt )
                   //om.setHeader( "Accept-Range", "bytes" )
+                  
+                  try {
+                    val thumbMd = S3.getObjectMetadata( bkt, key + "_TMP_thumb.png" )
+                    S3.move( bkt, key + "_TMP_thumb.png", bkt, key + ".png" )
+                    db.update( Mobj( "_id" -> doc.id ), Mobj( $set -> Mobj( "png" -> true ) ) )
+                  } catch {
+                    case e:AmazonServiceException =>
+                      // no thumb
+                  }
                   ok = true
                 } catch {
                   case e:Throwable =>
-                    Thread.sleep( 3300 ) // sleep for 3 secs-- after a bit it SHOULD be available
+                    Thread.sleep( 3000 ) // sleep for 3 secs-- after a bit it SHOULD be available
                 }
               }
             }
             
             complete = true
           case "failed" =>
-            if ( !retryUpload( db, doc, s3Url ) ) {
+            if ( !retryUpload( db, doc, s3Url, s3ParentPath ) ) {
               val zid = doc.i( 'zid )
               log( Event.Zencoder, "m" -> ( "Status came back as failed for job id " + zid + " on doc " + doc.s( '_id ) ) )
               complete = true
             }
           case "waiting" | "queued" | "assigning" | "processing" =>
-            Thread.sleep( 5000 )
+            Thread.sleep( waitTime )
           case status =>
             val zid = doc.i( 'zid )
             log( Event.Zencoder, "m" -> ( "Status came back as: " + status + "for job id " + zid + " on doc " + doc.s( '_id ) ) )
@@ -231,14 +263,14 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
     }
   }
   
-  private def retryUpload( db:DBCollection, doc:DBObject, s3Url:String ):Boolean = {
+  private def retryUpload( db:DBCollection, doc:DBObject, s3Url:String, s3ParentPath:String ):Boolean = {
     var numTries = doc.i( 'ztries )
     
     if ( numTries < 3 ) {
       numTries += 1
       doc( 'ztries ) = numTries
       db.update( Mobj( "_id" -> doc.id ), Mobj( $set -> Mobj( "ztries" -> numTries ) ) )
-      return upload( s3Url, doc.s( 'filename ), doc )
+      return upload( s3Url, doc.s( 'filename ), doc, s3ParentPath )
     }
     
     false
