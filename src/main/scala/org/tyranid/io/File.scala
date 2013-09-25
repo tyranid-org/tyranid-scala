@@ -59,7 +59,8 @@ abstract class TextExtractor {
 
 object TextExtractors {
   val extractors = Seq[TextExtractor]( 
-      new HtmlTextExtractor() )
+      new HtmlTextExtractor(),
+      new TxtExtractor() )
                                      
   def findByFilename( filename:String ) = {
     val ext = filename.suffix( '.' ).toLowerCase
@@ -128,9 +129,7 @@ class TxtExtractor extends TextExtractor {
       val out = new StringWriter()
       in = new FileInputStream( file )
       IOUtils.copy( in, out )
-
       out.flush
-      println( out._s )
       out._s
     } catch {
       case e:Throwable =>

@@ -109,6 +109,35 @@ class StringImp( s:String ) extends Serializable {
   
   def stripNonUtf8 = ( s == null ) ? s | noUtf8Pattern.matcher( s ).replaceAll( " " )
   
+  def pad( minLen:Int, c:Char = '0' ) = {
+    if ( s == null || s.length >= minLen ) {
+      s
+    } else {
+      val sb = new StringBuilder( s )
+      
+      for ( i <- 0 until ( minLen - s.length ) )
+        sb.insert( 0, c )
+        
+      sb._s
+    }
+  }
+	
+	def every( c:Char, where:Int ) = {
+    if ( s == null ) {
+      s
+    } else {
+  	  val sb = new StringBuilder( s )
+  	  var idx = s.length - where
+  
+  	  while ( idx > 0 ) {
+  	    sb.insert( idx, c )
+  	    idx = idx - where
+  	  }
+  	  
+  	  sb._s
+    }
+	}
+	
   def urlify = {
     val nodes = scala.collection.mutable.Buffer[NodeSeq]()
     val matcher = StringImp.urlPattern.matcher( s )

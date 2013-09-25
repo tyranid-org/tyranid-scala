@@ -21,12 +21,17 @@ import java.io.{ InputStream, File, FileInputStream, FileOutputStream, IOExcepti
 import java.net.URL
 import java.text.DateFormat
 import java.util.Date
+
+import javax.security.cert.X509Certificate
 import javax.servlet.{ Filter, FilterChain, FilterConfig, ServletRequest, ServletResponse }
 import javax.servlet.http.{ Cookie, HttpServlet, HttpServletRequest, HttpServletResponse, HttpSession }
+
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.xml.NodeSeq
+
 import org.bson.types.ObjectId
+
 import org.apache.commons.httpclient.util.DateUtil
 import org.apache.http.{ Header, NameValuePair, HttpHost, HttpResponse, HttpRequestInterceptor }
 import org.apache.http.auth.AuthScope
@@ -35,34 +40,31 @@ import org.apache.http.client.params.HttpClientParams
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{ HttpRequestBase, HttpDelete, HttpGet, HttpPost, HttpPut, HttpUriRequest, HttpEntityEnclosingRequestBase }
 import org.apache.http.client.protocol.{ ClientContext }
-import org.apache.http.entity.{ StringEntity, InputStreamEntity }
-import org.apache.http.impl.auth.BasicScheme
-import org.apache.http.impl.client.{ DefaultHttpClient, BasicAuthCache }
-import org.apache.http.entity.mime.MultipartEntity
+import org.apache.http.entity.{ ContentType, StringEntity, InputStreamEntity }
 import org.apache.http.entity.mime.content.{ InputStreamBody, StringBody, FileBody }
+import org.apache.http.entity.mime.MultipartEntityBuilder
+import org.apache.http.impl.auth.BasicScheme
+import org.apache.http.impl.client.{ BasicCredentialsProvider, HttpClientBuilder, HttpClients, BasicAuthCache }
 import org.apache.http.message.{ BasicHeader, BasicNameValuePair }
 import org.apache.http.params.{ BasicHttpParams, HttpConnectionParams }
 import org.apache.http.protocol.{ ExecutionContext, HttpContext, BasicHttpContext }
 import org.apache.http.util.EntityUtils
+
+import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
 import org.tyranid.json.JsCmd
-import org.tyranid.Imp._
 import org.tyranid.math.Base36
 import org.tyranid.pdf.Pdf
 import org.tyranid.time.Time
 import org.tyranid.web.{ FileUploadSupport, WebHandledException }
-import javax.security.cert.X509Certificate
 
 case class RestException( code:String, message:String ) extends Exception
 
 case class Http403Exception( response:HttpResponse ) extends Exception
 
-
-case class HttpSessionImp( sess:HttpSession ) {
-  
+case class HttpSessionImp( sess:HttpSession ) {  
   def isLoggingOut = sess.getAttribute( "isLoggingOut" )._b
-  def isLoggingOut_=( v:Boolean ) = sess.setAttribute( "isLoggingOut", v )
-  
+  def isLoggingOut_=( v:Boolean ) = sess.setAttribute( "isLoggingOut", v )  
 }
 
 case class HttpServletRequestOps( req:HttpServletRequest ) {
@@ -317,8 +319,6 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
   }
 
   def s3( bucket:S3Bucket, path:String, req:HttpServletRequest ) {
-    import org.apache.commons.httpclient.util.DateUtil
-    
     var out:OutputStream = null
     
     try {
@@ -516,19 +516,41 @@ object Http {
     }
 
   private def execute( request:HttpRequestBase, withParams:Boolean = true, authScope:AuthScope = null, username:String = null, password:String = null, preemptive:Boolean = false ) = {
-    val httpParams = new BasicHttpParams
-    HttpConnectionParams.setConnectionTimeout( httpParams, 30000 ) // 30s
-    HttpConnectionParams.setSoTimeout( httpParams, 30000 ) // 30s
+    val builder = HttpClients.custom()//.setDefaultCredentialsProvider(credsProvider).build();
     
-    val client = withParams ? new DefaultHttpClient( httpParams ) | new DefaultHttpClient( httpParams )
+    if ( username.notBlank && password.notBlank ) {
+      val credsProvider:BasicCredentialsProvider = null
+      
+      if ( preemptive ) {
+        val cp = new BasicCredentialsProvider()
+        val uri = request.getURI
+        val port = ( uri.getScheme.toLowerCase == "https" ) ? 443 | 80
+        val targetHost = new HttpHost( uri.getHost, port, uri.getScheme )
+        cp.setCredentials( new AuthScope( uri.getHost, port ), 
+                //new AuthScope(targetHost.getHostName(), targetHost.getPort()),
+             new UsernamePasswordCredentials(username,password ) )
+             
+        cp
+      } else if ( authScope != null ) {
+        val cp = new BasicCredentialsProvider()
+        cp.setCredentials( authScope, 
+             new UsernamePasswordCredentials(username,password ) )
+        cp  
+      }
+
+      if ( credsProvider != null )
+        builder.setDefaultCredentialsProvider(credsProvider)          
+    } 
+    
+    val client = builder.build()// withParams ? new DefaultHttpClient( httpParams ) | new DefaultHttpClient( httpParams )
     
     val ( response, context )  = ( preemptive ) ? {
       val uri = request.getURI
       val port = ( uri.getScheme.toLowerCase == "https" ) ? 443 | 80
       val targetHost = new HttpHost( uri.getHost, port, uri.getScheme )
       
-      if ( username.notBlank && password.notBlank ) 
-        client.getCredentialsProvider().setCredentials( new AuthScope( uri.getHost, port ), new UsernamePasswordCredentials( username, password ) )
+      //if ( username.notBlank && password.notBlank ) 
+      //  client.getCredentialsProvider().setCredentials( new AuthScope( uri.getHost, port ), new UsernamePasswordCredentials( username, password ) )
       
       val authCache = new BasicAuthCache()
       
@@ -541,8 +563,8 @@ object Http {
       localcontext.setAttribute(ClientContext.AUTH_CACHE, authCache)
       ( client.execute( targetHost, request, localcontext ), localcontext )
     } | { 
-      if ( authScope != null && username.notBlank && password.notBlank )
-        client.getCredentialsProvider().setCredentials( authScope, new UsernamePasswordCredentials( username, password ) )
+      //if ( authScope != null && username.notBlank && password.notBlank )
+      //  client.getCredentialsProvider().setCredentials( authScope, new UsernamePasswordCredentials( username, password ) )
       
       val context = new BasicHttpContext()
       ( client.execute( request, context ), context )
@@ -618,7 +640,6 @@ object Http {
   }
   
   def POST_FILE( url:String, file:File, contentLength: Long, filename:String, params:collection.Map[String,String] = null, headers:collection.Map[String,String] = null, filePartName:String = "file", put:Boolean = false ):HttpResult = {
-        
     val request = put ? new HttpPut( url ) | new HttpPost( url )
     
     if ( headers != null )
@@ -626,10 +647,10 @@ object Http {
 
     request.setEntity {
       if ( params != null ) {
-        val multipart = new MultipartEntity()
-        params.foreach{ p => multipart.addPart( p._1, new StringBody( p._2, java.nio.charset.Charset.forName( "UTF-8" ) ) ) }
-        multipart.addPart( filePartName, new FileBody( file, org.tyranid.io.File.mimeTypeFor( filename ).or( "application/octet-stream" ) ) )
-        multipart
+        val multipartBuilder = MultipartEntityBuilder.create()
+        params.foreach{ p => multipartBuilder.addPart( p._1, new StringBody( p._2, ContentType.TEXT_PLAIN ) ) }
+        multipartBuilder.addPart( filePartName, new FileBody( file   ) )
+        multipartBuilder.build()
       } else {
         new InputStreamEntity( new FileInputStream( file ), contentLength )
       }
@@ -641,5 +662,3 @@ object Http {
   def DELETE( url:String, query:collection.Map[String,String] = null ):HttpResult =
     execute( new HttpDelete( makeUrl( url, query ) ) )
 }
-
-
