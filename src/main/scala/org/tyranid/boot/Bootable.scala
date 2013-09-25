@@ -299,7 +299,12 @@ trait Bootable {
 
   def getS3Bucket( prefix:String ): S3Bucket = s3Buckets( prefix + envSuffix ) 
 
-  def bucketByUrl( url:String ) = s3Buckets.values.find( bucket => url.startsWith( bucket.url( "" ) ) )
+  def bucketByUrl( url:String ) = s3Buckets.values.find( bucket => {
+      val cfUrl = bucket.url( "" )
+      val nonCfUrl = bucket.url( "", true )
+      url.startsWith( cfUrl ) || url.startsWith( nonCfUrl )
+    }
+  )
   
   def bucket( buckets:S3Bucket* ) =
     for ( bucket <- buckets )
