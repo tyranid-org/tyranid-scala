@@ -519,24 +519,25 @@ object Http {
     val builder = HttpClients.custom()//.setDefaultCredentialsProvider(credsProvider).build();
     
     if ( username.notBlank && password.notBlank ) {
-      val credsProvider:BasicCredentialsProvider = null
-      
-      if ( preemptive ) {
-        val cp = new BasicCredentialsProvider()
-        val uri = request.getURI
-        val port = ( uri.getScheme.toLowerCase == "https" ) ? 443 | 80
-        val targetHost = new HttpHost( uri.getHost, port, uri.getScheme )
-        cp.setCredentials( new AuthScope( uri.getHost, port ), 
-                //new AuthScope(targetHost.getHostName(), targetHost.getPort()),
-             new UsernamePasswordCredentials(username,password ) )
-             
-        cp
-      } else if ( authScope != null ) {
-        val cp = new BasicCredentialsProvider()
-        cp.setCredentials( authScope, 
-             new UsernamePasswordCredentials(username,password ) )
-        cp  
-      }
+      val credsProvider:BasicCredentialsProvider = 
+        if ( preemptive ) {
+          val cp = new BasicCredentialsProvider()
+          val uri = request.getURI
+          val port = ( uri.getScheme.toLowerCase == "https" ) ? 443 | 80
+          val targetHost = new HttpHost( uri.getHost, port, uri.getScheme )
+          cp.setCredentials( new AuthScope( uri.getHost, port ), 
+                  //new AuthScope(targetHost.getHostName(), targetHost.getPort()),
+               new UsernamePasswordCredentials(username,password ) )
+               
+          cp
+        } else if ( authScope != null ) {
+          val cp = new BasicCredentialsProvider()
+          cp.setCredentials( authScope, 
+               new UsernamePasswordCredentials(username,password ) )
+          cp  
+        } else {
+          null
+        }
 
       if ( credsProvider != null )
         builder.setDefaultCredentialsProvider(credsProvider)          

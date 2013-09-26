@@ -208,7 +208,8 @@ $( function() {
       val org = sess.user.org
       val hasOrg = !org.isNew
       val sso = sess.get( "sso" ).as[SsoMapping]
-      val ssoLoe:String = ( sso == null ) ? null | sso.s( 'loEndpoint ) 
+      
+      val ssoLoe:String = ( sso == null ) ? null | sso.s( 'loEndpoint )
       val website = ( ssoLoe.isBlank ) ? T.website( "/?lo=1" + ( web.b( 'xhr ) ? "&xhr=1" | "" ), sess.user, sso ) | ssoLoe
       
       sess.logout()

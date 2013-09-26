@@ -373,6 +373,9 @@ spam( "logging in " + user.label )
       put( "incognito", Boolean.box( true ).booleanValue().as[Serializable] )
     }
       
+    if ( sso != null )
+      put( "sso", sso )
+    
     val onLogin = B.onLogin
     
     if ( onLogin != null )
