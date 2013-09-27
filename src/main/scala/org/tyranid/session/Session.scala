@@ -386,7 +386,7 @@ trait Session extends QuickCache {
 
   def tid:String = return B.SessionData.idToTid( id )
 
-  def data = {
+  def data:SessionData = {
     val d = B.SessionData.getById( id )
     if ( d == null ) {
        // this means that user still has an old id around that we deleted the sessiondata for ... recreate a new one
