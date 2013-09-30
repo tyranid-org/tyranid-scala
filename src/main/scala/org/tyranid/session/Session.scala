@@ -448,6 +448,9 @@ trait Session extends QuickCache {
       put( "incognito", Boolean.box( true ).booleanValue().as[Serializable] )
     }
       
+    if ( sso != null )
+      put( "sso", sso )
+    
     val onLogin = B.onLogin
     
     if ( onLogin != null )

@@ -700,10 +700,6 @@ trait ContentMeta extends PrivateKeyEntity {
   "lastModifiedBy"    is DbLink(B.User)       is 'required is 'client;
   "lastModifiedByOrg" is DbLink(B.Org)        is 'required;
 
-  "lastAction"        is DbDateTime           is 'required;
-  "lastActionBy"      is DbLink(B.User)       is 'required;
-  "lastActionByOrg"   is DbLink(B.Org)        is 'required;
-
   // Messages
   "fit"               is DbBoolean            as "From in To" help <div>Indicates that the posting user is in the to list.  This will normally be false unless a user explicitly addresses a message to themselves.</div>
   "s3"                is DbBoolean            help Text( "Indicates that the file or img is stored by us in S3." );

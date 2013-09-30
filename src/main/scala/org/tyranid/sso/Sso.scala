@@ -457,9 +457,6 @@ $( $('#idp').focus() );
             newBoard( 'lastModified )      = now
             newBoard( 'lastModifiedBy )    = newUser.id
             newBoard( 'lastModifiedByOrg ) = newUser.orgId
-            newBoard( 'lastAction ) = now
-            newBoard( 'lastActionBy ) = newUser.id
-            newBoard( 'lastActionByOrg ) = org.id
             newBoard.save
           } )
         }
