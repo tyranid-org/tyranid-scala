@@ -80,7 +80,7 @@ object SessionCleaner {
 
   def cleanGlobal {
 
-    val cutoff = new Date - ( 1 * Time.OneHourMs )
+    val cutoff = new Date - ( 4 * Time.OneHourMs )
 
     B.SessionData.db.remove( Mobj( "lpt" -> Mobj( $lte -> cutoff ) ) )
   }
@@ -117,8 +117,11 @@ class WebSessionListener extends HttpSessionListener {
   }
  
   def sessionDestroyed( e:HttpSessionEvent ) {
+    val hsid = e.getSession.getId
     //Comet.remove( e.getSession.getId  )
-    WebSession.sessions.remove( e.getSession.getId )
+    WebSession.sessions.remove( hsid )
+
+    B.SessionData.db.update( Mobj( "ss" -> hsid ), Mobj( $set -> Mobj( "exp" -> true ) ) )
   }	
 }
 
@@ -666,6 +669,8 @@ class SessionDataMeta extends MongoEntity( "a04t" ) {
   "dom"                is DbChar(32)        as "Website Domain";
 
   "ua"                 is DbLink(UserAgent) ;
+
+  "exp"                is DbBoolean         as "Expired";
 
   "incognito"          is DbBoolean         ;
 
