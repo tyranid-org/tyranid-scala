@@ -21,6 +21,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
+import org.tyranid.content.ContentType
 import org.tyranid.db.{ DbChar, DbLowerChar, DbUrl, DbDate, DbLink, Record }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
@@ -53,6 +54,12 @@ trait Org extends MongoRecord {
   def name:String
   
   def isOwner( user:User ):Boolean
+
+
+  // This is the group that holds the list of org members.  Eventually this object might be merged with this main organization object.
+  lazy val _group:Group = Group( Group.db.findOne( Mobj( "org" -> this.id, "type" -> ContentType.Organization.id ) ) )
+  
+  def group:Group = _group
 }
 
 
