@@ -133,9 +133,7 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
     db.find( Mobj( "o" -> tids ) ).map( apply ).toSeq
   }
   
-  def canSeeOther( orgTid:String, user:User ) = ownedBy( orgTid ).filter( g => Group( g ).canSee( user ) )
-  
-  def visibleTo( user:User, contentType:ContentType = ContentType.Group, allowBuiltins:Boolean = true, publicGroup:Boolean = false ) = {
+  def visibleTo( user:User ) = {
 
     def in( tids:Seq[String] ) =
       if ( tids.size == 1 )
@@ -143,64 +141,52 @@ object Group extends MongoEntity( tid = "a0Yv" ) with ContentMeta {
       else
         Mobj( $in -> tids.toArray )
 
-    def query( obj:DBObject ) = {
-      if ( contentType != null )
-        obj( "type" ) = contentType.id
+    def query( tids:Seq[String] ) = {
+      val obj = Mobj(
+        $or -> Mlist(
+          Mobj( "o" -> in( tids ) ),
+          Mobj( "v" -> in( tids ) )
+        )
+      )
 
-      if ( !allowBuiltins )
-        obj( "builtin" ) = Mobj( $ne -> true )
-
-      obj
+      db.find( obj )
     }
 
     var tids =
       if ( user.org != null ) Seq( user.tid, user.org.tid )
       else                    Seq( user.tid )
 
-    if ( contentType != ContentType.Group )
-      tids ++= user.groups.map( _.tid )
-    
-    if ( publicGroup )
-      tids ++= Seq( B.publicGroup.tid )
-      
-    val myGroups =
-      db.find(
-        query( Mobj( "o" -> in( tids ) ) )
-      ).map( apply ).toSeq
 
-    val memberGroups =
-      db.find( 
-        query( Mobj( "v" -> in( tids ) ) )
-      ).map( apply ).toSeq.filter( memberGroup => !myGroups.exists( _.id == memberGroup.id ) )
+    var visitedGroups = Buffer[Group]()
 
-    var newGroups = myGroups ++ memberGroups
+    // Recursively query groups if we have any groups that can be nested.
+    var newGroups = query( tids ).map( apply ).toSeq
 
+    while ( newGroups.nonEmpty ) {
+      visitedGroups ++= newGroups
 
-    /*
-     * Currently, groups of type Group are the only type of group allowed to contain other groups.
-     *
-     * This means the query needs to be a recursive query since each new query can find new groups
-     * that we, in turn, need to check.
-     *
-     *
-     */
-    if ( contentType == ContentType.Group ) {
-      var visitedGroups = Buffer[Group]()
+      val inGroups = newGroups.filter( _.canNest ).map( _.tid )
 
-      while ( newGroups.nonEmpty ) {
-        visitedGroups ++= newGroups
-
-        newGroups =
-          db.find( 
-            query( Mobj( "v" -> in( newGroups.map( _.tid ) ) ) )
-          ).map( apply ).filter( grp => !visitedGroups.exists( _.id == grp.id ) ).toSeq
-      }
-
-      visitedGroups
-    } else {
-      newGroups
+      newGroups =
+        if ( inGroups.nonEmpty )
+          query( inGroups).map( apply).filter( grp => !visitedGroups.exists( _.id == grp.id ) ).toSeq
+        else
+          Nil
     }
+
+    visitedGroups
   }
+
+  def publicProjects =
+    db.find(
+      Mobj(
+        "type" -> ContentType.Project.id,
+        $or -> Mlist(
+          Mobj( "o" -> B.publicGroup.tid ),
+          Mobj( "v" -> B.publicGroup.tid )
+        )
+      )
+    ).map( apply ).toSeq
 
   def ensureVisibility( groupTid:String, tid:String ) {
     val group = Group.getByTid( groupTid )
@@ -264,6 +250,11 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
    * * *   Nested Groups
    */
 
+  /**
+   * Only teams can be nested currently, not projects.
+   */
+  def canNest = contentType == ContentType.Team
+
   def hasParent = get( 'parent ) != null
 
   def parentGroup = Group.getById( get( 'parent ) )
@@ -305,8 +296,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
    * list.
    */
   def members = Record.getByTids( memberTids )
-  
-  def canSee( member:Record ):Boolean = canSee( T.user, member )
+ 
 
   def isTemplate = b( 'tmpl )
   def isSsoSynced = b( 'ssoSynced )
@@ -343,8 +333,6 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     }
   }
 
-  def canSee( viewer:User, member:Record ) = isOwner( viewer ) || canView( viewer )
-  
   def canBeSsoSynced:Boolean = T.session.get( "sso" ) != null
   
   override def imageUrl( editing:ContentEdit = null ) =
