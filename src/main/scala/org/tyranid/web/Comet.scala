@@ -119,11 +119,17 @@ spam( "results " + comet.output )
 
 
   def send( httpSessionId:String, m:java.util.Map[String,AnyRef] ) = {
-    val serverSession = B.comets.find( _.name == "message" ).get.service.getServerSession
+    B.comets.find( _.name == "message" ) foreach { comet =>
+      val service = comet.service
 
-    for ( session <- B.bayeux.getSessions ) {
-      if ( session.getAttribute( WebSession.CometHttpSessionIdKey ) == httpSessionId ) {
-        session.deliver( serverSession, "/message", m, null )
+      if ( service != null ) {
+        val serverSession = comet.service.getServerSession
+
+        for ( session <- B.bayeux.getSessions ) {
+          if ( session.getAttribute( WebSession.CometHttpSessionIdKey ) == httpSessionId ) {
+            session.deliver( serverSession, "/message", m, null )
+          }
+        }
       }
     }
   }
