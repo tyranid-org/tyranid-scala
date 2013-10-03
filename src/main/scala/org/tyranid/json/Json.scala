@@ -325,6 +325,17 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
           write( va.name )
           sb += ':'
           write( arr )
+        case d:DbArray if d.of.is[DbLink] =>
+          val arr = rec( va ).as[BasicDBList]
+          val link = va.domain.as[DbArray].of.as[DbLink]
+
+          write( va.name )
+          sb ++= ":["
+          for ( i <- 0 until arr.size ) {
+            if ( i > 0 ) sb += ','
+            write( link.toEntity.idToTid( arr( i ) ) )
+          }
+          sb += ']'
         case DbMongoId | DbInt | DbIntSerial if /* va.name == "_id" && */ va.att.isId && client =>
           write( "id" )
           sb += ':'
