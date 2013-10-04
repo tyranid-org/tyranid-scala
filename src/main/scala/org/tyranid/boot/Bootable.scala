@@ -106,7 +106,7 @@ trait Bootable {
 
   // DEV assumes the DNS is in your hosts file
   
-  def liteDomainName = "annotate"
+  def liteDomainName = "revu"
     
   def fullDomain = { 
     if ( DEV )        "rb-dev." + domain
