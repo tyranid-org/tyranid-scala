@@ -66,6 +66,7 @@ object Email {
     "@mac.com",
     "@mail.com",
     "@me.com",
+    "@mediacombb.net",
     "@mediacomcc.com",
     "@msn.com",
     "@myway.com",
