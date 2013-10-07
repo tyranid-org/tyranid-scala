@@ -76,6 +76,18 @@ object SessionCleaner {
       WebSession.sessions.remove( sess._1 )
       sess._2.invalidate 
     }
+
+    val ipHost = Ip.Host.toString
+
+    val invalidSessions:Seq[String] = (
+      for ( sd <- B.SessionData.db.find( Mobj( "sv" -> ipHost ) );
+            ss = sd.s( 'ss );
+            if !WebSession.sessions.contains( ss ) )
+        yield ss
+    ).toSeq
+
+    if ( invalidSessions.nonEmpty )
+      B.SessionData.db.remove( Mobj( "sv" -> ipHost, "ss" -> Mobj( $in -> invalidSessions.toMlist ) ) )
   }
 
   def cleanGlobal {
