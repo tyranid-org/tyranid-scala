@@ -325,9 +325,9 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
           write( va.name )
           sb += ':'
           write( arr )
-        case d:DbArray if d.of.is[DbLink] =>
+        case d:DbArray if d.of.is[DbLink] && d.of.as[DbLink].toEntity.is[RamEntity] => // JS-TID-HACK-1
           val arr = rec( va ).as[BasicDBList]
-          val link = va.domain.as[DbArray].of.as[DbLink]
+          val link = d.of.as[DbLink]
 
           write( va.name )
           sb ++= ":["
