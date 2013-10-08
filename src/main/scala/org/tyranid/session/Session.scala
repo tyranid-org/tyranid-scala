@@ -132,12 +132,10 @@ class WebSessionListener extends HttpSessionListener {
   def sessionCreated( e:HttpSessionEvent ) {
     val session = e.getSession
     WebSession.sessions( session.getId ) = session
-spam( "session created: " + session.getId )
   }
  
   def sessionDestroyed( e:HttpSessionEvent ) {
     val hsid = e.getSession.getId
-spam( "session destroyed: " + hsid )
     //Comet.remove( e.getSession.getId  )
     WebSession.sessions.remove( hsid )
 
