@@ -50,6 +50,9 @@ import org.tyranid.web.{ Comet, WebContext }
 
 object SessionCleaner { 
   def cleanLocal {
+
+    // Clean up local in-memory sessions
+
     val now = System.currentTimeMillis
     
     WebSession.sessions.filter { sess =>
@@ -76,6 +79,9 @@ object SessionCleaner {
       WebSession.sessions.remove( sess._1 )
       sess._2.invalidate 
     }
+
+
+    // Remove any SessionData records for this server which don't map to local sessions
 
     val ipHost = Ip.Host.toString
 
