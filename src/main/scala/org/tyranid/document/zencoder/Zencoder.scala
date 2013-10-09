@@ -251,7 +251,17 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
               complete = true
             }
           case "waiting" | "queued" | "assigning" | "processing" =>
-            Thread.sleep( waitTime )
+            val goAgain = ( outerTries + 1 ) < tries
+            
+            if ( goAgain ) {
+              Thread.sleep( waitTime )
+            } else {
+              val diff = System.currentTimeMillis() - doc.t( 'on ).getTime 
+              
+              if ( diff > ( Time.OneMinuteMs * 15 ) ) 
+                log( Event.Alert, "m" -> ( "Zencoder video/audio transcoding taking more than 15 mins. Job id " + doc.s( 'zid ) + " on doc " + doc.s( '_id ) ) )
+            }
+            
           case status =>
             val zid = doc.i( 'zid )
             log( Event.Zencoder, "m" -> ( "Status came back as: " + status + "for job id " + zid + " on doc " + doc.s( '_id ) ) )
