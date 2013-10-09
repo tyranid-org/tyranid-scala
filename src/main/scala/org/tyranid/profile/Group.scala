@@ -291,6 +291,17 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     groups
   }
 
+  def fullPath( sep:String = " / " ) = {
+    val path = new StringBuilder( this.label )
+    var parentGroup = this.parentGroup
+
+    while ( parentGroup != null ) {
+      path.insert( 0, parentGroup.label + sep )
+      parentGroup = parentGroup.parentGroup
+    }
+
+    path._s
+  }
 
   def idsForEntity( en:Entity ) = a_?( 'v ).map( _._s ).filter( _.startsWith( en.tid ) ).map( en.tidToId )
 
