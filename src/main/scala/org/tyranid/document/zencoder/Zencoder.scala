@@ -78,6 +78,7 @@ object Zencoder {
       if ( addThumb ) {
         val bucket = B.bucketByUrl( url ).get
         Map( "url" -> ( url + ".TMP." + format(0) ),
+             "max_frame_rate" -> 40,
              "video_codec" -> format(1),
              "audio_codec" -> format(2),
              "thumbnails" -> Map(
