@@ -323,7 +323,7 @@ object Tid {
       }
     }
   }
-  
+
   def delete( tid:String, performDeletion:Boolean ) = {
     val refs = references( tid )
 
@@ -339,7 +339,7 @@ object Tid {
         val refRefs = references( ref.tid ).filter( rr => !refs.exists( _.tid == rr.tid ) && rr.tid != tid )
 
         if ( refRefs.nonEmpty )
-          cascadeFailures ++= refRefs
+          cascadeFailures += ref //++= refRefs
         else
           deletes += ref
       } else {
