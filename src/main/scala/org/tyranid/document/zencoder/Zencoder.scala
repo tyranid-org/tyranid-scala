@@ -200,7 +200,7 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
   // Need to copy these over because they are not solely owned by us:
   // See: https://forums.aws.amazon.com/message.jspa?messageID=371475
         
-  def checkStatus( doc:DBObject, db:DBCollection, bkt:S3Bucket, key:String, s3Url:String, s3ParentPath:String, tries:Int = 3, waitTime:Int = 5000 ) = {
+  def checkStatus( doc:DBObject, db:DBCollection, bkt:S3Bucket, key:String, s3Url:String, s3ParentPath:String, tries:Int = 3, waitTime:Int = 3000 ) = {
     val zformats = doc.a( 'zfmts )
     
     if ( zformats != null ) {
