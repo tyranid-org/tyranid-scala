@@ -496,6 +496,21 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
     mostRecent
   }
 
+
+  def collectTaskTids( taskTids:mutable.Buffer[String], comments:Seq[Comment] ) {
+
+    if ( comments != null ) {
+      for ( c <- comments ) {
+        val taskTid = c.s( 'task )
+
+        if ( taskTid.notBlank )
+          taskTids += taskTid
+
+        collectTaskTids( taskTids, c.comments )
+      }
+    }
+  }
+
   def remove( comments:BasicDBList, id:Int ) {
     for ( c <- comments.toSeq.of[DBObject] )
       if ( c.i( '_id ) == id ) {
