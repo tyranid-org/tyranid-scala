@@ -141,9 +141,15 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
   @throws(classOf[MessagingException])
   override def send():Email = {
     if ( Email.enabled ) {
+      spam( "emailer sess: " + T.session )
+      
+      if ( T.session != null )
+        spam( "emailer isAllowing: " + T.session.isAllowingEmail )
+      
       if ( T.session != null && !T.session.isAllowingEmail ) return this
       
       compose
+      spam( "emailer after compose" )
       
       //if ( !request.getDestination().getToAddresses().contains( "mbradley@volerro.com" ) )
       //  return null
@@ -153,6 +159,7 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
       try {
         spam( "Send email to: " +  primaryRecipients.mkString( "," ) )
         AWSEmail.client.sendEmail( request )
+        spam( "Sent!" )
       } catch {
         case e:MessageRejectedException =>
           if ( !fromLog ) {
