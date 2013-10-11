@@ -20,6 +20,7 @@ package org.tyranid.email
 import javax.mail.MessagingException
 import javax.mail.internet.InternetAddress
 
+import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
@@ -145,7 +146,7 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
       
       compose
       
-      if ( false && !request.getDestination().getToAddresses().contains( "mbradley@volerro.com" ) ) {
+      if ( false && request.getDestination().getToAddresses().find( a => a.contains( "mrkcbradley" ) || a.contains( "mbradley" ) ) == None ) {
         println( """
 *********
             
