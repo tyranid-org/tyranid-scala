@@ -99,15 +99,15 @@ object ContentType extends RamEntity( tid = "a10v" ) {
 
   override val addNames = Seq( "_id", "name" )
 
-  val ChangeLog          = add( 1, "ChangeLog" )
-  val Message            = add( 2, "Message" )
-  val Content            = add( 3, "Content" )
-  val Folder             = add( 4, "Folder" )
-  val Document           = add( 5, "Document" )
-  val Team               = add( 6, "Team" )
-  val Project            = add( 7, "Project" )
-  val Organization       = add( 8, "Organization" )
-  val StandaloneProject  = add( 9, "StandaloneProject" )
+  val ChangeLog    = add( 1, "ChangeLog" )
+  val Message      = add( 2, "Message" )
+  val Content      = add( 3, "Content" )
+  val Folder       = add( 4, "Folder" )
+  val Document     = add( 5, "Document" )
+  val Team         = add( 6, "Team" )
+  val Project      = add( 7, "Project" )
+  val Organization = add( 8, "Organization" )
+  val LiteProject  = add( 9, "LiteProject" )
 }
 
 case class ContentType( override val view:TupleView ) extends Tuple( view )
