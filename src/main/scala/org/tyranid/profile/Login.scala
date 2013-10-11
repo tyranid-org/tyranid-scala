@@ -342,18 +342,23 @@ $( function() {
             web.jsRes()
           }
           
-          val domain = Email.domainFor( email )
-          
-          val orgc = B.Org.db.find( Mobj( "domain" -> ( "^" + domain.encRegex + "$" ).toPatternI ) ).limit(1)
-          val org = orgc.hasNext ? B.Org( orgc.next ) | null
-          
-          if ( org != null ) {
-            if ( !B.canAddUser( org ) ) {
-              sess.error( "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available." )
-              web.jsRes()
+          if ( !Email.isWellKnownProvider( email ) ) {
+            val domain = Email.domainFor( email )
+            
+            val orgc = B.Org.db.find( Mobj( "domain" -> ( "^" + domain.encRegex + "$" ).toPatternI ) ).limit(1)
+            val org = orgc.hasNext ? B.Org( orgc.next ) | null
+            
+            if ( org != null ) {
+              if ( !B.canAddUser( org ) ) {
+                sess.error( "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available." )
+                web.jsRes()
+              } else {
+                T.user( 'org ) = org.id
+                web.jsRes( Js( "$('#company').val( '" + org.s( 'name ) + "' ).attr( 'readonly', 'readonly' );" ) )
+              }
             } else {
-              T.user( 'org ) = org.id
-              web.jsRes( Js( "$('#company').val( '" + org.s( 'name ) + "' ).attr( 'readonly', 'readonly' );" ) )
+              T.user( 'org ) = null
+              web.jsRes( Js( "$('#company').val( '' ).removeAttr( 'readonly' );" ) )
             }
           } else {
             T.user( 'org ) = null
