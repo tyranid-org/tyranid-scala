@@ -827,8 +827,10 @@ abstract class Content( override val view:MongoView,
   def isLocked = b( 'locked )
 
   def contentType = ContentType.getById( i( 'type ) )
-  def isFolder = contentType == ContentType.Folder
-  def isProject = contentType == ContentType.Project
+  def isFolder      = contentType == ContentType.Folder
+  def isProject     = contentType == ContentType.Project
+  def isLiteProject = contentType == ContentType.LiteProject
+  def isProjectlike = isProject || isLiteProject
 
   def hasAnnotatedPages:Boolean = false
   
