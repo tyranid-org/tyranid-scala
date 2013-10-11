@@ -151,6 +151,7 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
       AWSEmail.throttle
     
       try {
+        spam( "Send email to: " +  primaryRecipients.mkString( "," ) )
         AWSEmail.client.sendEmail( request )
       } catch {
         case e:MessageRejectedException =>
