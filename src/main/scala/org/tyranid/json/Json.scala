@@ -198,22 +198,22 @@ class JsonNodeImp( node:JsonNode ) /*extends Dynamic*/ {
   def update( name:String, value:String  ) = node.asInstanceOf[ObjectNode].put( name, value )
 
   def a( key:String ):ArrayNode = apply( key ).a
-  def b( key:String ) = apply( key ).getValueAsBoolean
-  def d( key:String ) = apply( key ).getValueAsDouble
-  def i( key:String ) = apply( key ).getValueAsInt
-  def l( key:String ) = apply( key ).getValueAsLong
-  def s( key:String ) = apply( key ).getValueAsText.denull
+  def b( key:String ) = apply( key ).asBoolean
+  def d( key:String ) = apply( key ).asDouble
+  def i( key:String ) = apply( key ).asInt
+  def l( key:String ) = apply( key ).asLong
+  def s( key:String ) = apply( key ).asText.denull
 
   def a  =
     node match {
     case array:ArrayNode     => array
     case missing:MissingNode => Json.EmptyArray
     }
-  def b = node.getValueAsBoolean
-  def d = node.getValueAsDouble
-  def i = node.getValueAsInt
-  def l = node.getValueAsLong
-  def s = node.getValueAsText.denull
+  def b = node.asBoolean
+  def d = node.asDouble
+  def i = node.asInt
+  def l = node.asLong
+  def s = node.asText.denull
 
 
 
@@ -224,7 +224,7 @@ class JsonNodeImp( node:JsonNode ) /*extends Dynamic*/ {
   def od  = if ( node ne Missing ) Some( d )    else None
   def oi  = if ( node ne Missing ) Some( i )    else None
   def ol  = if ( node ne Missing ) Some( l )    else None
-  def os  = Option( node.getValueAsText )
+  def os  = Option( node.asText )
 
   def children =
     node match {
@@ -239,7 +239,7 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
 
   override def toString = {
     write( root )
-    pretty ? new ObjectMapper().defaultPrettyPrintingWriter().writeValueAsString( Json.parse( sb.toString ) ) | sb.toString
+    pretty ? new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString( Json.parse( sb.toString ) ) | sb.toString
   }
 
   private def write( obj:Any, data:JsData = null ):Unit =
