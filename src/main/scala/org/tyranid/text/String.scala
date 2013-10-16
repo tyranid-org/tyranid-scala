@@ -92,11 +92,8 @@ class StringImp( s:String ) extends Serializable {
 
   def encCsv = s.replace( "\"", "\\\"" )
   
-	def encUrl = java.net.URLEncoder.encode( s, "UTF-8" ) 
-	def decUrl =
-    if ( s != null ) java.net.URLDecoder.decode( s, "UTF-8" )
-    else             null
-
+	def encUrl = ( s == null ) ? null | java.net.URLEncoder.encode( s, "UTF-8" ) 
+	def decUrl = ( s == null ) ? null | java.net.URLDecoder.decode( s, "UTF-8" )
   //def decUrl = new org.apache.commons.codec.net.URLCodec( "UTF-8" ).decode( s )
 
 	def encOAuthUrl = OAuth.encOAuthUrl( s )

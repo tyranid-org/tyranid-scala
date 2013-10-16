@@ -68,9 +68,6 @@ object LoginCookie {
 
   def remove = {
     T.web.res.deleteCookie( name, domain = B.domain )
-
-    if ( B.domain != B.fullDomain )
-      T.web.res.deleteCookie( name, domain = B.fullDomain )
   }
 
   def autoLogin = {
