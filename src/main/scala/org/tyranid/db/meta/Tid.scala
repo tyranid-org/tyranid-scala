@@ -434,7 +434,7 @@ object Tidlet extends Weblet {
 
          <div class="fieldHeader">
           <label>Type</label><span>Record</span>
-          <label style="margin-left:16px;">Label</label><span>{ r.label.summarize().encUnicode }</span>
+          <label style="margin-left:16px;">Label</label><span style="font-weight:bold;color:#000;">{ r.label.summarize().encUnicode }</span>
           <label style="margin-left:16px;">Entity</label><span><a href={ "#admin/tid/" + entity.tid }>{ entity.name }</a></span>
           <label style="margin-left:16px;">Storage</label><span>{ entity.storageName + ( entity.embedded |* "-Embedded" ) }</span>
           { entity.isInstanceOf[MongoEntity] |* <a data-act="delete" data-tid={ tid } class="btn-danger btn" style="float:right;">Delete</a> }
