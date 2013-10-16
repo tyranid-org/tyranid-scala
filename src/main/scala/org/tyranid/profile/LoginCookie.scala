@@ -33,12 +33,8 @@ object LoginCookie {
       else if ( B.BETA )  "-beta"
       else                "" )
 
-  def domain =
-    if ( B.DEV ) null
-    else         B.domain
-
   def getUser:Option[User] = {
-    val cv = T.web.req.cookieValue( name, domain = domain )
+    val cv = T.web.req.cookieValue( name, domain = B.domain )
     
     if ( cv != null ) {
       cv.splitFirst( '|' ) match {
@@ -62,9 +58,7 @@ object LoginCookie {
     cookie.setMaxAge(60 * 60 * 24 * 14) // two weeks
     cookie.setPath("/")
     cookie.setSecure( true )
-
-    if ( domain != null )
-      cookie.setDomain( domain )
+    cookie.setDomain( B.domain )
 
     T.web.res.addCookie(cookie)
             
@@ -73,9 +67,9 @@ object LoginCookie {
   }
 
   def remove = {
-    T.web.res.deleteCookie( name, domain = domain )
+    T.web.res.deleteCookie( name, domain = B.domain )
 
-    if ( domain.notBlank && domain != B.fullDomain )
+    if ( B.domain != B.fullDomain )
       T.web.res.deleteCookie( name, domain = B.fullDomain )
   }
 
