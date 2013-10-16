@@ -357,6 +357,8 @@ trait Session extends QuickCache {
   def isLoggedIn = !user.isNew //getOrElse( "user", "" )._s.notBlank
 
   def isLite = b( "lite" )
+
+  def isHttpSession = httpSessionId != null
   
   var debug       = B.DEV
   var trace       = false
@@ -423,19 +425,19 @@ trait Session extends QuickCache {
   }
 
 
-  def record( values:Pair[String,Any]* ) {
+  def record( values:Pair[String,Any]* ):Unit =
+    if ( isHttpSession ) {
+      var seto = Mobj()
 
-    var seto = Mobj()
+      for ( pair <- values )
+        seto( pair._1 ) = pair._2
 
-    for ( pair <- values )
-      seto( pair._1 ) = pair._2
+      record( Mobj( $set -> seto ) )
+    }
 
-    record( Mobj( $set -> seto ) )
-  }
-
-  def record( update:DBObject ) {
-    B.SessionData.db.update( Mobj( "_id" -> id ), update )
-  }
+  def record( update:DBObject ):Unit =
+    if ( isHttpSession )
+      B.SessionData.db.update( Mobj( "_id" -> id ), update )
 
 
   /*
