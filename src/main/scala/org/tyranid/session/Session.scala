@@ -483,6 +483,8 @@ trait Session extends QuickCache {
     if ( onLogin != null )
       onLogin( this )
       
+      
+      spam( "LOGGING IN: " + user.s( 'email ) )
     val web = T.web
     var userAgent:UserAgent = null
     
