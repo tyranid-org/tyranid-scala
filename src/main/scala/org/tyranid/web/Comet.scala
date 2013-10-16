@@ -92,11 +92,11 @@ object Comet {
 
       val comet = Comet( sd )
 
-spam( "visiting " + sd.user.label )
+//sp am( "visiting " + sd.user.label )
 
       visitor( comet )
 
-spam( "results " + comet.output )
+//sp am( "results " + comet.output )
       if ( comet.output != null ) {
 
         val sv = sd.s( 'sv )
@@ -193,7 +193,7 @@ object CometQueue {
             }
           } else {
             val obj = cursor.next
-spam( "cometqueue processing " + obj )
+//sp am( "cometqueue processing " + obj )
             Comet.send( obj.s( 'ss ), obj.o( 'm ).toMap.asInstanceOf[java.util.Map[String,AnyRef]] )
 
             db.update( Mobj( "_id" -> obj( '_id ) ), Mobj( $set -> Mobj( "h" -> true ) ) )
