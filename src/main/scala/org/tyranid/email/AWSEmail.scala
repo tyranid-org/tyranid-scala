@@ -146,7 +146,7 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
       
       compose
       
-      if ( false && request.getDestination().getToAddresses().find( a => a.contains( "mrkcbradley" ) || a.contains( "mbradley" ) ) == None ) {
+      if ( request.getDestination().getToAddresses().find( a => a.contains( "mrkcbradley" ) || a.contains( "mbradley" ) ) == None ) {
         println( """
 *********
             
