@@ -501,6 +501,10 @@ trait Session extends QuickCache {
     record( "u" -> user.id, "lit" -> now, "incognito" -> incognito )
   }
   
+  def clearAutoLoggedIn = clear( "auto-login" )
+  def setAutoLoggedIn = put( "auto-login", Boolean.box( true ).booleanValue().as[Serializable] )
+  def isAutoLoggedIn = get( "auto-login" ).as[Boolean] ? true | false
+  
   def clearLiteVerified = clear( "lite-v" )
   def setLiteVerified = put( "lite-v", Boolean.box( true ).booleanValue().as[Serializable] )
   def isLiteVerified = get( "lite-v" ).as[Boolean] ? true | false

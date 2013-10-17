@@ -77,8 +77,10 @@ object LoginCookie {
     if ( !sess.isLoggedIn && !T.http.isLoggingOut && !user.b( 'inactive ) ) {
       val user = LoginCookie.getUser.of[User].getOrElse( null )
 
-      if ( user != null )
+      if ( user != null ) {
         sess.login( user )
+        sess.setAutoLoggedIn
+      }
     }
   }
 }
