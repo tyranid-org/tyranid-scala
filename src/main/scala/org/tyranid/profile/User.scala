@@ -192,7 +192,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   // TODO:  Make this more sophisticated, allow the entire user to be retrieved instead of just the name, and/or maybe something like ProfileItem
   def nameFor( userId:ObjectId ) = "TODO"
 
-  def ensureUser( email:String, invitedBy:ObjectId ) = {
+  def ensureUser( email:String, invitedBy:ObjectId = null ) = {
     val uc = db.find( Mobj( "email" -> ( "^" + email.encRegex + "$" ).toPatternI ) ).limit(1)    
     var u = uc.hasNext ? uc.next | null
 

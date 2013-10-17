@@ -483,8 +483,6 @@ trait Session extends QuickCache {
     if ( onLogin != null )
       onLogin( this )
       
-      
-      spam( "LOGGING IN: " + user.s( 'email ) )
     val web = T.web
     var userAgent:UserAgent = null
     
@@ -503,6 +501,10 @@ trait Session extends QuickCache {
     record( "u" -> user.id, "lit" -> now, "incognito" -> incognito )
   }
   
+  def clearLiteVerified = clear( "lite-v" )
+  def setLiteVerified = put( "lite-v", Boolean.box( true ).booleanValue().as[Serializable] )
+  def isLiteVerified = get( "lite-v" ).as[Boolean] ? true | false
+  
   def isIncognito = get( "incognito" ).as[Boolean] ? true | false
 
   def isAllowingEmail = !isIncognito || get( "allowEmail" ).as[Boolean]
@@ -517,8 +519,9 @@ trait Session extends QuickCache {
     if ( unlink ) T.unlinkSession
 
     val u = user
+
     if ( u != null && !isIncognito )
-      B.logoutListeners.foreach( _( u ) )
+      B.logoutListeners.foreach( _( u ) )    
   }
 
 
