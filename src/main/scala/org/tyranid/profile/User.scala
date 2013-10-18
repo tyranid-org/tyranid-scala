@@ -428,6 +428,9 @@ trait User extends MongoRecord {
 
   def projectTids       = projects.map( _.tid )
 
+  def allProjects       = T.requestCached( tid + "projects"     ) { groups.filter( g => g.contentType == ContentType.Project || g.contentType == ContentType.LiteProject ) ++
+                                                                    Group.publicProjects.filter( g => !userProjects.exists( _.id == g.id ) ).toSeq }
+
     
   /**
    * This is a list of tids the user is authorized.  It includes their own tid, the tid of their org, and
