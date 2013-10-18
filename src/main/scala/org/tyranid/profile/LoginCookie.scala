@@ -33,6 +33,20 @@ object LoginCookie {
       else if ( B.BETA )  "-beta"
       else                "" )
 
+  def getUserTid:String = {
+    val cv = T.web.req.cookieValue( name, domain = B.domain )
+    
+    if ( cv != null ) {
+      cv.splitFirst( '|' ) match {
+      case ( tid, token ) if !tid.endsWith( "null" ) =>
+        return tid
+      case _ =>
+      }
+    }
+    
+    null
+  }
+  
   def getUser:Option[User] = {
     val cv = T.web.req.cookieValue( name, domain = B.domain )
     
@@ -77,10 +91,8 @@ object LoginCookie {
     if ( !sess.isLoggedIn && !T.http.isLoggingOut && !user.b( 'inactive ) ) {
       val user = LoginCookie.getUser.of[User].getOrElse( null )
 
-      if ( user != null ) {
+      if ( user != null )
         sess.login( user )
-        sess.setAutoLoggedIn
-      }
     }
   }
 }
