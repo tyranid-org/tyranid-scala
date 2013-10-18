@@ -230,7 +230,7 @@ object Tid {
         entity( en )
     }
 
-    matches  
+    matches
   }
 
   /**
@@ -309,15 +309,20 @@ object Tid {
   }
   
   // WARNING!  This will perform a blind cascade delete
-  def deleteCascade( tid:String, deletions:mutable.Buffer[Record] = null ) {
+  def deleteCascade( tid:String, deletions:mutable.Buffer[Record] = null, visited:mutable.Set[String] = mutable.Set[String]() ) {
+    visited += tid
+
     val delStat = delete( tid, true )
     
     if ( delStat != null ) {
       val cFailures = delStat.cascadeFailures
       
       if ( cFailures.nonEmpty ) {
-        cFailures.foreach( f => deleteCascade( f.tid ) )
-        deleteCascade( tid )
+        for ( f <- cFailures;
+              if !visited.contains( f.tid ) )
+          deleteCascade( f.tid, deletions, visited )
+
+        deleteCascade( tid, deletions, visited )
       } else if ( deletions != null ) {
         deletions ++= delStat.deletes
       }
@@ -336,9 +341,9 @@ object Tid {
       if ( ref.view.entity.isInstanceOf[RamEntity] ) {
         ramReferences += ref
       } else if ( extractTid( ref, tid ) ) {
-        val refRefs = references( ref.tid ).filter( rr => !refs.exists( _.tid == rr.tid ) && rr.tid != tid )
+        val refRefs = references( ref.tid ).exists( rr => !refs.exists( _.tid == rr.tid ) && rr.tid != tid )
 
-        if ( refRefs.nonEmpty )
+        if ( refRefs )
           cascadeFailures += ref //++= refRefs
         else
           deletes += ref
