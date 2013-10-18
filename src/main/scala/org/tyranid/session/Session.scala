@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -43,17 +43,17 @@ import org.tyranid.QuickCache
 import org.tyranid.web.{ Comet, WebContext }
 
 
-object SessionCleaner { 
+object SessionCleaner {
   def clean {
     val now = System.currentTimeMillis
-    
+
     WebSession.sessions.filter( sess => {
-      val httpsess = sess._2 
-    
+      val httpsess = sess._2
+
       try {
         val tyrsess = httpsess.getAttribute( WebSession.HttpSessionKey ).as[Session]
-        
-        if ( tyrsess != null ) { 
+
+        if ( tyrsess != null ) {
           //val lastPathTime = tyrsess.get( "lastPathTime" ).as[Date]
           val idle = now - httpsess.getLastAccessedTime
           ( !tyrsess.isLoggedIn && idle > (2*Time.OneMinuteMs) ) || idle > Time.HalfHourMs
@@ -67,24 +67,24 @@ object SessionCleaner {
           e.printStackTrace
           false
       }
-    }).foreach( sess => { 
+    }).foreach( sess => {
       WebSession.sessions.remove( sess._1 )
       ServerSession.remove( sess._2.getId )
-      sess._2.invalidate 
+      sess._2.invalidate
     })
   }
 }
 
 object ServerSession {
   private val caches = mutable.Map[String,mutable.Map[String,Any]]()
-    
+
   def getOrElseUpdate[ T ]( session:HttpSession, key:String, block: => T ):T = {
     caches.getOrElseUpdate( session.getId, mutable.Map[String,Any]() ).getOrElseUpdate( key, block ).as[T]
   }
-  
+
   def remove( id:String ) = caches.remove( id )
-}  
-  
+}
+
 object WebSession {
   val sessions = mutable.Map[String,HttpSession]()
 
@@ -100,16 +100,16 @@ object WebSession {
 }
 
 class WebSessionListener extends HttpSessionListener {
- 
+
   def sessionCreated( e:HttpSessionEvent ) {
     val session = e.getSession
     WebSession.sessions( session.getId ) = session
   }
- 
+
   def sessionDestroyed( e:HttpSessionEvent ) {
     //Comet.remove( e.getSession.getId  )
     WebSession.sessions.remove( e.getSession.getId )
-  }	
+  }
 }
 
 object ThreadData {
@@ -131,51 +131,51 @@ object ThreadData {
 
 class ThreadData {
   def baseWebsite = "https://" + B.domainPort
-  
+
   def website( path:String = "", user:User = null, ssoMapping:SsoMapping = null ):String = {
     val subdomainWebsite = ( session == null ) ? baseWebsite | {
-      val subdomain = session.s( 'subdomain ) 
-      
+      val subdomain = session.s( 'subdomain )
+
       ( subdomain.isBlank ) ? baseWebsite | "https://" + subdomain + B.port
     }
-    
-    if ( user == null ) 
+
+    if ( user == null )
       return subdomainWebsite  + path
-        
+
     val ssoMappingImpl = ( ssoMapping == null ) ? {
       val ssoId = user.s( 'sso )
       ssoId.isBlank ? null | SsoMapping.getById( ssoId )
     } | ssoMapping
-    
+
     if ( ssoMappingImpl == null )
       return subdomainWebsite + path
-      
+
     return subdomainWebsite + "/sso/auth/" + ssoMappingImpl.id._s + "?startUrl=" + java.net.URLEncoder.encode( path, "UTF-8" )
   }
 
   def user:User =
     if ( session != null ) session.user
     else                   null
-    
+
   // --- HTTP Session
 
   private var httpData:HttpSession = _
 
   def http:HttpSession = httpData
 
-  def http_=( obj:HttpSession ) = {    
+  def http_=( obj:HttpSession ) = {
     httpData = obj
     clear
   }
 
-  def clear {    
+  def clear {
     tyrSession = null
   }
 
   // --- Tyranid Session
 
   private var tyrSession:Session = _
-  
+
   def becomeSession( s:Session ) = {
     tyrSession = s
   }
@@ -185,7 +185,7 @@ class ThreadData {
       tyrSession =
         if ( http != null ) {
           http.getAttribute( WebSession.HttpSessionKey ) match {
-          case s:Session => 
+          case s:Session =>
             s
           case _         =>
             val s = B.newSession()
@@ -199,7 +199,7 @@ class ThreadData {
 
     tyrSession
   }
-  
+
   def unlinkSession = {
     http.setAttribute( WebSession.HttpSessionKey, null )
     http.isLoggingOut = true
@@ -211,7 +211,7 @@ class ThreadData {
    */
 
   @volatile var web:WebContext = _
-  
+
   /*
    * * *  Security
    */
@@ -239,14 +239,14 @@ class ThreadData {
 
 	def requestCached[ T ]( key:String )( block: => T ):T = requestCache.getOrElseUpdate( key, block ).as[T]
 
-  
+
   /*
    * * *  Permissions Cache
    */
 
   def permissionCache = requestCached( "permissions" ) { mutable.Map[String,Boolean]() }
-  
-  
+
+
   /*
    * * *  WhiteLabel Cache
    */
@@ -264,7 +264,7 @@ class ThreadData {
 
 trait SessionMeta {
   val UA_KEY = "UA"
-    
+
   def apply():Session = ThreadData().session
 
   def byHttpSessionId( id:String ) =
@@ -286,7 +286,7 @@ object Session extends SessionMeta
 trait Session extends QuickCache {
   lazy val id = Base62.make( 10 )
 
-  
+
   private var userVar = B.newUser()
   def user:User           = userVar
   def user_=( user:User ) = userVar = user
@@ -298,10 +298,10 @@ trait Session extends QuickCache {
   var loggedUser  = false
 
   // If the user tid is set in the session
-  def isLoggedIn = !user.isNew //getOrElse( "user", "" )._s.notBlank
+  def isLoggedIn = !user.isNew && user.s( 'activationCode ).isBlank //getOrElse( "user", "" )._s.notBlank
 
   def isLite = b( "lite" )
-  
+
   var debug       = B.DEV
   var trace       = false
 
@@ -312,34 +312,34 @@ trait Session extends QuickCache {
   def getOrElseUpdate( key:String, any:java.io.Serializable ) = getVOrElseUpdate( key, any )
   def put( key:String, value:java.io.Serializable ) = putV( key, value )
   def clear( key:String ) = clearCache( key )
-  
+
   def b( key:String ) = getVOrElse( key, false ).as[Boolean]
   def s( key:String ) = getVOrElse( key, null ).as[String]
   def i( key:String ) = getVOrElse( key, null ).as[Integer]
-  
+
   def ua( web: WebContext ) = {
     var tUa:UserAgent = get( Session.UA_KEY ).as[UserAgent]
-    
+
     if ( tUa == null ) {
       if ( web == null )
         tUa = UserAgent.getById( 1 )
       else {
         tUa = UserAgent.getById( web.userAgentId )
       }
-      
+
       try {
         tUa.updateIfNeeded
       } catch {
         case e:Throwable =>
           e.printStackTrace()
       }
-      
+
       put( Session.UA_KEY, tUa )
     }
-      
+
     tUa
-  } 
-  
+  }
+
   /*
    * * *   Login
    */
@@ -348,7 +348,7 @@ trait Session extends QuickCache {
 spam( "logging in " + user.label )
     this.user = user
     put( "lastLogin", user.t( 'lastLogin ) )
-    
+
     if ( !incognito ) {
       var updates = Mobj( "lastLogin" -> new Date )
 
@@ -357,48 +357,48 @@ spam( "logging in " + user.label )
         updates( 'tz ) = id
         user( 'tz ) = id
       }
-      
+
       if ( sso != null )
         updates( 'sso ) = sso.id
-      
+
       UserStat.login( user.id )
       B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> updates ) )
       log( Event.Login, "bid" -> TrackingCookie.get )
 
       B.loginListeners.foreach( _( user ) )
-      
+
       if ( user.b( 'monitored ) )
         log( Event.Alert, "m" -> ( "User " + user.s( 'email ) + " just logged in." ) )
     } else {
       put( "incognito", Boolean.box( true ).booleanValue().as[Serializable] )
     }
-      
+
     if ( sso != null )
       put( "sso", sso )
-    
+
     val onLogin = B.onLogin
-    
+
     if ( onLogin != null )
       onLogin( this )
-      
+
     val web = T.web
     var userAgent:UserAgent = null
-    
+
     if ( web != null ) {
       val req = web.req
-      
+
       if ( req != null ) {
         web.req.addJsCmd( Js( "tyrl( window.cometConnect );" ) )
-        
+
         put( "remoteHost", web.req.getRemoteHost() )
         put( "remoteAddr", web.req.getRemoteAddr() )
         userAgent = ua( web )
       }
-      
-      T.requestCache.put( "req-common", true )      
+
+      T.requestCache.put( "req-common", true )
     }
   }
-  
+
   def isIncognito = get( "incognito" ).as[Boolean] ? true | false
 
   def isAllowingEmail = !isIncognito || get( "allowEmail" ).as[Boolean]
@@ -409,7 +409,7 @@ spam( "logging in " + user.label )
   def logout( unlink:Boolean = true ) = {
     LoginCookie.remove
     Social.removeCookies
-    
+
     if ( unlink ) T.unlinkSession
 
     val u = user
@@ -435,7 +435,7 @@ spam( "logging in " + user.label )
       if ( !u.isNew )
         B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "tz" -> olsonCode ) ) )
     }
-  } 
+  }
 
   /*
    * This returns the definitive timeZone for the user or null if the timeZone is not known
@@ -482,10 +482,10 @@ spam( "logging in " + user.label )
   def editing[ T: Manifest ]( gen: => org.tyranid.db.Record ):T = editings.getOrElseUpdate( manifest[T].runtimeClass, gen ).asInstanceOf[T]
 
   def editing[ T: Manifest ]:T                   = editings( manifest[T].runtimeClass ).asInstanceOf[T]
-  
+
   // Note that T and clz are not usually the same ... T might be org.tyranid.profile.User while clz represents com.company.profile.User
   def editing2[ T:Manifest ]( clz:Class[_], gen: => org.tyranid.db.Record ):T = editings.getOrElseUpdate( clz, gen ).asInstanceOf[T]
-  
+
   def doneEditing[ T: Manifest ] = editings.remove( manifest[T].runtimeClass )
 
   def clearAllEditing = editings.clear
@@ -495,7 +495,7 @@ spam( "logging in " + user.label )
    */
 
   @volatile private var notes:List[Notification] = Nil
-  
+
   def notice( msg:AnyRef, extra:NodeSeq = null, deferred:String = null ) = notes ::= Notification( Notification.NOTICE, msg.toString, cssClass = "alert-success", extra, deferred )
   def warn( msg:AnyRef, extra:NodeSeq = null, deferred:String = null )   = notes ::= Notification( Notification.WARN, msg.toString, cssClass= "alert", extra, deferred )
   def error( msg:AnyRef, extra:NodeSeq = null, deferred:String = null )  = notes ::= Notification( Notification.ERROR, msg.toString, cssClass= "alert-error", extra, deferred )
@@ -503,7 +503,7 @@ spam( "logging in " + user.label )
   def popNotices = popNotes( Notification.NOTICE )
   def popWarnings = popNotes( Notification.WARN )
   def popErrors = popNotes( Notification.ERROR )
-   
+
   def popNotes( level:Int = 0 ) = {
     val webPath = T.web.path or ""
     if ( level == 0 ) {
@@ -517,12 +517,12 @@ spam( "logging in " + user.label )
     }
   }
 
-  def hasNotices = peekNotes( Notification.NOTICE ).length > 0 
-  def hasWarnings = peekNotes( Notification.WARN ).length > 0 
+  def hasNotices = peekNotes( Notification.NOTICE ).length > 0
+  def hasWarnings = peekNotes( Notification.WARN ).length > 0
   def hasErrors = peekNotes( Notification.ERROR ).length > 0
-  
-  def hasAny = notes.length > 0 
-  
+
+  def hasAny = notes.length > 0
+
   def peekNotes( level:Int = 0 ): List[Notification] = ( level == 0 ) ? notes | notes.filter( n => n.level == level )
 
   @volatile var unshownPosts:Int = 0
@@ -586,7 +586,7 @@ class SessionDataMeta extends MongoEntity( "a04t" ) {
 }
 
 trait SessionData extends MongoRecord {
-  
+
 }
 
 
@@ -598,7 +598,7 @@ object Notification {
   val NOTICE = 1
   val WARN = 2
   val ERROR = 3
-  
+
   def box:NodeSeq = {
     val sess = Session()
 
@@ -607,8 +607,8 @@ object Notification {
         <a class="close" data-dismiss="alert" href="#">&times;</a>
         { Unparsed( note.msg ) }
         { if ( note.extra != null ) note.extra }
-       </div> 
-       } 
+       </div>
+       }
      }
   }
 }
