@@ -516,9 +516,11 @@ trait Session extends QuickCache {
   def setAllowEmail = put( "allowEmail", Boolean.box( true ).booleanValue().as[Serializable] )
   def clearAllowEmail = clear( "allowEmail" )
 
-  def logout( unlink:Boolean = true ) = {
-    LoginCookie.remove
-    Social.removeCookies
+  def logout( unlink:Boolean = true, removeCookies:Boolean = true ) = {
+    if ( removeCookies ) {
+      LoginCookie.remove
+      Social.removeCookies
+    }
     
     if ( unlink ) T.unlinkSession
 
