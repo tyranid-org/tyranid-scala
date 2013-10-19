@@ -105,8 +105,10 @@ trait Bootable {
   val operatorIps = Seq[String]()
 
   // DEV assumes the DNS is in your hosts file
+
+  val liteAppName = "Revu.Me"
   
-  def liteDomainName = "revu"
+  val liteDomainName = "revu"
     
   def fullDomain = { 
     if ( DEV )        "rb-dev." + domain
