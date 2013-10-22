@@ -347,10 +347,15 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   def canBeSsoSynced:Boolean = T.session.get( "sso" ) != null
   
   override def imageUrl( editing:ContentEdit = null ) =
-    if ( contentType == ContentType.Organization ) {
+    contentType match {
+    case ContentType.Organization =>
       val org = B.Org.getById( oid( 'org ) )
       org.s( 'thumbnail )
-    } else {
+
+    case ContentType.LiteProject =>
+      rec( 'lite ).as[Content].imageUrl( editing )
+
+    case _ =>
       super.imageUrl( editing )
     }
 

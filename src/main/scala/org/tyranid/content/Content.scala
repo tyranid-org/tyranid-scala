@@ -940,7 +940,11 @@ abstract class Content( override val view:MongoView,
     }
 
   def thumbStyle( size:String ):String = null
-  def thumbUrl( size:String ) = "/io/thumb/" + tid + "/" + size + "?cb=" + s( 'img ).denull.hashCode
+  def thumbUrl( size:String ):String =
+    if ( isLiteProject )
+      rec( 'lite ).as[Content].thumbUrl( size )
+    else
+      "/io/thumb/" + tid + "/" + size + "?cb=" + s( 'img ).denull.hashCode
 
   def thumbHtml( size:String, extraHtml:NodeSeq = null ) =
     <div class={ thumbClass( size ) } style={ thumbStyle( size ) }>
