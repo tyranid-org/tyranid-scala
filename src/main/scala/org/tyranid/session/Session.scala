@@ -345,7 +345,10 @@ trait Session extends QuickCache {
   
   private var userVar = B.newUser()
   def user:User           = userVar
-  def user_=( user:User ) = userVar = user
+  def user_=( user:User ) = {
+    println( "set user to: " + user.s( 'email ))
+    userVar = user
+  }
 
   def orgId               = user.orgId
   def orgTid              = ( orgId == null ) ? null | B.Org.idToTid( orgId )
