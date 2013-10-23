@@ -59,7 +59,7 @@ object S3 {
     ServiceUtils.readInputStreamToBytes( new FileInputStream( derFile ) )
   }
   
-  private val s3 = new AmazonS3Client( B.awsCredentials )
+  val s3 = new AmazonS3Client( B.awsCredentials )
 
   def signedUrl( bucket:S3Bucket, key:String, expireMinutes:Int = 60 ) = {
     val expiration = new Date().add( java.util.Calendar.MINUTE, expireMinutes )
@@ -316,6 +316,7 @@ object S3 {
   }
   
   def listObjects( bucket:S3Bucket, path:String ):Seq[String] = s3.listObjects( bucket.name, path ).getObjectSummaries.map( _.getKey )
+  def listRawObjects( bucket:S3Bucket, path:String ) = s3.listObjects( bucket.name, path )
 }
 
 
