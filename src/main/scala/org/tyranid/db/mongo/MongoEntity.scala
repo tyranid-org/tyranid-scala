@@ -381,10 +381,24 @@ case class MongoRecord( override val view:MongoView,
     }
 
   def rec( va:ViewAttribute ):MongoRecord =
-    va.att.domain.asInstanceOf[MongoEntity].recify( o( va ), this, rec => update( va, rec ) )
+    va.att.domain match {
+    case me:MongoEntity =>
+      me.asInstanceOf[MongoEntity].recify( o( va ), this, rec => update( va, rec ) )
+
+    case link:DbLink =>
+      // TODO:  we have an id and we have the entity, we shouldn't have to convert to a tid here, but the API isn't there yet
+      Record.getByTid( tid( va ) ).as[MongoRecord]
+    }
 
   def remove {
     db.remove( this )
+  }
+
+  def update( update:DBObject ) = db.update( Mobj( "_id" -> this.id ), update )
+
+  def inc( key:String, value:Int = 1 ) = {
+    this( key ) = i( key ) + value
+    update( Mobj( $inc -> Mobj( key -> value ) ) )
   }
 }
 

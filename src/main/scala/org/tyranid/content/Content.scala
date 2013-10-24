@@ -99,15 +99,15 @@ object ContentType extends RamEntity( tid = "a10v" ) {
 
   override val addNames = Seq( "_id", "name" )
 
-  val ChangeLog          = add( 1, "ChangeLog" )
-  val Message            = add( 2, "Message" )
-  val Content            = add( 3, "Content" )
-  val Folder             = add( 4, "Folder" )
-  val Document           = add( 5, "Document" )
-  val Group              = add( 6, "Group" )
-  val Project            = add( 7, "Project" )
-  val Organization       = add( 8, "Organization" )
-  val StandaloneProject  = add( 9, "StandaloneProject" )
+  val ChangeLog    = add( 1, "ChangeLog" )
+  val Message      = add( 2, "Message" )
+  val Content      = add( 3, "Content" )
+  val Folder       = add( 4, "Folder" )
+  val Document     = add( 5, "Document" )
+  val Team         = add( 6, "Team" )
+  val Project      = add( 7, "Project" )
+  val Organization = add( 8, "Organization" )
+  val LiteProject  = add( 9, "LiteProject" )
 }
 
 case class ContentType( override val view:TupleView ) extends Tuple( view )
@@ -496,6 +496,21 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
     mostRecent
   }
 
+
+  def collectTaskTids( taskTids:mutable.Buffer[String], comments:Seq[Comment] ) {
+
+    if ( comments != null ) {
+      for ( c <- comments ) {
+        val taskTid = c.s( 'task )
+
+        if ( taskTid.notBlank )
+          taskTids += taskTid
+
+        collectTaskTids( taskTids, c.comments )
+      }
+    }
+  }
+
   def remove( comments:BasicDBList, id:Int ) {
     for ( c <- comments.toSeq.of[DBObject] )
       if ( c.i( '_id ) == id ) {
@@ -663,8 +678,6 @@ trait ContentMeta extends PrivateKeyEntity {
   override def init = {
     super.init
 
-  "builtin"           is DbBoolean            help Text( "Builtin content is maintained by the system and is not editable by end users." );
-
   "on"                is DbDateTime           is 'required is 'client;
   "type"              is DbLink(ContentType)  is 'required is 'client;
 
@@ -683,7 +696,6 @@ trait ContentMeta extends PrivateKeyEntity {
   //"ownerOrgTid"       is DbTid(B.Org)         is 'temporary is 'client computed( rec => B.Org.idToTid( B.User.byTid( rec.as[Content].firstOwnerTid() ).flatten( _.oid( 'org ), null ) )
   
   "v"                 is DbArray(DbTid(B.Org,B.User,Group)) as "Viewers" is SearchAuth is 'client is 'auth;
-  "subV"              is DbArray(DbTid(B.Org,B.User))       ; // for showing content inside a group, subviewers
 
   "subscr"            is DbArray(DbTid(B.User)) as "Subscribers";
   "isSubscriber"      is DbBoolean            is 'temporary is 'client computed { _.as[Content].isSubscriber( T.user ) }
@@ -812,13 +824,13 @@ abstract class Content( override val view:MongoView,
                         override val parent:MongoRecord = null )
     extends MongoRecord( view, obj, parent ) with PrivateKeyRecord with HasText {
 
-  val isBuiltin = b( 'builtin )
-  
   def isLocked = b( 'locked )
 
   def contentType = ContentType.getById( i( 'type ) )
-  def isFolder = contentType == ContentType.Folder
-  def isProject = contentType == ContentType.Project
+  def isFolder      = contentType == ContentType.Folder
+  def isProject     = contentType == ContentType.Project
+  def isLiteProject = contentType == ContentType.LiteProject
+  def isProjectlike = isProject || isLiteProject
 
   def hasAnnotatedPages:Boolean = false
   
@@ -833,9 +845,6 @@ abstract class Content( override val view:MongoView,
     content( 'o ) = Seq( ownerTid )
     content( 'v ) = Seq( ownerTid )
     
-    if ( a_?( 'subV ).length > 0 )
-      content( 'v ) = Seq( ownerTid )
-      
     if ( a_?( 'subscr ).length > 0 )
       content( 'v ) = Seq( ownerTid )
     
@@ -931,7 +940,11 @@ abstract class Content( override val view:MongoView,
     }
 
   def thumbStyle( size:String ):String = null
-  def thumbUrl( size:String ) = "/io/thumb/" + tid + "/" + size + "?cb=" + s( 'img ).denull.hashCode
+  def thumbUrl( size:String ):String =
+    if ( isLiteProject )
+      rec( 'lite ).as[Content].thumbUrl( size )
+    else
+      "/io/thumb/" + tid + "/" + size + "?cb=" + s( 'img ).denull.hashCode
 
   def thumbHtml( size:String, extraHtml:NodeSeq = null ) =
     <div class={ thumbClass( size ) } style={ thumbStyle( size ) }>
@@ -1196,60 +1209,16 @@ abstract class Content( override val view:MongoView,
   def ownerTids  = obj.a_?( 'o ).toSeq.of[String]
   def viewerTids = obj.a_?( 'v ).toSeq.of[String]
 
-  // TODO:  make this name more generic / less Messages-ish
-  def isTo( u:User ):Boolean = {
-    val userTid    = u.tid
-    val userOrgTid = u.orgTid
-
-    val viewers = viewerTids
-
-    def isSubTo = {
-      val subV = obj.a_?( 'subV ).toSeq.of[String]
-      subV.isEmpty || subV.exists( tid => tid == userTid || tid == userOrgTid )
-    }
-
-    for ( tid <- viewers )
-      if ( tid == userTid || tid == userOrgTid )
-        return isSubTo
-
-    val from = Record.getByTid( this.a_?( 'o ).head.as[String] )
-    
-    if ( from == null )
-      return false
-
-    val groupTids = u.groupTids
-    for ( tid <- viewers;
-          if Group.hasTid( tid ) && groupTids.contains( tid );
-          grp <- Group.byTid( tid );
-          if grp.canSee( u, from ) )
-      return isSubTo
-
-    false
-  }
+  def isTo( u:User ):Boolean = canView( u )
 
   /**
    * This is like "isTo()" except that this controls whether a user can see a participant in the content (either on the "v"/to list or a "reply" from them)
    */
-  def canSee( u:User, tid:String ):Boolean = {
-    if (   this.a_?( 'o ).contains( u.tid )
-        || u.allowProfileTids.contains( tid ) )
-      return true
-
-    val groupTids = u.groupTids
-    val rec = Record.getByTid( tid )
-
-    if ( viewerTids.exists( toTid =>
-           toTid.startsWith( Group.tid ) &&
-           groupTids.contains( toTid ) &&
-           Group.byTid( toTid ).exists( _.canSee( u, rec ) ) ) )
-      return true
-
-    val groupPresent = viewerTids.exists( _.startsWith( Group.tid ) )
-
-    // If no group is present, then regular network rules apply ... for now.  Is this right?
-    // Note:  this u.inNetwork() is also handling the case where they are from the same org ... so if we remove u.inNetwork() will need to add in an org check
-    !groupPresent && u.inNetwork( tid )
-  }
+  def canSee( u:User, seenTid:String ):Boolean = (
+       this.a_?( 'o ).contains( u.tid )
+    || u.allowProfileTids.contains( seenTid )
+    || ( canViewDirectly( u ) && canViewDirectly( seenTid ) )
+  )
 
   def isArchived = b( 'archived )
 
@@ -1259,9 +1228,7 @@ abstract class Content( override val view:MongoView,
     if ( tid.isBlank )
       return false
 
-    val owners = a_?( 'o )
-
-    owners.foreach( t => {
+    a_?( 'o ) foreach { t =>
       if ( t == tid )
         return true
 
@@ -1273,16 +1240,13 @@ abstract class Content( override val view:MongoView,
         if ( group.isOwner( tid ) )
           return true
       }
-    })
+    }
 
     return false
   }
 
   def addOwner( tid:String ) = a_!( 'o ).addToSet( tid )
 
-  def isSubViewer( user: org.tyranid.profile.User ):Boolean = isSubViewer( user.tid ) || ( user.hasOrg && isSubViewer( user.org.tid ) )
-  def isSubViewer( tid: String ): Boolean = tid.isBlank ? false | ( a_?( 'subV ).exists( _._s == tid ) )
-  
   def isSubscriber( user: org.tyranid.profile.User ):Boolean = isSubscriber( user.tid ) || ( user.hasOrg && isSubscriber( user.org.tid ) )
   def isSubscriber( tid: String ): Boolean = tid.isBlank ? false | ( a_?( 'subscr ).exists( _._s == tid ) )
   

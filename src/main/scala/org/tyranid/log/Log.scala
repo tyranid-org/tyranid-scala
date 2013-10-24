@@ -351,7 +351,7 @@ class CometDebugTask( sess:org.tyranid.session.Session ) extends java.util.Timer
     Comet.visit { comet =>      
       val sess = comet.session
       
-      if ( sess != null && sess.getOrElse( "comet-debug", false ).as[Boolean] ) {
+      if ( sess != null && sess.b( 'cometDebug ) ) {
         comet.send( Map(
             "act" -> "cometPing",
             "cid" -> comet.session.id,
@@ -374,7 +374,7 @@ object Loglet extends Weblet {
         _404
       web.jsRes( JqHtml( "#adminContent", LogQuery.draw ) )
     case "/cometStart" =>
-      val debug = T.session.getOrElse( "comet-debug", false ).as[Boolean]
+      val debug = T.session.data.b( 'cometDebug )
       
       if ( !debug ) {
         T.session.put( "comet-debug", true )
@@ -397,9 +397,8 @@ object Loglet extends Weblet {
         Comet.visit { comet =>      
           val sess = comet.session
           
-          if ( sess != null && sess.getOrElse( "comet-debug", false ).as[Boolean] ) {
+          if ( sess != null && sess.b( 'cometDebug ) )
             numDebugs += 1
-          }
         }
 
         if ( numDebugs == 0 ) { 

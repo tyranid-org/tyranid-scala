@@ -20,7 +20,7 @@ package org.tyranid.web
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 
-import com.mongodb.DBObject
+import com.mongodb.{ Bytes, DBObject }
 
 import org.cometd.bayeux.server.{ BayeuxServer, ServerSession }
 import org.cometd.server.AbstractService
@@ -30,7 +30,8 @@ import org.tyranid.db.{ DbChar, DbLink }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.json.JsCmd
-import org.tyranid.session.{ Session, WebSession }
+import org.tyranid.net.Ip
+import org.tyranid.session.{ Session, SessionData, WebSession }
 
 
 case class CometService( name:String, create: ( BayeuxServer ) => AbstractService ) {
@@ -43,18 +44,20 @@ case class CometService( name:String, create: ( BayeuxServer ) => AbstractServic
 }
 
 
-case class Comet( serviceSession:ServerSession, fromSession:ServerSession, session:Session ) {
+case class Comet( session:SessionData ) {
+
+  var output:collection.Map[String,AnyRef] = null
+
+  def user = session.user
 
   def send( output:collection.Map[String,Any], cmds:JsCmd* ) {
-    val data =
+    val o =
       if ( cmds != null && cmds.nonEmpty )
         output + ( "cmds" -> cmds.filter( _ != null ).map( _.toMap ).toJsonStr( client = true ) )
       else
         output
 
-    val jOutput:java.util.Map[String,Object] = data.asInstanceOf[collection.Map[String,AnyRef]]
-
-    fromSession.deliver( serviceSession, "/message", jOutput, null )
+    this.output = o.asInstanceOf[collection.Map[String,AnyRef]];
   }
 
   def send( act:String, data:collection.Map[String,Any], cmds:JsCmd* ) {
@@ -71,46 +74,62 @@ case class Comet( serviceSession:ServerSession, fromSession:ServerSession, sessi
 object Comet {
 
   def remove( serverSessionId:String ) {
-    println( "remove: "+ serverSessionId )
-    
     val bSessions = new java.util.ArrayList( B.bayeux.getSessions )
     
     for ( session <- bSessions ) {
       val httpSessionId = session.getAttribute( WebSession.CometHttpSessionIdKey )
 
-      println( "found: " + httpSessionId )
-      if ( httpSessionId != null && serverSessionId == httpSessionId ) {
-        println( "Removed!: " + httpSessionId )
+      if ( httpSessionId != null && serverSessionId == httpSessionId )
         B.bayeux.getSessions().remove( session )
-      }
     }
   }
     
   def visit( visitor: ( Comet ) => Unit ) = {
-    // 1) Get all sessions on all servers
-    // 2) Send output to queue
-    
-    // 3) Separate periodic thread - read from queue for your tasks (by server) and do comet sends
-    //    - optimize by having local box do it right now
-    
 
-    val serverSession = B.comets.find( _.name == "message" ).get.service.getServerSession
-    //val seen = mutable.Set[String]()
+    for ( sd <- B.SessionData.records;
+          u = sd( 'u );
+          if u != null ) {
 
-    for ( session <- B.bayeux.getSessions ) {
-      val httpSessionId = session.getAttribute( WebSession.CometHttpSessionIdKey )
+      val comet = Comet( sd )
 
-      //println( "send to : " + httpSessionId )
-      if ( httpSessionId != null ) {
-        //println( "visiting: " + httpSessionId )
-        val httpSessionIdStr = httpSessionId.as[String]
-        
-        //if ( !seen( httpSessionIdStr ) ) {
-          //seen += httpSessionIdStr
-          
-          val tyrSession = Session.byHttpSessionId( httpSessionIdStr ).as[Session] // as a Volerro session
-          visitor( Comet( serverSession, session, tyrSession ) )
-       // }
+//sp am( "visiting " + sd.user.label )
+
+      visitor( comet )
+
+//sp am( "results " + comet.output )
+      if ( comet.output != null ) {
+
+        val sv = sd.s( 'sv )
+
+        if ( true || // DEBUG:  force everything remote so we can test the queue
+             sv != Ip.Host ) {
+          CometQueue.dbFor( sv ).save(
+            Mobj(
+              "h"  -> false, // this can't left undefined, because you can't update a document in a capped mongo collection to be larger
+              "ss" -> sd.s( 'ss ),
+              "m"  -> comet.output.toDBObject
+            )
+          )
+        } else {
+          send( sd.s( 'ss ), comet.output )
+        }
+      }
+    }
+  }
+
+
+  def send( httpSessionId:String, m:java.util.Map[String,AnyRef] ) = {
+    B.comets.find( _.name == "message" ) foreach { comet =>
+      val service = comet.service
+
+      if ( service != null ) {
+        val serverSession = comet.service.getServerSession
+
+        for ( session <- B.bayeux.getSessions ) {
+          if ( session.getAttribute( WebSession.CometHttpSessionIdKey ) == httpSessionId ) {
+            session.deliver( serverSession, "/message", m, null )
+          }
+        }
       }
     }
   }
@@ -121,23 +140,78 @@ object Comet {
  * * *  CometQueue
  */
 
-object CometQueue extends MongoEntity( tid = "a05t" ) {
-  type RecType = CometQueue
-  override def convert( obj:DBObject, parent:MongoRecord ) = new CometQueue( obj, parent )
+object CometQueue {
 
-  "_id"      is DbMongoId         is 'id;
-  "sv"       is DbChar(32)        as "Server";
+  //"_id"      is DbMongoId         is 'id;
 
-//"m"        is DbObject          as "Comet Message";
+  //"m"        is DbObject          as "Comet Message";
+  //"ss"       is DbChar(32)        as "HTTP Session ID";
 
-  override def init = {
-    super.init
-    "u"      is DbLink(B.User)    as "User";
+
+  def dbNameFor( ip:String ) = "comet_" + ip.replace( ".", "_" ).replace( ":", "_" )
+
+  def dbFor( ip:String ) = Mongo.connect.db( B.profileDbName )( dbNameFor( ip ) )
+
+  def createCollectionFor( ip:String ) = {
+
+    val db = Mongo.connect.db( B.profileDbName )
+
+    val colName = dbNameFor( ip )
+
+    if ( !db.collectionExists( colName ) ) {
+      db.createCollection(
+        colName,
+        Mobj(
+          "capped" -> true,
+          "size"   -> ( 2 * 1024 * 1024 )
+        )
+      )
+
+      // place a dummy "already-handled" object into the capped collection so that the query will "await data" properly ... if the collection is empty the query will return immediately
+      db( colName ).save( Mobj( "h" -> true ) )
+    }
   }
 
-}
+  def process = {
 
-class CometQueue( obj:DBObject, parent:MongoRecord ) extends MongoRecord( CometQueue.makeView, obj, parent ) {
+    val db = dbFor( localName )
 
+    def query = db.find( Mobj( "h" -> false ) ).addOption( Bytes.QUERYOPTION_TAILABLE ).addOption( Bytes.QUERYOPTION_AWAITDATA )
+
+    while ( true ) {
+
+      try {
+
+        var cursor = query
+
+        while ( true ) {
+          if ( !cursor.hasNext ) {
+
+            if ( cursor.getCursorId == 0 ) { // a.k.a. cursor.isDead ?
+              Thread.sleep( 1000 )
+              cursor = query
+            }
+          } else {
+            val obj = cursor.next
+//sp am( "cometqueue processing " + obj )
+            Comet.send( obj.s( 'ss ), obj.o( 'm ).toMap.asInstanceOf[java.util.Map[String,AnyRef]] )
+
+            db.update( Mobj( "_id" -> obj( '_id ) ), Mobj( $set -> Mobj( "h" -> true ) ) )
+          }
+        }
+      }
+    }
+  }
+
+  lazy val localName = org.tyranid.net.Ip.Host
+
+  def init = {
+
+    createCollectionFor( localName )
+
+    background {
+      process
+    }
+  }
 }
 

@@ -44,7 +44,7 @@ import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.email.EmailTemplate
 import org.tyranid.profile.{ Group, OrgMeta, User, UserMeta }
 import org.tyranid.secure.{ AccessType, Multipass }
-import org.tyranid.session.{ Milestone, Session, ThreadData, SessionDataMeta }
+import org.tyranid.session.{ Milestone, Session, SessionData, ThreadData, SessionDataMeta }
 import org.tyranid.sms.NexmoApp
 import org.tyranid.social.{ TwApp }
 import org.tyranid.social.basecamp.BcApp
@@ -105,8 +105,10 @@ trait Bootable {
   val operatorIps = Seq[String]()
 
   // DEV assumes the DNS is in your hosts file
+
+  val liteAppName = "Revu.Me"
   
-  def liteDomainName = "annotate"
+  val liteDomainName = "revu"
     
   def fullDomain = { 
     if ( DEV )        "rb-dev." + domain
@@ -167,6 +169,7 @@ trait Bootable {
   def debugChat        = TyranidConfig().b( 'debugChat )
   def syncWebDav       = TyranidConfig().b( 'syncWebDav )
   def hideUpgradeBtn   = TyranidConfig().b( 'hideUpgradeBtn )
+  def enableLite       = TyranidConfig().b( 'lite )
 
   def access( thread:ThreadData, accessType:AccessType, ref:AnyRef )
 
@@ -183,7 +186,8 @@ trait Bootable {
   @volatile var Org:OrgMeta = null
   @volatile var SessionData:SessionDataMeta = null
   @volatile var Location:MongoEntity = null
-  @volatile var newSession:() => Session = null
+  @volatile var newSession:()     => Session     = null
+  @volatile var newSessionData:() => SessionData = null
   
   def welcomeUserEvent
 

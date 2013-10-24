@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -44,7 +44,7 @@ object TidItem {
       TidItem( tid = tid, id = null, org = null, name = "Unknown", thumbnail = B.Org.defaultIcon )
     else {
       val ( entityTid, recordTid ) = tid.splitAt( 4 )
-  
+
       Entity.byTid( entityTid ) match {
       case Some( e ) => TidItem( tid = tid, id = e.tidToId( tid ), org = null, name = "Unknown " + e.label, thumbnail = e.defaultIcon )
       case None      => TidItem( tid = tid, id = null, org = null, name = "Unknown", thumbnail = B.Org.defaultIcon )
@@ -56,12 +56,13 @@ object TidItem {
 
   private lazy val itemFor = new ConcurrentExpireAutoMap( Time.HalfHourMs, ( tid:String ) => {
     Record.byTid( tid ) match {
-    case Some( rec ) => TidItem( tid = tid, id = rec.id, org = B.Org.orgIdFor( rec ), name = rec.label, thumbnail = rec.icon )
+    case Some( rec ) =>
+      TidItem( tid = tid, id = rec.id, org = B.Org.orgIdFor( rec ), name = rec.label, thumbnail = rec.icon )
     case None        => log( Event.RefInt, "m" -> ( "ERROR:  could not locate tid " + tid ), "ex" -> new RuntimeException() )
                         unknown( tid )
     }
   } )
-  
+
   def invalidate( tid:String ) = itemFor.clear( tid )
 }
 
@@ -113,7 +114,7 @@ object Tid {
 
   def entity( tid:String ) = {
     val enTid = entityTid( tid )
-    
+
     if ( enTid != null ) Entity.byTid( enTid )
     else                 null
   }
@@ -214,10 +215,10 @@ object Tid {
         // log( 'user ) = Session().user.id
         //if ( diffs.as.nonEmpty )
           //log( 'removals ) = PathValue.toDbObject( diffs.as )
-        
+
         //if ( diffs.bs.nonEmpty )
           //log( 'adds ) = PathValue.toDbObject( diffs.bs )
-        
+
         //if ( diffs.diffs.nonEmpty )
           //log( 'updates ) = PathDiff.toDbObject( diffs.diffs )
       }
@@ -230,7 +231,7 @@ object Tid {
         entity( en )
     }
 
-    matches  
+    matches
   }
 
   /**
@@ -277,7 +278,7 @@ object Tid {
         for ( va <- en.makeView.vas )
           if ( enter( va :: path ) ) {
             val r = if ( p != Nil ) p.get( rec ).as[DBObject] else rec.as[DBObject]
-            
+
             r.remove( va.name )
 
             if ( va.att.owner )
@@ -297,33 +298,38 @@ object Tid {
       // log( 'user ) = Session().user.id
       //if ( diffs.as.nonEmpty )
         //log( 'removals ) = PathValue.toDbObject( diffs.as )
-        
+
       //if ( diffs.bs.nonEmpty )
         //log( 'adds ) = PathValue.toDbObject( diffs.bs )
-        
+
       //if ( diffs.diffs.nonEmpty )
         //log( 'updates ) = PathDiff.toDbObject( diffs.diffs )
     }
 
     dangling
   }
-  
+
   // WARNING!  This will perform a blind cascade delete
-  def deleteCascade( tid:String, deletions:mutable.Buffer[Record] = null ) {
+  def deleteCascade( tid:String, deletions:mutable.Buffer[Record] = null, visited:mutable.Set[String] = mutable.Set[String]() ) {
+    visited += tid
+
     val delStat = delete( tid, true )
-    
+
     if ( delStat != null ) {
       val cFailures = delStat.cascadeFailures
-      
+
       if ( cFailures.nonEmpty ) {
-        cFailures.foreach( f => deleteCascade( f.tid ) )
-        deleteCascade( tid )
+        for ( f <- cFailures;
+              if !visited.contains( f.tid ) )
+          deleteCascade( f.tid, deletions, visited )
+
+        deleteCascade( tid, deletions, visited )
       } else if ( deletions != null ) {
         deletions ++= delStat.deletes
       }
     }
   }
-  
+
   def delete( tid:String, performDeletion:Boolean ) = {
     val refs = references( tid )
 
@@ -336,9 +342,9 @@ object Tid {
       if ( ref.view.entity.isInstanceOf[RamEntity] ) {
         ramReferences += ref
       } else if ( extractTid( ref, tid ) ) {
-        val refRefs = references( ref.tid ).filter( rr => !refs.exists( _.tid == rr.tid ) && rr.tid != tid )
+        val refRefs = references( ref.tid ).exists( rr => !refs.exists( _.tid == rr.tid ) && rr.tid != tid )
 
-        if ( refRefs.nonEmpty )
+        if ( refRefs )
           cascadeFailures += ref //++= refRefs
         else
           deletes += ref
@@ -348,19 +354,19 @@ object Tid {
     }
 
     val recOpt = Record.byTid( tid )
-    
+
     var results:DeleteResults = null
-    
+
     if ( recOpt != None ) {
       val rec = recOpt.get
-      
+
       if ( rec.view.entity.isInstanceOf[RamEntity] )
         ramReferences += rec
       else
         deletes += rec
-  
+
       results = DeleteResults( ramReferences = ramReferences, cascadeFailures = cascadeFailures, updates = updates, deletes = deletes )
-  
+
       if ( results.success && performDeletion ) {
         updates foreach { _.save }
         deletes foreach { _.delete }
@@ -386,7 +392,7 @@ object Tidlet extends Weblet {
       _404
 
     var tid = web.req.s( 'tid )
-    
+
     if ( tid.isBlank )
       tid = t.session.qcache.s( 'lastTid )
     else
@@ -405,7 +411,7 @@ object Tidlet extends Weblet {
   }
 
   val entityTabBar =
-    TabBar( this, 
+    TabBar( this,
       Tab( "/attrib", Text( "Attributes" ), default = true, cls = "btn btn-inverse" ),
       Tab( "/record", Text( "Records" ), cls = "btn btn-inverse" )
     )
@@ -434,7 +440,7 @@ object Tidlet extends Weblet {
 
          <div class="fieldHeader">
           <label>Type</label><span>Record</span>
-          <label style="margin-left:16px;">Label</label><span>{ r.label.summarize().encUnicode }</span>
+          <label style="margin-left:16px;">Label</label><span style="font-weight:bold;color:#000;">{ r.label.summarize().encUnicode }</span>
           <label style="margin-left:16px;">Entity</label><span><a href={ "#admin/tid/" + entity.tid }>{ entity.name }</a></span>
           <label style="margin-left:16px;">Storage</label><span>{ entity.storageName + ( entity.embedded |* "-Embedded" ) }</span>
           { entity.isInstanceOf[MongoEntity] |* <a data-act="delete" data-tid={ tid } class="btn-danger btn" style="float:right;">Delete</a> }

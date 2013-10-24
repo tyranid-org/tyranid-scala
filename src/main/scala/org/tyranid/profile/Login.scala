@@ -134,7 +134,7 @@ $( function() {
        </div>
        <div class="row-fluid">
          <div class="span6">
-          <div style="height:40px;display:inline-block;"><input type="checkbox" name="save" id="saveLogin" value="Y"/></div>
+          <div style="height:40px;display:inline-block;"><input type="checkbox" name="save" id="saveLogin" value="Y" checked="checked"/></div>
           <label for="saveLogin" style="vertical-align:text-top;display:inline-block;">Stay signed-in</label>
          </div> 
          <div class="span6" style="height:40px;padding-top:8px;"><button type="submit" class="btn-success btn pull-right">Sign-In <i class="icon-caret-right"></i></button></div>
@@ -553,7 +553,6 @@ $( function() {
           </div>
           <div class="row-fluid">
            <div class="span6">
-            <input type="hidden" name="keep" value={ web.s( 'keep ) }/>
             <input type="password" name="password2" id="password2" placeholder="Re-type password" data-val="req,same=password,min=7"/>
            </div>
            <div class="span6 val-display"></div>

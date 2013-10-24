@@ -26,7 +26,7 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.content.ContentType
+import org.tyranid.content.{ Content, ContentType }
 import org.tyranid.cloud.aws.S3
 import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDouble, DbEmail, DbLink, DbLong, DbPassword, Record, DbDate, DbInt, DbDateTime, DbUrl }
 import org.tyranid.db.meta.TidItem
@@ -192,7 +192,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
   // TODO:  Make this more sophisticated, allow the entire user to be retrieved instead of just the name, and/or maybe something like ProfileItem
   def nameFor( userId:ObjectId ) = "TODO"
 
-  def ensureUser( email:String, invitedBy:ObjectId ) = {
+  def ensureUser( email:String, invitedBy:ObjectId = null ) = {
     val uc = db.find( Mobj( "email" -> ( "^" + email.encRegex + "$" ).toPatternI ) ).limit(1)    
     var u = uc.hasNext ? uc.next | null
 
@@ -295,9 +295,11 @@ trait User extends MongoRecord {
     if ( hasName ) s( 'firstName )
     else           s( 'email )
 
-  override def label =
+  override def label = {
+    println( "e: " + s( 'email ) + ", hasName : " + hasName )
     if ( hasName ) super.label
     else           s( 'email )
+    }
 
   def isActive:Boolean = {
     if ( ( obj.has( 'inactive ) && b( 'inactive ) ) || s( 'activationCode ).notBlank )
@@ -309,6 +311,72 @@ trait User extends MongoRecord {
   def cool = { null }
   
   def email = s( 'email )
+
+  /*
+   *   anybody in a group that you're in ... including organizations and projects
+   * + anybody in a board that you're in
+   *
+   *
+   *
+   * Option 1:  post-filtering
+   *
+   * 1. get all users that match the pattern
+   *
+   * 2. filter this list after the fact
+   *
+   *    cache groups and their members ...
+   *
+   * Option 2:  database filtering ... possibly via an extra index or "index collection"
+   *
+   *
+   *
+   *
+   * Option 3:  create new database collection which by user has an array of all group and folder tids
+   *
+   *   query this collection where:
+   *
+   *      user $in [ raw list of users ],
+   *      groups $in [ list of all my groups/folders ]
+   *
+   *
+   *   ALTERNATE #1:
+   *
+   *   userVisibilityIndex {
+   *     label: email-or-name-string,
+   *     groups: array-of-groups-and-folders
+   *   }
+   *
+   *   ALTERNATE #2:
+   *
+   *   store groups directly on user and then just create an index on users
+   *
+   *
+   *  NOTE:  one large disadvantage of not doing the query entirely in mongo is that the initial query to bring back users can't have a limit() on it
+   *
+   */
+  def canSee( seen:User ):Boolean = {
+    this.id == seen.id ||
+    ( this.hasOrg && this.org.group.canViewDirectly( seen ) ) ||
+    this.teams.exists( _.canViewDirectly( seen ) ) ||
+    this.projects.exists( _.canViewDirectly( seen ) )
+  }
+
+  // TODO:  this needs to be more sophisticated
+  def canSee( seen:Org ):Boolean =
+    seen.group.canView( this )
+
+  def canSee( seenTid:String ):Boolean = {
+
+    val rec = Record.getByTid( seenTid )
+
+    rec match {
+    case null         => false
+    case seen:User    => canSee( seen )
+    case seen:Org     => canSee( seen )
+    case seen:Content => seen.canView( this )
+    case _            => false
+    }
+  }
 
   /**
    * This is a list of tags that the user is interested in.
@@ -347,20 +415,25 @@ trait User extends MongoRecord {
 
   def toClientCommonMap( force:Boolean = false ):Map[String,Any]
 
+  def groups:Seq[Group] = T.requestCached( tid + "groups"       ) { Group.visibleTo( this ) }
+
   // TODO:  cache this better somehow
-  def groups:Seq[Group] = T.requestCached( tid + "groups" ) { Group.visibleTo( this, contentType = ContentType.Group ) }
-  def groupIds          = groups.map( _.id )
+  def teams:Seq[Group]  = T.requestCached( tid + "teams"        ) { groups.filter( _.contentType == ContentType.Team    ) }
+  def userProjects      = T.requestCached( tid + "userProjects" ) { groups.filter( _.contentType == ContentType.Project ) }
+
+  def projects          = T.requestCached( tid + "projects"     ) { userProjects ++ Group.publicProjects.filter( g => !userProjects.exists( _.id == g.id ) ).toSeq }
+
   def groupTids         = groups.map( _.tid )
 
-  def nonBuiltinGroups    = T.requestCached( tid + "nonBuiltinGroups" ) { Group.visibleTo( this, contentType = ContentType.Group, allowBuiltins = false ) }
-  def nonBuiltinGroupIds  = nonBuiltinGroups.map( _.id )
-  def nonBuiltinGroupTids = nonBuiltinGroups.map( _.tid )
+  def teamIds           = teams.map( _.id )
+  def teamTids          = teams.map( _.tid )
 
-  // TODO:  cache this better somehow
-  def projects = T.requestCached( tid + "projects" ) { Group.visibleTo( this, contentType = ContentType.Project, publicGroup = true ) }
-  def projectIds  = projects.map( _.id )
-  def projectTids = projects.map( _.tid )
+  def projectTids       = projects.map( _.tid )
 
+  def allProjects       = T.requestCached( tid + "projects"     ) { groups.filter( g => g.contentType == ContentType.Project || g.contentType == ContentType.LiteProject ) ++
+                                                                    Group.publicProjects.filter( g => !userProjects.exists( _.id == g.id ) ).toSeq }
+
+    
   /**
    * This is a list of tids the user is authorized.  It includes their own tid, the tid of their org, and
    * the tid of all the groups they own or are members of.
@@ -374,30 +447,8 @@ trait User extends MongoRecord {
       if ( ot.notBlank )
         tids += ot
 
-      tids ++= groupTids
+      tids ++= teamTids
 
       tids
     }
-
-  def allowProfileProjectTids =
-    T.requestCached( "appt" ) {
-      val tids = ArrayBuffer[String]()
-      tids += tid
-
-      val ot = orgTid
-      if ( ot.notBlank )
-        tids += ot
-
-      tids ++= projectTids
-
-      tids
-    }
-
-  def inNetwork( tid:String ):Boolean = {
-    if ( tid == this.tid )
-      return true
-
-    var tidOrgId = TidItem.by( tid ).org
-    org != null && tidOrgId != null && org.id == tidOrgId
-  }
 }

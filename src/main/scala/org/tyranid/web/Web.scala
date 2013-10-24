@@ -20,6 +20,8 @@ package org.tyranid.web
 import com.newrelic.api.agent.NewRelic
 
 import java.io.IOException
+import java.util.Date
+
 import javax.servlet.{ Filter, FilterChain, FilterConfig, GenericServlet, ServletException, ServletRequest, ServletResponse, ServletContext }
 import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
 
@@ -96,12 +98,16 @@ trait TyrFilter extends Filter {
   def ensureSession( thread:ThreadData, web:WebContext ) {
     if ( thread.http == null ) {
       thread.http = web.req.getSession( true )
-      val session = T.session
+      val sess = T.session
+
+      sess.record( "rh" -> web.req.getRemoteHost, "ra" -> web.req.getRemoteAddr )
       
-      session.put( "remoteHost", web.req.getRemoteHost() )
-      session.put( "remoteAddr", web.req.getRemoteAddr() )
+      val subdomain = web.req.getServerName
+
+      sess.put( "lite", subdomain.startsWith( B.liteDomainName ) )
+      sess.put( "subdomain", subdomain )
       
-      session.ua( web )
+      sess.ua( web )
       LoginCookie.autoLogin          
     }
   }
@@ -210,8 +216,17 @@ class WebFilter extends TyrFilter {
 
     if ( !comet && !isAsset ) {
       val session = T.session
-      session.put( "lastPath", web.path )
-      session.put( "lastPathTime", new java.util.Date() )
+      
+      if ( session != null && T.http != null && !isAsset ) {
+        val now = new Date
+        val path = web.path
+        val subdomain = web.req.getServerName
+
+        session.put( "lite", subdomain.startsWith( B.liteDomainName ) )
+        session.record( "lp" -> path, "lpt" -> now, "dom" -> subdomain )
+        session.put( "subdomain", subdomain )
+        //sess.put( "subdomain", web.req.getServerName )
+      }
     }
     
     var first = true
@@ -296,7 +311,7 @@ class WebFilter extends TyrFilter {
           val hasUser = T.user != null 
           NewRelic.setUserName( hasUser ? T.user.fullName | "[Unknown]" )
           NewRelic.setAccountName( hasUser ? T.user.tid | "[None]" )
-          NewRelic.setProductName( T.session.id )
+          NewRelic.setProductName( T.session.id.toString )
         }
         
         //println( T.session.id + ":" + T.session.isLite )

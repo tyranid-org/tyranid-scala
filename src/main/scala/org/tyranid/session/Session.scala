@@ -27,13 +27,14 @@ import org.bson.types.ObjectId
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbLink }
+import org.tyranid.db.{ DbBoolean, DbChar, DbDateTime, DbInt, DbLink }
 import org.tyranid.db.meta.TidCache
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.http.UserAgent
 import org.tyranid.json.{ Js, JsCmd }
 import org.tyranid.math.Base62
+import org.tyranid.net.Ip
 import org.tyranid.profile.{ LoginCookie, User, UserStat, UserStatType }
 import org.tyranid.report.Query
 import org.tyranid.social.Social
@@ -43,11 +44,18 @@ import org.tyranid.QuickCache
 import org.tyranid.web.{ Comet, WebContext }
 
 
+/*
+ * * *  WebSession
+ */
+
 object SessionCleaner {
-  def clean {
+  def cleanLocal {
+
+    // Clean up local in-memory sessions
+
     val now = System.currentTimeMillis
 
-    WebSession.sessions.filter( sess => {
+    WebSession.sessions.filter { sess =>
       val httpsess = sess._2
 
       try {
@@ -67,23 +75,43 @@ object SessionCleaner {
           e.printStackTrace
           false
       }
-    }).foreach( sess => {
+    } foreach { sess =>
       WebSession.sessions.remove( sess._1 )
-      ServerSession.remove( sess._2.getId )
       sess._2.invalidate
-    })
+    }
+
+
+    // Remove any SessionData records for this server which don't map to local sessions
+
+    val ipHost = Ip.Host.toString
+
+    val invalidSessions:Seq[String] = (
+      for ( sd <- B.SessionData.db.find( Mobj( "sv" -> ipHost ) );
+            ss = sd.s( 'ss );
+            if !WebSession.sessions.contains( ss ) )
+        yield ss
+    ).toSeq
+
+    if ( invalidSessions.nonEmpty )
+      B.SessionData.db.remove( Mobj( "sv" -> ipHost, "ss" -> Mobj( $in -> invalidSessions.toMlist ) ) )
+  }
+
+  def cleanGlobal {
+
+    val cutoff = new Date - ( 4 * Time.OneHourMs )
+
+    B.SessionData.db.remove( Mobj( "lpt" -> Mobj( $lte -> cutoff ) ) )
   }
 }
 
-object ServerSession {
-  private val caches = mutable.Map[String,mutable.Map[String,Any]]()
 
-  def getOrElseUpdate[ T ]( session:HttpSession, key:String, block: => T ):T = {
-    caches.getOrElseUpdate( session.getId, mutable.Map[String,Any]() ).getOrElseUpdate( key, block ).as[T]
-  }
-
-  def remove( id:String ) = caches.remove( id )
-}
+/*
+ * * *  WebSession
+ *
+ * This is used to keep a complete list of sessions in memory since the Java API doesn't provide that anymore.
+ *
+ * TODO:  Once we have sessions in MongoDB we can probably remove this.
+ */
 
 object WebSession {
   val sessions = mutable.Map[String,HttpSession]()
@@ -107,10 +135,18 @@ class WebSessionListener extends HttpSessionListener {
   }
 
   def sessionDestroyed( e:HttpSessionEvent ) {
+    val hsid = e.getSession.getId
     //Comet.remove( e.getSession.getId  )
-    WebSession.sessions.remove( e.getSession.getId )
+    WebSession.sessions.remove( hsid )
+
+    B.SessionData.db.update( Mobj( "ss" -> hsid ), Mobj( $set -> Mobj( "exp" -> true ) ) )
   }
 }
+
+
+/*
+ * * *  ThreadData
+ */
 
 object ThreadData {
   private var tested = false
@@ -132,11 +168,15 @@ object ThreadData {
 class ThreadData {
   def baseWebsite = "https://" + B.domainPort
 
-  def website( path:String = "", user:User = null, ssoMapping:SsoMapping = null ):String = {
+  def website( path:String = "", user:User = null, ssoMapping:SsoMapping = null, subdomain:String = null ):String = {
     val subdomainWebsite = ( session == null ) ? baseWebsite | {
-      val subdomain = session.s( 'subdomain )
+      val sd =
+        if ( subdomain.notBlank )
+          subdomain
+        else
+          session.s( 'subdomain )
 
-      ( subdomain.isBlank ) ? baseWebsite | "https://" + subdomain + B.port
+      ( sd.isBlank ) ? baseWebsite | "https://" + sd + B.port
     }
 
     if ( user == null )
@@ -157,6 +197,7 @@ class ThreadData {
     if ( session != null ) session.user
     else                   null
 
+
   // --- HTTP Session
 
   private var httpData:HttpSession = _
@@ -172,6 +213,7 @@ class ThreadData {
     tyrSession = null
   }
 
+
   // --- Tyranid Session
 
   private var tyrSession:Session = _
@@ -183,17 +225,21 @@ class ThreadData {
   def session:Session = {
     if ( tyrSession == null ) {
       tyrSession =
-        if ( http != null ) {
+        http match {
+        case null =>
+          B.newSession()
+
+        case http =>
           http.getAttribute( WebSession.HttpSessionKey ) match {
           case s:Session =>
             s
           case _         =>
             val s = B.newSession()
             http.setAttribute( WebSession.HttpSessionKey, s )
+            session.httpSessionId = http.getId
+            session.id // ensure a SessionData record is recorded in the database
             s
           }
-        } else {
-          B.newSession()
         }
     }
 
@@ -235,6 +281,11 @@ class ThreadData {
    * * *  RequestCache ... prefer TidCache to this, this is problematic to extend into something like memcache
    */
 
+  def clearRequestCache = {
+    tidCache.clear
+    requestCache.clear
+  }
+
   val requestCache = mutable.Map[String,Any]()
 
 	def requestCached[ T ]( key:String )( block: => T ):T = requestCache.getOrElseUpdate( key, block ).as[T]
@@ -262,6 +313,11 @@ class ThreadData {
 }
 
 
+
+/*
+ * * *  In-Memory Session
+ */
+
 trait SessionMeta {
   val UA_KEY = "UA"
 
@@ -284,12 +340,15 @@ trait SessionMeta {
 object Session extends SessionMeta
 
 trait Session extends QuickCache {
-  lazy val id = Base62.make( 10 )
 
+  @volatile var httpSessionId:String = null
 
   private var userVar = B.newUser()
   def user:User           = userVar
-  def user_=( user:User ) = userVar = user
+  def user_=( user:User ) = {
+    println( "set user to: " + user.s( 'email ))
+    userVar = user
+  }
 
   def orgId               = user.orgId
   def orgTid              = ( orgId == null ) ? null | B.Org.idToTid( orgId )
@@ -298,9 +357,11 @@ trait Session extends QuickCache {
   var loggedUser  = false
 
   // If the user tid is set in the session
-  def isLoggedIn = !user.isNew && user.s( 'activationCode ).isBlank //getOrElse( "user", "" )._s.notBlank
+  def isLoggedIn = !user.isNew && ( user.s( 'activationCode ).isBlank || ( isLite && isLiteVerified ) )//getOrElse( "user", "" )._s.notBlank
 
   def isLite = b( "lite" )
+
+  def isHttpSession = httpSessionId != null
 
   var debug       = B.DEV
   var trace       = false
@@ -310,8 +371,9 @@ trait Session extends QuickCache {
   def get( key:String ) = getV( key )
   def getOrElse( key:String, any:java.io.Serializable ) = getVOrElse( key, any )
   def getOrElseUpdate( key:String, any:java.io.Serializable ) = getVOrElseUpdate( key, any )
-  def put( key:String, value:java.io.Serializable ) = putV( key, value )
   def clear( key:String ) = clearCache( key )
+
+  def put( key:String, value:java.io.Serializable ) = putV( key, value )
 
   def b( key:String ) = getVOrElse( key, false ).as[Boolean]
   def s( key:String ) = getVOrElse( key, null ).as[String]
@@ -321,11 +383,7 @@ trait Session extends QuickCache {
     var tUa:UserAgent = get( Session.UA_KEY ).as[UserAgent]
 
     if ( tUa == null ) {
-      if ( web == null )
-        tUa = UserAgent.getById( 1 )
-      else {
-        tUa = UserAgent.getById( web.userAgentId )
-      }
+      tUa = UserAgent.getById( if ( web == null ) 1 else web.userAgentId )
 
       try {
         tUa.updateIfNeeded
@@ -335,22 +393,72 @@ trait Session extends QuickCache {
       }
 
       put( Session.UA_KEY, tUa )
+
+      record( "ua" -> tUa.id )
     }
 
     tUa
   }
+
+
+  /*
+   * * *   SessionData
+   */
+
+  private var _id:ObjectId = null
+
+  // Id of the SessionData record corresponding to this in-memory session
+  def id:ObjectId = {
+    if ( _id == null )
+      _id = B.SessionData.idFor( this )
+
+    _id
+  }
+
+  def tid:String = return B.SessionData.idToTid( id )
+
+  def data:SessionData = {
+    val d = B.SessionData.getById( id )
+    if ( d == null ) {
+       // this means that user still has an old id around that we deleted the sessiondata for ... recreate a new one
+      _id = null
+      data
+    } else {
+      d
+    }
+  }
+
+  def record( values:Pair[String,Any]* ):Unit = {
+    for ( pair <- values )
+      putV( pair._1, pair._2.as[java.io.Serializable] )
+
+    if ( isHttpSession ) {
+      var seto = Mobj()
+
+      for ( pair <- values )
+        seto( pair._1 ) = pair._2
+
+      record( Mobj( $set -> seto ) )
+    }
+  }
+
+  def record( update:DBObject ):Unit =
+    if ( isHttpSession )
+      B.SessionData.db.update( Mobj( "_id" -> id ), update )
+
 
   /*
    * * *   Login
    */
 
   def login( user:User, incognito:Boolean = false, sso:SsoMapping = null ) = {
-spam( "logging in " + user.label )
     this.user = user
     put( "lastLogin", user.t( 'lastLogin ) )
 
+    val now = new Date
+
     if ( !incognito ) {
-      var updates = Mobj( "lastLogin" -> new Date )
+      var updates = Mobj( "lastLogin" -> now )
 
       if ( tz != null && tz != user.timeZone ) {
         var id = tz.getID
@@ -363,6 +471,7 @@ spam( "logging in " + user.label )
 
       UserStat.login( user.id )
       B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> updates ) )
+
       log( Event.Login, "bid" -> TrackingCookie.get )
 
       B.loginListeners.foreach( _( user ) )
@@ -390,14 +499,18 @@ spam( "logging in " + user.label )
       if ( req != null ) {
         web.req.addJsCmd( Js( "tyrl( window.cometConnect );" ) )
 
-        put( "remoteHost", web.req.getRemoteHost() )
-        put( "remoteAddr", web.req.getRemoteAddr() )
         userAgent = ua( web )
       }
 
       T.requestCache.put( "req-common", true )
     }
+
+    record( "u" -> user.id, "lit" -> now, "incognito" -> incognito )
   }
+
+  def clearLiteVerified = clear( "lite-v" )
+  def setLiteVerified = put( "lite-v", Boolean.box( true ).booleanValue().as[Serializable] )
+  def isLiteVerified = get( "lite-v" ).as[Boolean] ? true | false
 
   def isIncognito = get( "incognito" ).as[Boolean] ? true | false
 
@@ -406,16 +519,20 @@ spam( "logging in " + user.label )
   def setAllowEmail = put( "allowEmail", Boolean.box( true ).booleanValue().as[Serializable] )
   def clearAllowEmail = clear( "allowEmail" )
 
-  def logout( unlink:Boolean = true ) = {
-    LoginCookie.remove
-    Social.removeCookies
+  def logout( unlink:Boolean = true, removeCookies:Boolean = true ) = {
+    if ( removeCookies ) {
+      LoginCookie.remove
+      Social.removeCookies
+    }
 
     if ( unlink ) T.unlinkSession
 
     val u = user
+
     if ( u != null && !isIncognito )
       B.logoutListeners.foreach( _( u ) )
   }
+
 
   /*
    * * *   Time Zones
@@ -490,6 +607,7 @@ spam( "logging in " + user.label )
 
   def clearAllEditing = editings.clear
 
+
   /*
    * * *   Notifications
    */
@@ -525,8 +643,6 @@ spam( "logging in " + user.label )
 
   def peekNotes( level:Int = 0 ): List[Notification] = ( level == 0 ) ? notes | notes.filter( n => n.level == level )
 
-  @volatile var unshownPosts:Int = 0
-
 
   /*
    * * *   Web Paths / Tabs Memory
@@ -557,8 +673,48 @@ class SessionDataMeta extends MongoEntity( "a04t" ) {
 
   "_id"                is DbMongoId         is 'id;
 
+  /*
+   * IDs
+   *
+   *
+   *   mongo id here
+   *
+   *   per-server HttpSession id
+   *
+   *   in-memory tyranid Session id
+   *      used for Scribd and NewRelic
+   *
+   *   ?. merge ObjectId and tyranid session id ?
+   *
+   */
+
+
+
   "sv"                 is DbChar(32)        as "Server ID";
+
+
+  // http session or tyranid session ?
   "ss"                 is DbChar(32)        as "Session ID";
+
+  "rh"                 is DbChar(32)        as "Remote Host";
+  "ra"                 is DbChar(32)        as "Remote Address";
+
+  "ct"                 is DbDateTime        as "Session Creation Time";
+  "lit"                is DbDateTime        as "Login Time";
+
+  "lp"                 is DbChar(64)        as "Last Path";
+  "lpt"                is DbDateTime        as "Last Path Time";
+  "dom"                is DbChar(32)        as "Website Domain";
+
+  "ua"                 is DbLink(UserAgent) ;
+
+  "exp"                is DbBoolean         as "Expired";
+
+  "incognito"          is DbBoolean         ;
+
+  "cometDebug"         is DbBoolean         ;
+
+  "unshownPosts"       is DbInt             ;
 
   override def init = {
     super.init
@@ -566,27 +722,85 @@ class SessionDataMeta extends MongoEntity( "a04t" ) {
     "u"                is DbLink(B.User)    as "User";
   }
 
+  def idFor( session:Session ) = {
+    val hsid = session.httpSessionId
+
+    assert( hsid != null )
+
+    var rec:SessionData = B.SessionData( B.SessionData.db.findOne( Mobj( "ss" -> hsid ) ) )
+
+    if ( rec == null ) {
+      rec = B.newSessionData()
+
+      val http = T.http
+      if ( http != null )
+        rec( 'ct ) = new Date( http.getCreationTime )
+      else
+        rec( 'ct ) = new Date
+
+      rec( 'ss ) = hsid
+      rec( 'sv ) = Ip.Host.toString
+      rec.save
+    }
+
+    rec.oid
+  }
+
   /*
-   * TODO:
-   *
-   *   1.  when a user logs in, add an entry to this table
-   *
-   *       a.  probably need to keep the session active even if they aren't logged in
-   *
-   *       b.  expired lastModifiedDate on session
-   *
-   *   2.  change the session list in admin to use this table rather than the local session list
-   *
-   *   3.  change Comet.visit to use the CometQueue
-   *
-   *
-   *
-   *
+     TODO:
+
+
+
+
+     X.  sync MongoDB-SessionData with In-memory-tyranid.Session
+
+         X.  when http is assigned to ThreadData
+
+         X.  assign "sv" variable
+
+             X. get local ip from somewhere ... where ?
+
+         X.  update the session data in MongoDB as it is updated locally
+
+             X. login/logout
+
+             X. login time
+
+             X. last path access time ?
+
+
+     X.  change the session list in admin to use this table rather than the local session list
+
+     X.  clean up mongo-sessions in SessionCleaner
+
+         X.  expired lastModifiedDate on session
+
+     X.  change Comet.visit to use the CometQueue
+
+         X.  NAME:  come up with way to name local server that can be encoded in a mongodb collection name
+
+         X.  create capped collection comet_$NAME
+
+         X.  figure out read loop
+
+
+     X.  scheduled tasks
+
+         X. session cleaner needs to be both server-local (HttpSessions) and one-server (SessionData)
+
+
+
    */
+
+  // index on "ss" ?
 }
 
 trait SessionData extends MongoRecord {
 
+
+  def user = B.User.getById( oid( 'u ) )
+
+  def ua = UserAgent.getById( i( 'ua ) )
 }
 
 

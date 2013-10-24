@@ -20,6 +20,7 @@ package org.tyranid.email
 import javax.mail.MessagingException
 import javax.mail.internet.InternetAddress
 
+import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
@@ -151,8 +152,16 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
       compose
       spam( "emailer after compose" )
       
-      //if ( !request.getDestination().getToAddresses().contains( "mbradley@volerro.com" ) )
-      //  return null
+      if ( false && request.getDestination().getToAddresses().find( a => a.contains( "mrkcbradley" ) || a.contains( "mbradley" ) ) == None ) {
+        println( """
+*********
+            
+  Warning!!! EMAIL IS ONLY BEING SENT TO mbradley@volerro.com
+            
+*********            
+""")
+        return null
+      }
       
       AWSEmail.throttle
     

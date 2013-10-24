@@ -506,6 +506,26 @@ $( $('#idp').focus() );
           }
         }
         
+        if ( mapping.b( 'actOptOut ) && !u.b( 'actOptOut ) ) {
+          u( 'actOptOut ) = true
+          save = true
+        }
+          
+        if ( mapping.b( 'featOptOut ) && !u.b( 'featOptOut ) ) {
+          u( 'featOptOut ) = true
+          save = true
+        }
+        
+        if ( mapping.b( 'naOptOut ) && !u.b( 'naOptOut ) ) {
+          u( 'naOptOut ) = true
+          save = true
+        }
+          
+        if ( mapping.b( 'inviteOptOut ) && !u.b( 'inviteOptOut ) ) {
+          u( 'inviteOptOut ) = true
+          save = true
+        }
+        
         if ( !u.hasOrg ) {
           val org = B.Org.getById( orgId )
           

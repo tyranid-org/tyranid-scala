@@ -34,7 +34,8 @@ object TyranidConfig extends MongoEntity( tid = "a03t" ) {
 
 
   "_id"            is DbMongoId         is 'id;
-  "recaptcha"      is DbBoolean         as "Enable ReCaptchas";
+  "recaptcha"      is DbBoolean         as "Require ReCaptchas";
+  "lite"           is DbBoolean         as "Enable " + B.liteAppName;
   "accessLogs"     is DbBoolean         as "Enable Access Logs";
   "onePagePdf"     is DbBoolean         as "One Page PDF";
   "debugSso"       is DbBoolean         as "Debug SSO";
@@ -147,6 +148,12 @@ object TyranidConfiglet extends Weblet {
         TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "recaptcha" -> obj.b( 'recaptcha ) ) ) )
         sess.notice( "Recaptcha has been turned " + ( B.requireReCaptcha ? "ON" | "OFF" ) + "." )
   
+      case "lite" =>
+        val obj = TyranidConfig()
+        obj( 'lite ) = !B.enableLite
+        TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "lite" -> obj.b( 'lite ) ) ) )
+        sess.notice( B.liteAppName + " has been turned " + ( B.enableLite ? "ON" | "OFF" ) + "." )
+  
       case "logs" =>
         val obj = TyranidConfig()
         obj( 'accessLogs ) = !B.accessLogs
@@ -175,6 +182,7 @@ object TyranidConfiglet extends Weblet {
               "maint"          -> false,
               "email"          -> Email.enabled,
               "recaptcha"      -> B.requireReCaptcha,
+              "lite"           -> B.enableLite,
               "accessLogs"     -> B.accessLogs
             )
          ),

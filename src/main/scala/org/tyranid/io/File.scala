@@ -143,7 +143,7 @@ class TxtExtractor extends TextExtractor {
 
 
 object FileCleaner { 
-  def clean {
+  def cleanGlobal {
     // Clean up S3 zipped up boards in PRODUCTION
     if ( B.PRODUCTION ) {
       val yesterday = new Date().add( Calendar.DAY_OF_MONTH, -1 )
@@ -156,7 +156,9 @@ object FileCleaner {
       val tempFiles = S3.getFilenames( tempBucket, olderThan = yesterday )
       S3.deleteAll( tempBucket, tempFiles )      
     }
+  }
 
+  def cleanLocal {
     // Clean up all the temp files used in uploads
     val moreThan2HoursOld = System.currentTimeMillis - ( Time.OneHourMs * 2 )
     val tempDir = new SysFile( System.getProperty( "java.io.tmpdir" ) )
