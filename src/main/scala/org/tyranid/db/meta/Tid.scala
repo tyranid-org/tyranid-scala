@@ -56,7 +56,8 @@ object TidItem {
 
   private lazy val itemFor = new ConcurrentExpireAutoMap( Time.HalfHourMs, ( tid:String ) => {
     Record.byTid( tid ) match {
-    case Some( rec ) => TidItem( tid = tid, id = rec.id, org = B.Org.orgIdFor( rec ), name = rec.label, thumbnail = rec.icon )
+    case Some( rec ) =>
+      TidItem( tid = tid, id = rec.id, org = B.Org.orgIdFor( rec ), name = rec.label, thumbnail = rec.icon )
     case None        => log( Event.RefInt, "m" -> ( "ERROR:  could not locate tid " + tid ), "ex" -> new RuntimeException() )
                         unknown( tid )
     }

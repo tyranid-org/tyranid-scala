@@ -295,9 +295,11 @@ trait User extends MongoRecord {
     if ( hasName ) s( 'firstName )
     else           s( 'email )
 
-  override def label =
+  override def label = {
+    println( "e: " + s( 'email ) + ", hasName : " + hasName )
     if ( hasName ) super.label
     else           s( 'email )
+    }
 
   def isActive:Boolean = {
     if ( ( obj.has( 'inactive ) && b( 'inactive ) ) || s( 'activationCode ).notBlank )
