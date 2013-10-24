@@ -169,6 +169,7 @@ trait Bootable {
   def debugChat        = TyranidConfig().b( 'debugChat )
   def syncWebDav       = TyranidConfig().b( 'syncWebDav )
   def hideUpgradeBtn   = TyranidConfig().b( 'hideUpgradeBtn )
+  def enableLite       = TyranidConfig().b( 'lite )
 
   def access( thread:ThreadData, accessType:AccessType, ref:AnyRef )
 
