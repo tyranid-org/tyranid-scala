@@ -316,7 +316,7 @@ object Es {
 
   def index( rec:Record ) = {
     try {
-      if ( B.DEV ) println( "ES:  indexing " + rec.tid )
+      //if ( B.DEV ) println( "ES:  indexing " + rec.tid )
 //sp am( "getting JSON" )
       val json = jsonFor( rec )
 //sp am( "json=\n\n" + json + "\n\n" )

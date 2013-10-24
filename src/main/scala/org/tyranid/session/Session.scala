@@ -371,9 +371,10 @@ trait Session extends QuickCache {
   def get( key:String ) = getV( key )
   def getOrElse( key:String, any:java.io.Serializable ) = getVOrElse( key, any )
   def getOrElseUpdate( key:String, any:java.io.Serializable ) = getVOrElseUpdate( key, any )
-  def put( key:String, value:java.io.Serializable ) = putV( key, value )
   def clear( key:String ) = clearCache( key )
-  
+
+  def put( key:String, value:java.io.Serializable ) = putV( key, value )
+
   def b( key:String ) = getVOrElse( key, false ).as[Boolean]
   def s( key:String ) = getVOrElse( key, null ).as[String]
   def i( key:String ) = getVOrElse( key, null ).as[Integer]
@@ -427,8 +428,10 @@ trait Session extends QuickCache {
     }
   }
 
+  def record( values:Pair[String,Any]* ):Unit = {
+    for ( pair <- values )
+      putV( pair._1, pair._2.as[java.io.Serializable] )
 
-  def record( values:Pair[String,Any]* ):Unit =
     if ( isHttpSession ) {
       var seto = Mobj()
 
@@ -437,6 +440,7 @@ trait Session extends QuickCache {
 
       record( Mobj( $set -> seto ) )
     }
+  }
 
   def record( update:DBObject ):Unit =
     if ( isHttpSession )
