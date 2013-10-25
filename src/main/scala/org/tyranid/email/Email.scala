@@ -243,10 +243,13 @@ trait Email {
   }
 
   def addAttachment( _attachment:File ) = {
-    if (attachments == null) 
-      attachments = ArrayBuffer[File]()
-
-    attachments += _attachment
+    if ( _attachment != null ) {
+      if (attachments == null) 
+        attachments = ArrayBuffer[File]()
+  
+      attachments += _attachment
+    }
+    
     this
   }
 
