@@ -120,6 +120,49 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
     }
     
     val subjContent = new Content().withData( subject.isBlank ? "" | subject )
+    
+    
+    /*
+    if ( attachments != null && attachments.length > 0 ) {
+      import javax.mail.internet._
+      
+      
+      //val mimeMessage = new MimeMessage()
+      
+      val multipart = new javax.mail.internet.MimeMultipart
+      
+      if ( text.notBlank ) {
+        var messageBodyPart = new MimeBodyPart
+        messageBodyPart.setContent( text, "text/plain" )
+        multipart.addBodyPart( messageBodyPart )
+      }
+    
+      if ( html.notBlank ) {
+        var messageBodyPart = new MimeBodyPart
+        messageBodyPart.setContent( text, "text/html" )
+        multipart.addBodyPart( messageBodyPart )
+      }
+
+      //Attachment part
+      if (attachments != null && attachments.length != 0 ) {
+        
+        for ( attachment <- attachments ) {
+          val messageBodyPart = new MimeBodyPart
+          messageBodyPart.setDataHandler(new javax.activation.DataHandler( new javax.activation.FileDataSource( attachment ) ) )
+          //val fileSource = new javax.mail.util.ByteArrayDataSource( attachment, org.tyranid.io.File.mimeTypeFor( attachment.getName ) )
+          //messageBodyPart.setDataHandler(new javax.activation.DataHandler( fileSource ) )
+          messageBodyPart.setFileName( attachment.getName )
+          multipart.addBodyPart( messageBodyPart )
+        }
+      }
+      
+      val outputStream = new ByteArrayOutputStream()
+      mimeMessage.writeTo(outputStream);
+      RawMessage rawMessage = new RawMessage(ByteBuffer.wrap(outputStream.toByteArray()));
+    }
+      
+    */
+    
     val msg = new Message().withSubject( subjContent )
     val body = new Body()
     
@@ -130,6 +173,7 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
       body.withHtml( new Content().withData( html ) )
 
     msg.setBody( body )
+    
     //request.setReturnPath( B.bounceEmail )
     request.setMessage( msg )
     
