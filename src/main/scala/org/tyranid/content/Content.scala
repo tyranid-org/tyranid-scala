@@ -497,6 +497,24 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
   }
 
 
+  def collectTaskAndUserTids( taskTids:mutable.Buffer[String], userTids:mutable.Set[String], comments:Seq[Comment] ) {
+    if ( comments != null ) {
+      for ( c <- comments ) {
+        val taskTid = c.s( 'task )
+
+        if ( taskTid.notBlank )
+          taskTids += taskTid
+
+        val userTid = c.tid( 'u )
+
+        if ( userTid.notBlank )
+          userTids += userTid
+
+        collectTaskAndUserTids( taskTids, userTids, c.comments )
+      }
+    }
+  }
+  
   def collectTaskTids( taskTids:mutable.Buffer[String], comments:Seq[Comment] ) {
 
     if ( comments != null ) {
