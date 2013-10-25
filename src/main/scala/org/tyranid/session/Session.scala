@@ -429,8 +429,12 @@ trait Session extends QuickCache {
   }
 
   def record( values:Pair[String,Any]* ):Unit = {
-    for ( pair <- values )
+    for ( pair <- values ) {
+      // TODO:  probably should only be recording this to data and not putV, but some data is still looking at the QuickCache stuff ... notably Presence.Key stuff
       putV( pair._1, pair._2.as[java.io.Serializable] )
+
+      data( pair._1 ) = pair._2
+    }
 
     if ( isHttpSession ) {
       var seto = Mobj()
