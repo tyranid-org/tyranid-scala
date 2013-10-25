@@ -194,6 +194,42 @@ class StringImp( s:String ) extends Serializable {
    // }Unparsed( urlPattern.matcher( s ).replaceAll( "<a target='_blank' class='urlify' href='$1'>$1</a>" ) )
 //    [ Text( 'ksd' ), Unparsed( "<a ....>" + baseText + "</a>" ) ]
   
+	def generateFilename( extension:String ) = {
+	  if ( s != null ) {
+	    val ext = extension.isBlank ? s.suffix( '.' ).toLowerCase | extension
+      val urlParts = s.split( "/" )
+      val firstPart = urlParts(2)
+      val lastPart = urlParts(urlParts.length - 1 )
+      val firstParts = firstPart.split( "\\." )
+      
+      val name = 
+        if ( firstParts.length == 0 )
+          ""
+        else if ( firstParts.length == 1 || firstParts.length == 2 || ( firstParts.length == 3 && firstParts(0) != "www" ) )
+          firstParts(0)
+        else 
+          firstParts( firstParts.length - 2 )
+        
+      val suffix = 
+        if ( lastPart != firstPart ) {
+          val lastParts = lastPart.split( "\\." )
+          
+          if ( lastParts.length == 0 ) {
+            "_html"
+          } else if ( lastParts.length == 1 ) {
+            "_" + lastParts( 0 )
+          } else {
+            "_" + lastParts( lastParts.length - 2 )
+          }
+        } else {
+          "_html"
+        }
+      
+      name + suffix + "." + ext
+	  } else {
+	    s
+	  }
+  }
 	
   def stripXss:String = {
     if ( s == null )

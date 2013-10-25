@@ -296,7 +296,6 @@ trait User extends MongoRecord {
     else           s( 'email )
 
   override def label = {
-    println( "e: " + s( 'email ) + ", hasName : " + hasName )
     if ( hasName ) super.label
     else           s( 'email )
     }
