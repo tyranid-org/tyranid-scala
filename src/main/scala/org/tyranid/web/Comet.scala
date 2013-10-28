@@ -29,7 +29,7 @@ import org.tyranid.Imp._
 import org.tyranid.db.{ DbChar, DbLink }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
-import org.tyranid.json.JsCmd
+import org.tyranid.json.{ JsCmd, JsCmds }
 import org.tyranid.net.Ip
 import org.tyranid.session.{ Session, SessionData, WebSession }
 
@@ -51,9 +51,25 @@ case class Comet( session:SessionData ) {
   def user = session.user
 
   def send( output:collection.Map[String,Any], cmds:JsCmd* ) {
+    
+    val flatCmds = mutable.Buffer[JsCmd]()
+    
+    def addCmds( cmds:Seq[JsCmd] ) {
+      for ( cmd <- cmds )
+        cmd match {
+        case cmds:JsCmds =>
+          addCmds( cmds.cmds )
+  
+        case _ =>
+          flatCmds += cmd
+        }
+    }
+    
+    addCmds( cmds )
+    
     val o =
-      if ( cmds != null && cmds.nonEmpty )
-        output + ( "cmds" -> cmds.filter( _ != null ).map( _.toMap ).toJsonStr( client = true ) )
+      if ( flatCmds != null && flatCmds.nonEmpty )
+        output + ( "cmds" -> flatCmds.filter( _ != null ).map( _.toMap ).toJsonStr( client = true ) )
       else
         output
 

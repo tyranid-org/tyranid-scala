@@ -159,6 +159,12 @@ case class JsData( data:Seq[Record], auth:Boolean = false, extra:Seq[String] = N
               else                 null
 }
 
+case class JsRemoveData( data:Seq[String] ) extends JsCmd {
+
+  def toMap = if ( data.nonEmpty ) Map( "rmdata" -> this )
+              else                 null
+}
+
 case object JsNop extends JsCmd {
 
   def toMap = null
@@ -289,6 +295,9 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
         data.data foreach { _.compute( client, data.extra ) }
       
       write( data.data, data )
+
+    case data:JsRemoveData =>
+      write( data.data )
 
     case rec:Record =>
       if ( client ) rec.compute( client )
