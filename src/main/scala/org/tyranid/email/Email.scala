@@ -259,7 +259,7 @@ trait Email {
 }
 
 case class JavaEmail( subject:String, text:String, html:String=null ) extends Email {
-  private var emailSession:Session = null;
+  private var emailSession:Session = null
   
   var message:MimeMessage = null
 
@@ -279,16 +279,16 @@ case class JavaEmail( subject:String, text:String, html:String=null ) extends Em
 
   @throws(classOf[MessagingException])
   def compose:Email = {
-    if ( message == null ) {
-      val session:Session = getMailSession
-      message = new MimeMessage( session )
-    }
-
     //if (defaultFrom) 
     //  sender( Configs.getDefaultMailFrom() )
 
     if ( from == null ) 
       throw new MessagingException( "A from must be set on this email message!" )
+
+    if ( message == null ) {
+      val session:Session = getMailSession
+      message = new MimeMessage( session )
+    }
 
     message.setFrom( from )
     
@@ -397,9 +397,9 @@ case class JavaEmail( subject:String, text:String, html:String=null ) extends Em
         props.put( "mail.smtp.user", authUser );
         props.put( "mail.smtp.password", authPassword );
         
-        emailSession = Session.getDefaultInstance( props, EmailAuth( user = authUser, password = authPassword ) );
+        emailSession = Session.getInstance( props, EmailAuth( user = authUser, password = authPassword ) );
       } else {
-        emailSession = Session.getDefaultInstance( props, null );
+        emailSession = Session.getInstance( props, null );
       }
     }
     
