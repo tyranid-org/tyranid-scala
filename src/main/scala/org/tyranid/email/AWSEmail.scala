@@ -17,8 +17,13 @@
 
 package org.tyranid.email
 
+import java.io.ByteArrayOutputStream
+
+import java.nio.ByteBuffer
+import java.util.Arrays
+
 import javax.mail.MessagingException
-import javax.mail.internet.InternetAddress
+import javax.mail.internet._
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -73,6 +78,43 @@ object AWSEmail {
 
 case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boolean = false ) extends Email {
   var request:SendEmailRequest = null
+  var rawRequest:SendRawEmailRequest = null
+  
+  @throws(classOf[MessagingException])
+  def composeJavaMail:Email = {
+    if ( from == null ) 
+      throw new MessagingException( "A from must be set on this email message!" )   
+
+    val jMail = JavaEmail( subject = subject, text = text, html = html )
+    
+    for ( recipient <- primaryRecipients )
+      jMail.addTo( recipient.getAddress() )
+    
+    jMail.from( from.getAddress() )
+    
+    if ( replyTo != null && replyTo != from )
+      jMail.replyTo( replyTo.getAddress )
+      
+    for ( attachment <- attachments )
+      jMail.addAttachment( attachment )
+
+    jMail.compose
+    
+    val mimeMessage = jMail.message
+    
+    val outputStream = new ByteArrayOutputStream()
+    mimeMessage.writeTo( outputStream )
+    val rawMessage = new RawMessage( ByteBuffer.wrap( outputStream.toByteArray ) )
+
+    
+    rawRequest = new SendRawEmailRequest( rawMessage )
+
+    rawRequest.setDestinations( primaryRecipients.map( _.getAddress ) )
+    
+    rawRequest.setSource( from.getAddress )
+    
+    this    
+  }
   
   @throws(classOf[MessagingException])
   override def compose:Email = {
@@ -120,49 +162,7 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
     }
     
     val subjContent = new Content().withData( subject.isBlank ? "" | subject )
-    
-    
-    /*
-    if ( attachments != null && attachments.length > 0 ) {
-      import javax.mail.internet._
       
-      
-      //val mimeMessage = new MimeMessage()
-      
-      val multipart = new javax.mail.internet.MimeMultipart
-      
-      if ( text.notBlank ) {
-        var messageBodyPart = new MimeBodyPart
-        messageBodyPart.setContent( text, "text/plain" )
-        multipart.addBodyPart( messageBodyPart )
-      }
-    
-      if ( html.notBlank ) {
-        var messageBodyPart = new MimeBodyPart
-        messageBodyPart.setContent( text, "text/html" )
-        multipart.addBodyPart( messageBodyPart )
-      }
-
-      //Attachment part
-      if (attachments != null && attachments.length != 0 ) {
-        
-        for ( attachment <- attachments ) {
-          val messageBodyPart = new MimeBodyPart
-          messageBodyPart.setDataHandler(new javax.activation.DataHandler( new javax.activation.FileDataSource( attachment ) ) )
-          //val fileSource = new javax.mail.util.ByteArrayDataSource( attachment, org.tyranid.io.File.mimeTypeFor( attachment.getName ) )
-          //messageBodyPart.setDataHandler(new javax.activation.DataHandler( fileSource ) )
-          messageBodyPart.setFileName( attachment.getName )
-          multipart.addBodyPart( messageBodyPart )
-        }
-      }
-      
-      val outputStream = new ByteArrayOutputStream()
-      mimeMessage.writeTo(outputStream);
-      RawMessage rawMessage = new RawMessage(ByteBuffer.wrap(outputStream.toByteArray()));
-    }
-      
-    */
-    
     val msg = new Message().withSubject( subjContent )
     val body = new Body()
     
@@ -188,7 +188,14 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
     if ( Email.enabled ) {
       if ( T.session != null && !T.session.isAllowingEmail ) return this
       
-      compose
+      val withAttachments = ( attachments != null && attachments.length > 0 ) 
+      
+      if ( withAttachments ) {
+        // Create javamail and just send it to SES
+        composeJavaMail
+      } else {      
+        compose
+      }
       
       if ( false && request.getDestination().getToAddresses().find( a => a.contains( "mrkcbradley" ) || a.contains( "mbradley" ) ) == None ) {
         println( """
@@ -204,7 +211,10 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
       AWSEmail.throttle
     
       try {
-        AWSEmail.client.sendEmail( request )
+        if ( rawRequest != null )
+          AWSEmail.client.sendRawEmail( rawRequest )
+        else
+          AWSEmail.client.sendEmail( request )
       } catch {
         case e:MessageRejectedException =>
           if ( !fromLog ) {
