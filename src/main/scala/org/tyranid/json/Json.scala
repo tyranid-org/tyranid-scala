@@ -159,6 +159,12 @@ case class JsData( data:Seq[Record], auth:Boolean = false, extra:Seq[String] = N
               else                 null
 }
 
+object JsRemoveData {
+  def apply( tid:String ):JsRemoveData =
+    if ( tid.notBlank ) JsRemoveData( Seq( tid ) )
+    else               null
+}
+
 case class JsRemoveData( data:Seq[String] ) extends JsCmd {
 
   def toMap = if ( data.nonEmpty ) Map( "rmdata" -> this )
