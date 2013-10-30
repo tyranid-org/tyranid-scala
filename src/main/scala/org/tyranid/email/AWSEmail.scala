@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -39,92 +39,92 @@ import com.amazonaws.services.simpleemail.model._
 object AWSEmail {
   var lastSent:Long = 0
   var currentCount:Int = 0
-  
+
   def apply( subject:String, text:String, to:String, from:String ) {
     AWSEmail( subject, text ).addTo( to ).from( from ).send
   }
-  
+
   private def throttle = synchronized {
-    if ( currentCount > 5 && ( System.currentTimeMillis - lastSent ) < 2000 ) 
+    if ( currentCount > 5 && ( System.currentTimeMillis - lastSent ) < 2000 )
       Thread.sleep( 1000 )
 
     if ( currentCount > 5 )
       currentCount = 1
-    else 
-      currentCount += 1 
+    else
+      currentCount += 1
 
     AWSEmail.lastSent = System.currentTimeMillis
   }
-  
+
   /*
   val verifyCache = mutable.ArrayBuffer[String]()
-  
+
   def verifyEmailAddress( email:String ):Boolean = {
     val verifiedAddresses = client.listVerifiedEmailAddresses().getVerifiedEmailAddresses()
-    
+
     if ( verifiedAddresses.contains( email ) )
       return true
-    
+
     val request = new VerifyEmailAddressRequest()
     request.setEmailAddress( email )
     client.verifyEmailAddress( request )
-    
+
     return false
   }
   */
-  
+
   val client = new AmazonSimpleEmailServiceClient( B.awsCredentials )
 }
 
 case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boolean = false ) extends Email {
   var request:SendEmailRequest = null
   var rawRequest:SendRawEmailRequest = null
-  
+
   @throws(classOf[MessagingException])
   def composeJavaMail:Email = {
-    if ( from == null ) 
-      throw new MessagingException( "A from must be set on this email message!" )   
+    if ( from == null )
+      throw new MessagingException( "A from must be set on this email message!" )
 
     val jMail = JavaEmail( subject = subject, text = text, html = html )
-    
+
     for ( recipient <- primaryRecipients )
       jMail.addTo( recipient.getAddress() )
-    
+
     jMail.from( from.getAddress() )
-    
+
     if ( replyTo != null && replyTo != from )
       jMail.replyTo( replyTo.getAddress )
-      
+
     for ( attachment <- attachments )
       jMail.addAttachment( attachment )
 
     jMail.compose
-    
+
     val mimeMessage = jMail.message
-    
+
     val outputStream = new ByteArrayOutputStream()
     mimeMessage.writeTo( outputStream )
     val rawMessage = new RawMessage( ByteBuffer.wrap( outputStream.toByteArray ) )
 
-    
+
     rawRequest = new SendRawEmailRequest( rawMessage )
 
     rawRequest.setDestinations( primaryRecipients.map( _.getAddress ) )
-    
+
     rawRequest.setSource( from.getAddress )
-    
-    this    
+
+    this
   }
-  
+
   @throws(classOf[MessagingException])
   override def compose:Email = {
     //com.amazonaws.services.simpleemail.
-    //if (defaultFrom) 
+    //if (defaultFrom)
     //  sender( Configs.getDefaultMailFrom() )
 
-    if ( from == null ) 
+    if ( from == null )
       throw new MessagingException( "A from must be set on this email message!" )
-    
+
     request = new SendEmailRequest().withSource( from.getAddress() )
 
     if ( replyTo != null && replyTo != from )  {
@@ -132,54 +132,54 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
       toAddresses.add( replyTo.getAddress() )
       request.setReplyToAddresses( toAddresses )
     }
-      
-    if ( primaryRecipients == null ) 
+
+    if ( primaryRecipients == null )
       throw new MessagingException( "The primary recipients must be set on this email message." )
-   
+
     val toAddresses = new java.util.ArrayList[String]()
-    
+
     for ( recipient <- primaryRecipients )
       toAddresses.add( recipient.getAddress() )
-    
+
     request.setDestination( new Destination().withToAddresses( toAddresses ) )
 
     if ( ccRecipients != null ) {
       toAddresses.clear()
-  
+
       for ( recipient <- ccRecipients )
         toAddresses.add( recipient.getAddress() )
-  
+
       request.setDestination( new Destination().withCcAddresses( toAddresses ) )
     }
 
     if ( bccRecipients != null ) {
       toAddresses.clear()
-  
+
       for ( recipient <- bccRecipients )
         toAddresses.add( recipient.getAddress() )
-  
+
       request.setDestination( new Destination().withBccAddresses( toAddresses ) )
     }
-    
+
     val subjContent = new Content().withData( subject.isBlank ? "" | subject )
-      
+
     val msg = new Message().withSubject( subjContent )
     val body = new Body()
-    
+
     if ( text.notBlank )
       body.withText( new Content().withData( text ) )
-      
+
     if ( html.notBlank )
       body.withHtml( new Content().withData( html ) )
 
     msg.setBody( body )
-    
+
     //request.setReturnPath( B.bounceEmail )
     request.setMessage( msg )
-    
+
     this
   }
-  
+
   /*
    * This only buries exceptions if the exception is on an email originating from a Log message
    */
@@ -187,50 +187,39 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
   override def send():Email = {
     if ( Email.enabled ) {
       spam( "emailer sess: " + T.session )
-      
+
       if ( T.session != null )
         spam( "emailer isAllowing: " + T.session.isAllowingEmail )
-      
+
       if ( T.session != null && !T.session.isAllowingEmail ) return this
-      
-<<<<<<< HEAD
-      compose
-      spam( "emailer after compose" )
-=======
-      val withAttachments = ( attachments != null && attachments.length > 0 ) 
-      
+
+      val withAttachments = ( attachments != null && attachments.length > 0 )
+
       if ( withAttachments ) {
         // Create javamail and just send it to SES
         composeJavaMail
-      } else {      
+      } else {
         compose
       }
->>>>>>> dev
-      
+
       if ( false && request.getDestination().getToAddresses().find( a => a.contains( "mrkcbradley" ) || a.contains( "mbradley" ) ) == None ) {
         println( """
 *********
-            
+
   Warning!!! EMAIL IS ONLY BEING SENT TO mbradley@volerro.com
-            
-*********            
+
+*********
 """)
         return null
       }
-      
+
       AWSEmail.throttle
-    
+
       try {
-<<<<<<< HEAD
-        spam( "Send email to: " +  primaryRecipients.mkString( "," ) )
-        AWSEmail.client.sendEmail( request )
-        spam( "Sent!" )
-=======
         if ( rawRequest != null )
           AWSEmail.client.sendRawEmail( rawRequest )
         else
           AWSEmail.client.sendEmail( request )
->>>>>>> dev
       } catch {
         case e:MessageRejectedException =>
           if ( !fromLog ) {
@@ -239,13 +228,13 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
             val fromAddress = from.getAddress
             val recipients = primaryRecipients.mkString( "," )
             val user = ( sess == null ) ? null | sess.user
-  
+
             // Only send these if one of the real users is sending email
             val userEmail = ( user == null || user == B.systemUser ) ? null | user.s( 'email )
-            
+
             if ( userEmail.notBlank && !Email.isBlacklisted( userEmail ) )
               sendRejectionNotice( msg, userEmail )
-            
+
               e.logWith( "m" -> (
                   "| MessageRejectedException: " + msg + "\n" +
                   "|  From: " + fromAddress + "\n" +
@@ -256,7 +245,7 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
                   "|  Text: " + text + "\n" +
                   "|  HTML: " + html )
                   )
-                  
+
             throw e
           }
         case e2:Throwable =>
@@ -267,7 +256,7 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
             val recipients = primaryRecipients.mkString( "," )
             val user = ( sess == null ) ? null | sess.user
             val userEmail:String = ( user == null || user == B.systemUser ) ? null | user.s( 'email )
-            
+
               e2.logWith( "m" -> (
                   "| AWS Mail Exception: " + msg + "\n" +
                   "|  From: " + fromAddress + "\n" +
@@ -278,28 +267,28 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
                   "|  Text: " + text + "\n" +
                   "|  HTML: " + html )
                   )
-                
+
             throw e2
           }
       }
     }
-    
+
     this
   }
-  
+
   private def sendRejectionNotice( msg:String, userEmail:String ) {
     if ( primaryRecipients.length == 1 ) Email.blacklist( primaryRecipients.head.getAddress )
     val recipients = primaryRecipients.mkString( "," )
-    
+
     AWSEmail( subject = "Failed to send email: " + subject,
               text = """
 Hi,
-                            
+
 Sorry, but Volerro failed to send the following mail because one of the recipients rejected it as: """ + msg + """
 
 Email To: """ + recipients + """
 ----
-                  
+
 """ + text,
               html = """
 <p style="font-family: 'Helvetica Neue', Arial, Helvetica, sans-serif;font-size: 18px;font-weight: bold;color: #333333;">
@@ -311,6 +300,6 @@ Email To: """ + recipients + """
 """ + html )
               .addTo( userEmail )
               .from( "no-reply@" + B.domain )
-              .send    
+              .send
   }
 }
