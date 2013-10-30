@@ -23,8 +23,9 @@ import com.pdfcrowd.{ Client, PdfcrowdError }
 
 
 import org.tyranid.Imp._
-import org.tyranid.math.Base36
 import org.tyranid.app.AppStat
+import org.tyranid.content.Content
+import org.tyranid.math.Base36
       
 object Pdf {
   val lock = ""
@@ -187,6 +188,20 @@ object Pdf {
     }
   }
 
+  //lazy val convertBucket = B.
+  def convert( inFile:File, content:Content, sync:Boolean = false ) {
+    // if indesign
+    
+    val filename = inFile.getName()
+    val ext = filename.suffix( '.' ).toLowerCase
+    
+    ext match {
+      case "indd" =>
+      case _ =>
+        
+    }
+  }
+  
   def convertApiPptx( inFile:File, outFile:File ) = {
     // Only do one at a time
     var fileStream:FileOutputStream = null

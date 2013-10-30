@@ -37,8 +37,8 @@ import org.apache.commons.io.IOUtils
 
 case class S3StoreResult( url:String, mimeType:String )
 
-case class S3Bucket( prefix:String, cfDistributionId:String = "", cfDomain:String = "", keyPairId:String= "" ) {
-  val name = prefix + B.envSuffix + B.bucketSuffix
+case class S3Bucket( prefix:String, cfDistributionId:String = "", cfDomain:String = "", keyPairId:String= "", fullName:String = null ) {
+  val name = fullName.isBlank ? ( prefix + B.envSuffix + B.bucketSuffix ) | fullName
 
   def url( path:String, forceS3:Boolean = false ) =
     if ( forceS3 || ( cfDomain.isBlank || B.envSuffix.notBlank ) )

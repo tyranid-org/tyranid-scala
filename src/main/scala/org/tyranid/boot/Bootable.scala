@@ -153,6 +153,8 @@ trait Bootable {
   def logoutListeners:Seq[ User => Unit ] = Nil
 
 
+  lazy val ConvertBucket:org.tyranid.cloud.aws.S3Bucket = null
+
   /*
    * * *   S e c u r i t y
    */
@@ -301,6 +303,7 @@ trait Bootable {
 
   private val s3Buckets = scala.collection.mutable.Map[String,S3Bucket]()
 
+  def getS3BucketByFullName( name:String ): S3Bucket = s3Buckets( name ) 
   def getS3Bucket( prefix:String ): S3Bucket = s3Buckets( prefix + envSuffix ) 
 
   def bucketByUrl( url:String ) = s3Buckets.values.find( bucket => {

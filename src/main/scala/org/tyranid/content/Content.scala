@@ -1321,18 +1321,27 @@ abstract class Content( override val view:MongoView,
    * * *   Groups
    */
 
-  lazy val groupTid: String = {
-    val gTid:String = a_?( 'o ).map( _._s ).find( Group.hasTid ).getOrElse( null )
-
-    if (gTid.isBlank) {
-      val gOid = obj.has( 'parentGroup ) ? oid( 'parentGroup ) | null
-
-      if (gOid == null)
-        null
-      else
-        Group.idToTid(gOid)
-    } else
-      gTid
+  var _groupTid:String = null
+  var groupChecked = false
+  
+  def groupTid: String = {
+    if ( _groupTid.isBlank || !groupChecked ) {
+      groupChecked = true
+      
+      val gTid:String = a_?( 'o ).map( _._s ).find( Group.hasTid ).getOrElse( null )
+  
+      if ( gTid.isBlank ) {
+        val gOid = obj.has( 'parentGroup ) ? oid( 'parentGroup ) | null
+  
+        if ( gOid == null )
+          _groupTid = null
+        else
+          _groupTid = Group.idToTid( gOid )
+      } else
+        _groupTid = gTid
+    }
+    
+    _groupTid
   }
 
   def group = groupTid.isBlank ? null | Group.getByTid(groupTid)
