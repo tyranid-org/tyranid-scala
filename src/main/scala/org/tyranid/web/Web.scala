@@ -410,15 +410,19 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   // TODO:  eliminate "def js" and "tyr.js" since it is redundant with this way of doing it, then rename this to "js"
   def jsRes( cmds:JsCmd* ) = {
     val res = jsonRes( T.session )
-
-    for ( cmd <- cmds )
-      cmd match {
-      case cmds:JsCmds =>
-        res.cmds ++= cmds.cmds
-
-      case _ =>
-        res.cmds += cmd
-      }
+    
+    def addCmds( cmds:Seq[JsCmd] ) {
+      for ( cmd <- cmds )
+        cmd match {
+        case cmds:JsCmds =>
+          addCmds( cmds.cmds )
+  
+        case _ =>
+          res.cmds += cmd
+        }
+    }
+    
+    addCmds( cmds )
 
     json( res )
   }

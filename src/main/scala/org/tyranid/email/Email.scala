@@ -243,10 +243,13 @@ trait Email {
   }
 
   def addAttachment( _attachment:File ) = {
-    if (attachments == null) 
-      attachments = ArrayBuffer[File]()
-
-    attachments += _attachment
+    if ( _attachment != null ) {
+      if (attachments == null) 
+        attachments = ArrayBuffer[File]()
+  
+      attachments += _attachment
+    }
+    
     this
   }
 
@@ -256,7 +259,7 @@ trait Email {
 }
 
 case class JavaEmail( subject:String, text:String, html:String=null ) extends Email {
-  private var emailSession:Session = null;
+  private var emailSession:Session = null
   
   var message:MimeMessage = null
 
@@ -268,25 +271,24 @@ case class JavaEmail( subject:String, text:String, html:String=null ) extends Em
     
     compose
     
-    if ( Email.enabled ) {
+    if ( Email.enabled )
       Transport.send(message)
-    }
     
     this
   }
 
   @throws(classOf[MessagingException])
   def compose:Email = {
-    if ( message == null ) {
-      var session:Session = getMailSession
-      message = new MimeMessage( session )
-    }
-
     //if (defaultFrom) 
     //  sender( Configs.getDefaultMailFrom() )
 
     if ( from == null ) 
       throw new MessagingException( "A from must be set on this email message!" )
+
+    if ( message == null ) {
+      val session:Session = getMailSession
+      message = new MimeMessage( session )
+    }
 
     message.setFrom( from )
     
@@ -312,56 +314,44 @@ case class JavaEmail( subject:String, text:String, html:String=null ) extends Em
     if ( subject.notBlank ) 
       message.setSubject( subject )
 
-    if ( text. notBlank ) {
-      if ( html.notBlank ) {
-        var multipart:Multipart = new MimeMultipart( "alternative" )
-        var plainMessageBodyPart = new MimeBodyPart()
-        plainMessageBodyPart.setContent( text,"text/plain" )
+    var multipart:Multipart = null
+    
+    if ( html.notBlank ) {
+      multipart = new MimeMultipart( "mixed" )
+      
+      if ( text.notBlank ) {
+        val plainMessageBodyPart = new MimeBodyPart()
+        plainMessageBodyPart.setContent( text, "text/plain" )
         multipart.addBodyPart( plainMessageBodyPart )
-        var htmlMessageBodyPart = new MimeBodyPart()
-        htmlMessageBodyPart.setContent( html, "text/html" )
-        multipart.addBodyPart( htmlMessageBodyPart )
-        
-        if ( attachments != null ) {
-          for ( attachment <- attachments ) {
-            var messageBodyPart:BodyPart = new MimeBodyPart()
-            var source:DataSource = new FileDataSource( attachment )
-            messageBodyPart.setDataHandler( new DataHandler( source ) )
-            messageBodyPart.setFileName( attachment.getName() )
-            var contentType:String = guessContentType( attachment )
-
-            if ( contentType != null ) 
-              messageBodyPart.setHeader( "Content-Type", contentType )
-
-            multipart.addBodyPart(messageBodyPart)
-          }
-        }
-        
-        message.setContent( multipart )
-      } else {
-        message.setText( text )
-        
-        if ( attachments != null ) {
-          var multipart:Multipart = new MimeMultipart()
-
-          for ( attachment <- attachments ) {
-            var messageBodyPart:BodyPart = new MimeBodyPart()
-            var source:DataSource = new FileDataSource( attachment )
-            messageBodyPart.setDataHandler( new DataHandler( source ) )
-            messageBodyPart.setFileName( attachment.getName() )
-            var contentType:String = guessContentType( attachment )
-
-            if ( contentType != null ) 
-              messageBodyPart.setHeader( "Content-Type", contentType )
-
-            multipart.addBodyPart(messageBodyPart)
-          }
-
-          message.setContent( multipart )
-        }
       }
+      
+      val htmlMessageBodyPart = new MimeBodyPart()
+      htmlMessageBodyPart.setContent( html, "text/html" )
+      multipart.addBodyPart( htmlMessageBodyPart )
+    } else {
+      message.setText( text )
     }
+    
+    if ( attachments != null && attachments.length > 0 ) {
+      if ( multipart == null )
+        multipart = new MimeMultipart()
 
+      for ( attachment <- attachments ) {
+        val messageBodyPart:BodyPart = new MimeBodyPart()
+        val source:DataSource = new FileDataSource( attachment )
+        messageBodyPart.setDataHandler( new DataHandler( source ) )
+        messageBodyPart.setFileName( attachment.getName() )
+        val contentType:String = guessContentType( attachment )
+
+        if ( contentType != null ) 
+          messageBodyPart.setHeader( "Content-Type", contentType )
+
+        multipart.addBodyPart(messageBodyPart)
+      }
+
+      message.setContent( multipart )
+    }
+    
     this
   }
 
@@ -377,7 +367,7 @@ case class JavaEmail( subject:String, text:String, html:String=null ) extends Em
       if ( host.isBlank )
         throw new RuntimeException( "WARNING: host not set in emailConfig.  Sending of mail failed!" );
 
-      var props:Properties = System.getProperties()
+      val props:Properties = System.getProperties()
       props.put( "mail.smtp.host", host )
       
       val port = emailConfig.i( 'port )
@@ -407,9 +397,9 @@ case class JavaEmail( subject:String, text:String, html:String=null ) extends Em
         props.put( "mail.smtp.user", authUser );
         props.put( "mail.smtp.password", authPassword );
         
-        emailSession = Session.getDefaultInstance( props, EmailAuth( user = authUser, password = authPassword ) );
+        emailSession = Session.getInstance( props, EmailAuth( user = authUser, password = authPassword ) );
       } else {
-        emailSession = Session.getDefaultInstance( props, null );
+        emailSession = Session.getInstance( props, null );
       }
     }
     

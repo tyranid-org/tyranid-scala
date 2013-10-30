@@ -29,7 +29,7 @@ import org.tyranid.Imp._
 import org.tyranid.db.{ DbChar, DbLink }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
-import org.tyranid.json.JsCmd
+import org.tyranid.json.{ JsCmd, JsCmds }
 import org.tyranid.net.Ip
 import org.tyranid.session.{ Session, SessionData, WebSession }
 
@@ -50,14 +50,36 @@ case class Comet( session:SessionData ) {
 
   def user = session.user
 
+  def send( cmds:JsCmd* ) {
+    send( null.asInstanceOf[collection.Map[String,Any]], cmds:_* )
+  }
+  
   def send( output:collection.Map[String,Any], cmds:JsCmd* ) {
+    
+    val flatCmds = mutable.Buffer[JsCmd]()
+    
+    def addCmds( cmds:Seq[JsCmd] ) {
+      for ( cmd <- cmds )
+        cmd match {
+        case cmds:JsCmds =>
+          addCmds( cmds.cmds )
+  
+        case _ =>
+          flatCmds += cmd
+        }
+    }
+    
+    addCmds( cmds )
+    
+    val outMap = ( output == null ) ? Map[String,Any]() | output 
+    
     val o =
-      if ( cmds != null && cmds.nonEmpty )
-        output + ( "cmds" -> cmds.filter( _ != null ).map( _.toMap ).toJsonStr( client = true ) )
+      if ( flatCmds != null && flatCmds.nonEmpty )
+        outMap + ( "cmds" -> flatCmds.filter( _ != null ).map( _.toMap ).toJsonStr( client = true ) )
       else
-        output
+        outMap
 
-    this.output = o.asInstanceOf[collection.Map[String,AnyRef]];
+    this.output = o.asInstanceOf[collection.Map[String,AnyRef]]
   }
 
   def send( act:String, data:collection.Map[String,Any], cmds:JsCmd* ) {

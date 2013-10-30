@@ -497,6 +497,24 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
   }
 
 
+  def collectTaskAndUserTids( taskTids:mutable.Buffer[String], userTids:mutable.Set[String], comments:Seq[Comment] ) {
+    if ( comments != null ) {
+      for ( c <- comments ) {
+        val taskTid = c.s( 'task )
+
+        if ( taskTid.notBlank )
+          taskTids += taskTid
+
+        val userTid = c.tid( 'u )
+
+        if ( userTid.notBlank )
+          userTids += userTid
+
+        collectTaskAndUserTids( taskTids, userTids, c.comments )
+      }
+    }
+  }
+  
   def collectTaskTids( taskTids:mutable.Buffer[String], comments:Seq[Comment] ) {
 
     if ( comments != null ) {
@@ -1303,18 +1321,27 @@ abstract class Content( override val view:MongoView,
    * * *   Groups
    */
 
-  lazy val groupTid: String = {
-    val gTid:String = a_?( 'o ).map( _._s ).find( Group.hasTid ).getOrElse( null )
-
-    if (gTid.isBlank) {
-      val gOid = obj.has( 'parentGroup ) ? oid( 'parentGroup ) | null
-
-      if (gOid == null)
-        null
-      else
-        Group.idToTid(gOid)
-    } else
-      gTid
+  var _groupTid:String = null
+  var groupChecked = false
+  
+  def groupTid: String = {
+    if ( _groupTid.isBlank || !groupChecked ) {
+      groupChecked = true
+      
+      val gTid:String = a_?( 'o ).map( _._s ).find( Group.hasTid ).getOrElse( null )
+  
+      if ( gTid.isBlank ) {
+        val gOid = obj.has( 'parentGroup ) ? oid( 'parentGroup ) | null
+  
+        if ( gOid == null )
+          _groupTid = null
+        else
+          _groupTid = Group.idToTid( gOid )
+      } else
+        _groupTid = gTid
+    }
+    
+    _groupTid
   }
 
   def group = groupTid.isBlank ? null | Group.getByTid(groupTid)
