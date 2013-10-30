@@ -1325,7 +1325,7 @@ abstract class Content( override val view:MongoView,
   var groupChecked = false
   
   def groupTid: String = {
-    if ( _groupTid.isBlank || !groupChecked ) {
+    if ( _groupTid.isBlank && !groupChecked ) {
       groupChecked = true
       
       val gTid:String = a_?( 'o ).map( _._s ).find( Group.hasTid ).getOrElse( null )
