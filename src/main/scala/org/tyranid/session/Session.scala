@@ -98,7 +98,7 @@ object SessionCleaner {
 
   def cleanGlobal {
 
-    val cutoff = new Date - ( 4 * Time.OneHourMs )
+    val cutoff = new Date - ( 8 * Time.OneHourMs )
 
     B.SessionData.db.remove( Mobj( "lpt" -> Mobj( $lte -> cutoff ) ) )
   }

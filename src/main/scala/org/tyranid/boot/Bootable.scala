@@ -30,6 +30,7 @@ import com.braintreegateway.BraintreeGateway
 import org.bson.types.ObjectId
 
 import org.tyranid.Imp._
+import org.tyranid.cloud.aws.Aws
 import org.tyranid.content.Content
 import org.tyranid.db.{ Entity }
 import org.tyranid.db.mongo.Imp._
@@ -212,12 +213,17 @@ trait Bootable {
   
   println( "hostname: " + hostName )
   lazy val DEV = hostName.indexOf( "macbook" ) != -1 || hostName.indexOf( "iMac" ) != -1 || hostName.indexOf( "imac" ) != -1 || hostName.indexOf( "-mac-" ) != -1 || hostName.indexOf( ".local" ) != -1
-  //lazy val DEV = false
-  lazy val STAGE = !DEV && hostName.indexOf( "-x" ) != -1
-  //lazy val STAGE = false
-  lazy val BETA = !DEV && !STAGE && hostName.indexOf( "-beta" ) != -1
-  //lazy val BETA = true
-  lazy val PRODUCTION = !( DEV || STAGE || BETA )
+
+  lazy val securityGroup =
+    if ( DEV ) ""
+    else       ( Aws.instanceQueryUrl + "/latest/meta-data/security-groups" ).GET()._s
+
+  lazy val BETA = false //!DEV && !STAGE && hostName.indexOf( "-beta" ) != -1
+
+  lazy val PRODUCTION = !DEV && securityGroup == "mdb"
+
+  lazy val STAGE = !DEV && !PRODUCTION
+
 
   def mode =
     if ( DEV )        "development"
@@ -246,6 +252,10 @@ trait Bootable {
   @volatile var dbUser:String = ""
   @volatile var dbPw:String   = ""
   @volatile var dbDriver      = "org.postgresql.Driver"
+
+  // ElasticSearch
+  def elasticSearchHost:String = "http://localhost:9200"
+  
 
   // SMS
   val sms:NexmoApp = null
