@@ -854,6 +854,8 @@ abstract class Content( override val view:MongoView,
   
   def hasTag( tag:Int ) = a_?( 'tags ).exists( _ == tag )
 
+  def s3Path:String = null
+  
   def copy( ownerTid:String ):Content = {
     val content = this.clone().as[Content]
     

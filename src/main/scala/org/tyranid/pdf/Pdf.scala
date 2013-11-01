@@ -21,12 +21,13 @@ import java.io.{ File, FileOutputStream, IOException }
 
 import com.pdfcrowd.{ Client, PdfcrowdError }
 
-
 import org.tyranid.Imp._
 import org.tyranid.app.AppStat
+import org.tyranid.cloud.aws.S3
 import org.tyranid.content.Content
-import org.tyranid.math.Base36
-      
+import org.tyranid.document.{ ConvertState, Converter, DocumentConverterType }
+import org.tyranid.db.mongo.Imp._
+
 object Pdf {
   val lock = ""
   val lock2 = ""
@@ -188,18 +189,68 @@ object Pdf {
     }
   }
 
-  //lazy val convertBucket = B.
-  def convert( inFile:File, content:Content, sync:Boolean = false ) {
-    // if indesign
-    
-    val filename = inFile.getName()
-    val ext = filename.suffix( '.' ).toLowerCase
+  def convert( content:Content, inFile:File, fileSize:Long, fileName:String ): Boolean = {
+    // Already converted or not a document
+    if ( !B.documentEntity.hasTid( content.tid ) || content.i( 'convertState ) == ConvertState.ConvertedId )
+      return false
+      
+    val ext = fileName.suffix( '.' ).toLowerCase
     
     ext match {
-      case "indd" =>
+      case "indd" =>        
+        S3.copy( B.filesBucket, content.s3Path, Converter.bucket, "In/" + content.id._s + "." + ext )
+        B.documentEntity.db.update( Mobj( "_id" -> content.id ), Mobj( $set -> Mobj( "convertState" -> ConvertState.ConvertingId, "converter" -> DocumentConverterType.MadeToPrintId ) ) )
+        content( "convertState" ) = ConvertState.ConvertingId
+        content( "converter" ) = DocumentConverterType.MadeToPrintId
+        
+        // No need to save, I did the update myself
+        return false
       case _ =>
         
     }
+    
+    false
+  }
+  
+  def finishedConverting( content:Content ): Boolean = {
+    val convertState = content.i( 'convertState )
+    
+    convertState match {
+      case ConvertState.ConvertingId =>
+        val ext = content.s( 'fileName ).suffix( '.' ).toLowerCase
+        
+        ext match {
+          case "indd" =>
+            val bucket = Converter.bucket
+            val outPath = "Out/" + content.id._s + ".pdf"
+            val complete = S3.exists( bucket, outPath )
+            
+            if ( complete ) {
+              // Download it and send it to the document previewer
+              val convertedFile = S3.getFile( bucket, outPath, ".pdf" )
+              B.docPreviewApp.upload( convertedFile, convertedFile.length, convertedFile.getName, content )
+
+              // Remove it from input and output buckets
+              val outFiles = S3.getFilenames( bucket, prefix = "Out/" + content.id._s )
+              S3.deleteAll( bucket, outFiles )
+              //S3.delete( bucket, "In/" + content.id._s + "." + ext )
+              
+              // Update the content to let us know it was converted
+              content( "convertState" ) = ConvertState.ConvertedId
+              content.save
+              
+              convertedFile.delete
+              return true
+            }
+            
+            // Not complete yet
+            return false
+          case _ =>
+        }
+      case _ =>
+    }
+    
+    false
   }
   
   def convertApiPptx( inFile:File, outFile:File ) = {

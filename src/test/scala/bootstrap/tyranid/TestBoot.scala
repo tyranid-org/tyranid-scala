@@ -5,6 +5,8 @@ import scala.xml.NodeSeq
 
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.S3Bucket
+import org.tyranid.db.mongo.MongoEntity
+import org.tyranid.document.DocApp
 import org.tyranid.secure.AccessType
 import org.tyranid.session.ThreadData
 import org.tyranid.test.db.{ Session, User }
@@ -20,7 +22,11 @@ class Boot extends org.tyranid.boot.Bootable {
   val demoUser = null
   val publicGroup = null
   val sessionDataMeta = null
+  val filesBucket:S3Bucket = null
+  val documentEntity:MongoEntity = null
+  val docPreviewApp:DocApp = null
 
+  def finishConversion( content:org.tyranid.content.Content ) {}
   val alertEmail      = "info@tyranid.org"
 
   val applicationWebloc = null
