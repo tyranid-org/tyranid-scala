@@ -29,6 +29,7 @@ import com.mongodb.{ DBObject, DBCollection }
 import org.tyranid.Imp._
 import org.tyranid.app.AppStat
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
+import org.tyranid.content.Content
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.json.Json
 import org.tyranid.http.Http
@@ -195,6 +196,10 @@ Zencoder-Api-Key: e834e2d2e415f7ef2303ecbb81ab54da
     }
     
     false
+  }
+  
+  def finishedConverting( content:Content ) = {
+    true
   }
   
   // Need to copy these over because they are not solely owned by us:

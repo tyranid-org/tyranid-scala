@@ -30,9 +30,10 @@ import com.braintreegateway.BraintreeGateway
 import org.bson.types.ObjectId
 
 import org.tyranid.Imp._
+import org.tyranid.cloud.aws.S3Bucket
 import org.tyranid.content.Content
-import org.tyranid.db.{ Entity }
 import org.tyranid.db.mongo.Imp._
+import org.tyranid.document.DocApp
 import org.tyranid.document.CloudConvertApp
 import org.tyranid.document.crocodoc.CrocApp
 import org.tyranid.document.dropbox.DropboxApp
@@ -46,7 +47,7 @@ import org.tyranid.profile.{ Group, OrgMeta, User, UserMeta }
 import org.tyranid.secure.{ AccessType, Multipass }
 import org.tyranid.session.{ Milestone, Session, SessionData, ThreadData, SessionDataMeta }
 import org.tyranid.sms.NexmoApp
-import org.tyranid.social.{ TwApp }
+import org.tyranid.social.TwApp
 import org.tyranid.social.basecamp.BcApp
 import org.tyranid.social.facebook.FbApp
 import org.tyranid.social.google.GoApp
@@ -153,9 +154,7 @@ trait Bootable {
   def logoutListeners:Seq[ User => Unit ] = Nil
 
 
-  lazy val ConvertBucket:org.tyranid.cloud.aws.S3Bucket = null
-
-  /*
+   /*
    * * *   S e c u r i t y
    */
 
@@ -197,6 +196,8 @@ trait Bootable {
   def DocEntity:MongoEntity = null
 
   @volatile var loginPage:() => NodeSeq = null
+
+  def finishConversion( content:Content )
   
   def registerUser( user:User, companyName:String ) 
   def sendMessage( msg:String, toUserTid:String, fromUserTid:String = null ) 
@@ -294,16 +295,20 @@ trait Bootable {
   val convertApiKey:String = ""
   
   // AWS
-  import org.tyranid.cloud.aws.S3Bucket
-
   val awsCredentials:com.amazonaws.auth.AWSCredentials = null
   val bucketSuffix:String = ""
+  val documentEntity:MongoEntity   
     
   val domainRoute53ZoneId = ""
 
+  val filesBucket:S3Bucket
+  
+  val docPreviewApp:DocApp
+  
   private val s3Buckets = scala.collection.mutable.Map[String,S3Bucket]()
 
-  def getS3BucketByFullName( name:String ): S3Bucket = s3Buckets( name ) 
+  def getS3BucketByFullName( name:String ): S3Bucket = s3Buckets.values.find( bucket => bucket.name == name ).getOrElse( null )
+  
   def getS3Bucket( prefix:String ): S3Bucket = s3Buckets( prefix + envSuffix ) 
 
   def bucketByUrl( url:String ) = s3Buckets.values.find( bucket => {
