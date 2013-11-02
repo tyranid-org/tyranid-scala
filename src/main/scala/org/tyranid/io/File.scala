@@ -40,8 +40,9 @@ import scala.xml.{ NodeSeq, Unparsed }
 
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
+import org.tyranid.content.Content
 import org.tyranid.db.{ Domain, Record, Scope }
-import org.tyranid.document.OpenOfficeParser
+import org.tyranid.document.{ Converter, OpenOfficeParser }
 import org.tyranid.ui.PathField
 import org.tyranid.time.Time
 import org.tyranid.web.WebContext
@@ -143,23 +144,71 @@ class TxtExtractor extends TextExtractor {
 
 
 object FileCleaner { 
+  var processing = false
+  
   def cleanGlobal {
-    // Clean up S3 zipped up boards in PRODUCTION
-    if ( B.PRODUCTION ) {
-      val yesterday = new Date().add( Calendar.DAY_OF_MONTH, -1 )
+    if ( processing || !B.PRODUCTION )
+      return
       
-      val filesBucket = B.getS3Bucket( "files" )
-      val zips = S3.getFilenames( filesBucket, prefix = "zips", suffix = ".zip", olderThan = yesterday )
-      S3.deleteAll( filesBucket, zips )
+    synchronized {
+      processing = true
       
-      val tempBucket = B.getS3Bucket( "temp" )
-      val tempFiles = S3.getFilenames( tempBucket, olderThan = yesterday )
-      S3.deleteAll( tempBucket, tempFiles )      
+      try {
+        /*
+         * Clean up S3 zipped up boards
+         */ 
+        val yesterday = new Date().add( Calendar.DAY_OF_MONTH, -1 )
+        val filesBucket = B.getS3Bucket( "files" )
+        val zips = S3.getFilenames( filesBucket, prefix = "zips", suffix = ".zip", olderThan = yesterday )
+        S3.deleteAll( filesBucket, zips )
+        
+        /* 
+         * Clean up temporary files that were created
+         */
+        val tempBucket = B.getS3Bucket( "temp" )
+        val tempFiles = S3.getFilenames( tempBucket, olderThan = yesterday )
+        S3.deleteAll( tempBucket, tempFiles )
+        
+        /* 
+         * Clean up *or* make ready any files that have been converted
+         */
+        val oneHourAgo = new Date().add( Calendar.HOUR_OF_DAY, -1 )
+        val convertedFiles = S3.getFilenames( Converter.bucket, "Out/", olderThan = oneHourAgo )
+        
+        for ( convertedFile <- convertedFiles ) {
+          // Remove any duplicate conversions
+          if ( convertedFile.indexOf( '_' ) > 0 ) {
+            S3.delete( Converter.bucket, convertedFile )
+          } else {
+            val filename = convertedFile.suffix( '/' )
+            
+            if ( filename.notBlank ) {
+              val docIdStr = filename.prefix( '.' )
+              
+              try {
+                val doc = B.documentEntity.getById( docIdStr._oid )
+                
+                if ( doc == null ) {
+                  S3.delete( Converter.bucket, convertedFile )
+                } else {
+                  // Give it a chance to update the conversion
+                  B.finishConversion( doc.as[Content] )
+                }
+              } catch {
+                case t:Throwable =>
+                  log( Event.StackTrace, "m" -> ( "Error cleaning up converted document: " + convertedFile ), "ex" -> t )
+              }
+            }
+          }
+        }
+      } finally {
+        processing = false
+      }
     }
   }
 
   def cleanLocal {
-    // Clean up all the temp files used in uploads
+    // Clean up all the temp files used during uploads
     val moreThan2HoursOld = System.currentTimeMillis - ( Time.OneHourMs * 2 )
     val tempDir = new SysFile( System.getProperty( "java.io.tmpdir" ) )
 
