@@ -75,6 +75,7 @@ object Pdf {
           if ( retryCount == 1 )
             AppStat.PdfCrowdSend
             
+            println( "getting PDF for URL from pdfCrowd: " + finalUrl )
     	    client.convertURI( finalUrl, fileStream )
     	    
     	    if ( !useJavascript )
