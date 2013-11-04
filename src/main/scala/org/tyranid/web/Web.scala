@@ -102,7 +102,7 @@ trait TyrFilter extends Filter {
 
       sess.record( "rh" -> web.req.getRemoteHost, 
           "ra" -> {
-              val ra = web.req.getHeader( "X_Forwarded_For" )
+              val ra = web.req.getHeader( "X-Forwarded-For" )
               ra.isBlank ? web.req.getRemoteAddr | ra  
             }
           )
