@@ -54,8 +54,10 @@ object MetaMimeType extends RamEntity( tid = "a00u" ) {
   val XML                 = add( 16, "XML - Extensible Markup Language" )
   val ZIP                 = add( 17, "ZIP Archive" )
   val PSD                 = add( 18, "Adobe Photoshop" )
+  val AdobeInDesign       = add( 19, "Adobe InDesign" )
 
-  val Image               = add( 19, "Image" ).setIncludes( Seq( BMP, GIF, JPEG, PNG, TIFF, PSD ) )
+  val Image               = add( 20, "Image" ).setIncludes( Seq( BMP, GIF, JPEG, PNG, TIFF, PSD ) )
+  
 
   override def init = {
     super.init
@@ -155,7 +157,7 @@ object MimeType {
     MimeType( "application/x-gzip",                                                        ZIP,                 "GNU ZIP",                       Seq( "gz" ) ),
     
     MimeType( "application/x-hdf",                                                         null,                null,                            Seq( "hdf" ) ),
-    MimeType( "application/x-indesign",                                                    null,                null,                            Seq( "indd" ) ),    
+    MimeType( "application/x-indesign",                                                    AdobeInDesign,       "Adobe InDesign",                Seq( "indd" ) ),    
     MimeType( "application/x-latex",                                                       null,                "LaTeX",                         Seq( "latex" ) ),
     MimeType( "application/x-mif",                                                         null,                "MIF",                           Seq( "mif" ) ),
     MimeType( "application/x-netcdf",                                                      null,                null,                            Seq( "cdf", "nc" ) ),
