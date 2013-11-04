@@ -92,10 +92,10 @@ class Indexer extends Actor {
     try {
       if ( json != "{}" ) {
 //sp am( "posting index=" + index + "  type=" + typ )
-//sp am( "url=" + Es.host + "/" + index + "/" + typ + "/" + id )
+//sp am( "url=" + B.elasticSearchHost + "/" + index + "/" + typ + "/" + id )
 //sp am( "json=" + json )
 
-        val response  = ( Es.host + "/" + index + "/" + typ + "/" + id ).POST( content = json )
+        val response  = ( B.elasticSearchHost + "/" + index + "/" + typ + "/" + id ).POST( content = json )
         val responseJson = Json.parse( response._s )
         
         val error = responseJson.s( 'error )
@@ -130,7 +130,6 @@ object Es {
   val ElasticSearchDefaultPageSize = 10 // this needs to map to elasticsearch's actual default page size
 
   val UTF8_CHARSET = java.nio.charset.Charset.forName("UTF-8")
-  val host = "http://localhost:9200"
 
   def search( text:String, user:User, offset:Int = 0, pageSize:Int = ElasticSearchDefaultPageSize ):ObjectMap =
     search(
@@ -168,7 +167,7 @@ object Es {
       else
         ""
 
-    val s = ( Es.host + "/_search" + params ).POST( content = query.toJsonStr( false ) ).s
+    val s = ( B.elasticSearchHost + "/_search" + params ).POST( content = query.toJsonStr( false ) ).s
 //sp-am( "results=[\n\n" + s + "\n\n]" )
 
     val json = s.parseJsonObject
@@ -332,7 +331,7 @@ object Es {
 
   def deleteAll =
     for ( index <- Entity.all.filter( e => e.isSearchable && !e.embedded ).map( _.searchIndex ).toSeq.distinct )
-      ( Es.host + "/" + index ).DELETE()
+      ( B.elasticSearchHost + "/" + index ).DELETE()
 
   def mapAll {
     println( "ElasticSearch Mapping STARTED" )
@@ -366,7 +365,7 @@ object Es {
       if ( true )
         println( "Using Map:\n\n" + content )
 
-      ( Es.host + "/" + index + "/" ).PUT( content = content )
+      ( B.elasticSearchHost + "/" + index + "/" ).PUT( content = content )
     }
 
     println( "ElasticSearch Mapping COMPLETED" )
