@@ -100,7 +100,13 @@ trait TyrFilter extends Filter {
       thread.http = web.req.getSession( true )
       val sess = T.session
 
-      sess.record( "rh" -> web.req.getRemoteHost, "ra" -> web.req.getRemoteAddr )
+      sess.record( "rh" -> web.req.getRemoteHost, 
+          "ra" -> {
+              val ra = web.req.getHeader( "X_FORWARDED_FOR" )
+              
+              ra.isBlank ? web.req.getRemoteAddr | ra  
+            }
+          )
       
       val subdomain = web.req.getServerName
 
