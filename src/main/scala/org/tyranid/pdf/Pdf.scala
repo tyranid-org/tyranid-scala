@@ -202,6 +202,7 @@ object Pdf {
         B.documentEntity.db.update( Mobj( "_id" -> content.id ), Mobj( $set -> Mobj( "convertState" -> ConvertState.ConvertingId, "converter" -> DocumentConverterType.MadeToPrintId ) ) )
         content( "convertState" ) = ConvertState.ConvertingId
         content( "converter" ) = DocumentConverterType.MadeToPrintId
+        AppStat.MadeToPrintUpload
         
         // No need to save, I did the update myself
         return false

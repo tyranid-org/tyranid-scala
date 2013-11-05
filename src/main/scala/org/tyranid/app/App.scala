@@ -40,6 +40,9 @@ object AppStatType extends RamEntity( tid = "a1Fv" ) {
   val ZencoderSuccessId      = 401
   val ZencoderFailureId      = 402
   
+  val MadeToPrintUploadId    = 500
+  val MadeToPrintConvertedId = 501
+  
   val CrocodocUpload  = add( CrocodocUploadId,  "Crocodoc Upload" )
   val CrocodocRetry   = add( CrocodocRetryId,   "Crocodoc Retry" )
   val CrocodocSuccess = add( CrocodocSuccessId, "Crocodoc Success" )
@@ -57,7 +60,10 @@ object AppStatType extends RamEntity( tid = "a1Fv" ) {
   
   val ZencoderUpload  = add( ZencoderUploadId,  "Zencoder Upload" )
   val ZencoderSuccess = add( ZencoderSuccessId, "Zencoder Success" )
-  val ZencoderFailure = add( ZencoderFailureId, "Zencoder Failure" )  
+  val ZencoderFailure = add( ZencoderFailureId, "Zencoder Failure" )
+  
+  val MadeToPrintUpload    = add( MadeToPrintUploadId, "MadeToPrint Upload" )
+  val MadeToPrintConverted = add( MadeToPrintConvertedId, "MadeToPrint Converted" )
 }
 
 case class AppStatType( override val view:TupleView ) extends Tuple( view )
@@ -100,6 +106,9 @@ object AppStat extends MongoEntity( tid = "b04v" ) {
   def ZencoderUpload  = create( AppStatType.ZencoderUploadId )
   def ZencoderSuccess = create( AppStatType.ZencoderSuccessId )
   def ZencoderFailure = create( AppStatType.ZencoderFailureId )
+  
+  def MadeToPrintUpload    = create( AppStatType.MadeToPrintUploadId )
+  def MadeToPrintConverted = create( AppStatType.MadeToPrintConvertedId )
 }
 
 class AppStat( obj:DBObject, parent:MongoRecord ) extends MongoRecord( AppStat.makeView, obj, parent ) {}
