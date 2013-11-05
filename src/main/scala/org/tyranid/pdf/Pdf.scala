@@ -240,6 +240,8 @@ object Pdf {
               content( "convertState" ) = ConvertState.ConvertedId
               content.save
               
+              AppStat.MadeToPrintConverted
+              
               convertedFile.delete
               return true
             }
