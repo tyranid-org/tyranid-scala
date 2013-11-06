@@ -242,7 +242,7 @@ class WebFilter extends TyrFilter {
       return
     } else if ( isAsset && path.matches( WebFilter.robotsPattern ) ) {
       if ( web.req.getServerName.startsWith( B.liteDomainName ) ) {
-        web.ctx.getRequestDispatcher( "/robots_revu.txt" ).forward( web.req, web.res )
+        web.ctx.getRequestDispatcher( "/robots_" + B.liteDomainName + ".txt" ).forward( web.req, web.res )
         return
       }
     }
