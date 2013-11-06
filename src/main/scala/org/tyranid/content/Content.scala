@@ -787,6 +787,9 @@ trait ContentMeta extends PrivateKeyEntity {
   "contents"          is DbArray(DbTid())     is 'temporary is 'client; // contains a sequence of the tids for client for this content
   
   "beingDeleted"      is DbBoolean            ;            
+  
+  "estVal"            is DbDouble             is 'client; // Estimated amount (hrs/money,etc)  
+  "actVal"            is DbDouble             is 'client; // Actual amount (hrs/money,etc)
   }
 
   override def searchText = true
