@@ -61,6 +61,7 @@ case class Web404Exception()                       extends ControlThrowable
 object WebFilter {
   val versionPattern = "^/v[0-9]+/.*".r
   val maintPattern = "/maintenance.html".r
+  val robotsPattern = "/robots.txt".r
   
   val assetPattern = java.util.regex.Pattern.compile( "((([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|map|htc|vtt|odt|wav|map)))|.*robots\\.txt)$)|.*io/thumb.*|.*/sso/.*" )
   
@@ -112,7 +113,6 @@ trait TyrFilter extends Filter {
       sess.put( "lite", subdomain.startsWith( B.liteDomainName ) )
       sess.put( "subdomain", subdomain )
       
-      sess.ua( web )
       LoginCookie.autoLogin          
     }
   }
@@ -235,12 +235,16 @@ class WebFilter extends TyrFilter {
     }
     
     var first = true
-
     val path = web.path
     
     if ( B.maintenanceMode && !path.matches( WebFilter.maintPattern ) & !isAsset ) {
       web.ctx.getRequestDispatcher( "/maintenance.html" ).forward( web.req, web.res )
       return
+    } else if ( isAsset && path.matches( WebFilter.robotsPattern ) ) {
+      if ( web.req.getServerName.startsWith( B.liteDomainName ) ) {
+        web.ctx.getRequestDispatcher( "/robots_revu.txt" ).forward( web.req, web.res )
+        return
+      }
     }
     
     if ( path.matches( WebFilter.versionPattern ) ) {
