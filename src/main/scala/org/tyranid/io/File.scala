@@ -95,7 +95,8 @@ class TikaExtractor extends TextExtractor {
       parser.parse( is, new BodyContentHandler( out ), new Metadata, context ) 
       out.toString( "UTF-8" ).stripNonUtf8
     } finally {
-      is.close()
+      if ( is != null )
+        is.close()
     } 
   }
 }
@@ -114,7 +115,8 @@ class HtmlTextExtractor extends TextExtractor {
       new HtmlParser().parse( is, handler, new Metadata, new ParseContext() )
       handler.toString().stripNonUtf8
     } finally {
-      is.close
+      if ( is != null )
+        is.close
     }
   }
 }
@@ -137,7 +139,8 @@ class TxtExtractor extends TextExtractor {
         log( Event.StackTrace, "m" -> ( "Txt Extract Exception:" + e.getMessage() ), "ex" -> e )
       null
     } finally {
-      if ( in != null ) in.close
+      if ( in != null ) 
+        in.close
     }
   }
 }
