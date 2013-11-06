@@ -271,14 +271,8 @@ class UserMeta extends MongoEntity( "a01v" ) {
     user
   }
 
-  def isOnline( userTid:String ):Boolean = {
-    WebSession.visit { sess =>      
-      if ( !sess.isIncognito && sess.user.tid == userTid )
-        return true
-    }
-    
-    false
-  }
+  def isOnline( userTid:String ):Boolean =
+    B.SessionData.db.findOne( Mobj( "u" -> B.User.tidToId( userTid ), "incognito" -> Mobj( $ne -> true ) ), Mobj( "_id" -> 1 ) ) != null
 }
 
 trait User extends MongoRecord {
