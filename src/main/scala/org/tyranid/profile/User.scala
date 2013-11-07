@@ -181,6 +181,8 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "eye"            is DbBoolean           ;
   "bids"           is DbArray(DbChar(10)) as "Browser IDs";
   "sso"            is DbLink(SsoMapping)  ;
+  
+  "n1"             is DbBoolean           ; 
 
   override def init = {
     super.init
@@ -301,8 +303,6 @@ trait User extends MongoRecord {
     return true
   }
 
-  def cool = { null }
-  
   def email = s( 'email )
 
   /*
