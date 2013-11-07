@@ -532,8 +532,12 @@ trait Session extends QuickCache {
 
     val u = user
 
-    if ( u != null && !isIncognito )
-      B.logoutListeners.foreach( _( u ) )    
+    if ( u != null ) {
+      record( "u" -> null, "lit" -> null )
+
+      if ( !isIncognito )
+        B.logoutListeners.foreach( _( u ) )    
+    }
   }
 
 
