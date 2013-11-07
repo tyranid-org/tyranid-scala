@@ -30,6 +30,9 @@ import org.tyranid.Imp._
 import org.tyranid.time.Time
 
 object Aws {
+
+  val instanceQueryUrl = "http://169.254.169.254"
+
   // http://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html
   def canonicalRequestWithSignedHeaders( method:String, canonicalURI:String, queryString:String, headers:Map[String,String], payload:String ) = {
     val qsParts = queryString.isBlank ? null | queryString.split( "&" ) 

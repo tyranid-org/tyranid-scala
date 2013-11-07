@@ -98,7 +98,7 @@ object SessionCleaner {
 
   def cleanGlobal {
 
-    val cutoff = new Date - ( 4 * Time.OneHourMs )
+    val cutoff = new Date - ( 8 * Time.OneHourMs )
 
     B.SessionData.db.remove( Mobj( "lpt" -> Mobj( $lte -> cutoff ) ) )
   }
@@ -119,12 +119,14 @@ object WebSession {
   val CometHttpSessionIdKey = "tyrSessId"
   val HttpSessionKey = "tyrSess"
 
+  /*
   def visit( visitor: ( Session ) => Unit ) =
     for ( s <- sessions;
           httpSession = s._2;
           tyrSession = httpSession.getAttribute( WebSession.HttpSessionKey ).as[Session];
           if tyrSession != null )
       visitor( tyrSession )
+  */
 }
 
 class WebSessionListener extends HttpSessionListener {
@@ -802,6 +804,8 @@ trait SessionData extends MongoRecord {
   def user = B.User.getById( oid( 'u ) )
 
   def ua = UserAgent.getById( i( 'ua ) )
+
+  def isIncognito = b( 'incognito )
 }
 
 
