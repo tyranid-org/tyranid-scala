@@ -481,11 +481,6 @@ trait Session extends QuickCache {
       
       if ( user.b( 'monitored ) )
         log( Event.Alert, "m" -> ( "User " + user.s( 'email ) + " just logged in." ) )
-      
-      // Sent out in common
-      if ( user.b( 'n1 ) )
-        T.requestCache.put( "req-notice", "n1" )      
-      
     } else {
       put( "incognito", Boolean.box( true ).booleanValue().as[Serializable] )
     }
