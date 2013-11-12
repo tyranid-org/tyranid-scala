@@ -71,7 +71,7 @@ object Pdf {
             }
           } | url
           
-          println( finalUrl )
+          //println( finalUrl )
           if ( retryCount == 1 )
             AppStat.PdfCrowdSend
             
