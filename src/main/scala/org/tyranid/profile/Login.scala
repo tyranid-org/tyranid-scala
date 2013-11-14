@@ -199,7 +199,7 @@ $( function() {
           if ( web.b( 'save ) )
             LoginCookie.set(user)
   
-          web.jsRes( JsData( user ), JsModel( user.toClientCommonMap() ), Js( "V.app.load( '" + ( redirect.isBlank ? "/#dashboard" | redirect ) + "' );" ) )
+          web.jsRes( JsData( user ), JsModel( user.toClientCommonMap(), "common" ), Js( "V.app.load( '" + ( redirect.isBlank ? "/#dashboard" | redirect ) + "' );" ) )
         }
       }
     case "/clear" =>
@@ -462,7 +462,7 @@ $( function() {
           B.registerUser( user, companyName )
           B.welcomeUserEvent
             
-          web.jsRes( JsData( user), JsModel( user.toClientCommonMap( true ) ), Js( "V.app.load( '/#dashboard' );" ) )            
+          web.jsRes( JsData( user), JsModel( user.toClientCommonMap( true ), "common" ), Js( "V.app.load( '/#dashboard' );" ) )            
           return
         }
       } else {
