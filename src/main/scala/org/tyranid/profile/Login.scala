@@ -28,7 +28,7 @@ import org.tyranid.db.Scope
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.email.Email
-import org.tyranid.json.{ Js, JqHtml, JsonString }
+import org.tyranid.json.{ Js, JqHtml, JsModel, JsonString, JsData }
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
 import org.tyranid.secure.DbReCaptcha
@@ -199,7 +199,7 @@ $( function() {
           if ( web.b( 'save ) )
             LoginCookie.set(user)
   
-          web.jsRes( Js( "V.common.set( " + user.toClientCommonMap().toJsonStr( client = true ) + " ); V.app.load( '" + ( redirect.isBlank ? "/#dashboard" | redirect ) + "' );" ) )
+          web.jsRes( JsData( user ), JsModel( user.toClientCommonMap() ), Js( "V.app.load( '" + ( redirect.isBlank ? "/#dashboard" | redirect ) + "' );" ) )
         }
       }
     case "/clear" =>
@@ -312,8 +312,11 @@ $( function() {
           sess.login( user )
           user.save
           
-          sess.notice( "You can now change your password in <em>My Profile</em>.", deferred = "/#dashboard" )          
-          web.jsRes( Js( "V.common.set( " + user.toClientCommonMap().toJsonStr( client = true ) + " ); V.app.load( '/#dashboard' )" ) )
+          sess.notice( "You can now change your password in <em>My Profile</em>.", deferred = "/#dashboard" ) 
+          web.jsRes( JsData( sess.user ), JsModel( user.toClientCommonMap(), "common" ), Js( "V.app.load( '/#dashboard' );" ) )
+
+          // TODO: COMMON
+          //web.jsRes( JsData( user ), Js( "V.common.set( " + user.toClientCommonMap().toJsonStr( client = true ) + " ); V.app.load( '/#dashboard' )" ) )
         }
       }
 
@@ -459,7 +462,7 @@ $( function() {
           B.registerUser( user, companyName )
           B.welcomeUserEvent
             
-          web.jsRes( Js( "V.common.set( " + user.toClientCommonMap( true ).toJsonStr( client = true ) + " ); V.app.load( '/#dashboard' );" ) )            
+          web.jsRes( JsData( user), JsModel( user.toClientCommonMap( true ) ), Js( "V.app.load( '/#dashboard' );" ) )            
           return
         }
       } else {
