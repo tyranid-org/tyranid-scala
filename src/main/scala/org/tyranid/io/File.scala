@@ -161,9 +161,8 @@ object FileCleaner {
          * Clean up S3 zipped up boards
          */ 
         val yesterday = new Date().add( Calendar.DAY_OF_MONTH, -1 )
-        val filesBucket = B.getS3Bucket( "files" )
-        val zips = S3.getFilenames( filesBucket, prefix = "zips", suffix = ".zip", olderThan = yesterday )
-        S3.deleteAll( filesBucket, zips )
+        val zips = S3.getFilenames( B.filesBucket, prefix = "zips", suffix = ".zip", olderThan = yesterday )
+        S3.deleteAll( B.filesBucket, zips )
         
         /* 
          * Clean up temporary files that were created
@@ -192,7 +191,9 @@ object FileCleaner {
                 val doc = B.documentEntity.getById( docIdStr._oid )
                 
                 if ( doc == null ) {
-                  S3.delete( Converter.bucket, convertedFile )
+                  // Keep it around in case it can be used later
+                  S3.move( Converter.bucket, convertedFile, B.filesBucket, doc.s( 'parentFolder ) + "/" + docIdStr + ".pdf" )
+                  //S3.delete( Converter.bucket, convertedFile )
                 } else {
                   // Give it a chance to update the conversion
                   B.finishConversion( doc.as[Content] )
