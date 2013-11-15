@@ -114,19 +114,28 @@ _doc = {"status": 3, "socketioHost": "//socket.crocodoc.com:5555/", "objects": [
   override def previewJsonFor( extDocId:String, print:Boolean = false ) = {
     val sessionJson = Http.POST( "https://crocodoc.com/api/v2/session/create", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s
     
-    try {
-      val session = Json.parse( sessionJson ).s( 'session )
-      
-      session.isBlank ? null | Map( 
-        "extDocId" -> extDocId,
-        "session" -> session,
-        "_doc" -> ( B.CROC_JS_V2  ? Http.GET( "https://crocodoc.com/webservice/document.js?session=" + session )._s.substring( 6 ).parseJson | Map() )
-      )
-    } catch {
-      case t:Throwable => 
-        log( Event.Crocodoc, "m" -> ( "Failed to get status for extId: " + extDocId + ", str=" + sessionJson ), "ex" -> t )
-        throw t
+    var tries = 0
+    var previewJson:Map[String,Any] = null
+    
+    while ( tries < 3 ) {
+      try {
+        val session = Json.parse( sessionJson ).s( 'session )
+        
+        previewJson = session.isBlank ? null | Map( 
+          "extDocId" -> extDocId,
+          "session" -> session,
+          "_doc" -> ( B.CROC_JS_V2 ? Http.GET( "https://crocodoc.com/webservice/document.js?session=" + session )._s.substring( 6 ).parseJson | Map() )
+        )
+        
+        tries = ( previewJson == null ) ? 3 | ( tries + 1 )
+      } catch {
+        case t:Throwable => 
+          log( Event.Crocodoc, "m" -> ( "Failed to get status for extId: " + extDocId + ", str=" + sessionJson ), "ex" -> t )
+          Thread.sleep( 1000 ) // 1.25 secs
+      }
     }
+    
+    previewJson
   }
   
   def previewUrlFor( extDocId:String ):String = null
