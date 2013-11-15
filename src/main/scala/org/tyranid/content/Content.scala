@@ -1138,10 +1138,8 @@ abstract class Content( override val view:MongoView,
         try {
           f = Thumbnail.generate( imgFile, w, h )
           
-          if ( f != null ) {
-            println( "exists (" + urlPath + "): " + S3.exists( Content.thumbsBucket, urlPath + s ) )
+          if ( f != null )
             S3.write( Content.thumbsBucket, urlPath + s, f, true )
-          }
         } finally {
           if ( f != null )
             f.delete

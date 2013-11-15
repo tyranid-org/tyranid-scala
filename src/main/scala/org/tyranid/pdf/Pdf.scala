@@ -322,10 +322,15 @@ object Pdf {
   def isProtected( file:File ) = {
     val suffix = file.getName().suffix( '.' )
     
-    if ( suffix.toUpperCase() == "PDF" ) {        
-      val parser = new PDFParser( new BufferedInputStream( new FileInputStream( file ) ) )
-      parser.parse()
-      parser.getPDDocument().isEncrypted()
+    if ( suffix.toUpperCase() == "PDF" ) {
+      try {
+        val parser = new PDFParser( new BufferedInputStream( new FileInputStream( file ) ) )
+        parser.parse()
+        parser.getPDDocument().isEncrypted()
+      } catch {
+        case _:Throwable =>
+          false
+      }
     } else {
       false
     }
@@ -335,22 +340,27 @@ object Pdf {
     val suffix = file.getName().suffix( '.' )
     
     if ( suffix.toUpperCase() == "PDF" ) {
-      val parser = new PDFParser( new BufferedInputStream( new FileInputStream( file ) ) )
-      parser.parse()
-      val origPdfDoc = parser.getPDDocument()
-
-      if ( origPdfDoc.isEncrypted() ) {
-        origPdfDoc.setAllSecurityToBeRemoved( true )
-        origPdfDoc.openProtection( new StandardDecryptionMaterial( password ) )
-        
-        val newFile = File.createTempFile( "unlocked", ".pdf" )
-        val out = new BufferedOutputStream( new FileOutputStream( newFile ) ) 
-        origPdfDoc.save( out )
-        out.close
-        newFile
-      } else {
-        file
-      }        
+      try {
+        val parser = new PDFParser( new BufferedInputStream( new FileInputStream( file ) ) )
+        parser.parse()
+        val origPdfDoc = parser.getPDDocument()
+  
+        if ( origPdfDoc.isEncrypted() ) {
+          origPdfDoc.setAllSecurityToBeRemoved( true )
+          origPdfDoc.openProtection( new StandardDecryptionMaterial( password ) )
+          
+          val newFile = File.createTempFile( "unlocked", ".pdf" )
+          val out = new BufferedOutputStream( new FileOutputStream( newFile ) ) 
+          origPdfDoc.save( out )
+          out.close
+          newFile
+        } else {
+          file
+        }        
+      } catch {
+        case _:Throwable =>
+          file
+      }
     } else {
       file
     }
