@@ -17,10 +17,26 @@
 
 package org.tyranid.telco
 
+import scala.collection.JavaConversions._
+import com.twilio.sdk.{ TwilioRestClient, TwilioRestException}
+import com.twilio.sdk.resource.factory.SmsFactory
+import com.twilio.sdk.resource.instance.Sms
+import com.twilio.sdk.resource.list.SmsList
+import com.twilio.sdk.client.TwilioCapability
+//import java.util.HashMap;
+//import java.util.Map;
+
 object Twilio {
+  val baseUrl = "https://api.twilio.com/2010-04-01"
   
 }
 
 case class TwilioApp( sid:String, auth:String ) {
-
+  //val client = new TwilioRestClient( sid, auth )
+  
+  def createConference = {
+    val capability = new TwilioCapability( sid, auth )
+    capability.allowClientIncoming( "someone" )
+    capability.generateToken()
+  }
 }

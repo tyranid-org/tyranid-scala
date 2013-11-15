@@ -17,9 +17,12 @@
 
 package org.tyranid.pdf
 
-import java.io.{ File, FileOutputStream, IOException }
+import java.io.{ BufferedInputStream, BufferedOutputStream, FileInputStream, File, FileOutputStream, IOException }
 
 import com.pdfcrowd.{ Client, PdfcrowdError }
+
+import org.apache.pdfbox.pdfparser.PDFParser
+import org.apache.pdfbox.pdmodel.encryption.StandardDecryptionMaterial
 
 import org.tyranid.Imp._
 import org.tyranid.app.AppStat
@@ -316,4 +319,40 @@ object Pdf {
     outFile
   }
   
+  def isProtected( file:File ) = {
+    val suffix = file.getName().suffix( '.' )
+    
+    if ( suffix.toUpperCase() == "PDF" ) {        
+      val parser = new PDFParser( new BufferedInputStream( new FileInputStream( file ) ) )
+      parser.parse()
+      parser.getPDDocument().isEncrypted()
+    } else {
+      false
+    }
+  }
+      
+  def decrypt( file:File, password:String ) = {
+    val suffix = file.getName().suffix( '.' )
+    
+    if ( suffix.toUpperCase() == "PDF" ) {
+      val parser = new PDFParser( new BufferedInputStream( new FileInputStream( file ) ) )
+      parser.parse()
+      val origPdfDoc = parser.getPDDocument()
+
+      if ( origPdfDoc.isEncrypted() ) {
+        origPdfDoc.setAllSecurityToBeRemoved( true )
+        origPdfDoc.openProtection( new StandardDecryptionMaterial( password ) )
+        
+        val newFile = File.createTempFile( "unlocked", ".pdf" )
+        val out = new BufferedOutputStream( new FileOutputStream( newFile ) ) 
+        origPdfDoc.save( out )
+        out.close
+        newFile
+      } else {
+        file
+      }        
+    } else {
+      file
+    }
+  }
 }
