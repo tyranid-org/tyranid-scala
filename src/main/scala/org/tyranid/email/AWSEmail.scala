@@ -186,14 +186,9 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
   @throws(classOf[MessagingException])
   override def send():Email = {
     if ( Email.enabled ) {
-      if ( !B.PRODUCTION ) {
-        spam( "emailer sess: " + T.session )
-        
-        if ( T.session != null )
-          spam( "emailer isAllowing: " + T.session.isAllowingEmail )
-  
+
+      if ( !B.PRODUCTION )
         if ( T.session != null && !T.session.isAllowingEmail ) return this
-      }
 
       val withAttachments = ( attachments != null && attachments.length > 0 )
 
