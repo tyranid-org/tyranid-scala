@@ -1119,6 +1119,12 @@ abstract class Content( override val view:MongoView,
     </div>
   
   def generateThumbs:Boolean = {
+    val pathParts = tid.splitAt( 4 )
+    val urlPath = pathParts._1 + "/" + pathParts._2 + "/"
+    
+    if ( S3.exists( Content.thumbsBucket, urlPath + "l" ) )
+      return true
+      
     val imgFile = try {
       imageForThumbs
     } catch {
@@ -1126,9 +1132,6 @@ abstract class Content( override val view:MongoView,
     }  
     
     if ( imgFile != null && imgFile.exists && imgFile.length > 0 ) {
-      val pathParts = tid.splitAt( 4 )
-      val urlPath = pathParts._1 + "/" + pathParts._2 + "/"
-      
       def thumb( s:String, w:Int, h:Int ) {
         var f:File = null
         

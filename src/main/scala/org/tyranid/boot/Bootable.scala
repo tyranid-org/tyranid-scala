@@ -52,6 +52,7 @@ import org.tyranid.social.basecamp.BcApp
 import org.tyranid.social.facebook.FbApp
 import org.tyranid.social.google.GoApp
 import org.tyranid.social.linkedin.LiApp
+import org.tyranid.telco.TwilioApp
 import org.tyranid.web.{ Weblet, Webloc, WebPath, CometService, WebContext }
 
 object Boot {
@@ -275,6 +276,8 @@ trait Bootable {
   val google:GoApp        = null
   val twitter:TwApp       = null
 
+  val twilio:TwilioApp    = null
+  
   val basecamp:BcApp      = null
   
   // Document services
