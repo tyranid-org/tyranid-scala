@@ -110,13 +110,21 @@ trait Bootable {
 
   val liteAppName = "Revu.Me"
   
-  val liteDomainName = "revu"
+  val liteDomainPart = "revu"
+  val liteDomainName = "revu.me"
     
   def fullDomain = { 
     if ( DEV )        "rb-dev." + domain
     else if ( STAGE ) "rb-stage." + domain
     else if ( BETA )  "rb-beta." + domain
     else              "rb." + domain
+  }
+  
+  def liteFullDomain = { 
+    if ( DEV )        liteDomainPart + "-dev." + domain
+    else if ( STAGE ) liteDomainPart + "-stage." + domain
+    else if ( BETA )  liteDomainPart + "-beta." + domain
+    else              liteDomainPart + "." + domain
   }
     
   def port = 

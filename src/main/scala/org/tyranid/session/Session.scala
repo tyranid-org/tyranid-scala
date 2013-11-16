@@ -170,15 +170,17 @@ object ThreadData {
 class ThreadData {
   def baseWebsite = "https://" + B.domainPort
 
-  def website( path:String = "", user:User = null, ssoMapping:SsoMapping = null, subdomain:String = null ):String = {
-    val subdomainWebsite = ( session == null ) ? baseWebsite | {
-      val sd =
-        if ( subdomain.notBlank )
-          subdomain
-        else
-          session.s( 'subdomain )
+  def website( path:String = "", user:User = null, ssoMapping:SsoMapping = null, subdomain:String = null, forceLite:Boolean = false ):String = {
+    val subdomainWebsite = forceLite ? ( "https://" + B.liteFullDomain + B.port ) | {
+      ( session == null ) ? baseWebsite | {
+        val sd =
+          if ( subdomain.notBlank )
+            subdomain
+          else
+            session.s( 'subdomain )
 
-      ( sd.isBlank ) ? baseWebsite | "https://" + sd + B.port
+        ( sd.isBlank ) ? baseWebsite | "https://" + sd + B.port
+      }
     }
 
     if ( user == null )

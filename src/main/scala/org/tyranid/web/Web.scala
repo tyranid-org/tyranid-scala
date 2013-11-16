@@ -110,7 +110,7 @@ trait TyrFilter extends Filter {
       
       val subdomain = web.req.getServerName
 
-      sess.put( "lite", subdomain.startsWith( B.liteDomainName ) )
+      sess.put( "lite", subdomain.startsWith( B.liteDomainPart ) )
       sess.put( "subdomain", subdomain )
       
       LoginCookie.autoLogin          
@@ -227,7 +227,7 @@ class WebFilter extends TyrFilter {
         val path = web.path
         val subdomain = web.req.getServerName
 
-        session.put( "lite", subdomain.startsWith( B.liteDomainName ) )
+        session.put( "lite", subdomain.startsWith( B.liteDomainPart ) )
         session.record( "lp" -> path, "lpt" -> now, "dom" -> subdomain )
         session.put( "subdomain", subdomain )
         //sess.put( "subdomain", web.req.getServerName )
@@ -241,8 +241,8 @@ class WebFilter extends TyrFilter {
       web.ctx.getRequestDispatcher( "/maintenance.html" ).forward( web.req, web.res )
       return
     } else if ( isAsset && path.matches( WebFilter.robotsPattern ) ) {
-      if ( web.req.getServerName.startsWith( B.liteDomainName ) ) {
-        web.ctx.getRequestDispatcher( "/robots_" + B.liteDomainName + ".txt" ).forward( web.req, web.res )
+      if ( web.req.getServerName.startsWith( B.liteDomainPart ) ) {
+        web.ctx.getRequestDispatcher( "/robots_" + B.liteDomainPart + ".txt" ).forward( web.req, web.res )
         return
       }
     }
