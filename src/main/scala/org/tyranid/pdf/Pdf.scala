@@ -35,7 +35,7 @@ object Pdf {
   val lock = ""
   val lock2 = ""
 
-  def urlToFile( url:String, outFile:File, enableHyperlinks:Boolean = false, username:String = null, password:String = null, usePrintMedia:Boolean = true} ) = {
+  def urlToFile( url:String, outFile:File, enableHyperlinks:Boolean = false, username:String = null, password:String = null, usePrintMedia:Boolean = false ) = {
     var doConvertApi = false
 
     // PDF Crowd API only allows one at a time
