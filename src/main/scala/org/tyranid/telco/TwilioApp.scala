@@ -18,11 +18,16 @@
 package org.tyranid.telco
 
 import scala.collection.JavaConversions._
+
+import org.tyranid.session.Session
+import org.tyranid.web.{ WebContext, Weblet }
+
 import com.twilio.sdk.{ TwilioRestClient, TwilioRestException}
 import com.twilio.sdk.resource.factory.SmsFactory
 import com.twilio.sdk.resource.instance.Sms
 import com.twilio.sdk.resource.list.SmsList
 import com.twilio.sdk.client.TwilioCapability
+
 //import java.util.HashMap;
 //import java.util.Map;
 
@@ -40,3 +45,16 @@ case class TwilioApp( sid:String, auth:String ) {
     capability.generateToken()
   }
 }
+
+object Twiliolet extends Weblet {
+
+  def handle( web:WebContext ) {
+    val s = Session()
+    val u = s.user
+
+    rpath match {
+    case _ => _404
+    }
+  }
+}
+
