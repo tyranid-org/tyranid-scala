@@ -92,9 +92,7 @@ object Twiliolet extends Weblet {
     rpath match {
     case "/start" =>
       val token = B.twilio.createConference( web.s( 'name ) )
-      
       web.jsRes( JsModel( Map( "token" -> token ) ) )
-    
     case "/app" =>
       // Direct from twilio
       
