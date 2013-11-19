@@ -102,10 +102,10 @@ object SessionCleaner {
 
     B.SessionData.db.remove(
       Mobj(
-        $or -> Mobj(
+        $or -> Mlist(
           Mobj( "lpt" -> Mobj( $lte -> cutoff ) ),
           Mobj(
-            $and -> Mobj(
+            $and -> Mlist(
               Mobj( "lpt" -> null ),
               Mobj( "lit" -> Mobj( $lte -> cutoff ) )
             )
