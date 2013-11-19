@@ -18,25 +18,88 @@
 package org.tyranid.telco
 
 import scala.collection.JavaConversions._
-import com.twilio.sdk.{ TwilioRestClient, TwilioRestException}
+
+import java.util.HashMap
+
+import org.apache.http.NameValuePair
+import org.apache.http.message.BasicNameValuePair
+
+import com.mongodb.DBObject
+
+import com.twilio.sdk.{ TwilioRestClient, TwilioRestException }
 import com.twilio.sdk.resource.factory.SmsFactory
 import com.twilio.sdk.resource.instance.Sms
 import com.twilio.sdk.resource.list.SmsList
 import com.twilio.sdk.client.TwilioCapability
-//import java.util.HashMap;
-//import java.util.Map;
+
+import org.tyranid.Imp._
+import org.tyranid.db.{ DbChar, DbDateTime }
+import org.tyranid.db.mongo._
+import org.tyranid.json.JsModel
+import org.tyranid.session.Session
+import org.tyranid.web.{ WebContext, Weblet }
+
+
+object ConferenceNumber extends MongoEntity( "a0O5" ) {
+  type RecType = ConferenceNumber
+  override def convert( obj:DBObject, parent:MongoRecord ) = new ConferenceNumber( obj, parent )
+  
+  "_id"       is DbMongoId         is 'id is 'client;
+  "number"    is DbChar(15)        is 'client;
+  "on"        is DbDateTime        ; // Date/Time it was purchased
+}
+
+class ConferenceNumber( obj:DBObject, parent:MongoRecord ) extends MongoRecord( ConferenceNumber.makeView, obj, parent ) {
+}
 
 object Twilio {
-  val baseUrl = "https://api.twilio.com/2010-04-01"
-  
+  val baseUrl = "https://api.twilio.com/2010-04-01"  
 }
 
 case class TwilioApp( sid:String, auth:String ) {
-  //val client = new TwilioRestClient( sid, auth )
+  val client = new TwilioRestClient( sid, auth )
   
-  def createConference = {
+  def createConference( name:String ) = {
     val capability = new TwilioCapability( sid, auth )
-    capability.allowClientIncoming( "someone" )
+    capability.allowClientIncoming( name )
     capability.generateToken()
   }
+  
+  def provisionNumber:String = {
+    // Build a filter for the AvailablePhoneNumberList
+    val numbers = client.getAccount().getAvailablePhoneNumbers( new HashMap[String,String](), "US", "TollFree" )
+    val list = numbers.getPageData()
+      
+    if ( list.size > 0 ) {
+      // Purchase the first number in the list.
+      val purchaseParams = new java.util.ArrayList[org.apache.http.NameValuePair]()
+      val number = list.get(0).getPhoneNumber()
+      purchaseParams.add( new BasicNameValuePair( "PhoneNumber", number ) )
+      client.getAccount().getIncomingPhoneNumberFactory().create( purchaseParams )
+      number
+    } else {
+      provisionNumber
+    }
+  }
 }
+
+object Twiliolet extends Weblet {
+
+  def handle( web:WebContext ) {
+    val s = Session()
+    val u = s.user
+
+    rpath match {
+    case "/start" =>
+      val token = B.twilio.createConference( web.s( 'name ) )
+      
+      web.jsRes( JsModel( Map( "token" -> token ) ) )
+    
+    case "/app" =>
+      // Direct from twilio
+      
+    case _ => _404
+    }
+  }
+}
+
