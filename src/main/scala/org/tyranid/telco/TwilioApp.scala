@@ -67,9 +67,13 @@ case class TwilioApp( sid:String, auth:String ) {
     capability.generateToken()
   }
 
+  /*
+   * https://www.twilio.com/docs/api/rest/available-phone-numbers
+   */
   def provisionNumber:String = {
     // Build a filter for the AvailablePhoneNumberList
-    val numbers = client.getAccount().getAvailablePhoneNumbers( new HashMap[String,String](), "US", "TollFree" )
+    val numbers = client.getAccount().getAvailablePhoneNumbers( new HashMap[String,String](), "US", "Local" )
+    //val numbers = client.getAccount().getAvailablePhoneNumbers( new HashMap[String,String](), "US", "TollFree" )
     val list = numbers.getPageData()
 
     if ( list.size > 0 ) {
