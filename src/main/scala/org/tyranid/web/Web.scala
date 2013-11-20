@@ -66,6 +66,22 @@ object WebFilter {
   val assetPattern = java.util.regex.Pattern.compile( "((([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|map|htc|vtt|odt|wav|map)))|.*robots\\.txt)$)|.*io/thumb.*|.*/sso/.*" )
   
   def notAsset( path:String ) = !assetPattern.matcher( path ).matches
+  
+  def setSessionVars( web:WebContext ) {
+    val sess = T.session
+
+    sess.record( "rh" -> web.req.getRemoteHost, 
+        "ra" -> {
+            val ra = web.req.getHeader( "X-Forwarded-For" )
+            ra.isBlank ? web.req.getRemoteAddr | ra  
+          }
+        )
+    
+    val subdomain = web.req.getServerName
+
+    sess.put( "lite", subdomain.startsWith( B.liteDomainPart ) )
+    sess.put( "subdomain", subdomain )
+  }
 }
 
 trait TyrFilter extends Filter {
@@ -98,21 +114,8 @@ trait TyrFilter extends Filter {
   
   def ensureSession( thread:ThreadData, web:WebContext ) {
     if ( thread.http == null ) {
-      thread.http = web.req.getSession( true )
-      val sess = T.session
-
-      sess.record( "rh" -> web.req.getRemoteHost, 
-          "ra" -> {
-              val ra = web.req.getHeader( "X-Forwarded-For" )
-              ra.isBlank ? web.req.getRemoteAddr | ra  
-            }
-          )
-      
-      val subdomain = web.req.getServerName
-
-      sess.put( "lite", subdomain.startsWith( B.liteDomainName ) )
-      sess.put( "subdomain", subdomain )
-      
+      thread.http = web.req.getSession( true )      
+      WebFilter.setSessionVars( web )
       LoginCookie.autoLogin          
     }
   }
@@ -227,7 +230,7 @@ class WebFilter extends TyrFilter {
         val path = web.path
         val subdomain = web.req.getServerName
 
-        session.put( "lite", subdomain.startsWith( B.liteDomainName ) )
+        session.put( "lite", subdomain.startsWith( B.liteDomainPart ) )
         session.record( "lp" -> path, "lpt" -> now, "dom" -> subdomain )
         session.put( "subdomain", subdomain )
         //sess.put( "subdomain", web.req.getServerName )
@@ -241,8 +244,8 @@ class WebFilter extends TyrFilter {
       web.ctx.getRequestDispatcher( "/maintenance.html" ).forward( web.req, web.res )
       return
     } else if ( isAsset && path.matches( WebFilter.robotsPattern ) ) {
-      if ( web.req.getServerName.startsWith( B.liteDomainName ) ) {
-        web.ctx.getRequestDispatcher( "/robots_" + B.liteDomainName + ".txt" ).forward( web.req, web.res )
+      if ( web.req.getServerName.startsWith( B.liteDomainPart ) ) {
+        web.ctx.getRequestDispatcher( "/robots_" + B.liteDomainPart + ".txt" ).forward( web.req, web.res )
         return
       }
     }

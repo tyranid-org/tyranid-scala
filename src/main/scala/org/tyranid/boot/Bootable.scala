@@ -52,6 +52,7 @@ import org.tyranid.social.basecamp.BcApp
 import org.tyranid.social.facebook.FbApp
 import org.tyranid.social.google.GoApp
 import org.tyranid.social.linkedin.LiApp
+import org.tyranid.telco.TwilioApp
 import org.tyranid.web.{ Weblet, Webloc, WebPath, CometService, WebContext }
 
 object Boot {
@@ -109,13 +110,21 @@ trait Bootable {
 
   val liteAppName = "Revu.Me"
   
-  val liteDomainName = "revu"
+  val liteDomainPart = "revu"
+  val liteDomainName = "revu.me"
     
   def fullDomain = { 
     if ( DEV )        "rb-dev." + domain
     else if ( STAGE ) "rb-stage." + domain
     else if ( BETA )  "rb-beta." + domain
     else              "rb." + domain
+  }
+  
+  def liteFullDomain = { 
+    if ( DEV )        liteDomainPart + "-dev." + domain
+    else if ( STAGE ) liteDomainPart + "-stage." + domain
+    else if ( BETA )  liteDomainPart + "-beta." + domain
+    else              liteDomainPart + "." + domain
   }
     
   def port = 
@@ -275,6 +284,8 @@ trait Bootable {
   val google:GoApp        = null
   val twitter:TwApp       = null
 
+  val twilio:TwilioApp    = null
+  
   val basecamp:BcApp      = null
   
   // Document services

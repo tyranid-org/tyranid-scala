@@ -38,7 +38,7 @@ import org.tyranid.io.{ File => TFile }
 import org.tyranid.json.{ Js, Json, JqHtml }
 import org.tyranid.profile.{ Org, User, Group, Tag }
 import org.tyranid.ui.Focus
-import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
+import org.tyranid.web.{ Weblet, WebContext, WebTemplate, WebFilter }
 
 // US BANK ERROR MESSAGE:
 //   "errorMessage" : "Your Reserve Marketplace account has been deactivated for security reasons after inactivity over 90 days.\n\nTo reactivate your account, please contact The Resolution Center.\n\nEmail Address: resolution.center@usbank.com\nInternal Employee Phone: 651-466-7103\nStandard Hours:  Mon-Fri 1:00 am CT - 7:00 pm CT\n"
@@ -104,7 +104,7 @@ object Ssolet extends Weblet {
     val thread = T
     thread.http = web.req.getSession( true )
     thread.web = web
-       
+    WebFilter.setSessionVars( web )
     thread.session.login( user, sso = sso )
   }
   

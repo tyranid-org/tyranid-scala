@@ -18,13 +18,9 @@
 package org.tyranid.document.crocodoc
 
 import scala.collection.mutable
-
 import scala.xml.{ Unparsed, NodeSeq }
-
 import java.io.{ File, FileOutputStream, FileInputStream }
-
 import com.mongodb.DBObject
-
 import org.tyranid.Imp._
 import org.tyranid.app.AppStat
 import org.tyranid.db.mongo.Imp._
@@ -36,6 +32,7 @@ import org.tyranid.document.DocApp
 import org.tyranid.time.Time
 import org.tyranid.ui.Form
 import org.tyranid.web.{ Weblet, WebContext }
+import java.io.BufferedOutputStream
 
 object Crocodoc {
   val code = "croc"
