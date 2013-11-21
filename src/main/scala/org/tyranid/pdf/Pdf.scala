@@ -237,9 +237,14 @@ object Pdf {
               val convertedFile = S3.getFile( bucket, outPath, ".pdf" )
               B.docPreviewApp.upload( convertedFile, convertedFile.length, convertedFile.getName, content )
 
+              //if ( content.obj.containsField( "parentFolder" ))
+              //val parentFolderStr = content.s( 'parentFolder )
+              // Keep the PDF around in case we need it later
+              S3.move( bucket, outPath, B.filesBucket, content.s( 'parentFolder ) + "/" + content.id._s + ".pdf" )
+              
               // Remove it from input and output buckets
-              val outFiles = S3.getFilenames( bucket, prefix = "Out/" + content.id._s )
-              S3.deleteAll( bucket, outFiles )
+              S3.deleteAll( bucket, S3.getFilenames( bucket, prefix = "Out/" + content.id._s ) )
+              
               //S3.delete( bucket, "In/" + content.id._s + "." + ext )
 
               // Update the content to let us know it was converted
