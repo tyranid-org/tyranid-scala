@@ -456,9 +456,16 @@ object GroupCapacity extends MongoEntity( tid = "a1Av" ) {
     "cap"            is DbDouble          as "Capacity" is 'client;                  
   }
 
-  def forGroupTid( tid:String, user:User, date:Date ) =
+  def forGroupUser( tid:String, user:User, date:Date ) =
     GroupCapacity( GroupCapacity.db.findOrMake( Mobj( 
         "u" -> user.id , 
+        "g" -> Group.tidToId( tid ),
+        "start" -> Mobj( $gte -> date ),
+        "end" -> Mobj( $lt -> date )        
+    ) ) )
+    
+  def forGroup( tid:String, date:Date ) =
+    GroupCapacity( GroupCapacity.db.findOrMake( Mobj( 
         "g" -> Group.tidToId( tid ),
         "start" -> Mobj( $gte -> date ),
         "end" -> Mobj( $lt -> date )        
