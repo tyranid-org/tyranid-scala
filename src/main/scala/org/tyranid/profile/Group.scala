@@ -24,6 +24,7 @@ import scala.collection.mutable.Buffer
 import scala.xml.{ NodeSeq, Text, Unparsed }
 
 import java.io.File
+import java.util.Date
 
 import org.bson.types.ObjectId
 
@@ -31,7 +32,7 @@ import com.mongodb.DBObject
 
 import org.tyranid.Imp._
 import org.tyranid.content.{ ContentMeta, Content, ContentEdit, ContentType }
-import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbInt, DbLong, DbLink, DbTid, DbUrl, Entity, Record, Scope }
+import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDate, DbDouble, DbInt, DbLong, DbLink, DbTid, DbUrl, Entity, Record, Scope }
 import org.tyranid.db.meta.{ Tid, TidItem }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
@@ -437,6 +438,42 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   }  
 }
 
+object GroupCapacity extends MongoEntity( tid = "a1Av" ) {
+  type RecType = GroupCapacity
+  override def convert( obj:DBObject, parent:MongoRecord ) = new GroupCapacity( obj, parent )
+
+  override def init {
+    super.init
+
+    "_id"            is DbMongoId         is 'id is 'client;
+  
+    "u"              is DbLink(B.User)    as "User" is 'client;
+    "g"              is DbLink(Group)     as "Group" is 'client;
+  
+    "start"          is DbDate            as "Start" is 'client;
+    "end"            is DbDate            as "End" is 'client;
+    
+    "cap"            is DbDouble          as "Capacity" is 'client;                  
+  }
+
+  def forGroupTid( tid:String, user:User, date:Date ) =
+    GroupCapacity( GroupCapacity.db.findOrMake( Mobj( 
+        "u" -> user.id , 
+        "g" -> Group.tidToId( tid ),
+        "start" -> Mobj( $gte -> date ),
+        "end" -> Mobj( $lt -> date )        
+    ) ) )
+    
+  val index = {
+    db.ensureIndex( Mobj( "g" -> 1, "u" -> 1, "start" -> 1, "end" -> 1 ) )
+    db.ensureIndex( Mobj( "u" -> 1, "g" -> 1, "start" -> 1, "end" -> 1  ) )
+  }    
+}
+
+class GroupCapacity( obj:DBObject, parent:MongoRecord ) extends MongoRecord( GroupCapacity.makeView, obj, parent ) {
+}
+
+  
 /*
  * * *  Group Settings
  */
@@ -448,14 +485,16 @@ object GroupSettings extends MongoEntity( tid = "a0Rt" ) {
   override def init {
     super.init
 
-  "_id"            is DbMongoId                              is 'id is 'client;
-
-  "u"              is DbLink(B.User)                         as "User";
-  "g"              is DbLink(Group)                          as "Group" is 'client;
-
-  "order"          is DbArray(DbTid( B.ContentEntities:_* )) as "Ordering";
+    "_id"            is DbMongoId                              is 'id is 'client;
   
-  "flags"          is DbLong                                 as "Flags" is 'client;
+    "u"              is DbLink(B.User)                         as "User";
+    "g"              is DbLink(Group)                          as "Group" is 'client;
+  
+    "order"          is DbArray(DbTid( B.ContentEntities:_* )) as "Ordering";
+    
+    "flags"          is DbLong                                 as "Flags" is 'client;
+    
+    "cap"            is DbDouble                               as "Capacity"                  
   }
 
   db.ensureIndex( Mobj( "g" -> 1, "u" -> 1 ) )
