@@ -456,20 +456,20 @@ object GroupCapacity extends MongoEntity( tid = "a1Av" ) {
     "cap"            is DbDouble          as "Capacity" is 'client;                  
   }
 
-  def forGroupUser( tid:String, user:User, date:Date ) =
-    GroupCapacity( GroupCapacity.db.findOrMake( Mobj( 
-        "u" -> user.id , 
-        "g" -> Group.tidToId( tid ),
+  def forGroupUsers( tid:String, userTids:Seq[String], date:Date ) = {
+    GroupCapacity.db.find( Mobj( 
+        "g" -> Group.tidToId( tid ), 
+        "u" -> Mobj( $in -> userTids.map( B.User.tidToId ).toMlist ), 
         "start" -> Mobj( $gte -> date ),
         "end" -> Mobj( $lt -> date )        
-    ) ) )
-    
-  def forGroup( tid:String, date:Date ) =
-    GroupCapacity( GroupCapacity.db.findOrMake( Mobj( 
-        "g" -> Group.tidToId( tid ),
-        "start" -> Mobj( $gte -> date ),
-        "end" -> Mobj( $lt -> date )        
-    ) ) )
+    ) ).toSeq.map( gc => Map(
+        "u" -> B.User.idToTid( gc.oid( 'u ) ),
+        "cap" -> gc.d( 'cap ),
+        "start" -> gc.t( 'start ),
+        "end" -> gc.t( 'end ),
+        "def" -> GroupSettings.forGroupUserId( tid, gc.oid( 'u ) ).d( 'cap )
+        ) )
+  }
     
   val index = {
     db.ensureIndex( Mobj( "g" -> 1, "u" -> 1, "start" -> 1, "end" -> 1 ) )
@@ -509,6 +509,9 @@ object GroupSettings extends MongoEntity( tid = "a0Rt" ) {
   val FLAG_VISITED          = 1
   val FLAG_HIDDEN_COMMENTS  = 2
   
+  def forGroupUserId( tid:String, userId:ObjectId ) = 
+    GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> userId , "g" -> Group.tidToId( tid ) ) ) )
+    
   def forGroupTid( tid:String, user:User ) = 
     GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> user.id , "g" -> Group.tidToId( tid ) ) ) )
     
