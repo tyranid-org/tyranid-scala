@@ -17,6 +17,8 @@
 
 package org.tyranid.collection
 
+import com.mongodb.BasicDBList
+
 
 class ArrayImp[A]( array:Array[A] ) {
 
@@ -53,5 +55,16 @@ class ArrayImp[A]( array:Array[A] ) {
     array.find( obj => cls.isAssignableFrom( obj.getClass ) ).map( _.asInstanceOf[B] )
   }
 
+  def toMlist:BasicDBList =
+    if ( array == null ) {
+      null
+    } else {
+      val list = new BasicDBList
+
+      for ( v <- array )
+        list.add( v.asInstanceOf[AnyRef] )
+
+      list
+    }
 }
 

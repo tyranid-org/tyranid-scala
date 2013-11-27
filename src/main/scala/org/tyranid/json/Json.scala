@@ -22,7 +22,7 @@ import scala.collection.mutable
 import scala.xml.NodeSeq
 
 import org.bson.types.ObjectId
-import com.mongodb.BasicDBList
+import com.mongodb.{ BasicDBList, DBObject }
 
 import org.codehaus.jackson.map.ObjectMapper
 import org.codehaus.jackson.{ JsonNode, JsonFactory, JsonParser }
@@ -388,7 +388,7 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
 
       sb += '}'
 
-    case o:collection.Map[_,_]          =>
+    case o:collection.Map[_,_] =>
       sb += '{'
       var first = true
       for ( e <- o ) {
@@ -403,6 +403,25 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
         }
       }
       sb += '}'
+        
+    case o:java.util.LinkedHashMap[_,_] =>
+      sb += '{'
+      var first = true
+      for ( e <- o ) {
+        if ( e._2 != null ) {
+          if ( first )
+            first = false
+          else
+            sb += ','
+          write( e._1 )
+          sb += ':'
+          write( e._2 )
+        }
+      }
+      sb += '}'
+        
+    case o:DBObject =>
+      write( o.toMap )
         
     case b:java.lang.Boolean  => sb ++= b.toString
     case d:java.lang.Double   => sb ++= d.toString
