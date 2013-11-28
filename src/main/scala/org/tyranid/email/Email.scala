@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -46,7 +46,7 @@ object EmailConfig extends MongoEntity( tid = "a0At" ) {
   "pollHost"     is DbChar(40);
   "pollUser"     is DbEmail;
   "pollPassword" is DbPassword;
-  
+
   override lazy val dbName = name
 }
 
@@ -56,6 +56,7 @@ object Email {
 
   private val wellKnownProviders = Array(
     "@aol.com",
+    "@earthlink.net",
     "@fastmail.fm",
     "@gmail.com",
     "@hotmail.com",
@@ -126,17 +127,17 @@ object Email {
   def isBlacklisted( email:String ) = {
     val uc = B.User.db.find( Mobj( "email" -> email.toPatternI ), Mobj( "noEmail" -> 1 ) ).limit(1)
     val u = uc.hasNext ? uc.next | null
-    
+
     ( u == null ) ? false | u.b( 'noEmail )
   }
 
   def blacklist( email:String ) {
-    B.User.db.update( Mobj( "email" -> email.toPatternI ), Mobj( $set -> Mobj( "noEmail" -> true ) ), false, true )  
+    B.User.db.update( Mobj( "email" -> email.toPatternI ), Mobj( $set -> Mobj( "noEmail" -> true ) ), false, true )
   }
-  
+
   def isValid( email:String ) = {
     var result = true
-   
+
     try {
       val emailAddr = new InternetAddress( email )
       emailAddr.validate()
@@ -144,19 +145,19 @@ object Email {
       case e:Throwable =>
         result = false
     }
-    
-    result  
+
+    result
   }
-  
+
   def isWellKnownProvider( email:String ) =
     wellKnownProviders exists email.toLowerCase.contains
-  
+
   def domainFor( email:String ) =
     email.indexOf( '@' ) match {
     case -1 => ""
     case n  => email.substring( n + 1 ).trim.toLowerCase
     }
-    
+
   def domainPart( email:String ) =
     try {
       val emailParser = """([\w\d\+\-\_\.]+)(\+\d+)?@([\w\d\-]+)([\w\d\.])+""".r
@@ -172,8 +173,8 @@ object Email {
     if ( displayName.notBlank ) {
       try {
         return new InternetAddress( emailAddress, displayName )
-      } catch { 
-        case uee:UnsupportedEncodingException => 
+      } catch {
+        case uee:UnsupportedEncodingException =>
       }
     }
 
@@ -221,21 +222,21 @@ trait Email {
   var defaultFrom:Boolean = false;
 
   def addTo( emailAddress:String )  = {
-    if ( emailAddress.notBlank ) 
+    if ( emailAddress.notBlank )
       add( Message.RecipientType.TO, emailAddress.split( "," ) : _* )
-    else 
+    else
       this
   }
 
   def addCc( emailAddress:String ):Email = {
-    if ( emailAddress.notBlank ) 
+    if ( emailAddress.notBlank )
       return add( Message.RecipientType.CC, emailAddress.split( "," ) : _* )
 
     this
   }
 
   def addBcc( emailAddress:String ):Email = {
-    if ( emailAddress.notBlank ) 
+    if ( emailAddress.notBlank )
       return add( Message.RecipientType.BCC, emailAddress.split( "," ) : _* )
 
     this
@@ -246,8 +247,8 @@ trait Email {
       for ( emailAddress <- emailAddresses ) {
         try {
           add( recipientType, Email.getInetAddress( emailAddress ) )
-        } catch { 
-          case e:AddressException => 
+        } catch {
+          case e:AddressException =>
             e.log
         }
       }
@@ -259,10 +260,10 @@ trait Email {
   private def add( recipientType:Message.RecipientType, inetAddress:InternetAddress ) : Unit = {
     recipientType match {
       case Message.RecipientType.TO => primaryRecipients += inetAddress
-      case Message.RecipientType.CC => 
-        if ( ccRecipients == null ) ccRecipients = ArrayBuffer[InternetAddress]()      
+      case Message.RecipientType.CC =>
+        if ( ccRecipients == null ) ccRecipients = ArrayBuffer[InternetAddress]()
         ccRecipients += inetAddress
-      case Message.RecipientType.BCC => 
+      case Message.RecipientType.BCC =>
         if ( bccRecipients == null ) bccRecipients = ArrayBuffer[InternetAddress]()
         bccRecipients += inetAddress
     }
@@ -272,31 +273,31 @@ trait Email {
     if ( _replyToEmailAddress.notBlank )
       try {
         replyTo = Email.getInetAddress( _replyToEmailAddress )
-      } catch { 
-        case ae:AddressException => 
+      } catch {
+        case ae:AddressException =>
       }
-    
+
     this
   }
 
   def from(_fromEmailAddress:String):Email = {
     try {
       from = Email.getInetAddress( _fromEmailAddress )
-    } catch { 
-      case ae:AddressException => 
+    } catch {
+      case ae:AddressException =>
     }
-    
+
     this
   }
 
   def addAttachment( _attachment:File ) = {
     if ( _attachment != null ) {
-      if (attachments == null) 
+      if (attachments == null)
         attachments = ArrayBuffer[File]()
-  
+
       attachments += _attachment
     }
-    
+
     this
   }
 
@@ -307,7 +308,7 @@ trait Email {
 
 case class JavaEmail( subject:String, text:String, html:String=null ) extends Email {
   private var emailSession:Session = null
-  
+
   var message:MimeMessage = null
 
   def getMimeMessage = message
@@ -315,21 +316,21 @@ case class JavaEmail( subject:String, text:String, html:String=null ) extends Em
   @throws(classOf[MessagingException])
   def send:Email = {
     if ( T.session != null && T.session.isAllowingEmail ) return this
-    
+
     compose
-    
+
     if ( Email.enabled )
       Transport.send(message)
-    
+
     this
   }
 
   @throws(classOf[MessagingException])
   def compose:Email = {
-    //if (defaultFrom) 
+    //if (defaultFrom)
     //  sender( Configs.getDefaultMailFrom() )
 
-    if ( from == null ) 
+    if ( from == null )
       throw new MessagingException( "A from must be set on this email message!" )
 
     if ( message == null ) {
@@ -338,47 +339,47 @@ case class JavaEmail( subject:String, text:String, html:String=null ) extends Em
     }
 
     message.setFrom( from )
-    
-    if ( replyTo != null && replyTo != from ) 
+
+    if ( replyTo != null && replyTo != from )
       message.setReplyTo( Array[Address]( replyTo ) )
-    
-    if ( primaryRecipients == null ) 
+
+    if ( primaryRecipients == null )
       throw new MessagingException("The primary recipients must be set on this email message.")
 
     message.addRecipients( Message.RecipientType.TO, primaryRecipients.toArray[Address] )
 
-    if ( ccRecipients != null ) 
+    if ( ccRecipients != null )
       message.addRecipients( Message.RecipientType.CC, ccRecipients.toArray[Address] )
 
-    if ( bccRecipients != null ) 
+    if ( bccRecipients != null )
       message.addRecipients( Message.RecipientType.BCC, bccRecipients.toArray[Address] )
 
-    if ( sendDate == null ) 
+    if ( sendDate == null )
       sendDate = new Date()
 
     message.setSentDate( sendDate )
-    
-    if ( subject.notBlank ) 
+
+    if ( subject.notBlank )
       message.setSubject( subject )
 
     var multipart:Multipart = null
-    
+
     if ( html.notBlank ) {
       multipart = new MimeMultipart( "mixed" )
-      
+
       if ( text.notBlank ) {
         val plainMessageBodyPart = new MimeBodyPart()
         plainMessageBodyPart.setContent( text, "text/plain" )
         multipart.addBodyPart( plainMessageBodyPart )
       }
-      
+
       val htmlMessageBodyPart = new MimeBodyPart()
       htmlMessageBodyPart.setContent( html, "text/html" )
       multipart.addBodyPart( htmlMessageBodyPart )
     } else {
       message.setText( text )
     }
-    
+
     if ( attachments != null && attachments.length > 0 ) {
       if ( multipart == null )
         multipart = new MimeMultipart()
@@ -390,7 +391,7 @@ case class JavaEmail( subject:String, text:String, html:String=null ) extends Em
         messageBodyPart.setFileName( attachment.getName() )
         val contentType:String = guessContentType( attachment )
 
-        if ( contentType != null ) 
+        if ( contentType != null )
           messageBodyPart.setHeader( "Content-Type", contentType )
 
         multipart.addBodyPart(messageBodyPart)
@@ -398,58 +399,58 @@ case class JavaEmail( subject:String, text:String, html:String=null ) extends Em
 
       message.setContent( multipart )
     }
-    
+
     this
   }
 
   private def getMailSession:Session  = {
     if ( emailSession == null ) {
       val emailConfig = EmailConfig.db.findOne()
-      
+
       if ( emailConfig == null )
         throw new RuntimeException( "Email failed because there is no emailConfig is available." );
-        
+
       val host = emailConfig.s( 'host )
-      
+
       if ( host.isBlank )
         throw new RuntimeException( "WARNING: host not set in emailConfig.  Sending of mail failed!" );
 
       val props:Properties = System.getProperties()
       props.put( "mail.smtp.host", host )
-      
+
       val port = emailConfig.i( 'port )
-      
+
       if ( port != 0 )
           props.put( "mail.smtp.port", port._s )
-            
+
       val tls = emailConfig.b( 'tls )
-      
+
       if ( tls )
           props.put( "mail.smtp.starttls.enable", "true" );
-      
+
       val ssl = emailConfig.b( 'ssl )
-      
+
       if ( ssl ) {
           props.put( "mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory" );
           props.put( "mail.smtp.socketFactory.fallback", "false" );
       }
-          
+
 //    props.put( "mail.smtp.debug", "true" );
-            
+
       val authUser = emailConfig.s( 'authUser )
       val authPassword = emailConfig.s( 'authPassword )
-      
+
       if ( authUser notBlank ) {
         props.put( "mail.smtp.auth", "true" );
         props.put( "mail.smtp.user", authUser );
         props.put( "mail.smtp.password", authPassword );
-        
+
         emailSession = Session.getInstance( props, EmailAuth( user = authUser, password = authPassword ) );
       } else {
         emailSession = Session.getInstance( props, null );
       }
     }
-    
+
     return emailSession;
   }
 }
@@ -465,10 +466,10 @@ Security.addProvider( new com.sun.net.ssl.internal.ssl.Provider() );
 
 
   mail.<protocol>.socketFactory.class
-  mail.<protocol>.socketFactory.fallback 
+  mail.<protocol>.socketFactory.fallback
   mail.<protocol>.socketFactory.port
   mail.<protocol>.timeout
-  
+
  final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
   Properties props = System.getProperties();
   // IMAP provider
