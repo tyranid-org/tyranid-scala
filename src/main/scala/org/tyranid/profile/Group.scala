@@ -456,19 +456,21 @@ object GroupCapacity extends MongoEntity( tid = "a1Av" ) {
     "cap"            is DbDouble          as "Capacity" is 'client;                  
   }
 
-  def forGroupUsers( tid:String, userTids:Seq[String], date:Date ) = {
+  // TODO:  Move def out of this
+  def forGroupUsers( tid:String, userTids:Seq[String], startDate:Date, endDate:Date ) = {
     GroupCapacity.db.find( Mobj( 
         "g" -> Group.tidToId( tid ), 
         "u" -> Mobj( $in -> userTids.map( B.User.tidToId ).toMlist ), 
-        "start" -> Mobj( $gte -> date ),
-        "end" -> Mobj( $lt -> date )        
-    ) ).toSeq.map( gc => Map(
-        "u" -> B.User.idToTid( gc.oid( 'u ) ),
-        "cap" -> gc.d( 'cap ),
-        "start" -> gc.t( 'start ),
-        "end" -> gc.t( 'end ),
-        "def" -> GroupSettings.forGroupUserId( tid, gc.oid( 'u ) ).d( 'cap )
-        ) )
+        "start" -> Mobj( $gte -> startDate ),
+        "end" -> Mobj( $lte -> endDate )        
+    ) ).toSeq.map( gc => 
+        Map(
+          "u" -> B.User.idToTid( gc.oid( 'u ) ),
+          "cap" -> gc.d( 'cap ),
+          "start" -> gc.t( 'start ).getTime(),
+          "end" -> gc.t( 'end ).getTime()
+          ) 
+       )
   }
     
   val index = {
@@ -510,10 +512,35 @@ object GroupSettings extends MongoEntity( tid = "a0Rt" ) {
   val FLAG_HIDDEN_COMMENTS  = 2
   
   def forGroupUserId( tid:String, userId:ObjectId ) = 
-    GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> userId , "g" -> Group.tidToId( tid ) ) ) )
+    GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> userId, "g" -> Group.tidToId( tid ) ) ) )
+  
+  def capsForGroupUsers( tid:String, userTids:Seq[String], defCap:Double ) = {
+    val settings = GroupSettings.db.find( Mobj( 
+        "g" -> Group.tidToId( tid ), 
+        "u" -> Mobj( $in -> userTids.map( B.User.tidToId ).toMlist ) 
+    ) ).toSeq.map( gc => 
+        Map(
+          "u" -> B.User.idToTid( gc.oid( 'u ) ),
+          "cap" -> gc.d( 'cap )
+          ) 
+       )
+   
+    val allSettings = mutable.Set[Map[String,Any]]()
     
-  def forGroupTid( tid:String, user:User ) = 
-    GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> user.id , "g" -> Group.tidToId( tid ) ) ) )
+    userTids.foreach( u => {
+      val found = settings.find( o => o.s( 'u ) == u )
+     
+      if ( found == None ) {
+        allSettings += Map( "u" -> u, "cap" -> defCap )
+      } else {
+        allSettings += found.get
+      }
+    } )
+   
+    allSettings.toSeq
+  }
+    
+  def forGroupTid( tid:String, user:User ) = forGroupUserId( tid, user.id._oid )
     
   val index = {
     db.ensureIndex( Mobj( "u" -> 1, "g" -> 1 ) )
