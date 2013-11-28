@@ -933,6 +933,7 @@ trait ContentMeta extends PrivateKeyEntity {
   
   "estVal"            is DbDouble             is 'client; // Estimated amount (hrs/money,etc)  
   "actVal"            is DbDouble             is 'client; // Actual amount (hrs/money,etc)
+  "actPerOver"        is DbDouble             is 'client; // Actual percentage override 
   }
 
   override def searchText = true
