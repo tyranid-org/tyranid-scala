@@ -40,24 +40,31 @@ import org.tyranid.json.JsModel
 import org.tyranid.session.Session
 import org.tyranid.web.{ WebContext, Weblet }
 
-
-object ConferenceNumber extends MongoEntity( "a0O5" ) {
-  type RecType = ConferenceNumber
-  override def convert( obj:DBObject, parent:MongoRecord ) = new ConferenceNumber( obj, parent )
-
-  "_id"       is DbMongoId         is 'id is 'client;
-  "number"    is DbChar(15)        is 'client;
-  "on"        is DbDateTime        ; // Date/Time it was purchased
-}
-
-class ConferenceNumber( obj:DBObject, parent:MongoRecord ) extends MongoRecord( ConferenceNumber.makeView, obj, parent ) {
-}
-
-object Twilio {
+object TurboBridge {
   val baseUrl = "https://api.twilio.com/2010-04-01"
 }
 
-case class TwilioApp( sid:String, auth:String ) {
+case class TurboBridgeApp( account:Int, email:String, password:String ) {
+  val authMap = Map( "authAccount" -> 
+                      Map( "email" -> email, "password" -> password, "accountID" -> account )
+                   )
+  val basicRequest = Map( "request" -> authMap,
+                          "outputFormat" -> "json",
+                          "requestList" -> Map(
+                            "getBridges" -> Map(
+                              "accountID" -> account 
+                            )
+                          )
+                        )  
+  val basicReqParams = Map(
+      "outputFormat" -> "json",
+      "authPartnerUsername" -> email,
+      "authPartnerPassword" -> password,
+      "requestType" -> "getBridges",
+      "partnerID" -> "",
+      "accountID" -> account._s
+      )
+                            
   /*
   val client = new TwilioRestClient( sid, auth )
 
@@ -90,7 +97,7 @@ case class TwilioApp( sid:String, auth:String ) {
   */
 }
 
-object Twiliolet extends Weblet {
+object TurboBridgelet extends Weblet {
 
   def handle( web:WebContext ) {
     val s = Session()

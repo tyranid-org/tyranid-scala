@@ -1482,7 +1482,7 @@ abstract class Content( override val view:MongoView,
     T.permissionCache.getOrElseUpdate(
       this.tid + '|' + tid,
       tid.nonBlank &&
-      a_?( 'v ).exists( t =>
+      a_?( 'v ).exists( t => 
         t == tid || t == B.publicGroup.tid || { //  ( B.User.hasTid( tid ) && t == B.publicGroup.tid ) || {
           val ot = t._s
        
