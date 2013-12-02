@@ -37,13 +37,13 @@ private final class JsonDecoder( text:String ) {
 	private def decode:Any	= {
 		val value	= decodeNext
 		ws
-		if (!eof)	expected("end of input")
+		if (!eof)	expected( "end of input" )
 		value
 	}
 
 	private def decodeNext:Any = {
 		ws
-		if ( eof)		         expected("any char")
+		if ( eof )		       expected( "any char" )
 		if ( is( "null" ) )	 return null
 		if ( is( "true" ) )	 return true
 		if ( is( "false" ) ) return false
@@ -87,7 +87,7 @@ private final class JsonDecoder( text:String ) {
           }
 
 				ws
-				if ( !is( ':' ) )	expectedClass(":")
+				if ( !is( ':' ) )	expectedClass( ":" )
 				out( key ) = decodeNext
 				ws
 				if ( is( '}' ) )	return out.result
@@ -116,7 +116,7 @@ private final class JsonDecoder( text:String ) {
             case NO_CHAR => expected( "4 hex digits" )
             case h       => out	+= h.toChar
             }
-          case _                => offset -= 1; expectedClass("\"\\/trnfbu")
+          case _                => offset -= 1; expectedClass( "\"\\/trnfbu" )
 					}
 				} else if ( is( sep ) ) {
 					return out.result

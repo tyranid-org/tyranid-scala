@@ -537,7 +537,7 @@ object Tidlet extends Weblet {
           v.safeString.notBlank |*
           <div style={ divStyle }>
            <label for={ id } style="float:left;">{ path.label }</label>
-           <span id={ id } style="display:block; margin-left:400px;">{ val ns = PathField( pv.path ).cell( scope ); if ( ns == NodeSeq.Empty ) Unparsed("&nbsp;") else ns }</span>
+           <span id={ id } style="display:block; margin-left:400px;">{ val ns = PathField( pv.path ).cell( scope ); if ( ns == NodeSeq.Empty ) Unparsed("<i>blank value</i>") else ns }</span>
           </div>
         }
       }
