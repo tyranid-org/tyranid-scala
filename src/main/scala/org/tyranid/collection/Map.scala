@@ -90,9 +90,28 @@ class ObjectMapImp[A]( map:scala.collection.Map[String,Any] ) {
     }
 
   def toDBObject =
-    if ( map == null )
+    if ( map == null ) {
       null
-    else
-      new com.mongodb.BasicDBObject( map )
+    } else {
+      // this doesn't work because it doesn't convert nested arrays (and other thing?) properly
+      //new com.mongodb.BasicDBObject( map )
+
+      val dbobj = new com.mongodb.BasicDBObject()
+
+      for ( entry <- map;
+            key   = entry._1;
+            value = entry._2 ) {
+
+        value match {
+        case arr:Array[_] =>
+          dbobj.append( key, arr.toMlist )
+
+        case _ =>
+          dbobj.append( key, value )
+        }
+      }
+
+      dbobj
+    }
 }
 

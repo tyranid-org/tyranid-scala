@@ -34,7 +34,7 @@ import org.tyranid.db.tuple.{ Tuple, TupleView }
 import org.tyranid.email.AWSEmail
 import org.tyranid.http.UserAgent
 import org.tyranid.json.JqHtml
-import org.tyranid.net.DnsDomain
+import org.tyranid.net.{ DnsDomain, Ip }
 import org.tyranid.report.{ Query, Run, Sort }
 import org.tyranid.ui.{ CustomField, PathField, Search }
 import org.tyranid.web.{ Comet, Weblet, WebContext }
@@ -49,36 +49,36 @@ object Event extends RamEntity( tid = "a0It" ) {
 
   override val addNames = Seq( "_id", "name" )
 
-  val Access       = add(  1, "Access"     )
-  val StackTrace   = add(  2, "StackTrace" )
-  val LinkedIn     = add(  3, "LinkedIn"   )
-  val Error404     = add(  4, "404"        )
-  val Scraper      = add(  5, "Scraper"    )
-  val Import       = add(  6, "Import"     )
-  val Facebook     = add(  7, "Facebook"   )
-  val SmsOut       = add(  8, "SMS-Out"    )
-  val SmsIn        = add( 10, "SMS-In"     )
-  val Scheduler    = add( 11, "Scheduler"  )
-  val Converter    = add( 12, "Converter"  )
-  val Noaa         = add( 13, "NOAA"       )
-  val Eof          = add( 14, "EOF"        )
-  val Google       = add( 15, "Google"     )
-  val RefInt       = add( 16, "RefInt"     ) // referential integrity violation
-  val Alert        = add( 17, "Alert"      )
-  val Crocodoc     = add( 18, "Crocodoc"   )
-  val Scribd       = add( 19, "Scribd"     )
-  val Issuu        = add( 20, "Issuu"      )
-  val License      = add( 21, "License"    )
-  val Search       = add( 22, "Search"     )
-  val Payment      = add( 23, "Payment"    )
-  val Zencoder     = add( 24, "Zencoder"   )
-  val Transcoder   = add( 25, "Transcoder" )
-  val NewInvite    = add( 26, "NewInvite"  )
-  val Login        = add( 27, "Login"      )
+  val Access       = add(  1, "Access"       )
+  val StackTrace   = add(  2, "StackTrace"   )
+  val LinkedIn     = add(  3, "LinkedIn"     )
+  val Error404     = add(  4, "404"          )
+  val Scraper      = add(  5, "Scraper"      )
+  val Import       = add(  6, "Import"       )
+  val Facebook     = add(  7, "Facebook"     )
+  val SmsOut       = add(  8, "SMS-Out"      )
+  val SmsIn        = add( 10, "SMS-In"       )
+  val Scheduler    = add( 11, "Scheduler"    )
+  val Converter    = add( 12, "Converter"    )
+  val Noaa         = add( 13, "NOAA"         )
+  val Eof          = add( 14, "EOF"          )
+  val Google       = add( 15, "Google"       )
+  val RefInt       = add( 16, "RefInt"       ) // referential integrity violation
+  val Alert        = add( 17, "Alert"        )
+  val Crocodoc     = add( 18, "Crocodoc"     )
+  val Scribd       = add( 19, "Scribd"       )
+  val Issuu        = add( 20, "Issuu"        )
+  val License      = add( 21, "License"      )
+  val Search       = add( 22, "Search"       )
+  val Payment      = add( 23, "Payment"      )
+  val Zencoder     = add( 24, "Zencoder"     )
+  val Transcoder   = add( 25, "Transcoder"   )
+  val NewInvite    = add( 26, "NewInvite"    )
+  val Login        = add( 27, "Login"        )
   val EmailChange  = add( 28, "Email Change" )
-  val Export       = add( 29, "Export"     )
-  val LoginAs      = add( 30, "Login As"   )
-  val Subscription = add( 31, "Subscription"   )
+  val Export       = add( 29, "Export"       )
+  val LoginAs      = add( 30, "Login As"     )
+  val Subscription = add( 31, "Subscription" )
 }
 
 case class Event( override val view:TupleView ) extends Tuple( view ) {
@@ -102,6 +102,7 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
   "ip"       is DbChar(32)        as "IP";
   "p"        is DbChar(128)       as "Path";
   "bid"      is DbChar(10)        as "Browser ID";
+  "sv"       is DbChar(32)        as "Server ID";
 
   override def init = {
     super.init
@@ -176,6 +177,9 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
 
     if ( !l.has( 'ip ) )
       l( 'ip ) = thread.ip
+
+    if ( !l.has( 'sv ) )
+      l( 'sv ) = Ip.Host.toString
 
     val effEvent =
       event match {
@@ -318,6 +322,7 @@ object LogQuery extends Query {
     },
     PathField( "d",   search = Search.Equals ),
     PathField( "ip",  search = Search.Subst ),
+    PathField( "sv",  search = Search.Subst ),
     PathField( "ex",  search = Search.Subst ),
     PathField( "ct",  search = Search.Gte ),
     PathField( "du",  search = Search.Gte ),

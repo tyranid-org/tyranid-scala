@@ -41,18 +41,6 @@ import org.tyranid.session.Session
 import org.tyranid.web.{ WebContext, Weblet }
 
 
-object ConferenceNumber extends MongoEntity( "a0O5" ) {
-  type RecType = ConferenceNumber
-  override def convert( obj:DBObject, parent:MongoRecord ) = new ConferenceNumber( obj, parent )
-
-  "_id"       is DbMongoId         is 'id is 'client;
-  "number"    is DbChar(15)        is 'client;
-  "on"        is DbDateTime        ; // Date/Time it was purchased
-}
-
-class ConferenceNumber( obj:DBObject, parent:MongoRecord ) extends MongoRecord( ConferenceNumber.makeView, obj, parent ) {
-}
-
 object Twilio {
   val baseUrl = "https://api.twilio.com/2010-04-01"
 }
