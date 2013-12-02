@@ -25,76 +25,71 @@ import org.apache.http.NameValuePair
 import org.apache.http.message.BasicNameValuePair
 
 import com.mongodb.DBObject
-/*
-import com.twilio.sdk.{ TwilioRestClient, TwilioRestException }
-import com.twilio.sdk.resource.factory.SmsFactory
-import com.twilio.sdk.resource.instance.Sms
-import com.twilio.sdk.resource.list.SmsList
-import com.twilio.sdk.client.TwilioCapability
-*/
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbChar, DbDateTime }
+import org.tyranid.content.Content
+import org.tyranid.db.{ DbArray, DbChar, DbLink, DbDateTime, DbTid }
 import org.tyranid.db.mongo._
-import org.tyranid.json.JsModel
+import org.tyranid.json.{ Json, JsModel }
 import org.tyranid.session.Session
 import org.tyranid.web.{ WebContext, Weblet }
 
-object TurboBridge {
-  val baseUrl = "https://api.twilio.com/2010-04-01"
+
+object Conference extends MongoEntity( "a0O5" ) {
+  type RecType = Conference
+  override def convert( obj:DBObject, parent:MongoRecord ) = new Conference( obj, parent )
+
+  "_id"       is DbMongoId         is 'id is 'client;
+  "number"    is DbChar(15)        is 'client;
+  "on"        is DbDateTime        ; // Date/Time it was purchased
+//  "c"         is DbLink(Content)    as "Content";
+  "m"         is DbArray(DbTid(B.User)) as "Members" is 'client;
 }
 
-case class TurboBridgeApp( account:Int, email:String, password:String ) {
-  val authMap = Map( "authAccount" -> 
-                      Map( "email" -> email, "password" -> password, "accountID" -> account )
-                   )
-  val basicRequest = Map( "request" -> authMap,
-                          "outputFormat" -> "json",
-                          "requestList" -> Map(
-                            "getBridges" -> Map(
-                              "accountID" -> account 
-                            )
-                          )
-                        )  
-  val basicReqParams = Map(
+class Conference( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Conference.makeView, obj, parent ) {
+}
+
+object TurboBridge {
+  val bridgeUrl = "https://api.turbobridge.com/Bridge"
+}
+
+case class TurboBridgeApp( account:String, email:String, password:String ) {
+  def setBridgeUserParams( confId: String, userId:String ) = {
+    Map(
       "outputFormat" -> "json",
-      "authPartnerUsername" -> email,
-      "authPartnerPassword" -> password,
-      "requestType" -> "getBridges",
-      "partnerID" -> "",
-      "accountID" -> account._s
+      "authAccountEmail" -> email,
+      "authAccountPassword" -> password,
+      "authAccountPartnerID" -> "turbobridge",
+      "authAccountAccountID" -> account,
+      "requestType" -> "setBridgeUserID",
+      "conferenceID" -> confId,
+      "userID" -> userId      
       )
+  }
+  
+  def setBridgeParams( confId: String ) = {
+    Map(
+      "outputFormat" -> "json",
+      "authAccountEmail" -> email,
+      "authAccountPassword" -> password,
+      "authAccountPartnerID" -> "turbobridge",
+      "authAccountAccountID" -> account,
+      "requestType" -> "setBridge",
+      "conferenceID" -> confId,
+      "userIDPrompt" -> "1",
+      "confEventsUrl" -> ( "https://" + ( B.PRODUCTION ? "rb.volerro.com" | "stage-s.volerro.com:8443" ) + "/turbobridge/event" ),
+      "confMode" -> "qa"
+      )
+  }
                             
-  /*
-  val client = new TwilioRestClient( sid, auth )
-
-  def createConference( name:String ) = {
-    val capability = new TwilioCapability( sid, auth )
-    capability.allowClientIncoming( name )
-    capability.generateToken()
+  def createConference( confId:String ) = {
+    val json = Json.parse( "https://api.turbobridge.com/Bridge".POST( setBridgeParams( confId ), null, "text/json" ).s ).get(0)
+    
+    val authToken = json.get( "authToken" )
+    val reqItem = json.get( "requestItem" )
+    //val bridge = reqItem.
+    
   }
-
-  /*
-   * https://www.twilio.com/docs/api/rest/available-phone-numbers
-   */
-  def provisionNumber:String = {
-    // Build a filter for the AvailablePhoneNumberList
-    val numbers = client.getAccount().getAvailablePhoneNumbers( new HashMap[String,String](), "US", "Local" )
-    //val numbers = client.getAccount().getAvailablePhoneNumbers( new HashMap[String,String](), "US", "TollFree" )
-    val list = numbers.getPageData()
-
-    if ( list.size > 0 ) {
-      // Purchase the first number in the list.
-      val purchaseParams = new java.util.ArrayList[org.apache.http.NameValuePair]()
-      val number = list.get(0).getPhoneNumber()
-      purchaseParams.add( new BasicNameValuePair( "PhoneNumber", number ) )
-      client.getAccount().getIncomingPhoneNumberFactory().create( purchaseParams )
-      number
-    } else {
-      provisionNumber
-    }
-  }
-  */
 }
 
 object TurboBridgelet extends Weblet {
@@ -104,13 +99,11 @@ object TurboBridgelet extends Weblet {
     val u = s.user
 
     rpath match {
+
+    // Events coming in from TurboBridge-- join conference, leave conference, etc
+    case "/event" =>
+      
     case "/start" =>
-      //val token = B.twilio.createConference( web.s( 'name ) )
-
-      //web.jsRes( JsModel( Map( "token" -> token ) ) )
-
-    case "/app" =>
-      // Direct from twilio
 
     case _ => _404
     }
