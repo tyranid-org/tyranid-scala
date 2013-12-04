@@ -173,8 +173,6 @@ object S3 {
       for ( objectSummary <- objectListing.getObjectSummaries() ) {
         val key = objectSummary.getKey()
         
-        println( key )
-        
         cnt = cnt + 1
         
         if ( key.toLowerCase.endsWith( n ) )
