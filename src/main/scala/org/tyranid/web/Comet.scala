@@ -221,6 +221,10 @@ object CometQueue {
             db.update( Mobj( "_id" -> obj( '_id ) ), Mobj( $set -> Mobj( "h" -> true ) ) )
           }
         }
+      } catch {
+        case t:Throwable =>
+          t.fillInStackTrace
+          log( Event.Alert, "m" -> t.getMessage, "ex" -> t )
       }
     }
   }
