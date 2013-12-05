@@ -42,6 +42,7 @@ import org.tyranid.http.Http
 import org.tyranid.json.JqHtml
 import org.tyranid.math.Base62
 import org.tyranid.report.{ Report, Run }
+import org.tyranid.time.Time
 import org.tyranid.ui.{ Checkbox, Field, Help, Select, Search, Show, Valuable }
 import org.tyranid.web.{ WebContext, Weblet }
 
@@ -295,6 +296,47 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     path._s
   }
 
+  def compactCapMap( userCaps: mutable.Map[String,Array[Double]], startDate:Date, endDate:Date ) = {
+    val teamMemberTids = memberTids
+    val caps = GroupCapacity.forGroupUsers( tid, teamMemberTids, startDate, endDate )
+    val defCaps = GroupSettings.capMapForGroupUsers( tid, teamMemberTids, 40 )
+    
+    val startMillis = startDate.getTime
+    val endMillis = endDate.getTime
+    
+    val diffMillis = endMillis - startMillis
+    
+    val numDays = ( diffMillis / Time.OneDayMs )._i + 1
+    
+    // Produce a compact map, user to array of caps for each day
+    
+    for ( memberTid <- teamMemberTids ) {
+      var userCap = userCaps.getOrElse( memberTid, null )
+      
+      if ( userCap == null ) {
+        userCap = Array.fill(numDays){ defCaps( memberTid ) }
+        userCaps( memberTid ) = userCap
+      }
+      
+      var idx = 0
+      
+      for ( m <- startMillis until ( endMillis + 1 ) by Time.OneDayMs ) {
+        if ( new Date( m ).isUtcWeekend ) {
+          userCap(idx) = 0
+        } else {
+          def foundCap = caps.filter( _( 'u ) == memberTid ).find( c => {
+            c.t( 'start ).getTime() >= m && c.t( 'end ).getTime() <= ( m + Time.OneDayMs )  
+          } )
+          
+          if ( foundCap != None )
+            userCap(idx) = foundCap.get.d( 'cap )
+        }
+          
+        idx += 1
+      }
+    }
+  }
+  
   def idsForEntity( en:Entity ) = a_?( 'v ).map( _._s ).filter( _.startsWith( en.tid ) ).map( en.tidToId )
 
   def memberTids =
@@ -456,7 +498,6 @@ object GroupCapacity extends MongoEntity( tid = "a1Av" ) {
     "cap"            is DbDouble          as "Capacity" is 'client;                  
   }
 
-  // TODO:  Move def out of this
   def forGroupUsers( tid:String, userTids:Seq[String], startDate:Date, endDate:Date ) = {
     GroupCapacity.db.find( Mobj( 
         "g" -> Group.tidToId( tid ), 
@@ -539,7 +580,23 @@ object GroupSettings extends MongoEntity( tid = "a0Rt" ) {
    
     allSettings.toSeq
   }
+
+  def capMapForGroupUsers( tid:String, userTids:Seq[String], defCap:Double ) = {
+    val capMap = mutable.Map[String,Double]()
     
+    GroupSettings.db.find( Mobj( 
+        "g" -> Group.tidToId( tid ), 
+        "u" -> Mobj( $in -> userTids.map( B.User.tidToId ).toMlist ) 
+    ) ).toSeq.foreach( gc => capMap( B.User.idToTid( gc.oid( 'u ) ) ) = gc.d( 'cap ) )
+   
+    userTids.foreach( u => {
+      if ( !capMap.containsKey( u ) )
+        capMap( u ) = defCap
+    } )
+   
+    capMap
+  }
+  
   def forGroupTid( tid:String, user:User ) = forGroupUserId( tid, user.id._oid )
     
   val index = {
