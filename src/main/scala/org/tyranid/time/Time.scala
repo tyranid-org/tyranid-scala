@@ -338,6 +338,13 @@ class DateImp( d:Date ) extends Serializable {
     ( day == Calendar.SUNDAY || day == Calendar.SATURDAY )  
   }
 
+  def toUtcMidnight = toUtcCalendar.setMidnight.getTime()
+  
+  def isUtcWeekend = {
+    val day = toUtcCalendar.get( Calendar.DAY_OF_WEEK ) 
+    ( day == Calendar.SUNDAY || day == Calendar.SATURDAY )  
+  }
+
   def > ( other:Date ) = d.getTime >  other.getTime
   def >=( other:Date ) = d.getTime >= other.getTime
   def < ( other:Date ) = d.getTime <  other.getTime
