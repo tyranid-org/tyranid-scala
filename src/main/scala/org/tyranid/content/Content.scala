@@ -382,6 +382,7 @@ case class Positioning( var moving:Content,
   }
 }
 
+
 /* 
  * * * Time Track
  */
@@ -1288,6 +1289,7 @@ abstract class Content( override val view:MongoView,
     TimeTrack.remove( a_!( 'tt ), id )
     save
   }
+
 
   /*
    * * *   Comments
