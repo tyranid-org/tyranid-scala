@@ -308,13 +308,18 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     
     val numDays = ( diffMillis / Time.OneDayMs )._i + 1
     
+    // This may change-- will have to do something about weekend being zeroed out if it does
+    val numWorkDays = 5.0
+    
     // Produce a compact map, user to array of caps for each day
     
     for ( memberTid <- teamMemberTids ) {
       var userCap = userCaps.getOrElse( memberTid, null )
       
       if ( userCap == null ) {
-        userCap = Array.fill(numDays){ defCaps( memberTid ) }
+        val defCap = defCaps( memberTid )
+        val cap = ( defCap > 0.0 ) ? ( defCap / numWorkDays ) | 0.0
+        userCap = Array.fill(numDays){ cap }
         userCaps( memberTid ) = userCap
       }
       
@@ -322,14 +327,16 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
       
       for ( m <- startMillis until ( endMillis + 1 ) by Time.OneDayMs ) {
         if ( new Date( m ).isUtcWeekend ) {
-          userCap(idx) = 0
+          userCap(idx) = 0.0
         } else {
           def foundCap = caps.filter( _( 'u ) == memberTid ).find( c => {
             c.t( 'start ).getTime() >= m && c.t( 'end ).getTime() <= ( m + Time.OneDayMs )  
           } )
           
-          if ( foundCap != None )
-            userCap(idx) = foundCap.get.d( 'cap )
+          if ( foundCap != None ) {
+            val cap = foundCap.get.d( 'cap )
+            userCap(idx) = ( cap > 0.0 ) ? ( foundCap.get.d( 'cap ) / numWorkDays ) | 0.0
+          }
         }
           
         idx += 1
