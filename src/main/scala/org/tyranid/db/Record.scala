@@ -165,7 +165,11 @@ object Record {
             rEntity <- Entity.byTid(entry._1 );
             entity = rEntity.as[MongoEntity];
             entityTids = entry._2 ) yield {
-        entity.db.find( Mobj( "_id" -> Mobj( $in -> entityTids.map( entity.tidToId ).toMlist ) ) ).map( entity.apply ).toSeq
+        entity.db.find( Mobj( "_id" -> Mobj( $in -> entityTids.map( entity.tidToId ).toMlist ) ) ).map { obj =>
+          val rec = entity.apply( obj )
+          T.tidCache.byTid( rec.tid ) = rec
+          rec
+        }.toSeq
       }
     ).toSeq.flatten
 }

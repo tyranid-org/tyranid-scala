@@ -320,7 +320,7 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
 case class DBObjectImp( obj:DBObject ) extends DBObjectWrap with DBValue {
 
   def apply( key:String )         = obj.get( key )
-  def update( key:String, v:Any ) = obj.put( key, v )
+  def update( key:String, v:Any ) = obj.put( key, v.asInstanceOf[AnyRef] )
 
   def clear( keys:String* ) =
     for ( key <- keys )

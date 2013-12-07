@@ -100,7 +100,19 @@ object SessionCleaner {
 
     val cutoff = new Date - ( 8 * Time.OneHourMs )
 
-    B.SessionData.db.remove( Mobj( "lpt" -> Mobj( $lte -> cutoff ) ) )
+    B.SessionData.db.remove(
+      Mobj(
+        $or -> Mlist(
+          Mobj( "lpt" -> Mobj( $lte -> cutoff ) ),
+          Mobj(
+            $and -> Mlist(
+              Mobj( "lpt" -> null ),
+              Mobj( "lit" -> Mobj( $lte -> cutoff ) )
+            )
+          )
+        )
+      )
+    )
   }
 }
 

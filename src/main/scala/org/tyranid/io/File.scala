@@ -192,8 +192,8 @@ object FileCleaner {
                 
                 if ( doc == null ) {
                   // Keep it around in case it can be used later
-                  S3.move( Converter.bucket, convertedFile, B.filesBucket, doc.s( 'parentFolder ) + "/" + docIdStr + ".pdf" )
-                  //S3.delete( Converter.bucket, convertedFile )
+                  //S3.move( Converter.bucket, convertedFile, B.filesBucket, doc.s( 'parentFolder ) + "/" + docIdStr + ".pdf" )
+                  S3.delete( Converter.bucket, convertedFile )
                 } else {
                   // Give it a chance to update the conversion
                   B.finishConversion( doc.as[Content] )
