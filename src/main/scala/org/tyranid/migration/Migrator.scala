@@ -42,18 +42,24 @@ case class Migrator( migrators:Migrates* ) {
       }
       
       if ( !MigrationStatus.db.exists( Mobj( "_id" -> migrator.name ) ) ) {
+        val m = new MigrationStatus()
+        m( '_id ) = migrator.name
+        m.save
+        
         println( "[" + migrator.name + ": START]" )
         migrator.desc.lines.foreach( println )
         
-        migrator.migrate
+        try {
+          migrator.migrate
+        } catch {
+          case t:Throwable =>
+            t.printStackTrace()
+        }
 
-        if ( migrator.commit ) {
-          val m = new MigrationStatus()
-          m( '_id ) = migrator.name
-          m.save
-          
+        if ( migrator.commit ) {          
           println( "[" + migrator.name + ": COMPLETE]" )
         } else {
+          MigrationStatus.delete( m.id )
           println( "\n*\n*\n*\n*\n*\n[" + migrator.name + " is COMPLETE but it is NOT committed (migrator will run again on next startup)]\n*\n*\n*\n*\n*\n" )
         }
       } else {
