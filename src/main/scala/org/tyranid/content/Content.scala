@@ -553,7 +553,6 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
 
   "task"           is DbChar(32)             as "Task"            is 'client; // tid of the task associated with this comment
 
-
   "estVal"         is DbDouble               as "Estimated Value" is 'client; // this is a relative change, not a total ... currently value means "hours" but will mean things like "money" in the future
   "actVal"         is DbDouble               as "Actual Value"    is 'client; // this is a relative change, not a total ... currently value means "hours" but will mean things like "money" in the future
 
