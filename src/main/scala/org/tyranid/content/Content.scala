@@ -537,21 +537,25 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
   "id"             is DbInt                  is 'client computed { _.i( '_id ) };
 
   "on"             is DbDateTime             is 'client;
-  "m"              is DbChar(1024)           as "Message"     is 'client is 'label;
+  "m"              is DbChar(1024)           as "Message"         is 'client is 'label;
 
-  "pn"             is DbInt                  as "Page Number" is 'client;
-  "x"              is DbDouble               as "X"           is 'client;
-  "y"              is DbDouble               as "Y"           is 'client;
-  "w"              is DbDouble               as "When"        is 'client; // Used for timeline (video annotation)
-  "wi"             is DbDouble               as "Width"       is 'client; // Used for boxed annotations
-  "hi"             is DbDouble               as "Height"      is 'client; // Used for boxed annotations
+  "pn"             is DbInt                  as "Page Number"     is 'client;
+  "x"              is DbDouble               as "X"               is 'client;
+  "y"              is DbDouble               as "Y"               is 'client;
+  "w"              is DbDouble               as "When"            is 'client; // Used for timeline (video annotation)
+  "wi"             is DbDouble               as "Width"           is 'client; // Used for boxed annotations
+  "hi"             is DbDouble               as "Height"          is 'client; // Used for boxed annotations
 
-  "r"              is DbArray(Comment)       as "Replies"     is 'client;
+  "r"              is DbArray(Comment)       as "Replies"         is 'client;
 
-  "pri"            is DbBoolean              as "Priority"    is 'client; // a.k.a. "important" or "urgent"
-  "s"              is DbBoolean              as "System"      is 'client; // System generated--- not editable or removable
+  "pri"            is DbBoolean              as "Priority"        is 'client; // a.k.a. "important" or "urgent"
+  "s"              is DbBoolean              as "System"          is 'client; // System generated--- not editable or removable
 
-  "task"           is DbChar(32)             as "Task"        is 'client; // tid of the task associated with this comment
+  "task"           is DbChar(32)             as "Task"            is 'client; // tid of the task associated with this comment
+
+
+  "estVal"         is DbDouble               as "Estimated Value" is 'client; // this is a relative change, not a total ... currently value means "hours" but will mean things like "money" in the future
+  "actVal"         is DbDouble               as "Actual Value"    is 'client; // this is a relative change, not a total ... currently value means "hours" but will mean things like "money" in the future
 
   override def init = {
     super.init
