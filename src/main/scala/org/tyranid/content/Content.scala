@@ -621,6 +621,27 @@ object Comment extends MongoEntity( tid = "b00w", embedded = true ) {
     null
   }
 
+  // this method returns the old value, or null if the value didn't exist ... it will not add the comment record if it does not already exist
+  def update( comments:BasicDBList, newValue:DBObject ):DBObject = {
+
+    val id = newValue.i( '_id )
+
+    for ( ci <- 0 until comments.size;
+          comment = comments( ci ).as[DBObject] ) {
+
+      if ( comment.i( '_id ) == id ) {
+        comments( ci ) = newValue
+        return comment
+      } else {
+        val found = update( comment.a_?( 'r ), newValue )
+        if ( found != null )
+          return found
+      }
+    }
+
+    null
+  }
+
   def visit( comments:BasicDBList, block:Comment => Unit ) {
     for ( c <- asComments( comments ) )
       c.visit( block )

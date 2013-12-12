@@ -266,6 +266,11 @@ trait DBObjectWrap extends DBObject with BsonObject with DBValue {
   def isPartialObject                = obj.isPartialObject
   def markAsPartialObject            = obj.markAsPartialObject
 
+  // unfortunate ...
+  def idTo_id = {
+    obj( '_id ) = obj( 'id )
+    obj.remove( 'id )
+  }
 
   /*
    * * *   DBValue
