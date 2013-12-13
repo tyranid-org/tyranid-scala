@@ -460,7 +460,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     if ( !T.session.isIncognito && !settings.hasVisited ) {
       settings.setVisited
       
-      if ( contentType == ContentType.Project )
+      if ( contentType == ContentType.Team )
         settings( 'cap ) = 40.0
         
       settings.save
