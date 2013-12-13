@@ -24,7 +24,7 @@ import scala.collection.mutable.Buffer
 import scala.xml.{ NodeSeq, Text, Unparsed }
 
 import java.io.File
-import java.util.Date
+import java.util.{ Calendar, Date }
 
 import org.bson.types.ObjectId
 
@@ -296,9 +296,22 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     path._s
   }
 
+  // This is for >= startDate, and < endDate
+  // So, 1st to the 2nd would only include 1 day
   def compactCapMap( userCaps: mutable.Map[String,Array[Double]], startDate:Date, endDate:Date ) = {
+    val capStart = startDate.toMonday    
+    var capEnd = endDate.toMonday
+
+    // Since the is a <, then add a week to ensure the start date is not excluded
+    capEnd = capEnd.add( Calendar.DAY_OF_YEAR, 7 )
+    
+//    println( "cap start: "+  capStart.getTime )
+//    println( "cap end: "+  capEnd.getTime )
+        
     val teamMemberTids = memberTids
-    val caps = GroupCapacity.forGroupUsers( tid, teamMemberTids, startDate, endDate )
+    
+    // Caps are stored by weeks, so the startDate is always midnight on Monday
+    val caps = GroupCapacity.forGroupUsers( tid, teamMemberTids, capStart, capEnd )
     val defCaps = GroupSettings.capMapForGroupUsers( tid, teamMemberTids, 40 )
     
     val startMillis = startDate.getTime
@@ -306,7 +319,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     
     val diffMillis = endMillis - startMillis
     
-    val numDays = ( diffMillis / Time.OneDayMs )._i + 1
+    val numDays = ( diffMillis / Time.OneDayMs )._i
     
     // This may change-- will have to do something about weekend being zeroed out if it does
     val numWorkDays = 5.0
@@ -322,15 +335,42 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
         userCap = Array.fill(numDays){ cap }
         userCaps( memberTid ) = userCap
       }
+  
+      val myCap = caps.filter( _( 'u ) == memberTid )
       
+      for ( i <- 0 until numDays ) {
+        val qDate = new Date( startMillis + ( i * Time.OneDayMs ) )
+        
+        
+        if ( qDate.isUtcWeekend ) {
+          userCap(i) = 0.0
+        } else {
+          val mondayMillis = qDate.toMonday.getTime
+          
+          val foundCap = myCap.find( c => {
+            c.t( 'start ).getTime == mondayMillis
+          } )
+          
+          if ( foundCap != None ) {
+            val cap = foundCap.get.d( 'cap )
+            userCap(i) = ( cap > 0.0 ) ? ( cap / numWorkDays ) | 0.0
+          }
+        }
+      }
+
+      /*
       var idx = 0
       
-      for ( m <- startMillis until ( endMillis + 1 ) by Time.OneDayMs ) {
+      for ( m <- startMillis until endMillis by Time.OneDayMs ) {
         if ( new Date( m ).isUtcWeekend ) {
           userCap(idx) = 0.0
         } else {
           def foundCap = caps.filter( _( 'u ) == memberTid ).find( c => {
-            c.t( 'start ).getTime() >= m && c.t( 'end ).getTime() <= ( m + Time.OneDayMs )  
+            val start = c.t( 'start )
+            val end = start.add( Calendar.DAY_OF_YEAR, 1 )
+            
+            start.getTime() == m  
+            //start.getTime() >= m && end.getTime() < ( m + Time.OneDayMs )  
           } )
           
           if ( foundCap != None ) {
@@ -341,6 +381,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
           
         idx += 1
       }
+      */
     }
   }
   
@@ -504,30 +545,28 @@ object GroupCapacity extends MongoEntity( tid = "a1Av" ) {
     "g"              is DbLink(Group)     as "Group" is 'client;
   
     "start"          is DbDate            as "Start" is 'client;
-    "end"            is DbDate            as "End" is 'client;
     
     "cap"            is DbDouble          as "Capacity" is 'client;                  
   }
 
   def forGroupUsers( tid:String, userTids:Seq[String], startDate:Date, endDate:Date ) = {
+    spam( "ending: " + endDate.getTime )
     GroupCapacity.db.find( Mobj( 
         "g" -> Group.tidToId( tid ), 
-        "u" -> Mobj( $in -> userTids.map( B.User.tidToId ).toMlist ), 
-        "start" -> Mobj( $gte -> startDate ),
-        "end" -> Mobj( $lte -> endDate )        
+        "u" -> Mobj( $in -> userTids.map( B.User.tidToId ).toMlist ),
+        "start" -> Mobj( $gte -> startDate, $lt -> endDate )
     ) ).toSeq.map( gc => 
         Map(
           "u" -> B.User.idToTid( gc.oid( 'u ) ),
           "cap" -> gc.d( 'cap ),
-          "start" -> gc.t( 'start ).getTime(),
-          "end" -> gc.t( 'end ).getTime()
+          "start" -> gc.t( 'start ).getTime()
           ) 
        )
   }
     
   val index = {
-    db.ensureIndex( Mobj( "g" -> 1, "u" -> 1, "start" -> 1, "end" -> 1 ) )
-    db.ensureIndex( Mobj( "u" -> 1, "g" -> 1, "start" -> 1, "end" -> 1  ) )
+    db.ensureIndex( Mobj( "g" -> 1, "u" -> 1, "start" -> 1 ) )
+    db.ensureIndex( Mobj( "u" -> 1, "g" -> 1, "start" -> 1  ) )
   }    
 }
 

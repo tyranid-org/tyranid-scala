@@ -199,6 +199,12 @@ class DateImp( d:Date ) extends Serializable {
     c.getTime()
   }
   
+  def toMonday = {
+    val c = toUtcCalendar
+    c.set( Calendar.DAY_OF_WEEK, Calendar.MONDAY )
+    c.getTime()
+  }
+  
   def add( field:Int, amount:Int ) = {
     val c = toUtcCalendar
     c.add( field, amount )
