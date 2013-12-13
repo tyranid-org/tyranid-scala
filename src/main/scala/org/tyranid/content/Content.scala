@@ -524,6 +524,7 @@ class TimeTrack( obj:DBObject, parent:MongoRecord ) extends MongoRecord( TimeTra
   }
 }
 
+
 /*
  * * *  Comments
  */
@@ -847,6 +848,11 @@ class Comment( obj:DBObject, parent:MongoRecord ) extends MongoRecord( Comment.m
 
     comments foreach { _.collectUserTids( tids ) }
   }
+
+  /**
+   * An updatable value is a value like estVal or actVal where we need to update the calculated total on the task if this changes
+   */
+  def hasUpdatableValues = this.hasAny( 'estVal, 'actVal )
 }
 
 
@@ -1376,6 +1382,18 @@ abstract class Content( override val view:MongoView,
 
   def annotatedPages = comments.map( _.i( 'pn ) ).distinct
 
+  def updateValues = {
+    var estVal:Double = 0
+    var actVal:Double = 0
+
+    for ( c <- comments ) {
+      estVal += c.d( 'estVal )
+      actVal += c.d( 'actVal )
+    }
+
+    this( 'estVal ) = estVal
+    this( 'actVal ) = actVal
+  }
 
 
   /*
