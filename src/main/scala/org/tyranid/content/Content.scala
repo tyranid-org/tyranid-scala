@@ -383,148 +383,6 @@ case class Positioning( var moving:Content,
 }
 
 
-/* 
- * * * Time Track
- */
-
-object TimeTrack extends MongoEntity( tid = "b00x", embedded = true ) {
-  type RecType = TimeTrack
-  override def convert( obj:DBObject, parent:MongoRecord ) = new TimeTrack( obj, parent )
-
-  "_id"            is DbInt                  is 'id;
-
-  "id"             is DbInt                  is 'client computed { _.i( '_id ) };
-
-  "on"             is DbDateTime             is 'client;
-  "t"              is DbDouble               as "Time Spent" is 'client is 'label;
-
-  override def init = {
-    super.init
-    "u"            is DbLink(B.User)         is 'client; // user who time is applied towards
-  }
-
-  def maxId( list:BasicDBList ):Int = {
-    val candidates = list.toSeq.map( obj => TimeTrack.apply( obj.as[DBObject] ).i ( '_id  ) )
-
-    if ( candidates.size > 0 )
-      candidates.max
-    else
-      0
-  }
-
-  def idify( list:BasicDBList ):Boolean = {
-
-    var nextId = maxId( list ) + 1
-    var didAnything = false
-
-    def enterTime( timeTrack:TimeTrack ) {
-      if ( timeTrack.i( '_id ) == 0 ) {
-        timeTrack( '_id ) = nextId
-        didAnything = true
-        nextId += 1
-      }
-    }
-
-    def enterList( list:BasicDBList ) {
-      for ( tt <- asTimeTracks( list ) )
-        enterTime( tt )
-    }
-
-    enterList( list )
-    didAnything
-  }
-
-  def asTimeTracks( list:BasicDBList ) = list.toSeq.map( obj => TimeTrack( obj.as[DBObject] ) )
-
-  def find( list:BasicDBList, id:Int ):TimeTrack = {
-
-    for ( tt <- asTimeTracks( list ) ) {
-      if ( tt.i( '_id ) == id )
-        return tt
-    }
-
-    null
-  }
-
-  def visit( list:BasicDBList, block:TimeTrack => Unit ) {
-    for ( tt <- asTimeTracks( list ) )
-      tt.visit( block )
-  }
-
-  def mostRecent( list:Seq[TimeTrack] ):TimeTrack= {
-    var mostRecent:TimeTrack = null
-
-    for ( tt <- list ) {
-      val mrc = tt.id._i
-
-      if ( mostRecent == null || mrc > mostRecent.id._i )
-        mostRecent = tt
-    }
-
-    mostRecent
-  }
-
-  def remove( list:BasicDBList, id:Int ) {
-    for ( t <- list.toSeq.of[DBObject] )
-      if ( t.i( '_id ) == id )
-        list.remove( t )
-  }
-
-  def sort( list:Seq[TimeTrack], newestFirst:Boolean = false ) = {
-    if ( newestFirst )
-      list.sortBy( _.on ).reverse
-    else
-      list.sortBy( _.on )
-  }
-
-  def count( list:Seq[TimeTrack] ):Int = list.length
-
-  def parse( tid:String ) = {
-    val idx = tid.lastIndexOf( '_' )
-
-    val contentTid = tid.substring( 0, idx )
-    val commentId = tid.substring( idx + 1 )._i
-
-    ( contentTid, commentId )
-  }
-
-  def resolve( tid:String ) = {
-    val ( taskContentTid, taskCommentId ) = parse( tid )
-
-    val taskContent = Record.getByTid( taskContentTid ).as[Content]
-    val comment = taskContent.commentById( taskCommentId )
- 
-    ( taskContent, comment )
-  }
-}
-
-class TimeTrack( obj:DBObject, parent:MongoRecord ) extends MongoRecord( TimeTrack.makeView, obj, parent ) {
-  def user = {
-    val uid = oid( 'u )
-    val user = B.User.getById( uid )
-
-    if ( user == null )
-      B.systemUser
-    else
-      user
-  }
-
-  def visit( block:TimeTrack => Unit ) {
-    block( this )
-  }
-
-  def on = t( 'on )
-  def displayDate = t( 'on )
-  
-  def collectUserTids( tids:mutable.Set[String] ) {
-    val fromTid = tid( 'u )
-
-    if ( fromTid.notBlank )
-      tids += fromTid
-  }
-}
-
-
 /*
  * * *  Comments
  */
@@ -933,8 +791,6 @@ trait ContentMeta extends PrivateKeyEntity {
   "r"                 is DbArray(Comment)     as "Replies";
 
   "rc"                is DbInt                as "Reply Count" is 'temporary computed( _.as[Content].commentCount );
-
-  "tt"                is DbArray(TimeTrack)   as "Time Tracks";
   
   // Image / Thumbnail
   "img"               is DbUrl                is 'client; // TODO:  change to DbImage?
@@ -1281,43 +1137,6 @@ abstract class Content( override val view:MongoView,
       Comment.resolve( tc )
     else
       ( null, null )
-  }
-
-
-  /*
-   * * *   Time Tracking
-   */
-
-  def timeTracks = TimeTrack.asTimeTracks( a_?( 'tt ) )
-
-  def timeTrackCount = TimeTrack.count( timeTracks )
-  
-  def timeTracksCollectUserTids( tids:mutable.Set[String] ) = timeTracks.foreach { _.collectUserTids( tids ) }
-
-  def timeTrackTid( tt:TimeTrack ) = tid + "_" + tt.id
-
-  def timeTrackTidToId( tid:String ) =
-    if ( tid.isBlank )
-      0
-    else
-      tid.substring( this.tid.length + 1 )._i
-
-  def mostRecentTimeTrack = TimeTrack.mostRecent( timeTracks )
-
-  def timeTrackById( id:Int ) = TimeTrack.find( a_?( 'tt ), id )
-
-  def timeTrack( user:User, time:Double ) = {
-    val timeTracks = a_!( 'tt )
-    val tt = TimeTrack( Mobj( "_id" -> ( TimeTrack.maxId( timeTracks) + 1 ), "on" -> new Date, "d" -> time, "u" -> user.id ) )
-
-    save
-
-    tt
-  }
-
-  def timeTrackRemove( id:Int ) = {
-    TimeTrack.remove( a_!( 'tt ), id )
-    save
   }
 
 
