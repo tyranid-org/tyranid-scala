@@ -325,7 +325,6 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     val numWorkDays = 5.0
     
     // Produce a compact map, user to array of caps for each day
-    
     for ( memberTid <- teamMemberTids ) {
       var userCap = userCaps.getOrElse( memberTid, null )
       
@@ -357,31 +356,6 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
           }
         }
       }
-
-      /*
-      var idx = 0
-      
-      for ( m <- startMillis until endMillis by Time.OneDayMs ) {
-        if ( new Date( m ).isUtcWeekend ) {
-          userCap(idx) = 0.0
-        } else {
-          def foundCap = caps.filter( _( 'u ) == memberTid ).find( c => {
-            val start = c.t( 'start )
-            val end = start.add( Calendar.DAY_OF_YEAR, 1 )
-            
-            start.getTime() == m  
-            //start.getTime() >= m && end.getTime() < ( m + Time.OneDayMs )  
-          } )
-          
-          if ( foundCap != None ) {
-            val cap = foundCap.get.d( 'cap )
-            userCap(idx) = ( cap > 0.0 ) ? ( foundCap.get.d( 'cap ) / numWorkDays ) | 0.0
-          }
-        }
-          
-        idx += 1
-      }
-      */
     }
   }
   
