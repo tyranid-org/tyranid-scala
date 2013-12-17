@@ -1375,6 +1375,15 @@ abstract class Content( override val view:MongoView,
     comment
   }
 
+  def addComment( comment:DBObject ) = {
+
+    assert( !comment.has( 'id ) )
+
+    val comments = a_!( 'r )
+    comment( '_id ) = Comment.maxId( comments ) + 1
+    comments.add( comment )
+  }
+
   def commentRemove( id:Int ) = {
     Comment.remove( a_!( 'r ), id )
     save
