@@ -418,6 +418,20 @@ object Time {
     c.set( 0, 0, 0, 0, 0, 0 )
     c
   }
+  
+  def earliest( dates:Date* ) = {
+    if ( dates != null )
+      dates.minBy( d => ( d == null ) ? Long.MaxValue | d.getTime )
+    else  
+      null
+  }
+  
+  def latest( dates:Date* ) = {
+    if ( dates != null )
+      dates.maxBy( d => ( d == null ) ? 0l | d.getTime )
+    else  
+      null
+  }
 
   def now = System.currentTimeMillis
   
