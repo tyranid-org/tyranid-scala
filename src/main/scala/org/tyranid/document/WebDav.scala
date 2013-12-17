@@ -27,7 +27,7 @@ import com.github.sardine.impl.{ SardineException }
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbInt, DbChar, DbBoolean, DbDateTime }
+import org.tyranid.db.{ DbInt, DbLong, DbChar, DbBoolean, DbDateTime }
 import org.tyranid.db.mongo.{ MongoEntity, MongoRecord }
 
 object WebDavResource extends MongoEntity(tid = "a0Uw") {
@@ -40,7 +40,7 @@ object WebDavResource extends MongoEntity(tid = "a0Uw") {
   "on"      is DbDateTime  is 'client;
   "type"    is DbChar(10)  is 'client;
   "isDir"   is DbBoolean   is 'client;
-  "size"    is DbInt       is 'client;
+  "size"    is DbLong       is 'client;
   "mod"     is DbDateTime  is 'client;
   
   def convert( r:DavResource ):WebDavResource = {
