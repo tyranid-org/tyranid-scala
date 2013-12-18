@@ -218,21 +218,29 @@ object S3 {
   }
 
   def access( bucket:S3Bucket, key:String, public:Boolean = false, authenticated:Boolean = false ) = {
-    try {
-      val acl = s3.getObjectAcl( bucket.name, key )
-
-      acl.revokeAllPermissions( GroupGrantee.AllUsers )
-      
-      if ( public )
-        acl.grantPermission( GroupGrantee.AllUsers, Permission.Read )
+    var done = false
+    
+    for ( tries <- 1 until 2 if !done ) {
+      try {
+        val acl = s3.getObjectAcl( bucket.name, key )
+  
+        acl.revokeAllPermissions( GroupGrantee.AllUsers )
         
-      if ( authenticated )
-        acl.grantPermission( GroupGrantee.AuthenticatedUsers, Permission.Read )
-
-      s3.setObjectAcl( bucket.name, key, acl )
-    } catch {
-      case e:AmazonS3Exception =>
-        log( Event.StackTrace, "m" -> ( "S3 Exception for bucket " + bucket.name + " and key " + key ), "ex" -> e )
+        if ( public )
+          acl.grantPermission( GroupGrantee.AllUsers, Permission.Read )
+          
+        if ( authenticated )
+          acl.grantPermission( GroupGrantee.AuthenticatedUsers, Permission.Read )
+  
+        s3.setObjectAcl( bucket.name, key, acl )
+        done = true
+      } catch {
+        case e:AmazonS3Exception =>
+          if ( tries == 1 )
+            Thread.sleep( 2000 ) // try again in 2 seconds
+          else 
+            log( Event.StackTrace, "m" -> ( "S3 Exception for bucket " + bucket.name + " and key " + key ), "ex" -> e )
+      }
     }
   }
   
