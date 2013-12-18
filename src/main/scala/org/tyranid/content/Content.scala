@@ -773,6 +773,7 @@ trait ContentMeta extends PrivateKeyEntity {
 
   "taskComment"       is DbChar(32)           is 'client; // this is a commentTid (i.e. <content tid>_<comment id>)
 
+  "startDate"         is DbDate               is 'client; // if this is not specified, we use "on" instead of this
   "dueDate"           is DbDate               is 'client; // this is a due date for cards, a milestone due date for boards, and a due date for projects
 
 
