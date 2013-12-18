@@ -50,7 +50,7 @@ object Tags {
 
   def tagUi( id:String, label:String, placeholder:String = "" ) =
     <li class="tag">
-     <span>{ label }<a class="closeTag"><i class="icon-remove"></i></a><input type="hidden" style="display:none;" value={ id } id="to" name="to[]" placeholder={ placeholder }/></span>
+     <span>{ label }<a class="closeTag"><i class="fa fa-times"></i></a><input type="hidden" style="display:none;" value={ id } id="to" name="to[]" placeholder={ placeholder }/></span>
     </li>
 }
 

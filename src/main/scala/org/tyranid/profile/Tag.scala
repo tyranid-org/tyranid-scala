@@ -86,7 +86,7 @@ object Tag extends MongoEntity( tid = "a0Ct" ) {
     <li class="tag">
      <span>
       { label }
-      <a class="closeTag"><i class="icon-remove"></i></a>
+      <a class="closeTag"><i class="fa fa-times"></i></a>
       <input type="hidden" style="display:none;" value={ id } id={ setId } name={ setId + "[]" }/>
      </span>
     </li>

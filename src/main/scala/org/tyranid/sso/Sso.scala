@@ -668,7 +668,7 @@ $( $('#idp').focus() );
         <input type="text" class="span8" name="iconUrl" id="iconUrl"/>
        </div-->
        <div class="row-fluid">
-         <div class="span12" style="height:40px;padding-top:8px;"><button type="submit" id='ssoBtn' class="btn-success btn pull-right"><span>Lookup</span> <i class="icon-caret-right"></i></button></div>
+         <div class="span12" style="height:40px;padding-top:8px;"><button type="submit" id='ssoBtn' class="btn-success btn pull-right"><span>Lookup</span> <i class="fa fa-caret-right"></i></button></div>
        </div>
       </div>
      </fieldset>

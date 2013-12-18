@@ -367,7 +367,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   }  
 
   val newOverlay = <div class="new-overlay"><span class="text">NEW</span></div>
-  val privateOverlay = <div class="private-overlay"><span class="icon-minus"></span><span class="text">PRIVATE</span></div>
+  val privateOverlay = <div class="private-overlay"><span class="fa fa-minus"></span><span class="text">PRIVATE</span></div>
 
   override def thumbHtml( size:String, extraHtml:NodeSeq = null ) = {
     val url = imageUrl( null )
