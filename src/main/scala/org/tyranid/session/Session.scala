@@ -326,6 +326,13 @@ class ThreadData {
   //lazy val actuariusTransformer = new eu.henkelmann.actuarius.ActuariusTransformer()
 
   //lazy val pegdown = new org.pegdown.PegDownProcessor( org.pegdown.Extensions.ALL )
+
+
+  /*
+   * * *  Mode
+   */
+
+  @volatile var background:Boolean = false
 }
 
 

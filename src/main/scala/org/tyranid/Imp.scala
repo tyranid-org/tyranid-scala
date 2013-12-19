@@ -122,24 +122,44 @@ object Imp {
 		}
 	}
 
-  def background( block: => Unit ) {
-
+  def background( forceNewBackground:Boolean, block: => Unit ) {
     val s = Session()
-   
-    val r = new Runnable() {
-      def run {
-        T.becomeSession( s )
-      
-        // not technically needed unless we go back to thread pooling
-        T.clearRequestCache
-      
-        trylog {
-          block
+
+    if ( !forceNewBackground && T.background ) {
+      T.becomeSession( s )
+        
+      // not technically needed unless we go back to thread pooling
+      T.clearRequestCache
+        
+      trylog {
+        block
+      }
+    } else {
+      val r = new Runnable() {
+        def run {
+          try {
+            T.background = true
+            T.becomeSession( s )
+        
+            // not technically needed unless we go back to thread pooling
+            T.clearRequestCache
+        
+            trylog {
+              block
+            }
+          } finally {
+            // reset it back to false in case this thread gets reused in a pool
+            T.background = false
+          }
         }
       }
-    }
 
-    new Thread( r ).start
+      new Thread( r ).start
+    }
+  }
+
+  def background( block: => Unit ) {
+    background( forceNewBackground = true, block )
   }
 
   def background_?( test:Boolean, block: => Unit) {
