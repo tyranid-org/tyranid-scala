@@ -97,6 +97,8 @@ object Imp {
       e.getMessage
     }
 
+  def firstNonNull( any:Any* ) = any.find( _ != null ).getOrElse( null )
+  
   def spam( msg:Any ) =
     if ( msg != null ) println( "SPAM: " + msg.toString )
     else               println( "SPAM: null" )
