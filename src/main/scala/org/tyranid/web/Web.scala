@@ -329,6 +329,9 @@ class WebFilter extends TyrFilter {
         //println( T.session.id + ":" + T.session.isLite )
         
         if ( !comet && ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( ( T.user == null || !T.session.isLoggedIn ) && webloc.weblet.requiresLogin ) ) ) && web.req.getAttribute( "api" )._s.isBlank ) {
+          println( "user: " + T.user )
+          println( "ili: " + T.session.isLoggedIn )
+          println( "reql: " + webloc.weblet.requiresLogin )
           web.template( B.appShellPage( web ) )
           return
         }
