@@ -23,7 +23,6 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.net.Uri
 
-
 object LoginCookie {
 
   lazy val name =
@@ -65,19 +64,24 @@ object LoginCookie {
     None
   }
 
+  // Use the existing login token if it exists--- this will allow existing tokens in 
+  // different browsers to still work for the same user
   def set( user:User ) = {
-    val loginToken = org.tyranid.math.Base62.make( 10 )
+    val existingToken = user.s( 'loginToken )
+    val loginToken = existingToken or org.tyranid.math.Base62.make( 10 )
 
     val cookie = new javax.servlet.http.Cookie( name, user.tid + "|" + loginToken )
-    cookie.setMaxAge(60 * 60 * 24 * 14) // two weeks
+    cookie.setMaxAge( 60 * 60 * 24 * 14) // two weeks
     cookie.setPath("/")
     cookie.setSecure( true )
     cookie.setDomain( B.domain )
 
     T.web.res.addCookie(cookie)
             
-    user( "loginToken" ) = loginToken
-    B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "loginToken" -> loginToken ) ) )
+    if ( existingToken.isBlank ) {
+      user( "loginToken" ) = loginToken
+      B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "loginToken" -> loginToken ) ) )
+    }
   }
 
   def remove = {
