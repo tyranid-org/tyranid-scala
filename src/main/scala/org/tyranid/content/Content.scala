@@ -162,9 +162,9 @@ case class ContentMoveMode( override val view:TupleView ) extends Tuple( view )
  */
 object Positioning {
 
-  def apply( container:Content, newOrderTids:Seq[String] ):Positioning = {
+  def apply( container:Content, newOrderTids:Seq[String], useContents:Seq[Content] = null ):Positioning = {
 
-    val contents = ContentOrder.Manual.sort( container.contents )
+    val contents = ContentOrder.Manual.sort( ( useContents == null ) ? container.contents | useContents )
 
 
     val newOrder:Seq[Content] = newOrderTids.map( tid => contents.find( _.tid == tid ).get )

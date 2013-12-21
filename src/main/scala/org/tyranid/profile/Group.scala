@@ -265,8 +265,11 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
       p != null && p.isContainedIn( groupTid )
     }
 
+  def childGroups =
+    Group.db.find( Mobj( "parent" -> id ) ).map( Group.apply )
+    
   def ownedChildGroups =
-    Group.db.find( Mobj( "parent" -> id ) ).map( Group.apply ).filter( _.isOwner( T.user ) )
+    childGroups.filter( _.isOwner( T.user ) )
 
   def ownedDescendentGroups = {
     val groups = Buffer[Group]()
