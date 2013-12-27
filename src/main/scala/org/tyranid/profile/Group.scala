@@ -46,6 +46,7 @@ import org.tyranid.time.Time
 import org.tyranid.ui.{ Checkbox, Field, Help, Select, Search, Show, Valuable }
 import org.tyranid.web.{ WebContext, Weblet }
 
+
 object GroupCategory extends RamEntity( tid = "a1Nv" ) {
   type RecType = GroupCategory
   override def convert( view:TupleView ) = new GroupCategory( view )

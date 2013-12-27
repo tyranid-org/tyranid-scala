@@ -775,6 +775,7 @@ trait ContentMeta extends PrivateKeyEntity {
 
   "startDate"         is DbDate               is 'client; // if this is not specified, we use "on" instead of this
   "dueDate"           is DbDate               is 'client; // this is a due date for cards, a milestone due date for boards, and a due date for projects
+  "projectedVal"      is DbDate               is 'client; // projected value
 
 
   // Attachment / File
