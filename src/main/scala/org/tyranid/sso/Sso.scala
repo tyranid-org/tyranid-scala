@@ -545,7 +545,7 @@ $( $('#idp').focus() );
 //        if ( u.s( 'thumbnail ).isBlank ) {
 //           user( 'thumbnail ) = publicBucket.url( path )
 //
-//          val titleAttrib = mapping.s( 'titleAttrib )Ω
+//          val titleAttrib = mapping.s( 'titleAttrib )
 //          u( 'title ) = json.s( titleAttrib )
 //          save = true
 //        }
