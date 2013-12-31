@@ -364,6 +364,7 @@ $( $('#idp').focus() );
 
         val groupId = mapping.oid( 'group )
         Group.db.update( Mobj( "_id" -> groupId ), $addToSet( "v", newUser.tid ) )
+        Group.db.update( Mobj( "_id" -> groupId ), $addToSet( "members", newUser.tid ) )
         
         /*
         // We are instead ensure group ownership by the mapping, not the JSON, for now.
