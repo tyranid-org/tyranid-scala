@@ -556,6 +556,7 @@ $( $('#idp').focus() );
           
         val groupId = mapping.oid( 'group )
         Group.db.update( Mobj( "_id" -> groupId ), $addToSet( "v", u.tid ) )
+        Group.db.update( Mobj( "_id" -> groupId ), $addToSet( "members", u.tid ) )
         
         /*
         // For now, we are ensuring group membership from the mapping, not the JSON
