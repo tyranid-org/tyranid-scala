@@ -528,7 +528,7 @@ object GroupCapacity extends MongoEntity( tid = "a1Av" ) {
   }
 
   def forGroupUsers( tid:String, userTids:Seq[String], startDate:Date, endDate:Date ) = {
-    spam( "ending: " + endDate.getTime )
+    //spam( "ending: " + endDate.getTime )
     GroupCapacity.db.find( Mobj( 
         "g" -> Group.tidToId( tid ), 
         "u" -> Mobj( $in -> userTids.map( B.User.tidToId ).toMlist ),
