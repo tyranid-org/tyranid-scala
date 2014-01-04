@@ -19,6 +19,8 @@ package org.tyranid.collection
 
 import scala.collection.JavaConversions._
 
+import com.mongodb.DBObject
+
 import org.tyranid.Imp._
 
 
@@ -89,7 +91,7 @@ class ObjectMapImp[A]( map:scala.collection.Map[String,Any] ) {
     case None      => null
     }
 
-  def toDBObject =
+  def toDBObject:DBObject =
     if ( map == null ) {
       null
     } else {
@@ -105,6 +107,13 @@ class ObjectMapImp[A]( map:scala.collection.Map[String,Any] ) {
         value match {
         case arr:Array[_] =>
           dbobj.append( key, arr.toMlist )
+
+        case obj:java.util.LinkedHashMap[_,_] =>
+          var map:collection.Map[String,Any] = obj.as[java.util.LinkedHashMap[String,Any]];
+          dbobj.append( key, obj.as[Map[String,Any]].toDBObject )
+
+        case obj:collection.Map[_,_] =>
+          dbobj.append( key, obj.as[Map[String,Any]].toDBObject )
 
         case _ =>
           dbobj.append( key, value )

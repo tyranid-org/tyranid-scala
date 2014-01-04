@@ -104,6 +104,10 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
     val s = getParameter( param ).stripXss
     s != null |* s.toLaxDouble
   }
+  def t( param:String ):Date = {
+    val s = getParameter( param ).stripXss
+    if ( s != null ) new Date( s.toLaxLong ) else null
+  }
   def l( param:String ):Long = {
     val s = getParameter( param ).stripXss
     s != null |* s.toLaxLong

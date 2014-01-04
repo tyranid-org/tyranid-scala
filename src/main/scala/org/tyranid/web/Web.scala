@@ -516,6 +516,7 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   def d( param:String ):Double        = req.d( param )
   def l( param:String ):Long          = req.l( param )
   def b( param:String ):Boolean       = req.b( param )
+  def t( param:String ):Date          = req.t( param )
   def oid( param:String )             = req.oid( param  )
   def a( param:String ):Seq[String]   = req.a( param )
   def a_?( param:String ):Seq[String] = req.a_?( param )

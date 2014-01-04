@@ -530,7 +530,8 @@ class StringImp( s:String ) extends Serializable {
    * Generates a plural form of a singular word based if the passed in number is not 1.
    * i.e. 0 cats, 1 cat, 2 cats, ...
    */
-	def plural( cnt:Int ):String = if ( cnt == 1 ) s else plural
+	def plural( cnt:Int ):String    = if ( cnt == 1   ) s else plural
+	def plural( cnt:Double ):String = if ( cnt == 1.0 ) s else plural
 
   /**
    * Generates a possessive form of a singular word.

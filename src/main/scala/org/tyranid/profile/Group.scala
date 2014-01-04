@@ -24,6 +24,7 @@ import scala.collection.mutable.Buffer
 import scala.xml.{ NodeSeq, Text, Unparsed }
 
 import java.io.File
+import java.util.{ Calendar, Date }
 
 import org.bson.types.ObjectId
 
@@ -31,7 +32,7 @@ import com.mongodb.DBObject
 
 import org.tyranid.Imp._
 import org.tyranid.content.{ ContentMeta, Content, ContentEdit, ContentType }
-import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbInt, DbLong, DbLink, DbTid, DbUrl, Entity, Record, Scope }
+import org.tyranid.db.{ DbArray, DbBoolean, DbChar, DbDate, DbDouble, DbInt, DbLong, DbLink, DbTid, DbUrl, Entity, Record, Scope }
 import org.tyranid.db.meta.{ Tid, TidItem }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
@@ -41,8 +42,10 @@ import org.tyranid.http.Http
 import org.tyranid.json.JqHtml
 import org.tyranid.math.Base62
 import org.tyranid.report.{ Report, Run }
+import org.tyranid.time.Time
 import org.tyranid.ui.{ Checkbox, Field, Help, Select, Search, Show, Valuable }
 import org.tyranid.web.{ WebContext, Weblet }
+
 
 object GroupCategory extends RamEntity( tid = "a1Nv" ) {
   type RecType = GroupCategory
@@ -297,6 +300,69 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
     path._s
   }
 
+  // This is for >= startDate, and < endDate
+  // So, 1st to the 2nd would only include 1 day
+  def compactCapMap( userCaps: mutable.Map[String,Array[Double]], startDate:Date, endDate:Date ) = {
+    val capStart = startDate.toMonday    
+    var capEnd = endDate.toMonday
+
+    // Since the is a <, then add a week to ensure the start date is not excluded
+    capEnd = capEnd.add( Calendar.DAY_OF_YEAR, 7 )
+    
+//    println( "cap start: "+  capStart.getTime )
+//    println( "cap end: "+  capEnd.getTime )
+        
+    val teamMemberTids = memberTids
+    
+    // Caps are stored by weeks, so the startDate is always midnight on Monday
+    val caps = GroupCapacity.forGroupUsers( tid, teamMemberTids, capStart, capEnd )
+    val defCaps = GroupSettings.capMapForGroupUsers( tid, teamMemberTids, 40 )
+    
+    val startMillis = startDate.getTime
+    val endMillis = endDate.getTime
+    
+    val diffMillis = endMillis - startMillis
+    
+    val numDays = ( diffMillis / Time.OneDayMs )._i
+    
+    // This may change-- will have to do something about weekend being zeroed out if it does
+    val numWorkDays = 5.0
+    
+    // Produce a compact map, user to array of caps for each day
+    for ( memberTid <- teamMemberTids ) {
+      var userCap = userCaps.getOrElse( memberTid, null )
+      
+      if ( userCap == null ) {
+        val defCap = defCaps( memberTid )
+        val cap = ( defCap > 0.0 ) ? ( defCap / numWorkDays ) | 0.0
+        userCap = Array.fill(numDays){ cap }
+        userCaps( memberTid ) = userCap
+      }
+  
+      val myCap = caps.filter( _( 'u ) == memberTid )
+      
+      for ( i <- 0 until numDays ) {
+        val qDate = new Date( startMillis + ( i * Time.OneDayMs ) )
+        
+        
+        if ( qDate.isUtcWeekend ) {
+          userCap(i) = 0.0
+        } else {
+          val mondayMillis = qDate.toMonday.getTime
+          
+          val foundCap = myCap.find( c => {
+            c.t( 'start ).getTime == mondayMillis
+          } )
+          
+          if ( foundCap != None ) {
+            val cap = foundCap.get.d( 'cap )
+            userCap(i) = ( cap > 0.0 ) ? ( cap / numWorkDays ) | 0.0
+          }
+        }
+      }
+    }
+  }
+  
   def idsForEntity( en:Entity ) = a_?( 'v ).map( _._s ).filter( _.startsWith( en.tid ) ).map( en.tidToId )
 
   def memberTids =
@@ -370,7 +436,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   }  
 
   val newOverlay = <div class="new-overlay"><span class="text">NEW</span></div>
-  val privateOverlay = <div class="private-overlay"><span class="icon-minus"></span><span class="text">PRIVATE</span></div>
+  val privateOverlay = <div class="private-overlay"><span class="fa fa-minus"></span><span class="text">PRIVATE</span></div>
 
   override def thumbHtml( size:String, extraHtml:NodeSeq = null ) = {
     val url = imageUrl( null )
@@ -412,6 +478,10 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
           
     if ( !T.session.isIncognito && !settings.hasVisited ) {
       settings.setVisited
+      
+      if ( contentType == ContentType.Team )
+        settings( 'cap ) = 40.0
+        
       settings.save
     }
   }
@@ -440,6 +510,48 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
   }  
 }
 
+object GroupCapacity extends MongoEntity( tid = "a1Av" ) {
+  type RecType = GroupCapacity
+  override def convert( obj:DBObject, parent:MongoRecord ) = new GroupCapacity( obj, parent )
+
+  override def init {
+    super.init
+
+    "_id"            is DbMongoId         is 'id is 'client;
+  
+    "u"              is DbLink(B.User)    as "User" is 'client;
+    "g"              is DbLink(Group)     as "Group" is 'client;
+  
+    "start"          is DbDate            as "Start" is 'client;
+    
+    "cap"            is DbDouble          as "Capacity" is 'client;                  
+  }
+
+  def forGroupUsers( tid:String, userTids:Seq[String], startDate:Date, endDate:Date ) = {
+    //spam( "ending: " + endDate.getTime )
+    GroupCapacity.db.find( Mobj( 
+        "g" -> Group.tidToId( tid ), 
+        "u" -> Mobj( $in -> userTids.map( B.User.tidToId ).toMlist ),
+        "start" -> Mobj( $gte -> startDate, $lt -> endDate )
+    ) ).toSeq.map( gc => 
+        Map(
+          "u" -> B.User.idToTid( gc.oid( 'u ) ),
+          "cap" -> gc.d( 'cap ),
+          "start" -> gc.t( 'start ).getTime()
+          ) 
+       )
+  }
+    
+  val index = {
+    db.ensureIndex( Mobj( "g" -> 1, "u" -> 1, "start" -> 1 ) )
+    db.ensureIndex( Mobj( "u" -> 1, "g" -> 1, "start" -> 1  ) )
+  }    
+}
+
+class GroupCapacity( obj:DBObject, parent:MongoRecord ) extends MongoRecord( GroupCapacity.makeView, obj, parent ) {
+}
+
+  
 /*
  * * *  Group Settings
  */
@@ -451,14 +563,16 @@ object GroupSettings extends MongoEntity( tid = "a0Rt" ) {
   override def init {
     super.init
 
-  "_id"            is DbMongoId                              is 'id is 'client;
-
-  "u"              is DbLink(B.User)                         as "User";
-  "g"              is DbLink(Group)                          as "Group" is 'client;
-
-  "order"          is DbArray(DbTid( B.ContentEntities:_* )) as "Ordering";
+    "_id"            is DbMongoId                              is 'id is 'client;
   
-  "flags"          is DbLong                                 as "Flags" is 'client;
+    "u"              is DbLink(B.User)                         as "User";
+    "g"              is DbLink(Group)                          as "Group" is 'client;
+  
+    "order"          is DbArray(DbTid( B.ContentEntities:_* )) as "Ordering";
+    
+    "flags"          is DbLong                                 as "Flags" is 'client;
+    
+    "cap"            is DbDouble                               as "Capacity"                  
   }
 
   db.ensureIndex( Mobj( "g" -> 1, "u" -> 1 ) )
@@ -466,8 +580,52 @@ object GroupSettings extends MongoEntity( tid = "a0Rt" ) {
   val FLAG_VISITED          = 1
   val FLAG_HIDDEN_COMMENTS  = 2
   
-  def forGroupTid( tid:String, user:User ) = 
-    GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> user.id , "g" -> Group.tidToId( tid ) ) ) )
+  def forGroupUserId( tid:String, userId:ObjectId ) = 
+    GroupSettings( GroupSettings.db.findOrMake( Mobj( "u" -> userId, "g" -> Group.tidToId( tid ) ) ) )
+  
+  def capsForGroupUsers( tid:String, userTids:Seq[String], defCap:Double ) = {
+    val settings = GroupSettings.db.find( Mobj( 
+        "g" -> Group.tidToId( tid ), 
+        "u" -> Mobj( $in -> userTids.map( B.User.tidToId ).toMlist ) 
+    ) ).toSeq.map( gc => 
+        Map(
+          "u" -> B.User.idToTid( gc.oid( 'u ) ),
+          "cap" -> gc.d( 'cap )
+          ) 
+       )
+   
+    val allSettings = mutable.Set[Map[String,Any]]()
+    
+    userTids.foreach( u => {
+      val found = settings.find( o => o.s( 'u ) == u )
+     
+      if ( found == None ) {
+        allSettings += Map( "u" -> u, "cap" -> defCap )
+      } else {
+        allSettings += found.get
+      }
+    } )
+   
+    allSettings.toSeq
+  }
+
+  def capMapForGroupUsers( tid:String, userTids:Seq[String], defCap:Double ) = {
+    val capMap = mutable.Map[String,Double]()
+    
+    GroupSettings.db.find( Mobj( 
+        "g" -> Group.tidToId( tid ), 
+        "u" -> Mobj( $in -> userTids.map( B.User.tidToId ).toMlist ) 
+    ) ).toSeq.foreach( gc => capMap( B.User.idToTid( gc.oid( 'u ) ) ) = gc.d( 'cap ) )
+   
+    userTids.foreach( u => {
+      if ( !capMap.containsKey( u ) )
+        capMap( u ) = defCap
+    } )
+   
+    capMap
+  }
+  
+  def forGroupTid( tid:String, user:User ) = forGroupUserId( tid, user.id._oid )
     
   val index = {
     db.ensureIndex( Mobj( "u" -> 1, "g" -> 1 ) )

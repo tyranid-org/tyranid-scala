@@ -434,10 +434,8 @@ case class JsonString( root:Any, pretty:Boolean = false, client:Boolean = false 
       
     case ws:WebResponse       => sb ++= ws.toJsonStr
     case note:Notification    => write( note.msg )
-    case null => 
-      println( "Warning, turning NULL into JSON (empty string)" ); sb ++= "\"\""
-    case u => 
-      println( "Don't know how to turn " + u + " (" + u.getClass() + ") into JSON" ); sb ++= "\"\"" 
+    case null                 => sb ++= "null"
+    case u                    => println( "Don't know how to turn " + u + " (" + u.getClass() + ") into JSON" ); sb ++= "\"\"" 
     }
 }
 

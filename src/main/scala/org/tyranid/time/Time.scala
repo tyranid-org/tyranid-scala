@@ -199,6 +199,12 @@ class DateImp( d:Date ) extends Serializable {
     c.getTime()
   }
   
+  def toMonday = {
+    val c = toUtcCalendar
+    c.set( Calendar.DAY_OF_WEEK, Calendar.MONDAY )
+    c.getTime()
+  }
+  
   def add( field:Int, amount:Int ) = {
     val c = toUtcCalendar
     c.add( field, amount )
@@ -338,6 +344,13 @@ class DateImp( d:Date ) extends Serializable {
     ( day == Calendar.SUNDAY || day == Calendar.SATURDAY )  
   }
 
+  def toUtcMidnight = toUtcCalendar.setMidnight.getTime
+  
+  def isUtcWeekend = {
+    val day = toUtcCalendar.get( Calendar.DAY_OF_WEEK ) 
+    ( day == Calendar.SUNDAY || day == Calendar.SATURDAY )  
+  }
+
   def > ( other:Date ) = d.getTime >  other.getTime
   def >=( other:Date ) = d.getTime >= other.getTime
   def < ( other:Date ) = d.getTime <  other.getTime
@@ -404,6 +417,20 @@ object Time {
     val c = Calendar.getInstance( Utc )
     c.set( 0, 0, 0, 0, 0, 0 )
     c
+  }
+  
+  def earliest( dates:Date* ) = {
+    if ( dates != null )
+      dates.minBy( d => ( d == null ) ? Long.MaxValue | d.getTime )
+    else  
+      null
+  }
+  
+  def latest( dates:Date* ) = {
+    if ( dates != null )
+      dates.maxBy( d => ( d == null ) ? 0l | d.getTime )
+    else  
+      null
   }
 
   def now = System.currentTimeMillis
