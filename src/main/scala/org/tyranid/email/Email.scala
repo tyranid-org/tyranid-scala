@@ -72,6 +72,7 @@ object Email {
     "@msn.com",
     "@myway.com",
     "@netamumail.com",
+    "@posteo.de",
     "@wow.com",
     "@wp.pl",
     "@yahoo.com",
