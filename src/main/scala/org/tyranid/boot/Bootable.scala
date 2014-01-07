@@ -301,6 +301,10 @@ trait Bootable {
   val reCaptchaPublicKey  = ""
   val reCaptchaPrivateKey = ""
 
+  val turboBridgeAccountId = ""
+  val turboBridgeEmail = ""
+  val turboBridgePassword = ""
+    
   // Assistly
   val assistly:Multipass  = null
 

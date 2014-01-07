@@ -43,6 +43,9 @@ object AppStatType extends RamEntity( tid = "a1Fv" ) {
   val MadeToPrintUploadId    = 500
   val MadeToPrintConvertedId = 501
   
+  val ConferenceStartId      = 600
+  val ConferenceEndId        = 601
+  
   val CrocodocUpload  = add( CrocodocUploadId,  "Crocodoc Upload" )
   val CrocodocRetry   = add( CrocodocRetryId,   "Crocodoc Retry" )
   val CrocodocSuccess = add( CrocodocSuccessId, "Crocodoc Success" )
@@ -64,6 +67,9 @@ object AppStatType extends RamEntity( tid = "a1Fv" ) {
   
   val MadeToPrintUpload    = add( MadeToPrintUploadId, "MadeToPrint Upload" )
   val MadeToPrintConverted = add( MadeToPrintConvertedId, "MadeToPrint Converted" )
+  
+  val ConferenceStart = add( ConferenceStartId, "Conference Start" )
+  val ConferenceEnd   = add( ConferenceEndId, "Conference End" )
 }
 
 case class AppStatType( override val view:TupleView ) extends Tuple( view )
@@ -72,18 +78,22 @@ object AppStat extends MongoEntity( tid = "b04v" ) {
   "_id"  is DbMongoId            is 'id is 'client;
   "s"    is DbLink(AppStatType)  is 'required;
   "t"    is DbDateTime           is 'required;
+  "d"    is DbInt                as "Duration";
   
   val index = {
     db.ensureIndex( Mobj( "s" -> 1, "u" -> 1, "t" -> 1 ) )
     db.ensureIndex( Mobj( "u" -> 1, "s" -> 1, "t" -> 1 ) )
   }
   
-  private def create( statId:Int ) {
+  private def create( statId:Int, duration:Long = 0 ) {
     background {
       val stat = AppStat.make
       stat( 's ) = statId
       stat( 't ) = new Date
       
+      if ( duration != 0 )
+        stat( 'd ) = duration
+        
       stat.save
     }
   }
@@ -109,6 +119,9 @@ object AppStat extends MongoEntity( tid = "b04v" ) {
   
   def MadeToPrintUpload    = create( AppStatType.MadeToPrintUploadId )
   def MadeToPrintConverted = create( AppStatType.MadeToPrintConvertedId )
+  
+  def ConferenceStart = create( AppStatType.ConferenceStartId )
+  def ConferenceEnd( duration:Long = 0 )  = create( AppStatType.ConferenceEndId, duration )
 }
 
 class AppStat( obj:DBObject, parent:MongoRecord ) extends MongoRecord( AppStat.makeView, obj, parent ) {}

@@ -69,6 +69,21 @@ class StringImp( s:String ) extends Serializable {
       ( s, null )
 	}
 
+  def removeLeadingChars( char:Char ) = {
+    var newS = s
+    var done = false
+    
+    while( newS.length > 0 && !done ) {
+      if ( newS.charAt( 0 ) == char )
+        newS = newS.substring( 1 )
+      else
+        done = true
+    }
+      
+    newS
+    
+  }
+  
 	def removeAllChars( chars:String ) = {
 	  var newS = s
 	  
