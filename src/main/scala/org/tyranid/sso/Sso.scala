@@ -480,6 +480,11 @@ $( $('#idp').focus() );
         val u = B.User( user )
         var save = false
 
+        if ( u.s( 'activationCode ).notBlank ) {
+          u.obj.removeField( "activationCode" )
+          save = true
+        }
+
         val fName = u.s( 'firstName )
 
         if ( fName.isBlank || fName == "unknown" ) {
