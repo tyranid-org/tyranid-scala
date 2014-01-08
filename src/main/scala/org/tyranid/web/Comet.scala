@@ -34,6 +34,17 @@ import org.tyranid.net.Ip
 import org.tyranid.session.{ Session, SessionData, WebSession }
 
 
+
+
+/*
+
+    websockets
+
+    q.  multiple servers ?
+
+
+ */
+
 case class CometService( name:String, create: ( BayeuxServer ) => AbstractService ) {
 
   var service:AbstractService = null
