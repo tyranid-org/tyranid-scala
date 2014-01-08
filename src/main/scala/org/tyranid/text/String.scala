@@ -69,6 +69,21 @@ class StringImp( s:String ) extends Serializable {
       ( s, null )
 	}
 
+  def removeLeadingChars( char:Char ) = {
+    var newS = s
+    var done = false
+    
+    while( newS.length > 0 && !done ) {
+      if ( newS.charAt( 0 ) == char )
+        newS = newS.substring( 1 )
+      else
+        done = true
+    }
+      
+    newS
+    
+  }
+  
 	def removeAllChars( chars:String ) = {
 	  var newS = s
 	  
@@ -568,7 +583,8 @@ class StringImp( s:String ) extends Serializable {
     }
 
   def toPhoneMask:String = {
-    var offset = s.length match {
+    val newS = ( s.charAt( 0 ) == '+' ) ? s.substring( 1 ) | s
+    var offset = newS.length match {
                           case 10 => 0
                           case 11 => 1
                           case _ => -1
@@ -577,7 +593,7 @@ class StringImp( s:String ) extends Serializable {
     if ( offset == -1 )
       return null
       
-    return "(" + s.slice( offset,3+offset ) + ") " + s.slice( 3+offset, 6+offset ) + "-" + s.slice( 6+offset, 10+offset ) 
+    return "(" + newS.slice( offset,3+offset ) + ") " + newS.slice( 3+offset, 6+offset ) + "-" + newS.slice( 6+offset, 10+offset ) 
   }
 
   def toWebsite:String = {
