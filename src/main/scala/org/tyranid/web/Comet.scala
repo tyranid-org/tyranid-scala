@@ -38,9 +38,17 @@ import org.tyranid.session.{ Session, SessionData, WebSession }
 
 /*
 
-    websockets
+   websockets
 
-    q.  multiple servers ?
+   X. install script to install node.js server
+
+       X. copy direct
+
+   X. change push.js to find security keys correctly
+
+   /. change push.js to find mongodb url correctly
+
+   /. multiple servers
 
 
  */
