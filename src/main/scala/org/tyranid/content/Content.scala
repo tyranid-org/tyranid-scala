@@ -173,6 +173,18 @@ object Positioning {
     var moving:Content = null
     var before:Content = null
 
+    def pred( order:Seq[Content], idx:Int ) =
+      if ( idx > 0 )
+        order( idx - 1 )
+      else
+        null
+
+    def succ( order:Seq[Content], idx:Int ) =
+      if ( idx < order.length - 1 )
+        order( idx + 1 )
+      else
+        null
+
     /**
      * Reverse-Engineer what was moved where to where by comparing the newOrder to the oldOrder
      * 
@@ -198,6 +210,22 @@ object Positioning {
      * before: null
      *
      *
+     * Example #3, given:
+     *
+     * original order:  S, M, T
+     *      new order:  M, T, S
+     *
+     * this algorithm INCORRECTLY yields:
+     *
+     * moving: M
+     * before: T
+     *
+     * SHOULD Be:
+     *
+     * moving: S
+     * before: null
+     *
+     *
      * Algorithm:  Find the first out of order in the partial order
      *
      *   for each element X in the new order ...
@@ -217,15 +245,18 @@ object Positioning {
 
         val oi = contents.indexWhere( _.id == nic.id )
 
-        if (   // are any elements BEFORE ni in the new order while AFTER oi in the old order ?
-               newOrder.slice( 0, ni - 1 ).exists( njc =>
-                 contents.slice( oi+1, olen ).exists( _.id == njc.id )
+        if (   pred( newOrder, ni ) != pred( contents, oi )
+            && succ( newOrder, ni ) != succ( contents, oi )
+            && (   // are any elements BEFORE ni in the new order while AFTER oi in the old order ?
+                   newOrder.slice( 0, ni - 1 ).exists( njc =>
+                     contents.slice( oi+1, olen ).exists( _.id == njc.id )
+                   )
+                || // are any elements AFTER ni in the new order while BEFORE oi in the old order ?
+                   newOrder.slice( ni + 1, nlen ).exists( njc =>
+                     contents.slice( 0, oi ).exists( _.id == njc.id )
+                   )
                )
-            || // are any elements AFTER ni in the new order while BEFORE oi in the old order ?
-               newOrder.slice( ni + 1, nlen ).exists( njc =>
-                 contents.slice( 0, oi ).exists( _.id == njc.id )
-               )
-            ) {
+           ) {
           moving = nic
           before = if ( ni + 1 < nlen ) newOrder( ni + 1 )
                    else                 null

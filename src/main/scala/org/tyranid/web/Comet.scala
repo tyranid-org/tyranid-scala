@@ -34,6 +34,25 @@ import org.tyranid.net.Ip
 import org.tyranid.session.{ Session, SessionData, WebSession }
 
 
+
+
+/*
+
+   websockets
+
+   X. install script to install node.js server
+
+       X. copy direct
+
+   X. change push.js to find security keys correctly
+
+   /. change push.js to find mongodb url correctly
+
+   /. multiple servers
+
+
+ */
+
 case class CometService( name:String, create: ( BayeuxServer ) => AbstractService ) {
 
   var service:AbstractService = null
@@ -123,8 +142,17 @@ object Comet {
 
         val sv = sd.s( 'sv )
 
-        if ( true || // DEBUG:  force everything remote so we can test the queue
-             sv != Ip.Host ) {
+        if ( PushQueue.active ) {
+          PushQueue.db.save(
+            Mobj(
+              "h"  -> false, // this can't left undefined, because you can't update a document in a capped mongo collection to be larger
+              "ss" -> sd.s( 'ss ),
+              "m"  -> comet.output.toDBObject
+            )
+          )
+
+        } else if ( true || // DEBUG:  force everything remote so we can test the queue
+                    sv != Ip.Host ) {
           CometQueue.dbFor( sv ).save(
             Mobj(
               "h"  -> false, // this can't left undefined, because you can't update a document in a capped mongo collection to be larger
@@ -231,7 +259,7 @@ object CometQueue {
 
   lazy val localName = org.tyranid.net.Ip.Host
 
-  def init = {
+  def init {
 
     createCollectionFor( localName )
 
@@ -240,4 +268,47 @@ object CometQueue {
     }
   }
 }
+
+
+/*
+ * * *  PushQueue
+ */
+
+object PushQueue {
+
+  val active = false
+
+  //"_id"      is DbMongoId         is 'id;
+
+  //"m"        is DbObject          as "Comet Message";
+  //"ss"       is DbChar(32)        as "HTTP Session ID";
+  //"h"        is DbBoolean         as "Handled";
+
+  lazy val db = {
+    val mongo = Mongo.connect.db( B.profileDbName )
+
+    val collName = "pushing"
+
+    if ( !mongo.collectionExists( collName ) ) {
+      mongo.createCollection(
+        collName,
+        Mobj(
+          "capped" -> true,
+          "size"   -> ( 8 * 1024 * 1024 )
+        )
+      )
+
+      // place a dummy "already-handled" object into the capped collection so that the query will "await data" properly ... if the collection is empty the query will return immediately
+      mongo( collName ).save( Mobj( "h" -> true ) )
+    }
+
+    Mongo.connect.db( B.profileDbName )( collName )
+  }
+
+  def init {
+
+    db
+  }
+}
+
 

@@ -265,6 +265,8 @@ trait Bootable {
   // ElasticSearch
   def elasticSearchHost:String = "http://localhost:9200"
   
+  // socket.io
+  def socketIoHost:String = null
 
   // SMS
   val sms:NexmoApp = null
@@ -301,6 +303,10 @@ trait Bootable {
   val reCaptchaPublicKey  = ""
   val reCaptchaPrivateKey = ""
 
+  val turboBridgeAccountId = ""
+  val turboBridgeEmail = ""
+  val turboBridgePassword = ""
+    
   // Assistly
   val assistly:Multipass  = null
 
