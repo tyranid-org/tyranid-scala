@@ -276,7 +276,7 @@ object CometQueue {
 
 object PushQueue {
 
-  val active = false
+  val active = true
 
   //"_id"      is DbMongoId         is 'id;
 
