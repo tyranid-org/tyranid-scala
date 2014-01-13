@@ -19,6 +19,8 @@ package org.tyranid.collection
 
 import com.mongodb.BasicDBList
 
+import org.tyranid.Imp._
+
 
 class ArrayImp[A]( array:Array[A] ) {
 
@@ -62,7 +64,7 @@ class ArrayImp[A]( array:Array[A] ) {
       val list = new BasicDBList
 
       for ( v <- array )
-        list.add( v.asInstanceOf[AnyRef] )
+        list.add( v.toDBObject )
 
       list
     }
