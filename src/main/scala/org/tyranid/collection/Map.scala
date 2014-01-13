@@ -17,10 +17,6 @@
 
 package org.tyranid.collection
 
-import scala.collection.JavaConversions._
-
-import com.mongodb.DBObject
-
 import org.tyranid.Imp._
 
 
@@ -89,38 +85,6 @@ class ObjectMapImp[A]( map:scala.collection.Map[String,Any] ) {
     map.get( key ) match {
     case Some( v ) => v._t
     case None      => null
-    }
-
-  def toDBObject:DBObject =
-    if ( map == null ) {
-      null
-    } else {
-      // this doesn't work because it doesn't convert nested arrays (and other thing?) properly
-      //new com.mongodb.BasicDBObject( map )
-
-      val dbobj = new com.mongodb.BasicDBObject()
-
-      for ( entry <- map;
-            key   = entry._1;
-            value = entry._2 ) {
-
-        value match {
-        case arr:Array[_] =>
-          dbobj.append( key, arr.toMlist )
-
-        case obj:java.util.LinkedHashMap[_,_] =>
-          var map:collection.Map[String,Any] = obj.as[java.util.LinkedHashMap[String,Any]];
-          dbobj.append( key, obj.as[Map[String,Any]].toDBObject )
-
-        case obj:collection.Map[_,_] =>
-          dbobj.append( key, obj.as[Map[String,Any]].toDBObject )
-
-        case _ =>
-          dbobj.append( key, value )
-        }
-      }
-
-      dbobj
     }
 }
 
