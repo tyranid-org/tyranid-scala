@@ -19,7 +19,6 @@ package org.tyranid.any
 
 import java.util.Date
 
-import scala.collection.JavaConversions._
 import scala.collection.mutable.LinkedHashMap
 
 import org.bson.types.ObjectId
@@ -87,35 +86,8 @@ class AnyImp[T <: Any]( v:T ) {
     case null     => null
     }
 
+  def _ar = v.asInstanceOf[AnyRef]
+
   def asJsonObject = if ( v != null ) v.as[LinkedHashMap[String,Any]] else null
-
-  def toDBObject:AnyRef =
-    v match {
-    case null =>
-      null
-
-    case arr:Array[_] =>
-      arr.toMlist // TODO:  this needs to be recursive
-
-    case obj:java.util.LinkedHashMap[_,_] =>
-      var map:collection.Map[String,Any] = obj.as[java.util.LinkedHashMap[String,Any]];
-      obj.as[Map[String,Any]].toDBObject
-
-    case map:scala.collection.Map[_,_] =>
-      // this doesn't work because it doesn't convert nested arrays (and other thing?) properly
-      //new com.mongodb.BasicDBObject( map )
-
-      val dbobj = new com.mongodb.BasicDBObject()
-
-      for ( entry <- map;
-            key   = entry._1;
-            value = entry._2 )
-        dbobj.append( key._s, value.toDBObject )
-
-      dbobj
-
-    case _ =>
-      v
-    }
 }
 

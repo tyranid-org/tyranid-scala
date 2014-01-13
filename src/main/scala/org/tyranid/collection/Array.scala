@@ -64,7 +64,7 @@ class ArrayImp[A]( array:Array[A] ) {
       val list = new BasicDBList
 
       for ( v <- array )
-        list.add( v.toDBObject )
+        list.add( v.asInstanceOf[AnyRef].toDBObject )
 
       list
     }
