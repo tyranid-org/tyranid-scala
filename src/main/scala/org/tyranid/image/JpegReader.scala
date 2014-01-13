@@ -151,7 +151,7 @@ class JpegReader {
   }
 
   def convertCmykToRgb( cmykRaster:Raster, acmykProfile:ICC_Profile ): BufferedImage = {
-    val cmykProfile = ( acmykProfile == null ) ? ICC_Profile.getInstance( T.web.ctx.getResourceAsStream( "/ISOcoated_v2_300_eci.icc" ) ) |
+    val cmykProfile = ( acmykProfile == null ) ? ICC_Profile.getInstance( T.web.ctx.getResourceAsStream( "/resources/ISOcoated_v2_300_eci.icc" ) ) |
                                                  acmykProfile
         
     val cmykCS = new ICC_ColorSpace(cmykProfile);
