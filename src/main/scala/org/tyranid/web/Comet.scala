@@ -46,7 +46,7 @@ import org.tyranid.session.{ Session, SessionData, WebSession }
 
    X. change push.js to find security keys correctly
 
-   /. change push.js to find mongodb url correctly
+   X. change push.js to find mongodb url correctly
 
    /. multiple servers
 
