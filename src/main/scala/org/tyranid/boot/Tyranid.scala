@@ -20,7 +20,7 @@ package org.tyranid.boot
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.DbBoolean
+import org.tyranid.db.{ DbBoolean, DbInt }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.json.JsModel
@@ -43,19 +43,34 @@ object TyranidConfig extends MongoEntity( tid = "a03t" ) {
   "syncWebDav"     is DbBoolean         as "Sync WebDavs";
   "hideUpgradeBtn" is DbBoolean         as "Hide Upgrade Button";
   "allTmpl"        is DbBoolean         as "Templates for All";
+  "confAlertLimit" is DbInt             as "Send Alert when this limit is hit";     
 
   def apply():TyranidConfig = singleton
 
-  lazy val singleton = {
-    val recc = db.find( Mobj() ).limit(1)
-    var rec = recc.hasNext ? apply( recc.next ) | null
-
-    if ( rec == null ) {
-      rec = make
-      rec.save
+  private var _singleton:TyranidConfig = null
+  
+  def clear {
+    _singleton = null
+  }
+  
+  def singleton = {
+    if ( _singleton == null ) {
+      this.synchronized {
+        if ( _singleton == null ) {
+          val recc = db.find( Mobj() ).limit(1)
+          var rec = recc.hasNext ? apply( recc.next ) | null
+      
+          if ( rec == null ) {
+            rec = make
+            rec.save
+          }
+    
+          _singleton = rec
+        }
+      }
     }
-
-    rec
+    
+    _singleton
   }
 }
 

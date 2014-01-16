@@ -22,6 +22,7 @@ import java.util.Date
 import scala.collection.mutable.LinkedHashMap
 
 import org.bson.types.ObjectId
+import com.mongodb.DBObject
 
 import org.tyranid.Imp._
 
@@ -84,6 +85,8 @@ class AnyImp[T <: Any]( v:T ) {
     case s:String => new ObjectId( s ) 
     case null     => null
     }
+
+  def _ar = v.asInstanceOf[AnyRef]
 
   def asJsonObject = if ( v != null ) v.as[LinkedHashMap[String,Any]] else null
 }

@@ -38,7 +38,8 @@ object Errorlet extends Weblet {
       if ( originalUrl != null )
         log( Event.Error404, "p" -> originalUrl )
         
-      web.template( <tyr:404/> )
+      if ( WebFilter.notAsset( originalUrl ) )
+        web.template( <tyr:404/> )
     case "/throw" =>
       throw new RuntimeException( "test exception" )
 
