@@ -29,7 +29,7 @@ import org.tyranid.Imp._
 import org.tyranid.db.{ DbChar, DbLink }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
-import org.tyranid.json.{ JsCmd, JsCmds }
+import org.tyranid.json.{ JsCmd, JsCmds, JsModel }
 import org.tyranid.net.Ip
 import org.tyranid.session.{ Session, SessionData, WebSession }
 
@@ -308,7 +308,37 @@ object PushQueue {
   def init {
 
     db
+
+    background {
+
+      // give the server 3 seconds to get settled before we start pulverise it
+
+      Thread.sleep( 3000 )
+
+      PushQueue.db.save(
+        Mobj(
+          "h"       -> false, // this can't left undefined, because you can't update a document in a capped mongo collection to be larger
+          "restart" -> true
+        )
+      )
+    }
   }
 }
 
+object Cometlet extends Weblet {
+  
+  def handle( web:WebContext ) = {
+    rpath match {
+    case "/sync" =>
+      web.jsRes(
+        Map(
+          "session" -> T.session.httpSessionId
+        )
+      )
+
+    case _ =>
+      _404
+    }
+  }
+}
 
