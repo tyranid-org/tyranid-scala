@@ -132,7 +132,6 @@ object Ssolet extends Weblet {
           } else if ( mapping.s( 'idpId ).notBlank ) {
             //sess.error( "That code has been registered.  Please contact " + B.applicationName + " support if this information needs to be changed." )
             web.jsRes( Js( "V.app.load( '/sso/auth/" + code + "' );" ) )
-            //web.jsRes()
           } else {
             val orgId = mapping.oid( 'org )
             val org = TidItem.by( B.Org.idToTid( orgId ) )
