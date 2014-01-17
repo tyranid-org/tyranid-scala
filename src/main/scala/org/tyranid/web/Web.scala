@@ -441,6 +441,13 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
     json( res )
   }
 
+  def addJsCookie( js:String ) {
+    val cookie = new javax.servlet.http.Cookie( "volerroJS", js.encUrl )    
+    cookie.setPath("/")
+    cookie.setSecure( true )
+    res.addCookie( cookie )
+  }
+  
   def jsRes( value:collection.Map[String,Any], cmds:JsCmd* ) {
     val res = jsonRes( T.session )
 

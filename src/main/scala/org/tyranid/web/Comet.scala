@@ -325,20 +325,4 @@ object PushQueue {
   }
 }
 
-object Cometlet extends Weblet {
-  
-  def handle( web:WebContext ) = {
-    rpath match {
-    case "/sync" =>
-      web.jsRes(
-        Map(
-          "session" -> T.session.httpSessionId
-        )
-      )
-
-    case _ =>
-      _404
-    }
-  }
-}
 
