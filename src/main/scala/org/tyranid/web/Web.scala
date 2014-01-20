@@ -328,8 +328,19 @@ class WebFilter extends TyrFilter {
         
         //println( T.session.id + ":" + T.session.isLite )
         
-        if ( !comet && ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( ( T.user == null || !T.session.isLoggedIn ) && webloc.weblet.requiresLogin ) ) ) && web.req.getAttribute( "api" )._s.isBlank ) {
-          web.template( B.appShellPage( web ) )
+        if ( !comet && !isAsset ) {
+          println( "asp: " + web.b( 'asp ) )
+          println( "xhr: " + web.b( 'xhr ) )
+          println( "user: " + T.user )
+          if ( T.user != null ) println( "user li: " + T.session.isLoggedIn )
+        }
+        
+        if ( !comet
+            && ( web.b( 'asp ) || ( !web.b( 'xhr ) && 
+                !isAsset && ( ( T.user == null || !T.session.isLoggedIn ) && 
+                    webloc.weblet.requiresLogin ) ) ) 
+                    && web.req.getAttribute( "api" )._s.isBlank ) {
+          T.session.isLite ? web.forward( js = "V.app.lite();" ) | web.forward()
           return
         }
 
@@ -441,11 +452,18 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
     json( res )
   }
 
-  def addJsCookie( js:String ) {
-    val cookie = new javax.servlet.http.Cookie( "volerroJS", js.encUrl )    
+  def addJsCookie( js:String, name:String = "execJS" ) {
+    val cookie = new javax.servlet.http.Cookie( name, js.encUrl )    
     cookie.setPath("/")
     cookie.setSecure( true )
     res.addCookie( cookie )
+  }
+  
+  def forward( path:String = "/index.html", js:String = null ) = {
+    if ( js.notBlank )
+      addJsCookie( js )
+      
+    ctx.getRequestDispatcher( path ).forward( req, res )  
   }
   
   def jsRes( value:collection.Map[String,Any], cmds:JsCmd* ) {
@@ -465,6 +483,8 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
     json( res )
   }
 
+  def xhr = b( 'xhr )
+  
   def isApi = req.getAttribute( "api" ) != null
   
   def jsResNoNotifications( js:JsCmd* ) = {

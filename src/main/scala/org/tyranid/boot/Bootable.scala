@@ -204,13 +204,10 @@ trait Bootable {
   def ContentEntities:Seq[MongoEntity] = Nil
   def DocEntity:MongoEntity = null
 
-  @volatile var loginPage:() => NodeSeq = null
-
   def finishConversion( content:Content )
   
   def registerUser( user:User, companyName:String ) 
   def sendMessage( msg:String, toUserTid:String, fromUserTid:String = null ) 
-  def appShellPage( web:WebContext ): NodeSeq = NodeSeq.Empty
 
   lazy val appOrgId = Org.db.findOne( Mobj( "name" -> applicationName ) ).oid
   lazy val appOrgTid = Org.idToTid( appOrgId )

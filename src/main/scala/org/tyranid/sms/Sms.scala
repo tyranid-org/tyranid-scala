@@ -216,7 +216,6 @@ object Smslet extends Weblet {
      
       web.res.json( Map( 
         "html" -> ( 
-           { Notification.box } ++
            <header>With { Text( B.applicationName ) }, you can send and receive SMS messages to your mobile phone</header>
            <form method="post" action={ web.path } id="f">
             <table style="width:100%">
@@ -334,7 +333,6 @@ object Smslet extends Weblet {
       
       web.res.json( Map( 
         "html" -> (
-          { Notification.box } ++
           { header } ++
           { form } ),
         "onCloseRedirect" -> true,

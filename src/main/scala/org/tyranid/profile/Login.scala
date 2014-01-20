@@ -74,6 +74,14 @@ object Register {
 }
 
 object Loginlet extends Weblet {
+  def topPage = 
+   <div class="container" style="background: rgb(64,64,65);background: rgba(64,64,65,0.4);margin: 0 auto;width: 740px;border-radius: 8px;padding: 16px;">
+    <div style="text-align:center;background: url(https://d33lorp9dhlilu.cloudfront.net/images/volerro_logo_notag_reversed.png) no-repeat 0px 0px;height: 50px;background-position-x: center;"></div>
+    <div>
+     { Loginlet.box }
+    </div>
+   </div>
+
  def box = {
     val thread = T
     val user = thread.user
@@ -161,7 +169,7 @@ $( function() {
         val jsonRes = web.jsonRes( sess )
         
         jsonRes.htmlMap = Map( 
-              "html" -> B.loginPage(),
+              "html" -> topPage,
               "target" -> "#main",
               "transition" -> "fadeOutIn",
               "duration" -> 500 )
@@ -202,6 +210,8 @@ $( function() {
           web.jsRes( JsData( user ), JsModel( user.toClientCommonMap(), "common" ), Js( "V.app.load( '" + ( redirect.isBlank ? "/#dashboard" | redirect ) + "' );" ) )
         }
       }
+    case "/in/top" =>
+      web.jsRes( JqHtml( "#main", topPage ) )
     case "/clear" =>
       web.html( NodeSeq.Empty )
     case "/out" =>
@@ -214,8 +224,6 @@ $( function() {
       
       sess.logout()
       web.redirect( website )
-    case s if s.startsWith( "/in" ) =>
-      socialLogin( s.substring( 3 ) )
     case s if s.startsWith( "/register" ) =>
       registerRetail( web, sess )
       return
@@ -330,7 +338,7 @@ $( function() {
     }
   }
   
- def registerRetail( web:WebContext, sess:Session ) {
+  def registerRetail( web:WebContext, sess:Session ) {
     if ( web.b( 'updateFld ) ) {
       val updateFld = web.s( 'updateFld )
       
@@ -693,153 +701,7 @@ $( function() {
           if user.s( app.idName ).notBlank )
       println( "*** " + app.networkName + " " + app.idName + " = " + user.s( app.idName ) )
   }
-
-  def socialLogin( network:String ) = {
-    val sess = T.session
-
-    if ( !Social.appFor( network ).exchangeToken )
-      T.web.redirect( T.website() )
-
-    val user = findUser( network )
-
-    if ( user == null ) {
-      T.web.redirect( wpath + "/register" + network )
-    } else if ( user.s( 'activationCode ).notBlank ) {
-      notActivatedYet( user )
-    } else {
-      copySocialLogins( sess.user, user )
-      sess.login( user )
-      LoginCookie.set( user )
-      T.web.redirect( T.website() )
-    }
-  }
-
-  def socialRegister( network:String ) = {
-    val t = T
-    val web = t.web
-    val sess = t.session
-    val app = Social.appFor( network )
-
-    val user =
-      sess.user match {
-        case null => B.newUser()
-        case u    => if ( u.isNew ) u else B.newUser()
-      }
-
-    val uid = user.s( app.idName )
-    if ( uid.isBlank )
-      web.redirect( "/" )
-
-    if ( web.req.s( 'create ).notBlank ) {
-      val email = web.req.s( 'un )
-
-      if ( !validateUnusedEmail( email ) )
-        web.redirect( web.path )
-
-      app.importUser( user, uid )
-
-      user( 'email )     = email
-      user( 'createdOn ) = new Date
-
-      Register.sendActivation( user )
-
-      user.save
-      
-      Social.ensureSecureThumbnail( user )
-
-      web.redirect("/")
-
-    } else if ( web.req.s( 'link ).notBlank ) {
-
-      val existing = getUserByEmailPassword( web.req.s( 'un ), web.req.s( 'pw ) )
-
-      if ( existing != null ) {
-        copySocialLogins( sessionUser = user, existingUser = existing )
-        sess.login( existing )
-        LoginCookie.set(user)
-
-        sess.notice( "Your " + B.applicationName + " and " + app.networkName + " accounts are now linked." )
-        web.redirect( "/" )
-      }
-    }
-
-    web.template(
-      <tyr:shell>
-       <div class="plainBox">
-        <div class="title">Are You a New { B.applicationName } Member?</div>
-        <div class="contents">
-         <div>
-          If you are not a current { B.applicationName } user, then please select this option.
-          <p>Please enter in the email address that we should use with { B.applicationName }.</p>
-         </div>
-         <form method="post" action={ web.path } id="f">
-          <table>
-           <tr>
-            <td style="width:75px;">
-             <label for="un">Email:</label>
-            </td>
-            <td>
-             <input type="text" id="un" name="un" style="width:240px;" value={ user.s( 'email ) }/>
-             { Focus("#un") }
-            </td>
-           </tr>
-          </table>
-          <div class="btns" style="padding-top:16px;">
-           <input name="create" type="submit" class="btn-success btn" value={ "Create a New " + B.applicationName + " Account" }/>
-          </div>
-         </form>
-        </div>
-       </div>
-       <div class="plainBox">
-        <div class="title">... Or Do You Already Have a { B.applicationName } Account?</div>
-        <div class="contents">
-         <div>
-          If you already have an existing { B.applicationName } account, please log in with it below.
-          <p>This will link your existing { B.applicationName } account with your { app.networkName } account.</p>
-         </div>
-         <form method="post" action={ web.path } id="f">
-          <table>
-           <tr>
-            <td style="width:75px;">
-             <label for="un">Email:</label>
-            </td>
-            <td>
-             <input type="text" id="un" name="un" style="width:240px;" value={ user.s( 'email ) }/>
-             { Focus("#un") }
-            </td>
-           </tr>
-           <tr>
-            <td>
-             <label for="pw" style="padding-right:8px;">Password:</label>
-            </td>
-            <td>
-             <input type="password" name="pw" style="width:240px;"/>
-            </td>
-           </tr>
-          </table>
-          <div class="btns" style="padding-top:16px;">
-           <input name="link" type="submit" class="btn-success btn" value={ "Link your Existing " + B.applicationName + " Account to " + app.networkName }/>
-          </div>
-          {
-            val otherNetworks = Social.networks.filter( !_.isActive )
-            otherNetworks.nonEmpty |*
-          <hr style="margin:24px 0 0; border-color:#ccc;"/> ++
-          <div class="plainBox">
-           <div class="title">If you used a different Social Network to log in with { B.applicationName } in the past, you can log in with it here.</div>
-           <div class="contents">
-            <div>{
-             otherNetworks.flatMap { network =>
-              <div>{ network.loginButton( this ) }</div>
-             }
-            }</div>
-           </div>
-          </div> }
-         </form>
-        </div>
-       </div>
-      </tyr:shell> )
-  }
-
+  
   def notActivatedYet( user:User ) = {
     T.session.error( 
         "This account has not been activated yet!  Please check your email for the activation link.",
