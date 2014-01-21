@@ -212,7 +212,7 @@ trait Bootable {
   lazy val hostName = InetAddress.getLocalHost.getHostName
   
   println( "hostname: " + hostName )
-  lazy val DEV = hostName.indexOf( "macbook" ) != -1 || hostName.indexOf( "iMac" ) != -1 || hostName.indexOf( "imac" ) != -1 || hostName.indexOf( "-mac-" ) != -1 || hostName.indexOf( ".local" ) != -1
+  lazy val DEV = hostName.indexOf( "macbook" ) != -1 || hostName.indexOf( "iMac" ) != -1 || hostName.indexOf( "imac" ) != -1 || hostName.indexOf( "-mac-" ) != -1 || hostName.indexOf( ".local" ) != -1 || hostName.indexOf( "dannys-mbp" ) 
 
   lazy val securityGroup =
     if ( DEV ) ""
