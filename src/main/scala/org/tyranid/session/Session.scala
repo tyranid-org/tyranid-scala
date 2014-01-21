@@ -523,11 +523,8 @@ trait Session extends QuickCache {
     if ( web != null ) {
       val req = web.req
       
-      if ( req != null ) {
-        web.req.addJsCmd( Js( "tyrl( window.cometConnect );" ) )
-        
+      if ( req != null )
         userAgent = ua( web )
-      }
       
       T.requestCache.put( "req-common", true )      
     }

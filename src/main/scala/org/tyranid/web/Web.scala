@@ -466,6 +466,9 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
       if ( js.notBlank )
         addJsCookie( js )
       
+      if ( path == "/index.html" )
+        res.setNoCacheHeaders
+
       ctx.getRequestDispatcher( path ).forward( req, res )
     }
   }
