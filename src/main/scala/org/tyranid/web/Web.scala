@@ -706,14 +706,6 @@ trait Weblet {
     }
   }
 
-  def shell( content:NodeSeq ):Unit =
-    if ( parent != null )
-      parent.shell( content )
-    else
-      T.web.template(
-        content
-      )
-
   def _404 = throw new Web404Exception
   
   def getFormParam( formParams: collection.Map[String, Seq[String]], n: String, default: String = null ) = {
@@ -735,19 +727,6 @@ trait Weblet {
 
 
 object WebTemplate {
-  /*
-
-     +.  error message substitution
-
-     +.  intelligent javascript includes
-
-     +.  better caching / performance:
-     
-         static vs. dynamic
-         has templates vs. template-less
-
-   */
-
   def apply( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq =
     new WebTemplate().finish( xml, content )
 }
@@ -763,15 +742,6 @@ class WebTemplate {
 
   private def bindNode( node:Node, content:NodeSeq ):NodeSeq =
     node match {
-    case e:Elem if node.prefix == "tyr" =>
-    
-      if ( node.label == "content" ) {
-        process( content )
-      } else {
-        val template = B.templates.find( p => p._1 == node.label ).map( _._2 ) getOrElse ( throw new WebException( "Missing template " + node.label ) )
-        process( template( node ), e.child )
-      }
-
     case e:Elem if node.label == "head" =>
       val id = node.\( "@id" ).text
       if ( id.isBlank || !heads.exists( _.\( "@id" ).text == id ) )
