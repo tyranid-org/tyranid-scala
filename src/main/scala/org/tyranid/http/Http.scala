@@ -197,6 +197,9 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
   def dump {
 
     println( "** requestURI=" + T.web.req.getRequestURL )
+    println( "** path=" + T.web.req.path )
+    println( "** pathInfo=" + T.web.req.getPathInfo )
+    println( "** queryString=" + T.web.req.getQueryString )
 
     println( "** attributes" )
     for ( n <- req.getAttributeNames )
@@ -254,9 +257,7 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
 }
 
 case class HttpServletResponseOps( res:HttpServletResponse ) {
-  def ok = {
-    res.setStatus( 200 )
-  }
+  def ok = res.setStatus( 200 )
   
   /*
   
@@ -282,7 +283,7 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
   }   
   
   */
-  
+    
   def json( json:Any, status:Int = 200, jsonpCallback:String = null, headers:Map[String,String] = null, req:HttpServletRequest = null, cache:Boolean = false ) = {
     var jsonContentType = "application/json"
       
@@ -298,7 +299,7 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     res.setContentType( if ( jsonpCallback != null ) "text/javascript" else jsonContentType )
     res.setStatus( status )
 
-    if ( !cache ) setNoCacheHeaders( res )
+    if ( !cache ) setNoCacheHeaders
     
     if ( headers != null )
       for ( h <- headers ) 
@@ -403,7 +404,7 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     res.setContentType( mimeType )
     res.setStatus( status )
 
-    if ( !cache ) setNoCacheHeaders( res )
+    if ( !cache ) setNoCacheHeaders
     if ( headers != null )
       for ( h <- headers ) 
         res.setHeader( h._1, h._2 )
@@ -417,10 +418,14 @@ case class HttpServletResponseOps( res:HttpServletResponse ) {
     }
   }
 
-  def setNoCacheHeaders( res:HttpServletResponse ) {
-    res.setHeader( "Cache-Control", "no-cache" )
+  def setNoCacheHeaders {
+    res.setHeader( "Cache-Control", "private, no-cache, no-store, must-revalidate, max-age=0, proxy-revalidate, s-maxage=0" )
     res.setHeader( "Pragma", "no-cache" )
-    res.setHeader( "Expires", "-1" )
+    res.setHeader( "Expires", "0" )
+
+    //res.setHeader( "Cache-Control", "no-cache" )
+    //res.setHeader( "Pragma", "no-cache" )
+    //res.setHeader( "Expires", "-1" )
   }
   
   def out( s:String ) = {

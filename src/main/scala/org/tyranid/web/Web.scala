@@ -319,48 +319,56 @@ class WebFilter extends TyrFilter {
             if web.matches( webloc.weblet.wpath ) && webloc.weblet.matches( web ) ) {
         if ( !comet && !isAsset ) ensureSession( thread, web )
         
-        if ( T.session.trace ) {
-          val hasUser = T.user != null 
-          NewRelic.setUserName( hasUser ? T.user.fullName | "[Unknown]" )
-          NewRelic.setAccountName( hasUser ? T.user.tid | "[None]" )
-          NewRelic.setProductName( T.session.id.toString )
+        val t = T
+        val sess = t.session
+        val user = t.user
+        
+        if ( sess.trace ) {
+          val hasUser = user != null 
+          NewRelic.setUserName( hasUser ? user.fullName | "[Unknown]" )
+          NewRelic.setAccountName( hasUser ? user.tid | "[None]" )
+          NewRelic.setProductName( sess.id.toString )
         }
         
-        //println( T.session.id + ":" + T.session.isLite )
+        /*
+        println( sess.id + ":" + sess.isLite )
         
         if ( !comet && !isAsset ) {
           println( "asp: " + web.b( 'asp ) )
           println( "xhr: " + web.b( 'xhr ) )
           println( "user: " + T.user )
-          if ( T.user != null ) println( "user li: " + T.session.isLoggedIn )
+          if ( T.user != null ) println( "user li: " + sess.isLoggedIn )
         }
-        
-        if ( !comet
-            && ( web.b( 'asp ) || ( !web.b( 'xhr ) && 
-                !isAsset && ( ( T.user == null || !T.session.isLoggedIn ) && 
-                    webloc.weblet.requiresLogin ) ) ) 
-                    && web.req.getAttribute( "api" )._s.isBlank ) {
-          T.session.isLite ? web.forward( js = "V.app.lite();" ) | web.forward()
+        if ( !comet ) println( "isAsset: " + isAsset )
+        */
+
+        if (   !comet
+            && ( web.b( 'asp ) || ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isLoggedIn ) && webloc.weblet.requiresLogin ) ) ) 
+            && web.req.getAttribute( "api" )._s.isBlank ) {
+          
+          if ( isAsset ) spam( "isAsset matching on " + web.path )
+
+          web.forward( js = sess.isLite ? "V.app.lite();" | null )
           return
         }
 
         if ( first ) {
           web = FileUploadSupport.checkContext( web )
-          thread.web = web
+          t.web = web
           first = false
         }
 
         if ( handle( webloc ) ) {
           //sp am( "CACHE: CLEARING" )
-          thread.tidCache.clear
-          thread.requestCache.clear
+          t.tidCache.clear
+          t.requestCache.clear
           return
         }
       }
     } finally {
       AccessLog.log( web, thread, System.currentTimeMillis - start )
     }
-
+    
     chain.doFilter( web.req, web.res )
   }
 }
@@ -460,11 +468,65 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   }
   
   def forward( path:String = "/index.html", js:String = null ) = {
-    if ( js.notBlank )
-      addJsCookie( js )
+    if ( xhr ) {
+      if ( js.isBlank )
+        new RuntimeException( "Have XHR request, but don't have JS to respond with." ).printStackTrace()
+        
+      jsRes( Js( js ) )
+    } else {
+      if ( js.notBlank )
+        addJsCookie( js )
       
+      ctx.getRequestDispatcher( path ).forward( req, res )
+    }
+  }
+
+  /*
+  def forwardRes( path:String = "/index.html", cmds:Seq[JsCmd] = null ) = {
+    val res = jsonRes( T.session )
+    
+    def addCmds( cmds:Seq[JsCmd] ) {
+      for ( cmd <- cmds )
+        cmd match {
+        case cmds:JsCmds =>
+          addCmds( cmds.cmds )
+  
+        case _ =>
+          res.cmds += cmd
+        }
+    }
+    
+    if ( cmds != null )
+      addCmds( cmds )
+
+    forwardJson( res, path = path )
+  }
+
+  def forwardJson( json:Any, status:Int = 200, headers:Map[String,String] = null, cache:Boolean = false, path:String = "/index.html" ) = {
+    res.setStatus( status )
+
+    if ( !cache ) res.setNoCacheHeaders
+    
+    if ( headers != null )
+      for ( h <- headers ) 
+        res.setHeader( h._1, h._2 )
+        
+    val pretty = {
+      val prettyAttr = ( req == null ) ? null | req.getAttribute( "json.pretty" )
+      ( prettyAttr == null ) ? false | prettyAttr._b
+    }
+    
+    val outputJson = if ( json == null ) "{}" else json.toJsonStr( pretty = pretty, client = true )
+    
+//    res.setContentLength( if ( jsonpCallback != null ) ( jsonpCallback.length + 2 + outputJson.length ) else outputJson.length )
+
+    val cookie = new javax.servlet.http.Cookie( "json", outputJson )    
+    cookie.setPath("/")
+    cookie.setSecure( true )
+    res.addCookie( cookie )
     ctx.getRequestDispatcher( path ).forward( req, res )  
   }
+  */
   
   def jsRes( value:collection.Map[String,Any], cmds:JsCmd* ) {
     val res = jsonRes( T.session )
