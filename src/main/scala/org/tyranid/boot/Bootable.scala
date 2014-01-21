@@ -22,7 +22,6 @@ import java.net.InetAddress
 
 import scala.xml.NodeSeq
 
-import org.cometd.bayeux.server.BayeuxServer
 //import org.clapper.classutil.ClassFinder
 
 import com.braintreegateway.BraintreeGateway
@@ -53,7 +52,7 @@ import org.tyranid.social.facebook.FbApp
 import org.tyranid.social.google.GoApp
 import org.tyranid.social.linkedin.LiApp
 import org.tyranid.telco.TwilioApp
-import org.tyranid.web.{ Weblet, Webloc, WebPath, CometService, WebContext }
+import org.tyranid.web.{ Weblet, Webloc, WebPath, WebContext }
 
 object Boot {
   var TEST = false
@@ -151,10 +150,6 @@ trait Bootable {
   val milestones:Seq[Milestone]
 
   val emailTemplates:EmailTemplate
-
-  val comets:Seq[CometService]
-
-  @volatile var bayeux:BayeuxServer = null
 
   def boot:Unit
 

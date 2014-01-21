@@ -44,8 +44,6 @@ class Boot extends org.tyranid.boot.Bootable {
   
   val emailTemplates = null
 
-  val comets = Nil
-
   lazy val userMeta = User
   lazy val orgMeta = Org
 

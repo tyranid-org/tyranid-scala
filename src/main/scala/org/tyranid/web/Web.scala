@@ -29,8 +29,6 @@ import scala.collection.mutable
 import scala.util.control.ControlThrowable
 import scala.xml.{ Elem, Node, NodeSeq, Text, TopScope }
 
-import org.cometd.bayeux.server.BayeuxServer
-
 import org.tyranid.Imp._
 import org.tyranid.boot.Bootable
 import org.tyranid.db.mongo.Imp._
@@ -120,7 +118,7 @@ trait TyrFilter extends Filter {
     }
   }
   
-  def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData, comet:Boolean ): Unit
+  def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData ): Unit
   
   def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ):Unit = try {
     var web = new WebContext( request.asInstanceOf[HttpServletRequest],
@@ -141,21 +139,13 @@ trait TyrFilter extends Filter {
       case _ =>
       }
 
-    val comet = web.path.endsWith( "/cometd" )
-    
-    if ( comet ) {
-      // Do not report these calls to New Relic because they look like they are taking the max time (when they are in suspend mode), and they
-      // throw off the Apdex score big time.
-      request.setAttribute( "com.newrelic.agent.IGNORE", true )
-    } else {
-      println( "  | " + web.path + ( !B.DEV |* ", referer: " + web.req.getHeader( "referer" ) ) )
-    }
+    println( "  | " + web.path + ( !B.DEV |* ", referer: " + web.req.getHeader( "referer" ) ) )
     
     val thread = T
     thread.http = web.req.getSession( false )
     thread.web = web
 
-    completeFilter( boot, web, chain, thread, comet )
+    completeFilter( boot, web, chain, thread )
   } catch {
   case t:ControlThrowable =>
     throw t
@@ -180,8 +170,8 @@ class BasicAuthFilter extends TyrFilter {
     return null
   }
 
-  override def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData, comet:Boolean ):Unit = {  
-    if ( !comet && ( thread.http == null || !B.User.isLoggedIn ) ) {
+  override def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData ):Unit = {  
+    if ( thread.http == null || !B.User.isLoggedIn ) {
       val header = web.req.getHeader( "Authorization" )
       
       if ( header.isBlank ) {
@@ -218,11 +208,11 @@ class BasicAuthFilter extends TyrFilter {
 }
 
 class WebFilter extends TyrFilter {
-  override def completeFilter( boot:Bootable, webr:WebContext, chain:FilterChain, thread:ThreadData, comet:Boolean ):Unit = {
+  override def completeFilter( boot:Bootable, webr:WebContext, chain:FilterChain, thread:ThreadData ):Unit = {
     var web = webr
-    val isAsset = !comet && !WebFilter.notAsset( web.path )
+    val isAsset = !WebFilter.notAsset( web.path )
 
-    if ( !comet && !isAsset ) {
+    if ( !isAsset ) {
       val session = T.session
       
       if ( session != null && T.http != null && !isAsset ) {
@@ -317,7 +307,7 @@ class WebFilter extends TyrFilter {
     try {
       for ( webloc <- boot.weblocs;
             if web.matches( webloc.weblet.wpath ) && webloc.weblet.matches( web ) ) {
-        if ( !comet && !isAsset ) ensureSession( thread, web )
+        if ( !isAsset ) ensureSession( thread, web )
         
         val t = T
         val sess = t.session
@@ -333,17 +323,16 @@ class WebFilter extends TyrFilter {
         /*
         println( sess.id + ":" + sess.isLite )
         
-        if ( !comet && !isAsset ) {
+        if ( !isAsset ) {
           println( "asp: " + web.b( 'asp ) )
           println( "xhr: " + web.b( 'xhr ) )
           println( "user: " + T.user )
           if ( T.user != null ) println( "user li: " + sess.isLoggedIn )
         }
-        if ( !comet ) println( "isAsset: " + isAsset )
+        println( "isAsset: " + isAsset )
         */
 
-        if (   !comet
-            && ( web.b( 'asp ) || ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isLoggedIn ) && webloc.weblet.requiresLogin ) ) ) 
+        if ( ( web.b( 'asp ) || ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isLoggedIn ) && webloc.weblet.requiresLogin ) ) ) 
             && web.req.getAttribute( "api" )._s.isBlank ) {
           
           if ( isAsset ) spam( "isAsset matching on " + web.path )
@@ -597,9 +586,6 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
     throw WebRedirectException( url )
   }
   
-  def template( template:NodeSeq, status:Int = 200 ) =
-    res.html( WebTemplate( template ), status )
-    
   def s( param:String ):String        = req.s( param )
   def i( param:String ):Int           = req.i( param )
   def d( param:String ):Double        = req.d( param )
@@ -725,106 +711,4 @@ trait Weblet {
   }
 }
 
-
-object WebTemplate {
-  def apply( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq =
-    new WebTemplate().finish( xml, content )
-}
-
-class WebTemplate {
-
-  private val heads = new mutable.ArrayBuffer[Node]()
-  private val tops  = new mutable.ArrayBuffer[Node]()
-  private val tails = new mutable.ArrayBuffer[Node]()
-
-  private def hasTemplates( nodes:NodeSeq ):Boolean = nodes exists hasTemplates
-  private def hasTemplates(  node:Node    ):Boolean = ( node.label == "head" || node.label == "top" || node.label == "tail" || node.prefix == "tyr" ) || hasTemplates( node.child )
-
-  private def bindNode( node:Node, content:NodeSeq ):NodeSeq =
-    node match {
-    case e:Elem if node.label == "head" =>
-      val id = node.\( "@id" ).text
-      if ( id.isBlank || !heads.exists( _.\( "@id" ).text == id ) )
-        heads ++= node.child.flatMap( node => bindNode( node, content ) )
-        //heads ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
-      NodeSeq.Empty
-
-    case e:Elem if node.label == "top" =>
-      val id = node.\( "@id" ).text
-      if ( id.isBlank || !tops.exists( _.\( "@id" ).text == id ) )
-        tops ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
-      NodeSeq.Empty
-
-    case e:Elem if node.label == "tail" =>
-      val id = node.\( "@id" ).text
-      if ( id.isBlank || !tails.exists( _.\( "@id" ).text == id ) )
-        tails ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
-      NodeSeq.Empty
-
-    case e:Elem =>
-      if ( hasTemplates( node ) )
-        e.copy( child = process( node.child, content ) ) 
-      else
-        node
-
-    case n =>
-      n
-    }
-
-  def process( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq = {
-    if ( hasTemplates( xml ) )
-      xml.flatMap( node => bindNode( node, content ) )
-    else
-      xml
-  }
-
-  def finish( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq = {
-    val pxml = process( xml, content )
-
-    if ( heads.nonEmpty || tops.nonEmpty || tails.nonEmpty ) {
-      pxml.flatMap { node =>
-        node match {
-        case e:Elem if node.label == "html" =>
-          val content =
-            ( heads.nonEmpty |* <head>{ heads }</head> ) ++
-            ( if ( tops.nonEmpty || tails.nonEmpty )
-                node.child.flatMap { node =>
-                  node match {
-                  case e:Elem if node.label == "body" => e.copy( child = ( tops ++ node.child ++ tails ) )
-                  case n                              => n
-                  }
-                }
-              else
-                node.child )
-
-          e.copy( child = content )
-
-        case n => n
-        }
-      }
-
-    } else {
-      pxml
-    }
-  }
-}
-
-
-/*
- * This initialization is done inside of a servlet because we need to make sure that the CometServlet has initialized already and
- * using a servlet allows us to use the web.xml load-on-startup mechanism to achieve this ordering.  Another solution would be to set
- * up a web.xml listener.
- */
-class WebInit extends GenericServlet {
-
-  override def init {
-    val bayeux = getServletContext().getAttribute(BayeuxServer.ATTRIBUTE).as[BayeuxServer]
-    B.bayeux = bayeux
-    B.comets.foreach { _.init( bayeux ) }
-  }
-
-  def service( req:ServletRequest, res:ServletResponse ) = {
-    throw new ServletException
-  }
-}
 

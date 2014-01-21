@@ -351,23 +351,6 @@ object LogQuery extends Query {
 }
 
 
-class CometDebugTask( sess:org.tyranid.session.Session ) extends java.util.TimerTask {  
-  override def run {
-    println( "Comet ping!" )
-    Comet.visit { comet =>      
-      val sess = comet.session
-      
-      if ( sess != null && sess.b( 'cometDebug ) ) {
-        comet.send( Map(
-            "act" -> "cometPing",
-            "cid" -> comet.session.id,
-            "uid" -> sess.user.tid
-        ) )
-      }
-    }
-  }
-}
-
 object Loglet extends Weblet {
   import java.util.concurrent.{ Executors, ScheduledExecutorService, TimeUnit }
   
@@ -379,41 +362,6 @@ object Loglet extends Weblet {
       if ( !T.user.isGod )
         _404
       web.jsRes( JqHtml( "#adminContent", LogQuery.draw ) )
-    case "/cometStart" =>
-      val debug = T.session.data.b( 'cometDebug )
-      
-      if ( !debug ) {
-        T.session.put( "comet-debug", true )
-      }
-      
-      if ( executor == null ) {
-        val secs = web.i( 't ) or 1
-        executor = Executors.newScheduledThreadPool( 1 )
-        executor.scheduleAtFixedRate( new CometDebugTask( T.session ), 0, secs, TimeUnit.SECONDS )
-        println( "Started comet debug, ping every " + secs + " seconds" )
-      }
-      
-      web.jsRes()
-    case "/cometStop" =>
-      T.session.put( "comet-debug", false )
-      
-      if ( executor != null ) {
-        var numDebugs = 0
-        
-        Comet.visit { comet =>      
-          val sess = comet.session
-          
-          if ( sess != null && sess.b( 'cometDebug ) )
-            numDebugs += 1
-        }
-
-        if ( numDebugs == 0 ) { 
-          executor.shutdown
-          println( "Stopped comet debug" )
-        } else {
-          println( "Comet debug NOT stopped, there are still " + numDebugs + " session being debugged." )
-        }
-      }
     case _ =>
       _404
     }

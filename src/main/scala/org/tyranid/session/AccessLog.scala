@@ -97,7 +97,6 @@ object AccessLog {
 
     if ( B.accessLogs ) {
       web.path match {
-      case "/cometd" => // ignore
       case p if !WebFilter.notAsset( p ) => // ignore
       case p         =>
         Log.log( Event.Access,

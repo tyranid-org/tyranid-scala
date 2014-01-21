@@ -743,8 +743,6 @@ class SessionDataMeta extends MongoEntity( "a04t" ) {
 
   "incognito"          is DbBoolean         ;
 
-  "cometDebug"         is DbBoolean         ;
-
   "unshownPosts"       is DbInt             ;
 
   override def init = {
