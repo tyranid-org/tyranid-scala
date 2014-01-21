@@ -150,7 +150,6 @@ trait Bootable {
   val paths:Seq[WebPath]
   val milestones:Seq[Milestone]
 
-  val templates:List[(String, ( NodeSeq ) => NodeSeq )]
   val emailTemplates:EmailTemplate
 
   val comets:Seq[CometService]

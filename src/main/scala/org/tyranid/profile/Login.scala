@@ -36,7 +36,7 @@ import org.tyranid.session.Session
 import org.tyranid.sso.SsoMapping
 import org.tyranid.social.Social
 import org.tyranid.ui.{ Button, Grid, Row, Focus, Form }
-import org.tyranid.web.{ Weblet, WebContext, WebTemplate, WebResponse }
+import org.tyranid.web.{ Weblet, WebContext, WebResponse }
 import org.tyranid.web.WebHandledException
 
 object Register {

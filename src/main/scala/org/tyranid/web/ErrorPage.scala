@@ -17,13 +17,33 @@
 
 package org.tyranid.web
 
+import scala.xml.{ NodeSeq }
+
 import org.tyranid.Imp._
+import org.tyranid.json.JqHtml
 
 object Errorlet extends Weblet {
 
   def handle( web:WebContext ) {
 
     rpath match {
+    case "/" =>
+      if ( web.xhr ) {
+        if ( web.b( 'full ) )
+          web.jsRes( JqHtml( "#main",
+            <div class="warning" style="margin:80px 0 0 200px; width:500px;">
+             <img src="/images/warning.png" style="height:120px; width:120px; float:right;"/>
+             <p><strong>We're sorry!</strong></p>
+             <p>There seems to be some difficulties with this page.  Our technical staff have been notified that you have encountered this issue.</p>
+             <p>Please visit <a href="http://rbsupport.volerro.com/">http://rbsupport.volerro.com/</a> if this is an urgent issue.</p>
+             <p>Your time is important to us, so thank you for your patience!</p>
+             <p><em>- The { B.applicationName } Team</em></p>
+           </div>
+          ) )
+      } else {
+        web.forward( path = "/error/?full=1" )
+      }
+      
     case "/404" =>
       
       val originalUrl = web.req.getAttribute( "javax.servlet.forward.request_uri" )._s
@@ -38,8 +58,30 @@ object Errorlet extends Weblet {
       if ( originalUrl != null )
         log( Event.Error404, "p" -> originalUrl )
         
-      if ( WebFilter.notAsset( originalUrl ) )
-        web.template( <tyr:404/> )
+      if ( WebFilter.notAsset( originalUrl ) ) {
+        if ( web.xhr ) {
+          if ( web.b( 'full ) ) {
+            web.jsRes( JqHtml( "#main", 
+      <div class="warning" style="margin:80px 0 0 200px; width:500px;">
+       <img src="/images/warning.png" style="height:120px; width:120px; float:right;"/>
+       <p style="font-size:32px;"><strong>404</strong></p>
+       <p>We're sorry, but the requested URL <pre>{ T.web.req.getAttribute( "javax.servlet.forward.request_uri" ) }</pre> was not found on our servers.</p>
+       <p>Please visit <a href={ "http://rbsupport.volerro.com/" }>{ "http://rbsupport.volerro.com/" }</a> if this is an urgent issue.</p>
+       <p>Thank you.</p>
+       <p><em>- The { B.applicationName } Team</em></p>
+      </div> ) )
+          } else {
+            T.session.error(
+             "<p>We're sorry, but the requested URL <pre>" + T.web.req.getAttribute( "javax.servlet.forward.request_uri" )  + "</pre> was not found on our servers.</p>" +
+             "<p>Please visit <a href='http://rbsupport.volerro.com'>http://rbsupport.volerro.com</a> if this is an urgent issue.</p>" +
+             "<p>Thank you.</p>" +
+             "<p><em>- The " + B.applicationName + " Team</em></p>".encJson
+            )
+          }          
+        } else {
+          T.web.forward( path = "/error/404?full=1" )
+        }
+      }
     case "/throw" =>
       throw new RuntimeException( "test exception" )
 

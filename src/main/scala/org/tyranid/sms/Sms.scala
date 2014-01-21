@@ -34,7 +34,7 @@ import org.tyranid.math.Base62
 import org.tyranid.profile.User
 import org.tyranid.session.Notification
 import org.tyranid.time.Time
-import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
+import org.tyranid.web.{ Weblet, WebContext }
 import org.tyranid.ui.{ Grid, Row, PathField, UiStyle }
 
 import java.util.Date
