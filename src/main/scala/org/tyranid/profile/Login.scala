@@ -165,6 +165,8 @@ $( function() {
     case "/in" | "/" =>
       val saving = web.b( "xhrSbt" )
       
+      web.req.dump
+      
       if ( web.b( "xhr" ) && !saving ) {
         val jsonRes = web.jsonRes( sess )
         
