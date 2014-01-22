@@ -35,12 +35,12 @@ object Pdf {
   val lock = ""
   val lock2 = ""
 
-  def urlToFile( url:String, outFile:File, enableHyperlinks:Boolean = false, username:String = null, password:String = null, usePrintMedia:Boolean = false ) = {
+  def urlToFile( url:String, outFile:File, disableJavascript:Boolean = false, enableHyperlinks:Boolean = false, username:String = null, password:String = null, usePrintMedia:Boolean = false ) = {
     var doConvertApi = false
 
     // PDF Crowd API only allows one at a time
     lock.synchronized {
-      var useJavascript = true
+      var useJavascript = !disableJavascript
       var retry = true
       var fileStream:FileOutputStream = null
       var retryCount = 0
