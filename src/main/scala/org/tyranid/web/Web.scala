@@ -337,6 +337,16 @@ class WebFilter extends TyrFilter {
           
           if ( isAsset ) spam( "isAsset matching on " + web.path )
 
+          val dbg = t.web.s( 'debugit )
+      
+          if ( dbg.notBlank )
+            sess.debug = dbg._b
+      
+          val trace = t.web.s( 'trace )
+      
+          if ( trace.notBlank )
+            sess.trace = trace._b
+          
           web.forward( js = sess.isLite ? "V.app.lite();" | null )
           return
         }
