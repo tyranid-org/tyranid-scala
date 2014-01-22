@@ -251,7 +251,13 @@ $( $('#idp').focus() );
       if ( B.debugSso )
         println( "DEBUG: Raw string response: " + str )
         
-      val json = Json.parse( str )
+      val json = try {
+        Json.parse( str )
+      } catch {
+        case e:Throwable =>
+          log( Event.Alert, "m" -> ( "raw json: " + str ), "e" -> e )
+          null
+      }
       
       if ( B.debugSso )
         println( "Json Object: " + json )
