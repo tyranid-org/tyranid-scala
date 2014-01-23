@@ -35,12 +35,12 @@ object Pdf {
   val lock = ""
   val lock2 = ""
 
-  def urlToFile( url:String, outFile:File, enableHyperlinks:Boolean = false, username:String = null, password:String = null, usePrintMedia:Boolean = false ) = {
+  def urlToFile( url:String, outFile:File, disableJavascript:Boolean = false, enableHyperlinks:Boolean = false, username:String = null, password:String = null, usePrintMedia:Boolean = false ) = {
     var doConvertApi = false
 
     // PDF Crowd API only allows one at a time
     lock.synchronized {
-      var useJavascript = true
+      var useJavascript = !disableJavascript
       var retry = true
       var fileStream:FileOutputStream = null
       var retryCount = 0
@@ -241,10 +241,10 @@ object Pdf {
               //val parentFolderStr = content.s( 'parentFolder )
               // Keep the PDF around in case we need it later
               S3.move( bucket, outPath, B.filesBucket, content.s( 'parentFolder ) + "/" + content.id._s + ".pdf" )
-              
+
               // Remove it from input and output buckets
               S3.deleteAll( bucket, S3.getFilenames( bucket, prefix = "Out/" + content.id._s ) )
-              
+
               //S3.delete( bucket, "In/" + content.id._s + "." + ext )
 
               // Update the content to let us know it was converted
