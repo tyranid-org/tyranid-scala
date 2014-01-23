@@ -209,7 +209,8 @@ $( function() {
           if ( web.b( 'save ) )
             LoginCookie.set(user)
   
-          web.jsRes( JsData( user ), JsModel( user.toClientCommonMap(), "common" ), Js( "V.app.load( '" + ( redirect.isBlank ? "/#dashboard" | redirect ) + "' );" ) )
+          web.jsRes( JsData( user ), JsModel( user.toClientCommonMap(), "common" ),
+              Js( "V.app.load( '" + ( redirect.isBlank ? "/#dashboard" | redirect ) + "' );" ) )
         }
       }
     case "/in/top" =>
