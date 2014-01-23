@@ -635,9 +635,6 @@ $( $('#idp').focus() );
     val user = thread.user
     val web = thread.web
     val loggingOut = web.req.s( 'lo ).notBlank
-    val noSocial = web.b( 'nosocial )
-
-    val params = noSocial |* "?nosocial=1"
 
     <form method="post" action={ wpath } id="f" class="sso" style="margin-bottom:12px;" data-val="1" data-val-top="1">
      <fieldset class="ssoBox">

@@ -74,24 +74,11 @@ object Register {
 }
 
 object Loginlet extends Weblet {
-  def topPage = 
+  def topPage =
    <div class="container" style="background: rgb(64,64,65);background: rgba(64,64,65,0.4);margin: 0 auto;width: 740px;border-radius: 8px;padding: 16px;">
     <div style="text-align:center;background: url(https://d33lorp9dhlilu.cloudfront.net/images/volerro_logo_notag_reversed.png) no-repeat 0px 0px;height: 50px;background-position-x: center;"></div>
     <div>
-     { Loginlet.box }
-    </div>
-   </div>
-
- def box = {
-    val thread = T
-    val user = thread.user
-    val web = thread.web
-    val loggingOut = web.req.s( 'lo ).notBlank
-    val noSocial = web.b( 'nosocial )
-
-    val params = noSocial |* "?nosocial=1"
-
-    <script>{ Unparsed( """
+     <script>{ Unparsed( """
 $( function() {
   $('#forgot').click(function(e) {
     var un = $( "#un" );
@@ -121,51 +108,49 @@ $( function() {
   T.initFormPlaceholders( "#f" );
 });
 """ ) }
-    </script> ++
-    <form method="post" action={ wpath + "/in" } id="f" class="login" style="margin-bottom:12px;" data-val="1" data-val-top="1">
-     <fieldset class="loginBox">
-      <div class="container-fluid" style="padding:0;">
-       <div class="row-fluid">
-        <h1 class="span5">Sign-in</h1>
-        <div class="span7 pull-right regLink">or <a data-sbt={ Form.attrJson( Map( "href" -> ( wpath + "/register" + params ), "top" -> 1 ) ) }>Register for { B.applicationName }!</a></div>
+     </script> ++
+     <form method="post" action={ wpath + "/in" } id="f" class="login" style="margin-bottom:12px;" data-val="1" data-val-top="1">
+      <fieldset class="loginBox">
+       <div class="container-fluid" style="padding:0;">
+        <div class="row-fluid">
+         <h1 class="span5">Sign-in</h1>
+         <div class="span7 pull-right regLink">or <a data-sbt={ Form.attrJson( Map( "href" -> ( wpath + "/register" ), "top" -> 1 ) ) }>Register for { B.applicationName }!</a></div>
+        </div>
        </div>
-      </div>
-      <hr style="margin:4px 0 30px;"/>
-      <div class="top-form-messages"></div>
-      <div class="container-fluid" style="padding:0;">
-       <div class="row-fluid">
-        <input type="email" id="un" name="un" placeholder="Email" autocapitalize="off" data-val="req,email"/>
-        { Focus("#un") }
+       <hr style="margin:4px 0 30px;"/>
+       <div class="top-form-messages"></div>
+       <div class="container-fluid" style="padding:0;">
+        <div class="row-fluid">
+         <input type="email" id="un" name="un" placeholder="Email" autocapitalize="off" data-val="req,email"/>
+         { Focus("#un") }
+        </div>
+        <div class="row-fluid">
+         <input type="password" name="pw" id="pw" placeholder="Password" autocapitalize="off" data-val="req"/>
+        </div>
+        <div class="row-fluid">
+          <div class="span6">
+           <div style="height:40px;display:inline-block;"><input type="checkbox" name="save" id="saveLogin" value="Y" checked="checked"/></div>
+           <label for="saveLogin" style="vertical-align:text-top;display:inline-block;">Stay signed-in</label>
+          </div> 
+          <div class="span6" style="height:40px;padding-top:8px;"><button type="submit" class="btn-success btn pull-right">Sign-In <i class="fa fa-caret-right"></i></button></div>
+        </div>
+        <hr style="margin:24px 0 0;"/>
        </div>
-       <div class="row-fluid">
-        <input type="password" name="pw" id="pw" placeholder="Password" autocapitalize="off" data-val="req"/>
-       </div>
-       <div class="row-fluid">
-         <div class="span6">
-          <div style="height:40px;display:inline-block;"><input type="checkbox" name="save" id="saveLogin" value="Y" checked="checked"/></div>
-          <label for="saveLogin" style="vertical-align:text-top;display:inline-block;">Stay signed-in</label>
-         </div> 
-         <div class="span6" style="height:40px;padding-top:8px;"><button type="submit" class="btn-success btn pull-right">Sign-In <i class="fa fa-caret-right"></i></button></div>
-       </div>
-       <hr style="margin:24px 0 0;"/>
-      </div>
-     </fieldset>
-     <!--input type="hidden" name="l" value={ web.req.s("l") }/-->
-    </form> ++
-    <div class="container-fluid" style="padding:0;">
-     <a href="#" id="forgot" class="pull-right">Forgot your password?</a>
+      </fieldset>
+      <!--input type="hidden" name="l" value={ web.req.s("l") }/-->
+     </form> ++
+     <div class="container-fluid" style="padding:0;">
+      <a href="#" id="forgot" class="pull-right">Forgot your password?</a>
+     </div>
     </div>
-  }
-
+   </div>
+  
   def handle( web: WebContext ) {
     val sess = T.session
-    val noSocial = web.b( 'nosocial )
 
     rpath match {
     case "/in" | "/" =>
       val saving = web.b( "xhrSbt" )
-      
-      web.req.dump
       
       if ( web.b( "xhr" ) && !saving ) {
         val jsonRes = web.jsonRes( sess )

@@ -592,7 +592,7 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   
   def fullPath = path + ( req.getQueryString != null |* "?" + req.getQueryString )
 
-  def forward( url:String )  = throw WebForwardException( url )
+  //def forward( url:String )  = throw WebForwardException( url )
 
   def redirect( url:String ) = {
     assert( !url.endsWith( "/null" ) )
