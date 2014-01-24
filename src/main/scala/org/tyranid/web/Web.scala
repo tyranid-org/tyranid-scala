@@ -469,6 +469,8 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   
   def forward( path:String = "/index.html", js:String = null ) = {
     if ( xhr ) {
+      println( "js: " + js ) 
+      new RuntimeException().printStackTrace();
       if ( js.isBlank )
         new RuntimeException( "Have XHR request, but don't have JS to respond with." ).printStackTrace()
         
