@@ -505,13 +505,22 @@ trait Session extends QuickCache {
       
       if ( user.b( 'monitored ) )
         log( Event.Alert, "m" -> ( "User " + user.s( 'email ) + " just logged in." ) )
+        
+      if ( sso != null )
+        put( "sso", sso )        
     } else {
       put( "incognito", Boolean.box( true ).booleanValue().as[Serializable] )
+      
+      val ssoCode = user.s( 'sso )
+      
+      if ( ssoCode.notBlank ) {
+        val mapping = SsoMapping.getById( ssoCode )
+        
+        if ( mapping != null )       
+          put( "sso", mapping )
+      }
     }
       
-    if ( sso != null )
-      put( "sso", sso )
-    
     val onLogin = B.onLogin
     
     if ( onLogin != null )

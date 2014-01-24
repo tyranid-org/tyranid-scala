@@ -76,7 +76,7 @@ object Loginlet extends Weblet {
             LoginCookie.set(user)
   
           web.jsRes( JsData( user ), JsModel( user.toClientCommonMap(), "common" ),
-              Js( "window.appRouter.goto( '#dashboard' )" ) )
+              Js( "V.app.newLoad( '#dashboard' );" ) )
         }
       } else {
         web.forward( js = "window.pendingMainLoads.push( function() { Backbone.trigger( '#login' ); } );" )
