@@ -270,6 +270,9 @@ $( function() {
 
       T.web.redirect( "/?na=1" ) // na = need activation
     case "/forgot" =>
+      if ( !web.xhr )
+        return web.forward()
+
       val forgotCode = web.req.s( 'a )
 
       if ( forgotCode.isBlank ) {
@@ -277,7 +280,7 @@ $( function() {
 
         if ( email.isBlank ) {
           sess.warn( "Please enter in an email address." )
-          return web.json( web.jsonRes( sess ) )
+          return web.jsRes()
         }
 
         val dbUserc = B.User.db.find( Mobj( "email" -> email.toPatternI ) ).limit(1)
@@ -285,8 +288,7 @@ $( function() {
 
         if ( dbUser == null ) {
           sess.warn( "Sorry, it doesn't look like the email address " + email + " is on " + B.applicationName + "." )
-
-          return web.json( web.jsonRes( sess ) )
+          return web.jsRes()
         }
 
         val activationCode = dbUser.s( 'activationCode )
@@ -306,26 +308,21 @@ $( function() {
         }
 
         web.jsRes()
-        //return web.json( web.jsonRes( sess ) )
       } else {
         val dbUserc = B.User.db.find( Mobj( "resetCode" -> forgotCode ) ).limit(1)
         val dbUser = dbUserc.hasNext ? dbUserc.next | null
 
         if ( dbUser == null ) {
-          sess.notice( "Account access code not found!", deferred = "/#dashboard" )
-          //web.redirect( "/log/in" )
-          web.jsRes( Js( "V.common.clear().set(V.common.defaults); V.app.load( '/#dashboard' )" ) )
+          sess.notice( "Account access code not found!" )
+          web.jsRes() // Js( "V.common.clear().set(V.common.defaults); V.app.load( '/#dashboard' )" ) )
         } else {
-          val user = B.User(dbUser)
-          user.remove('resetCode)
+          val user = B.User( dbUser )
+          user.remove( 'resetCode )
           sess.login( user )
           user.save
 
-          sess.notice( "You can now change your password in <em>My Profile</em>.", deferred = "/#dashboard" )
-          web.jsRes( JsData( sess.user ), JsModel( user.toClientCommonMap(), "common" ), Js( "V.app.load( '/#dashboard' );" ) )
-
-          // TODO: COMMON
-          //web.jsRes( JsData( user ), Js( "V.common.set( " + user.toClientCommonMap().toJsonStr( client = true ) + " ); V.app.load( '/#dashboard' )" ) )
+          sess.notice( "You can now change your password in <em>My Profile</em>.", deferred = "/project/all" )
+          web.jsRes( Js( "window.location = '/#dashboard';" ) )
         }
       }
 

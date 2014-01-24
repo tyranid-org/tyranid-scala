@@ -332,7 +332,8 @@ class WebFilter extends TyrFilter {
         println( "isAsset: " + isAsset )
         */
 
-        if ( ( web.b( 'asp ) || ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isLoggedIn ) && webloc.weblet.requiresLogin ) ) ) 
+        if ( ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isLoggedIn ) && webloc.weblet.requiresLogin ) ) 
+        //if ( ( web.b( 'asp ) || ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isLoggedIn ) && webloc.weblet.requiresLogin ) ) ) 
             && web.req.getAttribute( "api" )._s.isBlank ) {
           
           if ( isAsset ) spam( "isAsset matching on " + web.path )
