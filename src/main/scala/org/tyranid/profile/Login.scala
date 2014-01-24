@@ -290,7 +290,7 @@ $( function() {
         }
 
         val activationCode = dbUser.s( 'activationCode )
-
+        
         if ( activationCode.notBlank ) {
           sess.notice( "Your account has not been activated yet.  Your activation link has been sent to " + email + "." )
           background { B.emailTemplates.welcome( B.User( dbUser ), activationCode ) }
