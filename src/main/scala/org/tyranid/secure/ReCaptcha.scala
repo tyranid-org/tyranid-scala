@@ -56,7 +56,7 @@ window.showRecaptcha = function(element) {
         "response"   -> web.s( 'recaptcha_response_field )
       ) ).s.trim
       
-    println( res )
+    //println( res )
     
     res.startsWith( "true" )
   }
