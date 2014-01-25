@@ -38,7 +38,7 @@ import org.tyranid.io.{ File => TFile }
 import org.tyranid.json.{ Js, Json, JqHtml }
 import org.tyranid.profile.{ Org, User, Group, Tag }
 import org.tyranid.ui.Focus
-import org.tyranid.web.{ Weblet, WebContext, WebTemplate, WebFilter }
+import org.tyranid.web.{ Weblet, WebContext, WebFilter }
 
 // US BANK ERROR MESSAGE:
 //   "errorMessage" : "Your Reserve Marketplace account has been deactivated for security reasons after inactivity over 90 days.\n\nTo reactivate your account, please contact The Resolution Center.\n\nEmail Address: resolution.center@usbank.com\nInternal Employee Phone: 651-466-7103\nStandard Hours:  Mon-Fri 1:00 am CT - 7:00 pm CT\n"
@@ -119,7 +119,7 @@ object Ssolet extends Weblet {
         if ( web.b( 'xhr ) )
           web.jsRes( JqHtml( "#main", pageWrapper( signupBox ), transition="fadeOutIn", duration = 500 ), Js( "T.initFormPlaceholders( '#f' );" ) )
         else
-          web.template( <tyr:shell>{ pageWrapper( signupBox ) }</tyr:shell> )
+          web.forward()
       } else {
         val code = web.s( 'code )
 
@@ -132,7 +132,6 @@ object Ssolet extends Weblet {
           } else if ( mapping.s( 'idpId ).notBlank ) {
             //sess.error( "That code has been registered.  Please contact " + B.applicationName + " support if this information needs to be changed." )
             web.jsRes( Js( "V.app.load( '/sso/auth/" + code + "' );" ) )
-            //web.jsRes()
           } else {
             val orgId = mapping.oid( 'org )
             val org = TidItem.by( B.Org.idToTid( orgId ) )
@@ -178,7 +177,7 @@ $( $('#idp').focus() );
         sess.error( "Sorry, this account has been deactivated." )
         web.jsRes()
       } else {
-        web.template( <tyr:shell>{ errorMessageBox( errorMessage ) }</tyr:shell> )
+        web.jsRes( JqHtml( "#main", errorMessageBox( errorMessage ) ) )
       }
 
       return
@@ -200,7 +199,7 @@ $( $('#idp').focus() );
         if ( web.b( 'xhr ) )
           web.jsRes( JqHtml( "#main", pageWrapper( signupBox ), transition="fadeOutIn", duration = 500 ), Js( "T.initFormPlaceholders( '#f' );" ) )
         else
-          web.template( <tyr:shell>{ pageWrapper( signupBox ) }</tyr:shell> )
+          web.forward( path = s )
       } else {
         if ( B.debugSso )
           println( "DEBUG: Incoming /auth call for: " + id + ", mapping found" )
@@ -252,7 +251,13 @@ $( $('#idp').focus() );
       if ( B.debugSso )
         println( "DEBUG: Raw string response: " + str )
 
-      val json = Json.parse( str )
+      val json = try {
+        Json.parse( str )
+      } catch {
+        case e:Throwable =>
+          log( Event.Alert, "m" -> ( "raw json: " + str ), "e" -> e )
+          null
+      }
 
       if ( B.debugSso )
         println( "Json Object: " + json )
@@ -471,7 +476,7 @@ $( $('#idp').focus() );
           sess.error( "Sorry, this account has been deactivated." )
           web.jsRes()
         } else {
-          web.template( <tyr:shell>{ errorMessageBox( errorMessage ) }</tyr:shell> )
+          web.jsRes( JqHtml( "#main", errorMessageBox( errorMessage ) ) )
         }
 
         return

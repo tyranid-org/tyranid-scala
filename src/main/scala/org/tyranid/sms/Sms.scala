@@ -34,7 +34,7 @@ import org.tyranid.math.Base62
 import org.tyranid.profile.User
 import org.tyranid.session.Notification
 import org.tyranid.time.Time
-import org.tyranid.web.{ Weblet, WebContext, WebTemplate }
+import org.tyranid.web.{ Weblet, WebContext }
 import org.tyranid.ui.{ Grid, Row, PathField, UiStyle }
 
 import java.util.Date
@@ -216,7 +216,6 @@ object Smslet extends Weblet {
      
       web.res.json( Map( 
         "html" -> ( 
-           { Notification.box } ++
            <header>With { Text( B.applicationName ) }, you can send and receive SMS messages to your mobile phone</header>
            <form method="post" action={ web.path } id="f">
             <table style="width:100%">
@@ -334,7 +333,6 @@ object Smslet extends Weblet {
       
       web.res.json( Map( 
         "html" -> (
-          { Notification.box } ++
           { header } ++
           { form } ),
         "onCloseRedirect" -> true,

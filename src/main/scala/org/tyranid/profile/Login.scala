@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -36,19 +36,19 @@ import org.tyranid.session.Session
 import org.tyranid.sso.SsoMapping
 import org.tyranid.social.Social
 import org.tyranid.ui.{ Button, Grid, Row, Focus, Form }
-import org.tyranid.web.{ Weblet, WebContext, WebTemplate, WebResponse }
+import org.tyranid.web.{ Weblet, WebContext, WebResponse }
 import org.tyranid.web.WebHandledException
 
 object Register {
   def sendActivation( user:User ) = {
     val activationCode = Base62.make(8)
-    
+
     user( 'activationCode ) = activationCode
 
     background { B.emailTemplates.welcome( user, activationCode ) }
   }
 
-  def finishPage( user:User, companyName:String = null ) = 
+  def finishPage( user:User, companyName:String = null ) =
    <div class="container" style="background: rgb(64,64,65);background: rgba(64,64,65,0.4);margin: 0 auto;width: 740px;border-radius: 8px;padding: 16px;">
      <div style="text-align:center;background: url(https://d33lorp9dhlilu.cloudfront.net/images/volerro_logo_notag_reversed.png) no-repeat 0px 0px;height: 50px;background-position-x: center;"></div>
      <div>
@@ -66,7 +66,7 @@ object Register {
           { companyName.notBlank |* <div>Click the activation link in your email to gain access to { companyName.possessive } network and projects.</div> }
          </div>
          <hr/>
-        </div> 
+        </div>
        </fieldset>
       </form>
      </div>
@@ -74,6 +74,14 @@ object Register {
 }
 
 object Loginlet extends Weblet {
+  def topPage =
+   <div class="container" style="background: rgb(64,64,65);background: rgba(64,64,65,0.4);margin: 0 auto;width: 740px;border-radius: 8px;padding: 16px;">
+    <div style="text-align:center;background: url(https://d33lorp9dhlilu.cloudfront.net/images/volerro_logo_notag_reversed.png) no-repeat 0px 0px;height: 50px;background-position-x: center;"></div>
+    <div>
+     { Loginlet.box }
+    </div>
+   </div>
+
  def box = {
     val thread = T
     val user = thread.user
@@ -89,15 +97,15 @@ $( function() {
     var un = $( "#un" );
     var msg = "";
     var fldVal = un.val();
-        
+
     if ( !fldVal ) {
       msg = "Please enter an email address";
     } else if ( !T.Validator.validEmail( fldVal ) ) {
       msg = "Please enter a valid email address";
     }
-       
+
     var formHandler = T.FormHandler.get( un.get() );
-        
+
     if ( msg ) {
       formHandler.topEl().empty();
       T.addTopMsg( formHandler.topEl(), "error", msg );
@@ -107,7 +115,7 @@ $( function() {
     formHandler.topEl().empty();
     T.navTo( '/log/forgot?xhr=1&un=' + encodeURIComponent( fldVal ) );
   });
-  
+
   T.closeModal( ".modal" );
   $( "body" ).addClass( "front" );
   T.initFormPlaceholders( "#f" );
@@ -136,7 +144,7 @@ $( function() {
          <div class="span6">
           <div style="height:40px;display:inline-block;"><input type="checkbox" name="save" id="saveLogin" value="Y" checked="checked"/></div>
           <label for="saveLogin" style="vertical-align:text-top;display:inline-block;">Stay signed-in</label>
-         </div> 
+         </div>
          <div class="span6" style="height:40px;padding-top:8px;"><button type="submit" class="btn-success btn pull-right">Sign-In <i class="fa fa-caret-right"></i></button></div>
        </div>
        <hr style="margin:24px 0 0;"/>
@@ -156,66 +164,67 @@ $( function() {
     rpath match {
     case "/in" | "/" =>
       val saving = web.b( "xhrSbt" )
-      
+
       if ( web.b( "xhr" ) && !saving ) {
         val jsonRes = web.jsonRes( sess )
-        
-        jsonRes.htmlMap = Map( 
-              "html" -> B.loginPage(),
+
+        jsonRes.htmlMap = Map(
+              "html" -> topPage,
               "target" -> "#main",
               "transition" -> "fadeOutIn",
               "duration" -> 500 )
 
         jsonRes.extraJS = "T.initFormPlaceholders( '#f' );"
-        web.json( jsonRes )              
+        web.json( jsonRes )
       } else {
         val email    = web.s( 'un )
         val password = web.s( 'pw )
         val redirect = web.s( 'l  )
-  
+
         val user =
           if ( email.isBlank )
             LoginCookie.getUser.getOrElse(null)
           else
             getUserByEmailPassword( email, password )
-  
+
         if ( user == null || user.s( "activationCode" ).notBlank ) {
           if (user != null) {
             notActivatedYet( user )
-          } else if ( email.isBlank ) 
+          } else if ( email.isBlank )
             sess.warn( "Please log in." )
-  
+
            val jsonRes = web.jsonRes( sess )
-           
+
            if ( !sess.hasErrors )
              jsonRes.redirect = redirect.isBlank ? T.website() | ( T.website() + "/?l=" + redirect.encUrl )
-             
+
            jsonRes.extraJS = "T.initFormPlaceholders( '#f' );"
            web.json( jsonRes )
         } else {
           copySocialLogins( sessionUser = sess.user, existingUser = user )
           sess.login( user )
-  
+
           if ( web.b( 'save ) )
             LoginCookie.set(user)
-  
-          web.jsRes( JsData( user ), JsModel( user.toClientCommonMap(), "common" ), Js( "V.app.load( '" + ( redirect.isBlank ? "/#dashboard" | redirect ) + "' );" ) )
+
+          web.jsRes( JsData( user ), JsModel( user.toClientCommonMap(), "common" ),
+              Js( "V.app.load( '" + ( redirect.isBlank ? "/#dashboard" | redirect ) + "' );" ) )
         }
       }
+    case "/in/top" =>
+      web.jsRes( JqHtml( "#main", topPage ) )
     case "/clear" =>
       web.html( NodeSeq.Empty )
     case "/out" =>
       val org = sess.user.org
       val hasOrg = !org.isNew
       val sso = sess.get( "sso" ).as[SsoMapping]
-      
+
       val ssoLoe:String = ( sso == null ) ? null | sso.s( 'loEndpoint )
       val website = ( ssoLoe.isBlank ) ? T.website( "/?lo=1" + ( web.b( 'xhr ) ? "&xhr=1" | "" ), sess.user, sso ) | ssoLoe
-      
+
       sess.logout()
       web.redirect( website )
-    case s if s.startsWith( "/in" ) =>
-      socialLogin( s.substring( 3 ) )
     case s if s.startsWith( "/register" ) =>
       registerRetail( web, sess )
       return
@@ -223,34 +232,34 @@ $( function() {
       val term = web.req.s( 'term ).toLowerCase
 
       def icon( thumb:String ) = thumb.notBlank ? thumb | B.Org.defaultIcon
-        
+
       val json = B.Org.db.find( Mobj( "name" -> ( ".*" + term + ".*" ).toPatternI ), Mobj( "name" -> 1, "thumbnail" -> 1 ) ).
             limit( 8 ).
             toSeq.
             map( o => Map( "id"    -> B.Org.idToTid( o( '_id ) ),
                            "value" -> o.s( "name" ),
-                           "label" -> 
+                           "label" ->
                               <div>
                                <div class="tno orgIcon" data-org={ B.Org.idToTid( o( '_id ) ) }>
                                 <img src={ icon( o.s( 'thumbnail ) ) }/>
                                </div>
-                               <div class="lbl">  
+                               <div class="lbl">
                                 { o.s( "name" ) }
                                </div>
                               </div> ) )
-      
+
       web.res.json( json )
     case "/resendActivation" =>
       import org.bson.types.ObjectId
-      
+
       val userId = web.s( "id" ) or ""
-      
+
       if ( userId == null ) {
         T.session.notice( "Your user was not found." )
       } else {
-        val u = B.User.byId( userId._oid ).getOrElse( null ) 
+        val u = B.User.byId( userId._oid ).getOrElse( null )
         val user = if ( u == null ) null else u
-        
+
         if ( user != null ) {
           T.session.notice( "Your activation code has been sent to your email and should be there shortly." )
           background { B.emailTemplates.welcome( user ) }
@@ -258,17 +267,20 @@ $( function() {
           T.session.notice( "Your user was not found." )
         }
       }
-      
+
       T.web.redirect( "/?na=1" ) // na = need activation
     case "/forgot" =>
+      if ( !web.xhr )
+        return web.forward()
+
       val forgotCode = web.req.s( 'a )
 
       if ( forgotCode.isBlank ) {
         val email = web.req.s( 'un ) or sess.user.s( 'email )
 
         if ( email.isBlank ) {
-          sess.warn( "Please enter in an email address." )          
-          return web.json( web.jsonRes( sess ) )
+          sess.warn( "Please enter in an email address." )
+          return web.jsRes()
         }
 
         val dbUserc = B.User.db.find( Mobj( "email" -> email.toPatternI ) ).limit(1)
@@ -276,8 +288,7 @@ $( function() {
 
         if ( dbUser == null ) {
           sess.warn( "Sorry, it doesn't look like the email address " + email + " is on " + B.applicationName + "." )
-          
-          return web.json( web.jsonRes( sess ) )
+          return web.jsRes()
         }
 
         val activationCode = dbUser.s( 'activationCode )
@@ -290,33 +301,28 @@ $( function() {
           val resetCode = Base62.make(8)
           user('resetCode) = resetCode
           user.save
-  
+
           sess.notice( "Instructions for changing your password have been sent to " + email + "." )
-  
-          B.emailTemplates.forgotPassword( user )          
+
+          B.emailTemplates.forgotPassword( user )
         }
-        
+
         web.jsRes()
-        //return web.json( web.jsonRes( sess ) )
       } else {
         val dbUserc = B.User.db.find( Mobj( "resetCode" -> forgotCode ) ).limit(1)
         val dbUser = dbUserc.hasNext ? dbUserc.next | null
-        
+
         if ( dbUser == null ) {
-          sess.notice( "Account access code not found!", deferred = "/#dashboard" )
-          //web.redirect( "/log/in" )
-          web.jsRes( Js( "V.common.clear().set(V.common.defaults); V.app.load( '/#dashboard' )" ) )
+          sess.notice( "Account access code not found!" )
+          web.jsRes() // Js( "V.common.clear().set(V.common.defaults); V.app.load( '/#dashboard' )" ) )
         } else {
-          val user = B.User(dbUser)
-          user.remove('resetCode)
+          val user = B.User( dbUser )
+          user.remove( 'resetCode )
           sess.login( user )
           user.save
-          
-          sess.notice( "You can now change your password in <em>My Profile</em>.", deferred = "/#dashboard" ) 
-          web.jsRes( JsData( sess.user ), JsModel( user.toClientCommonMap(), "common" ), Js( "V.app.load( '/#dashboard' );" ) )
 
-          // TODO: COMMON
-          //web.jsRes( JsData( user ), Js( "V.common.set( " + user.toClientCommonMap().toJsonStr( client = true ) + " ); V.app.load( '/#dashboard' )" ) )
+          sess.notice( "You can now change your password in <em>My Profile</em>.", deferred = "/project/all" )
+          web.jsRes( Js( "window.location = '/#dashboard';" ) )
         }
       }
 
@@ -325,33 +331,33 @@ $( function() {
       web.jsRes()
 
     case "/null" =>
-      log( Event.RefInt, "m" -> ( "null, Referer: " + web.req.getHeader( "referer" ) ) ) 
+      log( Event.RefInt, "m" -> ( "null, Referer: " + web.req.getHeader( "referer" ) ) )
     case _ =>
     }
   }
-  
- def registerRetail( web:WebContext, sess:Session ) {
+
+  def registerRetail( web:WebContext, sess:Session ) {
     if ( web.b( 'updateFld ) ) {
       val updateFld = web.s( 'updateFld )
-      
+
       updateFld match {
         case "email" =>
           val email = web.s( 'email )
-          
+
           if ( Email.isValid( email ) ) {
             val exists = B.User.db.exists( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) )
-  
+
             if ( exists ) {
               sess.error( "Email is already in use." )
               web.jsRes()
             }
-            
+
             if ( !Email.isWellKnownProvider( email ) ) {
               val domain = Email.domainFor( email )
-              
+
               val orgc = B.Org.db.find( Mobj( "domain" -> ( "^" + domain.encRegex + "$" ).toPatternI ) ).limit(1)
               val org = orgc.hasNext ? B.Org( orgc.next ) | null
-              
+
               if ( org != null ) {
                 if ( !B.canAddUser( org ) ) {
                   sess.error( "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available." )
@@ -377,16 +383,16 @@ $( function() {
           if ( exists ) {
             sess.error( "Company name is already in use." )
             web.jsRes()
-          } 
-        case _ => 
+          }
+        case _ =>
            web.jsRes()
       }
-      
+
       return
     }
-    
+
     val keep = web.b( 'keep )
-    
+
     val user =
       sess.user match {
       case null => B.newUser()
@@ -402,7 +408,7 @@ $( function() {
 
     if ( user.isNew  ) {
       sess.user = user
-  
+
       user.extraVaValidations =
         ( user.view( 'email ),
           { scope:Scope =>
@@ -410,15 +416,15 @@ $( function() {
               Some( Invalid( scope.at( 'email ), user.s( 'email ) + " is already in use.") )
           } ) ::
           Nil
-          
+
       val inviteCode = web.s( 'code )
-      
+
       if ( inviteCode.notBlank ) {
         user( 'activationCode ) = inviteCode
-        
+
         val contactc = ContactInfo.db.find( Mobj( "inviteCode" -> inviteCode ) ).limit(1)
         val contact = contactc.hasNext ? contactc.next | null
-        
+
         if ( contact != null ) {
           user( 'email ) = contact.s( 'email )
           user( 'firstName ) = contact.s( 'name ).split( ' ' )(0)
@@ -430,7 +436,7 @@ $( function() {
     val ui = user.view.ui( "registerrb" )
 
     user.isAdding = true
-    
+
     val doRecaptcha = B.requireReCaptcha
 
     if ( web.b( 'xhrSbt ) ) {
@@ -441,8 +447,8 @@ $( function() {
         user( 'createdOn ) = new Date
 
         val email = user.s( 'email )
-        val companyName = web.s( 'company ).trim 
-        
+        val companyName = web.s( 'company ).trim
+
         if ( user.oid( 'org ) == null && companyName.notBlank ) {
           val exists = B.Org.db.exists( Mobj( "name" -> ("^" + companyName.encRegex + "$").toPatternI ) )
 
@@ -452,49 +458,49 @@ $( function() {
             return
           }
         }
-          
+
         if ( user.s( 'activationCode ).isBlank ) {
           Register.sendActivation( user )
           B.registerUser( user, companyName )
           web.jsRes( JqHtml( "#main", Register.finishPage( user, companyName ) ) )
           sess.logout( true )
           return
-        } else {          
+        } else {
           sess.login( user )
           user.remove( 'activationCode )
-          
+
           B.registerUser( user, companyName )
           B.welcomeUserEvent
-            
-          web.jsRes( JsData( user), JsModel( user.toClientCommonMap( true ), "common" ), Js( "V.app.load( '/#dashboard' );" ) )            
+
+          web.jsRes( JsData( user), JsModel( user.toClientCommonMap( true ), "common" ), Js( "V.app.load( '/#dashboard' );" ) )
           return
         }
       } else {
         for ( i <- invalids )
           sess.error( i.message )
-          
+
         if ( doRecaptcha )
           jsonRes.extraJS = "Recaptcha.reload();"
       }
-      
-      jsonRes.extraJS = "T.initFormPlaceholders( '#f' );"      
+
+      jsonRes.extraJS = "T.initFormPlaceholders( '#f' );"
       web.json( jsonRes )
       return
     }
 
     val orgName:String = {
       val userEmail = user.s( 'email )
-    
+
       if ( !user.isNew && userEmail.notBlank ) {
         val orgId = user.oid( 'org )
-        
+
         if ( orgId != null ) {
           TidItem.by( B.Org.idToTid( orgId ) ).label
         } else {
           val domain = Email.domainFor( userEmail )
           val orgc = B.Org.db.find( Mobj( "domain" -> ( "^" + domain.encRegex + "$" ).toPatternI ) ).limit(1)
           val org = orgc.hasNext ? orgc.next | null
-            
+
           if ( org != null ) {
             T.user( 'org ) = org.id
             org.s( 'name )
@@ -506,9 +512,9 @@ $( function() {
         ""
       }
     }
-        
+
     // TODO:  When we get rid of IE8 support, then get rid of the onClick event on the agreement checkbox
-    
+
     val inner =
    <div style="text-align:center;background: url(https://d33lorp9dhlilu.cloudfront.net/images/volerro_logo_notag_reversed.png) no-repeat 0px 0px;height: 50px;background-position-x: center;"></div> ++
    <div>
@@ -531,8 +537,8 @@ $( function() {
            { Focus("#firstName") }
            <div class="span6 val-display"></div>
            <div class="span6 hints" style="position:relative;">
-            <div>Hint: <b>This will be the email address we send your account activation link to</b>.  Use your company or organization email address to easier connect with co-workers.</div> 
-           </div>  
+            <div>Hint: <b>This will be the email address we send your account activation link to</b>.  Use your company or organization email address to easier connect with co-workers.</div>
+           </div>
           </div>
           <div class="row-fluid">
            <div class="span6">
@@ -556,7 +562,7 @@ $( function() {
            <div class="span6">
             <input type="password" name="password" id="password" placeholder="Password" data-val="req,min=7"/>
            </div>
-           <div class="span6 val-display"></div> 
+           <div class="span6 val-display"></div>
           </div>
           <div class="row-fluid">
            <div class="span6">
@@ -570,7 +576,7 @@ $( function() {
             <script>{ Unparsed( "jQuery.getScript( \"" + DbReCaptcha.scriptSrc + "\" );" + DbReCaptcha.showFunction( "white" ) ) }</script>
             { DbReCaptcha.div }
            </div>
-           <div class="span6 val-display"></div> 
+           <div class="span6 val-display"></div>
           </div>
         }
           <div class="row-fluid">
@@ -584,27 +590,27 @@ $( function() {
        <div class="row-fluid">
          <div class="span6">
           <div style="height:40px;line-height:40px;position:relative;top:10px;">Already registered? <a tabindex="-1" data-sbt={ Form.attrJson( Map( "href" -> ( wpath + "/in" ), "top" -> 1 ) ) }>Sign in here</a></div>
-         </div> 
+         </div>
          <div class="span6" style="height:40px;padding-top:8px;"><button id='regBtn' disabled='disabled' type="submit" class="btn-success btn pull-right">Register <i class="fa fa-caret-right"></i></button></div>
        </div>
       </div>
      </fieldset>
     </form>
    </div>
-        
+
     val jsonRes = web.jsonRes( sess )
-    
-    jsonRes.htmlMap = Map( 
+
+    jsonRes.htmlMap = Map(
         "html" -> <div class="container" style="background: rgb(64,64,65);background: rgba(64,64,65,0.4);margin: 0 auto;width: 740px;border-radius: 8px;padding: 16px;">{ inner }</div>,
         "transition" -> "fadeOutIn",
         "duration" -> 500 )
-    
+
     jsonRes.extraJS = "T.callWhenHtmlDone( function() { T.initFormPlaceholders( '#f' ); }, 600 );" + ( doRecaptcha ?
                         ( "T.callWhen( function() { return window.Recaptcha !== undefined && window.showRecapcha !== null; }, function() {" + DbReCaptcha.callShowFunction + "}, 100 );" ) | "" )
-      
+
     web.json( jsonRes )
-  }  
- 
+  }
+
   def validateEmail( email:String ) =
     if ( email.isBlank ) {
       T.session.warn( "Please enter in an email address." )
@@ -628,27 +634,27 @@ $( function() {
 
   def getUserByEmailPassword( email:String, pw:String ):User = {
     val sess = T.session
-  
+
     if ( email.notBlank && pw.notBlank ) {
       if ( !validateEmail( email ) )
         return null
-  
+
       if ( pw.isBlank ) {
         sess.warn( "Please enter in a password." )
         return null
       }
-  
+
       val users = B.User.db.find( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI,
                       $or -> Array(
                         Mobj( "inactive" -> Mobj( $exists -> false ) ),
                         Mobj( "inactive" -> false ) )
                       ) ).toSeq
-      
+
       for ( u <- users; dbPw = u.s( 'password ) )
         if ( dbPw.notBlank && pw.checkShash( dbPw ) )
           return B.User( u )
     }
-    
+
     sess.error( "Invalid login.  Please try again." )
 
     null
@@ -694,157 +700,11 @@ $( function() {
       println( "*** " + app.networkName + " " + app.idName + " = " + user.s( app.idName ) )
   }
 
-  def socialLogin( network:String ) = {
-    val sess = T.session
-
-    if ( !Social.appFor( network ).exchangeToken )
-      T.web.redirect( T.website() )
-
-    val user = findUser( network )
-
-    if ( user == null ) {
-      T.web.redirect( wpath + "/register" + network )
-    } else if ( user.s( 'activationCode ).notBlank ) {
-      notActivatedYet( user )
-    } else {
-      copySocialLogins( sess.user, user )
-      sess.login( user )
-      LoginCookie.set( user )
-      T.web.redirect( T.website() )
-    }
-  }
-
-  def socialRegister( network:String ) = {
-    val t = T
-    val web = t.web
-    val sess = t.session
-    val app = Social.appFor( network )
-
-    val user =
-      sess.user match {
-        case null => B.newUser()
-        case u    => if ( u.isNew ) u else B.newUser()
-      }
-
-    val uid = user.s( app.idName )
-    if ( uid.isBlank )
-      web.redirect( "/" )
-
-    if ( web.req.s( 'create ).notBlank ) {
-      val email = web.req.s( 'un )
-
-      if ( !validateUnusedEmail( email ) )
-        web.redirect( web.path )
-
-      app.importUser( user, uid )
-
-      user( 'email )     = email
-      user( 'createdOn ) = new Date
-
-      Register.sendActivation( user )
-
-      user.save
-      
-      Social.ensureSecureThumbnail( user )
-
-      web.redirect("/")
-
-    } else if ( web.req.s( 'link ).notBlank ) {
-
-      val existing = getUserByEmailPassword( web.req.s( 'un ), web.req.s( 'pw ) )
-
-      if ( existing != null ) {
-        copySocialLogins( sessionUser = user, existingUser = existing )
-        sess.login( existing )
-        LoginCookie.set(user)
-
-        sess.notice( "Your " + B.applicationName + " and " + app.networkName + " accounts are now linked." )
-        web.redirect( "/" )
-      }
-    }
-
-    web.template(
-      <tyr:shell>
-       <div class="plainBox">
-        <div class="title">Are You a New { B.applicationName } Member?</div>
-        <div class="contents">
-         <div>
-          If you are not a current { B.applicationName } user, then please select this option.
-          <p>Please enter in the email address that we should use with { B.applicationName }.</p>
-         </div>
-         <form method="post" action={ web.path } id="f">
-          <table>
-           <tr>
-            <td style="width:75px;">
-             <label for="un">Email:</label>
-            </td>
-            <td>
-             <input type="text" id="un" name="un" style="width:240px;" value={ user.s( 'email ) }/>
-             { Focus("#un") }
-            </td>
-           </tr>
-          </table>
-          <div class="btns" style="padding-top:16px;">
-           <input name="create" type="submit" class="btn-success btn" value={ "Create a New " + B.applicationName + " Account" }/>
-          </div>
-         </form>
-        </div>
-       </div>
-       <div class="plainBox">
-        <div class="title">... Or Do You Already Have a { B.applicationName } Account?</div>
-        <div class="contents">
-         <div>
-          If you already have an existing { B.applicationName } account, please log in with it below.
-          <p>This will link your existing { B.applicationName } account with your { app.networkName } account.</p>
-         </div>
-         <form method="post" action={ web.path } id="f">
-          <table>
-           <tr>
-            <td style="width:75px;">
-             <label for="un">Email:</label>
-            </td>
-            <td>
-             <input type="text" id="un" name="un" style="width:240px;" value={ user.s( 'email ) }/>
-             { Focus("#un") }
-            </td>
-           </tr>
-           <tr>
-            <td>
-             <label for="pw" style="padding-right:8px;">Password:</label>
-            </td>
-            <td>
-             <input type="password" name="pw" style="width:240px;"/>
-            </td>
-           </tr>
-          </table>
-          <div class="btns" style="padding-top:16px;">
-           <input name="link" type="submit" class="btn-success btn" value={ "Link your Existing " + B.applicationName + " Account to " + app.networkName }/>
-          </div>
-          {
-            val otherNetworks = Social.networks.filter( !_.isActive )
-            otherNetworks.nonEmpty |*
-          <hr style="margin:24px 0 0; border-color:#ccc;"/> ++
-          <div class="plainBox">
-           <div class="title">If you used a different Social Network to log in with { B.applicationName } in the past, you can log in with it here.</div>
-           <div class="contents">
-            <div>{
-             otherNetworks.flatMap { network =>
-              <div>{ network.loginButton( this ) }</div>
-             }
-            }</div>
-           </div>
-          </div> }
-         </form>
-        </div>
-       </div>
-      </tyr:shell> )
-  }
-
   def notActivatedYet( user:User ) = {
-    T.session.error( 
+    T.session.error(
         "This account has not been activated yet!  Please check your email for the activation link.",
         <a href={ "/log/resendActivation?id=" + user.id }>Send Again</a> )
-        
+
     T.web.jsRes()
     throw new WebHandledException
   }

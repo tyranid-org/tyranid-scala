@@ -34,12 +34,6 @@ class Boot extends org.tyranid.boot.Bootable {
 
   val paths = Seq()
   
-  val templates =
-    "shell"  -> ( ( xml:NodeSeq ) => <html><head></head><body><tyr:header/><tyr:content/></body></html> ) ::
-    "header" -> ( ( xml:NodeSeq ) => <h1>hi there</h1> ) ::
-    "sample" -> ( ( xml:NodeSeq ) => <p>Sample</p> ) ::
-    Nil
-
   val milestones = Seq()
   
   // AWS
@@ -49,8 +43,6 @@ class Boot extends org.tyranid.boot.Bootable {
   def canAddUser( o:org.tyranid.profile.Org ) = true
   
   val emailTemplates = null
-
-  val comets = Nil
 
   lazy val userMeta = User
   lazy val orgMeta = Org

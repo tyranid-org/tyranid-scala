@@ -29,8 +29,6 @@ import scala.collection.mutable
 import scala.util.control.ControlThrowable
 import scala.xml.{ Elem, Node, NodeSeq, Text, TopScope }
 
-import org.cometd.bayeux.server.BayeuxServer
-
 import org.tyranid.Imp._
 import org.tyranid.boot.Bootable
 import org.tyranid.db.mongo.Imp._
@@ -120,7 +118,7 @@ trait TyrFilter extends Filter {
     }
   }
   
-  def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData, comet:Boolean ): Unit
+  def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData ): Unit
   
   def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ):Unit = try {
     var web = new WebContext( request.asInstanceOf[HttpServletRequest],
@@ -141,21 +139,13 @@ trait TyrFilter extends Filter {
       case _ =>
       }
 
-    val comet = web.path.endsWith( "/cometd" )
-    
-    if ( comet ) {
-      // Do not report these calls to New Relic because they look like they are taking the max time (when they are in suspend mode), and they
-      // throw off the Apdex score big time.
-      request.setAttribute( "com.newrelic.agent.IGNORE", true )
-    } else {
-      println( "  | " + web.path + ( !B.DEV |* ", referer: " + web.req.getHeader( "referer" ) ) )
-    }
+    println( "  | " + web.path + ( !B.DEV |* ", referer: " + web.req.getHeader( "referer" ) ) )
     
     val thread = T
     thread.http = web.req.getSession( false )
     thread.web = web
 
-    completeFilter( boot, web, chain, thread, comet )
+    completeFilter( boot, web, chain, thread )
   } catch {
   case t:ControlThrowable =>
     throw t
@@ -180,8 +170,8 @@ class BasicAuthFilter extends TyrFilter {
     return null
   }
 
-  override def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData, comet:Boolean ):Unit = {  
-    if ( !comet && ( thread.http == null || !B.User.isLoggedIn ) ) {
+  override def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData ):Unit = {  
+    if ( thread.http == null || !B.User.isLoggedIn ) {
       val header = web.req.getHeader( "Authorization" )
       
       if ( header.isBlank ) {
@@ -218,11 +208,11 @@ class BasicAuthFilter extends TyrFilter {
 }
 
 class WebFilter extends TyrFilter {
-  override def completeFilter( boot:Bootable, webr:WebContext, chain:FilterChain, thread:ThreadData, comet:Boolean ):Unit = {
+  override def completeFilter( boot:Bootable, webr:WebContext, chain:FilterChain, thread:ThreadData ):Unit = {
     var web = webr
-    val isAsset = !comet && !WebFilter.notAsset( web.path )
+    val isAsset = !WebFilter.notAsset( web.path )
 
-    if ( !comet && !isAsset ) {
+    if ( !isAsset ) {
       val session = T.session
       
       if ( session != null && T.http != null && !isAsset ) {
@@ -306,7 +296,7 @@ class WebFilter extends TyrFilter {
         e.log
         
         T.session.error( "Sorry, there seems to be some difficulties with this page.  Our technical staff have been notified that you have encountered this issue. Please visit <a href='http://rbsupport.volerro.com/' target='_blank'>http://rbsupport.volerro.com</a> if this is an urgent issue." )
-        web.b( 'xhr ) ? web.jsRes() | web.template( <tyr:errorPage/> )
+        web.xhr ? web.jsRes() | web.forward( "/error?full=1" )
       }
 
       return true
@@ -317,39 +307,68 @@ class WebFilter extends TyrFilter {
     try {
       for ( webloc <- boot.weblocs;
             if web.matches( webloc.weblet.wpath ) && webloc.weblet.matches( web ) ) {
-        if ( !comet && !isAsset ) ensureSession( thread, web )
+        if ( !isAsset ) ensureSession( thread, web )
         
-        if ( T.session.trace ) {
-          val hasUser = T.user != null 
-          NewRelic.setUserName( hasUser ? T.user.fullName | "[Unknown]" )
-          NewRelic.setAccountName( hasUser ? T.user.tid | "[None]" )
-          NewRelic.setProductName( T.session.id.toString )
+        val t = T
+        val sess = t.session
+        val user = t.user
+        
+        if ( sess.trace ) {
+          val hasUser = user != null 
+          NewRelic.setUserName( hasUser ? user.fullName | "[Unknown]" )
+          NewRelic.setAccountName( hasUser ? user.tid | "[None]" )
+          NewRelic.setProductName( sess.id.toString )
         }
         
-        //println( T.session.id + ":" + T.session.isLite )
+        /*
+        println( sess.id + ":" + sess.isLite )
         
-        if ( !comet && ( web.b( 'asp ) || ( !web.b( 'xhr ) && !isAsset && ( ( T.user == null || !T.session.isLoggedIn ) && webloc.weblet.requiresLogin ) ) ) && web.req.getAttribute( "api" )._s.isBlank ) {
-          web.template( B.appShellPage( web ) )
+        if ( !isAsset ) {
+          println( "asp: " + web.b( 'asp ) )
+          println( "xhr: " + web.b( 'xhr ) )
+          println( "user: " + T.user )
+          if ( T.user != null ) println( "user li: " + sess.isLoggedIn )
+        }
+        println( "isAsset: " + isAsset )
+        */
+
+        if ( ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isLoggedIn ) && webloc.weblet.requiresLogin ) ) 
+        //if ( ( web.b( 'asp ) || ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isLoggedIn ) && webloc.weblet.requiresLogin ) ) ) 
+            && web.req.getAttribute( "api" )._s.isBlank ) {
+          
+          if ( isAsset ) spam( "isAsset matching on " + web.path )
+
+          val dbg = t.web.s( 'debugit )
+      
+          if ( dbg.notBlank )
+            sess.debug = dbg._b
+      
+          val trace = t.web.s( 'trace )
+      
+          if ( trace.notBlank )
+            sess.trace = trace._b
+          
+          web.forward( js = sess.isLite ? "V.app.lite();" | null )
           return
         }
 
         if ( first ) {
           web = FileUploadSupport.checkContext( web )
-          thread.web = web
+          t.web = web
           first = false
         }
 
         if ( handle( webloc ) ) {
           //sp am( "CACHE: CLEARING" )
-          thread.tidCache.clear
-          thread.requestCache.clear
+          t.tidCache.clear
+          t.requestCache.clear
           return
         }
       }
     } finally {
       AccessLog.log( web, thread, System.currentTimeMillis - start )
     }
-
+    
     chain.doFilter( web.req, web.res )
   }
 }
@@ -441,6 +460,77 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
     json( res )
   }
 
+  def addJsCookie( js:String, name:String = "execJS" ) {
+    val cookie = new javax.servlet.http.Cookie( name, js.encUrl )    
+    cookie.setPath("/")
+    cookie.setSecure( true )
+    res.addCookie( cookie )
+  }
+  
+  def forward( path:String = "/index.html", js:String = null ) = {
+    if ( xhr ) {
+      if ( js.isBlank )
+        new RuntimeException( "Have XHR request, but don't have JS to respond with." ).printStackTrace()
+        
+      jsRes( Js( js ) )
+    } else {
+      if ( js.notBlank )
+        addJsCookie( js )
+      
+      if ( path == "/index.html" )
+        res.setNoCacheHeaders
+
+      ctx.getRequestDispatcher( path ).forward( req, res )
+    }
+  }
+
+  /*
+  def forwardRes( path:String = "/index.html", cmds:Seq[JsCmd] = null ) = {
+    val res = jsonRes( T.session )
+    
+    def addCmds( cmds:Seq[JsCmd] ) {
+      for ( cmd <- cmds )
+        cmd match {
+        case cmds:JsCmds =>
+          addCmds( cmds.cmds )
+  
+        case _ =>
+          res.cmds += cmd
+        }
+    }
+    
+    if ( cmds != null )
+      addCmds( cmds )
+
+    forwardJson( res, path = path )
+  }
+
+  def forwardJson( json:Any, status:Int = 200, headers:Map[String,String] = null, cache:Boolean = false, path:String = "/index.html" ) = {
+    res.setStatus( status )
+
+    if ( !cache ) res.setNoCacheHeaders
+    
+    if ( headers != null )
+      for ( h <- headers ) 
+        res.setHeader( h._1, h._2 )
+        
+    val pretty = {
+      val prettyAttr = ( req == null ) ? null | req.getAttribute( "json.pretty" )
+      ( prettyAttr == null ) ? false | prettyAttr._b
+    }
+    
+    val outputJson = if ( json == null ) "{}" else json.toJsonStr( pretty = pretty, client = true )
+    
+//    res.setContentLength( if ( jsonpCallback != null ) ( jsonpCallback.length + 2 + outputJson.length ) else outputJson.length )
+
+    val cookie = new javax.servlet.http.Cookie( "json", outputJson )    
+    cookie.setPath("/")
+    cookie.setSecure( true )
+    res.addCookie( cookie )
+    ctx.getRequestDispatcher( path ).forward( req, res )  
+  }
+  */
+  
   def jsRes( value:collection.Map[String,Any], cmds:JsCmd* ) {
     val res = jsonRes( T.session )
 
@@ -458,6 +548,8 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
     json( res )
   }
 
+  def xhr = b( 'xhr )
+  
   def isApi = req.getAttribute( "api" ) != null
   
   def jsResNoNotifications( js:JsCmd* ) = {
@@ -508,9 +600,6 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
     throw WebRedirectException( url )
   }
   
-  def template( template:NodeSeq, status:Int = 200 ) =
-    res.html( WebTemplate( template ), status )
-    
   def s( param:String ):String        = req.s( param )
   def i( param:String ):Int           = req.i( param )
   def d( param:String ):Double        = req.d( param )
@@ -617,14 +706,6 @@ trait Weblet {
     }
   }
 
-  def shell( content:NodeSeq ):Unit =
-    if ( parent != null )
-      parent.shell( content )
-    else
-      T.web.template(
-        content
-      )
-
   def _404 = throw new Web404Exception
   
   def getFormParam( formParams: collection.Map[String, Seq[String]], n: String, default: String = null ) = {
@@ -644,128 +725,4 @@ trait Weblet {
   }
 }
 
-
-object WebTemplate {
-  /*
-
-     +.  error message substitution
-
-     +.  intelligent javascript includes
-
-     +.  better caching / performance:
-     
-         static vs. dynamic
-         has templates vs. template-less
-
-   */
-
-  def apply( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq =
-    new WebTemplate().finish( xml, content )
-}
-
-class WebTemplate {
-
-  private val heads = new mutable.ArrayBuffer[Node]()
-  private val tops  = new mutable.ArrayBuffer[Node]()
-  private val tails = new mutable.ArrayBuffer[Node]()
-
-  private def hasTemplates( nodes:NodeSeq ):Boolean = nodes exists hasTemplates
-  private def hasTemplates(  node:Node    ):Boolean = ( node.label == "head" || node.label == "top" || node.label == "tail" || node.prefix == "tyr" ) || hasTemplates( node.child )
-
-  private def bindNode( node:Node, content:NodeSeq ):NodeSeq =
-    node match {
-    case e:Elem if node.prefix == "tyr" =>
-    
-      if ( node.label == "content" ) {
-        process( content )
-      } else {
-        val template = B.templates.find( p => p._1 == node.label ).map( _._2 ) getOrElse ( throw new WebException( "Missing template " + node.label ) )
-        process( template( node ), e.child )
-      }
-
-    case e:Elem if node.label == "head" =>
-      val id = node.\( "@id" ).text
-      if ( id.isBlank || !heads.exists( _.\( "@id" ).text == id ) )
-        heads ++= node.child.flatMap( node => bindNode( node, content ) )
-        //heads ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
-      NodeSeq.Empty
-
-    case e:Elem if node.label == "top" =>
-      val id = node.\( "@id" ).text
-      if ( id.isBlank || !tops.exists( _.\( "@id" ).text == id ) )
-        tops ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
-      NodeSeq.Empty
-
-    case e:Elem if node.label == "tail" =>
-      val id = node.\( "@id" ).text
-      if ( id.isBlank || !tails.exists( _.\( "@id" ).text == id ) )
-        tails ++= ( node.child map { case e:Elem => e.copy(scope = TopScope) case n => n } )
-      NodeSeq.Empty
-
-    case e:Elem =>
-      if ( hasTemplates( node ) )
-        e.copy( child = process( node.child, content ) ) 
-      else
-        node
-
-    case n =>
-      n
-    }
-
-  def process( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq = {
-    if ( hasTemplates( xml ) )
-      xml.flatMap( node => bindNode( node, content ) )
-    else
-      xml
-  }
-
-  def finish( xml:NodeSeq, content:NodeSeq = NodeSeq.Empty ):NodeSeq = {
-    val pxml = process( xml, content )
-
-    if ( heads.nonEmpty || tops.nonEmpty || tails.nonEmpty ) {
-      pxml.flatMap { node =>
-        node match {
-        case e:Elem if node.label == "html" =>
-          val content =
-            ( heads.nonEmpty |* <head>{ heads }</head> ) ++
-            ( if ( tops.nonEmpty || tails.nonEmpty )
-                node.child.flatMap { node =>
-                  node match {
-                  case e:Elem if node.label == "body" => e.copy( child = ( tops ++ node.child ++ tails ) )
-                  case n                              => n
-                  }
-                }
-              else
-                node.child )
-
-          e.copy( child = content )
-
-        case n => n
-        }
-      }
-
-    } else {
-      pxml
-    }
-  }
-}
-
-
-/*
- * This initialization is done inside of a servlet because we need to make sure that the CometServlet has initialized already and
- * using a servlet allows us to use the web.xml load-on-startup mechanism to achieve this ordering.  Another solution would be to set
- * up a web.xml listener.
- */
-class WebInit extends GenericServlet {
-
-  override def init {
-    val bayeux = getServletContext().getAttribute(BayeuxServer.ATTRIBUTE).as[BayeuxServer]
-    B.bayeux = bayeux
-    B.comets.foreach { _.init( bayeux ) }
-  }
-
-  def service( req:ServletRequest, res:ServletResponse ) = {
-    throw new ServletException
-  }
-}
 

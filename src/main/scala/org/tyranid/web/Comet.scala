@@ -22,14 +22,11 @@ import scala.collection.mutable
 
 import com.mongodb.{ Bytes, DBObject }
 
-import org.cometd.bayeux.server.{ BayeuxServer, ServerSession }
-import org.cometd.server.AbstractService
-
 import org.tyranid.Imp._
 import org.tyranid.db.{ DbChar, DbLink }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
-import org.tyranid.json.{ JsCmd, JsCmds }
+import org.tyranid.json.{ JsCmd, JsCmds, JsModel }
 import org.tyranid.net.Ip
 import org.tyranid.session.{ Session, SessionData, WebSession }
 
@@ -52,16 +49,6 @@ import org.tyranid.session.{ Session, SessionData, WebSession }
 
 
  */
-
-case class CometService( name:String, create: ( BayeuxServer ) => AbstractService ) {
-
-  var service:AbstractService = null
-
-  def init( bayeux:BayeuxServer ) {
-    service = create( bayeux )
-  }
-}
-
 
 case class Comet( session:SessionData ) {
 
@@ -114,17 +101,6 @@ case class Comet( session:SessionData ) {
 
 object Comet {
 
-  def remove( serverSessionId:String ) {
-    val bSessions = new java.util.ArrayList( B.bayeux.getSessions )
-    
-    for ( session <- bSessions ) {
-      val httpSessionId = session.getAttribute( WebSession.CometHttpSessionIdKey )
-
-      if ( httpSessionId != null && serverSessionId == httpSessionId )
-        B.bayeux.getSessions().remove( session )
-    }
-  }
-    
   def visit( visitor: ( Comet ) => Unit ) = {
 
     for ( sd <- B.SessionData.records;
@@ -142,132 +118,18 @@ object Comet {
 
         val sv = sd.s( 'sv )
 
-        if ( PushQueue.active ) {
-          PushQueue.db.save(
-            Mobj(
-              "h"  -> false, // this can't left undefined, because you can't update a document in a capped mongo collection to be larger
-              "ss" -> sd.s( 'ss ),
-              "m"  -> comet.output.toDBObject
-            )
+        PushQueue.db.save(
+          Mobj(
+            "h"  -> false, // this can't left undefined, because you can't update a document in a capped mongo collection to be larger
+            "ss" -> sd.s( 'ss ),
+            "m"  -> comet.output.toDBObject
           )
-
-        } else if ( true || // DEBUG:  force everything remote so we can test the queue
-                    sv != Ip.Host ) {
-          CometQueue.dbFor( sv ).save(
-            Mobj(
-              "h"  -> false, // this can't left undefined, because you can't update a document in a capped mongo collection to be larger
-              "ss" -> sd.s( 'ss ),
-              "m"  -> comet.output.toDBObject
-            )
-          )
-        } else {
-          send( sd.s( 'ss ), comet.output )
-        }
-      }
-    }
-  }
-
-
-  def send( httpSessionId:String, m:java.util.Map[String,AnyRef] ) = {
-    B.comets.find( _.name == "message" ) foreach { comet =>
-      val service = comet.service
-
-      if ( service != null ) {
-        val serverSession = comet.service.getServerSession
-
-        for ( session <- B.bayeux.getSessions ) {
-          if ( session.getAttribute( WebSession.CometHttpSessionIdKey ) == httpSessionId ) {
-            session.deliver( serverSession, "/message", m, null )
-          }
-        }
-      }
-    }
-  }
-}
-
-
-/*
- * * *  CometQueue
- */
-
-object CometQueue {
-
-  //"_id"      is DbMongoId         is 'id;
-
-  //"m"        is DbObject          as "Comet Message";
-  //"ss"       is DbChar(32)        as "HTTP Session ID";
-
-
-  def dbNameFor( ip:String ) = "comet_" + ip.replace( ".", "_" ).replace( ":", "_" )
-
-  def dbFor( ip:String ) = Mongo.connect.db( B.profileDbName )( dbNameFor( ip ) )
-
-  def createCollectionFor( ip:String ) = {
-
-    val db = Mongo.connect.db( B.profileDbName )
-
-    val colName = dbNameFor( ip )
-
-    if ( !db.collectionExists( colName ) ) {
-      db.createCollection(
-        colName,
-        Mobj(
-          "capped" -> true,
-          "size"   -> ( 2 * 1024 * 1024 )
         )
-      )
-
-      // place a dummy "already-handled" object into the capped collection so that the query will "await data" properly ... if the collection is empty the query will return immediately
-      db( colName ).save( Mobj( "h" -> true ) )
-    }
-  }
-
-  def process = {
-
-    val db = dbFor( localName )
-
-    def query = db.find( Mobj( "h" -> false ) ).addOption( Bytes.QUERYOPTION_TAILABLE ).addOption( Bytes.QUERYOPTION_AWAITDATA )
-
-    while ( true ) {
-
-      try {
-
-        var cursor = query
-
-        while ( true ) {
-          if ( !cursor.hasNext ) {
-
-            if ( cursor.getCursorId == 0 ) { // a.k.a. cursor.isDead ?
-              Thread.sleep( 1000 )
-              cursor = query
-            }
-          } else {
-            val obj = cursor.next
-//sp am( "cometqueue processing " + obj )
-            Comet.send( obj.s( 'ss ), obj.o( 'm ).toMap.asInstanceOf[java.util.Map[String,AnyRef]] )
-
-            db.update( Mobj( "_id" -> obj( '_id ) ), Mobj( $set -> Mobj( "h" -> true ) ) )
-          }
-        }
-      } catch {
-        case t:Throwable =>
-          t.fillInStackTrace
-          log( Event.Alert, "m" -> t.getMessage, "ex" -> t )
       }
     }
   }
-
-  lazy val localName = org.tyranid.net.Ip.Host
-
-  def init {
-
-    createCollectionFor( localName )
-
-    background {
-      process
-    }
-  }
 }
+
 
 
 /*
@@ -275,8 +137,6 @@ object CometQueue {
  */
 
 object PushQueue {
-
-  val active = true
 
   //"_id"      is DbMongoId         is 'id;
 
@@ -308,6 +168,20 @@ object PushQueue {
   def init {
 
     db
+
+    background {
+
+      // give the server 3 seconds to get settled before we start pulverise it
+
+      Thread.sleep( 3000 )
+
+      PushQueue.db.save(
+        Mobj(
+          "h"       -> false, // this can't left undefined, because you can't update a document in a capped mongo collection to be larger
+          "restart" -> true
+        )
+      )
+    }
   }
 }
 

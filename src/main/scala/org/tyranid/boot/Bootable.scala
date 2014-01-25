@@ -22,7 +22,6 @@ import java.net.InetAddress
 
 import scala.xml.NodeSeq
 
-import org.cometd.bayeux.server.BayeuxServer
 //import org.clapper.classutil.ClassFinder
 
 import com.braintreegateway.BraintreeGateway
@@ -53,7 +52,7 @@ import org.tyranid.social.facebook.FbApp
 import org.tyranid.social.google.GoApp
 import org.tyranid.social.linkedin.LiApp
 import org.tyranid.telco.TwilioApp
-import org.tyranid.web.{ Weblet, Webloc, WebPath, CometService, WebContext }
+import org.tyranid.web.{ Weblet, Webloc, WebPath, WebContext }
 
 object Boot {
   var TEST = false
@@ -150,12 +149,7 @@ trait Bootable {
   val paths:Seq[WebPath]
   val milestones:Seq[Milestone]
 
-  val templates:List[(String, ( NodeSeq ) => NodeSeq )]
   val emailTemplates:EmailTemplate
-
-  val comets:Seq[CometService]
-
-  @volatile var bayeux:BayeuxServer = null
 
   def boot:Unit
 
@@ -204,13 +198,10 @@ trait Bootable {
   def ContentEntities:Seq[MongoEntity] = Nil
   def DocEntity:MongoEntity = null
 
-  @volatile var loginPage:() => NodeSeq = null
-
   def finishConversion( content:Content )
   
   def registerUser( user:User, companyName:String ) 
   def sendMessage( msg:String, toUserTid:String, fromUserTid:String = null ) 
-  def appShellPage( web:WebContext ): NodeSeq = NodeSeq.Empty
 
   lazy val appOrgId = Org.db.findOne( Mobj( "name" -> applicationName ) ).oid
   lazy val appOrgTid = Org.idToTid( appOrgId )
@@ -221,7 +212,7 @@ trait Bootable {
   lazy val hostName = InetAddress.getLocalHost.getHostName
   
   println( "hostname: " + hostName )
-  lazy val DEV = hostName.indexOf( "macbook" ) != -1 || hostName.indexOf( "iMac" ) != -1 || hostName.indexOf( "imac" ) != -1 || hostName.indexOf( "-mac-" ) != -1 || hostName.indexOf( ".local" ) != -1
+  lazy val DEV = hostName.indexOf( "macbook" ) != -1 || hostName.indexOf( "iMac" ) != -1 || hostName.indexOf( "imac" ) != -1 || hostName.indexOf( "-mac-" ) != -1 || hostName.indexOf( ".local" ) != -1 || hostName.indexOf( "dannys-mbp" ) != -1
 
   lazy val securityGroup =
     if ( DEV ) ""
