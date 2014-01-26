@@ -307,6 +307,14 @@ class WebFilter extends TyrFilter {
     try {
       for ( webloc <- boot.weblocs;
             if web.matches( webloc.weblet.wpath ) && webloc.weblet.matches( web ) ) {
+        
+        val comet = web.fullPath.startsWith( "/comet" )
+        
+        if ( comet ) {
+          Errorlet.stopComet( web )
+          return
+        }
+        
         if ( !isAsset ) ensureSession( thread, web )
         
         val t = T

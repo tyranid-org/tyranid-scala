@@ -19,11 +19,39 @@ package org.tyranid.web
 
 import scala.xml.{ NodeSeq }
 
+import java.io.{ BufferedInputStream, ByteArrayInputStream, BufferedOutputStream, IOException }
+
 import org.tyranid.Imp._
 import org.tyranid.json.JqHtml
 
 object Errorlet extends Weblet {
 
+  val stopCometStr = """[
+  {
+     "channel": "/meta/handshake",
+     "version": "1.0",
+     "minimumVersion": "0.9",
+     "supportedConnectionTypes": ["long-polling","callback-polling"],
+     "successful": false,
+     "error": "Authentication failed",
+     "advice": { "reconnect": "none" }
+   }
+]""".getBytes
+    
+  def stopComet( web:WebContext ) = { 
+    web.res.setContentType( "application/json" )
+    
+    try {
+      new BufferedInputStream( new ByteArrayInputStream( stopCometStr ) ).transferTo( new BufferedOutputStream( web.res.getOutputStream() ), true )
+    } catch {
+      case e:IOException => ; // bury
+      case e if e.getClass.getSimpleName == "EofException" =>
+      case e2:Throwable => throw e2
+    }
+    
+    web.res.ok
+  }
+        
   def handle( web:WebContext ) {
 
     rpath match {
@@ -54,6 +82,11 @@ object Errorlet extends Weblet {
       }
       
       println( originalUrl )
+      
+      if ( originalUrl.startsWith( "/cometd" ) ) {
+        stopComet( web )
+        return
+      }
       
       if ( originalUrl != null )
         log( Event.Error404, "p" -> originalUrl )
