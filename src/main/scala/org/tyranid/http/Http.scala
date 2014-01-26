@@ -554,38 +554,46 @@ object Http {
     
     val client = builder.build()// withParams ? new DefaultHttpClient( httpParams ) | new DefaultHttpClient( httpParams )
     
-    val ( response, context )  = ( preemptive ) ? {
-      val uri = request.getURI
-      val port = ( uri.getScheme.toLowerCase == "https" ) ? 443 | 80
-      val targetHost = new HttpHost( uri.getHost, port, uri.getScheme )
-      
-      //if ( username.notBlank && password.notBlank ) 
-      //  client.getCredentialsProvider().setCredentials( new AuthScope( uri.getHost, port ), new UsernamePasswordCredentials( username, password ) )
-      
-      val authCache = new BasicAuthCache()
-      
-      // Generate BASIC scheme object and add it to the local auth cache
-      val basicAuth = new BasicScheme()
-      authCache.put( targetHost, basicAuth )
-  
-      // Add AuthCache to the execution context
-      val localcontext = new BasicHttpContext()
-      localcontext.setAttribute(ClientContext.AUTH_CACHE, authCache)
-      ( client.execute( targetHost, request, localcontext ), localcontext )
-    } | { 
-      //if ( authScope != null && username.notBlank && password.notBlank )
-      //  client.getCredentialsProvider().setCredentials( authScope, new UsernamePasswordCredentials( username, password ) )
-      
-      val context = new BasicHttpContext()
-      ( client.execute( request, context ), context )
-    }
+    try {
+      val ( response, context )  = ( preemptive ) ? {
+        val uri = request.getURI
+        val port = ( uri.getScheme.toLowerCase == "https" ) ? 443 | 80
+        val targetHost = new HttpHost( uri.getHost, port, uri.getScheme )
+        
+        //if ( username.notBlank && password.notBlank ) 
+        //  client.getCredentialsProvider().setCredentials( new AuthScope( uri.getHost, port ), new UsernamePasswordCredentials( username, password ) )
+        
+        val authCache = new BasicAuthCache()
+        
+        // Generate BASIC scheme object and add it to the local auth cache
+        val basicAuth = new BasicScheme()
+        authCache.put( targetHost, basicAuth )
     
-    response.getStatusLine.getStatusCode match {
-    case 403 =>
-      println( request.getURI()._s )
-      println( scala.io.Source.fromInputStream( response.getEntity().getContent() ).getLines().mkString("\n") )
-      throw new Http403Exception( response )
-    case _   => HttpResult( response, context )
+        // Add AuthCache to the execution context
+        val localcontext = new BasicHttpContext()
+        localcontext.setAttribute(ClientContext.AUTH_CACHE, authCache)
+        ( client.execute( targetHost, request, localcontext ), localcontext )
+      } | { 
+        //if ( authScope != null && username.notBlank && password.notBlank )
+        //  client.getCredentialsProvider().setCredentials( authScope, new UsernamePasswordCredentials( username, password ) )
+        
+        val context = new BasicHttpContext()
+        ( client.execute( request, context ), context )
+      }
+      
+      response.getStatusLine.getStatusCode match {
+      case 403 =>
+        println( request.getURI()._s )
+        println( scala.io.Source.fromInputStream( response.getEntity().getContent() ).getLines().mkString("\n") )
+        throw new Http403Exception( response )
+      case _   => HttpResult( response, context )
+      }
+    } catch {
+      case _:java.net.ConnectException =>
+        spam( "Unable to connect to: " + request.getURI()._s )
+        null
+      case t:Throwable =>
+        throw t
     }
   }
 

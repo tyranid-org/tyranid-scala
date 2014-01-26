@@ -195,7 +195,7 @@ class BasicAuthFilter extends TyrFilter {
       }
 
       ensureSession( thread, web )
-      T.session.login( user )
+      T.session.login( user, verified = true )
     }
     
     //web.req.setAttribute( "removeFromPath", "/api" )

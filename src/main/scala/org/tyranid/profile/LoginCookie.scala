@@ -96,7 +96,7 @@ object LoginCookie {
       val user = LoginCookie.getUser.of[User].getOrElse( null )
 
       if ( user != null )
-        sess.login( user )
+        sess.login( user, verified = true )
     }
   }
 }

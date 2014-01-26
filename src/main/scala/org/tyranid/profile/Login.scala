@@ -70,7 +70,7 @@ object Loginlet extends Weblet {
           web.jsRes()
         } else {
           copySocialLogins( sessionUser = sess.user, existingUser = user )
-          sess.login( user )
+          sess.login( user, verified = true )
   
           if ( web.b( 'save ) )
             LoginCookie.set(user)
@@ -179,8 +179,8 @@ object Loginlet extends Weblet {
           web.jsRes( Js( "V.common.clear().set(V.common.defaults); V.app.load( '/#dashboard' )" ) )
         } else {
           val user = B.User(dbUser)
-          user.remove('resetCode)
-          sess.login( user )
+          user.remove( 'resetCode )
+          sess.login( user, verified = true )
           user.save
           
           sess.notice( "You can now change your password in <em>My Profile</em>.", deferred = "/#dashboard" ) 
@@ -298,7 +298,7 @@ object Loginlet extends Weblet {
         return web.jsRes( JsModel( Map( "email" -> email, "firstName" -> firstName ) ) )
       } 
       
-      sess.login( user )
+      sess.login( user, verified = true )
       user.remove( 'activationCode )
       
       B.registerUser( user, companyName )

@@ -380,6 +380,7 @@ trait Session extends QuickCache {
   def isLoggedIn = !user.isNew && ( user.s( 'activationCode ).isBlank || ( isLite && isLiteVerified ) )//getOrElse( "user", "" )._s.notBlank
 
   def isLite = b( "lite" )
+  def isVerified = b( "vfy" )
 
   def isHttpSession = httpSessionId != null
   
@@ -478,7 +479,7 @@ trait Session extends QuickCache {
    * * *   Login
    */
 
-  def login( user:User, incognito:Boolean = false, sso:SsoMapping = null ) = {
+  def login( user:User, incognito:Boolean = false, sso:SsoMapping = null, verified:Boolean = false ) = {
     this.user = user
     put( "lastLogin", user.t( 'lastLogin ) )
 
@@ -538,6 +539,9 @@ trait Session extends QuickCache {
       T.requestCache.put( "req-common", true )      
     }
 
+    if ( verified || incognito )
+      put( "vfy", true ) // verified login
+      
     record( "u" -> user.id, "lit" -> now, "incognito" -> incognito )
   }
   
