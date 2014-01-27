@@ -69,12 +69,12 @@ object Errorlet extends Weblet {
            </div>
           ) )
       } else {
-        web.forward( path = "/error/?full=1" )
+        web.forward( js = "V.app.load('/error/?full=1')" )
       }
 
     case "/404" =>
 
-      val originalUrl = web.req.getAttribute( "javax.servlet.forward.request_uri" )._s
+      var originalUrl = web.req.getAttribute( "javax.servlet.forward.request_uri" )._s
       if ( originalUrl.isBlank )
         originalUrl = web.s( 'url ) or ""
 
@@ -114,7 +114,7 @@ object Errorlet extends Weblet {
             )
           }
         } else {
-          T.web.forward( js = "V.app.load('/error/404?full=1&url=" + originalUrl.encUrl + "')" )
+          web.forward( js = "V.app.load('/error/404?full=1&url=" + originalUrl.encUrl + "')" )
         }
       }
     case "/throw" =>
