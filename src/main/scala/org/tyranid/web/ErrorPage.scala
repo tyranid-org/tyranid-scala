@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -41,11 +41,11 @@ object Errorlet extends Weblet {
            </div>
           ) )
       } else {
-        web.forward( path = "/error/?full=1" )
+        web.forward( js = "V.app.load('/error/?full=1')" )
       }
-      
+
     case "/404" =>
-      
+
       var originalUrl = web.req.getAttribute( "javax.servlet.forward.request_uri" )._s
       if ( originalUrl.isBlank )
         originalUrl = web.s( 'url ) or ""
@@ -54,16 +54,16 @@ object Errorlet extends Weblet {
         web.res.ok
         return
       }
-      
+
       println( originalUrl )
-      
+
       if ( originalUrl.notBlank )
         log( Event.Error404, "p" -> originalUrl )
-        
+
       if ( WebFilter.notAsset( originalUrl ) ) {
         if ( web.xhr ) {
           if ( web.b( 'full ) ) {
-            web.jsRes( JqHtml( "#main", 
+            web.jsRes( JqHtml( "#main",
       <div class="warning" style="margin:80px 0 0 200px; width:500px;">
        <img src="/images/warning.png" style="height:120px; width:120px; float:right;"/>
        <p style="font-size:32px;"><strong>404</strong></p>
@@ -79,9 +79,9 @@ object Errorlet extends Weblet {
              "<p>Thank you.</p>" +
              "<p><em>- The " + B.applicationName + " Team</em></p>".encJson
             )
-          }          
+          }
         } else {
-          T.web.forward( js = "V.app.load('/error/404?full=1&url=" + originalUrl.encUrl + "')" )
+          web.forward( js = "V.app.load('/error/404?full=1&url=" + originalUrl.encUrl + "')" )
         }
       }
     case "/throw" =>
