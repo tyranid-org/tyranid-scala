@@ -46,7 +46,9 @@ object Errorlet extends Weblet {
       
     case "/404" =>
       
-      val originalUrl = web.req.getAttribute( "javax.servlet.forward.request_uri" )._s
+      var originalUrl = web.req.getAttribute( "javax.servlet.forward.request_uri" )._s
+      if ( originalUrl.isBlank )
+        originalUrl = web.s( 'url ) or ""
 
       if ( T.session.ua( web ).isIE && ( originalUrl.startsWith( "/\"" ) || originalUrl.startsWith( "/%22/" ) ) ) {
         web.res.ok
@@ -55,7 +57,7 @@ object Errorlet extends Weblet {
       
       println( originalUrl )
       
-      if ( originalUrl != null )
+      if ( originalUrl.notBlank )
         log( Event.Error404, "p" -> originalUrl )
         
       if ( WebFilter.notAsset( originalUrl ) ) {
@@ -79,7 +81,7 @@ object Errorlet extends Weblet {
             )
           }          
         } else {
-          T.web.forward( path = "/error/404?full=1" )
+          T.web.forward( js = "V.app.load('/error/404?full=1&url=" + originalUrl.encUrl + "')" )
         }
       }
     case "/throw" =>
