@@ -67,14 +67,14 @@ object Errorlet extends Weblet {
       <div class="warning" style="margin:80px 0 0 200px; width:500px;">
        <img src="/images/warning.png" style="height:120px; width:120px; float:right;"/>
        <p style="font-size:32px;"><strong>404</strong></p>
-       <p>We're sorry, but the requested URL <pre>{ T.web.req.getAttribute( "javax.servlet.forward.request_uri" ) }</pre> was not found on our servers.</p>
+       <p>We're sorry, but the requested URL <pre>{ originalUrl }</pre> was not found on our servers.</p>
        <p>Please visit <a href={ "http://rbsupport.volerro.com/" }>{ "http://rbsupport.volerro.com/" }</a> if this is an urgent issue.</p>
        <p>Thank you.</p>
        <p><em>- The { B.applicationName } Team</em></p>
       </div> ) )
           } else {
             T.session.error(
-             "<p>We're sorry, but the requested URL <pre>" + T.web.req.getAttribute( "javax.servlet.forward.request_uri" )  + "</pre> was not found on our servers.</p>" +
+             "<p>We're sorry, but the requested URL <pre>" + originalUrl  + "</pre> was not found on our servers.</p>" +
              "<p>Please visit <a href='http://rbsupport.volerro.com'>http://rbsupport.volerro.com</a> if this is an urgent issue.</p>" +
              "<p>Thank you.</p>" +
              "<p><em>- The " + B.applicationName + " Team</em></p>".encJson
