@@ -79,7 +79,7 @@ object Loginlet extends Weblet {
               Js( "V.app.newLoad( '#dashboard' );" ) )
         }
       } else {
-        web.forward( js = "window.pendingMainLoads.push( function() { Backbone.trigger( '#login' ); } );" )
+        web.forward( js = "mainLoad( function() { Backbone.trigger( '#login' ); } );" )
       }
 
     case "/clear" =>
@@ -316,7 +316,7 @@ object Loginlet extends Weblet {
           
       return web.jsRes( JsModel( modelMap ) )
     } else {
-      web.forward( js = "window.pendingMainLoads.push( function() { Backbone.trigger( '#login', { register : true } ); } );" )
+      web.forward( js = "mainLoad( function() { Backbone.trigger( '#login', { register : true } ); } );" )
     }
   }  
   

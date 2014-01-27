@@ -377,9 +377,7 @@ trait Session extends QuickCache {
   var loggedUser  = false
 
   // If the user tid is set in the session
-  def isLoggedIn = !user.isNew && ( user.s( 'activationCode ).isBlank || ( isLite && isLiteVerified ) )//getOrElse( "user", "" )._s.notBlank
-
-  def isLite = b( "lite" )
+  def isLoggedIn = !user.isNew && ( user.s( 'activationCode ).isBlank || isLiteVerified )
   def isVerified = b( "vfy" )
 
   def isHttpSession = httpSessionId != null

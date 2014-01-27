@@ -75,10 +75,7 @@ object WebFilter {
           }
         )
     
-    val subdomain = web.req.getServerName
-
-    sess.put( "lite", subdomain.startsWith( B.liteDomainPart ) )
-    sess.put( "subdomain", subdomain )
+    sess.put( "subdomain", web.req.getServerName )
   }
 }
 
@@ -347,8 +344,8 @@ class WebFilter extends TyrFilter {
       
           if ( trace.notBlank )
             sess.trace = trace._b
-          
-          web.forward( js = sess.isLite ? "V.app.lite();" | null )
+
+          web.forward()
           return
         }
 
@@ -649,14 +646,8 @@ trait Weblet {
   def redirectIfNotLoggedIn( web:WebContext ) = {
     val sess = Session()
     
-    if ( !sess.isLoggedIn ) {
-      //if ( web.b( 'xhr ) ) {
-      //  web.redirect( "#login/" + web.req.uriAndQueryString.encUrl )         
-      //} else {
-      //  web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
-      //}
+    if ( !sess.isLoggedIn )
       web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
-    }
   }
 
   def redirectIfNotHasOrg( web:WebContext ) = {
