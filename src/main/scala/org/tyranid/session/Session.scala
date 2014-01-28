@@ -378,7 +378,6 @@ trait Session extends QuickCache {
 
   // If the user tid is set in the session
   def isLoggedIn = !user.isNew && ( user.s( 'activationCode ).isBlank || isLiteVerified )
-  def isVerified = b( "vfy" )
 
   def isHttpSession = httpSessionId != null
   
@@ -543,15 +542,18 @@ trait Session extends QuickCache {
     record( "u" -> user.id, "lit" -> now, "incognito" -> incognito )
   }
   
-  def clearLiteVerified = clear( "lite-v" )
-  def setLiteVerified = put( "lite-v", Boolean.box( true ).booleanValue().as[Serializable] )
-  def isLiteVerified = get( "lite-v" ).as[Boolean] ? true | false
+  def clearVerified = clear( "vfy" )
+  def isVerified = b( "vfy" )
   
-  def isIncognito = get( "incognito" ).as[Boolean] ? true | false
+  def clearLiteVerified = clear( "lite-v" )
+  def setLiteVerified = put( "lite-v", true )
+  def isLiteVerified = b( "lite-v" )
+  
+  def isIncognito = b( "incognito" )
 
-  def isAllowingEmail = !isIncognito || get( "allowEmail" ).as[Boolean]
+  def isAllowingEmail = !isIncognito || b( "allowEmail" )
 
-  def setAllowEmail = put( "allowEmail", Boolean.box( true ).booleanValue().as[Serializable] )
+  def setAllowEmail = put( "allowEmail", true )
   def clearAllowEmail = clear( "allowEmail" )
 
   def logout( unlink:Boolean = true, removeCookies:Boolean = true ) = {
