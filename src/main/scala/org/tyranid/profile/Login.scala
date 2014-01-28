@@ -90,7 +90,7 @@ object Loginlet extends Weblet {
       sess.logout()
       
       // r means the client is handling the redirect
-      web.b( 'r ) ? web.jsRes() | ( web.xhr ? web.jsRes( Js( "window.appRouter.goto( '#login' )" ) ) | web.redirect( website ) )       
+      web.b( 'r ) ? web.jsRes() | ( web.xhr ? web.jsRes( Js( "Backbone.trigger( '#login' )" ) ) | web.redirect( website ) )       
     case s if s.startsWith( "/register" ) =>
       register( web, sess )
     case "/company" =>

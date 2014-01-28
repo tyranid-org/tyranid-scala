@@ -483,6 +483,8 @@ trait Session extends QuickCache {
     val now = new Date
     
     if ( !incognito ) {
+      clear( "incognito" )
+      
       var updates = Mobj( "lastLogin" -> now )
 
       if ( tz != null && tz != user.timeZone ) {
@@ -507,7 +509,7 @@ trait Session extends QuickCache {
       if ( sso != null )
         put( "sso", sso )        
     } else {
-      put( "incognito", Boolean.box( true ).booleanValue().as[Serializable] )
+      put( "incognito", true )
       
       val ssoCode = user.s( 'sso )
       
@@ -537,13 +539,14 @@ trait Session extends QuickCache {
     }
 
     if ( verified || incognito )
-      put( "vfy", true ) // verified login
+      setVerified // verified login
       
     record( "u" -> user.id, "lit" -> now, "incognito" -> incognito )
   }
   
   def clearVerified = clear( "vfy" )
   def isVerified = b( "vfy" )
+  def setVerified = put( "vfy", true )
   
   def clearLiteVerified = clear( "lite-v" )
   def setLiteVerified = put( "lite-v", true )
@@ -557,8 +560,10 @@ trait Session extends QuickCache {
   def clearAllowEmail = clear( "allowEmail" )
 
   def logout( unlink:Boolean = true, removeCookies:Boolean = true ) = {
-    if ( removeCookies ) {
-      LoginCookie.remove
+    if ( removeCookies ) {      
+      if ( !isIncognito )
+        LoginCookie.remove
+        
       Social.removeCookies
     }
     
@@ -573,7 +578,6 @@ trait Session extends QuickCache {
         B.logoutListeners.foreach( _( u ) )    
     }
   }
-
 
   /*
    * * *   Time Zones
