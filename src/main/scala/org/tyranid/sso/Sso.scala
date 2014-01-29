@@ -105,7 +105,7 @@ object Ssolet extends Weblet {
     thread.http = web.req.getSession( true )
     thread.web = web
     WebFilter.setSessionVars( web )
-    thread.session.login( user, sso = sso, verified = true )
+    thread.session.login( user, sso = sso, setAuth = true )
   }
   
   def handle(web: WebContext) {

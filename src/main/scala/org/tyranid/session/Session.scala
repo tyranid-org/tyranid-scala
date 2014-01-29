@@ -64,7 +64,7 @@ object SessionCleaner {
         if ( tyrsess != null ) { 
           //val lastPathTime = tyrsess.get( "lastPathTime" ).as[Date]
           val idle = now - httpsess.getLastAccessedTime
-          ( !tyrsess.isLoggedIn && idle > (2*Time.OneMinuteMs) ) || idle > Time.HalfHourMs
+          ( !tyrsess.isVerified && idle > (2*Time.OneMinuteMs) ) || idle > Time.HalfHourMs
         } else {
           true
         }
@@ -375,10 +375,15 @@ trait Session extends QuickCache {
 
   var loggedEntry = false
   var loggedUser  = false
-
+  
   // If the user tid is set in the session
-  def isLoggedIn = !user.isNew && ( user.s( 'activationCode ).isBlank || isLiteVerified )
-
+  
+  def isVerified = {
+    val verified = user.s( 'activationCode ).notBlank ? isLiteVerified | isAuthenticated
+    
+    !user.isNew && verified
+  }
+  
   def isHttpSession = httpSessionId != null
   
   var debug       = B.DEV
@@ -476,7 +481,7 @@ trait Session extends QuickCache {
    * * *   Login
    */
 
-  def login( user:User, incognito:Boolean = false, sso:SsoMapping = null, verified:Boolean = false ) = {
+  def login( user:User, incognito:Boolean = false, sso:SsoMapping = null, setAuth:Boolean = false ) = {
     this.user = user
     put( "lastLogin", user.t( 'lastLogin ) )
 
@@ -538,15 +543,15 @@ trait Session extends QuickCache {
       T.requestCache.put( "req-common", true )      
     }
 
-    if ( verified || incognito )
-      setVerified // verified login
+    if ( setAuth || incognito )
+      setAuthenticated // verified login
       
     record( "u" -> user.id, "lit" -> now, "incognito" -> incognito )
   }
   
-  def clearVerified = clear( "vfy" )
-  def isVerified = b( "vfy" )
-  def setVerified = put( "vfy", true )
+  def clearAuthenticated = clear( "auth" )
+  def isAuthenticated = b( "auth" )
+  def setAuthenticated = put( "auth", true )
   
   def clearLiteVerified = clear( "lite-v" )
   def setLiteVerified = put( "lite-v", true )
@@ -608,7 +613,7 @@ trait Session extends QuickCache {
       return tz
 
     val u = user
-    if ( u != null && isLoggedIn )
+    if ( u != null && isVerified )
       tz = u.timeZone
 
     tz

@@ -113,7 +113,7 @@ object AccessLog {
       // still do "digest" access logs
 
       if ( !session.loggedUser ) {
-        if ( session.isLoggedIn ) {
+        if ( session.isVerified ) {
           Log.log( Event.Access, "ua" -> web.req.getHeader( "User-Agent" ) )
           session.loggedUser = true
           session.loggedEntry = true

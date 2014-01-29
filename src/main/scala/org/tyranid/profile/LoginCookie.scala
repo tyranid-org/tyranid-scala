@@ -92,11 +92,11 @@ object LoginCookie {
     val sess = T.session
     val user = sess.user
 
-    if ( !sess.isLoggedIn && !T.http.isLoggingOut && !user.b( 'inactive ) ) {
+    if ( !sess.isAuthenticated && !T.http.isLoggingOut && !user.b( 'inactive ) ) {
       val user = LoginCookie.getUser.of[User].getOrElse( null )
 
       if ( user != null )
-        sess.login( user, verified = true )
+        sess.login( user, setAuth = true )
     }
   }
 }

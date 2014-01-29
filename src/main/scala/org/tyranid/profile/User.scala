@@ -195,7 +195,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
     "invitedBy"    is DbLink(B.User)      ;
   }
 
-  def isLoggedIn = Session().isLoggedIn
+  //def isLoggedIn = Session().isLoggedIn
   
   // TODO:  Make this more sophisticated, allow the entire user to be retrieved instead of just the name, and/or maybe something like ProfileItem
   def nameFor( userId:ObjectId ) = "TODO"

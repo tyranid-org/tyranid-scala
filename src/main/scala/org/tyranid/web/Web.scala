@@ -168,7 +168,7 @@ class BasicAuthFilter extends TyrFilter {
   }
 
   override def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData ):Unit = {  
-    if ( thread.http == null || !B.User.isLoggedIn ) {
+    if ( thread.http == null || !T.session.isAuthenticated ) {
       val header = web.req.getHeader( "Authorization" )
       
       if ( header.isBlank ) {
@@ -192,7 +192,7 @@ class BasicAuthFilter extends TyrFilter {
       }
 
       ensureSession( thread, web )
-      T.session.login( user, verified = true )
+      T.session.login( user, setAuth = true )
     }
     
     //web.req.setAttribute( "removeFromPath", "/api" )
@@ -281,12 +281,10 @@ class WebFilter extends TyrFilter {
         
         web.ctx.getRequestDispatcher( "/404" ).forward( web.req, web.res )
       case re:org.tyranid.secure.SecureException =>
-        if ( !B.User.isLoggedIn ) {
+        if ( thread.session != null ) {
+          thread.session.warn( "Access denied (3)." )
           val redirectUrl = web.req.uriAndQueryString.replaceAll( "&?xhr=1", "" )
-          web.res.sendRedirect( "/log/in?l=" + redirectUrl.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
-        } else {
-          thread.session.warn( "Access denied." )
-          web.res.sendRedirect( "/" + ( web.b( 'xhr ) ? "?xhr=1" | "" ) )
+          web.forward( path = redirectUrl.encUrl )
         }
       case e:Exception =>
         println( "GOT EXCEPTION: " + e.getMessage() )
@@ -330,7 +328,7 @@ class WebFilter extends TyrFilter {
         */
 
         //if ( ( web.b( 'asp ) || ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isLoggedIn ) && webloc.weblet.requiresLogin ) ) ) 
-        if ( ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isLoggedIn ) && webloc.weblet.requiresLogin ) ) 
+        if ( ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isVerified ) && webloc.weblet.requiresLogin ) ) 
             && web.req.getAttribute( "api" )._s.isBlank ) {
           
           if ( isAsset ) spam( "isAsset matching on " + web.path )
@@ -643,15 +641,56 @@ case class Webloc( path:String, weblet:Weblet, children:Webloc* ) {
 trait Weblet {
   val rootPath = "/"
   
-  def redirectIfNotLoggedIn( web:WebContext ) = {
+  def redirectIfNotAuthenticated( web:WebContext ) = {
     val sess = Session()
     
-    if ( !sess.isLoggedIn )
+    if ( !sess.isAuthenticated ) {
+      if ( sess.isVerified ) {
+        val subdomain = web.req.getServerName
+        val lite = subdomain.startsWith( B.liteDomainPart ) 
+
+        if ( lite ) {
+          val js = "mainLoad( function() { Backbone.trigger( '#lite', { error : 'Access Denied (1).' } ); } );"
+            
+          if ( web.xhr ) {
+            web.jsRes( Js( js ) )
+          } else {
+            web.forward( js = js  )
+          }
+          
+          throw WebHandledException()
+        }
+      } 
+      
       web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
+    }
+  }
+
+  def redirectIfNotVerified( web:WebContext ) = {
+    val sess = Session()
+    
+    if ( !sess.isVerified ) {
+      val subdomain = web.req.getServerName
+      val lite = subdomain.startsWith( B.liteDomainPart ) 
+
+      if ( lite ) {
+        val js = "mainLoad( function() { Backbone.trigger( '#lite', { error : 'Access Denied (2).' } ); } );"
+          
+        if ( web.xhr ) {
+          web.jsRes( Js( js ) )
+        } else {
+          web.forward( js = js  )
+        }
+        
+        throw WebHandledException()
+      } else {
+        web.redirect( "/log/in?l=" + web.req.uriAndQueryString.encUrl + ( web.b( 'xhr ) ? "&xhr=1" | "" ) )
+      }
+    }      
   }
 
   def redirectIfNotHasOrg( web:WebContext ) = {
-    redirectIfNotLoggedIn( web )
+    redirectIfNotVerified( web )
     
     if ( !org.tyranid.session.Session().user.has( 'org ) )
       web.redirect( "/" + ( web.b( 'xhr ) ? "?xhr=1" | "" ) )
