@@ -105,7 +105,7 @@ object Ssolet extends Weblet {
     thread.http = web.req.getSession( true )
     thread.web = web
     WebFilter.setSessionVars( web )
-    thread.session.login( user, sso = sso )
+    thread.session.login( user, sso = sso, setAuth = true )
   }
   
   def handle(web: WebContext) {
@@ -635,9 +635,6 @@ $( $('#idp').focus() );
     val user = thread.user
     val web = thread.web
     val loggingOut = web.req.s( 'lo ).notBlank
-    val noSocial = web.b( 'nosocial )
-
-    val params = noSocial |* "?nosocial=1"
 
     <form method="post" action={ wpath } id="f" class="sso" style="margin-bottom:12px;" data-val="1" data-val-top="1">
      <fieldset class="ssoBox">

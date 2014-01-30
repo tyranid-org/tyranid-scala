@@ -130,6 +130,7 @@ case class NexmoApp( apiKey:String, secret:String, defaultFrom:String ) {
 object Smslet extends Weblet {
 
   def handle(web: WebContext) {
+    redirectIfNotAuthenticated( web )
     val sess = T.session
     
     rpath match {
@@ -157,7 +158,6 @@ object Smslet extends Weblet {
       }
       
     case "/toggleOk" =>
-      redirectIfNotLoggedIn( web )
       val (user,sms) = smsStart
       
       if ( sms.b( 'ok ) ) {
@@ -168,7 +168,6 @@ object Smslet extends Weblet {
         
       web.forward( "/sms/verify?id=" + web.s( "id" ) or "" )
     case "/clearNumber" =>
-      redirectIfNotLoggedIn( web )
       val (user,sms) = smsStart
       
       sms( 'phone ) = null
@@ -177,7 +176,6 @@ object Smslet extends Weblet {
       sess.notice( "SMS/Mobile Phone cleared" )
       web.forward( "/user/edit?id=" + web.s( "id" ) or "" )
     case "/toggleOn" =>
-      redirectIfNotLoggedIn( web )
       val (user,sms) = smsStart
       
       sms( 'on ) = !sms.b( 'on )
@@ -185,7 +183,6 @@ object Smslet extends Weblet {
         
       web.forward( "/sms/edit?id=" + web.s( "id" ) or "" )
     case "/edit" =>
-      redirectIfNotLoggedIn( web )
       val (user,sms) = smsStart
     
       if ( !sms.b( 'ok ) && !web.b( 'savingHere ) )
@@ -230,8 +227,6 @@ object Smslet extends Weblet {
          "onCloseRedirect" -> true ) )
 
     case "/verify" =>
-      redirectIfNotLoggedIn( web )
-      
       var form:NodeSeq = null
       var header:NodeSeq = null
           
@@ -339,8 +334,6 @@ object Smslet extends Weblet {
         "endpoint" -> "/sms/verify") )
         
     case "/sendAgain" =>
-      redirectIfNotLoggedIn( web )
-      
       var (user,sms) = smsStart
       
       var vCode = sms.s( 'vCode )
@@ -356,8 +349,6 @@ object Smslet extends Weblet {
       web.forward( "/sms/verify?id=" + web.s( "id" ) or "" )
   
     case "/clearSend" =>
-      redirectIfNotLoggedIn( web )
-      
       var (user,sms) = smsStart
       
       sess.notice( "SMS Information cleared." )

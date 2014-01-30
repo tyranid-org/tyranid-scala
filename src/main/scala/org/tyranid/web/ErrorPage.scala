@@ -57,7 +57,7 @@ object Errorlet extends Weblet {
 
       println( originalUrl )
 
-      if ( originalUrl != null )
+      if ( originalUrl.notBlank )
         log( Event.Error404, "p" -> originalUrl )
 
       if ( WebFilter.notAsset( originalUrl ) ) {
@@ -81,7 +81,7 @@ object Errorlet extends Weblet {
             )
           }
         } else {
-          T.web.forward( js = "V.app.load('/error/404?full=1&url=" + originalUrl.encUrl + "')" )
+          web.forward( js = "V.app.load('/error/404?full=1&url=" + originalUrl.encUrl + "')" )
         }
       }
     case "/throw" =>

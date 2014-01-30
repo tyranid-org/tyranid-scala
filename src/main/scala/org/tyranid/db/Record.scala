@@ -330,8 +330,6 @@ trait Record extends Valid with BsonObject with QuickCache with Serializable {
    * * *   Forms
    */
 
-  var isAdding:Boolean = false
-
   def submit {
     //require( parent == null )
     submitFlagged = true

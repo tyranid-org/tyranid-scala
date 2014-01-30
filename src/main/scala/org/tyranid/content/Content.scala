@@ -1385,7 +1385,7 @@ abstract class Content( override val view:MongoView,
   
   def isMember( user:org.tyranid.profile.User ) = canEdit( user ) || canView( user )
 
-  def canView( tid:String ):Boolean =
+  def canView( tid:String ):Boolean = {
     T.permissionCache.getOrElseUpdate(
       this.tid + '|' + tid,
       tid.nonBlank &&
@@ -1398,6 +1398,7 @@ abstract class Content( override val view:MongoView,
         }
       )
     )
+  }
 
   def canViewDirectly( tid:String ):Boolean =
     tid.nonBlank &&
