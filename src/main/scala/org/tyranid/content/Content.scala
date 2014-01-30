@@ -1293,10 +1293,8 @@ abstract class Content( override val view:MongoView,
     uTids.toSeq
   }
   
-  def viewerUsers = {
-    val users:mutable.ArrayBuffer[Record] = new mutable.ArrayBuffer[Record]
-    userTids( "v" ).map( userTid => B.User.getByTid( userTid ) )
-  }
+  def viewerUserTids = userTids( "v" )
+  def viewerUsers = viewerUserTids.map( userTid => B.User.getByTid( userTid ) )
   
   def viewers = Record.getByTids( viewerTids )
 
