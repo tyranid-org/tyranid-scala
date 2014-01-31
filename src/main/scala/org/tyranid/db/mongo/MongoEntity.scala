@@ -190,10 +190,15 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
     }
 
     for ( rec <- db.find( Mobj( "_id" -> Mobj( $in -> idsToQuery ) ) ).map( apply ).toSeq;
-          idx = ids.indexOf( rec.id ) )
+          idx = ids.indexOf( rec.id ) ) {
       recs( idx ) = rec
+      T.tidCache.byTid( tids( idx ) ) = rec
+    }
 
-    recs
+    if ( idsToQuery.nonEmpty && recs.exists( _ == null ) )
+      recs.filter( _ != null )
+    else
+      recs
   }
 
 
