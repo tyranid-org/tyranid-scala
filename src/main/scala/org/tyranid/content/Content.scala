@@ -1293,8 +1293,11 @@ abstract class Content( override val view:MongoView,
     uTids.toSeq
   }
   
+  def ownerUserTids = userTids( "o" )
+  def ownerUsers = B.User.getByTids( ownerUserTids )
+
   def viewerUserTids = userTids( "v" )
-  def viewerUsers = viewerUserTids.map( userTid => B.User.getByTid( userTid ) )
+  def viewerUsers = viewerUserTids.map( B.User.getByTid )
   
   def viewers = Record.getByTids( viewerTids )
 

@@ -162,7 +162,41 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
     apply( c.hasNext ? c.next | null )
   }
 
-  def getByIds( ids:Seq[Any] ) = db.find( Mobj( "_id" -> Mobj( $in -> ids.toMlist ) ) ).map( apply ).toSeq
+  def getByIds( ids:Seq[Any] )      = _getByTIds( ids = ids,                 tids = ids.map( idToTid ) )
+  def getByTids( tids:Seq[String] ) = _getByTIds( ids = tids.map( tidToId ), tids = tids               )
+
+  /**
+   * This is an internal method not meant to be used except by getByIds and getByTids.  The ids and tids array need to match exactly.
+   */
+  private def _getByTIds( ids:Seq[Any], tids:Seq[String] ):Seq[RecType] = {
+    val tc = T.tidCache.byTid
+
+    val size = ids.size
+
+    val recs = new mutable.ArrayBuffer[RecType]( size )
+
+    val idsToQuery = Mlist()
+
+    for ( i <- 0 until size ) {
+      val tid = tids( i )
+
+      tc.get( tid ) match {
+      case Some( rec ) =>
+        recs( i ) = rec.asInstanceOf[RecType]
+
+      case None =>
+        idsToQuery += ids( i )
+      }
+    }
+
+    for ( rec <- db.find( Mobj( "_id" -> Mobj( $in -> idsToQuery ) ) ).map( apply ).toSeq;
+          idx = ids.indexOf( rec.id ) )
+      recs( idx ) = rec
+
+    recs
+  }
+
+
     
   def remove( obj:DBObject ) = db.remove( obj )
 
