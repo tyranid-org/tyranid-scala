@@ -184,7 +184,7 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
         recs += rec.asInstanceOf[RecType]
 
       case None =>
-        idsToQuery += ids( i )
+        idsToQuery += ids( i ).asInstanceOf[AnyRef]
         recs += null
       }
     }
