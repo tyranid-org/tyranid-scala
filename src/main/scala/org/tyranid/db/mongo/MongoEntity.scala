@@ -174,7 +174,6 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
     val size = ids.size
 
     val recs = new mutable.ArrayBuffer[RecType]( size )
-
     val idsToQuery = Mlist()
 
     for ( i <- 0 until size ) {
@@ -182,10 +181,11 @@ case class MongoEntity( tid:String, embedded:Boolean = false ) extends Entity {
 
       tc.get( tid ) match {
       case Some( rec ) =>
-        recs( i ) = rec.asInstanceOf[RecType]
+        recs += rec.asInstanceOf[RecType]
 
       case None =>
         idsToQuery += ids( i )
+        recs += null
       }
     }
 
