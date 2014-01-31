@@ -376,9 +376,13 @@ object Thumbnail {
                  null
                }
            }
+           
+         case e2:java.lang.IllegalStateException =>
+           e2.printStackTrace()
+           println( "Cannot read image (1): " + originalFile.getName )
          case e3:Throwable =>
            e3.printStackTrace()
-           println( "Cannot read image: " + originalFile.getName )
+           println( "Cannot read image (2): " + originalFile.getName )
            null
        }
     }.as[BufferedImage]
