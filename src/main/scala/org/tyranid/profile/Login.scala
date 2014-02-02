@@ -177,7 +177,7 @@ object Loginlet extends Weblet {
 
         if ( dbUser == null ) {
           sess.notice( "Account access code not found!" )
-          web.jsRes() // Js( "V.common.clear().set(V.common.defaults); V.app.load( '/#dashboard' )" ) )
+          web.jsRes()
         } else {
           val user = B.User(dbUser)
           user.remove( 'resetCode )
@@ -185,7 +185,7 @@ object Loginlet extends Weblet {
           user.save
 
           sess.notice( "You can now change your password in <em>My Profile</em>.", deferred = "/#dashboard" )
-          web.jsRes( JsData( sess.user ), JsModel( user.toClientCommonMap(), "common" ), Js( "V.app.load( '/#dashboard' );" ) )
+          web.jsRes( JsData( sess.user ), JsModel( user.toClientCommonMap(), "common" ), Js( "router.navigate( '/#dashboard', { trigger : true } );" ) )
         }
       }
 
