@@ -422,7 +422,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
       org.s( 'thumbnail )
 
     case ContentType.LiteProject =>
-      val content = rec( 'lite ).as[Content]
+      val content = rec( 'thumbc ).as[Content]
       ( content == null ) ? null | content.imageUrl( editing )
 
     case _ =>

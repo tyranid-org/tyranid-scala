@@ -60,6 +60,7 @@ object Imp {
   val $pull        = "$pull"
   val $pullAll     = "$pullAll"
   val $regex       = "$regex"
+  val $rename      = "$rename"
   val $set         = "$set"
   val $size        = "$size"
   val $unset       = "$unset"
