@@ -49,12 +49,12 @@ object Loginlet extends Weblet {
     rpath match {
     case "/" =>
       if ( !web.xhr )
-        web.redirect( T.website( "/", sess.user ) )
+        web.redirect( T.website( "/#login", sess.user ) )
 
       web.jsRes()
     case "/in" =>
       if ( !web.xhr )
-        web.redirect( T.website( "/", sess.user ) )
+        web.redirect( T.website( "/#login", sess.user ) )
         
       val saving = web.b( "xhrSbt" )
 
@@ -89,7 +89,7 @@ object Loginlet extends Weblet {
               Js( "V.app.newLoad( '#dashboard' );" ) )
         }
       } else {
-        web.forward( js = "mainLoad( function() { Backbone.trigger( '#login' ); } );" )
+        web.jsRes( Js( "router.navigate( '#login', { trigger : true } );" ) )
       }
 
     case "/out" =>
@@ -101,7 +101,7 @@ object Loginlet extends Weblet {
         web.redirect( website )
         
       // r means the client is handling the redirect
-      web.b( 'r ) ? web.jsRes() | web.jsRes( Js( "Backbone.trigger( '#login' )" ) )
+      web.b( 'r ) ? web.jsRes() | web.jsRes( Js( "router.navigate( '#login', { trigger : true } );" ) )
     case "/register" =>      
       if ( !web.xhr )
         web.redirect( "/#register" )
