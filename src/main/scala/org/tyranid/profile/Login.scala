@@ -41,11 +41,21 @@ import org.tyranid.web.{ Weblet, WebContext, WebResponse }
 import org.tyranid.web.WebHandledException
 
 object Loginlet extends Weblet {
+  override val requiresLogin = false
+  
   def handle( web: WebContext ) {
     val sess = T.session
 
     rpath match {
-    case "/" | "/in" =>
+    case "/" =>
+      if ( !web.xhr )
+        web.redirect( T.website( "/", sess.user ) )
+
+      web.jsRes()
+    case "/in" =>
+      if ( !web.xhr )
+        web.redirect( T.website( "/", sess.user ) )
+        
       val saving = web.b( "xhrSbt" )
 
       if ( saving ) {
@@ -82,20 +92,23 @@ object Loginlet extends Weblet {
         web.forward( js = "mainLoad( function() { Backbone.trigger( '#login' ); } );" )
       }
 
-    case "/clear" =>
-      web.html( NodeSeq.Empty )
     case "/out" =>
       val website = T.website( "/", sess.user )
-
+      
       sess.logout()
-
+      
+      if ( !web.xhr )
+        web.redirect( website )
+        
       // r means the client is handling the redirect
-      web.b( 'r ) ? web.jsRes() | ( web.xhr ? web.jsRes( Js( "Backbone.trigger( '#login' )" ) ) | web.redirect( website ) )
-    case s if s.startsWith( "/register" ) =>
+      web.b( 'r ) ? web.jsRes() | web.jsRes( Js( "Backbone.trigger( '#login' )" ) )
+    case "/register" =>      
+      if ( !web.xhr )
+        web.redirect( "/#register" )
+        
       register( web, sess )
     case "/company" =>
       val term = web.req.s( 'term ).toLowerCase
-
       def icon( thumb:String ) = thumb.notBlank ? thumb | B.Org.defaultIcon
 
       val json = B.Org.db.find( Mobj( "name" -> ( ".*" + term + ".*" ).toPatternI ), Mobj( "name" -> 1, "thumbnail" -> 1 ) ).
@@ -226,7 +239,7 @@ object Loginlet extends Weblet {
 
             if ( exists ) {
               sess.error( "Email is already in use." )
-              web.jsRes()
+              return web.jsRes()
             }
 
             if ( !Email.isWellKnownProvider( email ) ) {
@@ -238,31 +251,31 @@ object Loginlet extends Weblet {
               if ( org != null ) {
                 if ( !B.canAddUser( org ) ) {
                   sess.error( "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available." )
-                  web.jsRes()
-                } else {
-                  T.user( 'org ) = org.id
-                  web.jsRes( Js( "$('#company').val( '" + org.s( 'name ) + "' ).attr( 'readonly', 'readonly' );" ) )
+                  return web.jsRes()
                 }
-              } else {
-                T.user( 'org ) = null
-                web.jsRes( Js( "$('#company').val( '' ).removeAttr( 'readonly' );" ) )
-              }
-            } else {
+                
+                T.user( 'org ) = org.id
+                return web.jsRes( Js( "$('#company').val( '" + org.s( 'name ) + "' ).attr( 'readonly', 'readonly' );" ) )
+              } 
+              
               T.user( 'org ) = null
-              web.jsRes( Js( "$('#company').val( '' ).removeAttr( 'readonly' );" ) )
-            }
-          } else {
-            web.jsRes()
-          }
+              return web.jsRes( Js( "$('#company').val( '' ).removeAttr( 'readonly' );" ) )
+            } 
+            
+            T.user( 'org ) = null
+            return web.jsRes( Js( "$('#company').val( '' ).removeAttr( 'readonly' );" ) )
+          } 
+          
+          return web.jsRes()
         case "company" =>
           val exists = B.Org.db.exists( Mobj( "name" -> ("^" + web.s( 'company ).encRegex + "$").toPatternI ) )
 
           if ( exists ) {
             sess.error( "Company name is already in use." )
-            web.jsRes()
+            return web.jsRes()
           }
         case _ =>
-           web.jsRes()
+           return web.jsRes()
       }
 
       return
@@ -279,8 +292,7 @@ object Loginlet extends Weblet {
 
         if ( exists ) {
           sess.error( "Company name is already in use." )
-          web.jsRes()
-          return
+          return web.jsRes()
         }
       }
 
@@ -306,7 +318,9 @@ object Loginlet extends Weblet {
       B.welcomeUserEvent
 
       return web.jsRes( JsData( user), JsModel( Map( "dashboard" -> true ) ), JsModel( user.toClientCommonMap( true ), "common" ) )
-    } else if ( web.b( 'start ) ) {
+    } 
+    
+    if ( web.b( 'start ) ) {
       val modelMap = mutable.Map(
           "doRecaptcha" -> B.requireReCaptcha,
           "firstName" -> user.s( 'firstName ),
@@ -316,9 +330,9 @@ object Loginlet extends Weblet {
           )
 
       return web.jsRes( JsModel( modelMap ) )
-    } else {
-      web.forward( js = "mainLoad( function() { Backbone.trigger( '#login', { register : true } ); } );" )
-    }
+    } 
+    
+    web.forward( js = "mainLoad( function() { Backbone.trigger( '#login', { register : true } ); } );" )
   }
 
   def sendActivation( user:User ) = {

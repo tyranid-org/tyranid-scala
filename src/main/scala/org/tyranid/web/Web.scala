@@ -326,7 +326,7 @@ class WebFilter extends TyrFilter {
         }
         println( "isAsset: " + isAsset )
         */
-        
+
         if ( ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isVerified ) && webloc.weblet.requiresLogin ) )
             && web.req.getAttribute( "api" )._s.isBlank ) {
 
