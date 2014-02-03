@@ -1029,8 +1029,8 @@ abstract class Content( override val view:MongoView,
 
   def thumbStyle( size:String ):String = null
   def thumbUrl( size:String ):String =
-    if ( isLiteProject )
-      rec( 'lite ).as[Content].thumbUrl( size )
+    if ( obj.has( 'thumbc ) )
+      rec( 'thumbc ).as[Content].thumbUrl( size )
     else
       "/io/thumb/" + tid + "/" + size + "?cb=" + s( 'img ).denull.hashCode
 
