@@ -1293,10 +1293,8 @@ abstract class Content( override val view:MongoView,
     uTids.toSeq
   }
   
-  def viewerUsers = {
-    val users:mutable.ArrayBuffer[Record] = new mutable.ArrayBuffer[Record]
-    userTids( "v" ).map( userTid => B.User.getByTid( userTid ) )
-  }
+  def viewerUserTids = userTids( "v" )
+  def viewerUsers = viewerUserTids.map( userTid => B.User.getByTid( userTid ) )
   
   def viewers = Record.getByTids( viewerTids )
 
@@ -1385,7 +1383,7 @@ abstract class Content( override val view:MongoView,
   
   def isMember( user:org.tyranid.profile.User ) = canEdit( user ) || canView( user )
 
-  def canView( tid:String ):Boolean =
+  def canView( tid:String ):Boolean = {
     T.permissionCache.getOrElseUpdate(
       this.tid + '|' + tid,
       tid.nonBlank &&
@@ -1398,6 +1396,7 @@ abstract class Content( override val view:MongoView,
         }
       )
     )
+  }
 
   def canViewDirectly( tid:String ):Boolean =
     tid.nonBlank &&

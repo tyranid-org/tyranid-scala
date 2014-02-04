@@ -64,7 +64,7 @@ object SessionCleaner {
         if ( tyrsess != null ) {
           //val lastPathTime = tyrsess.get( "lastPathTime" ).as[Date]
           val idle = now - httpsess.getLastAccessedTime
-          ( !tyrsess.isLoggedIn && idle > (2*Time.OneMinuteMs) ) || idle > Time.HalfHourMs
+          ( !tyrsess.isVerified && idle > (2*Time.OneMinuteMs) ) || idle > Time.HalfHourMs
         } else {
           true
         }
@@ -377,9 +377,12 @@ trait Session extends QuickCache {
   var loggedUser  = false
 
   // If the user tid is set in the session
-  def isLoggedIn = !user.isNew && ( user.s( 'activationCode ).isBlank || ( isLite && isLiteVerified ) )//getOrElse( "user", "" )._s.notBlank
 
-  def isLite = b( "lite" )
+  def isVerified = {
+    val verified = user.s( 'activationCode ).notBlank ? isLiteVerified | isAuthenticated
+
+    !user.isNew && verified
+  }
 
   def isHttpSession = httpSessionId != null
 
@@ -478,13 +481,15 @@ trait Session extends QuickCache {
    * * *   Login
    */
 
-  def login( user:User, incognito:Boolean = false, sso:SsoMapping = null ) = {
+  def login( user:User, incognito:Boolean = false, sso:SsoMapping = null, setAuth:Boolean = false ) = {
     this.user = user
     put( "lastLogin", user.t( 'lastLogin ) )
 
     val now = new Date
 
     if ( !incognito ) {
+      clear( "incognito" )
+
       var updates = Mobj( "lastLogin" -> now )
 
       if ( tz != null && tz != user.timeZone ) {
@@ -505,12 +510,21 @@ trait Session extends QuickCache {
 
       if ( user.b( 'monitored ) )
         log( Event.Alert, "m" -> ( "User " + user.s( 'email ) + " just logged in." ) )
-    } else {
-      put( "incognito", Boolean.box( true ).booleanValue().as[Serializable] )
-    }
 
-    if ( sso != null )
-      put( "sso", sso )
+      if ( sso != null )
+        put( "sso", sso )
+    } else {
+      put( "incognito", true )
+
+      val ssoCode = user.s( 'sso )
+
+      if ( ssoCode.notBlank ) {
+        val mapping = SsoMapping.getById( ssoCode )
+
+        if ( mapping != null )
+          put( "sso", mapping )
+      }
+    }
 
     val onLogin = B.onLogin
 
@@ -529,23 +543,32 @@ trait Session extends QuickCache {
       T.requestCache.put( "req-common", true )
     }
 
+    if ( setAuth || incognito )
+      setAuthenticated // verified login
+
     record( "u" -> user.id, "lit" -> now, "incognito" -> incognito )
   }
 
+  def clearAuthenticated = clear( "auth" )
+  def isAuthenticated = b( "auth" )
+  def setAuthenticated = put( "auth", true )
+
   def clearLiteVerified = clear( "lite-v" )
-  def setLiteVerified = put( "lite-v", Boolean.box( true ).booleanValue().as[Serializable] )
-  def isLiteVerified = get( "lite-v" ).as[Boolean] ? true | false
+  def setLiteVerified = put( "lite-v", true )
+  def isLiteVerified = b( "lite-v" )
 
-  def isIncognito = get( "incognito" ).as[Boolean] ? true | false
+  def isIncognito = b( "incognito" )
 
-  def isAllowingEmail = !isIncognito || get( "allowEmail" ).as[Boolean]
+  def isAllowingEmail = !isIncognito || b( "allowEmail" )
 
-  def setAllowEmail = put( "allowEmail", Boolean.box( true ).booleanValue().as[Serializable] )
+  def setAllowEmail = put( "allowEmail", true )
   def clearAllowEmail = clear( "allowEmail" )
 
   def logout( unlink:Boolean = true, removeCookies:Boolean = true ) = {
     if ( removeCookies ) {
-      LoginCookie.remove
+      if ( !isIncognito )
+        LoginCookie.remove
+
       Social.removeCookies
     }
 
@@ -560,7 +583,6 @@ trait Session extends QuickCache {
         B.logoutListeners.foreach( _( u ) )
     }
   }
-
 
   /*
    * * *   Time Zones
@@ -591,7 +613,7 @@ trait Session extends QuickCache {
       return tz
 
     val u = user
-    if ( u != null && isLoggedIn )
+    if ( u != null && isVerified )
       tz = u.timeZone
 
     tz

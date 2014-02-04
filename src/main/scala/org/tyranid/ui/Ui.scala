@@ -295,10 +295,12 @@ case class Tab( rpath:String, label:NodeSeq, cls:String = null, default:Boolean 
 
   def draw( bar:TabBar, qs:String ) = {
     val fpath = bar.weblet.wpath + rpath
+    
+    println( rpath )
     val choice = bar.choice
 
     <li>{
-      var cls = this.cls
+      var cls = this.cls 
 
       if ( rpath == choice ) {
         if ( cls == null )

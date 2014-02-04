@@ -167,19 +167,25 @@ object Es {
       else
         ""
 
-    val s = ( B.elasticSearchHost + "/_search" + params ).POST( content = query.toJsonStr( false ) ).s
-//sp-am( "results=[\n\n" + s + "\n\n]" )
-
-    val json = s.parseJsonObject
-
-    val error = json.s( 'error )
+    val res = ( B.elasticSearchHost + "/_search" + params ).POST( content = query.toJsonStr( false ) )
     
-    if ( error.notBlank ) {
-      println( "ES Search Failure.  Query=\n\n" + query.toJsonStr( false ) + "\n\nError:\n\n" + error )
-      Log.log( Event.Search, "m" -> ( "ElasticSearch search failure=" + error ) ) 
+    if ( res != null ) {
+      val s = ( B.elasticSearchHost + "/_search" + params ).POST( content = query.toJsonStr( false ) ).s
+  //sp-am( "results=[\n\n" + s + "\n\n]" )
+  
+      val json = s.parseJsonObject
+  
+      val error = json.s( 'error )
+      
+      if ( error.notBlank ) {
+        println( "ES Search Failure.  Query=\n\n" + query.toJsonStr( false ) + "\n\nError:\n\n" + error )
+        Log.log( Event.Search, "m" -> ( "ElasticSearch search failure=" + error ) ) 
+      }
+  
+      json
+    } else {
+      new scala.collection.mutable.LinkedHashMap[String,Any]()
     }
-
-    json
   }
 
   def jsonFor( rec:Record ) = {

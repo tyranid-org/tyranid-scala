@@ -56,23 +56,6 @@ object AWSEmail {
     AWSEmail.lastSent = System.currentTimeMillis
   }
 
-  /*
-  val verifyCache = mutable.ArrayBuffer[String]()
-
-  def verifyEmailAddress( email:String ):Boolean = {
-    val verifiedAddresses = client.listVerifiedEmailAddresses().getVerifiedEmailAddresses()
-
-    if ( verifiedAddresses.contains( email ) )
-      return true
-
-    val request = new VerifyEmailAddressRequest()
-    request.setEmailAddress( email )
-    client.verifyEmailAddress( request )
-
-    return false
-  }
-  */
-
   val client = new AmazonSimpleEmailServiceClient( B.awsCredentials )
 }
 
@@ -281,7 +264,7 @@ case class AWSEmail( subject:String, text:String, html:String=null, fromLog: Boo
               text = """
 Hi,
 
-Sorry, but Volerro failed to send the following mail because one of the recipients rejected it as: """ + msg + """
+Sorry, but """ + B.applicationName + """ failed to send the following mail because one of the recipients rejected it as: """ + msg + """
 
 Email To: """ + recipients + """
 ----
