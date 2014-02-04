@@ -68,12 +68,10 @@ object WebFilter {
   def setSessionVars( web:WebContext ) {
     val sess = T.session
 
-    sess.record( "rh" -> web.req.getRemoteHost,
-        "ra" -> {
-            val ra = web.req.getHeader( "X-Forwarded-For" )
-            ra.isBlank ? web.req.getRemoteAddr | ra
-          }
-        )
+    sess.record( 
+     "rh" -> web.req.getRemoteHost,
+     "ra" -> T.ip        
+    )
 
     sess.put( "subdomain", web.req.getServerName )
   }
@@ -580,7 +578,10 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
     }
   }
 
-  def ip = req.getRemoteAddr
+  def ip = {
+    val ra = req.getHeader( "X-Forwarded-For" )
+    ra.isBlank ? req.getRemoteAddr | ra
+  }
 
   var _path:String = null
 
