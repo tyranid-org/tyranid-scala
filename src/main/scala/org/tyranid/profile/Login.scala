@@ -107,6 +107,10 @@ object Loginlet extends Weblet {
         web.redirect( "/#register" )
         
       register( web, sess )
+    case "/log" =>      
+      log( web.b( 'a ) ? Event.Alert | Event.Log, "m" -> ( "Name: " + web.s( 'n ) + ", Message: " + web.s( 'm ) ) )
+      web.jsRes()
+      
     case "/company" =>
       val term = web.req.s( 'term ).toLowerCase
       def icon( thumb:String ) = thumb.notBlank ? thumb | B.Org.defaultIcon
