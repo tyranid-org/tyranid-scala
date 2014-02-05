@@ -56,11 +56,13 @@ object UserStatType extends RamEntity( tid = "a0Nt" ) {
   val ApiId        = 2
   val CreateLiteId = 3
   val StartConferenceId = 4
+  val CreateLiteProId = 5
 
   val Login      = add( LoginId,      "Login" )
   val Api        = add( ApiId,        "Api Call" )
   val CreateLite = add( CreateLiteId, "Create Lite" )
   val StartConference = add( StartConferenceId, "StartConference" )
+  val CreateLitePro = add( CreateLiteProId, "CreateLitePro" )
 }
 
 case class UserStatType( override val view:TupleView ) extends Tuple( view )
@@ -95,6 +97,7 @@ object UserStat extends MongoEntity( tid = "a0Ot" ) {
   def api( userId:Any, path:String ) = create( userId._oid, UserStatType.ApiId, path )
   def createLite( userId:Any ) = create( userId._oid, UserStatType.CreateLiteId )
   def startConference( userId:Any, sessId:String ) = create( userId._oid, UserStatType.StartConferenceId, sessId )
+  def createLitePro( userId:Any ) = create( userId._oid, UserStatType.CreateLiteProId )
 }
 
 class UserStat( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserStat.makeView, obj, parent ) {}
