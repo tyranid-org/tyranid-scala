@@ -287,6 +287,8 @@ class UserMeta extends MongoEntity( "a01v" ) {
 }
 
 trait User extends MongoRecord {
+  def isRegistered = s( 'activationCode ).isBlank
+
   def hasName = s( 'firstName ) != "unknown"
 
   def fullName =
