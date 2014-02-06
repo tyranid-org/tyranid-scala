@@ -80,6 +80,7 @@ object Event extends RamEntity( tid = "a0It" ) {
   val LoginAs      = add( 30, "Login As"     )
   val Subscription = add( 31, "Subscription" )
   val AudioBridge  = add( 32, "Audio Bridge" )
+  val Log          = add( 33, "Log" )
 }
 
 case class Event( override val view:TupleView ) extends Tuple( view ) {
