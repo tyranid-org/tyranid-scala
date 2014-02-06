@@ -64,7 +64,7 @@ object SessionCleaner {
         if ( tyrsess != null ) { 
           //val lastPathTime = tyrsess.get( "lastPathTime" ).as[Date]
           val idle = now - httpsess.getLastAccessedTime
-          ( !tyrsess.isVerified && idle > (2*Time.OneMinuteMs) ) || idle > Time.HalfHourMs
+          ( !tyrsess.isVerified && idle > (2*Time.OneMinuteMs) ) || idle > Time.OneHourMs
         } else {
           true
         }
