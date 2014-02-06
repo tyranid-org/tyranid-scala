@@ -650,7 +650,7 @@ trait Weblet {
         val lite = subdomain.startsWith( B.liteDomainPart )
 
         if ( lite ) {
-          val js = "mainLoad( function() { Backbone.trigger( '#lite', { error : 'Access Denied (1).' } ); } );"
+          val js = "mainLoad( function() { router.navigate( '#lite', { error : 'Access Denied (1).' } ); } );"
 
           if ( web.xhr ) {
             web.jsRes( Js( js ) )
@@ -674,7 +674,7 @@ trait Weblet {
       val lite = subdomain.startsWith( B.liteDomainPart )
 
       if ( lite ) {
-        val js = "mainLoad( function() { Backbone.trigger( '#lite', { error : 'Access Denied (2).' } ); } );"
+        val js = "mainLoad( function() { router.navigate( '#lite', { error : 'Access Denied (2).' } ); } );"
 
         if ( web.xhr ) {
           web.jsRes( Js( js ) )
