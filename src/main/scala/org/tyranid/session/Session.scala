@@ -490,7 +490,7 @@ trait Session extends QuickCache {
     if ( !incognito ) {
       clear( "incognito" )
       
-      var updates = Mobj( "lastLogin" -> now )
+      val updates = Mobj( "lastLogin" -> now )
 
       if ( tz != null && tz != user.timeZone ) {
         var id = tz.getID
