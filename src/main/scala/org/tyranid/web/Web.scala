@@ -112,7 +112,7 @@ trait TyrFilter extends Filter {
       LoginCookie.autoLogin
     }
   }
-
+  
   def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData ): Unit
 
   def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ):Unit = try {
@@ -325,21 +325,16 @@ class WebFilter extends TyrFilter {
         println( "isAsset: " + isAsset )
         */
 
+        if (!isAsset )
+          println( sess.id._s )
+          
         if ( ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isVerified ) && webloc.weblet.requiresLogin ) )
             && web.req.getAttribute( "api" )._s.isBlank ) {
 
           if ( isAsset ) spam( "isAsset matching on " + web.path )
 
-          val dbg = t.web.s( 'debugit )
-
-          if ( dbg.notBlank )
-            sess.debug = dbg._b
-
-          val trace = t.web.s( 'trace )
-
-          if ( trace.notBlank )
-            sess.trace = trace._b
-
+          web.checkDebug( sess )
+                
           web.forward()
           return
         }
@@ -595,6 +590,18 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   def redirect( url:String ) = {
     assert( !url.endsWith( "/null" ) )
     throw WebRedirectException( url )
+  }
+
+  def checkDebug( sess:Session ) {
+    val dbg = s( 'debugit )
+
+    if ( dbg.notBlank )
+      sess.debug = dbg._b
+
+    val trace = s( 'trace )
+
+    if ( trace.notBlank )
+      sess.trace = trace._b
   }
 
   def s( param:String ):String        = req.s( param )
