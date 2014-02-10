@@ -271,10 +271,10 @@ class WebFilter extends TyrFilter {
         if ( webloc.path == "" )
           return false
 
-        // If it is an asset, then just return 404
+        // If it is an asset, then just return forbidden (404 will just redirect to our error weblet and we don't want that)
         if ( isAsset ) {
-          web.res.sendError( HttpServletResponse.SC_NOT_FOUND )
-          return false
+          web.res.sendError( HttpServletResponse.SC_FORBIDDEN )
+          return true
         }
 
         web.ctx.getRequestDispatcher( "/404" ).forward( web.req, web.res )
@@ -325,9 +325,6 @@ class WebFilter extends TyrFilter {
         println( "isAsset: " + isAsset )
         */
 
-        if (!isAsset )
-          println( sess.id._s )
-          
         if ( ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isVerified ) && webloc.weblet.requiresLogin ) )
             && web.req.getAttribute( "api" )._s.isBlank ) {
 

@@ -18,12 +18,9 @@
 package org.tyranid.profile
 
 import java.util.Date
-
 import scala.collection.mutable
 import scala.xml.{ NodeSeq, Unparsed }
-
 import com.mongodb.DBObject
-
 import org.tyranid.Imp._
 import org.tyranid.db.Scope
 import org.tyranid.db.meta.TidItem
@@ -33,12 +30,13 @@ import org.tyranid.json.{ Js, JqHtml, JsModel, JsonString, JsData }
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
 import org.tyranid.secure.DbReCaptcha
-import org.tyranid.session.Session
+import org.tyranid.session.{ Session, EmailCookie }
 import org.tyranid.sso.SsoMapping
 import org.tyranid.social.Social
 import org.tyranid.ui.{ Button, Grid, Row, Focus, Form }
 import org.tyranid.web.{ Weblet, WebContext, WebResponse }
 import org.tyranid.web.WebHandledException
+import org.tyranid.web.WebIgnoreException
 
 object Loginlet extends Weblet {
   override val requiresLogin = false
@@ -213,6 +211,7 @@ object Loginlet extends Weblet {
     case "/null" =>
       log( Event.RefInt, "m" -> ( "null, Referer: " + web.req.getHeader( "referer" ) ) )
     case _ =>
+      throw new WebIgnoreException()
     }
   }
 
@@ -311,8 +310,9 @@ object Loginlet extends Weblet {
       if ( user.s( 'activationCode ).isBlank ) {
         sendActivation( user )
         B.registerUser( user, companyName )
+        EmailCookie.set( email )
         sess.logout( true )
-        return web.jsRes( JsModel( Map( "email" -> email, "firstName" -> firstName ) ) )
+        return web.jsRes( JsModel( user.toClientCommonMap(), "common" ), JsModel( Map( "email" -> email, "firstName" -> firstName ) ) )
       }
 
       sess.login( user, setAuth = true )
@@ -329,7 +329,7 @@ object Loginlet extends Weblet {
           "doRecaptcha" -> B.requireReCaptcha,
           "firstName" -> user.s( 'firstName ),
           "lastName" -> user.s( 'lastName ),
-          "email" -> user.s( 'email ),
+          "email" -> ( user.s( 'email ) or EmailCookie.get ),
           "locked" -> user.s( 'activationCode ).notBlank
           )
 
