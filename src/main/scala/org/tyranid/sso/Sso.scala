@@ -187,8 +187,9 @@ $( $('#idp').focus() );
       println( url )
       web.jsRes()
     case s if s.startsWith( "/auth/" ) =>
-      val id = s.split( "/" )(2)
-      val mapping = ( id == "test" ) ? SsoMapping.testMapping | SsoMapping.getById( id )
+      val parts = s.split( "/" )
+      val id = ( parts.length > 2 ) ? parts(2) | ""
+      val mapping = ( parts.length > 2 ) ? ( ( id == "test" ) ? SsoMapping.testMapping | SsoMapping.getById( id ) ) | null
       
       if ( mapping == null || mapping.s( 'idpId ).isBlank ) {
         if ( B.debugSso )
