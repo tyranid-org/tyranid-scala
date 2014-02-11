@@ -207,7 +207,10 @@ object Loginlet extends Weblet {
     case "/tz" =>
       T.session.setTimeZoneFromClient( web.s( 'v ) )
       web.jsRes()
-
+      
+    case "/checkEmail" =>
+      checkEmail( web, sess, web.s( 'email ) )
+      
     case "/null" =>
       log( Event.RefInt, "m" -> ( "null, Referer: " + web.req.getHeader( "referer" ) ) )
     case _ =>
@@ -215,6 +218,31 @@ object Loginlet extends Weblet {
     }
   }
 
+  def checkEmail( web:WebContext, sess:Session, email:String ) {
+    if ( !Email.isWellKnownProvider( email ) ) {
+      val domain = Email.domainFor( email )
+
+      val orgc = B.Org.db.find( Mobj( "domain" -> ( "^" + domain.encRegex + "$" ).toPatternI ) ).limit(1)
+      val org = orgc.hasNext ? B.Org( orgc.next ) | null
+
+      if ( org != null ) {
+        if ( !B.canAddUser( org ) ) {
+          sess.error( "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available." )
+          return web.jsRes()
+        }
+        
+        T.user( 'org ) = org.id
+        return web.jsRes( Js( "$('#company').val( '" + org.s( 'name ) + "' ).attr( 'readonly', 'readonly' );" ) )
+      } 
+      
+      T.user( 'org ) = null
+      return web.jsRes( Js( "$('#company').val( '' ).removeAttr( 'readonly' );" ) )
+    } 
+    
+    T.user( 'org ) = null
+    return web.jsRes( Js( "$('#company').val( '' ).removeAttr( 'readonly' );" ) )    
+  }
+  
   def register( web:WebContext, sess:Session ) {
     val user =
       sess.user match {
@@ -245,28 +273,7 @@ object Loginlet extends Weblet {
               return web.jsRes()
             }
 
-            if ( !Email.isWellKnownProvider( email ) ) {
-              val domain = Email.domainFor( email )
-
-              val orgc = B.Org.db.find( Mobj( "domain" -> ( "^" + domain.encRegex + "$" ).toPatternI ) ).limit(1)
-              val org = orgc.hasNext ? B.Org( orgc.next ) | null
-
-              if ( org != null ) {
-                if ( !B.canAddUser( org ) ) {
-                  sess.error( "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available." )
-                  return web.jsRes()
-                }
-                
-                T.user( 'org ) = org.id
-                return web.jsRes( Js( "$('#company').val( '" + org.s( 'name ) + "' ).attr( 'readonly', 'readonly' );" ) )
-              } 
-              
-              T.user( 'org ) = null
-              return web.jsRes( Js( "$('#company').val( '' ).removeAttr( 'readonly' );" ) )
-            } 
-            
-            T.user( 'org ) = null
-            return web.jsRes( Js( "$('#company').val( '' ).removeAttr( 'readonly' );" ) )
+            return checkEmail( web, sess, email )
           } 
           
           return web.jsRes()
