@@ -53,6 +53,7 @@ object SessionCleaner {
 
     // Clean up local in-memory sessions
 
+    /*
     val now = System.currentTimeMillis
     
     WebSession.sessions.filter { sess =>
@@ -80,7 +81,8 @@ object SessionCleaner {
       sess._2.invalidate 
     }
 
-
+    */
+    
     // Remove any SessionData records for this server which don't map to local sessions
 
     val ipHost = Ip.Host.toString
@@ -150,10 +152,14 @@ class WebSessionListener extends HttpSessionListener {
  
   def sessionDestroyed( e:HttpSessionEvent ) {
     val hsid = e.getSession.getId
-    //Comet.remove( e.getSession.getId  )
     WebSession.sessions.remove( hsid )
 
     B.SessionData.db.update( Mobj( "ss" -> hsid ), Mobj( $set -> Mobj( "exp" -> true ) ) )
+    
+    if ( T.user != null ) {
+      B.User.db.update( Mobj( "_id" -> T.user.id ), Mobj( $set -> Mobj( "ls" -> hsid ) ) )
+      Comet.timeout( hsid )
+    }
   }	
 }
 

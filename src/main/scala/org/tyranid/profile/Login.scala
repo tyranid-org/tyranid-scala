@@ -18,15 +18,18 @@
 package org.tyranid.profile
 
 import java.util.Date
+
 import scala.collection.mutable
 import scala.xml.{ NodeSeq, Unparsed }
+
 import com.mongodb.DBObject
+
 import org.tyranid.Imp._
 import org.tyranid.db.Scope
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.email.Email
-import org.tyranid.json.{ Js, JqHtml, JsModel, JsonString, JsData }
+import org.tyranid.json.{ Js, JqHtml, JsModel, JsonString, JsData, JsValue }
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
 import org.tyranid.secure.DbReCaptcha
@@ -208,6 +211,17 @@ object Loginlet extends Weblet {
       T.session.setTimeZoneFromClient( web.s( 'v ) )
       web.jsRes()
       
+    case "/reconnect" =>
+      val userTid = web.s( 'u )
+      val user = B.User.getByTid( userTid )
+      
+      if ( user.s( 'ls ) == web.s( 's ) ) {
+        sess.user = user
+        sess.login( user, setAuth = true )
+        web.jsRes( JsValue( T.session.httpSessionId ) )
+      } else {
+        web.jsRes()
+      }
     case "/checkEmail" =>
       checkEmail( web, sess, web.s( 'email ) )
       

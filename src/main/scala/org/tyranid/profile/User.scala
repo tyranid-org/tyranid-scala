@@ -192,7 +192,9 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "sso"            is DbLink(SsoMapping)  ;
   
   "n1"             is DbBoolean           ; 
+  "ls"             is DbChar(30)          ; // Last Session ID 
 
+  
   override def init = {
     super.init
     "invitedBy"    is DbLink(B.User)      ;
