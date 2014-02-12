@@ -23,7 +23,7 @@ import java.io.IOException
 import java.util.Date
 
 import javax.servlet.{ Filter, FilterChain, FilterConfig, GenericServlet, ServletException, ServletRequest, ServletResponse, ServletContext }
-import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
+import javax.servlet.http.{ HttpServletRequest, HttpServletResponse }
 
 import scala.collection.mutable
 import scala.util.control.ControlThrowable

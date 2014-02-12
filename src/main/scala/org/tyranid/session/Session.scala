@@ -50,6 +50,8 @@ import org.tyranid.web.{ Comet, WebContext }
 
 object SessionCleaner { 
   def cleanLocal {
+    if ( B.SHUTTINGDOWN )
+      return
 
     // Clean up local in-memory sessions
 
@@ -99,6 +101,8 @@ object SessionCleaner {
   }
 
   def cleanGlobal {
+    if ( B.SHUTTINGDOWN )
+      return
 
     val cutoff = new Date - ( 8 * Time.OneHourMs )
 
@@ -151,14 +155,23 @@ class WebSessionListener extends HttpSessionListener {
   }
  
   def sessionDestroyed( e:HttpSessionEvent ) {
+    println( "Releasing session: " + e.getSession().getId )
     val hsid = e.getSession.getId
+    val user = Session.byHttpSessionId( hsid ).user
     WebSession.sessions.remove( hsid )
 
     B.SessionData.db.update( Mobj( "ss" -> hsid ), Mobj( $set -> Mobj( "exp" -> true ) ) )
     
-    if ( T.user != null ) {
-      B.User.db.update( Mobj( "_id" -> T.user.id ), Mobj( $set -> Mobj( "ls" -> hsid ) ) )
-      Comet.timeout( hsid )
+    if ( user != null ) {
+      B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "ls" -> hsid ) ) )
+      
+      if ( !B.SHUTTINGDOWN ) {
+        val now = System.currentTimeMillis
+        val idle = now - e.getSession().getLastAccessedTime()
+        
+        if ( idle > Time.OneHourMs )
+          Comet.timeout( hsid )
+      }
     }
   }	
 }

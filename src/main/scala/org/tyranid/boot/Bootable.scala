@@ -109,6 +109,8 @@ trait Bootable {
 
   val liteAppName = "Revu.Me"
   
+  @volatile var SHUTTINGDOWN = false
+  
   val liteDomainPart = "revu"
   val liteDomainName = "revu.me"
     

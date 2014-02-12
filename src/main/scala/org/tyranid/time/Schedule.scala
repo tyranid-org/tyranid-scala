@@ -204,7 +204,7 @@ object Scheduler {
 
   def start = {
     background {
-      while ( true ) {
+      while ( true && !B.SHUTTINGDOWN ) {
         T.clearRequestCache
 
         val size =
