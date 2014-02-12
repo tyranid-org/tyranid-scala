@@ -155,7 +155,6 @@ class WebSessionListener extends HttpSessionListener {
   }
  
   def sessionDestroyed( e:HttpSessionEvent ) {
-    println( "Releasing session: " + e.getSession().getId )
     val hsid = e.getSession.getId
     val user = Session.byHttpSessionId( hsid ).user
     WebSession.sessions.remove( hsid )
