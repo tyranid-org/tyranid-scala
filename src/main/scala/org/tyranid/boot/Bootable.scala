@@ -170,6 +170,7 @@ trait Bootable {
   def requireReCaptcha = TyranidConfig().b( 'recaptcha )
   def accessLogs       = TyranidConfig().b( 'accessLogs )
   def onePagePdf       = TyranidConfig().b( 'onePagePdf )
+  def convIndd         = TyranidConfig().b( 'convIndd )
   def allTmpl          = TyranidConfig().b( 'allTmpl )
   def debugSso         = TyranidConfig().b( 'debugSso )
   def debugChat        = TyranidConfig().b( 'debugChat )

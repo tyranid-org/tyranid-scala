@@ -203,7 +203,7 @@ object Pdf {
     val ext = fileName.suffix( '.' ).toLowerCase
 
     ext match {
-      case "indd" =>
+      case "indd" if B.convIndd =>
         S3.copy( B.filesBucket, content.s3Path, Converter.bucket, "In/" + content.id._s + "." + ext )
         B.documentEntity.db.update( Mobj( "_id" -> content.id ), Mobj( $set -> Mobj( "convertState" -> ConvertState.ConvertingId, "converter" -> DocumentConverterType.MadeToPrintId ) ) )
         content( "convertState" ) = ConvertState.ConvertingId

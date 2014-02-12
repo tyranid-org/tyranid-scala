@@ -44,6 +44,7 @@ object TyranidConfig extends MongoEntity( tid = "a03t" ) {
   "hideUpgradeBtn" is DbBoolean         as "Hide Upgrade Button";
   "allTmpl"        is DbBoolean         as "Templates for All";
   "confAlertLimit" is DbInt             as "Send Alert when this limit is hit";     
+  "convIndd"       is DbInt             as "Convert InDesign Docs";     
 
   def apply():TyranidConfig = singleton
 
@@ -123,6 +124,12 @@ object TyranidConfiglet extends Weblet {
         TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "onePagePdf" -> obj.b( 'onePagePdf ) ) ) )
         sess.notice( "One Page PDF has been turned " + ( B.onePagePdf ? "ON" | "OFF" ) + "." )
   
+      case "indd" =>
+        val obj = TyranidConfig()
+        obj( 'convIndd ) = !B.convIndd
+        TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "convIndd" -> obj.b( 'convIndd ) ) ) )
+        sess.notice( "InDesign Conversion has been turned " + ( B.convIndd ? "ON" | "OFF" ) + "." )
+  
       case "tmpl" =>
         val obj = TyranidConfig()
         obj( 'allTmpl ) = !B.allTmpl
@@ -198,7 +205,8 @@ object TyranidConfiglet extends Weblet {
               "email"          -> Email.enabled,
               "recaptcha"      -> B.requireReCaptcha,
               "lite"           -> B.enableLite,
-              "accessLogs"     -> B.accessLogs
+              "accessLogs"     -> B.accessLogs,
+              "convIndd"       -> B.convIndd
             )
          ),
          name = "main"
