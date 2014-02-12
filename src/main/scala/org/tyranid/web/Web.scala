@@ -355,6 +355,11 @@ class WebFilter extends TyrFilter {
 
     chain.doFilter( web.req, web.res )
   }
+  
+  override def destroy {
+    super.destroy
+    B.SHUTTINGDOWN = true
+  }
 }
 
 class WebResponse( web:WebContext, sess:Session ) {
