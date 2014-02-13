@@ -195,12 +195,13 @@ $( $('#idp').focus() );
         if ( B.debugSso )
           println( "DEBUG: Incoming /auth call for: " + id + ", mapping not found" )
       
-        sess.error( "SSO Mapping for code " + id + " not found." )
         
-        if ( web.b( 'xhr ) ) 
+        if ( web.b( 'xhr ) ) { 
+          sess.error( "SSO Mapping for code " + id + " not found." )
           web.jsRes( JqHtml( "#main", pageWrapper( signupBox ), transition="fadeOutIn", duration = 500 ), Js( "T.initFormPlaceholders( '#f' );" ) )
-        else
-          web.forward( path = s )
+        } else {
+          web.forward( js = "mainLoad( function() { Backbone.trigger( '#login', { error: 1, top: 1, msg: 'SSO Mapping for code " + id + " not found.' } ); } );" )
+        }
       } else {
         if ( B.debugSso )
           println( "DEBUG: Incoming /auth call for: " + id + ", mapping found" )
@@ -266,7 +267,7 @@ $( $('#idp').focus() );
           return web.jsRes()
         }
         
-        web.forward( js = "mainLoad( function() { Backbone.trigger( '#login', { error: '" + str + "' } ); } );" )
+        web.forward( js = "mainLoad( function() { Backbone.trigger( '#login', { error: 1, top: 1, msg: '" + str + "' } ); } );" )
         return
       }
       
@@ -277,8 +278,13 @@ $( $('#idp').focus() );
 
       if ( mapping == null ) {
         println( "DEBUG: Mapping not found!" )
-        sess.error( "Unable to determine SSO profile." )
-        web.jsRes()
+        
+        if ( web.xhr ) {
+          sess.error( "Unable to determine SSO profile." )
+          return web.jsRes()
+        }
+        
+        web.forward( js = "mainLoad( function() { Backbone.trigger( '#login', { error: 1, top: 1, msg: 'Unable to determine SSO profile' } ); } );" )
         return
       }
       
@@ -288,8 +294,14 @@ $( $('#idp').focus() );
         if ( B.debugSso )
           println( "DEBUG: There is no email field with the attribute name " + mapping.s( 'emailAttrib ) + "." )
         
-        sess.error( "There is no email field with the attribute name " + mapping.s( 'emailAttrib ) + " in the response:" + str )
-        web.jsRes()
+        val errStr = "There is no email field with the attribute name " + mapping.s( 'emailAttrib ) + " in the response:" + str
+        
+        if ( web.xhr ) {
+          sess.error( errStr )
+          return web.jsRes()
+        }
+        
+        web.forward( js = "mainLoad( function() { Backbone.trigger( '#login', { error: 1, top: 1, msg: '" + errStr + "' } ); } );" )
         return
       }
       
@@ -322,8 +334,13 @@ $( $('#idp').focus() );
         val org = B.Org.getById( orgId )
         
         if ( !B.canAddUser( org ) ) {
-          sess.error( "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available." )
-          web.jsRes()
+          val errStr = "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available."
+          if ( web.xhr ) {
+            sess.error( errStr )
+            return web.jsRes()
+          }
+          
+          web.forward( js = "mainLoad( function() { Backbone.trigger( '#login', { error: 1, top: 1, msg: '" + errStr + "' } ); } );" )
           return
         }
         
