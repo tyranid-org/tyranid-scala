@@ -342,7 +342,7 @@ object Loginlet extends Weblet {
       B.registerUser( user, companyName )
       B.welcomeUserEvent
 
-      return web.jsRes( JsData( user), JsModel( Map( "dashboard" -> true ) ), JsModel( user.toClientCommonMap( true ), "common" ) )
+      return web.jsRes( JsData( user ), JsModel( user.toClientCommonMap( true ), "common" ), JsModel( Map( "dashboard" -> true ) ) )
     } 
     
     if ( web.b( 'start ) ) {
