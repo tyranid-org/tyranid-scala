@@ -260,6 +260,16 @@ $( $('#idp').focus() );
           null
       }
       
+      if ( json == null ) {
+        if ( web.xhr ) {
+          sess.error( str )
+          return web.jsRes()
+        }
+        
+        web.forward( js = "mainLoad( function() { Backbone.trigger( '#login', { error: '" + str + "' } ); } );" )
+        return
+      }
+      
       if ( B.debugSso )
         println( "Json Object: " + json )
       
@@ -541,15 +551,20 @@ $( $('#idp').focus() );
         if ( !u.hasOrg ) {
           val org = B.Org.getById( orgId )
           
-          if ( !B.canAddUser( org ) ) {
-            sess.error( "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available." )
-            web.jsRes()
-            return
+          if ( org != null ) {
+            if ( !B.canAddUser( org ) ) {
+              sess.error( "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available." )
+              web.jsRes()
+              return
+            }
+            
+            u.join( org )
           }
           
-          u.join( org )
           B.welcomeUserEvent
-          Group.ensureInOrgGroup( u )        
+          
+          if ( org != null )
+            Group.ensureInOrgGroup( u )        
 
           save = true
         }
