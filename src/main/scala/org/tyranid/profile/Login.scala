@@ -215,7 +215,7 @@ object Loginlet extends Weblet {
       val userTid = web.s( 'u )
       val user = B.User.getByTid( userTid )
       
-      if ( user.s( 'ls ) == web.s( 's ) ) {
+      if ( user != null && user.s( 'ls ) == web.s( 's ) ) {
         sess.user = user
         sess.login( user, setAuth = true )
         web.jsRes( JsValue( T.session.httpSessionId ) )
