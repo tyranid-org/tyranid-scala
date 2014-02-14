@@ -107,7 +107,7 @@ trait Bootable {
 
   // DEV assumes the DNS is in your hosts file
 
-  val liteAppName = "Revu.Me"
+  val liteAppName = "ReVu.Me"
   
   @volatile var SHUTTINGDOWN = false
   
