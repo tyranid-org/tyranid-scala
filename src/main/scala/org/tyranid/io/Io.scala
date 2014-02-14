@@ -175,17 +175,17 @@ object Iolet extends Weblet {
     case "/tempUpload" =>
       val url = web.s( 'url )
 
-      if ( url.notBlank ) {
+      val filename:String = if ( url.notBlank ) {
         val ext = org.tyranid.io.File.safeExtension( url )
         val randName = math.random * Int.MaxValue + "_" + System.currentTimeMillis + "." + ext 
 
         S3.storeUrl( org.tyranid.io.File.tempBucket, url, randName, true )
-        web.json( Map( "thumbSrc" -> org.tyranid.io.File.tempBucket.url( randName ) ) )
+        randName
       } else {      
         val bodyParams = web.req.getAttribute(FileUploadSupport.BodyParamsKey).as[BodyParams]
   
-        if ( bodyParams == null) {
-          //errStr = "Unable to determine file body (2)."
+        if ( bodyParams == null ) {
+          null
         } else {
           val formParams = bodyParams.formParams
           val fileItem = bodyParams.getFileItems( "files", bodyParams.getFileItems( "thumb" ) )(0) 
@@ -196,11 +196,15 @@ object Iolet extends Weblet {
             fileItem.write( imgFile )
   
           val randName = math.random * Int.MaxValue + "_" + System.currentTimeMillis + "_" + fileItem.getName 
-          S3.write( org.tyranid.io.File.tempBucket, randName, imgFile )
-          S3.access( org.tyranid.io.File.tempBucket, randName, true )
-          web.json( Map( "thumbSrc" -> org.tyranid.io.File.tempBucket.url( randName ) ) )
+          S3.write( org.tyranid.io.File.tempBucket, randName, imgFile, true )
+          randName
         }
       }
+
+      if ( filename.notBlank )
+        web.json( Map( "thumbSrc" -> org.tyranid.io.File.tempBucket.url( filename ) ) )
+      else
+        web.jsRes()
     case _ =>
       _404
     }

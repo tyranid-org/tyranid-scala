@@ -17,6 +17,7 @@
 
 package org.tyranid.session
 
+import javax.servlet.http.Cookie
 import javax.servlet.http.HttpSession
 
 import scala.collection.mutable
@@ -125,6 +126,30 @@ object AccessLog {
         session.loggedEntry = true
       }
     }
+  }
+}
+
+object EmailCookie {
+  def set( email: String ) {
+    if ( email.isBlank ) {
+      clear
+    } else if ( email != "noset" ) {
+      //sp am( "Setting COOKIE email to " + email )
+      val emailCookie = new Cookie( "lite.email", email.encUrl )
+      emailCookie.setMaxAge( 60 * 60 * 24 * 365 ) // one year
+      emailCookie.setPath( "/" )
+      emailCookie.setSecure( true )
+      emailCookie.setDomain( B.domain )
+
+      T.web.res.addCookie( emailCookie )
+    }
+  }
+  
+  def get = 
+    T.web.req.cookieValue( "lite.email" ).decUrl
+  
+  def clear {
+   T.web.res.deleteCookie( "lite.email", "/", B.domain )
   }
 }
 

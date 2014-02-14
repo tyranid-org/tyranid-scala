@@ -29,16 +29,17 @@ import org.tyranid.db.Scope
 import org.tyranid.db.meta.TidItem
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.email.Email
-import org.tyranid.json.{ Js, JqHtml, JsModel, JsonString, JsData }
+import org.tyranid.json.{ Js, JqHtml, JsModel, JsonString, JsData, JsValue }
 import org.tyranid.logic.Invalid
 import org.tyranid.math.Base62
 import org.tyranid.secure.DbReCaptcha
-import org.tyranid.session.Session
+import org.tyranid.session.{ Session, EmailCookie }
 import org.tyranid.sso.SsoMapping
 import org.tyranid.social.Social
 import org.tyranid.ui.{ Button, Grid, Row, Focus, Form }
 import org.tyranid.web.{ Weblet, WebContext, WebResponse }
 import org.tyranid.web.WebHandledException
+import org.tyranid.web.WebIgnoreException
 
 object Loginlet extends Weblet {
   override val requiresLogin = false
@@ -209,13 +210,53 @@ object Loginlet extends Weblet {
     case "/tz" =>
       T.session.setTimeZoneFromClient( web.s( 'v ) )
       web.jsRes()
-
+      
+    case "/reconnect" =>
+      val userTid = web.s( 'u )
+      val user = B.User.getByTid( userTid )
+      
+      if ( user.s( 'ls ) == web.s( 's ) ) {
+        sess.user = user
+        sess.login( user, setAuth = true )
+        web.jsRes( JsValue( T.session.httpSessionId ) )
+      } else {
+        web.jsRes()
+      }
+    case "/checkEmail" =>
+      checkEmail( web, sess, web.s( 'email ) )
+      
     case "/null" =>
       log( Event.RefInt, "m" -> ( "null, Referer: " + web.req.getHeader( "referer" ) ) )
     case _ =>
+      throw new WebIgnoreException()
     }
   }
 
+  def checkEmail( web:WebContext, sess:Session, email:String ) {
+    if ( !Email.isWellKnownProvider( email ) ) {
+      val domain = Email.domainFor( email )
+
+      val orgc = B.Org.db.find( Mobj( "domain" -> ( "^" + domain.encRegex + "$" ).toPatternI ) ).limit(1)
+      val org = orgc.hasNext ? B.Org( orgc.next ) | null
+
+      if ( org != null ) {
+        if ( !B.canAddUser( org ) ) {
+          sess.error( "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available." )
+          return web.jsRes()
+        }
+        
+        T.user( 'org ) = org.id
+        return web.jsRes( Js( "$('#company').val( '" + org.s( 'name ) + "' ).attr( 'readonly', 'readonly' );" ) )
+      } 
+      
+      T.user( 'org ) = null
+      return web.jsRes( Js( "$('#company').val( '' ).removeAttr( 'readonly' );" ) )
+    } 
+    
+    T.user( 'org ) = null
+    return web.jsRes( Js( "$('#company').val( '' ).removeAttr( 'readonly' );" ) )    
+  }
+  
   def register( web:WebContext, sess:Session ) {
     val user =
       sess.user match {
@@ -246,28 +287,7 @@ object Loginlet extends Weblet {
               return web.jsRes()
             }
 
-            if ( !Email.isWellKnownProvider( email ) ) {
-              val domain = Email.domainFor( email )
-
-              val orgc = B.Org.db.find( Mobj( "domain" -> ( "^" + domain.encRegex + "$" ).toPatternI ) ).limit(1)
-              val org = orgc.hasNext ? B.Org( orgc.next ) | null
-
-              if ( org != null ) {
-                if ( !B.canAddUser( org ) ) {
-                  sess.error( "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available." )
-                  return web.jsRes()
-                }
-                
-                T.user( 'org ) = org.id
-                return web.jsRes( Js( "$('#company').val( '" + org.s( 'name ) + "' ).attr( 'readonly', 'readonly' );" ) )
-              } 
-              
-              T.user( 'org ) = null
-              return web.jsRes( Js( "$('#company').val( '' ).removeAttr( 'readonly' );" ) )
-            } 
-            
-            T.user( 'org ) = null
-            return web.jsRes( Js( "$('#company').val( '' ).removeAttr( 'readonly' );" ) )
+            return checkEmail( web, sess, email )
           } 
           
           return web.jsRes()
@@ -311,8 +331,9 @@ object Loginlet extends Weblet {
       if ( user.s( 'activationCode ).isBlank ) {
         sendActivation( user )
         B.registerUser( user, companyName )
+        EmailCookie.set( email )
         sess.logout( true )
-        return web.jsRes( JsModel( Map( "email" -> email, "firstName" -> firstName ) ) )
+        return web.jsRes( JsModel( user.toClientCommonMap(), "common" ), JsModel( Map( "email" -> email, "firstName" -> firstName ) ) )
       }
 
       sess.login( user, setAuth = true )
@@ -321,7 +342,7 @@ object Loginlet extends Weblet {
       B.registerUser( user, companyName )
       B.welcomeUserEvent
 
-      return web.jsRes( JsData( user), JsModel( Map( "dashboard" -> true ) ), JsModel( user.toClientCommonMap( true ), "common" ) )
+      return web.jsRes( JsData( user ), JsModel( user.toClientCommonMap( true ), "common" ), JsModel( Map( "dashboard" -> true ) ) )
     } 
     
     if ( web.b( 'start ) ) {
@@ -329,7 +350,7 @@ object Loginlet extends Weblet {
           "doRecaptcha" -> B.requireReCaptcha,
           "firstName" -> user.s( 'firstName ),
           "lastName" -> user.s( 'lastName ),
-          "email" -> user.s( 'email ),
+          "email" -> ( user.s( 'email ) or EmailCookie.get ),
           "locked" -> user.s( 'activationCode ).notBlank
           )
 

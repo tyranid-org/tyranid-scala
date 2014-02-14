@@ -187,19 +187,21 @@ $( $('#idp').focus() );
       println( url )
       web.jsRes()
     case s if s.startsWith( "/auth/" ) =>
-      val id = s.split( "/" )(2)
-      val mapping = ( id == "test" ) ? SsoMapping.testMapping | SsoMapping.getById( id )
+      val parts = s.split( "/" )
+      val id = ( parts.length > 2 ) ? parts(2) | ""
+      val mapping = ( parts.length > 2 ) ? ( ( id == "test" ) ? SsoMapping.testMapping | SsoMapping.getById( id ) ) | null
 
       if ( mapping == null || mapping.s( 'idpId ).isBlank ) {
         if ( B.debugSso )
           println( "DEBUG: Incoming /auth call for: " + id + ", mapping not found" )
 
-        sess.error( "SSO Mapping for code " + id + " not found." )
 
-        if ( web.b( 'xhr ) )
+        if ( web.b( 'xhr ) ) {
+          sess.error( "SSO Mapping for code " + id + " not found." )
           web.jsRes( JqHtml( "#main", pageWrapper( signupBox ), transition="fadeOutIn", duration = 500 ), Js( "T.initFormPlaceholders( '#f' );" ) )
-        else
-          web.forward( path = s )
+        } else {
+          web.forward( js = "mainLoad( function() { Backbone.trigger( '#login', { error: 1, top: 1, msg: 'SSO Mapping for code " + id + " not found.' } ); } );" )
+        }
       } else {
         if ( B.debugSso )
           println( "DEBUG: Incoming /auth call for: " + id + ", mapping found" )
@@ -259,6 +261,16 @@ $( $('#idp').focus() );
           null
       }
 
+      if ( json == null ) {
+        if ( web.xhr ) {
+          sess.error( str )
+          return web.jsRes()
+        }
+
+        web.forward( js = "mainLoad( function() { Backbone.trigger( '#login', { error: 1, top: 1, msg: '" + str + "' } ); } );" )
+        return
+      }
+
       if ( B.debugSso )
         println( "Json Object: " + json )
 
@@ -266,8 +278,13 @@ $( $('#idp').focus() );
 
       if ( mapping == null ) {
         println( "DEBUG: Mapping not found!" )
-        sess.error( "Unable to determine SSO profile." )
-        web.jsRes()
+
+        if ( web.xhr ) {
+          sess.error( "Unable to determine SSO profile." )
+          return web.jsRes()
+        }
+
+        web.forward( js = "mainLoad( function() { Backbone.trigger( '#login', { error: 1, top: 1, msg: 'Unable to determine SSO profile' } ); } );" )
         return
       }
 
@@ -277,8 +294,14 @@ $( $('#idp').focus() );
         if ( B.debugSso )
           println( "DEBUG: There is no email field with the attribute name " + mapping.s( 'emailAttrib ) + "." )
 
-        sess.error( "There is no email field with the attribute name " + mapping.s( 'emailAttrib ) + " in the response:" + str )
-        web.jsRes()
+        val errStr = "There is no email field with the attribute name " + mapping.s( 'emailAttrib ) + " in the response:" + str
+
+        if ( web.xhr ) {
+          sess.error( errStr )
+          return web.jsRes()
+        }
+
+        web.forward( js = "mainLoad( function() { Backbone.trigger( '#login', { error: 1, top: 1, msg: '" + errStr + "' } ); } );" )
         return
       }
 
@@ -311,8 +334,13 @@ $( $('#idp').focus() );
         val org = B.Org.getById( orgId )
 
         if ( !B.canAddUser( org ) ) {
-          sess.error( "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available." )
-          web.jsRes()
+          val errStr = "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available."
+          if ( web.xhr ) {
+            sess.error( errStr )
+            return web.jsRes()
+          }
+
+          web.forward( js = "mainLoad( function() { Backbone.trigger( '#login', { error: 1, top: 1, msg: '" + errStr + "' } ); } );" )
           return
         }
 
@@ -540,15 +568,20 @@ $( $('#idp').focus() );
         if ( !u.hasOrg ) {
           val org = B.Org.getById( orgId )
 
-          if ( !B.canAddUser( org ) ) {
-            sess.error( "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available." )
-            web.jsRes()
-            return
+          if ( org != null ) {
+            if ( !B.canAddUser( org ) ) {
+              sess.error( "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available." )
+              web.jsRes()
+              return
+            }
+
+            u.join( org )
           }
 
-          u.join( org )
           B.welcomeUserEvent
-          Group.ensureInOrgGroup( u )
+
+          if ( org != null )
+            Group.ensureInOrgGroup( u )
 
           save = true
         }

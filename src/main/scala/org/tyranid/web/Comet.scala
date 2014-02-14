@@ -128,6 +128,34 @@ object Comet {
       }
     }
   }
+  
+  def timeout( ss:String ) {
+    val sd = B.SessionData.db.findOne( Mobj( "ss" -> ss ) )
+    
+    if ( sd != null ) {
+      PushQueue.db.save(
+        Mobj(
+          "h"       -> false, // this can't left undefined, because you can't update a document in a capped mongo collection to be larger
+          "ss"      -> ss,
+          "m"       -> Mobj( "act" -> "timeout" )
+        )
+      )
+    }
+  }
+  
+  def sendJs( ss:String, js:String ) {
+    val sd = B.SessionData.db.findOne( Mobj( "ss" -> ss ) )
+    
+    if ( sd != null ) {
+      PushQueue.db.save(
+        Mobj(
+          "h"       -> false, // this can't left undefined, because you can't update a document in a capped mongo collection to be larger
+          "ss"      -> ss,
+          "m"       -> Mobj( "act" -> "cmd", "js" -> js )
+        )
+      )
+    }
+  }
 }
 
 

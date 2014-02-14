@@ -88,6 +88,8 @@ class AnyImp[T <: Any]( v:T ) {
 
   def _ar = v.asInstanceOf[AnyRef]
 
+  def _v = v
+
   def asJsonObject = if ( v != null ) v.as[LinkedHashMap[String,Any]] else null
 }
 

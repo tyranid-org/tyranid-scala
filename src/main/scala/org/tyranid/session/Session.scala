@@ -50,9 +50,12 @@ import org.tyranid.web.{ Comet, WebContext }
 
 object SessionCleaner {
   def cleanLocal {
+    if ( B.SHUTTINGDOWN )
+      return
 
     // Clean up local in-memory sessions
 
+    /*
     val now = System.currentTimeMillis
 
     WebSession.sessions.filter { sess =>
@@ -80,6 +83,7 @@ object SessionCleaner {
       sess._2.invalidate
     }
 
+    */
 
     // Remove any SessionData records for this server which don't map to local sessions
 
@@ -97,6 +101,8 @@ object SessionCleaner {
   }
 
   def cleanGlobal {
+    if ( B.SHUTTINGDOWN )
+      return
 
     val cutoff = new Date - ( 8 * Time.OneHourMs )
 
@@ -150,10 +156,22 @@ class WebSessionListener extends HttpSessionListener {
 
   def sessionDestroyed( e:HttpSessionEvent ) {
     val hsid = e.getSession.getId
-    //Comet.remove( e.getSession.getId  )
+    val user = Session.byHttpSessionId( hsid ).user
     WebSession.sessions.remove( hsid )
 
     B.SessionData.db.update( Mobj( "ss" -> hsid ), Mobj( $set -> Mobj( "exp" -> true ) ) )
+
+    if ( user != null ) {
+      B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "ls" -> hsid ) ) )
+
+      if ( !B.SHUTTINGDOWN ) {
+        val now = System.currentTimeMillis
+        val idle = now - e.getSession().getLastAccessedTime()
+
+        if ( idle > Time.OneHourMs )
+          Comet.timeout( hsid )
+      }
+    }
   }
 }
 
@@ -666,7 +684,7 @@ trait Session extends QuickCache {
 
   def notice( msg:AnyRef, extra:NodeSeq = null, deferred:String = null ) = notes ::= Notification( Notification.NOTICE, msg.toString, cssClass = "alert-success", extra, deferred )
   def warn( msg:AnyRef, extra:NodeSeq = null, deferred:String = null )   = notes ::= Notification( Notification.WARN, msg.toString, cssClass= "alert", extra, deferred )
-  def error( msg:AnyRef, extra:NodeSeq = null, deferred:String = null )  = notes ::= Notification( Notification.ERROR, msg.toString, cssClass= "alert-error", extra, deferred )
+  def error( msg:AnyRef = "", extra:NodeSeq = null, deferred:String = null )  = notes ::= Notification( Notification.ERROR, msg.toString, cssClass= "alert-error", extra, deferred )
 
   def popNotices = popNotes( Notification.NOTICE )
   def popWarnings = popNotes( Notification.WARN )

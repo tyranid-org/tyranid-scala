@@ -23,7 +23,7 @@ import java.io.IOException
 import java.util.Date
 
 import javax.servlet.{ Filter, FilterChain, FilterConfig, GenericServlet, ServletException, ServletRequest, ServletResponse, ServletContext }
-import javax.servlet.http.{ HttpServlet, HttpServletRequest, HttpServletResponse }
+import javax.servlet.http.{ HttpServletRequest, HttpServletResponse }
 
 import scala.collection.mutable
 import scala.util.control.ControlThrowable
@@ -112,7 +112,7 @@ trait TyrFilter extends Filter {
       LoginCookie.autoLogin
     }
   }
-
+  
   def completeFilter( boot:Bootable, web:WebContext, chain:FilterChain, thread:ThreadData ): Unit
 
   def doFilter( request:ServletRequest, response:ServletResponse, chain:FilterChain ):Unit = try {
@@ -271,10 +271,10 @@ class WebFilter extends TyrFilter {
         if ( webloc.path == "" )
           return false
 
-        // If it is an asset, then just return 404
+        // If it is an asset, then just return forbidden (404 will just redirect to our error weblet and we don't want that)
         if ( isAsset ) {
-          web.res.sendError( HttpServletResponse.SC_NOT_FOUND )
-          return false
+          web.res.sendError( HttpServletResponse.SC_FORBIDDEN )
+          return true
         }
 
         web.ctx.getRequestDispatcher( "/404" ).forward( web.req, web.res )
@@ -338,16 +338,8 @@ class WebFilter extends TyrFilter {
 
           if ( isAsset ) spam( "isAsset matching on " + web.path )
 
-          val dbg = t.web.s( 'debugit )
-
-          if ( dbg.notBlank )
-            sess.debug = dbg._b
-
-          val trace = t.web.s( 'trace )
-
-          if ( trace.notBlank )
-            sess.trace = trace._b
-
+          web.checkDebug( sess )
+                
           web.forward()
           return
         }
@@ -370,6 +362,11 @@ class WebFilter extends TyrFilter {
     }
 
     chain.doFilter( web.req, web.res )
+  }
+  
+  override def destroy {
+    super.destroy
+    B.SHUTTINGDOWN = true
   }
 }
 
@@ -603,6 +600,18 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   def redirect( url:String ) = {
     assert( !url.endsWith( "/null" ) )
     throw WebRedirectException( url )
+  }
+
+  def checkDebug( sess:Session ) {
+    val dbg = s( 'debugit )
+
+    if ( dbg.notBlank )
+      sess.debug = dbg._b
+
+    val trace = s( 'trace )
+
+    if ( trace.notBlank )
+      sess.trace = trace._b
   }
 
   def s( param:String ):String        = req.s( param )

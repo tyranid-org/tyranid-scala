@@ -56,11 +56,13 @@ object UserStatType extends RamEntity( tid = "a0Nt" ) {
   val ApiId        = 2
   val CreateLiteId = 3
   val StartConferenceId = 4
+  val CreateLiteProId = 5
 
   val Login      = add( LoginId,      "Login" )
   val Api        = add( ApiId,        "Api Call" )
   val CreateLite = add( CreateLiteId, "Create Lite" )
   val StartConference = add( StartConferenceId, "StartConference" )
+  val CreateLitePro = add( CreateLiteProId, "CreateLitePro" )
 }
 
 case class UserStatType( override val view:TupleView ) extends Tuple( view )
@@ -95,6 +97,7 @@ object UserStat extends MongoEntity( tid = "a0Ot" ) {
   def api( userId:Any, path:String ) = create( userId._oid, UserStatType.ApiId, path )
   def createLite( userId:Any ) = create( userId._oid, UserStatType.CreateLiteId )
   def startConference( userId:Any, sessId:String ) = create( userId._oid, UserStatType.StartConferenceId, sessId )
+  def createLitePro( userId:Any ) = create( userId._oid, UserStatType.CreateLiteProId )
 }
 
 class UserStat( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserStat.makeView, obj, parent ) {}
@@ -189,7 +192,9 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "sso"            is DbLink(SsoMapping)  ;
   
   "n1"             is DbBoolean           ; 
+  "ls"             is DbChar(30)          ; // Last Session ID 
 
+  
   override def init = {
     super.init
     "invitedBy"    is DbLink(B.User)      ;
@@ -284,6 +289,8 @@ class UserMeta extends MongoEntity( "a01v" ) {
 }
 
 trait User extends MongoRecord {
+  def isRegistered = s( 'activationCode ).isBlank
+
   def hasName = s( 'firstName ) != "unknown"
 
   def fullName =
@@ -297,10 +304,9 @@ trait User extends MongoRecord {
     if ( hasName ) s( 'firstName )
     else           s( 'email )
 
-  override def label = {
+  override def label =
     if ( hasName ) super.label
     else           s( 'email )
-    }
 
   def isActive:Boolean = {
     if ( ( obj.has( 'inactive ) && b( 'inactive ) ) || s( 'activationCode ).notBlank )
