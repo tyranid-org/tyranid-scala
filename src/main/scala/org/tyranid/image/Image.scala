@@ -462,6 +462,7 @@ object Thumbnail {
       if ( thumbWidth < thumbW || thumbHeight < thumbH ) {
 //      if ( imageWidth < thumbW || imageHeight < thumbH ) {
         ImageIO.write( image, "JPG", thumbFile )
+        image.flush()
       } else {
         var (x,y,w,h) = ( 0, 0, thumbW, thumbH )
         
@@ -473,6 +474,7 @@ object Thumbnail {
         
         try {
           ImageIO.write( image.getSubimage( x, y, w, h ), "JPG", thumbFile ) 
+          image.flush()
         } catch {
           case e:Throwable =>
             println( "ERROR: " + e.getMessage() )
@@ -481,6 +483,8 @@ object Thumbnail {
         }
       }
     }
+    
+    System.gc
     
     return thumbFile
   }
