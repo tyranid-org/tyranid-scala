@@ -215,7 +215,7 @@ object Loginlet extends Weblet {
       val userTid = web.s( 'u )
       val user = B.User.getByTid( userTid )
       
-      if ( user.s( 'ls ) == web.s( 's ) ) {
+      if ( user != null && user.s( 'ls ) == web.s( 's ) ) {
         sess.user = user
         sess.login( user, setAuth = true )
         web.jsRes( JsValue( T.session.httpSessionId ) )
@@ -308,6 +308,11 @@ object Loginlet extends Weblet {
     val password = web.s( 'password )
 
     if ( password.notBlank ) {
+      if ( B.requireReCaptcha && !DbReCaptcha.passed ) {
+        sess.error( "Invalid captcha, please try again." )
+        return web.jsRes( Js( "Recaptcha.reload();" ) )
+      }
+      
       val email = web.s( 'email )
       val companyName = web.s( 'company ).trim
 
@@ -345,19 +350,7 @@ object Loginlet extends Weblet {
       return web.jsRes( JsData( user ), JsModel( user.toClientCommonMap( true ), "common" ), JsModel( Map( "dashboard" -> true ) ) )
     } 
     
-    if ( web.b( 'start ) ) {
-      val modelMap = mutable.Map(
-          "doRecaptcha" -> B.requireReCaptcha,
-          "firstName" -> user.s( 'firstName ),
-          "lastName" -> user.s( 'lastName ),
-          "email" -> ( user.s( 'email ) or EmailCookie.get ),
-          "locked" -> user.s( 'activationCode ).notBlank
-          )
-
-      return web.jsRes( JsModel( modelMap ) )
-    } 
-    
-    web.forward( js = "mainLoad( function() { Backbone.trigger( '#login', { register : true } ); } );" )
+    web.forward( js = "mainLoad( function() { router.navigate( '#register', { trigger: true } ); } );" )
   }
 
   def sendActivation( user:User ) = {
