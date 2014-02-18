@@ -217,7 +217,10 @@ object Loginlet extends Weblet {
       
       if ( user != null && user.s( 'ls ) == web.s( 's ) ) {
         sess.user = user
-        sess.login( user, setAuth = true )
+        
+        if ( !sess.isAuthenticated )
+          sess.login( user, setAuth = true )
+          
         web.jsRes( JsValue( T.session.httpSessionId ) )
       } else {
         web.jsRes()

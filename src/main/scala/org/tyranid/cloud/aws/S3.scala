@@ -47,6 +47,12 @@ case class S3Bucket( prefix:String, cfDistributionId:String = "", cfDomain:Strin
       "https://" + cfDomain + ".cloudfront.net/" + path
       
   def file( path:String ) = S3.getFile( this, path )  
+  
+  def pathForUrl( url:String ) = {
+    val cfUrl = this.url( "" )
+    val nonCfUrl = this.url( "", true )
+    url.startsWith( cfUrl ) ? url.substring( cfUrl.length ) | url.substring( nonCfUrl.length )
+  }
 }
 
 object S3 {
@@ -212,9 +218,12 @@ object S3 {
       throw e
   }
 
-  def move( bucketFrom:S3Bucket, fromPath:String, bucketTo:S3Bucket, toPath:String ) = {
+  def move( bucketFrom:S3Bucket, fromPath:String, bucketTo:S3Bucket, toPath:String, public:Boolean = false ) = {
     copy( bucketFrom, fromPath, bucketTo, toPath )
     delete( bucketFrom, fromPath )
+    
+    if ( public )
+      access( bucketTo, toPath, true )
   }
 
   def access( bucket:S3Bucket, key:String, public:Boolean = false, authenticated:Boolean = false ) = {
