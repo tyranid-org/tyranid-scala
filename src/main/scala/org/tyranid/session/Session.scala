@@ -158,9 +158,7 @@ class WebSessionListener extends HttpSessionListener {
     val hs = e.getSession
     val hsid = hs.getId
     val tyrSession = hs.getAttribute( WebSession.HttpSessionKey ).as[org.tyranid.session.Session]
-    val user = tyrSession.user
-    tyrSession.user.clearCache()
-    tyrSession.user = null
+    
     
     val sess = WebSession.sessions.remove( hsid ).getOrElse( null )
     
@@ -172,15 +170,20 @@ class WebSessionListener extends HttpSessionListener {
 
     B.SessionData.db.update( Mobj( "ss" -> hsid ), Mobj( $set -> Mobj( "exp" -> true ) ) )
     
-    if ( user != null ) {
-      B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "ls" -> hsid ) ) )
-      
-      if ( !B.SHUTTINGDOWN ) {
-        val now = System.currentTimeMillis
-        val idle = now - hs.getLastAccessedTime()
+    if ( tyrSession != null ) {
+      val user = tyrSession.user
+      tyrSession.user.clearCache()
+      tyrSession.user = null
+      if ( user != null ) {
+        B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "ls" -> hsid ) ) )
         
-        if ( idle > Time.OneHourMs )
-          Comet.timeout( hsid )
+        if ( !B.SHUTTINGDOWN ) {
+          val now = System.currentTimeMillis
+          val idle = now - hs.getLastAccessedTime()
+          
+          if ( idle > Time.OneHourMs )
+            Comet.timeout( hsid )
+        }
       }
     }
   }	
