@@ -124,10 +124,11 @@ object Imp {
 		}
 	}
 
-  def background( forceNewBackground:Boolean, block: => Unit ) {
+  def background( subject:String, forceNewBackground:Boolean )( block: => Unit ) {
     val s = Session()
 
     if ( !forceNewBackground && T.background ) {
+      // TODO:  are the following two lines needed?
       T.becomeSession( s )
         
       // not technically needed unless we go back to thread pooling
@@ -139,33 +140,50 @@ object Imp {
     } else {
       val r = new Runnable() {
         def run {
+          val t = T
+          
           try {
-            T.background = true
-            T.becomeSession( s )
+            t.background = true
+            t.becomeSession( s )
         
             // not technically needed unless we go back to thread pooling
-            T.clearRequestCache
+            t.clearRequestCache
         
             trylog {
               block
             }
+          
+            // TODO:  how long before the ThreadLocal is cleared up?  is this clear necessary?
+            t.clearRequestCache
           } finally {
             // reset it back to false in case this thread gets reused in a pool
-            T.background = false
+            if ( B.profile ) {
+              val name = Thread.currentThread().getName()
+              val startTime = name.suffix( ':' )._l
+              log( Event.Log, "m" -> ( "Ended " + name ), "du" -> ( System.currentTimeMillis - startTime ) )
+            }
+              
+            t.background = false
           }
         }
       }
 
-      new Thread( r ).start
+      val nt = new Thread( r )
+      if ( B.profile ) {
+        val t = System.currentTimeMillis
+        nt.setName( subject + ":" + t )
+        log( Event.Log, "m" -> ( "Started " + nt.getName ) )
+      }
+      nt.start
     }
   }
 
-  def background( block: => Unit ) {
-    background( forceNewBackground = true, block )
+  def background( subject:String )( block: => Unit ) {
+    background( subject, forceNewBackground = true ) { block }
   }
 
-  def background_?( test:Boolean, block: => Unit) {
-    test ? background { block } | block
+  def background_?( test:Boolean, subject:String )( block: => Unit) {
+    test ? background( subject ) { block } | block
   }
 
   val Event = org.tyranid.log.Event

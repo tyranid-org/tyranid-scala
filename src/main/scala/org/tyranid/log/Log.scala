@@ -230,11 +230,13 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
       if ( effEvent == Event.StackTrace )
         sb ++= "\n\nStack Trace:\n\n" + throwable.getStackTrace.map( _.toString ).mkString( "\n" )
 
-      background {
+      val subject = ( effEvent == Event.StackTrace ) ? "Volerro Stack Trace" | "Volerro Alert"
+      
+      background( subject ) {
         try {
           println( "*** sending email" )
             
-          AWSEmail( subject = ( effEvent == Event.StackTrace ) ? "Volerro Stack Trace" | "Volerro Alert",
+          AWSEmail( subject = subject,
                     text = sb.toString, fromLog = true ).
             addTo( B.alertEmail ).
             from( "no-reply@" + B.domain ).
