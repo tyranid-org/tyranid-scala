@@ -174,7 +174,7 @@ object Imp {
       val nt = new Thread( r )
       if ( B.profile ) {
         nt.setName( subject + ":" + startTime )
-        logId = log( Event.Profile, "m" -> nt.getName ).id
+        logId = log( Event.Background, "m" -> nt.getName ).id
       }
       nt.start
     }

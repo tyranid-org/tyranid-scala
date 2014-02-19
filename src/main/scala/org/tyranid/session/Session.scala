@@ -96,6 +96,9 @@ object SessionCleaner {
 
     if ( invalidSessions.nonEmpty )
       B.SessionData.db.remove( Mobj( "sv" -> ipHost, "ss" -> Mobj( $in -> invalidSessions.toMlist ) ) )
+
+    if ( B.profile )
+      log( Event.Profile, "m" -> ( "WebSession size: " + WebSession.sessions.memorySize ) )
   }
 
   def cleanGlobal {

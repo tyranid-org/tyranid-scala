@@ -342,6 +342,7 @@ class WebFilter extends TyrFilter {
           first = false
         }
 
+
         if ( handle( webloc ) ) {
           //sp am( "CACHE: CLEARING" )
           t.clearRequestCache

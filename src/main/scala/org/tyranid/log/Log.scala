@@ -81,7 +81,8 @@ object Event extends RamEntity( tid = "a0It" ) {
   val Subscription = add( 31, "Subscription" )
   val AudioBridge  = add( 32, "Audio Bridge" )
   val Log          = add( 33, "Log"          )
-  val Profile      = add( 34, "Profile"      )
+  val Background   = add( 34, "Background"   )
+  val Profile      = add( 35, "Profile"      )
 }
 
 case class Event( override val view:TupleView ) extends Tuple( view ) {
