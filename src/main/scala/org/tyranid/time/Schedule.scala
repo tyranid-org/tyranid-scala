@@ -203,7 +203,7 @@ object Scheduler {
   }
 
   def start = {
-    background {
+    background( "Start Scheduler" ) {
       while ( true && !B.SHUTTINGDOWN ) {
         T.clearRequestCache
 
@@ -319,7 +319,7 @@ spam( "subject=\"" + subject + "\"" )
       task foreach { task =>
 
       spam( "running 2 " + task.id )
-        background {
+        background( "Start TaskStats" ) {
 
       spam( "running 3 " + task.id )
           if ( !task.local )

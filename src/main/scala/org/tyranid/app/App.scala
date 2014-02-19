@@ -86,7 +86,7 @@ object AppStat extends MongoEntity( tid = "b04v" ) {
   }
   
   private def create( statId:Int, duration:Long = 0 ) {
-    background {
+    background( "Craete AppStat" ) {
       val stat = AppStat.make
       stat( 's ) = statId
       stat( 't ) = new Date

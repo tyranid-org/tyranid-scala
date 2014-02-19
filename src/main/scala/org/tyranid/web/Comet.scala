@@ -197,7 +197,7 @@ object PushQueue {
 
     db
 
-    background {
+    background( "Init PushQueue Restart" ) {
 
       // give the server 3 seconds to get settled before we start pulverise it
 
