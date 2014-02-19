@@ -26,6 +26,9 @@ import java.util.{ Calendar, Date }
 import scala.collection.mutable.Buffer
 import scala.xml.{ NodeSeq, Unparsed }
 
+import org.bson.types.ObjectId
+
+import org.tyranid.db.mongo.Imp._
 import org.tyranid.log.Log
 import org.tyranid.session.Session
 
@@ -138,6 +141,9 @@ object Imp {
         block
       }
     } else {
+      val startTime = System.currentTimeMillis
+      var logId:AnyRef = null
+
       val r = new Runnable() {
         def run {
           val t = T
@@ -157,11 +163,8 @@ object Imp {
             t.clearRequestCache
           } finally {
             // reset it back to false in case this thread gets reused in a pool
-            if ( B.profile ) {
-              val name = Thread.currentThread().getName()
-              val startTime = name.suffix( ':' )._l
-              log( Event.Log, "m" -> ( "Ended " + name ), "du" -> ( System.currentTimeMillis - startTime ) )
-            }
+            if ( B.profile )
+              Log.db.update( Mobj( "_id" -> logId ), Mobj( $set -> Mobj( "du" -> ( System.currentTimeMillis - startTime ) ) ) )
               
             t.background = false
           }
@@ -170,9 +173,8 @@ object Imp {
 
       val nt = new Thread( r )
       if ( B.profile ) {
-        val t = System.currentTimeMillis
-        nt.setName( subject + ":" + t )
-        log( Event.Log, "m" -> ( "Started " + nt.getName ) )
+        nt.setName( subject + ":" + startTime )
+        logId = log( Event.Profile, "m" -> nt.getName ).id
       }
       nt.start
     }
