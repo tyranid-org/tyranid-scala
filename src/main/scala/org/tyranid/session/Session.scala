@@ -49,13 +49,13 @@ import org.tyranid.web.{ Comet, WebContext }
  */
 
 object SessionCleaner {
+  val maxIdleTimeCheck = Time.OneHourMs + (5*Time.OneMinuteMs)
+
   def cleanLocal {
     if ( B.SHUTTINGDOWN )
       return
 
     // Clean up local in-memory sessions
-
-    /*
     val now = System.currentTimeMillis
 
     WebSession.sessions.filter { sess =>
@@ -65,9 +65,8 @@ object SessionCleaner {
         val tyrsess = httpsess.getAttribute( WebSession.HttpSessionKey ).as[Session]
 
         if ( tyrsess != null ) {
-          //val lastPathTime = tyrsess.get( "lastPathTime" ).as[Date]
           val idle = now - httpsess.getLastAccessedTime
-          ( !tyrsess.isVerified && idle > (2*Time.OneMinuteMs) ) || idle > Time.OneHourMs
+          ( !tyrsess.isVerified && idle > (5*Time.OneMinuteMs) ) || idle > maxIdleTimeCheck
         } else {
           true
         }
@@ -80,10 +79,9 @@ object SessionCleaner {
       }
     } foreach { sess =>
       WebSession.sessions.remove( sess._1 )
+      sess._2.removeAttribute( WebSession.HttpSessionKey )
       sess._2.invalidate
     }
-
-    */
 
     // Remove any SessionData records for this server which don't map to local sessions
 
@@ -98,6 +96,9 @@ object SessionCleaner {
 
     if ( invalidSessions.nonEmpty )
       B.SessionData.db.remove( Mobj( "sv" -> ipHost, "ss" -> Mobj( $in -> invalidSessions.toMlist ) ) )
+
+    if ( B.profile )
+      log( Event.Profile, "m" -> ( "WebSession size: " + WebSession.sessions.memorySize ) )
   }
 
   def cleanGlobal {
@@ -134,7 +135,6 @@ object SessionCleaner {
 object WebSession {
   val sessions = mutable.Map[String,HttpSession]()
 
-  val CometHttpSessionIdKey = "tyrSessId"
   val HttpSessionKey = "tyrSess"
 
   /*
@@ -155,21 +155,35 @@ class WebSessionListener extends HttpSessionListener {
   }
 
   def sessionDestroyed( e:HttpSessionEvent ) {
-    val hsid = e.getSession.getId
-    val user = Session.byHttpSessionId( hsid ).user
-    WebSession.sessions.remove( hsid )
+    val hs = e.getSession
+    val hsid = hs.getId
+    val tyrSession = hs.getAttribute( WebSession.HttpSessionKey ).as[org.tyranid.session.Session]
+
+
+    val sess = WebSession.sessions.remove( hsid ).getOrElse( null )
+
+    if ( sess != hs )
+      spam( "Sessions do not match!" )
+
+    if ( sess != null )
+      sess.removeAttribute( WebSession.HttpSessionKey )
 
     B.SessionData.db.update( Mobj( "ss" -> hsid ), Mobj( $set -> Mobj( "exp" -> true ) ) )
 
-    if ( user != null ) {
-      B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "ls" -> hsid ) ) )
+    if ( tyrSession != null ) {
+      val user = tyrSession.user
+      tyrSession.user.clearCache()
+      tyrSession.user = null
+      if ( user != null ) {
+        B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "ls" -> hsid ) ) )
 
-      if ( !B.SHUTTINGDOWN ) {
-        val now = System.currentTimeMillis
-        val idle = now - e.getSession().getLastAccessedTime()
+        if ( !B.SHUTTINGDOWN ) {
+          val now = System.currentTimeMillis
+          val idle = now - hs.getLastAccessedTime()
 
-        if ( idle > Time.OneHourMs )
-          Comet.timeout( hsid )
+          if ( idle > Time.OneHourMs )
+            Comet.timeout( hsid )
+        }
       }
     }
   }

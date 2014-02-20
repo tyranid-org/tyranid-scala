@@ -174,6 +174,7 @@ trait Bootable {
   def allTmpl          = TyranidConfig().b( 'allTmpl )
   def debugSso         = TyranidConfig().b( 'debugSso )
   def debugChat        = TyranidConfig().b( 'debugChat )
+  def profile          = TyranidConfig().b( 'profile )
   def syncWebDav       = TyranidConfig().b( 'syncWebDav )
   def hideUpgradeBtn   = TyranidConfig().b( 'hideUpgradeBtn )
   def enableLite       = TyranidConfig().b( 'lite )

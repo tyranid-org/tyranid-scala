@@ -80,7 +80,9 @@ object Event extends RamEntity( tid = "a0It" ) {
   val LoginAs      = add( 30, "Login As"     )
   val Subscription = add( 31, "Subscription" )
   val AudioBridge  = add( 32, "Audio Bridge" )
-  val Log          = add( 33, "Log" )
+  val Log          = add( 33, "Log"          )
+  val Background   = add( 34, "Background"   )
+  val Profile      = add( 35, "Profile"      )
 }
 
 case class Event( override val view:TupleView ) extends Tuple( view ) {
@@ -230,11 +232,13 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
       if ( effEvent == Event.StackTrace )
         sb ++= "\n\nStack Trace:\n\n" + throwable.getStackTrace.map( _.toString ).mkString( "\n" )
 
-      background {
+      val subject = ( effEvent == Event.StackTrace ) ? "Volerro Stack Trace" | "Volerro Alert"
+      
+      background( subject ) {
         try {
           println( "*** sending email" )
             
-          AWSEmail( subject = ( effEvent == Event.StackTrace ) ? "Volerro Stack Trace" | "Volerro Alert",
+          AWSEmail( subject = subject,
                     text = sb.toString, fromLog = true ).
             addTo( B.alertEmail ).
             from( "no-reply@" + B.domain ).
@@ -245,6 +249,8 @@ object Log extends MongoEntity( tid = "a0Ht" ) {
         }
       }
     }
+
+    l
   }
 
   override lazy val defaultSort = Sort( "on", "On", "on" -> -1 )

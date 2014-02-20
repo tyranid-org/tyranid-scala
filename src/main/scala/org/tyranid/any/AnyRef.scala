@@ -63,5 +63,7 @@ class AnyRefImp[T <: AnyRef]( ref:T ) {
     case _ =>
       ref
     }
+
+  def memorySize = MemorySize.sizeOf( ref )
 }
 

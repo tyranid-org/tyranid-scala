@@ -80,7 +80,7 @@ object UserStat extends MongoEntity( tid = "a0Ot" ) {
   }
   
   private def create( userId:ObjectId, statId:Int, x:String = null ) {
-    background {
+    background( "Create UserStat" ) {
       val stat = UserStat.make
       stat( 's ) = statId
       stat( 't ) = new Date
@@ -239,7 +239,7 @@ class UserMeta extends MongoEntity( "a01v" ) {
       return null
     }
     
-    background {
+    background( "Find Gravatar" ) {
       try {
         val iconUrl = "https://secure.gravatar.com/avatar/" + md5Hex( email ) + ".jpg?d=404"
         val res = Http.GET( iconUrl )

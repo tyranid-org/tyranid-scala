@@ -350,10 +350,14 @@ class WebFilter extends TyrFilter {
           first = false
         }
 
+
+
+        if ( B.profile && 30.dice == 1 )
+          log( Event.Profile, "m" -> ( "ThreadLocal size: " + t.memorySize ) )
+
         if ( handle( webloc ) ) {
           //sp am( "CACHE: CLEARING" )
-          t.tidCache.clear
-          t.requestCache.clear
+          t.clearRequestCache
           return
         }
       }

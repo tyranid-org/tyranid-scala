@@ -45,6 +45,7 @@ object TyranidConfig extends MongoEntity( tid = "a03t" ) {
   "allTmpl"        is DbBoolean         as "Templates for All";
   "confAlertLimit" is DbInt             as "Send Alert when this limit is hit";     
   "convIndd"       is DbInt             as "Convert InDesign Docs";     
+  "profile"        is DbBoolean         as "Profiling";     
 
   def apply():TyranidConfig = singleton
 
@@ -148,6 +149,12 @@ object TyranidConfiglet extends Weblet {
         TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "debugChat" -> obj.b( 'debugChat ) ) ) )
         sess.notice( "Chat Debug has been turned " + ( B.debugChat ? "ON" | "OFF" ) + "." )
   
+      case "profile" =>
+        val obj = TyranidConfig()
+        obj( 'profile ) = !B.profile
+        TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "profile" -> obj.b( 'profile ) ) ) )
+        sess.notice( "Profiling has been turned " + ( B.profile ? "ON" | "OFF" ) + "." )
+  
       case "syncWebDav" =>
         val obj = TyranidConfig()
         obj( 'syncWebDav ) = !B.syncWebDav
@@ -206,6 +213,7 @@ object TyranidConfiglet extends Weblet {
               "recaptcha"      -> B.requireReCaptcha,
               "lite"           -> B.enableLite,
               "accessLogs"     -> B.accessLogs,
+              "profile"        -> B.profile,
               "convIndd"       -> B.convIndd
             )
          ),

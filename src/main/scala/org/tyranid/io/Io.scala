@@ -38,6 +38,8 @@ import org.tyranid.cloud.aws.S3
 import org.tyranid.content.{ Content, ContentMeta }
 import org.tyranid.db.{ Entity, Record }
 import org.tyranid.db.meta.{ TidItem }
+import org.tyranid.db.mongo.Imp._
+import org.tyranid.db.mongo.{ MongoEntity }
 import org.tyranid.web.{ WebContext, Weblet, WebHandledException, FileUploadSupport }
 import org.tyranid.web.FileUploadSupport.BodyParams
 
@@ -201,6 +203,17 @@ object Iolet extends Weblet {
         }
       }
 
+      // This will save the property off into an existing object if needed
+      val saveProp = web.s( 'upp )
+      
+      if ( saveProp.notBlank ) {
+        val tid = web.s( 'c )                
+        val en = Entity.byTid( tid )
+        
+        if ( en.is[MongoEntity] )
+          en.as[MongoEntity].db.update( Mobj( "_id" -> en.as[MongoEntity].tidToId( tid ) ), Mobj( $set -> Mobj( saveProp -> url ) ) )
+      }
+      
       if ( filename.notBlank )
         web.json( Map( "thumbSrc" -> org.tyranid.io.File.tempBucket.url( filename ) ) )
       else

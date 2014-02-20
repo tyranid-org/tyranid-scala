@@ -143,7 +143,7 @@ object Loginlet extends Weblet {
 
         if ( user != null ) {
           sess.notice( "Your activation code has been sent to your email and should be there shortly." )
-          background { B.emailTemplates.welcome( user ) }
+          background( "Resend email activation code" ) { B.emailTemplates.welcome( user ) }
         } else {
           sess.notice( "Your user was not found." )
         }
@@ -176,7 +176,7 @@ object Loginlet extends Weblet {
 
         if ( activationCode.notBlank ) {
           sess.notice( "Your account has not been activated yet.  Your activation link has been sent to " + email + "." )
-          background { B.emailTemplates.welcome( B.User( dbUser ), activationCode ) }
+          background( "Forgot/Resend email activation" ) { B.emailTemplates.welcome( B.User( dbUser ), activationCode ) }
         } else {
           val user = B.User(dbUser)
           val resetCode = Base62.make(8)
@@ -359,7 +359,7 @@ object Loginlet extends Weblet {
   def sendActivation( user:User ) = {
     val activationCode = Base62.make(8)
     user( 'activationCode ) = activationCode
-    background { B.emailTemplates.welcome( user, activationCode ) }
+    background( "Send Email Activation" ) { B.emailTemplates.welcome( user, activationCode ) }
   }
 
   def validateEmail( email:String ) =
