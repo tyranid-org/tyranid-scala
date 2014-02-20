@@ -204,6 +204,8 @@ object Scheduler {
 
   def start = {
     background( "Start Scheduler" ) {
+      Thread.sleep( Time.OneMinuteMs )
+
       while ( true && !B.SHUTTINGDOWN ) {
         T.clearRequestCache
 

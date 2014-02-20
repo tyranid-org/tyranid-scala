@@ -43,6 +43,7 @@ import org.tyranid.secure.DbReCaptcha
 import org.tyranid.session.{ Session, ThreadData, WebSession }
 import org.tyranid.web.{ Comet, WebContext }
 
+
 object UserStatType extends RamEntity( tid = "a0Nt" ) {
   type RecType = UserStatType
   override def convert( view:TupleView ) = new UserStatType( view )
