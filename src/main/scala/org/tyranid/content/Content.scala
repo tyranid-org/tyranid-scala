@@ -840,7 +840,7 @@ trait ContentMeta extends PrivateKeyEntity {
   
   
   "color"             is DbChar(6)            is 'client;
-  "thumb"             is DbBoolean            is 'client; // Flag to state whether to use thumb instead of color
+  "thumbDate"         is DbDateTime           is 'client; // Flag to state whether to use thumb instead of color
   
   "locked"            is DbBoolean            is 'client;
   

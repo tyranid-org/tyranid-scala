@@ -169,6 +169,16 @@ object S3 {
       throw e
   }
   
+  def deleteKeys( bucket:S3Bucket, keys:String* ) = try {
+    val dor = new DeleteObjectsRequest( bucket.name )
+    dor.setKeys( keys.map( k => new DeleteObjectsRequest.KeyVersion( k ) ) )    
+    s3.deleteObjects( dor )
+  } catch {
+    case e:Throwable =>
+      println( "Error deleting [" + keys + "]" )
+      throw e
+  }
+  
   def findKey( bucket:S3Bucket, name:String ):String = {
     var objectListing = s3.listObjects( new ListObjectsRequest().withBucketName( bucket.name ) )
     var cnt = 0
