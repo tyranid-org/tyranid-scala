@@ -61,7 +61,7 @@ object WebFilter {
   val maintPattern = "/maintenance.html".r
   val robotsPattern = "/robots.txt".r
 
-  val assetPattern = java.util.regex.Pattern.compile( "((([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|map|htc|vtt|odt|wav|map)))|.*robots\\.txt)$)|.*io/thumb.*|.*/sso/.*" )
+  val assetPattern = java.util.regex.Pattern.compile( "((([^\\s]+(\\.(?i)(ico|jpeg|jpg|png|gif|bmp|js|css|ttf|eot|woff|svg|html|map|htc|vtt|odt|wav|map)))|.*robots\\.txt)$)|.*/io/.*|.*/sso/.*" )
 
   def notAsset( path:String ) = !assetPattern.matcher( path ).matches
 
