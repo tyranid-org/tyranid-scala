@@ -104,10 +104,37 @@ object Loginlet extends Weblet {
       // r means the client is handling the redirect
       web.b( 'r ) ? web.jsRes() | web.jsRes( Js( "router.navigate( '#login', { trigger : true } );" ) )
     case "/register" =>      
-      if ( !web.xhr )
-        web.redirect( "/#register" )
+      if ( !web.xhr ) {
+        val activationCode = web.s( "a" )
+        
+        if ( activationCode.isBlank )
+          web.redirect( "/#register" )
+        else
+          web.redirect( "/#register/" + activationCode )
+      }
         
       register( web, sess )
+    case "/loadCode" =>
+      val code = web.s( 'code )
+      
+      if ( code.isBlank )
+        return web.jsRes()
+        
+      val dbUser = B.User.db.findOne( Mobj( "activationCode" -> code ) )
+
+      if ( dbUser != null ) {        
+        val email = dbUser.s( 'email )
+        val domain = Email.domainFor( email )
+
+        val orgc = B.Org.db.find( Mobj( "domain" -> ( "^" + domain.encRegex + "$" ).toPatternI ) ).limit(1)
+        val org = orgc.hasNext ? B.Org( orgc.next ) | null
+        val company:String = ( org == null ) ? null | org.s( 'name )
+
+        return web.jsRes( JsModel( Map( "email" -> dbUser.s( 'email ), "company" -> company, "locked" -> company.notBlank ) ) )
+      }
+      
+      web.jsRes()
+      
     case "/log" =>      
       log( web.b( 'a ) ? Event.Alert | Event.Log, "m" -> ( "Name: " + web.s( 'n ) + ", Message: " + web.s( 'm ) ) )
       web.jsRes()
