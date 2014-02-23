@@ -245,7 +245,7 @@ object TrackingCookie {
           Mobj( "$set" -> Mobj( "bid" -> main.bid ) ),
           false,
           true )
-
+        
         /*
 
           We're only collapsing bids that are used by a single user, so this isn't needed yet
