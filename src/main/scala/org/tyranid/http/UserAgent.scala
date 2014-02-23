@@ -358,20 +358,10 @@ class UserAgent( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserAge
   //def betterThanIE9 = !isIE || uaVersion >=10 // !isIE || s( 'agentVersion )._i >= 10
   def betterThanIE9 = !isIE || s( 'agentVersion )._i >= 10 || uaVersion >= 10
   
-  def html5FileSupport = {
-    //updateIfNeeded
-    betterThanIE9
-  }
-  
   def htmlUnicodeSupport = {
     //updateIfNeeded
     betterThanIE8
   }
-  
-  def htmlCss3Rotate = {
-    //updateIfNeeded
-    betterThanIE8
-  }  
   
   def html5VideoSupport = {
     //updateIfNeeded
