@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2014 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.bson.types.ObjectId
 
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ Aws, S3Bucket }
+import org.tyranid.cloud.stackdriver.StackDriverApp
 import org.tyranid.content.Content
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.document.DocApp
@@ -228,7 +229,11 @@ trait Bootable {
 
   lazy val STAGE = !DEV && !PRODUCTION
 
-
+  lazy val ec2InstanceId = {
+    if ( DEV ) ""
+    else       ( Aws.instanceQueryUrl + "/latest/meta-data/instance-id" ).GET()._s
+  }
+  
   def mode =
     if ( DEV )        "development"
     else if ( STAGE ) "stage"
@@ -301,7 +306,9 @@ trait Bootable {
   val turboBridgeAccountId = ""
   val turboBridgeEmail = ""
   val turboBridgePassword = ""
-    
+
+  val stackdriver:StackDriverApp = null
+
   // Assistly
   val assistly:Multipass  = null
 
