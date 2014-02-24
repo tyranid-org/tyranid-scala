@@ -559,6 +559,8 @@ trait Session extends QuickCache {
         if ( mapping != null )       
           put( "sso", mapping )
       }
+
+      B.stackdriver.sendLiteCount
     }
       
     val onLogin = B.onLogin

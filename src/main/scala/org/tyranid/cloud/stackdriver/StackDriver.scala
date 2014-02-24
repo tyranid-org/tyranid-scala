@@ -89,11 +89,23 @@ case class StackDriverApp( apiKey:String ) {
   }
   
   val METRIC_WEB_SESSION_COUNT = "web_session_count"
+  val METRIC_LITE_COUNT = B.liteAppName + "_count"
   
   //// Tyranid specific calls
     
   def webSessionCount( value:Double ) {
     sendMe( METRIC_WEB_SESSION_COUNT, value )
+  }
+  
+  def sendLiteCount = ifProd {
+    import org.tyranid.session.WebSession
+    
+    val sessions = WebSession.sessions.values.seq
+    
+    sendMe( METRIC_LITE_COUNT, sessions.filter( ws => {
+      val tyrSession = ws.getAttribute( WebSession.HttpSessionKey ).as[org.tyranid.session.Session]
+      tyrSession != null && tyrSession.b( "lite" )
+    } ).size )
   }  
 }
 
