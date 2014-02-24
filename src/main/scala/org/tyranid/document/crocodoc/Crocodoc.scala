@@ -95,7 +95,7 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   
   def docPreviewContainer( extDocId:String, height:String="100%", print:Boolean = false, annotatable:Boolean = true ): NodeSeq =
     { print |* <script src={ B.CROCODOC_SCRIPT }></script> } ++
-    <div class={ "doc-view doc crocodoc" + ( annotatable |* " annotatableObject" ) } id={ "dv_" + extDocId }></div>
+    <div class={ "doc-view crocodoc" + ( annotatable |* " annotatableObject" ) } id={ "dv_" + extDocId }></div>
 
     /* ---
 
