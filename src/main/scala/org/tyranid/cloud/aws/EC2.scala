@@ -52,15 +52,15 @@ object EC2 {
     }
   }
   
-  
-  //"i-bc73089d"  
   def myInstanceTags = ( myInstance == null ) ? null | myInstance.getTags
   
-  def myInstanceHasTag( tagName: String, value:String = null ) : Boolean = {
-    if ( myInstance == null )
+  def myInstanceHasTag( tagName: String, value:String = null ): Boolean = {
+    val tags = myInstanceTags
+    
+    if ( tags == null )
       return false
       
-    for ( tag <- myInstance.getTags )
+    for ( tag <- tags )
       if ( tag.getKey == tagName && ( value.isBlank ? true | tag.getValue == value ) )
         return true
         
