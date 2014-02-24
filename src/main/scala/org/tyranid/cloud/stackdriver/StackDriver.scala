@@ -30,7 +30,15 @@ case class StackDriverApp( apiKey:String ) {
   
   def poster = new CustomMetricsPoster( apiKey )
   
-  def sendGlobal( metricName:String, value:Double, when:Date = null ) {
+  def ifProd( block: => Unit ) {
+    if ( B.PRODUCTION ) {
+      background( "stackdriver custom stat" ) {
+        block
+      }
+    }
+  }
+  
+  def sendGlobal( metricName:String, value:Double, when:Date = null ) = ifProd {
     ( when == null ) ? poster.sendMetricDataPoint( metricName, value ) | poster.sendMetricDataPoint( metricName, value, when )
   }
   
@@ -41,43 +49,51 @@ case class StackDriverApp( apiKey:String ) {
       poster.sendMetricDataPoint( metricName, value )
   }
 
-  def sendGlobalsWhen( metricName:String, when:Date, values:Double* ) {
+  def sendGlobalsWhen( metricName:String, when:Date, values:Double* ) = ifProd {
     val poster = this.poster
     
     for ( value <- values )
       ( when == null ) ? poster.sendMetricDataPoint( metricName, value ) | poster.sendMetricDataPoint( metricName, value, when ) 
   }
   
-  def sendDiffGlobals( map:Map[String,Double], when:Date = null ) {
+  def sendDiffGlobals( map:Map[String,Double], when:Date = null ) = ifProd {
     val poster = this.poster
     
     for ( key <- map.keys )
       ( when == null ) ? poster.sendMetricDataPoint( key, map.get( key ).get ) | poster.sendMetricDataPoint( key, map.get( key ).get, when )
   }
 
-  def sendMe( metricName:String, value:Double, when:Date = null ) {
+  def sendMe( metricName:String, value:Double, when:Date = null ) = ifProd {
     ( when == null ) ? poster.sendInstanceMetricDataPoint( metricName, value, B.ec2InstanceId ) | poster.sendInstanceMetricDataPoint( metricName, value, when, B.ec2InstanceId )
   }
   
-  def sendMes( metricName:String, values:Double* ) {
+  def sendMes( metricName:String, values:Double* ) = ifProd {
     val poster = this.poster
     
     for ( value <- values )
       poster.sendInstanceMetricDataPoint( metricName, value, B.ec2InstanceId )
   }
   
-  def sendMesWhen( metricName:String, when: Date, values:Double* ) {
+  def sendMesWhen( metricName:String, when: Date, values:Double* ) = ifProd {
     val poster = this.poster
     
     for ( value <- values )
       ( when == null ) ? poster.sendInstanceMetricDataPoint( metricName, value, B.ec2InstanceId ) | poster.sendInstanceMetricDataPoint( metricName, value, when, B.ec2InstanceId )
   }
   
-  def sendDiffMes( map:Map[String,Double], when:Date = null ) {
+  def sendDiffMes( map:Map[String,Double], when:Date = null ) = ifProd {
     val poster = this.poster
     
     for ( key <- map.keys )
       ( when == null ) ? poster.sendInstanceMetricDataPoint( key, map.get( key ).get, B.ec2InstanceId ) | poster.sendInstanceMetricDataPoint( key, map.get( key ).get, when, B.ec2InstanceId ) 
   }
+  
+  val METRIC_WEB_SESSION_COUNT = "web_session_count"
+  
+  //// Tyranid specific calls
+    
+  def webSessionCount( value:Double ) {
+    sendMe( METRIC_WEB_SESSION_COUNT, value )
+  }  
 }
 

@@ -152,14 +152,15 @@ class WebSessionListener extends HttpSessionListener {
   def sessionCreated( e:HttpSessionEvent ) {
     val session = e.getSession
     WebSession.sessions( session.getId ) = session
+
+    B.stackdriver.webSessionCount( WebSession.sessions.size )
   }
  
   def sessionDestroyed( e:HttpSessionEvent ) {
     val hs = e.getSession
     val hsid = hs.getId
     val tyrSession = hs.getAttribute( WebSession.HttpSessionKey ).as[org.tyranid.session.Session]
-    
-    
+        
     val sess = WebSession.sessions.remove( hsid ).getOrElse( null )
     
     if ( sess != hs )
@@ -186,6 +187,8 @@ class WebSessionListener extends HttpSessionListener {
         }
       }
     }
+    
+    B.stackdriver.webSessionCount( WebSession.sessions.size )
   }	
 }
 
