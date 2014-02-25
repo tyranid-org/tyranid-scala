@@ -121,7 +121,7 @@ _doc = {"status": 3, "socketioHost": "//socket.crocodoc.com:5555/", "objects": [
         previewJson = session.isBlank ? null | Map( 
           "extDocId" -> extDocId,
           "session" -> session,
-          "_doc" -> ( B.CROC_JS_V2 ? Http.GET( "https://crocodoc.com/webservice/document.js?session=" + session )._s.substring( 6 ).parseJson | Map() )
+          "_doc" -> ( B.CROC_JS_V2 ? Http.GET( "https://crocodoc.com/webservice/document.js?session=" + session ).s.substring( 6 ).parseJson | Map() )
         )
         
         tries = ( previewJson == null ) ? 3 | ( tries + 1 )
@@ -152,12 +152,12 @@ _doc = {"status": 3, "socketioHost": "//socket.crocodoc.com:5555/", "objects": [
     
       if ( entity != null ) {
         if ( "application/json" == entity.getContentType.getValue ) {
-          val json = Json.parse( res._s )
+          val json = Json.parse( res.s )
           
           if ( json.s( 'error ) == "thumbnail not available" ) {
             Thread.sleep( 2000 ) // retry -- this is the only time this method does not return out of this while loop
           } else {
-            log( Event.Crocodoc, "m" -> ( "Get Thumbnail failed for crocodoc uuid: " + extDocId + ", error is: " + res._s ) )
+            log( Event.Crocodoc, "m" -> ( "Get Thumbnail failed for crocodoc uuid: " + extDocId + ", error is: " + res.s ) )
             return null 
           }
         } else {
@@ -181,7 +181,7 @@ _doc = {"status": 3, "socketioHost": "//socket.crocodoc.com:5555/", "objects": [
   }
   
   def getText( extDocId:String ):String = {
-    val text = Http.GET( "https://crocodoc.com/api/v2/download/text?token=" + apiKey + "&uuid=" + extDocId )._s
+    val text = Http.GET( "https://crocodoc.com/api/v2/download/text?token=" + apiKey + "&uuid=" + extDocId ).s
     
     if ( text.startsWith( "{\"error\"" ) ) {
       log( Event.Crocodoc, "m" -> ( "Extract text failed for crocodoc uuid: " + extDocId + ", error is: " + text ) )
@@ -192,7 +192,7 @@ _doc = {"status": 3, "socketioHost": "//socket.crocodoc.com:5555/", "objects": [
   }
   
   def delete( extDocId:String ):Boolean = {
-    val result = Http.POST( "https://crocodoc.com/api/v2/document/delete", null, Map( "token" -> apiKey, "uuid" -> extDocId ) )._s
+    val result = Http.POST( "https://crocodoc.com/api/v2/document/delete", null, Map( "token" -> apiKey, "uuid" -> extDocId ) ).s
     
     if ( result == "true" ) 
       true

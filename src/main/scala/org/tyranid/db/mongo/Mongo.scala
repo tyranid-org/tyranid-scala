@@ -110,10 +110,10 @@ object Imp {
   }
 
   object Mongo {
-//    val options = MongoClientOptions.builder()
-//    options.connectionsPerHost( 20 )
-//    lazy val connect = new MongoClient( B.mongoHost, options.build() )
-    lazy val connect = new MongoClient( B.mongoHost )
+    val options = MongoClientOptions.builder()
+    options.connectionsPerHost( 200 )
+    lazy val connect = new MongoClient( B.mongoHost, options.build() )
+    //lazy val connect = new MongoClient( B.mongoHost )
     
     trait ImmutableObject extends DBObject {
       import java.util.Map

@@ -17,6 +17,8 @@
 
 package org.tyranid.profile
 
+import org.apache.http.util.EntityUtils
+
 import java.security.MessageDigest
 import java.util.{ Date, TimeZone }
 
@@ -34,7 +36,7 @@ import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.db.ram.RamEntity
 import org.tyranid.db.tuple.{ Tuple, TupleView }
-import org.tyranid.http.Http
+import org.tyranid.http.{ Http, HttpResult }
 import org.tyranid.image.DbThumbnail
 import org.tyranid.sms.SMS
 import org.tyranid.sso.SsoMapping
@@ -241,15 +243,20 @@ class UserMeta extends MongoEntity( "a01v" ) {
     }
     
     background( "Find Gravatar" ) {
+      var res:HttpResult = null
+      
       try {
         val iconUrl = "https://secure.gravatar.com/avatar/" + md5Hex( email ) + ".jpg?d=404"
-        val res = Http.GET( iconUrl )
+        res = Http.GET( iconUrl )
         
         if ( res.response.getStatusLine.getStatusCode != 404 )
           B.User.db.update( Mobj( "_id" -> userId ), Mobj( $set -> Mobj( "thumbnail" -> iconUrl ) ) )
       } catch {
         case t:Throwable =>
           t.printStackTrace()
+      } finally {
+        if ( res != null )
+          EntityUtils.consumeQuietly( res.response.getEntity )  
       }
     }
   }

@@ -466,7 +466,9 @@ case class HttpResult( response:HttpResponse, context:HttpContext ) {
 
   def s = {
     val entity = response.getEntity
-    entity != null |* EntityUtils.toString( entity )
+    val result = entity != null |* EntityUtils.toString( entity )
+    EntityUtils.consumeQuietly( entity )    
+    result
   }
 
   override def toString = s
@@ -581,12 +583,14 @@ object Http {
         ( client.execute( request, context ), context )
       }
       
+      val result = HttpResult( response, context )
+      
       response.getStatusLine.getStatusCode match {
       case 403 =>
         println( request.getURI()._s )
-        println( scala.io.Source.fromInputStream( response.getEntity().getContent() ).getLines().mkString("\n") )
+        println( "403 Result: " + result.s )
         throw new Http403Exception( response )
-      case _   => HttpResult( response, context )
+      case _   => result
       }
     } catch {
       case _:java.net.ConnectException =>
