@@ -88,8 +88,8 @@ case class StackDriverApp( apiKey:String ) {
       ( when == null ) ? poster.sendInstanceMetricDataPoint( key, map.get( key ).get, B.ec2InstanceId ) | poster.sendInstanceMetricDataPoint( key, map.get( key ).get, when, B.ec2InstanceId ) 
   }
   
-  val METRIC_WEB_SESSION_COUNT = "web_session_count"
-  val METRIC_LITE_COUNT = B.liteAppName + "_count"
+  lazy val METRIC_WEB_SESSION_COUNT = "web_session_count"
+  lazy val METRIC_LITE_COUNT = B.liteAppName + "_count"
   
   //// Tyranid specific calls
     

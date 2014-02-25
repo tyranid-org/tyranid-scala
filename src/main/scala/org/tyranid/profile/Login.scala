@@ -310,7 +310,7 @@ object Loginlet extends Weblet {
           val email = web.s( 'email )
 
           if ( Email.isValid( email ) ) {
-            val exists = B.User.db.exists( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) )
+            val exists = B.User.db.exists( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI, "activationCode" -> Mobj( $exists -> false ) ) )
 
             if ( exists ) {
               sess.error( "Email is already in use." )
@@ -344,6 +344,16 @@ object Loginlet extends Weblet {
       }
       
       val email = web.s( 'email )
+      
+      if ( Email.isValid( email ) ) {
+        val exists = B.User.db.exists( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI, "activationCode" -> Mobj( $exists -> false ) ) )
+
+        if ( exists ) {
+          sess.error( "Email is already in use." )
+          return web.jsRes()
+        }
+      }       
+      
       val companyName = web.s( 'company ).trim
 
       if ( user.oid( 'org ) == null && companyName.notBlank ) {
