@@ -43,7 +43,7 @@ import org.tyranid.web.WebIgnoreException
 
 object Loginlet extends Weblet {
   override val requiresLogin = false
-  
+
   def handle( web: WebContext ) {
     val sess = T.session
 
@@ -56,7 +56,7 @@ object Loginlet extends Weblet {
     case "/in" =>
       if ( !web.xhr )
         web.redirect( T.website( "/#login", sess.user ) )
-        
+
       val saving = web.b( "xhrSbt" )
 
       if ( saving ) {
@@ -95,34 +95,34 @@ object Loginlet extends Weblet {
 
     case "/out" =>
       val website = T.website( "/", sess.user )
-      
+
       sess.logout()
-      
+
       if ( !web.xhr )
         web.redirect( website )
-        
+
       // r means the client is handling the redirect
       web.b( 'r ) ? web.jsRes() | web.jsRes( Js( "router.navigate( '#login', { trigger : true } );" ) )
-    case "/register" =>      
+    case "/register" =>
       if ( !web.xhr ) {
         val activationCode = web.s( "a" )
-        
+
         if ( activationCode.isBlank )
           web.redirect( "/#register" )
         else
           web.redirect( "/#register/" + activationCode )
       }
-        
+
       register( web, sess )
     case "/loadCode" =>
       val code = web.s( 'code )
-      
+
       if ( code.isBlank )
         return web.jsRes()
-        
+
       val dbUser = B.User.db.findOne( Mobj( "activationCode" -> code ) )
 
-      if ( dbUser != null ) {        
+      if ( dbUser != null ) {
         val email = dbUser.s( 'email )
         val domain = Email.domainFor( email )
 
@@ -132,13 +132,13 @@ object Loginlet extends Weblet {
 
         return web.jsRes( JsModel( Map( "email" -> dbUser.s( 'email ), "company" -> company, "locked" -> true ) ) )
       }
-      
+
       web.jsRes()
-      
-    case "/log" =>      
+
+    case "/log" =>
       log( web.b( 'a ) ? Event.Alert | Event.Log, "m" -> ( "Name: " + web.s( 'n ) + ", Message: " + web.s( 'm ) ) )
       web.jsRes()
-      
+
     case "/company" =>
       val term = web.req.s( 'term ).toLowerCase
       def icon( thumb:String ) = thumb.notBlank ? thumb | B.Org.defaultIcon
@@ -238,24 +238,24 @@ object Loginlet extends Weblet {
     case "/tz" =>
       T.session.setTimeZoneFromClient( web.s( 'v ) )
       web.jsRes()
-      
+
     case "/reconnect" =>
       val userTid = web.s( 'u )
       val user = B.User.getByTid( userTid )
-      
+
       if ( user != null && user.s( 'ls ) == web.s( 's ) ) {
         sess.user = user
-        
+
         if ( !sess.isAuthenticated )
           sess.login( user, setAuth = true )
-          
+
         web.jsRes( JsValue( T.session.httpSessionId ) )
       } else {
         web.jsRes()
       }
     case "/checkEmail" =>
       checkEmail( web, sess, web.s( 'email ) )
-      
+
     case "/null" =>
       log( Event.RefInt, "m" -> ( "null, Referer: " + web.req.getHeader( "referer" ) ) )
     case _ =>
@@ -275,19 +275,19 @@ object Loginlet extends Weblet {
           sess.error( "Sorry, " + org.s( 'name ) + " is licensed for a specfic number of seats, and none are available." )
           return web.jsRes()
         }
-        
+
         T.user( 'org ) = org.id
         return web.jsRes( Js( "$('#company').val( '" + org.s( 'name ) + "' ).attr( 'readonly', 'readonly' );" ) )
-      } 
-      
+      }
+
       T.user( 'org ) = null
       return web.jsRes( Js( "$('#company').val( '' ).removeAttr( 'readonly' );" ) )
-    } 
-    
+    }
+
     T.user( 'org ) = null
-    return web.jsRes( Js( "$('#company').val( '' ).removeAttr( 'readonly' );" ) )    
+    return web.jsRes( Js( "$('#company').val( '' ).removeAttr( 'readonly' );" ) )
   }
-  
+
   def register( web:WebContext, sess:Session ) {
     val user =
       sess.user match {
@@ -312,9 +312,9 @@ object Loginlet extends Weblet {
 
           if ( Email.isValid( email ) ) {
             val myActCode = user.s( 'activationCode )
-            val exists = myActCode.isBlank ? 
-              B.User.db.exists( Mobj( "email" -> email.encRegex.toPatternI ) ) |
-              B.User.db.exists( Mobj( "email" -> email.encRegex.toPatternI, "activationCode" -> Mobj( $ne -> myActCode ) ) )
+            val exists = myActCode.isBlank ?
+              B.User.db.exists( Mobj( "email" -> ( "^" + email.encRegex + "$" ).toPatternI ) ) |
+              B.User.db.exists( Mobj( "email" -> ( "^" + email.encRegex + "$" ).toPatternI, "activationCode" -> Mobj( $ne -> myActCode ) ) )
 
             if ( exists ) {
               sess.error( "That email is already in use. If you were invited, then use the activation link in your email. If you do not have the email, then have another sent you from the 'Forgot Password' link on the Sign In page." )
@@ -322,11 +322,11 @@ object Loginlet extends Weblet {
             }
 
             return checkEmail( web, sess, email )
-          } 
-          
+          }
+
           return web.jsRes()
         case "company" =>
-          val exists = B.Org.db.exists( Mobj( "name" -> web.s( 'company ).encRegex.toPatternI ) )
+          val exists = B.Org.db.exists( Mobj( "name" -> ( "^" + web.s( 'company ).encRegex + "$" ).toPatternI ) )
 
           if ( exists ) {
             sess.error( "Company name is already in use." )
@@ -346,21 +346,21 @@ object Loginlet extends Weblet {
         sess.error( "Invalid captcha, please try again." )
         return web.jsRes( Js( "Recaptcha.reload();" ) )
       }
-      
+
       val email = web.s( 'email )
-      
+
       if ( Email.isValid( email ) ) {
         val myActCode = user.s( 'activationCode )
-        val exists = myActCode.isBlank ? 
-          B.User.db.exists( Mobj( "email" -> email.encRegex.toPatternI ) ) |
-          B.User.db.exists( Mobj( "email" -> email.encRegex.toPatternI, "activationCode" -> Mobj( $ne -> myActCode ) ) )
+        val exists = myActCode.isBlank ?
+          B.User.db.exists( Mobj( "email" -> ( "^" + email.encRegex + "$" ).toPatternI ) ) |
+          B.User.db.exists( Mobj( "email" -> ( "^" + email.encRegex + "$" ).toPatternI, "activationCode" -> Mobj( $ne -> myActCode ) ) )
 
         if ( exists ) {
           sess.error( "That email is already in use. If you were invited, then use the activation link in your email. If you do not have the email, then have another sent you from the 'Forgot Password' link on the Sign In page." )
           return web.jsRes()
         }
-      }       
-      
+      }
+
       val companyName = web.s( 'company ).trim
 
       if ( user.oid( 'org ) == null && companyName.notBlank ) {
@@ -395,8 +395,8 @@ object Loginlet extends Weblet {
       B.welcomeUserEvent
 
       return web.jsRes( JsData( user ), JsModel( user.toClientCommonMap( true ), "common" ), JsModel( Map( "dashboard" -> true ) ) )
-    } 
-    
+    }
+
     web.forward( js = "mainLoad( function() { router.navigate( '#register', { trigger: true } ); } );" )
   }
 
