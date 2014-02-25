@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2014 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -211,7 +211,7 @@ object S3 {
       delete( bucket, keyPrefix.isBlank ? key | ( keyPrefix + key ) )
   }
   
-  def copy( sourceBucket:S3Bucket, sourceKey:String, targetBucket:S3Bucket, targetKey:String, encrypt:Boolean = false ) = try {
+  def copy( sourceBucket:S3Bucket, sourceKey:String, targetBucket:S3Bucket, targetKey:String, public:Boolean = false, encrypt:Boolean = false ) = try {
     val copyObjRequest = new CopyObjectRequest( sourceBucket.name, sourceKey, targetBucket.name, targetKey )
             
     if ( encrypt ) {
@@ -222,6 +222,10 @@ object S3 {
     }
     
     s3.copyObject( copyObjRequest )
+    
+    
+    if ( public )
+      access( targetBucket, targetKey, true )    
   } catch {
     case e:Throwable =>
       println( "Error copying from [" + sourceKey + "] to [" + targetKey + "]" )
@@ -229,11 +233,8 @@ object S3 {
   }
 
   def move( bucketFrom:S3Bucket, fromPath:String, bucketTo:S3Bucket, toPath:String, public:Boolean = false ) = {
-    copy( bucketFrom, fromPath, bucketTo, toPath )
+    copy( bucketFrom, fromPath, bucketTo, toPath, public = public )
     delete( bucketFrom, fromPath )
-    
-    if ( public )
-      access( bucketTo, toPath, true )
   }
 
   def access( bucket:S3Bucket, key:String, public:Boolean = false, authenticated:Boolean = false ) = {

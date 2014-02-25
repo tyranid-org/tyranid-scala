@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2014 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,13 +152,14 @@ class WebSessionListener extends HttpSessionListener {
   def sessionCreated( e:HttpSessionEvent ) {
     val session = e.getSession
     WebSession.sessions( session.getId ) = session
+
+    B.stackdriver.webSessionCount( WebSession.sessions.size )
   }
 
   def sessionDestroyed( e:HttpSessionEvent ) {
     val hs = e.getSession
     val hsid = hs.getId
     val tyrSession = hs.getAttribute( WebSession.HttpSessionKey ).as[org.tyranid.session.Session]
-
 
     val sess = WebSession.sessions.remove( hsid ).getOrElse( null )
 
@@ -186,6 +187,8 @@ class WebSessionListener extends HttpSessionListener {
         }
       }
     }
+
+    B.stackdriver.webSessionCount( WebSession.sessions.size )
   }
 }
 
@@ -556,6 +559,8 @@ trait Session extends QuickCache {
         if ( mapping != null )
           put( "sso", mapping )
       }
+
+      B.stackdriver.sendLiteCount
     }
 
     val onLogin = B.onLogin

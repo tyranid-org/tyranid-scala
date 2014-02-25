@@ -1,7 +1,7 @@
 package org.tyranid.sso
 
 /**
- * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2014 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -323,7 +323,7 @@ $( $('#idp').focus() );
       */
 
       val orgId = mapping.oid( 'org )
-      val userc = B.User.db.find( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) ).limit(1)
+      val userc = B.User.db.find( Mobj( "email" -> email.encRegex.toPatternI ) ).limit(1)
       val user = userc.hasNext ? userc.next | null
 
       if ( user == null ) {

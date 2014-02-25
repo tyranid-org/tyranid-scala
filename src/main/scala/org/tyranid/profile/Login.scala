@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2013 Tyranid <http://tyranid.org>
+ * Copyright (c) 2008-2014 Tyranid <http://tyranid.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,7 +130,7 @@ object Loginlet extends Weblet {
         val org = orgc.hasNext ? B.Org( orgc.next ) | null
         val company:String = ( org == null ) ? null | org.s( 'name )
 
-        return web.jsRes( JsModel( Map( "email" -> dbUser.s( 'email ), "company" -> company, "locked" -> company.notBlank ) ) )
+        return web.jsRes( JsModel( Map( "email" -> dbUser.s( 'email ), "company" -> company, "locked" -> true ) ) )
       }
       
       web.jsRes()
@@ -191,7 +191,8 @@ object Loginlet extends Weblet {
           return web.jsRes()
         }
 
-        val dbUserc = B.User.db.find( Mobj( "email" -> email.toPatternI ) ).limit(1)
+        println( email )
+        val dbUserc = B.User.db.find( Mobj( "email" -> email.encRegex.toPatternI ) ).limit(1)
         val dbUser = dbUserc.hasNext ? dbUserc.next | null
 
         if ( dbUser == null ) {
@@ -310,10 +311,13 @@ object Loginlet extends Weblet {
           val email = web.s( 'email )
 
           if ( Email.isValid( email ) ) {
-            val exists = B.User.db.exists( Mobj( "email" -> ("^" + email.encRegex + "$").toPatternI ) )
+            val myActCode = user.s( 'activationCode )
+            val exists = myActCode.isBlank ? 
+              B.User.db.exists( Mobj( "email" -> email.encRegex.toPatternI ) ) |
+              B.User.db.exists( Mobj( "email" -> email.encRegex.toPatternI, "activationCode" -> Mobj( $ne -> myActCode ) ) )
 
             if ( exists ) {
-              sess.error( "Email is already in use." )
+              sess.error( "That email is already in use. If you were invited, then use the activation link in your email. If you do not have the email, then have another sent you from the 'Forgot Password' link on the Sign In page." )
               return web.jsRes()
             }
 
@@ -322,7 +326,7 @@ object Loginlet extends Weblet {
           
           return web.jsRes()
         case "company" =>
-          val exists = B.Org.db.exists( Mobj( "name" -> ("^" + web.s( 'company ).encRegex + "$").toPatternI ) )
+          val exists = B.Org.db.exists( Mobj( "name" -> web.s( 'company ).encRegex.toPatternI ) )
 
           if ( exists ) {
             sess.error( "Company name is already in use." )
@@ -344,10 +348,23 @@ object Loginlet extends Weblet {
       }
       
       val email = web.s( 'email )
+      
+      if ( Email.isValid( email ) ) {
+        val myActCode = user.s( 'activationCode )
+        val exists = myActCode.isBlank ? 
+          B.User.db.exists( Mobj( "email" -> email.encRegex.toPatternI ) ) |
+          B.User.db.exists( Mobj( "email" -> email.encRegex.toPatternI, "activationCode" -> Mobj( $ne -> myActCode ) ) )
+
+        if ( exists ) {
+          sess.error( "That email is already in use. If you were invited, then use the activation link in your email. If you do not have the email, then have another sent you from the 'Forgot Password' link on the Sign In page." )
+          return web.jsRes()
+        }
+      }       
+      
       val companyName = web.s( 'company ).trim
 
       if ( user.oid( 'org ) == null && companyName.notBlank ) {
-        val exists = B.Org.db.exists( Mobj( "name" -> ("^" + companyName.encRegex + "$").toPatternI ) )
+        val exists = B.Org.db.exists( Mobj( "name" -> companyName.encRegex.toPatternI ) )
 
         if ( exists ) {
           sess.error( "Company name is already in use." )
