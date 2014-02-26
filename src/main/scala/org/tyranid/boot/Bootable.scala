@@ -221,7 +221,7 @@ trait Bootable {
 
   lazy val securityGroup =
     if ( DEV ) ""
-    else       ( Aws.instanceQueryUrl + "/latest/meta-data/security-groups" ).GET()._s
+    else       ( Aws.instanceQueryUrl + "/latest/meta-data/security-groups" ).GET().s
 
   lazy val BETA = false //!DEV && !STAGE && hostName.indexOf( "-beta" ) != -1
 
@@ -231,7 +231,7 @@ trait Bootable {
 
   lazy val ec2InstanceId = {
     if ( DEV ) ""
-    else       ( Aws.instanceQueryUrl + "/latest/meta-data/instance-id" ).GET()._s
+    else       ( Aws.instanceQueryUrl + "/latest/meta-data/instance-id" ).GET().s
   }
   
   def mode =
