@@ -49,7 +49,7 @@ import org.tyranid.web.{ Comet, WebContext }
  */
 
 object SessionCleaner { 
-  val maxIdleTimeCheck = Time.OneHourMs + (5*Time.OneMinuteMs)
+  val maxIdleTimeCheck = WebSession.IDLE_TIMEOUT + (5*Time.OneMinuteMs)
   
   def cleanLocal {
     if ( B.SHUTTINGDOWN )
@@ -133,6 +133,8 @@ object SessionCleaner {
  */
 
 object WebSession {
+  val IDLE_TIMEOUT = 5*Time.OneMinuteMs // Time.OneHourMs
+  
   val sessions = mutable.Map[String,HttpSession]()
 
   val HttpSessionKey = "tyrSess"
@@ -182,8 +184,12 @@ class WebSessionListener extends HttpSessionListener {
           val now = System.currentTimeMillis
           val idle = now - hs.getLastAccessedTime()
           
-          if ( idle > Time.OneHourMs )
+          if ( idle > WebSession.IDLE_TIMEOUT ) {
+            if ( !B.PRODUCTION )
+              spam( "Timing out: " + hsid )
+              
             Comet.timeout( hsid )
+          }
         }
       }
     }
