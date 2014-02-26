@@ -80,6 +80,7 @@ object S3 {
     } else {
       val req = new GeneratePresignedUrlRequest( bucket.name, key )
       req.setExpiration( expiration )
+      spam( "bucket.name=" + bucket.name + " key=" + key + " expiration=" + expiration )
       s3.generatePresignedUrl( req )._s
     }
   }
