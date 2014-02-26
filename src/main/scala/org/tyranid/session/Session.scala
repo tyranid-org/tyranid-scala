@@ -133,7 +133,7 @@ object SessionCleaner {
  */
 
 object WebSession {
-  val IDLE_TIMEOUT = 5*Time.OneMinuteMs // Time.OneHourMs
+  val IDLE_TIMEOUT = Time.OneHourMs
   
   val sessions = mutable.Map[String,HttpSession]()
 
