@@ -97,6 +97,27 @@ object SessionCleaner {
     if ( invalidSessions.nonEmpty )
       B.SessionData.db.remove( Mobj( "sv" -> ipHost, "ss" -> Mobj( $in -> invalidSessions.toMlist ) ) )
 
+    WebSession.sessions.filter { sess =>
+      val httpsess = sess._2 
+    
+      try {
+        httpsess.getAttribute( WebSession.InvalidateKey ) != null
+      } catch {
+        case e:IllegalStateException =>
+          true
+        case e:Throwable =>
+          e.printStackTrace
+          false
+      }
+    } foreach { sess =>
+      try {
+        sess._2.invalidate
+      } catch {
+        case t:Throwable =>
+          // bury
+      }
+    }
+      
     if ( B.profile )
       log( Event.Profile, "m" -> ( "WebSession size: " + WebSession.sessions.memorySize ) )
   }
@@ -138,6 +159,7 @@ object WebSession {
   val sessions = mutable.Map[String,HttpSession]()
 
   val HttpSessionKey = "tyrSess"
+  val InvalidateKey  = "tyrInv"
 
   /*
   def visit( visitor: ( Session ) => Unit ) =
@@ -305,6 +327,7 @@ class ThreadData {
 
   def unlinkSession = {
     http.setAttribute( WebSession.HttpSessionKey, null )
+    http.setAttribute( WebSession.InvalidateKey, Boolean.box( true ) )
     http.isLoggingOut = true
     tyrSession = null
   }
