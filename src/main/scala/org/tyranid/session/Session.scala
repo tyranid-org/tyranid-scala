@@ -97,6 +97,7 @@ object SessionCleaner {
     if ( invalidSessions.nonEmpty )
       B.SessionData.db.remove( Mobj( "sv" -> ipHost, "ss" -> Mobj( $in -> invalidSessions.toMlist ) ) )
 
+      /*
     WebSession.sessions.filter { sess =>
       val httpsess = sess._2 
     
@@ -117,6 +118,7 @@ object SessionCleaner {
           // bury
       }
     }
+    */
       
     if ( B.profile )
       log( Event.Profile, "m" -> ( "WebSession size: " + WebSession.sessions.memorySize ) )
@@ -187,8 +189,12 @@ class WebSessionListener extends HttpSessionListener {
         
     val sess = WebSession.sessions.remove( hsid ).getOrElse( null )
     
-    if ( sess != hs )
-      spam( "Sessions do not match!" )
+    if ( sess != hs ) { 
+      spam( "Sessions do not match: " + hsid )
+      
+      if ( sess == null )
+        spam( "session was not in WebSession.sessions." )
+    }
     
     if ( sess != null )
       sess.removeAttribute( WebSession.HttpSessionKey )
@@ -199,6 +205,7 @@ class WebSessionListener extends HttpSessionListener {
       val user = tyrSession.user
       tyrSession.user.clearCache()
       tyrSession.user = null
+      
       if ( user != null ) {
         B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "ls" -> hsid ) ) )
         
@@ -327,7 +334,7 @@ class ThreadData {
 
   def unlinkSession = {
     http.setAttribute( WebSession.HttpSessionKey, null )
-    http.setAttribute( WebSession.InvalidateKey, Boolean.box( true ) )
+    //http.setAttribute( WebSession.InvalidateKey, Boolean.box( true ) )
     http.isLoggingOut = true
     tyrSession = null
   }
