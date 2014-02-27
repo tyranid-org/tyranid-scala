@@ -118,12 +118,8 @@ object SessionCleaner {
           // bury
       }
     }
-<<<<<<< HEAD
-
-=======
     */
-      
->>>>>>> dev
+
     if ( B.profile )
       log( Event.Profile, "m" -> ( "WebSession size: " + WebSession.sessions.memorySize ) )
   }
@@ -192,21 +188,14 @@ class WebSessionListener extends HttpSessionListener {
     val tyrSession = hs.getAttribute( WebSession.HttpSessionKey ).as[org.tyranid.session.Session]
 
     val sess = WebSession.sessions.remove( hsid ).getOrElse( null )
-<<<<<<< HEAD
 
-    if ( sess != hs )
-      spam( "Sessions do not match!" )
-
-=======
-    
-    if ( sess != hs ) { 
+    if ( sess != hs ) {
       spam( "Sessions do not match: " + hsid )
-      
+
       if ( sess == null )
         spam( "session was not in WebSession.sessions." )
     }
-    
->>>>>>> dev
+
     if ( sess != null )
       sess.removeAttribute( WebSession.HttpSessionKey )
 
@@ -216,7 +205,7 @@ class WebSessionListener extends HttpSessionListener {
       val user = tyrSession.user
       tyrSession.user.clearCache()
       tyrSession.user = null
-      
+
       if ( user != null ) {
         B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> Mobj( "ls" -> hsid ) ) )
 
