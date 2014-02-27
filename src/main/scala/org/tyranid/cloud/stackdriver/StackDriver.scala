@@ -42,7 +42,7 @@ case class StackDriverApp( apiKey:String ) {
     ( when == null ) ? poster.sendMetricDataPoint( metricName, value ) | poster.sendMetricDataPoint( metricName, value, when )
   }
   
-  def sendGlobals( metricName:String, values:Double* ) {
+  def sendGlobals( metricName:String, values:Double* ) = ifProd {
     val poster = this.poster
     
     for ( value <- values )

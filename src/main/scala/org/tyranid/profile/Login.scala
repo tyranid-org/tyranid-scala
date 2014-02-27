@@ -97,6 +97,7 @@ object Loginlet extends Weblet {
       val website = T.website( "/", sess.user )
 
       sess.logout()
+      T.web.res.deleteCookie( "JSESSIONID", domain = B.domain )
 
       if ( !web.xhr )
         web.redirect( website )

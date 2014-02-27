@@ -49,7 +49,7 @@ import org.tyranid.web.{ Comet, WebContext }
  */
 
 object SessionCleaner {
-  val maxIdleTimeCheck = Time.OneHourMs + (5*Time.OneMinuteMs)
+  val maxIdleTimeCheck = WebSession.IDLE_TIMEOUT + (5*Time.OneMinuteMs)
 
   def cleanLocal {
     if ( B.SHUTTINGDOWN )
@@ -97,6 +97,27 @@ object SessionCleaner {
     if ( invalidSessions.nonEmpty )
       B.SessionData.db.remove( Mobj( "sv" -> ipHost, "ss" -> Mobj( $in -> invalidSessions.toMlist ) ) )
 
+    WebSession.sessions.filter { sess =>
+      val httpsess = sess._2
+
+      try {
+        httpsess.getAttribute( WebSession.InvalidateKey ) != null
+      } catch {
+        case e:IllegalStateException =>
+          true
+        case e:Throwable =>
+          e.printStackTrace
+          false
+      }
+    } foreach { sess =>
+      try {
+        sess._2.invalidate
+      } catch {
+        case t:Throwable =>
+          // bury
+      }
+    }
+
     if ( B.profile )
       log( Event.Profile, "m" -> ( "WebSession size: " + WebSession.sessions.memorySize ) )
   }
@@ -133,9 +154,12 @@ object SessionCleaner {
  */
 
 object WebSession {
+  val IDLE_TIMEOUT = Time.OneHourMs
+
   val sessions = mutable.Map[String,HttpSession]()
 
   val HttpSessionKey = "tyrSess"
+  val InvalidateKey  = "tyrInv"
 
   /*
   def visit( visitor: ( Session ) => Unit ) =
@@ -182,8 +206,12 @@ class WebSessionListener extends HttpSessionListener {
           val now = System.currentTimeMillis
           val idle = now - hs.getLastAccessedTime()
 
-          if ( idle > Time.OneHourMs )
+          if ( idle > WebSession.IDLE_TIMEOUT ) {
+            if ( !B.PRODUCTION )
+              spam( "Timing out: " + hsid )
+
             Comet.timeout( hsid )
+          }
         }
       }
     }
@@ -299,6 +327,7 @@ class ThreadData {
 
   def unlinkSession = {
     http.setAttribute( WebSession.HttpSessionKey, null )
+    http.setAttribute( WebSession.InvalidateKey, Boolean.box( true ) )
     http.isLoggingOut = true
     tyrSession = null
   }
