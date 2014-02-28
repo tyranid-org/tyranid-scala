@@ -114,7 +114,7 @@ trait Bootable {
   
   val liteDomainPart = "revu"
   val liteDomainName = "revu.me"
-    
+ 
   def fullDomain = { 
     if ( DEV )        "rb-dev." + domain
     else if ( STAGE ) "rb-stage." + domain
