@@ -170,7 +170,7 @@ object Es {
     val res = ( B.elasticSearchHost + "/_search" + params ).POST( content = query.toJsonStr( false ) )
     
     if ( res != null ) {
-      val s = ( B.elasticSearchHost + "/_search" + params ).POST( content = query.toJsonStr( false ) ).s
+      val s = res.s
   //sp-am( "results=[\n\n" + s + "\n\n]" )
   
       val json = s.parseJsonObject
