@@ -50,9 +50,11 @@ import org.apache.http.params.{ BasicHttpParams, HttpConnectionParams }
 import org.apache.http.protocol.{ ExecutionContext, HttpContext, BasicHttpContext }
 import org.apache.http.util.EntityUtils
 
+import org.codehaus.jackson.JsonNode
+
 import org.tyranid.Imp._
 import org.tyranid.cloud.aws.{ S3, S3Bucket }
-import org.tyranid.json.JsCmd
+import org.tyranid.json.{ Json, JsCmd }
 import org.tyranid.math.Base36
 import org.tyranid.pdf.Pdf
 import org.tyranid.time.Time
@@ -68,6 +70,13 @@ case class HttpSessionImp( sess:HttpSession ) {
 }
 
 case class HttpServletRequestOps( req:HttpServletRequest ) {
+
+  def getJson:JsonNode = {
+    if ( !req.getContentType.startsWith( "application/json" ) )
+      return null
+      
+    Json.parse( scala.io.Source.fromInputStream( req.getInputStream ).getLines.mkString )
+  }
   
   def getParameter( param:String):String = {
     try {
