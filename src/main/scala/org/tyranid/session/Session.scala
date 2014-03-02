@@ -66,7 +66,9 @@ object SessionCleaner {
 
         if ( tyrsess != null ) {
           val idle = now - httpsess.getLastAccessedTime
-          ( !tyrsess.isVerified && idle > (5*Time.OneMinuteMs) ) || idle > maxIdleTimeCheck
+          ( !tyrsess.isVerified && idle > (5*Time.OneMinuteMs) ) ||
+            idle > maxIdleTimeCheck ||
+            httpsess.getAttribute( WebSession.InvalidateKey ) != null
         } else {
           true
         }
@@ -96,27 +98,6 @@ object SessionCleaner {
 
     if ( invalidSessions.nonEmpty )
       B.SessionData.db.remove( Mobj( "sv" -> ipHost, "ss" -> Mobj( $in -> invalidSessions.toMlist ) ) )
-
-    WebSession.sessions.filter { sess =>
-      val httpsess = sess._2
-
-      try {
-        httpsess.getAttribute( WebSession.InvalidateKey ) != null
-      } catch {
-        case e:IllegalStateException =>
-          true
-        case e:Throwable =>
-          e.printStackTrace
-          false
-      }
-    } foreach { sess =>
-      try {
-        sess._2.invalidate
-      } catch {
-        case t:Throwable =>
-          // bury
-      }
-    }
 
     if ( B.profile )
       log( Event.Profile, "m" -> ( "WebSession size: " + WebSession.sessions.memorySize ) )
