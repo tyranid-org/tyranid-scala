@@ -72,10 +72,13 @@ case class HttpSessionImp( sess:HttpSession ) {
 case class HttpServletRequestOps( req:HttpServletRequest ) {
 
   def getJson:JsonNode = {
-    if ( !req.getContentType.startsWith( "application/json" ) )
+    val contentType = req.getContentType
+    
+    if ( contentType.isBlank || !contentType.startsWith( "application/json" ) )
       return null
       
-    Json.parse( scala.io.Source.fromInputStream( req.getInputStream ).getLines.mkString )
+    val jsonStr =  scala.io.Source.fromInputStream( req.getInputStream ).getLines.mkString
+    jsonStr.isBlank ? null | Json.parse( jsonStr )
   }
   
   def getParameter( param:String):String = {
