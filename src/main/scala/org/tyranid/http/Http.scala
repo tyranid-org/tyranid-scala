@@ -594,7 +594,7 @@ object Http {
       }
     } catch {
       case _:java.net.ConnectException =>
-        spam( "Unable to connect to: " + request.getURI()._s )
+        println( "Unable to connect to: " + request.getURI()._s )
         null
       case t:Throwable =>
         throw t
