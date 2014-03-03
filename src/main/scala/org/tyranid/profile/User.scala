@@ -55,11 +55,11 @@ object UserStatType extends RamEntity( tid = "a0Nt" ) {
 
   override val addNames = Seq( "_id", "name" )
   
-  val LoginId      = 1
-  val ApiId        = 2
-  val CreateLiteId = 3
+  val LoginId          = 1
+  val ApiId            = 2
+  val CreateLiteId     = 3
   val StartConferenceId = 4
-  val CreateLiteProId = 5
+  val CreateLiteProId   = 5
 
   val Login      = add( LoginId,      "Login" )
   val Api        = add( ApiId,        "Api Call" )
