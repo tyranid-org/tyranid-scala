@@ -213,7 +213,7 @@ $( $('#idp').focus() );
 
         val appUrl = tokenUrl( id, web.s( 'startUrl ) )
 
-        web.res.sendRedirect( "https://sso.connect.pingidentity.com/sso/sp/initsso?saasid=" + SAAS_ID + "&idpid=" + idpId + "&appurl=" + appUrl + "/" + id + "&errorurl=" + ERROR_URL )
+        web.res.sendRedirect( "https://sso.connect.pingidentity.com/sso/sp/initsso?saasid=" + SAAS_ID + "&idpid=" + idpId + "&appurl=" + appUrl + "/" + id )//+ "&errorurl=" + ERROR_URL )
       }
     case t if t.startsWith( "/token/" ) =>
       val id = t.split( "/" )(2)
