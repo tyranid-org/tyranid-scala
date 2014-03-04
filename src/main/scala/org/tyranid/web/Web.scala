@@ -250,8 +250,10 @@ class WebFilter extends TyrFilter {
 
     def handle( webloc:Webloc ):Boolean = {
       for ( cwebloc <- webloc.children if web.matches( cwebloc.weblet.wpath ) && cwebloc.weblet.matches( web ) )
-        if ( handle( cwebloc ) )
+        if ( handle( cwebloc ) ) {
+          spam( "handled by child: " + cwebloc.weblet.getClass.getName )
           return true
+        }
 
       try {
         webloc.weblet.handle( web )
@@ -261,6 +263,7 @@ class WebFilter extends TyrFilter {
       case ie:WebIgnoreException =>
         return false
       case re:WebRedirectException =>
+        spam( "redirected!!!" )
         if ( !web.res.isCommitted )
           web.res.sendRedirect( re.redirect )
       case fe:WebForwardException =>
@@ -313,17 +316,11 @@ class WebFilter extends TyrFilter {
           NewRelic.setProductName( sess.id.toString )
         }
 
-        /*
-        println( sess.id + ":" + sess.isLite )
-
         if ( !isAsset ) {
-          println( "asp: " + web.b( 'asp ) )
           println( "xhr: " + web.b( 'xhr ) )
           println( "user: " + T.user )
-          if ( T.user != null ) println( "user li: " + sess.isLoggedIn )
         }
         println( "isAsset: " + isAsset )
-        */
 
         if ( ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isVerified ) && webloc.weblet.requiresLogin ) )
             && web.req.getAttribute( "api" )._s.isBlank ) {
