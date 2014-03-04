@@ -96,7 +96,7 @@ class Indexer extends Actor {
 //sp am( "json=" + json )
 
         val response  = ( B.elasticSearchHost + "/" + index + "/" + typ + "/" + id ).POST( content = json )
-        val responseJson = Json.parse( response._s )
+        val responseJson = Json.parse( response.s )
         
         val error = responseJson.s( 'error )
         

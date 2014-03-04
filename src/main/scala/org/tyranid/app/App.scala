@@ -46,6 +46,8 @@ object AppStatType extends RamEntity( tid = "a1Fv" ) {
   val ConferenceStartId      = 600
   val ConferenceEndId        = 601
   
+//  val BeginLiteId            = 701
+    
   val CrocodocUpload  = add( CrocodocUploadId,  "Crocodoc Upload" )
   val CrocodocRetry   = add( CrocodocRetryId,   "Crocodoc Retry" )
   val CrocodocSuccess = add( CrocodocSuccessId, "Crocodoc Success" )
@@ -70,6 +72,8 @@ object AppStatType extends RamEntity( tid = "a1Fv" ) {
   
   val ConferenceStart = add( ConferenceStartId, "Conference Start" )
   val ConferenceEnd   = add( ConferenceEndId, "Conference End" )
+  
+//  val BeginLite   = add( BeginLiteId, "Begin Lite" )  
 }
 
 case class AppStatType( override val view:TupleView ) extends Tuple( view )
@@ -86,7 +90,7 @@ object AppStat extends MongoEntity( tid = "b04v" ) {
   }
   
   private def create( statId:Int, duration:Long = 0 ) {
-    background( "Craete AppStat" ) {
+    background( "Create AppStat" ) {
       val stat = AppStat.make
       stat( 's ) = statId
       stat( 't ) = new Date
@@ -121,7 +125,9 @@ object AppStat extends MongoEntity( tid = "b04v" ) {
   def MadeToPrintConverted = create( AppStatType.MadeToPrintConvertedId )
   
   def ConferenceStart = create( AppStatType.ConferenceStartId )
-  def ConferenceEnd( duration:Long = 0 )  = create( AppStatType.ConferenceEndId, duration )
+  def ConferenceEnd( duration:Long = 0 ) = create( AppStatType.ConferenceEndId, duration )
+  
+  //def BeginLite = create( AppStatType.BeginLiteId )
 }
 
 class AppStat( obj:DBObject, parent:MongoRecord ) extends MongoRecord( AppStat.makeView, obj, parent ) {}
