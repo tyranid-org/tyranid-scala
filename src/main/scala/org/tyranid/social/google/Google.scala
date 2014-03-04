@@ -81,5 +81,20 @@ case class GoApp( simpleKey:String ) { // extends SoApp {
     log( Event.Google, "m" -> ( "geocode problem:\n\nAddress:" + address + "\n\nResponse:\n\n" + str ) )
     null
   }
+
+  def antiForgery = {
+    val state = new java.math.BigInteger( 130, new java.security.SecureRandom ).toString( 32 )
+
+    T.session.googleCrossSiteRequestForgeryToken = state
+
+    // Read index.html into memory, and set the Client ID,
+    // Token State, and Application Name in the HTML before serving it.
+
+    //return new Scanner( new File( "index.html" ), "UTF-8" )
+        //.useDelimiter( "\\A" ).next
+        //.replaceAll( "[{]{2}\\s*CLIENT_ID\\s*[}]{2}", CLIENT_ID )
+        //.replaceAll( "[{]{2}\\s*STATE\\s*[}]{2}", state )
+        //.replaceAll( "[{]{2}\\s*APPLICATION_NAME\\s*[}]{2}", APPLICATION_NAME )
+  }
 }
 

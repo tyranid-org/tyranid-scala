@@ -48,7 +48,7 @@ import org.tyranid.web.{ Comet, WebContext }
  * * *  WebSession
  */
 
-object SessionCleaner { 
+object SessionCleaner {
   val maxIdleTimeCheck = WebSession.IDLE_TIMEOUT + (5*Time.OneMinuteMs)
   
   def cleanLocal {
@@ -472,6 +472,8 @@ trait Session extends QuickCache {
       
     tUa
   } 
+
+  @volatile var googleCrossSiteRequestForgeryToken:String = null
 
 
   /*
