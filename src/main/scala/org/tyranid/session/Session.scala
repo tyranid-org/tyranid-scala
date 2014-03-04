@@ -435,6 +435,8 @@ trait Session extends QuickCache {
   }
   
   def isHttpSession = httpSessionId != null
+
+  def isCordova = b( 'cordova )
   
   var debug       = B.DEV
   var trace       = false
