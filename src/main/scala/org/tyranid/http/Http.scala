@@ -79,7 +79,7 @@ case class HttpServletRequestOps( req:HttpServletRequest ) {
       
     val jsonStr =  scala.io.Source.fromInputStream( req.getInputStream ).getLines.mkString
     
-    if ( B.DEV )
+    if ( !B.PRODUCTION )
       println( "JSON: " + jsonStr )
       
     jsonStr.isBlank ? null | Json.parse( jsonStr )
