@@ -271,10 +271,7 @@ $( $('#idp').focus() );
         return
       }
 
-      if ( B.debugSso )
-        println( "Json Object: " + json )
-
-      var mapping = SsoMapping.getById( id )
+      val mapping = SsoMapping.getById( id )
 
       if ( mapping == null ) {
         println( "DEBUG: Mapping not found!" )

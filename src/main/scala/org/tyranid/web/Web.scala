@@ -599,7 +599,6 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   }
 
   def checkDebug( sess:Session ) {
-    println( "CHEDCK DEBUG! ")
     val dbg = s( 'debugit )
 
     if ( dbg.notBlank )
