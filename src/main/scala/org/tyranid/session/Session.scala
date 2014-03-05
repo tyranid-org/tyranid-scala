@@ -229,7 +229,31 @@ object ThreadData {
 }
 
 class ThreadData {
+  def updateQueryString( path:String, name:String, value:Any ) = {
+   val re = "([?|&])" + name + "=.*?(&|$)".toPatternI
+   val separator = ( path.indexOf('?') > -1 && path.indexOf('=') != -1 ) ? "&" | "?"
+
+   path.matches( re ) ?
+          path.replace( re, "$1" + name + "=" + value._s + "$2") |
+          path + separator + name + "=" + value._s
+
+  }
+
   def baseWebsite = "https://" + B.domainPort
+
+  def ioUrl = {
+    val cordova = T.web.b( 'cordova ) || T.session.isCordova
+    
+    if ( B.PRODUCTION )
+      ( cordova |* "https:" ) + "//io.volerro.com";
+    else
+      cordova ? baseWebsite | "";
+  }
+
+  def ioWebsite( path:String ) = {
+    val cordova = T.web.b( 'cordova ) || T.session.isCordova
+    ioUrl + ( cordova ? updateQueryString( path, "cordova", 1 ) | path )
+  }
   
   def website( path:String = "", user:User = null, ssoMapping:SsoMapping = null, subdomain:String = null, forceLite:Boolean = false, forceMain:Boolean = false ):String = {
     val subdomainWebsite = ( !forceMain && forceLite ) ? ( "https://" + B.liteFullDomain + B.port ) | {

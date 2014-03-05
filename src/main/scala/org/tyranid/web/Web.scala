@@ -271,7 +271,6 @@ class WebFilter extends TyrFilter {
       case ie:WebIgnoreException =>
         return false
       case re:WebRedirectException =>
-        spam( "redirected!!!" )
         if ( !web.res.isCommitted )
           web.res.sendRedirect( re.redirect )
       case fe:WebForwardException =>
@@ -324,12 +323,14 @@ class WebFilter extends TyrFilter {
           NewRelic.setProductName( sess.id.toString )
         }
 
+        /*
         if ( !isAsset ) {
           println( "xhr: " + web.b( 'xhr ) )
           println( "user: " + T.user )
         }
         println( "isAsset: " + isAsset )
-
+        */
+        
         if ( ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isVerified ) && webloc.weblet.requiresLogin ) )
             && web.req.getAttribute( "api" )._s.isBlank ) {
 

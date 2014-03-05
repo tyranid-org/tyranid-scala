@@ -1055,7 +1055,7 @@ abstract class Content( override val view:MongoView,
     if ( obj.has( 'thumbc ) )
       rec( 'thumbc ).as[Content].thumbUrl( size )
     else
-      "/io/thumb/" + tid + "/" + size + "?cb=" + s( 'img ).denull.hashCode
+      T.ioWebsite( "/io/thumb/" + tid + "/" + size + "?cb=" + s( 'img ).denull.hashCode )
 
   def thumbHtml( size:String, extraHtml:NodeSeq = null ) =
     <div class={ thumbClass( size ) } style={ thumbStyle( size ) }>
