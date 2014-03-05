@@ -81,11 +81,13 @@ case class GoApp( simpleKey:String ) { // extends SoApp {
     log( Event.Google, "m" -> ( "geocode problem:\n\nAddress:" + address + "\n\nResponse:\n\n" + str ) )
     null
   }
+}
 
-  def antiForgery = {
-    val state = new java.math.BigInteger( 130, new java.security.SecureRandom ).toString( 32 )
 
-    T.session.googleCrossSiteRequestForgeryToken = state
+object Google {
+
+  def createCrossSiteAntiForgeryToken = {
+    new java.math.BigInteger( 130, new java.security.SecureRandom ).toString( 32 )
 
     // Read index.html into memory, and set the Client ID,
     // Token State, and Application Name in the HTML before serving it.
@@ -96,5 +98,18 @@ case class GoApp( simpleKey:String ) { // extends SoApp {
         //.replaceAll( "[{]{2}\\s*STATE\\s*[}]{2}", state )
         //.replaceAll( "[{]{2}\\s*APPLICATION_NAME\\s*[}]{2}", APPLICATION_NAME )
   }
+
+  def loginCode = """
+<script type="text/javascript">
+(function () {
+  var po = document.createElement('script');
+  po.type = 'text/javascript';
+  po.async = true;
+  po.src = 'https://plus.google.com/js/client:plusone.js?onload=start';
+  var s = document.getElementsByTagName('script')[0];
+  s.parentNode.insertBefore(po, s);
+})();
+</script>
+"""
 }
 
