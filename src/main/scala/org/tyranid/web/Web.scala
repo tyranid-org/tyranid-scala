@@ -107,9 +107,16 @@ trait TyrFilter extends Filter {
 
   def ensureSession( thread:ThreadData, web:WebContext ) {
     if ( thread.http == null ) {
-      thread.http = web.req.getSession( true )
-      WebFilter.setSessionVars( web )
-      LoginCookie.autoLogin
+      val sessId = web.req.s( "JSESSIONID" )
+      
+      if ( sessId.notBlank )
+        thread.http = org.tyranid.session.WebSession.sessions( sessId )
+      
+      if ( thread.http == null ) {
+        thread.http = web.req.getSession( true )
+        WebFilter.setSessionVars( web )
+        LoginCookie.autoLogin
+      }      
     }
   }
   
@@ -256,6 +263,7 @@ class WebFilter extends TyrFilter {
         }
 
       try {
+        //web.res.setHeader( "Access-Control-Allow-Origin", "*" )
         webloc.weblet.handle( web )
       } catch {
       case he:WebHandledException =>

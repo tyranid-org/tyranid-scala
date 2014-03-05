@@ -172,6 +172,7 @@ object TrackingCookie {
       cookie.setMaxAge(60 * 60 * 24 * 365) // one year
       cookie.setPath("/")
       cookie.setSecure( true )
+      cookie.setDomain( B.domain )
       t.web.res.addCookie( cookie )
     }
 
