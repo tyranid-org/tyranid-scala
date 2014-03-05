@@ -63,20 +63,28 @@ object SessionCleaner {
     
       try {
         val tyrsess = httpsess.getAttribute( WebSession.HttpSessionKey ).as[Session]
+spam( "tyrsess for " + sess._1 + " = " + tyrsess )
         
         if ( tyrsess != null ) { 
           val idle = now - httpsess.getLastAccessedTime
+spam( "idle time for " + sess._1 + " = " + idle )
+          val v =
           ( !tyrsess.isVerified && idle > (5*Time.OneMinuteMs) ) || 
             idle > maxIdleTimeCheck || 
             httpsess.getAttribute( WebSession.InvalidateKey ) != null
+spam( "removal check for " + sess._1 + " = " + v )
+v
         } else {
+spam( "true for " + sess._1 )
           true
         }
       } catch {
         case e:IllegalStateException =>
+spam( "true-ex for " + sess._1 )
           true
         case e:Throwable =>
           e.printStackTrace
+spam( "false-ex for " + sess._1 )
           false
       }
     } foreach { sess =>
@@ -88,6 +96,7 @@ object SessionCleaner {
     // Remove any SessionData records for this server which don't map to local sessions
 
     val ipHost = Ip.Host.toString
+spam( "ipHost: " + ipHost )
 
     val invalidSessions:Seq[String] = (
       for ( sd <- B.SessionData.db.find( Mobj( "sv" -> ipHost ) );
@@ -95,6 +104,7 @@ object SessionCleaner {
             if !WebSession.sessions.contains( ss ) )
         yield ss
     ).toSeq
+spam( "invalidSessions: " + invalidSessions.mkString )
 
     if ( invalidSessions.nonEmpty )
       B.SessionData.db.remove( Mobj( "sv" -> ipHost, "ss" -> Mobj( $in -> invalidSessions.toMlist ) ) )
