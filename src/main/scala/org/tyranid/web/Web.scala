@@ -110,7 +110,7 @@ trait TyrFilter extends Filter {
       val sessId = web.req.s( "JSESSIONID" )
       
       if ( sessId.notBlank )
-        thread.http = org.tyranid.session.WebSession.sessions( sessId )
+        thread.http = org.tyranid.session.WebSession.sessions.getOrElse( sessId, null )
       
       if ( thread.http == null ) {
         thread.http = web.req.getSession( true )
