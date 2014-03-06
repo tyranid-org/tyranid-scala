@@ -509,7 +509,7 @@ trait Session extends QuickCache {
     tUa
   } 
 
-  lazy val googleCrossSiteRequestForgeryToken = org.tyranid.social.google.Google.createCrossSiteAntiForgeryToken
+  lazy val googleCrossSiteRequestForgeryToken = B.google.createCrossSiteAntiForgeryToken
 
 
   /*

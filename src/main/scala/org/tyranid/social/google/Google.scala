@@ -29,7 +29,7 @@ import org.tyranid.math.Base64
 import org.tyranid.session.Session
 
 
-case class GoApp( simpleKey:String ) { // extends SoApp {
+case class GoApp( simpleKey:String, clientId:String, signin:Boolean ) { // extends SoApp {
 
   val networkCode = "go"
   val networkName = "Google+"
@@ -81,10 +81,6 @@ case class GoApp( simpleKey:String ) { // extends SoApp {
     log( Event.Google, "m" -> ( "geocode problem:\n\nAddress:" + address + "\n\nResponse:\n\n" + str ) )
     null
   }
-}
-
-
-object Google {
 
   def createCrossSiteAntiForgeryToken = {
     new java.math.BigInteger( 130, new java.security.SecureRandom ).toString( 32 )
@@ -99,8 +95,7 @@ object Google {
         //.replaceAll( "[{]{2}\\s*APPLICATION_NAME\\s*[}]{2}", APPLICATION_NAME )
   }
 
-  def loginCode = """
-<script type="text/javascript">
+  def signinCode = """
 (function () {
   var po = document.createElement('script');
   po.type = 'text/javascript';
@@ -109,7 +104,6 @@ object Google {
   var s = document.getElementsByTagName('script')[0];
   s.parentNode.insertBefore(po, s);
 })();
-</script>
 """
 }
 
