@@ -328,13 +328,14 @@ class WebFilter extends TyrFilter {
         }
         println( "isAsset: " + isAsset )
         */
-        
+
+        if ( !isAsset )
+          web.checkDebug( sess )
+
         if ( ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isVerified ) && webloc.weblet.requiresLogin ) )
             && web.req.getAttribute( "api" )._s.isBlank ) {
 
           if ( isAsset ) spam( "isAsset matching on " + web.path )
-
-          web.checkDebug( sess )
                 
           web.forward()
           return
@@ -345,8 +346,6 @@ class WebFilter extends TyrFilter {
           t.web = web
           first = false
         }
-
-
 
         if ( B.profile && 30.dice == 1 )
           log( Event.Profile, "m" -> ( "ThreadLocal size: " + t.memorySize ) )
