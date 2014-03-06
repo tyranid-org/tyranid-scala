@@ -63,20 +63,28 @@ object SessionCleaner {
 
       try {
         val tyrsess = httpsess.getAttribute( WebSession.HttpSessionKey ).as[Session]
+spam( "tyrsess for " + sess._1 + " = " + tyrsess )
 
         if ( tyrsess != null ) {
           val idle = now - httpsess.getLastAccessedTime
+spam( "idle time for " + sess._1 + " = " + idle )
+          val v =
           ( !tyrsess.isVerified && idle > (5*Time.OneMinuteMs) ) ||
             idle > maxIdleTimeCheck ||
             httpsess.getAttribute( WebSession.InvalidateKey ) != null
+spam( "removal check for " + sess._1 + " = " + v )
+v
         } else {
+spam( "true for " + sess._1 )
           true
         }
       } catch {
         case e:IllegalStateException =>
+spam( "true-ex for " + sess._1 )
           true
         case e:Throwable =>
           e.printStackTrace
+spam( "false-ex for " + sess._1 )
           false
       }
     } foreach { sess =>
@@ -88,6 +96,7 @@ object SessionCleaner {
     // Remove any SessionData records for this server which don't map to local sessions
 
     val ipHost = Ip.Host.toString
+spam( "ipHost: " + ipHost )
 
     val invalidSessions:Seq[String] = (
       for ( sd <- B.SessionData.db.find( Mobj( "sv" -> ipHost ) );
@@ -95,6 +104,7 @@ object SessionCleaner {
             if !WebSession.sessions.contains( ss ) )
         yield ss
     ).toSeq
+spam( "invalidSessions: " + invalidSessions.mkString )
 
     if ( invalidSessions.nonEmpty )
       B.SessionData.db.remove( Mobj( "sv" -> ipHost, "ss" -> Mobj( $in -> invalidSessions.toMlist ) ) )
@@ -229,7 +239,31 @@ object ThreadData {
 }
 
 class ThreadData {
+  def updateQueryString( path:String, name:String, value:Any ) = {
+   val re = "([?|&])" + name + "=.*?(&|$)".toPatternI
+   val separator = ( path.indexOf('?') > -1 && path.indexOf('=') != -1 ) ? "&" | "?"
+
+   path.matches( re ) ?
+          path.replace( re, "$1" + name + "=" + value._s + "$2") |
+          path + separator + name + "=" + value._s
+
+  }
+
   def baseWebsite = "https://" + B.domainPort
+
+  def ioUrl = {
+    val cordova = T.web.b( 'cordova ) || T.session.isCordova
+
+    if ( B.PRODUCTION )
+      ( cordova |* "https:" ) + "//io.volerro.com";
+    else
+      cordova ? baseWebsite | "";
+  }
+
+  def ioWebsite( path:String ) = {
+    val cordova = T.web.b( 'cordova ) || T.session.isCordova
+    ioUrl + ( cordova ? updateQueryString( path, "cordova", 1 ) | path )
+  }
 
   def website( path:String = "", user:User = null, ssoMapping:SsoMapping = null, subdomain:String = null, forceLite:Boolean = false, forceMain:Boolean = false ):String = {
     val subdomainWebsite = ( !forceMain && forceLite ) ? ( "https://" + B.liteFullDomain + B.port ) | {
@@ -436,6 +470,8 @@ trait Session extends QuickCache {
 
   def isHttpSession = httpSessionId != null
 
+  def isCordova = b( 'cordova )
+
   var debug       = B.DEV
   var trace       = false
 
@@ -472,6 +508,8 @@ trait Session extends QuickCache {
 
     tUa
   }
+
+  lazy val googleCrossSiteRequestForgeryToken = org.tyranid.social.google.Google.createCrossSiteAntiForgeryToken
 
 
   /*

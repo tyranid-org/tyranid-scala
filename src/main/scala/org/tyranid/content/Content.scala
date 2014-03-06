@@ -903,7 +903,29 @@ object Content {
   //val defaultColors = Array( "5f89a2", "597b7c", "93278f", "e72967", "f47b20", "ef5033", "009591", "9fd5b5", "1bb7ea", "73d0f9" )
   val defaultColors = Array( "1276bc","a73c15","98bb23","0c2074","77003a","f7941e","000341","d2891e","215429","34b44a","00aeef","560047","24c0bb","68162b","fdba2c" )
   val defaultCardColor = "faf082"
-  val cardColors = Array( "34b27d", defaultCardColor, "e09952", "cb4d4d", "9933cc", "4d77cb", "ffffff" )  
+  val cardColors = Array( "34b27d", defaultCardColor, "e09952", "cb4d4d", "9933cc", "4d77cb", "ffffff" )
+
+  def userTids( tids:Seq[String] ) = {
+    val uTids = new mutable.ArrayBuffer[String]()
+    
+    tids.foreach { tid =>
+      tid match {
+      case userTid if B.User.hasTid( userTid ) && !uTids.contains( userTid ) =>
+        uTids += userTid
+      case groupTid if Group.hasTid( groupTid ) =>
+        val g = Group.db.findOne( Mobj( "_id" -> Group.tidToId( groupTid ) ), Mobj( "v" -> 1 ) )
+        
+        g.a_?( 'v ).toSeq.of[String].foreach { guTid =>
+          if ( B.User.hasTid( guTid ) && !uTids.contains( guTid ) )
+            uTids += guTid
+        }
+      case _ =>
+        // nop
+      }
+    }
+    
+    uTids.toSeq
+  }
 }
 
 abstract class Content( override val view:MongoView,
@@ -1033,7 +1055,7 @@ abstract class Content( override val view:MongoView,
     if ( obj.has( 'thumbc ) )
       rec( 'thumbc ).as[Content].thumbUrl( size )
     else
-      "/io/thumb/" + tid + "/" + size + "?cb=" + s( 'img ).denull.hashCode
+      T.ioWebsite( "/io/thumb/" + tid + "/" + size + "?cb=" + s( 'img ).denull.hashCode )
 
   def thumbHtml( size:String, extraHtml:NodeSeq = null ) =
     <div class={ thumbClass( size ) } style={ thumbStyle( size ) }>
@@ -1271,28 +1293,7 @@ abstract class Content( override val view:MongoView,
 
   def writers = owners
   
-
-  def userTids( arrayAttName:String ) = {
-    val uTids = new mutable.ArrayBuffer[String]()
-    
-    a_?( arrayAttName ).toSeq.of[String].foreach { tid =>
-      tid match {
-      case userTid if B.User.hasTid( userTid ) && !uTids.contains( userTid ) =>
-        uTids += userTid
-      case groupTid if Group.hasTid( groupTid ) =>
-        val g = Group.db.findOne( Mobj( "_id" -> Group.tidToId( groupTid ) ), Mobj( "v" -> 1 ) )
-        
-        g.a_?( 'v ).toSeq.of[String].foreach { guTid =>
-          if ( B.User.hasTid( guTid ) && !uTids.contains( guTid ) )
-            uTids += guTid
-        }
-      case _ =>
-        // nop
-      }
-    }
-    
-    uTids.toSeq
-  }
+  def userTids( arrayAttName:String ) = Content.userTids( a_?( arrayAttName ).toSeq.of[String] )
   
   def ownerUserTids = userTids( "o" )
   def ownerUsers = B.User.getByTids( ownerUserTids )

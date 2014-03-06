@@ -107,9 +107,16 @@ trait TyrFilter extends Filter {
 
   def ensureSession( thread:ThreadData, web:WebContext ) {
     if ( thread.http == null ) {
-      thread.http = web.req.getSession( true )
-      WebFilter.setSessionVars( web )
-      LoginCookie.autoLogin
+      val sessId = web.req.s( "JSESSIONID" )
+      
+      if ( sessId.notBlank )
+        thread.http = org.tyranid.session.WebSession.sessions( sessId )
+      
+      if ( thread.http == null ) {
+        thread.http = web.req.getSession( true )
+        WebFilter.setSessionVars( web )
+        LoginCookie.autoLogin
+      }      
     }
   }
   
@@ -250,10 +257,13 @@ class WebFilter extends TyrFilter {
 
     def handle( webloc:Webloc ):Boolean = {
       for ( cwebloc <- webloc.children if web.matches( cwebloc.weblet.wpath ) && cwebloc.weblet.matches( web ) )
-        if ( handle( cwebloc ) )
+        if ( handle( cwebloc ) ) {
+          spam( "handled by child: " + cwebloc.weblet.getClass.getName )
           return true
+        }
 
       try {
+        //web.res.setHeader( "Access-Control-Allow-Origin", "*" )
         webloc.weblet.handle( web )
       } catch {
       case he:WebHandledException =>
@@ -322,17 +332,13 @@ class WebFilter extends TyrFilter {
         }
 
         /*
-        println( sess.id + ":" + sess.isLite )
-
         if ( !isAsset ) {
-          println( "asp: " + web.b( 'asp ) )
           println( "xhr: " + web.b( 'xhr ) )
           println( "user: " + T.user )
-          if ( T.user != null ) println( "user li: " + sess.isLoggedIn )
         }
         println( "isAsset: " + isAsset )
         */
-
+        
         if ( ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isVerified ) && webloc.weblet.requiresLogin ) )
             && web.req.getAttribute( "api" )._s.isBlank ) {
 
@@ -607,7 +613,6 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
   }
 
   def checkDebug( sess:Session ) {
-    println( "CHEDCK DEBUG! ")
     val dbg = s( 'debugit )
 
     if ( dbg.notBlank )

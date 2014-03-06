@@ -83,3 +83,33 @@ case class GoApp( simpleKey:String ) { // extends SoApp {
   }
 }
 
+
+object Google {
+
+  def createCrossSiteAntiForgeryToken = {
+    new java.math.BigInteger( 130, new java.security.SecureRandom ).toString( 32 )
+
+    // Read index.html into memory, and set the Client ID,
+    // Token State, and Application Name in the HTML before serving it.
+
+    //return new Scanner( new File( "index.html" ), "UTF-8" )
+        //.useDelimiter( "\\A" ).next
+        //.replaceAll( "[{]{2}\\s*CLIENT_ID\\s*[}]{2}", CLIENT_ID )
+        //.replaceAll( "[{]{2}\\s*STATE\\s*[}]{2}", state )
+        //.replaceAll( "[{]{2}\\s*APPLICATION_NAME\\s*[}]{2}", APPLICATION_NAME )
+  }
+
+  def loginCode = """
+<script type="text/javascript">
+(function () {
+  var po = document.createElement('script');
+  po.type = 'text/javascript';
+  po.async = true;
+  po.src = 'https://plus.google.com/js/client:plusone.js?onload=start';
+  var s = document.getElementsByTagName('script')[0];
+  s.parentNode.insertBefore(po, s);
+})();
+</script>
+"""
+}
+
