@@ -257,10 +257,8 @@ class WebFilter extends TyrFilter {
 
     def handle( webloc:Webloc ):Boolean = {
       for ( cwebloc <- webloc.children if web.matches( cwebloc.weblet.wpath ) && cwebloc.weblet.matches( web ) )
-        if ( handle( cwebloc ) ) {
-          spam( "handled by child: " + cwebloc.weblet.getClass.getName )
+        if ( handle( cwebloc ) )
           return true
-        }
 
       try {
         //web.res.setHeader( "Access-Control-Allow-Origin", "*" )
@@ -338,13 +336,14 @@ class WebFilter extends TyrFilter {
         }
         println( "isAsset: " + isAsset )
         */
-        
+
+        if ( !isAsset )
+          web.checkDebug( sess )
+
         if ( ( !web.b( 'xhr ) && ( !isAsset && ( T.user == null || !sess.isVerified ) && webloc.weblet.requiresLogin ) )
             && web.req.getAttribute( "api" )._s.isBlank ) {
 
           if ( isAsset ) spam( "isAsset matching on " + web.path )
-
-          web.checkDebug( sess )
                 
           web.forward()
           return
@@ -355,8 +354,6 @@ class WebFilter extends TyrFilter {
           t.web = web
           first = false
         }
-
-
 
         if ( B.profile && 30.dice == 1 )
           log( Event.Profile, "m" -> ( "ThreadLocal size: " + t.memorySize ) )
