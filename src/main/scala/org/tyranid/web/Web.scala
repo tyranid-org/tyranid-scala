@@ -257,10 +257,8 @@ class WebFilter extends TyrFilter {
 
     def handle( webloc:Webloc ):Boolean = {
       for ( cwebloc <- webloc.children if web.matches( cwebloc.weblet.wpath ) && cwebloc.weblet.matches( web ) )
-        if ( handle( cwebloc ) ) {
-          spam( "handled by child: " + cwebloc.weblet.getClass.getName )
+        if ( handle( cwebloc ) )
           return true
-        }
 
       try {
         //web.res.setHeader( "Access-Control-Allow-Origin", "*" )
