@@ -46,65 +46,6 @@ import org.tyranid.session.{ Session, ThreadData, WebSession }
 import org.tyranid.web.{ Comet, WebContext }
 
 
-object UserStatType extends RamEntity( tid = "a0Nt" ) {
-  type RecType = UserStatType
-  override def convert( view:TupleView ) = new UserStatType( view )
-
-  "_id"     is DbInt      is 'id;
-  "name"    is DbChar(64) is 'label;
-
-  override val addNames = Seq( "_id", "name" )
-  
-  val LoginId          = 1
-  val ApiId            = 2
-  val CreateLiteId     = 3
-  val StartConferenceId = 4
-  val CreateLiteProId   = 5
-
-  val Login      = add( LoginId,      "Login" )
-  val Api        = add( ApiId,        "Api Call" )
-  val CreateLite = add( CreateLiteId, "Create Lite" )
-  val StartConference = add( StartConferenceId, "StartConference" )
-  val CreateLitePro = add( CreateLiteProId, "CreateLitePro" )
-}
-
-case class UserStatType( override val view:TupleView ) extends Tuple( view )
-
-object UserStat extends MongoEntity( tid = "a0Ot" ) {
-  "_id"  is DbMongoId            is 'id is 'client;
-  "s"    is DbLink(UserStatType) is 'required;
-  "t"    is DbDateTime           is 'required;
-  "u"    is DbLink(B.User)       is 'required is 'owner;
-  "x"    is DbChar( 50 )         as "Extra";
-  
-  val index = {
-    db.ensureIndex( Mobj( "s" -> 1, "u" -> 1, "t" -> 1 ) )
-    db.ensureIndex( Mobj( "u" -> 1, "s" -> 1, "t" -> 1 ) )
-  }
-  
-  private def create( userId:ObjectId, statId:Int, x:String = null ) {
-    background( "Create UserStat" ) {
-      val stat = UserStat.make
-      stat( 's ) = statId
-      stat( 't ) = new Date
-      stat( 'u ) = userId
-      
-      if ( x.notBlank )
-        stat( 'x ) = x
-        
-      stat.save
-    }
-  }
-  
-  def login( userId:Any ) = create( userId._oid, UserStatType.LoginId )
-  def api( userId:Any, path:String ) = create( userId._oid, UserStatType.ApiId, path )
-  def createLite( userId:Any ) = create( userId._oid, UserStatType.CreateLiteId )
-  def startConference( userId:Any, sessId:String ) = create( userId._oid, UserStatType.StartConferenceId, sessId )
-  def createLitePro( userId:Any ) = create( userId._oid, UserStatType.CreateLiteProId )
-}
-
-class UserStat( obj:DBObject, parent:MongoRecord ) extends MongoRecord( UserStat.makeView, obj, parent ) {}
-
 object ContactInfo extends MongoEntity( tid = "a0Ov" ) {
   "_id"              is DbMongoId  is 'id;
   "name"             is DbChar(40)       ;

@@ -35,7 +35,7 @@ import org.tyranid.http.UserAgent
 import org.tyranid.json.{ Js, JsCmd }
 import org.tyranid.math.Base62
 import org.tyranid.net.Ip
-import org.tyranid.profile.{ LoginCookie, User, UserStat, UserStatType }
+import org.tyranid.profile.{ LoginCookie, User }
 import org.tyranid.report.Query
 import org.tyranid.social.Social
 import org.tyranid.sso.SsoMapping
@@ -589,7 +589,6 @@ trait Session extends QuickCache {
       if ( sso != null )
         updates( 'sso ) = sso.id
 
-      UserStat.login( user.id )
       B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> updates ) )
 
       log( Event.Login, "bid" -> TrackingCookie.get )
