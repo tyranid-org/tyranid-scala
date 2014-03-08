@@ -611,7 +611,7 @@ case class WebContext( req:HttpServletRequest, res:HttpServletResponse, ctx:Serv
 
   def checkDebug( sess:Session ) {
     val dbg = s( 'debugit )
-
+    
     if ( dbg.notBlank )
       sess.debug = dbg._b
 

@@ -261,7 +261,7 @@ class ThreadData {
   }
 
   def ioWebsite( path:String ) = {
-    val cordova = T.web.b( 'cordova ) || T.session.isCordova
+    val cordova = ( T.web != null && T.web.b( 'cordova ) ) || T.session.isCordova
     ioUrl + ( cordova ? updateQueryString( path, "cordova", 1 ) | path )
   }
 
