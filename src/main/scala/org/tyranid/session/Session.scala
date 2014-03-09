@@ -252,7 +252,7 @@ class ThreadData {
   def baseWebsite = "https://" + B.domainPort
 
   def ioUrl = {
-    val cordova = T.web.b( 'cordova ) || T.session.isCordova
+    val cordova = ( T.web != null && T.web.b( 'cordova ) ) || ( T.session != null && T.session.isCordova )
     
     if ( B.PRODUCTION )
       ( cordova |* "https:" ) + "//io.volerro.com";
