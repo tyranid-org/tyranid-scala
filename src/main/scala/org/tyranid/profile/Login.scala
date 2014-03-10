@@ -87,11 +87,14 @@ object Loginlet extends Weblet {
             LoginCookie.set(user)
 
           web.jsRes( JsData( user ), JsModel( user.toClientCommonMap(), "common" ),
-              Js( "V.app.newLoad( '#dashboard' );" ) )
+              Js( "T.session='" + T.session.httpSessionId + "';V.app.newLoad( '#dashboard' );" ) )
         }
       } else {
         web.jsRes( Js( "router.navigate( '#login', { trigger : true } );" ) )
       }
+
+    case "/in/google" =>
+      B.google.login
 
     case "/out" =>
       val website = T.website( "/", sess.user )
