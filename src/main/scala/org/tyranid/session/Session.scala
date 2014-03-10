@@ -35,7 +35,7 @@ import org.tyranid.http.UserAgent
 import org.tyranid.json.{ Js, JsCmd }
 import org.tyranid.math.Base62
 import org.tyranid.net.Ip
-import org.tyranid.profile.{ LoginCookie, User, UserStat, UserStatType }
+import org.tyranid.profile.{ LoginCookie, User }
 import org.tyranid.report.Query
 import org.tyranid.social.Social
 import org.tyranid.sso.SsoMapping
@@ -252,7 +252,7 @@ class ThreadData {
   def baseWebsite = "https://" + B.domainPort
 
   def ioUrl = {
-    val cordova = T.web.b( 'cordova ) || T.session.isCordova
+    val cordova = ( T.web != null && T.web.b( 'cordova ) ) || ( T.session != null && T.session.isCordova )
     
     if ( B.PRODUCTION )
       ( cordova |* "https:" ) + "//io.volerro.com";
@@ -261,7 +261,7 @@ class ThreadData {
   }
 
   def ioWebsite( path:String ) = {
-    val cordova = T.web.b( 'cordova ) || T.session.isCordova
+    val cordova = ( T.web != null && T.web.b( 'cordova ) ) || ( T.session != null && T.session.isCordova )
     ioUrl + ( cordova ? updateQueryString( path, "cordova", 1 ) | path )
   }
   
@@ -589,7 +589,6 @@ trait Session extends QuickCache {
       if ( sso != null )
         updates( 'sso ) = sso.id
       
-      UserStat.login( user.id )
       B.User.db.update( Mobj( "_id" -> user.id ), Mobj( $set -> updates ) )
 
       log( Event.Login, "bid" -> TrackingCookie.get )
