@@ -17,6 +17,8 @@
 
 package org.tyranid.social.google
 
+import java.util.Date
+
 import scala.xml.Unparsed
 
 import com.mongodb.DBObject
@@ -217,6 +219,7 @@ case class GoApp( simpleKey:String, clientId:String, secret:String, signin:Boole
         val gUser = ( "https://www.googleapis.com/plus/v1/people/" + guid + "?access_token=" + accessToken ).GET().s.parseJsonObject
         //sp am( gUser )
 
+        user( 'createdOn ) = new Date
         user( 'email )     = email
         user( 'goid )      = guid
         user( 'got )       = accessToken
