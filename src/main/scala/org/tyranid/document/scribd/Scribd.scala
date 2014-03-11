@@ -74,7 +74,10 @@ case class ScribdApp( apiKey:String, secret:String = null, publisher:String = nu
     
     false
   }
-  
+    
+  def download( extDocId:String ) = null
+
+    
   def statusFor( extDocId:String ) = {
     "DONE"
     //val statusJson = Json.parse( Http.GET( "https://crocodoc.com/api/v2/document/status?token=" + apiKey + "&uuids=" + extDocId ).s ).get(0)
