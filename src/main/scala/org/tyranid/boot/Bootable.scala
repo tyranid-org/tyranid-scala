@@ -158,6 +158,7 @@ trait Bootable {
 
   def loginListeners:Seq[ User => Unit ] = Nil
   def logoutListeners:Seq[ User => Unit ] = Nil
+  def logoutJs = ""
 
 
    /*

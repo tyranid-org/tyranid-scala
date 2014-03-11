@@ -119,7 +119,7 @@ case class GoApp( simpleKey:String, clientId:String, secret:String, signin:Boole
     val sess = t.session
 
     val csrf = web.s( 'csrf )
-    if ( csrf != sess.crossSiteRequestForgeryToken ) {
+    if ( csrf != t.crossSiteRequestForgeryToken ) {
       sess.error( "Invalid state parameter." )
       return web.jsRes()
     }
@@ -149,7 +149,7 @@ case class GoApp( simpleKey:String, clientId:String, secret:String, signin:Boole
       // Check that the token is valid.
       val oauth2 = new Oauth2.Builder( httpTransport, jsonFactory, credential ).build
       val tokenInfo = oauth2.tokeninfo.setAccessToken( credential.getAccessToken ).execute
-      spam( "access token=" + credential.getAccessToken )
+      //sp am( "access token=" + credential.getAccessToken )
 
       if ( tokenInfo.containsKey( "error" ) ) {
         sess.error( tokenInfo.get( "error" ).toString )
@@ -172,16 +172,16 @@ case class GoApp( simpleKey:String, clientId:String, secret:String, signin:Boole
       val guid = tokenInfo.getUserId
       val email = tokenInfo.getEmail
 
-      spam( "plusId: " + guid )
-      spam( "email: " + email )
-      spam( "token 1: " + credential.getAccessToken )
-      spam( "token 2: " + tokenResponse.getClass.getName )
-      spam( "token 2: " + tokenResponse.toString )
+      //sp am( "plusId: " + guid )
+      //sp am( "email: " + email )
+      //sp am( "token 1: " + credential.getAccessToken )
+      //sp am( "token 2: " + tokenResponse.getClass.getName )
+      //sp am( "token 2: " + tokenResponse.toString )
 
       val tr = tokenResponse.toString.parseJsonObject
 
       val accessToken = tr.s( 'access_token )
-      spam( "access_token 2: " + accessToken )
+      //sp am( "access_token 2: " + accessToken )
       val expiresIn = tr.i( 'expires_in )
       val idToken = tr.s( 'id_token )
       val refreshToken = tr.s( 'refresh_token )
@@ -215,7 +215,7 @@ case class GoApp( simpleKey:String, clientId:String, secret:String, signin:Boole
         }
 
         val gUser = ( "https://www.googleapis.com/plus/v1/people/" + guid + "?access_token=" + accessToken ).GET().s.parseJsonObject
-        spam( gUser )
+        //sp am( gUser )
 
         user( 'email )     = email
         user( 'goid )      = guid
@@ -253,9 +253,9 @@ case class GoApp( simpleKey:String, clientId:String, secret:String, signin:Boole
 
         if ( isNew ) {
           val orgs = gUser.a_?( 'organizations )
-          spam( "orgs.length: " + orgs.length )
-          for ( o <- orgs )
-            spam( "org: " + o )
+          //sp am( "orgs.length: " + orgs.length )
+          //for ( o <- orgs )
+            //sp am( "org: " + o )
 
           val orgName =
             if ( orgs.length > 0 )
@@ -263,7 +263,7 @@ case class GoApp( simpleKey:String, clientId:String, secret:String, signin:Boole
             else
               null
 
-          spam( "user.tid=" + user.tid )
+          //sp am( "user.tid=" + user.tid )
 
           if ( orgName.notBlank )
             B.registerUser( user, orgName )

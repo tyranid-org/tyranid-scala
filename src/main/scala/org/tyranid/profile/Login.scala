@@ -41,6 +41,7 @@ import org.tyranid.web.{ Weblet, WebContext, WebResponse }
 import org.tyranid.web.WebHandledException
 import org.tyranid.web.WebIgnoreException
 
+
 object Loginlet extends Weblet {
   override val requiresLogin = false
 
@@ -100,13 +101,19 @@ object Loginlet extends Weblet {
       val website = T.website( "/", sess.user )
 
       sess.logout()
-      T.web.res.deleteCookie( "JSESSIONID", domain = B.domain )
+      //T.web.res.deleteCookie( "JSESSIONID", domain = B.domain )
 
       if ( !web.xhr )
         web.redirect( website )
 
+      var js = B.logoutJs
+
       // r means the client is handling the redirect
-      web.b( 'r ) ? web.jsRes() | web.jsRes( Js( "router.navigate( '#login', { trigger : true } );" ) )
+      if ( web.b( 'r ) )
+        js += "router.navigate( '#login', { trigger : true } );"
+
+      web.jsRes( Js( js ) )
+
     case "/register" =>
       if ( !web.xhr ) {
         val activationCode = web.s( "a" )
