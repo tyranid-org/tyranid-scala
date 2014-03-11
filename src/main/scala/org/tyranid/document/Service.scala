@@ -105,6 +105,14 @@ object Service {
     } else 
       null
   }
+  
+  def download( extDocId:String ):File = {
+    if ( extDocId.notBlank ) {
+      val parts = extDocId.split( "," )
+      appFor( parts(0 ) ).download( parts.drop(1).mkString( "," ) )
+    } else 
+      null
+  }
 }
 
 trait DocApp {
@@ -114,6 +122,7 @@ trait DocApp {
   val supportedFormats:List[String] 
   val active = true
     
+  def download( extDocId:String ): File
   def upload( file:File, fileSize:Long, filename:String, obj:DBObject ): Boolean
   def statusFor( extDocId:String ):String
   def getText( extDocId:String ):String

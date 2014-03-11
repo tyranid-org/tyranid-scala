@@ -423,7 +423,7 @@ class Group( obj:DBObject, parent:MongoRecord ) extends Content( Group.makeView,
 
     case ContentType.LiteProject =>
       val content = rec( 'thumbc ).as[Content]
-      ( content == null ) ? null | content.imageUrl( editing )
+      ( content == null ) ? super.imageUrl( editing ) | content.imageUrl( editing )
 
     case _ =>
       super.imageUrl( editing )
