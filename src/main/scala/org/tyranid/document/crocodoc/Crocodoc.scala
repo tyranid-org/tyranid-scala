@@ -89,7 +89,8 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
   }
   
   def download( extDocId:String ) = {
-    Http.GET_File( "https://crocodoc.com/api/v2/download/document?token=" + apiKey + "&uuid=" + extDocId )
+    val file = Http.GET_File( "https://crocodoc.com/api/v2/download/document?token=" + apiKey + "&uuid=" + extDocId )
+    ( file.length == 25 && new FileInputStream( file ).asString == """{"error": "invalid uuid"}""" ) ? null | file
   }
   
   def statusFor( extDocId:String ) = {
