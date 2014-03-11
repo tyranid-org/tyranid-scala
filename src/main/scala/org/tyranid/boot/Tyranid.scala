@@ -46,6 +46,7 @@ object TyranidConfig extends MongoEntity( tid = "a03t" ) {
   "confAlertLimit" is DbInt             as "Send Alert when this limit is hit";     
   "convIndd"       is DbInt             as "Convert InDesign Docs";     
   "profile"        is DbBoolean         as "Profiling";     
+  "actOn"          is DbBoolean         as "Act On";     
 
   def apply():TyranidConfig = singleton
 
@@ -143,6 +144,12 @@ object TyranidConfiglet extends Weblet {
         TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "debugSso" -> obj.b( 'debugSso ) ) ) )
         sess.notice( "SSO Debug has been turned " + ( B.debugSso ? "ON" | "OFF" ) + "." )
   
+      case "actOn" =>
+        val obj = TyranidConfig()
+        obj( 'actOn ) = !B.actOn
+        TyranidConfig.db.update( Mobj( "_id" -> obj.id ), Mobj( $set -> Mobj( "actOn" -> obj.b( 'actOn ) ) ) )
+        sess.notice( "Act On has been turned " + ( B.actOn ? "ON" | "OFF" ) + "." )
+  
       case "chat" =>
         val obj = TyranidConfig()
         obj( 'debugChat ) = !B.debugChat
@@ -214,7 +221,8 @@ object TyranidConfiglet extends Weblet {
               "lite"           -> B.enableLite,
               "accessLogs"     -> B.accessLogs,
               "profile"        -> B.profile,
-              "convIndd"       -> B.convIndd
+              "convIndd"       -> B.convIndd,
+              "actOn"          -> B.actOn
             )
          ),
          name = "main"
