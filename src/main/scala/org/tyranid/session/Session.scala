@@ -152,6 +152,7 @@ object WebSession {
   val HttpSessionKey = "tyrSess"
   val InvalidateKey  = "tyrInv"
   val CsrfKey  = "tyrCsrf"
+  val GoogleLoginKey  = "googleLogin"
 
   /*
   def visit( visitor: ( Session ) => Unit ) =
@@ -268,6 +269,15 @@ class ThreadData {
       null
     }
   }
+
+  def googleLogin =
+    http.getAttribute( WebSession.GoogleLoginKey ) match {
+    case null => false
+    case s    => s._b
+    }
+
+  def markGoogleLogin =
+    http.setAttribute( WebSession.GoogleLoginKey, true )
 
   def ioUrl = {
     val cordova = ( T.web != null && T.web.b( 'cordova ) ) || ( T.session != null && T.session.isCordova )
