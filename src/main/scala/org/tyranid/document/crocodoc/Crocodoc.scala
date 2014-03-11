@@ -88,9 +88,7 @@ case class CrocApp( apiKey:String, secret:String = null ) extends DocApp {
     false
   }
   
-  def download( extDocId:String ) = {
-    Http.GET_File( "https://crocodoc.com/api/v2/download/document?token=" + apiKey + "&uuid=" + extDocId )
-  }
+  def download( extDocId:String ) = Http.GET_File( "https://crocodoc.com/api/v2/download/document?token=" + apiKey + "&uuid=" + extDocId )
   
   def statusFor( extDocId:String ) = {
     val statusJson = Json.parse( Http.GET( "https://crocodoc.com/api/v2/document/status?token=" + apiKey + "&uuids=" + extDocId ).s ).get(0)
