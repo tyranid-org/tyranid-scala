@@ -100,6 +100,8 @@ object Loginlet extends Weblet {
     case "/out" =>
       val website = T.website( "/", sess.user )
 
+      val googleUser = sess.user.has( 'goid )
+
       sess.logout()
       //T.web.res.deleteCookie( "JSESSIONID", domain = B.domain )
 
@@ -108,9 +110,14 @@ object Loginlet extends Weblet {
 
       var js = B.logoutJs
 
-      // r means the client is handling the redirect
-      if ( web.b( 'r ) )
-        js += "router.navigate( '#login', { trigger : true } );"
+
+      if ( googleUser ) {
+        js += "window.location = 'https://www.google.com/accounts/Logout?continue=https://appengine.google.com/_ah/logout?continue=https://" + B.domainPort + "/#login';"
+      } else {
+        // r means the client is handling the redirect
+        if ( web.b( 'r ) )
+          js += "router.navigate( '#login', { trigger : true } );"
+      }
 
       web.jsRes( Js( js ) )
 

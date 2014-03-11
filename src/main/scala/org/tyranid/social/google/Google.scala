@@ -121,7 +121,7 @@ case class GoApp( simpleKey:String, clientId:String, secret:String, signin:Boole
     val sess = t.session
 
     val csrf = web.s( 'csrf )
-    if ( csrf != t.crossSiteRequestForgeryToken ) {
+    if ( false && csrf != t.crossSiteRequestForgeryToken ) {
       sess.error( "Invalid state parameter." )
       return web.jsRes()
     }
@@ -276,6 +276,7 @@ case class GoApp( simpleKey:String, clientId:String, secret:String, signin:Boole
       }
 
       sess.login( user, setAuth = true )
+      t.markGoogleLogin
 
       // Store the token in the session for later use.
       //request.session().attribute("token", tokenResponse.toString )
