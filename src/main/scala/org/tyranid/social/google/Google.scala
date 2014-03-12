@@ -32,6 +32,7 @@ import com.google.api.services.oauth2.Oauth2
 import org.tyranid.Imp._
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.http.Http
+import org.tyranid.json.Js
 import org.tyranid.locale.{ Country, LatLong }
 import org.tyranid.math.Base64
 import org.tyranid.session.Session
@@ -200,8 +201,8 @@ case class GoApp( simpleKey:String, clientId:String, secret:String, signin:Boole
             val pw = web.s( 'pw )
 
             if ( pw.isBlank ) {
-              sess.error( "This user already exists.  Please enter in your Volerro password to link this account to your Google+ account." )
-              return web.jsRes()
+              sess.error( "A Volerro user for your google account <b>" + email + "</b> already exists.  Please enter in your Volerro password to link this account to your Google+ account." )
+              return web.jsRes( Js( "T.changeEmail = '" + email + "';" ) )
             }
 
             if ( !pw.checkShash( user.s( 'password ) ) ) {
