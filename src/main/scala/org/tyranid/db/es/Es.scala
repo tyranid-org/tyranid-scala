@@ -96,13 +96,16 @@ class Indexer extends Actor {
 //sp am( "json=" + json )
 
         val response  = ( B.elasticSearchHost + "/" + index + "/" + typ + "/" + id ).POST( content = json )
-        val responseJson = Json.parse( response.s )
         
-        val error = responseJson.s( 'error )
-        
-        if ( error.notBlank ) {
-          println( "ES Indexing Failure on ID " + id + ", error=" + responseJson + "\n\nIndex JSON:\n\n" + json )
-          Log.log( Event.Search, "m" -> ( "Failed to index id " + id + ", type=" + typ + ", err=" + error ) ) 
+        if ( response != null ) {
+          val responseJson = Json.parse( response.s )
+          
+          val error = responseJson.s( 'error )
+          
+          if ( error.notBlank ) {
+            println( "ES Indexing Failure on ID " + id + ", error=" + responseJson + "\n\nIndex JSON:\n\n" + json )
+            Log.log( Event.Search, "m" -> ( "Failed to index id " + id + ", type=" + typ + ", err=" + error ) ) 
+          }
         }
       }
     } catch {
