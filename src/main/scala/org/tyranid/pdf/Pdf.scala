@@ -83,7 +83,7 @@ object Pdf {
 
     	    client.convertURI( finalUrl, fileStream )
 
-    	    if ( !useJavascript )
+    	    if ( !useJavascript && !disableJavascript )
             B.sendMessage( "When importing the URL [" + url + "], there was an error.  It was tried again with Javascript turned off on the page and it was successful.  The result may not exactly reflect what the page looked like.", T.user.tid )
 
           retry = false
