@@ -198,10 +198,10 @@ case class GoApp( simpleKey:String, clientId:String, secret:String, signin:Boole
           user = B.User( B.User.db.findOne( Mobj( "email" -> email ) ) )
 
           if ( user != null ) {
-            val pw = web.s( 'pw )
+            val pw = web.s( 'googlePw )
 
             if ( pw.isBlank ) {
-              sess.error( "A Volerro user for your google account <b>" + email + "</b> already exists.  Please enter in your Volerro password to link this account to your Google+ account." )
+              sess.error()// "A Volerro user for your google account <b>" + email + "</b> already exists.  Please enter in your Volerro password to link this account to your Google+ account." )
               return web.jsRes( Js( "T.changeEmail = '" + email + "';" ) )
             }
 
