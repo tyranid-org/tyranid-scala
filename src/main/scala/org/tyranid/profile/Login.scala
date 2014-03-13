@@ -37,9 +37,7 @@ import org.tyranid.session.{ Session, EmailCookie }
 import org.tyranid.sso.SsoMapping
 import org.tyranid.social.Social
 import org.tyranid.ui.{ Button, Grid, Row, Focus, Form }
-import org.tyranid.web.{ Weblet, WebContext, WebResponse }
-import org.tyranid.web.WebHandledException
-import org.tyranid.web.WebIgnoreException
+import org.tyranid.web.{ Weblet, WebContext, WebResponse, WebFilter, WebHandledException, WebIgnoreException }
 
 
 object Loginlet extends Weblet {
@@ -307,6 +305,13 @@ object Loginlet extends Weblet {
   }
 
   def register( web:WebContext, sess:Session ) {
+    if ( sess.isVerified ) {
+      sess.logout( true, false )
+      
+      T.http = web.req.getSession( true )
+      WebFilter.setSessionVars( web )      
+    }
+      
     val user =
       sess.user match {
       case null => B.newUser()
@@ -317,7 +322,7 @@ object Loginlet extends Weblet {
 
                    u
     }
-
+    
     if ( user.isNew  )
       sess.user = user
 
