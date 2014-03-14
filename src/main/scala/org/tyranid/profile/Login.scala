@@ -37,9 +37,8 @@ import org.tyranid.session.{ Session, EmailCookie }
 import org.tyranid.sso.SsoMapping
 import org.tyranid.social.Social
 import org.tyranid.ui.{ Button, Grid, Row, Focus, Form }
-import org.tyranid.web.{ Weblet, WebContext, WebResponse }
-import org.tyranid.web.WebHandledException
-import org.tyranid.web.WebIgnoreException
+import org.tyranid.web.{ Weblet, WebContext, WebResponse, WebFilter, WebHandledException, WebIgnoreException }
+
 
 object Loginlet extends Weblet {
   override val requiresLogin = false
@@ -87,23 +86,39 @@ object Loginlet extends Weblet {
             LoginCookie.set(user)
 
           web.jsRes( JsData( user ), JsModel( user.toClientCommonMap(), "common" ),
-              Js( "V.app.newLoad( '#dashboard' );" ) )
+              Js( "T.session='" + T.session.httpSessionId + "';V.app.newLoad( '#dashboard' );" ) )
         }
       } else {
         web.jsRes( Js( "router.navigate( '#login', { trigger : true } );" ) )
       }
 
+    case "/in/google" =>
+      B.google.login
+
     case "/out" =>
       val website = T.website( "/", sess.user )
 
+      val googleUser = sess.user.has( 'goid )
+
       sess.logout()
-      T.web.res.deleteCookie( "JSESSIONID", domain = B.domain )
+      //T.web.res.deleteCookie( "JSESSIONID", domain = B.domain )
 
       if ( !web.xhr )
         web.redirect( website )
 
-      // r means the client is handling the redirect
-      web.b( 'r ) ? web.jsRes() | web.jsRes( Js( "router.navigate( '#login', { trigger : true } );" ) )
+      var js = B.logoutJs
+
+
+      if ( googleUser ) {
+        js += "window.location = 'https://www.google.com/accounts/Logout?continue=https://appengine.google.com/_ah/logout?continue=https://" + B.domainPort + "/#login';"
+      } else {
+        // r means the client is handling the redirect
+        if ( web.b( 'r ) )
+          js += "router.navigate( '#login', { trigger : true } );"
+      }
+
+      web.jsRes( Js( js ) )
+
     case "/register" =>
       if ( !web.xhr ) {
         val activationCode = web.s( "a" )
@@ -290,6 +305,13 @@ object Loginlet extends Weblet {
   }
 
   def register( web:WebContext, sess:Session ) {
+    if ( sess.isVerified ) {
+      sess.logout( true, false )
+      
+      T.http = web.req.getSession( true )
+      WebFilter.setSessionVars( web )      
+    }
+      
     val user =
       sess.user match {
       case null => B.newUser()
@@ -300,7 +322,7 @@ object Loginlet extends Weblet {
 
                    u
     }
-
+    
     if ( user.isNew  )
       sess.user = user
 

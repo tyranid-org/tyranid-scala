@@ -80,6 +80,8 @@ case class IssuuApp( apiKey:String, secret:String = null ) extends DocApp {
     return false
   }
   
+  def download( extDocId:String ) = null
+
   def getText( extDocId:String ):String = {
     null  
   }

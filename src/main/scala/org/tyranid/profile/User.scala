@@ -131,6 +131,11 @@ class UserMeta extends MongoEntity( "a01v" ) {
   "twt"            is DbChar(90)          ; // Twitter OAuth 1.0a token
   "twts"           is DbChar(90)          ; // Twitter OAuth 1.0a token secret
 
+  "goid"           is DbChar(90)          ; // Google id if linked
+  "got"            is DbChar(90)          ; // Google OAuth 2.0 token
+  "gote"           is DbLong              ; // Google token expiration
+  "goft"           is DbChar(90)          ; // Google refresh token
+
   "eye"            is DbBoolean           ;
   "bids"           is DbArray(DbChar(10)) as "Browser IDs";
   "sso"            is DbLink(SsoMapping)  ;

@@ -158,6 +158,7 @@ trait Bootable {
 
   def loginListeners:Seq[ User => Unit ] = Nil
   def logoutListeners:Seq[ User => Unit ] = Nil
+  def logoutJs = ""
 
 
    /*
@@ -174,6 +175,7 @@ trait Bootable {
   def convIndd         = TyranidConfig().b( 'convIndd )
   def allTmpl          = TyranidConfig().b( 'allTmpl )
   def debugSso         = TyranidConfig().b( 'debugSso )
+  def actOn            = TyranidConfig().b( 'actOn )
   def debugChat        = TyranidConfig().b( 'debugChat )
   def profile          = TyranidConfig().b( 'profile )
   def syncWebDav       = TyranidConfig().b( 'syncWebDav )

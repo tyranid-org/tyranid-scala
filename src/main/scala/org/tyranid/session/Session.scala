@@ -151,6 +151,8 @@ object WebSession {
 
   val HttpSessionKey = "tyrSess"
   val InvalidateKey  = "tyrInv"
+  val CsrfKey  = "tyrCsrf"
+  val GoogleLoginKey  = "googleLogin"
 
   /*
   def visit( visitor: ( Session ) => Unit ) =
@@ -250,6 +252,32 @@ class ThreadData {
   }
 
   def baseWebsite = "https://" + B.domainPort
+
+  def crossSiteRequestForgeryToken = {
+    if ( http != null ) {
+      // this needs to be on the HttpSession instead of the TyranidSession because when a user logs out their TyranidSession is fragged
+      http.getAttribute( WebSession.CsrfKey ) match {
+      case null =>
+        val s = B.google.createCrossSiteAntiForgeryToken
+        http.setAttribute( WebSession.CsrfKey, s )
+        s
+
+      case s =>
+        s
+      }
+    } else {
+      null
+    }
+  }
+
+  def googleLogin =
+    http.getAttribute( WebSession.GoogleLoginKey ) match {
+    case null => false
+    case s    => s._b
+    }
+
+  def markGoogleLogin =
+    http.setAttribute( WebSession.GoogleLoginKey, true )
 
   def ioUrl = {
     val cordova = ( T.web != null && T.web.b( 'cordova ) ) || ( T.session != null && T.session.isCordova )
@@ -508,8 +536,6 @@ trait Session extends QuickCache {
 
     tUa
   }
-
-  lazy val googleCrossSiteRequestForgeryToken = org.tyranid.social.google.Google.createCrossSiteAntiForgeryToken
 
 
   /*

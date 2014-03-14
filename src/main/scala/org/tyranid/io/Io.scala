@@ -105,7 +105,7 @@ object Iolet extends Weblet {
   def handle( web:WebContext ) {
     rpath match {
      // <img src="/io/thumb/a09vUCwNUOSweddROKEl/l|m|s|t"/>
-    case s if s.startsWith( "/thumb" ) =>
+    case s if s.startsWith( "/thumb/" ) =>
       val parts = s.substring( 7 ).split( "/" )
       
       if ( parts.size < 2 ) {
