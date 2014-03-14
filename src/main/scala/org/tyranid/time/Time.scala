@@ -356,8 +356,10 @@ class DateImp( d:Date ) extends Serializable {
   def < ( other:Date ) = d.getTime <  other.getTime
   def <=( other:Date ) = d.getTime <= other.getTime
 
-  def +( ms:Long ) = new Date( d.getTime + ms )
-  def -( ms:Long ) = new Date( d.getTime - ms )
+  def +( ms:Long ):Date = new Date( d.getTime + ms )
+  def -( ms:Long ):Date = new Date( d.getTime - ms )
+
+  def -( other:Date ):Long = d.getTime - other.getTime
 }
 
 object Time {
