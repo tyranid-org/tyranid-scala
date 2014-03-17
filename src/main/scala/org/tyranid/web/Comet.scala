@@ -20,6 +20,8 @@ package org.tyranid.web
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 
+import org.bson.types.ObjectId
+
 import com.mongodb.{ Bytes, DBObject }
 
 import org.tyranid.Imp._
@@ -29,7 +31,6 @@ import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.json.{ JsCmd, JsCmds, JsModel }
 import org.tyranid.net.Ip
 import org.tyranid.session.{ Session, SessionData, WebSession }
-
 
 
 
@@ -103,7 +104,7 @@ object Comet {
 
   def visit( userIds:Seq[ObjectId] )( visitor: ( Comet ) => Unit ) = {
 
-    for ( sd <- B.SessionData.db.find( Mobj( "u" -> Mobj( $in -> userIds.toMlist ); finish this
+    for ( sd <- B.SessionData.db.find( Mobj( "u" -> Mobj( $in -> userIds.toMlist ) ) ).map( B.SessionData.apply );
           u = sd( 'u );
           if u != null ) {
 
