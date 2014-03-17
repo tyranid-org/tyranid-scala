@@ -219,7 +219,7 @@ object Iolet extends Weblet {
       else
         web.jsRes()
     case _ =>
-      _404
+      web.jsRes()
     }
   }
 }
