@@ -205,7 +205,7 @@ case class GoApp( simpleKey:String, clientId:String, secret:String, signin:Boole
               return web.jsRes( Js( "T.changeEmail = '" + email + "';" ) )
             }
 
-            if ( !pw.checkShash( user.s( 'password ) ) ) {
+            if ( user.s( 'password ).notBlank && !pw.checkShash( user.s( 'password ) ) ) {
               sess.error( "Invalid password." )
               return web.jsRes()
             }
