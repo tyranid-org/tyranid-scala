@@ -101,6 +101,34 @@ case class Comet( session:SessionData ) {
 
 object Comet {
 
+  def visit( userIds:Seq[ObjectId] )( visitor: ( Comet ) => Unit ) = {
+
+    for ( sd <- B.SessionData.db.find( Mobj( "u" -> Mobj( $in -> userIds.toMlist ); finish this
+          u = sd( 'u );
+          if u != null ) {
+
+      val comet = Comet( sd )
+
+//sp am( "visiting " + sd.user.label )
+
+      visitor( comet )
+
+//sp am( "results " + comet.output )
+      if ( comet.output != null ) {
+
+        val sv = sd.s( 'sv )
+
+        PushQueue.db.save(
+          Mobj(
+            "h"  -> false, // this can't left undefined, because you can't update a document in a capped mongo collection to be larger
+            "ss" -> sd.s( 'ss ),
+            "m"  -> comet.output.toDBObject
+          )
+        )
+      }
+    }
+  }
+
   def visit( visitor: ( Comet ) => Unit ) = {
 
     for ( sd <- B.SessionData.records;
