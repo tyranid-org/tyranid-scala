@@ -959,7 +959,8 @@ class SessionDataMeta extends MongoEntity( "a04t" ) {
 }
 
 trait SessionData extends MongoRecord {
-  
+
+  def httpSessionId = s( 'ss )
 
   def user = B.User.getById( oid( 'u ) )
 
