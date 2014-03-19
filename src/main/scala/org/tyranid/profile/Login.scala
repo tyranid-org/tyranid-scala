@@ -95,6 +95,8 @@ object Loginlet extends Weblet {
     case "/in/google" =>
       B.google.login
 
+    case "/close" =>
+      sess.logout( false, true, invalidate = true )      
     case "/out" =>
       val website = T.website( "/", sess.user )
 

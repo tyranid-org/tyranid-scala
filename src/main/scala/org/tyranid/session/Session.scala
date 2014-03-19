@@ -679,7 +679,7 @@ trait Session extends QuickCache {
   def setAllowEmail = put( "allowEmail", true )
   def clearAllowEmail = clear( "allowEmail" )
 
-  def logout( unlink:Boolean = true, removeCookies:Boolean = true ) = {
+  def logout( unlink:Boolean = true, removeCookies:Boolean = true, invalidate:Boolean = false ) = {
     if ( removeCookies ) {      
       if ( !isIncognito )
         LoginCookie.remove
@@ -696,6 +696,13 @@ trait Session extends QuickCache {
 
       if ( !isIncognito )
         B.logoutListeners.foreach( _( u ) )    
+    }
+    
+    if ( invalidate && T.http != null ) {
+      val thisSession = T.web.req.getSession( false )
+      
+      if ( thisSession == T.http )
+        thisSession.invalidate
     }
   }
 

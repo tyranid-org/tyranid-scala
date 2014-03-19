@@ -162,7 +162,7 @@ object TrackingCookie {
     val t = T
 
     if ( t.web == null )
-      return null;
+      return null
 
     var token = t.web.req.cookieValue( B.trackingCookieName )
     if ( token.isBlank ) {
@@ -177,17 +177,20 @@ object TrackingCookie {
     }
 
     val u = t.user
-    val tokens = u.a_?( 'bids ).toSeq.of[String]
-
-    if ( !tokens.contains( token ) ) {
-      val list = ( tokens :+ token ).toMlist
-      u( 'bids ) = list
-      B.User.db.update( Mobj( "_id" -> u.id ), Mobj( $set -> Mobj( "bids" -> list ) ) )
+    
+    if ( u != null ) {
+      val tokens = u.a_?( 'bids ).toSeq.of[String]
+  
+      if ( !tokens.contains( token ) ) {
+        val list = ( tokens :+ token ).toMlist
+        u( 'bids ) = list
+        B.User.db.update( Mobj( "_id" -> u.id ), Mobj( $set -> Mobj( "bids" -> list ) ) )
+      }
+  
+      //if ( tokens.size > 12 )
+        //consolidate( u )
     }
-
-    //if ( tokens.size > 12 )
-      //consolidate( u )
-
+    
     token
   }
 
