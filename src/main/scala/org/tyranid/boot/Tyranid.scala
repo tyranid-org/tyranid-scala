@@ -20,7 +20,7 @@ package org.tyranid.boot
 import com.mongodb.DBObject
 
 import org.tyranid.Imp._
-import org.tyranid.db.{ DbBoolean, DbInt }
+import org.tyranid.db.{ DbBoolean, DbInt, DbChar }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.db.mongo.{ DbMongoId, MongoEntity, MongoRecord }
 import org.tyranid.json.JsModel
@@ -43,7 +43,7 @@ object TyranidConfig extends MongoEntity( tid = "a03t" ) {
   "syncWebDav"     is DbBoolean         as "Sync WebDavs";
   "hideUpgradeBtn" is DbBoolean         as "Hide Upgrade Button";
   "allTmpl"        is DbBoolean         as "Templates for All";
-  "confAlertLimit" is DbInt             as "Send Alert when this limit is hit";     
+  "confAlertLimit" is DbInt             as "Send Alert when this conference limit is hit";     
   "convIndd"       is DbInt             as "Convert InDesign Docs";     
   "profile"        is DbBoolean         as "Profiling";     
   "actOn"          is DbBoolean         as "Act On";     
