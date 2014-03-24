@@ -132,6 +132,7 @@ object Iolet extends Weblet {
             def entity = Entity.byTid( tid ).getOrElse( null )
            
             if ( entity == null || !entity.is[ContentMeta] ) {
+              web.res.setNoCacheHeaders
               web.res.setStatus( 302 )
               web.res.setHeader( "Location", notFoundUrl )
               web.res.setHeader( "Connection", "close" )
@@ -142,6 +143,7 @@ object Iolet extends Weblet {
             val rec = Record.getByTid( tid ) 
   
             if ( rec == null ) {
+              web.res.setNoCacheHeaders
               web.res.setStatus( 302 )
               web.res.setHeader( "Location", notFoundUrl )
               web.res.setHeader( "Connection", "close" )
@@ -150,8 +152,9 @@ object Iolet extends Weblet {
             }
            
             if ( !rec.as[Content].generateThumbs ) {
+              web.res.setNoCacheHeaders
               web.res.setStatus( 302 )
-              web.res.setHeader( "Location", B.getS3Bucket( "public" ).url( "icons/na.png" ) )
+              web.res.setHeader( "Location", notFoundUrl )
               web.res.setHeader( "Connection", "close" )
               return
             }
@@ -160,12 +163,14 @@ object Iolet extends Weblet {
             web.res.setStatus( 200 )
             return
           case e3:AmazonClientException =>
+            web.res.setNoCacheHeaders
             web.res.setStatus( 302 )
             web.res.setHeader( "Location", notFoundUrl )
             web.res.setHeader( "Connection", "close" )
             log( Event.Eof, "m" -> ( e3.getMessage() + " for thumb path= " + rpath ) )
             return
           case e4:Throwable =>
+            web.res.setNoCacheHeaders
             web.res.setStatus( 302 )
             web.res.setHeader( "Location", notFoundUrl )
             web.res.setHeader( "Connection", "close" )
