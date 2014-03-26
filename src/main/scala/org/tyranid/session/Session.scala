@@ -414,6 +414,25 @@ class ThreadData {
     requestCache.clear
   }
 
+  def reqData( name:String ) {
+    val data = requestCache.getOrElseUpdate( "req-data", new mutable.HashMap[String,Boolean]() ).as[mutable.HashMap[String,Boolean]]
+    
+    if ( !data.getOrElse( name, false ).as[Boolean] )
+      data.put( name, true )
+  }
+
+  def isSentData( name:String ) = {
+    val data = requestCache.getOrElse( "req-sent-data", null ).as[mutable.HashMap[String,Boolean]]
+    data != null && data.get( name ) == Some
+  }
+  
+  def reqSentData( name:String ) {
+    val data = requestCache.getOrElseUpdate( "req-sent-data", new mutable.HashMap[String,Boolean]() ).as[mutable.HashMap[String,Boolean]]
+    
+    if ( !data.getOrElse( name, false ).as[Boolean] )
+      data.put( name, true )
+  }
+  
   val requestCache = mutable.Map[String,Any]()
 
 	def requestCached[ T ]( key:String )( block: => T ):T = requestCache.getOrElseUpdate( key, block ).as[T]
@@ -655,7 +674,8 @@ trait Session extends QuickCache {
       if ( req != null )
         userAgent = ua( web )
       
-      T.requestCache.put( "req-common", true )      
+      T.reqData( "common" )
+      T.reqData( "presentations" )
     }
 
     if ( setAuth || incognito )

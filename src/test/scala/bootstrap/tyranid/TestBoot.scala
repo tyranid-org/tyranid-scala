@@ -27,6 +27,7 @@ class Boot extends org.tyranid.boot.Bootable {
   val docPreviewApp:DocApp = null
 
   def finishConversion( content:org.tyranid.content.Content ) {}
+  def addInvolvedPresentationData( req:javax.servlet.http.HttpServletRequest ) {}
   val alertEmail      = "info@tyranid.org"
 
   val applicationWebloc = null

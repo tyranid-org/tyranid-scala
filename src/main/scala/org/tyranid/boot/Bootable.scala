@@ -20,6 +20,8 @@ package org.tyranid.boot
 import java.io.File
 import java.net.InetAddress
 
+import javax.servlet.http.HttpServletRequest
+
 import scala.xml.NodeSeq
 
 //import org.clapper.classutil.ClassFinder
@@ -206,6 +208,7 @@ trait Bootable {
   def DocEntity:MongoEntity = null
 
   def finishConversion( content:Content )
+  def addInvolvedPresentationData( req:HttpServletRequest )
   
   def registerUser( user:User, companyName:String ) 
   def sendMessage( msg:String, toUserTid:String, fromUserTid:String = null ) 
