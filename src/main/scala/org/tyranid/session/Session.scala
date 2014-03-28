@@ -279,19 +279,17 @@ class ThreadData {
   def markGoogleLogin =
     http.setAttribute( WebSession.GoogleLoginKey, true )
 
+  def isCordova = ( T.web != null && T.web.b( 'cordova ) ) || ( T.session != null && T.session.isCordova )
+
   def ioUrl = {
-    val cordova = ( T.web != null && T.web.b( 'cordova ) ) || ( T.session != null && T.session.isCordova )
-    
     if ( B.PRODUCTION )
-      ( cordova |* "https:" ) + "//io.volerro.com";
+      ( isCordova |* "https:" ) + "//io.volerro.com";
     else
-      cordova ? baseWebsite | "";
+      isCordova ? baseWebsite | "";
   }
 
-  def ioWebsite( path:String ) = {
-    val cordova = ( T.web != null && T.web.b( 'cordova ) ) || ( T.session != null && T.session.isCordova )
-    ioUrl + ( cordova ? updateQueryString( path, "cordova", 1 ) | path )
-  }
+  def ioWebsite( path:String ) =
+    ioUrl + ( isCordova ? updateQueryString( path, "cordova", 1 ) | path )
   
   def website( path:String = "", user:User = null, ssoMapping:SsoMapping = null, subdomain:String = null, forceLite:Boolean = false, forceMain:Boolean = false ):String = {
     val subdomainWebsite = ( !forceMain && forceLite ) ? ( "https://" + B.liteFullDomain + B.port ) | {
