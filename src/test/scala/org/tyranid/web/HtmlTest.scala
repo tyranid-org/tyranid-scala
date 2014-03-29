@@ -19,7 +19,7 @@ package org.tyranid.web
 
 import org.scalatest.FunSuite
 
-import org.tyranid.Imp._
+import org.tyranid.ImpT._
 
 
 class HtmlSuite extends FunSuite {

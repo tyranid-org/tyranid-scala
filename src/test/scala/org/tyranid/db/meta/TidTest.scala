@@ -19,7 +19,7 @@ package org.tyranid.db.meta
 
 import org.scalatest.FunSuite
 
-import org.tyranid.Imp._
+import org.tyranid.ImpT._
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.test.db._
 

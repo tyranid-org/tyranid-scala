@@ -3,7 +3,7 @@ package bootstrap.tyranid
 
 import scala.xml.NodeSeq
 
-import org.tyranid.Imp._
+import org.tyranid.ImpT._
 import org.tyranid.cloud.aws.S3Bucket
 import org.tyranid.db.mongo.MongoEntity
 import org.tyranid.document.DocApp
@@ -41,7 +41,7 @@ class Boot extends org.tyranid.boot.Bootable {
   override val awsCredentials = new com.amazonaws.auth.BasicAWSCredentials( "TODO", "TODO" )
   override val bucketSuffix   = ".volerro.com"
 
-  def canAddUser( o:org.tyranid.profile.Org ) = true
+  def canAddUser( o:org.tyranid.profile.OrgT ) = true
   
   val emailTemplates = null
 
@@ -50,7 +50,7 @@ class Boot extends org.tyranid.boot.Bootable {
 
   override def sendMessage( msg:String, toUserTid:String, fromUserTid:String = null ) { } 
 
-  override def registerUser( user:org.tyranid.profile.User, companyName:String ) { }
+  override def registerUser( user:org.tyranid.profile.UserT, companyName:String ) { }
     
   val build = 1
 

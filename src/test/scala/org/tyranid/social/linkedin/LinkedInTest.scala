@@ -19,7 +19,7 @@ package org.tyranid.social.linkedin
 
 import org.scalatest.FunSuite
 
-import org.tyranid.Imp._
+import org.tyranid.ImpT._
 
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner

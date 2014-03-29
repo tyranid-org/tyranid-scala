@@ -21,7 +21,7 @@ import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.FunSuite
 
-import org.tyranid.Imp._
+import org.tyranid.ImpT._
 
 @RunWith(classOf[JUnitRunner])
 class StringSuite extends FunSuite {

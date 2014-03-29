@@ -21,7 +21,7 @@ import scala.util.Random
 
 import org.scalatest.FunSuite
 
-import org.tyranid.Imp._
+import org.tyranid.ImpT._
 
 
 case class RadixLong( decimal:Long, base36:String, base62:String )

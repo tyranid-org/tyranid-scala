@@ -19,7 +19,7 @@ package org.tyranid.email
 
 import org.scalatest.FunSuite
 
-import org.tyranid.Imp._
+import org.tyranid.ImpT._
 
 
 case class EmailData( email:String, domain:String, domainPart:String )

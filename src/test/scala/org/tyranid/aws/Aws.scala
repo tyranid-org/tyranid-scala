@@ -9,7 +9,7 @@ import org.scalatest.FunSuite
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
-import org.tyranid.Imp._
+import org.tyranid.ImpT._
 import org.tyranid.cloud.aws.{ Aws, S3, S3Bucket }
 import org.tyranid.db.mongo.Imp._
 import org.tyranid.session.ThreadData

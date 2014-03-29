@@ -23,8 +23,8 @@ import scala.xml.Unparsed
 
 import org.scalatest.FunSuite
 
-import org.tyranid.Imp._
-import org.tyranid.session.Session
+import org.tyranid.ImpT._
+import org.tyranid.session.{ SessionT => Session }
 
 
 class WebSuite extends FunSuite {

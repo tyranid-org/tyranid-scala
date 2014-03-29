@@ -23,8 +23,8 @@ import org.scalatest.FunSuite
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
-import org.tyranid.Imp._
-import org.tyranid.session.Session
+import org.tyranid.ImpT._
+import org.tyranid.session.{ SessionT => Session }
 
 
 @RunWith(classOf[JUnitRunner])

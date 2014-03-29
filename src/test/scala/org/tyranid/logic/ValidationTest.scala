@@ -19,7 +19,7 @@ package org.tyranid.logic
 
 import org.scalatest.FunSuite
 
-import org.tyranid.Imp._
+import org.tyranid.ImpT._
 import org.tyranid.db.DbEmail
 //import org.tyranid.Bind
 //import org.tyranid.db.Scope
