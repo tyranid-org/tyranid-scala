@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -39,7 +39,7 @@ import org.tyranid.ui.PathField
 import org.tyranid.web.Html
 
 
-    
+
 
 
 // Might be able to get an image out of pdfbox:
@@ -169,7 +169,7 @@ case class DbThumbnail( bucket:S3Bucket ) extends DbImageish( bucket ) {
 
     v.isBlank ? NodeSeq.Empty | <img src={ v } style="width:50px; height:50px;"/>
   }
-  
+
   override def ui( s:Scope, f:PathField ): NodeSeq = {
     <div class='thumbnailImg'>
       <div><input id={ f.id } name={ f.id } type="file"/></div>
@@ -178,6 +178,7 @@ case class DbThumbnail( bucket:S3Bucket ) extends DbImageish( bucket ) {
 }
 
 object Image {
+  ImageIO.scanForPlugins
 
   private val cache = mutable.Map[URL,Image]()
 
@@ -190,7 +191,7 @@ object Image {
       } )
   }
 
-  
+
   def suffixes( contentType:String, path:String ) = {
     val suffixes = mutable.ArrayBuffer[String]()
 
@@ -260,14 +261,14 @@ object Image {
 
     None
   }
-  
+
 	def queryDimensions( url:URL ):Option[Dimensions] = {
 		var iis:MemoryCacheImageInputStream = null
 
 		try {
    		val urlc = url.openConnection
    		urlc.setConnectTimeout( 45000 )
-			
+
 			iis = new MemoryCacheImageInputStream( urlc.getInputStream )
 
 			for ( suffix <- suffixes( urlc.getContentType, url.getPath );
@@ -334,49 +335,49 @@ object Thumbnail {
   val Medium = Thumbnail( "medium", "m", Dimensions( width = 140, height = 91 ) ) // Timeline
   val Small  = Thumbnail( "small",  "s", Dimensions( width = 100, height = 65 ) ) // Project header
   val Tiny   = Thumbnail( "tiny",   "t", Dimensions( width =  40, height = 40 ) ) // Dashboard drop-down
-  
+
   def generate( originalFile:File, thumbW:Int, thumbH:Int, thumbnailFile:File = null ):File = {
     var image = {
        try {
          ImageIO.read( originalFile )
        } catch {
          case e:javax.imageio.IIOException =>
-           try {
-             new JpegReader().readImage( originalFile ) 
-           } catch {
-             case e2:Throwable => 
+           //try {
+           //  new JpegReader().readImage( originalFile )
+           //} catch {
+           //  case e2:Throwable =>
                //Find a suitable ImageReader
                val suffix = originalFile.getName.suffix( '.' ).toUpperCase
                val readers = ImageIO.getImageReadersByFormatName( suffix )
                var reader:ImageReader = null
                var found = false
-               
+
                while ( readers.hasNext() && !found ) {
                  reader = readers.next().as[ImageReader]
-                  
+
                  if ( reader.canReadRaster() )
                    found = true
                }
-            
+
                if ( found ) {
                  //Stream the image file (the original CMYK image)
-                 val input =   ImageIO.createImageInputStream( originalFile ) 
-                 reader.setInput( input ) 
-              
+                 val input =   ImageIO.createImageInputStream( originalFile )
+                 reader.setInput( input )
+
                  //Read the image raster
-                 val raster = reader.readRaster(0, null) 
-              
+                 val raster = reader.readRaster(0, null)
+
                  //Create a new RGB image
-                 val bi = new BufferedImage(raster.getWidth(), raster.getHeight(), BufferedImage.TYPE_4BYTE_ABGR) 
-              
+                 val bi = new BufferedImage(raster.getWidth(), raster.getHeight(), BufferedImage.TYPE_4BYTE_ABGR)
+
                  //Fill the new image with the old raster
                  bi.getRaster().setRect(raster)
                  bi
                } else {
                  null
                }
-           }
-           
+           //}
+
          case e2:java.lang.IllegalStateException =>
            e2.printStackTrace()
            println( "Cannot read image (1): " + originalFile.getName )
@@ -386,16 +387,16 @@ object Thumbnail {
            null
        }
     }.as[BufferedImage]
-    
+
     if ( image == null ) {
       println( "Error: Unable to get thumb from file: " + originalFile.getAbsolutePath )
       return null
     }
-    
+
     val imageWidth  = image.getWidth( null )
     val imageHeight = image.getHeight( null )
 
-    val thumbFile = ( thumbnailFile == null ) ? File.createTempFile( originalFile.getName(), ".tmp" ) | thumbnailFile 
+    val thumbFile = ( thumbnailFile == null ) ? File.createTempFile( originalFile.getName(), ".tmp" ) | thumbnailFile
 
     // Do not create thumbs that are bigger than the original image, or if the original image is the right size, then use that
     if ( ( thumbW > imageWidth && thumbH > imageHeight ) || ( imageWidth == thumbW && imageHeight == thumbH ) ) {
@@ -403,15 +404,15 @@ object Thumbnail {
     } else {
       //val thumbRatio:Double = double2Double( thumbW ) / double2Double( thumbH )
       val imageRatio:Double = double2Double( imageWidth ) / double2Double( imageHeight )
-      
+
       var thumbHeight = thumbH
       var thumbWidth  = thumbW
-      
+
       if ( imageWidth > imageHeight )
         thumbHeight = ( thumbWidth / imageRatio )._i
       else
         thumbWidth = ( thumbHeight * imageRatio )._i
-      
+
       if ( imageWidth < thumbWidth && imageHeight < thumbHeight ) {
         thumbWidth = imageWidth
         thumbHeight = imageHeight
@@ -419,15 +420,15 @@ object Thumbnail {
         thumbWidth = imageWidth
       } else if ( imageHeight < thumbHeight ) {
         thumbHeight = imageHeight
-      } 
-      
+      }
+
       if ( thumbWidth == 0 || thumbHeight == 0 )
         return null
-  
+
       var w = imageWidth
       var h = imageHeight
       var first = true
-      
+
       do {
         if ( w > thumbWidth) {
           w /= 2
@@ -443,14 +444,14 @@ object Thumbnail {
 
         val tmp = new BufferedImage( w, h, BufferedImage.TYPE_INT_RGB )
         val g = tmp.createGraphics
-        
+
         if ( first ) {
           g.setBackground( Color.WHITE )
           g.setPaint( Color.WHITE )
           g.fillRect( 0, 0, w, h )
           first = false
         }
-        
+
         g.setRenderingHint( RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC )
         g.drawImage( image, 0, 0, w, h, null )
         g.dispose
@@ -465,15 +466,15 @@ object Thumbnail {
         image.flush()
       } else {
         var (x,y,w,h) = ( 0, 0, thumbW, thumbH )
-        
+
         if ( thumbWidth > thumbW ) {
-          x = ( thumbWidth - thumbW ) / 2 
+          x = ( thumbWidth - thumbW ) / 2
         } else if ( thumbHeight > thumbH ) {
           y = ( thumbHeight - thumbH ) / 2
         }
-        
+
         try {
-          ImageIO.write( image.getSubimage( x, y, w, h ), "JPG", thumbFile ) 
+          ImageIO.write( image.getSubimage( x, y, w, h ), "JPG", thumbFile )
           image.flush()
         } catch {
           case e:Throwable =>
@@ -483,9 +484,9 @@ object Thumbnail {
         }
       }
     }
-    
+
     System.gc
-    
+
     return thumbFile
   }
 }
